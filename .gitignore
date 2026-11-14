@@ -1,6 +1,7 @@
 node_modules/
 dist/
-build/
+# Bau-Ausgaben (nicht apps/server/src/build – das ist der Bau-Server)
+/build/
 target/
 *.log
 .env
