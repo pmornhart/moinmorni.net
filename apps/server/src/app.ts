@@ -7,6 +7,7 @@ import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod';
 import type { Config } from './config.js';
 import { openDatabase, type Db } from './db/index.js';
+import { createHub, type Hub } from './hub/index.js';
 import { AppError } from './lib/errors.js';
 import { createEventBus, type EventBus } from './lib/events.js';
 import { createMotorClient, MotorError, type FetchLike, type MotorClient } from './motor/client.js';
@@ -34,6 +35,7 @@ export interface BuiltApp {
   readonly motor: MotorClient;
   readonly events: EventBus;
   readonly setup: SetupService;
+  readonly hub: Hub;
   /** Nach dem Start im Hintergrund: Einrichtungs-Code bereitlegen, Motor einstellen. */
   readonly start: () => Promise<void>;
   readonly close: () => Promise<void>;
@@ -80,7 +82,15 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   });
 
   const auth = createPanelAuth(handle.db, motor, stores);
-  const status = createStatusService(config, motor, stores);
+  const hub = createHub({
+    secret: config.secret,
+    db: handle.db,
+    stores,
+    events,
+    log: app.log,
+    timeZone: config.timeZone,
+  });
+  const status = createStatusService(config, motor, stores, hub);
   const setup = createSetupService(config, handle.db, motor, app.log);
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
@@ -118,8 +128,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     motor,
     events,
     setup,
+    hub,
     start: setup.start,
     close: async () => {
+      await hub.close();
       await app.close();
       handle.close();
     },

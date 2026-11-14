@@ -38,6 +38,8 @@ export const teamMembers = sqliteTable('team_members', {
   motorUserId: integer('motor_user_id').primaryKey(),
   username: text('username').notNull(),
   roleId: text('role_id').notNull(),
+  /** Minecraft-Konto, das im Motor verbunden ist – dort gilt die Team-Rolle auch im Spiel. */
+  minecraftUuid: text('minecraft_uuid'),
   createdAt: createdAt(),
 });
 

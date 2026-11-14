@@ -27,6 +27,8 @@ const envSchema = z.object({
   MM_DOMAIN: z.string().default('moinmorni.net'),
   MM_BEDROCK_PORT: z.coerce.number().int().min(1).max(PORT_MAX).default(DEFAULT_BEDROCK_PORT),
   MM_WEB_DIR: z.string().optional(),
+  /** Zeitzone für Zeiten im Spiel (bis wann ein Bann gilt). */
+  TZ: z.string().default('Europe/Berlin'),
 });
 
 export interface Config {
@@ -40,6 +42,7 @@ export interface Config {
   readonly domain: string;
   readonly bedrockPort: number;
   readonly webDir: string;
+  readonly timeZone: string;
 }
 
 export function loadConfig(env: Record<string, string | undefined>, here: string): Config {
@@ -55,5 +58,6 @@ export function loadConfig(env: Record<string, string | undefined>, here: string
     domain: e.MM_DOMAIN,
     bedrockPort: e.MM_BEDROCK_PORT,
     webDir: e.MM_WEB_DIR ? path.resolve(e.MM_WEB_DIR) : path.resolve(here, '../../web/dist'),
+    timeZone: e.TZ,
   };
 }

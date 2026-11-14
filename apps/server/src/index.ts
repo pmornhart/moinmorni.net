@@ -27,6 +27,7 @@ process.once('SIGTERM', () => void stop());
 process.once('SIGINT', () => void stop());
 
 await built.app.listen({ host: config.host, port: config.port });
+await built.hub.listen(config.host, config.hubPort);
 built.app.log.info({ motor: config.motorUrl, domain: config.domain }, 'MoinMorni läuft');
 built
   .start()

@@ -56,8 +56,17 @@ export function createPanelAuth(db: Db, motor: MotorClient, stores: Stores): Pan
       !member && owners === 0 && me.user.isAdmin && !me.user.username.startsWith(SERVICE_PREFIX);
     if (bootstrap)
       db.insert(teamMembers)
-        .values({ motorUserId: me.user.id, username: me.user.username, roleId: OWNER })
+        .values({
+          motorUserId: me.user.id,
+          username: me.user.username,
+          roleId: OWNER,
+          minecraftUuid: me.user.minecraftUuid ?? null,
+        })
         .run();
+    // Verbundenes Minecraft-Konto merken: dort gilt die Team-Rolle auch im Spiel (Hub).
+    const minecraftUuid = me.user.minecraftUuid ?? null;
+    if (member && member.minecraftUuid !== minecraftUuid)
+      db.update(teamMembers).set({ minecraftUuid }).where(eq(teamMembers.motorUserId, me.user.id)).run();
     const roleId = member?.roleId ?? (bootstrap ? OWNER : null);
     const role = roleId ? stores.role(roleId) : undefined;
     const user: PanelUser | null = role
@@ -66,7 +75,7 @@ export function createPanelAuth(db: Db, motor: MotorClient, stores: Stores): Pan
           username: me.user.username,
           role,
           areas: new Set(role.panel),
-          minecraftUuid: me.user.minecraftUuid ?? null,
+          minecraftUuid,
           csrfToken: me.csrfToken,
         }
       : null;

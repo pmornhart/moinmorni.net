@@ -1,5 +1,6 @@
 import type { Mode, ModeStatus, NetworkStatus } from '@moinmorni/shared';
 import type { Config } from '../config.js';
+import type { Hub } from '../hub/index.js';
 import type { MotorClient } from '../motor/client.js';
 import type { Stores } from '../panel/stores.js';
 
@@ -23,17 +24,31 @@ export interface StatusService {
 }
 
 /** Status für Webseite, Lobby-Figuren und Discord: wer ist online, welcher Modus läuft. Kurz zwischengespeichert. */
-export function createStatusService(config: Config, motor: MotorClient, stores: Stores): StatusService {
+/**
+ * Spielerzahlen kommen vom Hub (der Proxy meldet jeden Wechsel sofort); ist der Proxy nicht verbunden, aus dem
+ * Motor (fragt die Server alle paar Sekunden ab).
+ */
+export function createStatusService(
+  config: Config,
+  motor: MotorClient,
+  stores: Stores,
+  hub: Pick<Hub, 'presence' | 'proxyOnline'>,
+): StatusService {
   const cache: { at: number; value: NetworkStatus | null } = { at: 0, value: null };
-  const modeStatus = (m: Mode, network: MotorNetwork | undefined): ModeStatus => {
+  const modeStatus = (
+    m: Mode,
+    network: MotorNetwork | undefined,
+    counts: Record<string, number> | null,
+  ): ModeStatus => {
     const member = network?.members.find((s) => s.name === m.server);
+    const live = counts && m.server ? (counts[m.server] ?? 0) : null;
     return {
       id: m.id,
       name: m.name,
       description: m.description,
       state: m.state,
       access: m.access,
-      players: member?.players ?? 0,
+      players: live ?? member?.players ?? 0,
       maxPlayers: m.maxPlayers,
       awake: member?.state === RUNNING,
     };
@@ -49,14 +64,15 @@ export function createStatusService(config: Config, motor: MotorClient, stores: 
     const networks = await networksOrNone();
     const network = networks.find((n) => n.name === NETWORK_NAME);
     const settings = stores.settings('network');
+    const counts = hub.proxyOnline() ? hub.presence.counts() : null;
     return {
-      online: network?.proxy.state === RUNNING,
-      players: network?.proxy.players ?? 0,
+      online: network?.proxy.state === RUNNING || hub.proxyOnline(),
+      players: counts ? hub.presence.all().length : (network?.proxy.players ?? 0),
       maxPlayers: Number(settings['maxPlayers']),
       javaAddress: config.domain,
       bedrockAddress: config.domain,
       bedrockPort: config.bedrockPort,
-      modes: stores.modes().map((m) => modeStatus(m, network)),
+      modes: stores.modes().map((m) => modeStatus(m, network, counts)),
       updatedAt: new Date().toISOString(),
     };
   };
