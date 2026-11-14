@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -15,6 +16,8 @@ import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { createStatusService } from './public/status.js';
+import { registerSetupRoutes } from './setup/routes.js';
+import { createSetupService, type SetupService } from './setup/service.js';
 
 export type Api = FastifyInstance<
   import('node:http').Server,
@@ -30,6 +33,9 @@ export interface BuiltApp {
   readonly stores: Stores;
   readonly motor: MotorClient;
   readonly events: EventBus;
+  readonly setup: SetupService;
+  /** Nach dem Start im Hintergrund: Einrichtungs-Code bereitlegen, Motor einstellen. */
+  readonly start: () => Promise<void>;
   readonly close: () => Promise<void>;
 }
 
@@ -61,6 +67,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   await app.register(helmet, { contentSecurityPolicy: false, referrerPolicy: { policy: 'same-origin' } });
+  // Nur Routen mit eigener Grenze (Einrichtung, später Anmeldung im Hub) – der Rest bleibt frei.
+  await app.register(rateLimit, { global: false });
 
   app.setErrorHandler((err, request, reply) => {
     if (err instanceof AppError) return reply.code(err.status).send({ error: err.code });
@@ -73,6 +81,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
 
   const auth = createPanelAuth(handle.db, motor, stores);
   const status = createStatusService(config, motor, stores);
+  const setup = createSetupService(config, handle.db, motor, app.log);
+  registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
   registerPanelRoutes(app, auth, stores);
   await registerMotorProxy(app, config.motorUrl);
@@ -107,6 +117,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     stores,
     motor,
     events,
+    setup,
+    start: setup.start,
     close: async () => {
       await app.close();
       handle.close();

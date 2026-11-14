@@ -1,0 +1,120 @@
+# MoinMorni – Start: `docker compose up -d` (die Einrichtung macht install.sh), dann https://<deine Domain>.
+# Von außen erreichbar ist nur MoinMorni (Webseite + Panel, Port 8080 – NetBird macht HTTPS) und der Proxy der
+# Minecraft-Server (legt der Motor an). Motor, Docker-Zugang und Hub bleiben intern.
+name: moinmorni
+
+services:
+  moinmorni:
+    build:
+      context: .
+      args:
+        MM_VERSION: ${MM_BUILD_VERSION:-dev}
+    container_name: moinmorni
+    restart: unless-stopped
+    # Nur die eigenen Werte aus der .env (die Geheimnisse des Motors bleiben beim Motor).
+    environment:
+      MM_SECRET: ${MM_SECRET:?MM_SECRET fehlt – bitte install.sh ausführen}
+      MM_MOTOR_TOKEN: ${MM_MOTOR_TOKEN:-}
+      MM_DOMAIN: ${MM_DOMAIN:-moinmorni.net}
+      MM_DISCORD_TOKEN: ${MM_DISCORD_TOKEN:-}
+      MM_DATA_DIR: /data
+      MM_MOTOR_URL: http://motor:8080
+      TZ: ${TZ:-Europe/Berlin}
+    ports:
+      - '${MM_PORT:-8080}:8080'
+    volumes:
+      - moinmorni-data:/data
+    networks:
+      - intern
+      - minecraft
+    depends_on:
+      - motor
+    user: '1000:1000'
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # MorniHosting als Motor: legt die Minecraft-Container an, ohne eigene Oberfläche und ohne Ports nach außen.
+  motor:
+    build:
+      context: ./vendor/mornihosting
+      args:
+        MH_VERSION: ${MH_BUILD_VERSION:-dev}
+    container_name: moinmorni-motor
+    restart: unless-stopped
+    environment:
+      MH_SECRET: ${MH_SECRET:?MH_SECRET fehlt – bitte install.sh ausführen}
+      MH_PUBLIC_ADDRESS: ${MM_DOMAIN:-moinmorni.net}
+      MH_LAN_IP: ${MM_LAN_IP:-}
+      TZ: ${TZ:-Europe/Berlin}
+      MH_HEADLESS: 'true'
+      MH_DOCKER_HOST: tcp://socket-proxy:2375
+      MH_DATA_DIR: /data
+      MH_MC_NETWORK: moinmorni-mc
+      MH_ROUTER_JAVA_PORT: '0'
+      MH_ROUTER_BEDROCK_PORT: '0'
+    volumes:
+      - motor-data:/data
+    networks:
+      - docker-api
+      - intern
+      - minecraft
+    depends_on:
+      - socket-proxy
+    user: '1000:1000'
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # Der Motor spricht Docker nur über diesen Proxy, nie direkt mit dem Socket.
+  socket-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:v0.4.1
+    container_name: moinmorni-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+      NETWORKS: 1
+      EXEC: 1
+      INFO: 1
+      EVENTS: 1
+      PING: 1
+      VERSION: 1
+      POST: 1
+      DISABLE_IPV6: 1
+      LOG_LEVEL: warning
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-api
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  moinmorni-data:
+    name: moinmorni-data
+  motor-data:
+    name: moinmorni-motor-data
+
+networks:
+  # Nur Motor und Docker-Proxy, ohne Internet.
+  docker-api:
+    internal: true
+  # MoinMorni ↔ Motor.
+  intern:
+    internal: true
+  # Minecraft-Container, Motor (RCON) und MoinMorni (Hub für die Plugins).
+  minecraft:
+    name: moinmorni-mc

@@ -21,20 +21,53 @@ fs.mkdirSync(DIR, { recursive: true });
 if (!fs.existsSync(secretFile)) fs.writeFileSync(secretFile, `${crypto.randomUUID()}${crypto.randomUUID()}`);
 const secret = fs.readFileSync(secretFile, 'utf8').trim();
 
-const [motorApp, cli, motorCfg, fake] = await Promise.all([from('app.ts'), from('admin-cli.ts'), from('config.ts'), from('docker/fake-driver.ts')]);
+const [motorApp, cli, motorCfg, fake] = await Promise.all([
+  from('app.ts'),
+  from('admin-cli.ts'),
+  from('config.ts'),
+  from('docker/fake-driver.ts'),
+]);
 const motor = await motorApp['buildApp']({
-  config: motorCfg['loadConfig']({ MH_SECRET: secret, MH_DATA_DIR: path.join(DIR, 'motor'), MH_DOCKER_DRIVER: 'fake', MH_HEADLESS: 'true', MH_ROUTER_JAVA_PORT: '0', MH_ROUTER_BEDROCK_PORT: '0' }, '0.0.0-dev'),
+  config: motorCfg['loadConfig'](
+    {
+      MH_SECRET: secret,
+      MH_DATA_DIR: path.join(DIR, 'motor'),
+      MH_DOCKER_DRIVER: 'fake',
+      MH_HEADLESS: 'true',
+      MH_ROUTER_JAVA_PORT: '0',
+      MH_ROUTER_BEDROCK_PORT: '0',
+    },
+    '0.0.0-dev',
+  ),
   logger: false,
   docker: fake['createFakeDriver']({ stepMs: fake['FAKE_STEP_MS_FAST'], simulatePlayers: true }),
 });
 await motor.start();
 await motor.app.listen({ host: '127.0.0.1', port: MOTOR_PORT });
 const motorUrl = `http://127.0.0.1:${MOTOR_PORT}`;
-await fetch(`${motorUrl}/api/setup`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'philip', password: PASSWORD, locale: 'de' }) });
+await fetch(`${motorUrl}/api/setup`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ username: 'philip', password: PASSWORD, locale: 'de' }),
+});
 const tokenFile = path.join(DIR, 'motor-token');
-if (!fs.existsSync(tokenFile)) fs.writeFileSync(tokenFile, (await cli['runCommand'](motor.ctx.db, 'service-token', ['moinmorni'])).message);
+if (!fs.existsSync(tokenFile))
+  fs.writeFileSync(
+    tokenFile,
+    (await cli['runCommand'](motor.ctx.db, 'service-token', ['moinmorni'])).message,
+  );
 const mm = await buildApp({
-  config: loadConfig({ MM_SECRET: secret, MM_DATA_DIR: path.join(DIR, 'moinmorni'), MM_MOTOR_URL: motorUrl, MM_MOTOR_TOKEN: fs.readFileSync(tokenFile, 'utf8').trim(), MM_PORT: String(MM_PORT), MM_HOST: '127.0.0.1' }, path.resolve(import.meta.dirname, '../src')),
+  config: loadConfig(
+    {
+      MM_SECRET: secret,
+      MM_DATA_DIR: path.join(DIR, 'moinmorni'),
+      MM_MOTOR_URL: motorUrl,
+      MM_MOTOR_TOKEN: fs.readFileSync(tokenFile, 'utf8').trim(),
+      MM_PORT: String(MM_PORT),
+      MM_HOST: '127.0.0.1',
+    },
+    path.resolve(import.meta.dirname, '../src'),
+  ),
   logger: false,
 });
 await mm.app.listen({ host: '127.0.0.1', port: MM_PORT });

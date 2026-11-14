@@ -53,13 +53,20 @@ export const OWNER_PASSWORD = 'Test-Passwort-12345';
 
 export interface Harness {
   readonly mm: BuiltApp;
+  readonly mmUrl: string;
+  readonly mmDir: string;
   readonly motorUrl: string;
   /** Anmelden über die Weiterleitung, wie der Browser: liefert Cookie und CSRF-Token. */
   readonly login: (username: string, password: string) => Promise<{ cookie: string; csrf: string }>;
   readonly cleanup: () => Promise<void>;
 }
 
-export async function createHarness(): Promise<Harness> {
+export interface HarnessOptions {
+  /** false = der Motor ist frisch, noch ohne Konto (Ersteinrichtung über MoinMorni testen). */
+  readonly motorSetup?: boolean;
+}
+
+export async function createHarness(options: HarnessOptions = {}): Promise<Harness> {
   const { buildMotor, runCommand, loadMotorConfig, createFakeDriver, FAKE_STEP_MS_FAST } = await loadMotor();
   const motorDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-motor-'));
   const mmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-data-'));
@@ -84,11 +91,12 @@ export async function createHarness(): Promise<Harness> {
   const address = motor.app.server.address() as { port: number };
   const motorUrl = `http://127.0.0.1:${address.port}`;
   // Philip richtet das erste Konto ein (im echten Aufbau über den Einrichtungs-Assistenten von MoinMorni).
-  await fetch(`${motorUrl}/api/setup`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username: 'philip', password: OWNER_PASSWORD, locale: 'de' }),
-  });
+  if (options.motorSetup !== false)
+    await fetch(`${motorUrl}/api/setup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username: 'philip', password: OWNER_PASSWORD, locale: 'de' }),
+    });
   const token = (await runCommand(motor.ctx.db, 'service-token', ['moinmorni'])).message;
   const mm = await buildApp({
     config: loadConfig(
@@ -110,6 +118,8 @@ export async function createHarness(): Promise<Harness> {
 
   return {
     mm,
+    mmUrl,
+    mmDir,
     motorUrl,
     login: async (username, password) => {
       const res = await fetch(`${mmUrl}/panel/motor/api/auth/login`, {
