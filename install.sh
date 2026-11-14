@@ -28,6 +28,9 @@ REPO_URL="${MM_REPO_URL:-https://github.com/pmornhart/moinmorni.net.git}"
 BRANCH="${MM_BRANCH:-main}"
 WAIT_TRIES=90
 WAIT_SECONDS=2
+# Den Bot-Token aus der Umgebung gleich übernehmen und nicht an andere Programme (apt, git, docker …) weitervererben.
+TOKEN_FROM_ENV="${MM_DISCORD_TOKEN:-}"
+unset MM_DISCORD_TOKEN
 
 GN=$'\e[32m'
 YW=$'\e[33m'
@@ -52,12 +55,13 @@ fi
 
 printf '\n %sMoinMorni%s – dein Minecraft-Netzwerk\n\n' "${BL}" "${CL}"
 
-# Wert in der .env setzen (ohne sed, damit Sonderzeichen im Wert nichts kaputt machen).
+# Wert in der .env setzen (ohne sed, damit Sonderzeichen im Wert nichts kaputt machen). Schlüssel und Wert gehen über
+# die Umgebung an awk, nicht als Argument – sonst stünden Geheimnisse wie der Bot-Token kurz in der Prozessliste (ps).
 set_env() {
   local key="$1" value="$2" tmp
   tmp="$(mktemp .env.XXXXXX)"
-  awk -v k="${key}" -v v="${value}" '
-    BEGIN { FS = OFS = "=" }
+  MM_ENV_KEY="${key}" MM_ENV_VALUE="${value}" awk '
+    BEGIN { FS = OFS = "="; k = ENVIRON["MM_ENV_KEY"]; v = ENVIRON["MM_ENV_VALUE"] }
     $1 == k { print k "=" v; found = 1; next }
     { print }
     END { if (!found) print k "=" v }
@@ -110,7 +114,7 @@ fi
 msg_ok "Dateien liegen in ${INSTALL_DIR}"
 cd "${INSTALL_DIR}"
 
-LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')" || LAN_IP=""
 # Domain: nur Buchstaben, Ziffern, Punkte und Bindestriche – "moinmorni.net" ja, "https://x" nein.
 DOMAIN_PATTERN='^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
 # Discord-Bot-Token: drei Teile aus Buchstaben, Ziffern, _ und -, getrennt durch Punkte.
@@ -138,7 +142,7 @@ if [[ ! -f .env ]]; then
   fi
   set_env MM_DOMAIN "${domain}"
 
-  token="${MM_DISCORD_TOKEN:-}"
+  token="${TOKEN_FROM_ENV}"
   if [[ -z "${token}" && -t 0 ]]; then
     printf ' Token deines Discord-Bots (Eingabe bleibt unsichtbar, leer lassen = später im Panel):\n '
     read -rs token
@@ -155,6 +159,7 @@ else
   chmod 600 .env
   msg_ok ".env ist schon da und bleibt unverändert"
 fi
+unset TOKEN_FROM_ENV
 
 msg_info "MoinMorni wird gebaut (das erste Mal dauert es ein paar Minuten)"
 export MM_BUILD_VERSION MH_BUILD_VERSION
