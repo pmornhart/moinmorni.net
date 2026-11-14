@@ -238,6 +238,12 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
         json(res, 200, commands);
       },
     ],
+    // Direktnachricht: Kanal „8<Empfänger>“, Nachrichten landen wie in jedem Kanal in `messages`.
+    [
+      'POST',
+      /^\/users\/@me\/channels$/,
+      (_m, b, res) => json(res, 200, { id: `8${String(b['recipient_id'])}`, type: 1 }),
+    ],
     [
       'POST',
       /^\/interactions\/(\w+)\/([\w-]+)\/callback$/,
@@ -252,6 +258,20 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
     const chunks: Buffer[] = [];
     req.on('data', (c: Buffer) => chunks.push(c));
     req.on('end', () => {
+      const oauthPath = (req.url ?? '').replace(/^\/api\/v10/, '');
+      // „Mit Discord anmelden“ (Webseite): Code gegen Schlüssel tauschen, dann „wer bin ich“.
+      if (req.method === 'POST' && oauthPath === '/oauth2/token') {
+        const form = new URLSearchParams(Buffer.concat(chunks).toString());
+        return form.get('code') === 'good-code' && form.get('client_secret') === 'client-secret'
+          ? json(res, 200, { access_token: 'user-token', token_type: 'Bearer' })
+          : json(res, 400, { error: 'invalid_grant' });
+      }
+      if (
+        req.method === 'GET' &&
+        oauthPath === '/users/@me' &&
+        req.headers.authorization === 'Bearer user-token'
+      )
+        return json(res, 200, { id: '5555', username: 'lena_dc', global_name: 'Lena' });
       if (req.headers.authorization !== 'Bot test-token')
         return json(res, 401, { code: 0, message: '401: Unauthorized' });
       const path = (req.url ?? '').replace(/^\/api\/v10/, '');

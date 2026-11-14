@@ -27,6 +27,8 @@ import {
   type RoleIds,
 } from './layout.js';
 import { botLang, bt, RULES_TEXT, type BotLang } from './texts.js';
+import { APPLY_BUTTON, APPLY_FORM, createApplicationBot } from './applications.js';
+import type { ApplicationService } from '../mornicraft/applications.js';
 
 /**
  * Der MoinMorni-Bot: richtet den Discord-Server ein (Rollen aus der Vorlage, Kanäle mit Rechten, Regeln, Hilfe mit
@@ -47,6 +49,8 @@ const EPHEMERAL = 64;
 const REPLY = 4;
 const INTERACTION_COMMAND = 2;
 const INTERACTION_COMPONENT = 3;
+const INTERACTION_MODAL = 5;
+const BUTTON_SECONDARY = 2;
 const ROW = 1;
 const BUTTON = 2;
 const BUTTON_PRIMARY = 1;
@@ -114,10 +118,14 @@ export interface MoinMorniBot {
   readonly handle: (e: GatewayEvent) => Promise<void>;
   /** Zeile in den Team-Log-Kanal (ohne Bot oder Kanal: nichts). */
   readonly teamLog: (line: string) => Promise<void>;
+  /** ID der Discord-Anwendung (für „Mit Discord anmelden“); null ohne Bot. */
+  readonly applicationId: () => Promise<string | null>;
 }
 
 export interface BotDeps {
   readonly config: Config;
+  /** Bewerbungen für MorniCraft (Formular, Posten in #bewerbungen, Entscheiden per Knopf). */
+  readonly applications?: ApplicationService;
   readonly db: Db;
   readonly stores: Stores;
   readonly hub: Hub;
@@ -155,6 +163,16 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     if (!client) return Promise.reject(new Error('discord_not_configured'));
     return client.rest<T>(method, path, body, reason);
   };
+  const appBot = deps.applications
+    ? createApplicationBot({
+        rest,
+        channel: (key) => get(`ch:${key}`),
+        applications: deps.applications,
+        hub,
+        domain: config.domain,
+        log,
+      })
+    : null;
   const guildId = (): string | null => get('guild');
   const appId = async (): Promise<string> => {
     if (app.id) return app.id;
@@ -250,6 +268,17 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
             custom_id: TICKET_OPEN,
             emoji: { name: '🎫' },
           },
+          ...(deps.applications
+            ? [
+                {
+                  type: BUTTON,
+                  style: BUTTON_SECONDARY,
+                  label: bt('de', 'applyButton'),
+                  custom_id: APPLY_BUTTON,
+                  emoji: { name: '📝' },
+                },
+              ]
+            : []),
         ],
       },
     ],
@@ -268,6 +297,11 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       name: 'hilfe',
       description: 'So geht MoinMorni',
       description_localizations: { 'en-US': 'How MoinMorni works' },
+    },
+    {
+      name: 'bewerben',
+      description: 'Für MorniCraft bewerben',
+      description_localizations: { 'en-US': 'Apply for MorniCraft' },
     },
     {
       name: 'status',
@@ -715,6 +749,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const data = (d['data'] ?? {}) as { name?: string; custom_id?: string };
     const type = Number(d['type']);
     const commandsByName: Readonly<Record<string, () => Promise<void>>> = {
+      ...(appBot ? { bewerben: () => appBot.open(d, lang) } : {}),
       verbinden: () => link(d, lang),
       hilfe: () => hilfe(d, lang),
       status: async () => {
@@ -726,9 +761,16 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const buttons: Readonly<Record<string, () => Promise<void>>> = {
       [TICKET_OPEN]: () => ticket(d, lang),
       [TICKET_CLOSE]: () => closeTicket(d, lang),
+      ...(appBot ? { [APPLY_BUTTON]: () => appBot.open(d, lang) } : {}),
     };
+    const component = data.custom_id ?? '';
     if (type === INTERACTION_COMMAND) await commandsByName[data.name ?? '']?.();
-    if (type === INTERACTION_COMPONENT) await buttons[data.custom_id ?? '']?.();
+    if (type === INTERACTION_COMPONENT) {
+      const plain = buttons[component];
+      if (plain) await plain();
+      else await appBot?.button(d, lang, component);
+    }
+    if (type === INTERACTION_MODAL && component === APPLY_FORM) await appBot?.submit(d, lang);
   };
 
   return {
@@ -739,6 +781,14 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       });
       events.on('punishments.changed', (c) => {
         onPunishment(c).catch((err: unknown) => log.warn({ err }, 'Discord: Strafe nicht übertragen'));
+      });
+      events.on('application.created', ({ id }) => {
+        appBot?.posted(id).catch((err: unknown) => log.warn({ err }, 'Discord: Bewerbung nicht gepostet'));
+      });
+      events.on('application.decided', ({ id }) => {
+        appBot
+          ?.decided(id)
+          .catch((err: unknown) => log.warn({ err }, 'Discord: Entscheidung nicht übertragen'));
       });
       events.on('news.published', ({ slug }) => {
         postNews(slug).catch((err: unknown) => log.warn({ err }, 'Discord: News nicht gepostet'));
@@ -785,6 +835,14 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     /** Zeile in den Team-Log-Kanal (z. B. „MoinMorni wurde aktualisiert“). */
     teamLog: async (line: string) => {
       if (client) await log2team(line);
+    },
+    applicationId: async () => {
+      if (!client) return null;
+      try {
+        return await appId();
+      } catch {
+        return null;
+      }
     },
     inviteUrl: () => {
       const code = get('invite');

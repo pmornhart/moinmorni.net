@@ -17,6 +17,7 @@ services:
       MM_MOTOR_TOKEN: ${MM_MOTOR_TOKEN:-}
       MM_DOMAIN: ${MM_DOMAIN:-moinmorni.net}
       MM_DISCORD_TOKEN: ${MM_DISCORD_TOKEN:-}
+      MM_DISCORD_CLIENT_SECRET: ${MM_DISCORD_CLIENT_SECRET:-}
       MM_DATA_DIR: /data
       MM_MOTOR_URL: http://motor:8080
       TZ: ${TZ:-Europe/Berlin}

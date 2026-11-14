@@ -35,6 +35,8 @@ const envSchema = z.object({
   MM_AUTO_NETWORK: z.enum(['true', 'false']).default('true'),
   /** Token des eigenen Discord-Bots (optional; lässt sich auch im Panel eintragen). */
   MM_DISCORD_TOKEN: z.string().optional(),
+  /** Geheimnis der Discord-Anwendung (OAuth2) – für „Mit Discord anmelden“ beim Bewerben auf der Webseite. */
+  MM_DISCORD_CLIENT_SECRET: z.string().optional(),
   /** Discord-API (nur Tests zeigen auf ein nachgebautes Discord). */
   MM_DISCORD_API: z.string().url().default('https://discord.com/api/v10'),
   /** Zeitzone für Zeiten im Spiel (bis wann ein Bann gilt). */
@@ -64,6 +66,7 @@ export interface Config {
   readonly autoNetwork: boolean;
   readonly discordToken: string | null;
   readonly discordApi: string;
+  readonly discordClientSecret: string | null;
   readonly version: string;
   readonly updateBranch: string;
   readonly githubApi: string;
@@ -88,6 +91,7 @@ export function loadConfig(env: Record<string, string | undefined>, here: string
     autoNetwork: e.MM_AUTO_NETWORK === 'true',
     discordToken: e.MM_DISCORD_TOKEN?.trim() || null,
     discordApi: e.MM_DISCORD_API.replace(TRAILING_SLASHES, ''),
+    discordClientSecret: e.MM_DISCORD_CLIENT_SECRET?.trim() || null,
     version: e.MM_VERSION,
     updateBranch: e.MM_UPDATE_BRANCH,
     githubApi: e.MM_GITHUB_API.replace(TRAILING_SLASHES, ''),

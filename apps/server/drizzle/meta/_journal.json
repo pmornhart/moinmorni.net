@@ -43,6 +43,13 @@
       "when": 1794670046586,
       "tag": "0005_news",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794697721409,
+      "tag": "0006_mornicraft_applications",
+      "breakpoints": true
     }
   ]
 }

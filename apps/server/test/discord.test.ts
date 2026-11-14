@@ -41,7 +41,13 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
 
   beforeAll(async () => {
     dc = await startFakeDiscord();
-    h = await createHarness({ env: { MM_DISCORD_TOKEN: 'test-token', MM_DISCORD_API: dc.api } });
+    h = await createHarness({
+      env: {
+        MM_DISCORD_TOKEN: 'test-token',
+        MM_DISCORD_API: dc.api,
+        MM_DISCORD_CLIENT_SECRET: 'client-secret',
+      },
+    });
     owner = await h.login('philip', OWNER_PASSWORD);
     h.mm.bot.start();
     const port = await h.mm.hub.listen('127.0.0.1', 0);
@@ -83,7 +89,12 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(JSON.stringify(dc.messages.get(help?.id ?? ''))).toContain('mm:ticket:open');
     const status = channelByName('🟢・status');
     expect(JSON.stringify(dc.messages.get(status?.id ?? ''))).toContain('MoinMorni');
-    expect(dc.commands.map((c) => (c as { name: string }).name)).toEqual(['verbinden', 'hilfe', 'status']);
+    expect(dc.commands.map((c) => (c as { name: string }).name)).toEqual([
+      'verbinden',
+      'hilfe',
+      'bewerben',
+      'status',
+    ]);
     expect(dc.guild.features).toContain('COMMUNITY');
 
     const roles = dc.guild.roles.size;
@@ -171,6 +182,122 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(log).toContain('entbannt');
     expect(log).toContain('Gefängnis');
     expect(log).toContain('Beleidigung');
+  });
+
+  test('MorniCraft-Bewerbung: Formular in Discord, #bewerbungen, Annehmen per Knopf, Webseite mit Discord-Anmeldung, Whitelist', async () => {
+    const PHILIP_UUID = '11111111-1111-1111-1111-111111111111';
+    const PHILIP_DC = '6666';
+    const apps = channelByName('📝・bewerbungen');
+    const lastReply = () => dc.replies.at(-1)?.body;
+    const field = (custom_id: string, value: string) => ({ type: 1, components: [{ custom_id, value }] });
+
+    // /bewerben öffnet das Formular.
+    await interaction(2, { name: 'bewerben' });
+    expect(lastReply()).toMatchObject({ type: 9, data: { custom_id: 'mm:apply-form' } });
+    await interaction(5, {
+      custom_id: 'mm:apply-form',
+      components: [
+        field('minecraft', 'Lena_Baut'),
+        field('about', 'Ich baue gern Häuser im Alpenstil und spiele seit Jahren.'),
+        field('why', 'Weil ihr nett seid.'),
+        field('age', '15'),
+      ],
+    });
+    expect(JSON.stringify(lastReply())).toContain('Lena_Baut');
+    await until(() => (dc.messages.get(apps?.id ?? '') ?? []).length > 0);
+    const posted = (dc.messages.get(apps?.id ?? '') ?? [])[0] as unknown as {
+      id: string;
+      embeds: Array<{ title: string }>;
+      components: Array<{ components: Array<{ custom_id: string }> }>;
+    };
+    expect(posted.embeds[0]?.title).toContain('Lena_Baut');
+    const accept = posted.components[0]?.components[0]?.custom_id ?? '';
+    expect(accept).toMatch(/^mm:app-accept:\d+$/);
+
+    // Noch eine Bewerbung geht nicht, solange eine offen ist; Lena selbst darf nicht entscheiden.
+    await interaction(2, { name: 'bewerben' });
+    expect(JSON.stringify(lastReply())).toContain('liegt beim Team');
+    await interaction(3, { custom_id: accept });
+    expect(JSON.stringify(lastReply())).toContain('Entscheiden darf nur das Team');
+
+    // Philip (Owner, Konto verbunden) nimmt an → Whitelist, Nachricht angepasst, Direktnachricht an Lena.
+    h.mm.hub.players.seen({ uuid: PHILIP_UUID, name: 'Philip', bedrock: false });
+    h.mm.hub.players.setRole(PHILIP_UUID, 'owner');
+    h.mm.hub.players.setDiscord(PHILIP_UUID, PHILIP_DC);
+    await interaction(
+      3,
+      { custom_id: accept },
+      { member: { user: { id: PHILIP_DC, username: 'philip_dc' } } },
+    );
+    expect(JSON.stringify(lastReply())).toContain('angenommen');
+    await until(() => (dc.messages.get(`8${LENA_DC}`) ?? []).length > 0);
+    expect(JSON.stringify(dc.messages.get(`8${LENA_DC}`))).toContain('Willkommen bei MorniCraft');
+    await until(
+      () =>
+        ((dc.messages.get(apps?.id ?? '') ?? [])[0] as unknown as { components: unknown[] }).components
+          .length === 0,
+    );
+    const list = (await call('GET', '/api/panel/whitelist')).json<Array<{ displayName: string }>>();
+    expect(list.map((w) => w.displayName)).toEqual(['Lena_Baut']);
+
+    // Hub: MorniCraft offen, Lena_Baut darf hinein (der Server schläft und wird geweckt), ein Fremder nicht.
+    h.mm.stores.patchMode('mornicraft', { state: 'on' }, 'test');
+    const toldAbout = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+    await proxy.request({ t: 'login', uuid: LENA, name: 'Lena_Baut', locale: 'de_de', bedrock: false });
+    await proxy.request({ t: 'connecting', uuid: LENA, server: 'mornicraft' });
+    expect((await toldAbout(LENA, 'MorniCraft'))['text']).not.toContain('nicht auf der Liste');
+    const STRANGER = '99999999-9999-9999-9999-999999999999';
+    await proxy.request({ t: 'login', uuid: STRANGER, name: 'Fremder', locale: 'de_de', bedrock: false });
+    expect(await proxy.request({ t: 'connecting', uuid: STRANGER, server: 'mornicraft' })).toMatchObject({
+      data: { allow: false },
+    });
+    await toldAbout(STRANGER, 'nicht auf der Liste');
+
+    // Webseite: mit Discord anmelden (OAuth2), dann bewerben.
+    const web = (method: 'GET' | 'POST', url: string, cookie = '', payload?: object) =>
+      h.mm.app.inject({ method, url, payload, headers: cookie ? { cookie } : {} });
+    expect((await web('GET', '/api/public/apply')).json()).toMatchObject({
+      open: true,
+      discordLogin: true,
+      me: null,
+    });
+    const login = await web('GET', '/api/public/apply/login');
+    expect(login.statusCode).toBe(302);
+    const target = new URL(String(login.headers.location));
+    expect(target.host).toBe('discord.com');
+    expect(target.searchParams.get('client_id')).toBe('777');
+    expect(target.searchParams.get('scope')).toBe('identify');
+    const state = target.searchParams.get('state') ?? '';
+    const stateCookie = String(login.headers['set-cookie']).split(';')[0] ?? '';
+    const wrong = await web('GET', `/api/public/apply/callback?code=good-code&state=falsch`, stateCookie);
+    expect(String(wrong.headers.location)).toContain('fehler=discord_login_failed');
+    const back = await web('GET', `/api/public/apply/callback?code=good-code&state=${state}`, stateCookie);
+    expect(back.headers.location).toBe('/mornicraft/bewerben');
+    const cookies = ([] as string[]).concat(back.headers['set-cookie'] ?? []);
+    const session = cookies.find((c) => c.startsWith('mm_apply='))?.split(';')[0] ?? '';
+    expect((await web('GET', '/api/public/apply', session)).json()).toMatchObject({
+      me: { name: 'Lena' },
+      application: { status: 'accepted', minecraftName: 'Lena_Baut' },
+    });
+    expect(
+      (await web('POST', '/api/public/apply', '', { minecraftName: 'X_y', answers: {} })).statusCode,
+    ).toBe(400);
+    const sent = await web('POST', '/api/public/apply', session, {
+      minecraftName: 'Lena_Zwei',
+      answers: { about: 'Mein Zweitkonto zum Bauen und Ausprobieren.', why: 'Zum Testen.' },
+    });
+    expect(sent.json()).toMatchObject({ status: 'pending', minecraftName: 'Lena_Zwei' });
+    const pending = (await call('GET', '/api/panel/applications?status=pending')).json<
+      Array<{ id: number }>
+    >();
+    expect(pending).toHaveLength(1);
+    const no = await call('POST', `/api/panel/applications/${pending[0]?.id}/decide`, {
+      accept: false,
+      note: 'Ein Konto reicht.',
+    });
+    expect(no.json()).toMatchObject({ status: 'rejected', decidedBy: 'philip' });
+    await until(() => JSON.stringify(dc.messages.get(`8${LENA_DC}`)).includes('Ein Konto reicht.'));
   });
 
   test('Ticket öffnen und schließen, Begrüßung neuer Mitglieder', async () => {

@@ -19,6 +19,8 @@ import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerUpdateRoutes } from './system/routes.js';
+import { createApplicationService } from './mornicraft/applications.js';
+import { registerApplyRoutes } from './mornicraft/routes.js';
 import { createUpdateService } from './system/update.js';
 import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
@@ -106,8 +108,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   // Der Hub weckt schlafende Modi über den Schlaf-Dienst (der wiederum den Hub fragt, wer wo ist).
   const sleepRef: { service: SleepService | null } = { service: null };
   const botRef: { bot: MoinMorniBot | null } = { bot: null };
+  const applications = createApplicationService(handle.db, stores, events);
   const hub = createHub({
     wake: (server) => sleepRef.service?.wake(server) ?? Promise.resolve(false),
+    allowedIn: applications.allowed,
     extraCommands: (ctx) => botRef.bot?.commands(ctx) ?? [],
     secret: config.secret,
     db: handle.db,
@@ -132,6 +136,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     hub,
     events,
     status,
+    applications,
     log: app.log,
     ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
   });
@@ -179,6 +184,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerNewsRoutes(app, auth, handle.db, events);
   const updates = createUpdateService(config, motor, stores, options.githubFetch);
   registerUpdateRoutes(app, auth, updates);
+  registerApplyRoutes(app, {
+    config,
+    auth,
+    applications,
+    discordAppId: bot.applicationId,
+    clientSecret: config.discordClientSecret,
+    ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
+  });
   const announceUpdate = async (): Promise<void> => {
     const r = updates.takeResult();
     if (!r) return;

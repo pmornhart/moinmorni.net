@@ -382,6 +382,10 @@ const TEXTS = {
     de: `${P}<light_purple><white>{mode}</white> ist nur auf Einladung.</light_purple> <gray>Stehst du auf der Liste, geht's gleich los – sonst kannst du dich auf der Webseite oder im Discord bewerben.`,
     en: `${P}<light_purple><white>{mode}</white> is invitation only.</light_purple> <gray>If you're on the list, you'll be in right away – otherwise apply on the website or in Discord.`,
   },
+  'mode.not_listed': {
+    de: `${P}<light_purple><white>{mode}</white> ist nur auf Einladung – du stehst (noch) nicht auf der Liste.</light_purple> <gray>Bewirb dich: <click:open_url:'{url}'><aqua><u>{url}</u></aqua></click> oder im Discord mit <white>/bewerben</white>.`,
+    en: `${P}<light_purple><white>{mode}</white> is invitation only – you are not on the list (yet).</light_purple> <gray>Apply: <click:open_url:'{url}'><aqua><u>{url}</u></aqua></click> or in Discord with <white>/bewerben</white>.`,
+  },
   'mode.maintenance': {
     de: `${P}<gold><white>{mode}</white> ist gerade in Wartung.`,
     en: `${P}<gold><white>{mode}</white> is under maintenance right now.`,

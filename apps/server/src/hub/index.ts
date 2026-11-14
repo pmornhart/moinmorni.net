@@ -93,6 +93,8 @@ export interface HubOptions {
   readonly extraCommands?: (ctx: HubContext) => Command[];
   /** Schlafenden Server wecken (Motor starten); false = ging nicht. */
   readonly wake?: (server: string) => Promise<boolean>;
+  /** Steht diese Person auf der Whitelist eines Modus „nur auf Einladung“? Ohne = niemand außer dem Team. */
+  readonly allowedIn?: (mode: string, uuid: string, name: string) => boolean;
 }
 
 export interface Hub {
@@ -302,6 +304,17 @@ export function createHub(options: HubOptions): Hub {
     if (mode?.state === 'soon') return stop(text(lang, 'mode.soon', { mode: name }));
     if (mode?.state === 'maintenance' && !hasRight(players.roleOf(uuid), 'maintenance-join'))
       return stop(text(lang, 'mode.maintenance', { mode: name }));
+    // Nur auf Einladung (MorniCraft): Whitelist – das Team kommt immer hinein.
+    if (
+      mode?.access === 'whitelist' &&
+      !hasRight(players.roleOf(uuid), 'maintenance-join') &&
+      !(
+        options.allowedIn?.(mode.id, uuid, presence.get(uuid)?.name ?? players.get(uuid)?.name ?? '') ?? false
+      )
+    )
+      return stop(
+        text(lang, 'mode.not_listed', { mode: name, url: mm(`https://${ctx.domain}/mornicraft/bewerben`) }),
+      );
     if (!mode || conns.backends.has(server) || !options.wake) return 'go';
     const list = waiting.get(server) ?? new Set<string>();
     const first = !waiting.has(server);

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { integer, primaryKey, sqliteTable, text, index } from 'drizzle-orm/sqlite-core';
+import { integer, primaryKey, sqliteTable, text, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import type { Mode, Role } from '@moinmorni/shared';
 
 const now = sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`;
@@ -132,4 +132,45 @@ export const news = sqliteTable(
     updatedAt: text('updated_at').notNull().default(now),
   },
   (t) => [index('news_published').on(t.publishedAt)],
+);
+
+/** Wer in einen Modus „nur auf Einladung“ (MorniCraft) darf – per Name (Bewerber kennen ihre UUID nicht). */
+export const whitelist = sqliteTable(
+  'whitelist',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    mode: text('mode').notNull(),
+    /** Minecraft-Name, klein geschrieben (für den Vergleich). */
+    name: text('name').notNull(),
+    /** Name wie angegeben (für die Anzeige). */
+    displayName: text('display_name').notNull(),
+    /** Sobald jemand mit dem Namen da war. */
+    uuid: text('uuid'),
+    addedBy: text('added_by').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('whitelist_mode_name').on(t.mode, t.name)],
+);
+
+/** Bewerbungen für MorniCraft (Webseite mit Discord-Anmeldung oder Discord-Knopf). */
+export const applications = sqliteTable(
+  'applications',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    mode: text('mode').notNull(),
+    minecraftName: text('minecraft_name').notNull(),
+    discordId: text('discord_id'),
+    discordName: text('discord_name'),
+    /** Antworten auf die Fragen (about, why, age …). */
+    answers: text('answers', { mode: 'json' }).$type<Record<string, string>>().notNull(),
+    via: text('via').$type<'website' | 'discord'>().notNull(),
+    status: text('status').$type<'pending' | 'accepted' | 'rejected'>().notNull().default('pending'),
+    decidedBy: text('decided_by'),
+    decidedAt: text('decided_at'),
+    note: text('note'),
+    /** Nachricht im Discord-Kanal #bewerbungen (wird nach der Entscheidung angepasst). */
+    discordMessageId: text('discord_message_id'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('applications_status').on(t.status)],
 );

@@ -20,6 +20,10 @@ export interface Events {
   'news.published': { slug: string };
   /** Rang oder Name eines Spielers geändert (Discord zieht die Rolle nach). */
   'player.changed': { uuid: string };
+  /** Neue Bewerbung (Discord postet sie in #bewerbungen). */
+  'application.created': { id: number };
+  /** Bewerbung entschieden (Discord passt die Nachricht an und sagt es der Person). */
+  'application.decided': { id: number };
 }
 
 export interface EventBus {

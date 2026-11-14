@@ -706,6 +706,47 @@ export const WEBSITE_AREA: SettingArea = {
   ],
 };
 
+export const MORNICRAFT_AREA: SettingArea = {
+  id: 'mornicraft',
+  title: t('MorniCraft', 'MorniCraft'),
+  text: t(
+    'MorniCraft ist nur auf Einladung: Wer auf der Whitelist steht, kommt hinein. Bewerben geht über die Webseite (mit Discord-Anmeldung) und im Discord.',
+    'MorniCraft is invitation only: whoever is on the whitelist gets in. Applying works on the website (with Discord sign-in) and in Discord.',
+  ),
+  icon: 'Pickaxe',
+  panel: 'modes',
+  sections: [
+    {
+      id: 'applications',
+      title: t('Bewerbungen', 'Applications'),
+      settings: [
+        {
+          key: 'applicationsOpen',
+          type: 'boolean',
+          default: true,
+          label: t('Bewerbungen offen', 'Applications open'),
+          help: t(
+            'Aus: Webseite und Discord sagen freundlich, dass gerade keine Bewerbungen angenommen werden.',
+            'Off: website and Discord say kindly that no applications are taken right now.',
+          ),
+          command: '/mornicraft bewerbungen an|aus',
+        },
+        {
+          key: 'acceptMessage',
+          type: 'text',
+          default: '',
+          maxLength: 300,
+          label: t('Nachricht bei Zusage', 'Message on acceptance'),
+          help: t(
+            'Bekommt, wer angenommen wurde (Discord und im Spiel). Leer = eine freundliche Standard-Nachricht.',
+            'Sent to accepted players (Discord and in game). Empty = a friendly default message.',
+          ),
+        },
+      ],
+    },
+  ],
+};
+
 export const UPDATES_AREA: SettingArea = {
   id: 'updates',
   title: t('Updates', 'Updates'),
@@ -785,6 +826,7 @@ export const SETTING_AREAS: readonly SettingArea[] = [
   SOCIAL_AREA,
   LOBBY_AREA,
   WEBSITE_AREA,
+  MORNICRAFT_AREA,
   UPDATES_AREA,
 ];
 

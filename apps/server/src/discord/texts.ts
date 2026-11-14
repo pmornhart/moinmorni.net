@@ -99,6 +99,42 @@ export const T = {
     de: '🔓 **{name}** aus dem Gefängnis ({by})',
     en: '🔓 **{name}** released from jail ({by})',
   },
+  applyButton: { de: 'Für MorniCraft bewerben', en: 'Apply for MorniCraft' },
+  applyClosed: {
+    de: 'Gerade nehmen wir keine Bewerbungen für MorniCraft an – schau bald wieder vorbei!',
+    en: 'We are not taking MorniCraft applications right now – check back soon!',
+  },
+  applyPending: {
+    de: 'Deine Bewerbung als **{name}** liegt beim Team – du hörst bald von uns.',
+    en: 'Your application as **{name}** is with the team – you will hear from us soon.',
+  },
+  applyTitle: { de: 'Bewerbung für MorniCraft', en: 'Application for MorniCraft' },
+  applyName: { de: 'Dein Minecraft-Name', en: 'Your Minecraft name' },
+  applyAbout: { de: 'Erzähl kurz von dir', en: 'Tell us a bit about you' },
+  applyWhy: { de: 'Warum möchtest du mitspielen?', en: 'Why do you want to play with us?' },
+  applyAge: { de: 'Alter (freiwillig)', en: 'Age (optional)' },
+  applyThanks: {
+    de: 'Danke! Deine Bewerbung als **{name}** ist beim Team. Du bekommst hier eine Nachricht, sobald entschieden ist.',
+    en: 'Thank you! Your application as **{name}** is with the team. You will get a message here once it is decided.',
+  },
+  applyFailed: {
+    de: 'Das hat nicht geklappt ({reason}). Prüf den Minecraft-Namen oder frag im Hilfe-Kanal.',
+    en: 'That did not work ({reason}). Check the Minecraft name or ask in the help channel.',
+  },
+  applyNoRight: {
+    de: 'Entscheiden darf nur das Team – mit verbundenem Minecraft-Konto (/verbinden).',
+    en: 'Only the team may decide – with a linked Minecraft account (/verbinden).',
+  },
+  applyAccepted: { de: 'Bewerbung #{id} angenommen ✅', en: 'Application #{id} accepted ✅' },
+  applyRejected: { de: 'Bewerbung #{id} abgelehnt.', en: 'Application #{id} rejected.' },
+  applyWelcome: {
+    de: '🎉 Willkommen bei MorniCraft, {name}! Du stehst jetzt auf der Liste – verbinde dich mit {domain} und klick in der Lobby auf die MorniCraft-Figur.',
+    en: '🎉 Welcome to MorniCraft, {name}! You are on the list now – join {domain} and click the MorniCraft figure in the lobby.',
+  },
+  applyNo: {
+    de: 'Danke für deine Bewerbung für MorniCraft. Diesmal hat es leider nicht gepasst.{note}',
+    en: 'Thank you for applying to MorniCraft. Unfortunately it was not a fit this time.{note}',
+  },
   logUpdateStarted: {
     de: '🔄 Update von MoinMorni gestartet ({by}) – das Panel ist gleich ein paar Minuten weg, die Minecraft-Server laufen weiter.',
     en: '🔄 MoinMorni update started ({by}) – the panel is gone for a few minutes, the Minecraft servers keep running.',
