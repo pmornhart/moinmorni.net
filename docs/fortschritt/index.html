@@ -1,0 +1,160 @@
+<title>MoinMorni Fortschritt</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one calm column; a crest-like header band, then the building blocks as a numbered sequence (the order is the build order), results below. */
+:root {
+  --bg: #f2f6f4; --card: #ffffff; --fg: #0f1f18; --muted: #4f6258; --line: #e2eae5;
+  --emerald: #059669; --emerald-soft: #d8f3e8; --gold: #b07d12; --gold-soft: #fbf1d9;
+  --blue: #2f6db3; --blue-soft: #e3eefb; --red: #b42323; --red-soft: #fde4e4;
+  --band: #0f2a20; --band-fg: #f4efe0;
+  --display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1512; --card: #151e1a; --fg: #e9f1ed; --muted: #a2b5ab; --line: rgba(255,255,255,.08);
+  --emerald: #34d399; --emerald-soft: rgba(52,211,153,.13); --gold: #e7bb4d; --gold-soft: rgba(231,187,77,.14);
+  --blue: #7fb2ec; --blue-soft: rgba(127,178,236,.14); --red: #fb8a8a; --red-soft: rgba(251,138,138,.13);
+  --band: #08130e; --band-fg: #f4efe0; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e1512; --card: #151e1a; --fg: #e9f1ed; --muted: #a2b5ab; --line: rgba(255,255,255,.08);
+  --emerald: #34d399; --emerald-soft: rgba(52,211,153,.13); --gold: #e7bb4d; --gold-soft: rgba(231,187,77,.14);
+  --blue: #7fb2ec; --blue-soft: rgba(127,178,236,.14); --red: #fb8a8a; --red-soft: rgba(251,138,138,.13);
+  --band: #08130e; --band-fg: #f4efe0; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.band { background: var(--band); color: var(--band-fg); position: relative; overflow: hidden; }
+header.band::after { content: ""; position: absolute; inset: auto 0 0 0; height: 10px;
+  background: repeating-linear-gradient(135deg, #ffffff 0 10px, #4f8fd6 10px 20px); opacity: .9; }
+header .wrap { padding-block: 36px 40px; display: grid; gap: 14px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #e7bb4d; font-weight: 600; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 6vw, 44px); line-height: 1.08; margin: 0; text-wrap: balance; }
+.goal { margin: 0; max-width: 62ch; color: #d9dfd6; }
+.meter { display: grid; gap: 6px; max-width: 520px; }
+.meter-top { display: flex; justify-content: space-between; font-size: 13px; color: #d9dfd6; font-variant-numeric: tabular-nums; }
+.bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: linear-gradient(90deg, #10b981, #e7bb4d); border-radius: inherit; }
+main .wrap { padding-block: 28px 56px; display: grid; gap: 36px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 22px; margin: 0 0 12px; }
+.now { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 4px; }
+.now b { font-weight: 700; }
+ol.blocks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: b -1; }
+ol.blocks li { counter-increment: b; display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 12px; align-items: start;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+ol.blocks li::before { content: counter(b); font-family: var(--mono); font-size: 13px; color: var(--muted); padding-top: 2px; text-align: right; }
+.t { font-weight: 600; }
+.d { color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+.note { font-size: 13.5px; margin-top: 6px; }
+.pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.s-open .pill { background: var(--line); color: var(--muted); }
+.s-run .pill { background: var(--gold-soft); color: var(--gold); }
+.s-done .pill { background: var(--emerald-soft); color: var(--emerald); }
+.s-wait .pill { background: var(--blue-soft); color: var(--blue); }
+.s-prob .pill { background: var(--red-soft); color: var(--red); }
+.s-run { border-color: var(--gold) !important; }
+.results { display: grid; gap: 16px; }
+figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+figure img { display: block; width: 100%; height: auto; }
+figcaption { padding: 10px 14px; font-size: 13.5px; color: var(--muted); }
+pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+.empty { color: var(--muted); font-size: 14px; }
+ul.files { margin: 0; padding-left: 18px; font-family: var(--mono); font-size: 13px; display: grid; gap: 2px; }
+@media (max-width: 520px) { ol.blocks li { grid-template-columns: 24px minmax(0,1fr); } ol.blocks li .pill { grid-column: 2; justify-self: start; } }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">Fortschritt · moinmorni.net</div>
+    <h1>MoinMorni</h1>
+    <p class="goal">Eigenes Minecraft-Netzwerk für Java und Bedrock: Lobby im Alpendorf mit Schloss, mehrere Spielmodi, Webseite mit Panel, eigener Discord-Bot und Modpack. Läuft auf MorniHosting und hält sich selbst aktuell.</p>
+    <div class="meter">
+      <div class="meter-top"><span id="pct">0 %</span><span id="upd"></span></div>
+      <div class="bar"><i id="fill" style="width:0%"></i></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section>
+      <h2>Gerade dran</h2>
+      <div class="now" id="now"></div>
+    </section>
+    <section>
+      <h2>Bausteine</h2>
+      <ol class="blocks" id="blocks"></ol>
+    </section>
+    <section>
+      <h2>Zwischenergebnisse</h2>
+      <div class="results" id="results"></div>
+    </section>
+    <section>
+      <h2>Neu oder geändert</h2>
+      <ul class="files" id="files"></ul>
+    </section>
+  </div>
+</main>
+
+<script>
+/* Stand – wird nach jedem Baustein aktualisiert. Status: open | run | wait | done | prob */
+const STAND = {
+  updated: '14.11.2026, 13:40',
+  now: { title: 'Baustein 0 · Verstehen und Plan', text: 'Fragerunde 1 ist beantwortet. Drei Helfer prüfen gerade Fakten (MCPVP, Cytooxien, Discord, Voice-Chat, NetBird, Modpack). Danach kommen Zusammenfassung und letzte Annahmen.' },
+  blocks: [
+    ['Verstehen und Plan', 'Fragerunden, Recherche, Zusammenfassung zum Bestätigen', 'run'],
+    ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder mit echten Texturen, Licht und Himmel', 'open'],
+    ['Lobby-Entwürfe', '2–3 Entwürfe als Bilder: Alpendorf, Maibaum, Biergarten, Schloss. Du wählst aus.', 'open'],
+    ['MorniHosting: Netzwerke', 'Proxy und Server als Gruppe, Geyser, Floodgate, Via und Voice-Chat am Proxy, eigene Domain über NetBird (Branch + PR in MorniHosting)', 'open'],
+    ['MorniHosting: ein Login für beides', '„Mit MorniHosting anmelden“, Schlüssel mit begrenzten Rechten, Server-Seiten als einbettbarer Baustein', 'open'],
+    ['MoinMorni-Grundgerüst', 'Webseite, Panel und Bot in einem Repo, Datenbank, Deutsch/Englisch, Tests', 'open'],
+    ['Netzwerk-Plugin', 'Sichere Verbindung zum Panel, Ränge, Chat, Freunde, Party, Strafen, Statistiken, Sprache, Status, Schlaf-Modus', 'open'],
+    ['Panel', 'Modi, Lobby, Spieler und Strafen, Rollen, Inhalte, Updates, alle MorniHosting-Funktionen pro Server', 'open'],
+    ['Webseite', 'Startseite mit Adresse, Online-Zahl, Modi, News, Changelog, Regeln, Team, Ranglisten, Profile, Modpack', 'open'],
+    ['Discord-Bot', 'Richtet den Server ein, Live-Status, Konten verbinden, Ränge, Tickets, News, Meldungen, Strafen', 'open'],
+    ['Voice-Chat', 'Über den Proxy, Gruppen über Server hinweg, Team darf beitreten und stummschalten', 'open'],
+    ['Lobby bauen', 'Gewählter Entwurf, Portale und NPCs mit Spielerzahl, Launchpads, Parkour, Kompass-Menü, Saison-Deko', 'open'],
+    ['MorniCraft im Netzwerk', 'Netzwerk-Modus in MorniCraft und MorniHosting, Whitelist mit Bewerbung, Mirni SMP als „bald“', 'open'],
+    ['Bau-Server', 'Kreativ-Server fürs Bauteam, Bauten per Knopf in die Modi übernehmen', 'open'],
+    ['Duels', '1v1 und 2v2, Kits, Arenen, Warteschlange, /duel, Ranglisten (Spielgefühl wie bei MCPVP)', 'open'],
+    ['Morni Party', 'Brettspiel für 2–8 Spieler, mehrere Spielfelder, Taler und Edelweiß, Minispiele', 'open'],
+    ['Modi allein und zusammen', 'Erste Modi zum Anschauen: Gipfelsturm, Burgverlies, Bollwerk', 'open'],
+    ['Modpack', 'Voice-Chat, Leistung, schöne Optik, Bau-Werkzeuge, Server schon eingetragen, Modrinth', 'open'],
+    ['Updates', 'Modi, MorniHosting, MorniCraft und Plugins halten sich aktuell: vorher Backup, bei Fehler zurück, Meldung in Discord', 'open'],
+    ['Proxmox-Quick-Start', 'Einzeiler, Installation, Update-Befehl, Anleitung, README', 'open'],
+    ['Abschluss', 'Jede MorniHosting-Funktion von MoinMorni aus prüfen, Sicherheitsprüfung, Liste: geht / geht noch nicht / warum', 'open']
+  ],
+  results: [],
+  files: ['CLAUDE.md', 'STAND.md', '.claude/settings.json + Hooks', 'docs/fortschritt/index.html']
+};
+const LABEL = { open: 'offen', run: 'läuft gerade', wait: 'wartet auf dich', done: 'fertig', prob: 'Problem' };
+const WEIGHT = { done: 1, run: 0.4, wait: 0.8 };
+const blocks = document.getElementById('blocks');
+STAND.blocks.forEach(([t, d, s, note]) => {
+  const li = document.createElement('li'); li.className = 's-' + s;
+  li.innerHTML = '<div><div class="t"></div><div class="d"></div>' + (note ? '<div class="note"></div>' : '') + '</div><span class="pill"></span>';
+  li.querySelector('.t').textContent = t; li.querySelector('.d').textContent = d;
+  if (note) li.querySelector('.note').textContent = note;
+  li.querySelector('.pill').textContent = LABEL[s];
+  blocks.appendChild(li);
+});
+const pct = Math.round(STAND.blocks.reduce((a, b) => a + (WEIGHT[b[2]] || 0), 0) / STAND.blocks.length * 100);
+document.getElementById('pct').textContent = pct + ' % fertig';
+document.getElementById('fill').style.width = pct + '%';
+document.getElementById('upd').textContent = 'Stand: ' + STAND.updated;
+const now = document.getElementById('now');
+now.innerHTML = '<b></b><span></span>';
+now.querySelector('b').textContent = STAND.now.title; now.querySelector('span').textContent = STAND.now.text;
+const res = document.getElementById('results');
+if (!STAND.results.length) { res.innerHTML = '<p class="empty">Noch keine Bilder. Die ersten kommen mit dem Test- und Bildwerkzeug und den Lobby-Entwürfen.</p>'; }
+STAND.results.forEach(r => {
+  const f = document.createElement(r.img ? 'figure' : 'div');
+  if (r.img) { f.innerHTML = '<img alt=""><figcaption></figcaption>'; f.querySelector('img').src = r.img; f.querySelector('img').alt = r.caption; f.querySelector('figcaption').textContent = r.time + ' · ' + r.caption; }
+  else { f.innerHTML = '<pre></pre>'; f.querySelector('pre').textContent = r.text; }
+  res.appendChild(f);
+});
+const files = document.getElementById('files');
+STAND.files.forEach(x => { const li = document.createElement('li'); li.textContent = x; files.appendChild(li); });
+</script>
