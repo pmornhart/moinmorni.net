@@ -41,6 +41,9 @@
 - **Rundgänge:** Panel (Team), Lobby (neue Spieler), Hilfe-Seiten (Webseite), Discord `/hilfe` + Begrüßung.
 - **Runde 2 – alle Empfehlungen:** Duels mit Klassisch (Suppe, ohne Abklingzeit) / Modern / Fähigkeiten + Kit-Editor, gewertet + locker; Morni Party mit Gipfelrennen + Edelweiß-Jagd, 3 Spielfelder (Almsommer am Morni-Kogel, Schloss Weißenstein, Goldstollen) + 12 Minispiele; Modpack Zoom an, keine Minimap, ohne Axiom (später nach Freigabe); MorniCraft-Bewerbung über Webseite (Discord-Login) und Discord-Knopf, Schalter „Bewerbungen offen“; Admin = alles außer Owner/Admin vergeben, Vorlage Owner/Admin, Bot verbinden, Server löschen; Party = gemeinsame Sprachgruppe über Server hinweg, eigene Gruppen netzwerkweit, Nähe-Chat pro Server, Team-Funk in Runden.
 - **Recherche:** `docs/recherche/` (Discord: Bots legen keine Server mehr an; Voice: Velocity-Plugin, eigene Brücke über Server, kein Bedrock-Voice; NetBird nach Port; Versionen 26.3).
+- **Lobby (Philip, 14.11. nachmittags):** keine Portale, sondern **Menschen (NPCs) zum Anklicken** → verbindet in den Modus (Name, Spielerzahl, Status über dem Kopf); **Leben im Dorf**: herumlaufende NPCs, **begehbare, eingerichtete Häuser**, Biergarten mit Wirt und Gästen. NPC-Outfits eigene Pixel-Skins über unser Texturpaket (keine fremden Skins).
+- **Voice (Philip):** immer auch **gemeinsame Sprachkanäle über alle Modi** (feste Kanäle, z. B. „Dorfplatz“, von jedem Server aus), dazu Party- und eigene Gruppen netzwerkweit.
+- Lobby-Entwürfe A/B/C fertig (Bilder an Philip) – Auswahl offen.
 - Repos zum Anlegen (Philip): MoinMorni-Lobby, -Duels, -Party, -Gipfelsturm, -Burgverlies, -Bollwerk.
 
 ## Stand

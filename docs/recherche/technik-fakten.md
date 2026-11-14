@@ -34,3 +34,16 @@
 - prismarine-viewer 1.33.0 (Texturen bis 1.21.4, Headless nur mit nativem Build). **V/U**
 - Chunky 2.5.0-Snapshot rendert bis 26.3, Kommandozeile `-render <scene>`, Texturen aus der Client-Jar (`-download-mc`). **V**
 - HeadlessMC kann den echten Client (z. B. 26.3) unter Xvfb + Mesa starten. **U** → wird in Baustein 1 ausprobiert.
+
+## Netzwerk-Test in der Sandbox (14.11., echt)
+- Velocity 4.3.1 + Paper 26.3 dahinter, **Modern Forwarding**: `velocity.toml` → `player-info-forwarding-mode = "MODERN"`,
+  `forwarding-secret-file = "forwarding.secret"`, `[servers]` Name → Adresse, `try = ["lobby"]`; Paper →
+  `config/paper-global.yml`: `proxies.velocity.enabled: true`, `online-mode` wie am Proxy, `secret` = Inhalt von
+  forwarding.secret; `server.properties`: `online-mode=false`.
+- **ViaVersion + ViaBackwards (Velocity 5.12.2)** am Proxy: ein mineflayer-Spieler mit 26.1 kam in die 26.3-Lobby,
+  aber erst nachdem Via die Server-Version per Ping erkannt hatte (`velocity-ping-interval: 60` → vorher „Outdated
+  client! Please use 26.3“). → Im Netzwerk-Baustein Ping-Intervall kurz setzen bzw. `velocity-servers` vorbelegen.
+- **Simple Voice Chat Velocity 2.6.26**: „Voice chat proxy server started at 0.0.0.0:<Proxy-Port>“ – UDP auf demselben
+  Port wie Minecraft. Backends brauchen das Plugin ebenfalls (eigene UDP-Ports, intern).
+- mineflayer über Via: nach dem Beitritt Kick wegen `invalid_player_movement` (Bewegungs-Pakete) → für Tests über den
+  Proxy Physik der Test-Spieler aus bzw. nur kurz bewegen.
