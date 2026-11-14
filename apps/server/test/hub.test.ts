@@ -426,6 +426,36 @@ describe('Hub', () => {
     expect(await go(PHILIP, 'duels')).toMatchObject({ data: { allow: true } });
   });
 
+  test('Lobby-Figuren: Klick bringt in den Modus, Spielerzahlen kommen live an die Server', async () => {
+    const { proxy, lobby } = await network();
+    type Row = { id: string; players: number; awake: boolean };
+    const row = (m: Msg, id: string): Row | undefined => (m['modes'] as Row[]).find((md) => md.id === id);
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+
+    // Lena ist in Duels (wach), Morni Party schläft.
+    const state = await lobby.next('lobby', (m) => row(m, 'duels')?.players === 1);
+    expect(row(state, 'duels')).toMatchObject({ awake: true, players: 1 });
+    expect(row(state, 'party')).toMatchObject({ awake: false, players: 0 });
+
+    // Klick auf die Duels-Figur → Proxy verbindet.
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'duels' });
+    expect(await proxy.next('connect', (m) => m['uuid'] === PHILIP)).toMatchObject({ server: 'duels' });
+    // Wer schon drin ist, bekommt nur einen Hinweis.
+    lobby.send({ t: 'play', uuid: LENA, mode: 'duels' });
+    await said(LENA, 'already');
+    // Schlafender Modus wird geweckt, geschlossener sagt Bescheid.
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'party' });
+    await said(PHILIP, 'wacht gerade auf');
+    expect(woken).toEqual(['party']);
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'mornicraft' });
+    await said(PHILIP, 'geschlossen');
+
+    // Wechsel → neue Zahlen kommen an.
+    proxy.send({ t: 'switch', uuid: PHILIP, server: 'duels' });
+    await lobby.next('lobby', (m) => row(m, 'duels')?.players === 2);
+  });
+
   test('Sprachchat-Brücke: Kanäle über alle Server, kein Sprechen für andere, Stumm, Party, Team folgt', async () => {
     const { proxy, lobby, duels } = await network();
     const cmd = (uuid: string, command: string, ...args: string[]) =>

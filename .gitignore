@@ -15,3 +15,4 @@ render-cache/
 # Spiel-Screenshots nur lokal (Mojang-Texturen)
 docs/fortschritt/bilder/
 __pycache__/
+tools/mc-client/logs/

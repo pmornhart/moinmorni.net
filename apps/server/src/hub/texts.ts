@@ -338,6 +338,18 @@ const TEXTS = {
     de: `${P}<gray><white>{mode}</white> kommt bald – wir bauen noch daran.`,
     en: `${P}<gray><white>{mode}</white> is coming soon – we're still building it.`,
   },
+  'mode.joining': {
+    de: `${P}<gray>Ab nach <white>{mode}</white> …`,
+    en: `${P}<gray>Off to <white>{mode}</white> …`,
+  },
+  'mode.already': {
+    de: `${P}<gray>Du bist schon in <white>{mode}</white>.`,
+    en: `${P}<gray>You're already in <white>{mode}</white>.`,
+  },
+  'mode.invite_only': {
+    de: `${P}<light_purple><white>{mode}</white> ist nur auf Einladung.</light_purple> <gray>Stehst du auf der Liste, geht's gleich los – sonst kannst du dich auf der Webseite oder im Discord bewerben.`,
+    en: `${P}<light_purple><white>{mode}</white> is invitation only.</light_purple> <gray>If you're on the list, you'll be in right away – otherwise apply on the website or in Discord.`,
+  },
   'mode.maintenance': {
     de: `${P}<gold><white>{mode}</white> ist gerade in Wartung.`,
     en: `${P}<gold><white>{mode}</white> is under maintenance right now.`,

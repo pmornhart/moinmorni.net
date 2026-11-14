@@ -8,7 +8,8 @@ import type { Canvas } from './canvas.js';
 import { Frame } from './frame.js';
 import { pick } from './noise.js';
 import { pairs, range } from './range.js';
-import { cylinder, discAt, gableRoof, lathe, slab, stairs, YAW, type Facing } from './shapes.js';
+import { cylinder, discAt, gableRoof, lathe, slab, stairs, STEP, YAW, type Facing } from './shapes.js';
+import { furnish, signText, type RoomKind } from './village.js';
 import { roundTree } from './nature.js';
 
 const D = {
@@ -37,6 +38,9 @@ const D = {
   textUp: 1.6,
   half: 0.5,
   centre: 3,
+  signAhead: 0.52,
+  signY: 3.12,
+  signScale: 0.8,
 } as const;
 
 const WALL_PLASTER = ['calcite', 'calcite', 'white_concrete', 'calcite'] as const;
@@ -53,6 +57,10 @@ export interface HouseSpec {
   readonly roof?: string;
   readonly shutter?: string;
   readonly wood?: string;
+  /** Mit Einrichtung (begehbar, Leiter nach oben); ohne bleibt das Haus innen voll. */
+  readonly interior?: RoomKind;
+  /** Schild über der Tür, z. B. „Bäckerei“. */
+  readonly sign?: string;
 }
 
 /** Alpenhaus: weißer Putz unten, Holz oben, Giebel nach vorne, Balkon mit Blumen, Fensterläden. */
@@ -73,9 +81,20 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
         f.set(u, y, v, upper ? `${wood}_planks` : pick(h.rnd, WALL_PLASTER));
       }),
     );
-  f.fill(1, 1, 1, w - 1, top, d - 1, `${wood}_planks`);
+  if (h.interior) hollowOut(f, h, w, d, top, wood);
+  else f.fill(1, 1, 1, w - 1, top, d - 1, `${wood}_planks`);
   [0, w].forEach((u) => [0, d].forEach((v) => f.fill(u, 1, v, u, top, v, `stripped_${wood}_log`)));
-  range(0, h.floors - 1).forEach((fl) => f.fill(0, (fl + 1) * D.floor, -0, w, (fl + 1) * D.floor, 0, `stripped_${wood}_log[axis=${f.frontAxis()}]`));
+  range(0, h.floors - 1).forEach((fl) =>
+    f.fill(
+      0,
+      (fl + 1) * D.floor,
+      -0,
+      w,
+      (fl + 1) * D.floor,
+      0,
+      `stripped_${wood}_log[axis=${f.frontAxis()}]`,
+    ),
+  );
   const pane = `glass_pane[${f.dir('left')}=true,${f.dir('right')}=true]`;
   const windowsAt = range(1, w - 1).filter((u) => u % D.windowGap === 1 && u + 1 < w);
   range(0, h.floors - 1).forEach((fl) => {
@@ -87,18 +106,47 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
         f.set(u - 1, y, -1, `${shutter}[facing=${f.dir('back')},open=true,half=top]`);
         f.set(u + 1, y, -1, `${shutter}[facing=${f.dir('back')},open=true,half=top]`);
       });
-      f.set(u, y0 - 1, -1, h.rnd() < D.half ? 'flowering_azalea_leaves[persistent=true]' : 'azalea_leaves[persistent=true]');
+      f.set(
+        u,
+        y0 - 1,
+        -1,
+        h.rnd() < D.half ? 'flowering_azalea_leaves[persistent=true]' : 'azalea_leaves[persistent=true]',
+      );
     });
   });
   const door = Math.floor(w / 2);
   f.set(door, 1, 0, `${wood}_door[facing=${f.dir('front')},half=lower,hinge=left]`);
   f.set(door, 2, 0, `${wood}_door[facing=${f.dir('front')},half=upper,hinge=left]`);
-  f.set(door, D.floor - 1, -1, 'lantern');
+  if (h.sign) {
+    [door - 1, door + 1].forEach((u) => f.set(u, D.floor - 1, -1, 'lantern'));
+    const [sx, , sz] = f.at(door, 0, 0);
+    const [fx, fz] = STEP[h.front];
+    signText(
+      c,
+      sx + D.half + fx * D.signAhead,
+      h.y + D.signY,
+      sz + D.half + fz * D.signAhead,
+      h.front,
+      [{ text: h.sign, color: 'gold', bold: true }],
+      D.signScale,
+    );
+  } else f.set(door, D.floor - 1, -1, 'lantern');
+  if (h.interior) furnish(f, { kind: h.interior, w, d, floors: h.floors, storey: D.floor, wood, door });
   if (h.floors > 1) {
     const by = D.floor + 1;
     f.fill(0, D.floor, -D.balconyDepth, w, D.floor, -D.balconyDepth, slab(wood, 'top'));
-    f.fill(0, by, -D.balconyDepth, w, by, -D.balconyDepth, `${wood}_fence[${f.dir('left')}=true,${f.dir('right')}=true]`);
-    range(0, w).filter((u) => u % 2 === 0).forEach((u) => f.set(u, by + 1, -D.balconyDepth, 'flowering_azalea_leaves[persistent=true]'));
+    f.fill(
+      0,
+      by,
+      -D.balconyDepth,
+      w,
+      by,
+      -D.balconyDepth,
+      `${wood}_fence[${f.dir('left')}=true,${f.dir('right')}=true]`,
+    );
+    range(0, w)
+      .filter((u) => u % 2 === 0)
+      .forEach((u) => f.set(u, by + 1, -D.balconyDepth, 'flowering_azalea_leaves[persistent=true]'));
   }
   const [x1, , z1] = f.at(0, 0, 0);
   const [x2, , z2] = f.at(w, 0, d);
@@ -116,9 +164,34 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
   });
 }
 
+/** Innen hohl: Dielen, Decken je Stockwerk, Leiter hinten rechts, Fenster an Seiten und Rückwand. */
+function hollowOut(f: Frame, h: HouseSpec, w: number, d: number, top: number, wood: string): void {
+  f.fill(1, 0, 1, w - 1, 0, d - 1, `${wood}_planks`);
+  f.fill(1, 1, 1, w - 1, top - 1, d - 1, 'air');
+  range(1, h.floors).forEach((fl) =>
+    f.fill(1, fl * D.floor, 1, w - 1, fl * D.floor, d - 1, `${wood}_planks`),
+  );
+  range(1, (h.floors - 1) * D.floor + 1).forEach((y) =>
+    f.set(w - 1, y, d - 1, `ladder[facing=${f.dir('front')}]`),
+  );
+  const sidePane = `glass_pane[${f.dir('front')}=true,${f.dir('back')}=true]`;
+  const backPane = `glass_pane[${f.dir('left')}=true,${f.dir('right')}=true]`;
+  range(0, h.floors - 1).forEach((fl) => {
+    const y0 = fl * D.floor + D.windowFrom;
+    range(2, d - 2)
+      .filter((v) => v % D.windowGap === 2)
+      .forEach((v) => [0, w].forEach((u) => f.fill(u, y0, v, u, y0 + D.windowHigh - 1, v, sidePane)));
+    range(1, w - 2)
+      .filter((u) => u % D.windowGap === 1)
+      .forEach((u) => f.fill(u, y0, d, u, y0 + D.windowHigh - 1, d, backPane));
+  });
+}
+
 /** Maibaum: weiß-blau gestreift, Kranz mit Bändern, Zunftarme mit Fahnen, grüne Spitze. */
 export function maypole(c: Canvas, x: number, y: number, z: number, height: number): void {
-  pairs(range(x - 1, x + 1), range(z - 1, z + 1)).forEach(([px, pz]) => c.set(px, y, pz, 'polished_andesite'));
+  pairs(range(x - 1, x + 1), range(z - 1, z + 1)).forEach(([px, pz]) =>
+    c.set(px, y, pz, 'polished_andesite'),
+  );
   range(y + 1, y + height).forEach((py) =>
     c.set(x, py, z, Math.floor((py - y) / D.poleBand) % 2 === 0 ? 'white_concrete' : 'light_blue_concrete'),
   );
@@ -139,8 +212,15 @@ export function maypole(c: Canvas, x: number, y: number, z: number, height: numb
   const wy = y + height - D.crown * 2;
   discAt(c, x, wy, z, D.wreathR, 'spruce_leaves[persistent=true]');
   c.set(x, wy, z, 'white_concrete');
-  [[D.wreathR, 0], [-D.wreathR, 0], [0, D.wreathR], [0, -D.wreathR]].forEach(([dx = 0, dz = 0], i) =>
-    range(1, D.ribbon).forEach((r) => c.set(x + dx, wy - r, z + dz, i % 2 === 0 ? 'light_blue_wool' : 'white_wool')),
+  [
+    [D.wreathR, 0],
+    [-D.wreathR, 0],
+    [0, D.wreathR],
+    [0, -D.wreathR],
+  ].forEach(([dx = 0, dz = 0], i) =>
+    range(1, D.ribbon).forEach((r) =>
+      c.set(x + dx, wy - r, z + dz, i % 2 === 0 ? 'light_blue_wool' : 'white_wool'),
+    ),
   );
   lathe(c, x, y + height + 1, z, [2, 2, 1, 1, 0], 'spruce_leaves[persistent=true]');
 }
@@ -155,13 +235,14 @@ export function biergarten(
   y: number,
   rnd: () => number,
 ): void {
-  pairs(range(x1, x2), range(z1, z2)).forEach(([x, z]) => c.set(x, y, z, rnd() < 0.85 ? 'gravel' : 'coarse_dirt'));
+  pairs(range(x1, x2), range(z1, z2)).forEach(([x, z]) =>
+    c.set(x, y, z, rnd() < 0.85 ? 'gravel' : 'coarse_dirt'),
+  );
   const rows = range(z1 + 2, z2 - 2).filter((z) => (z - z1 - 2) % D.tableGap === 0);
   const cols = range(x1 + 2, x2 - D.tableLen - 1).filter((x) => (x - x1 - 2) % (D.tableLen + 3) === 0);
   pairs(cols, rows).forEach(([tx, tz]) => {
     range(tx, tx + D.tableLen - 1).forEach((x) => {
-      c.set(x, y + 1, tz, x === tx || x === tx + D.tableLen - 1 ? 'spruce_fence' : 'air');
-      c.set(x, y + 2, tz, slab('spruce', 'top'));
+      c.set(x, y + 1, tz, slab('spruce', 'top'));
       c.set(x, y + 1, tz - D.bench, slab('spruce'));
       c.set(x, y + 1, tz + D.bench, slab('spruce'));
     });
@@ -173,7 +254,9 @@ export function biergarten(
     c.set(x, y, z, 'grass_block');
     roundTree(c, x, y + 1, z, { height: 11, radius: 4.5, log: 'dark_oak_log', leaves: 'oak_leaves', rnd });
   });
-  range(x1 + 1, x2 - 1).filter((x) => x % 3 === 0).forEach((x) => rows.forEach((z) => c.set(x, y + 6, z, 'lantern[hanging=true]')));
+  range(x1 + 1, x2 - 1)
+    .filter((x) => x % 3 === 0)
+    .forEach((x) => rows.forEach((z) => c.set(x, y + 6, z, 'lantern[hanging=true]')));
   range(x1 + 1, x2 - 1).forEach((x) => rows.forEach((z) => c.soft(x, y + 7, z, 'iron_chain[axis=x]')));
   const bx = x2 - 6;
   const bz = z1 - 1;
@@ -193,7 +276,12 @@ export function onionTower(c: Canvas, cx: number, y: number, cz: number, r: numb
   discAt(c, cx, y + height, cz, r + 1, 'smooth_quartz');
   range(0, Math.floor(height / D.storey) - 1).forEach((i) => {
     const wy = y + D.centre + i * D.storey;
-    [[r, 0], [-r, 0], [0, r], [0, -r]].forEach(([dx = 0, dz = 0]) => {
+    [
+      [r, 0],
+      [-r, 0],
+      [0, r],
+      [0, -r],
+    ].forEach(([dx = 0, dz = 0]) => {
       c.set(cx + dx, wy, cz + dz, 'light_blue_stained_glass');
       c.set(cx + dx, wy + 1, cz + dz, 'light_blue_stained_glass');
     });
@@ -201,7 +289,9 @@ export function onionTower(c: Canvas, cx: number, y: number, cz: number, r: numb
   const dome = y + height + 1;
   const bulb = [r, r + 1, r + 1, r + 1, r, r - 1, r - 2, Math.max(1, r - 3), 1, 1].map((v) => Math.max(0, v));
   lathe(c, cx, dome, cz, bulb, 'waxed_oxidized_copper');
-  range(dome + bulb.length, dome + bulb.length + D.domeTip - 1).forEach((ty) => c.set(cx, ty, cz, 'gold_block'));
+  range(dome + bulb.length, dome + bulb.length + D.domeTip - 1).forEach((ty) =>
+    c.set(cx, ty, cz, 'gold_block'),
+  );
   c.set(cx, dome + bulb.length + D.domeTip, cz, 'lightning_rod');
 }
 
@@ -310,7 +400,9 @@ export function portalArch(c: Canvas, p: PortalSpec): void {
   );
   if (p.npc) {
     const [nx, ny, nz] = f.at(-1, 1, -2);
-    c.extra.push(`summon mannequin ${nx + D.half} ${ny} ${nz + D.half} {Rotation:[${yaw}f,0f],immovable:true}`);
+    c.extra.push(
+      `summon mannequin ${nx + D.half} ${ny} ${nz + D.half} {Rotation:[${yaw}f,0f],immovable:true}`,
+    );
   }
 }
 
@@ -352,8 +444,10 @@ export function castle(c: Canvas, s: CastleSpec): void {
   pairs(range(-18, 18), range(3, 30)).forEach(([u, v]) => {
     const pathTile = Math.abs(u) <= 2 || v === 16;
     f.set(u, 0, v, pathTile ? 'gravel' : 'grass_block');
-    if (!pathTile && (Math.abs(u) === 5 || Math.abs(u) === 16 || v === 4 || v === 29)) f.set(u, 1, v, 'azalea_leaves[persistent=true]');
-    else if (!pathTile && (u + v) % 3 === 0) f.set(u, 1, v, pick(s.rnd, ['red_tulip', 'white_tulip', 'cornflower', 'allium', 'oxeye_daisy']));
+    if (!pathTile && (Math.abs(u) === 5 || Math.abs(u) === 16 || v === 4 || v === 29))
+      f.set(u, 1, v, 'azalea_leaves[persistent=true]');
+    else if (!pathTile && (u + v) % 3 === 0)
+      f.set(u, 1, v, pick(s.rnd, ['red_tulip', 'white_tulip', 'cornflower', 'allium', 'oxeye_daisy']));
   });
   const [fx, fy, fz] = f.at(0, 0, 16);
   fountain(c, fx, fy, fz, 4);
@@ -378,7 +472,14 @@ export function castle(c: Canvas, s: CastleSpec): void {
   range(dy + 39, dy + 41).forEach((ty) => c.set(dx, ty, dz, 'gold_block'));
   c.set(dx, dy + 42, dz, 'lightning_rod');
   // Türme: vier am Hauptflügel, zwei vorne an den Seitenflügeln
-  [[-W + 1, 33], [W - 1, 33], [-W + 1, 48], [W - 1, 48], [-W + 1, 2], [W - 1, 2]].forEach(([u = 0, v = 0], i) => {
+  [
+    [-W + 1, 33],
+    [W - 1, 33],
+    [-W + 1, 48],
+    [W - 1, 48],
+    [-W + 1, 2],
+    [W - 1, 2],
+  ].forEach(([u = 0, v = 0], i) => {
     const [tx, ty, tz] = f.at(u, 1, v);
     onionTower(c, tx, ty, tz, 5, i < 4 ? 30 : 22);
     c.set(tx, ty + (i < 4 ? 30 : 22) + 1, tz, 'white_banner');
@@ -386,7 +487,13 @@ export function castle(c: Canvas, s: CastleSpec): void {
 }
 
 /** Ursprung eines Seitenflügels, dessen Vorderseite zur Hofmitte zeigt. */
-function wingOrigin(f: Frame, u: number, y: number, v: number, face: 'left' | 'right'): { x: number; y: number; z: number; front: Facing } {
+function wingOrigin(
+  f: Frame,
+  u: number,
+  y: number,
+  v: number,
+  face: 'left' | 'right',
+): { x: number; y: number; z: number; front: Facing } {
   const [x, wy, z] = f.at(u, y, v);
   return { x, y: wy, z, front: f.dir(face) };
 }
@@ -405,8 +512,16 @@ export function chapel(c: Canvas, x: number, y: number, z: number, front: Facing
   const [ax, , az] = f.at(0, 0, 0);
   const [bx, , bz] = f.at(8, 0, 14);
   gableRoof(c, {
-    x1: Math.min(ax, bx), z1: Math.min(az, bz), x2: Math.max(ax, bx), z2: Math.max(az, bz),
-    y: y + 7, along: f.frontAxis() === 'x' ? 'z' : 'x', material: 'dark_oak', gable: 'white_concrete', overhang: 1, eaves: 1,
+    x1: Math.min(ax, bx),
+    z1: Math.min(az, bz),
+    x2: Math.max(ax, bx),
+    z2: Math.max(az, bz),
+    y: y + 7,
+    along: f.frontAxis() === 'x' ? 'z' : 'x',
+    material: 'dark_oak',
+    gable: 'white_concrete',
+    overhang: 1,
+    eaves: 1,
   });
   f.fill(2, 0, -5, 6, 16, -1, 'white_concrete');
   f.fill(3, 10, -5, 5, 12, -5, 'air');

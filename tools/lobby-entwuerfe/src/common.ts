@@ -6,29 +6,94 @@ import {
   fbm,
   GROUND,
   type Facing,
+  marketStall,
   pairs,
   portalArch,
   range,
+  type RoomKind,
   roundTree,
   spruce,
   STEP,
 } from '@moinmorni/builder';
 
 export interface Mode {
+  readonly id: string;
   readonly name: string;
   readonly colour: string;
   readonly line: string;
+  /** Zeile unter der Spielerzahl (im echten Betrieb vom Lobby-Plugin gesetzt). */
+  readonly status: string;
+  /** Skin der Figur (`cast.ts`). */
+  readonly skin: string;
+  /** Waren auf der Theke des Marktstands. */
+  readonly goods: readonly string[];
 }
 
 /** Spielmodi wie im Entwurf (Spielerzahlen sind Beispiele). */
 export const MODES: readonly Mode[] = [
-  { name: 'MorniCraft', colour: 'lime', line: '● Nur auf Einladung' },
-  { name: 'Duels', colour: 'red', line: '● 12 Spieler' },
-  { name: 'Morni Party', colour: 'yellow', line: '● 8 Spieler' },
-  { name: 'Gipfelsturm', colour: 'light_blue', line: '● 5 Spieler' },
-  { name: 'Burgverlies', colour: 'purple', line: '● 3 Spieler' },
-  { name: 'Bollwerk', colour: 'orange', line: '● 4 Spieler' },
-  { name: 'Mirni SMP', colour: 'gray', line: '○ Bald' },
+  {
+    id: 'mornicraft',
+    name: 'MorniCraft',
+    colour: 'lime',
+    line: '● Nur auf Einladung',
+    status: 'Klick: Bewerben',
+    skin: 'mornicraft',
+    goods: ['hay_block', 'pumpkin', 'melon', 'potted_oak_sapling'],
+  },
+  {
+    id: 'duels',
+    name: 'Duels',
+    colour: 'red',
+    line: '● 12 Spieler',
+    status: 'Klick: Mitspielen',
+    skin: 'duels',
+    goods: ['target', 'anvil', 'iron_block', 'potted_cactus'],
+  },
+  {
+    id: 'party',
+    name: 'Morni Party',
+    colour: 'yellow',
+    line: '● 8 Spieler',
+    status: 'Klick: Mitspielen',
+    skin: 'party',
+    goods: ['cake', 'yellow_candle[candles=4,lit=true]', 'note_block', 'jukebox'],
+  },
+  {
+    id: 'gipfelsturm',
+    name: 'Gipfelsturm',
+    colour: 'light_blue',
+    line: '● 5 Spieler',
+    status: 'Klick: Mitspielen',
+    skin: 'gipfelsturm',
+    goods: ['blue_ice', 'packed_ice', 'snow_block', 'potted_spruce_sapling'],
+  },
+  {
+    id: 'burgverlies',
+    name: 'Burgverlies',
+    colour: 'purple',
+    line: '● 3 Spieler',
+    status: 'Klick: Mitspielen',
+    skin: 'burgverlies',
+    goods: ['skeleton_skull', 'chest', 'iron_bars', 'soul_lantern'],
+  },
+  {
+    id: 'bollwerk',
+    name: 'Bollwerk',
+    colour: 'orange',
+    line: '● 4 Spieler',
+    status: 'Klick: Mitspielen',
+    skin: 'bollwerk',
+    goods: ['dispenser[facing=up]', 'redstone_block', 'target', 'iron_block'],
+  },
+  {
+    id: 'mirni',
+    name: 'Mirni SMP',
+    colour: 'gray',
+    line: '○ Bald',
+    status: 'Noch geschlossen',
+    skin: 'mirni',
+    goods: ['grass_block', 'oak_log', 'crafting_table', 'potted_poppy'],
+  },
 ];
 
 /** 0 innerhalb von `from`, 1 ab `to`, weich dazwischen. */
@@ -60,22 +125,75 @@ export function houseAt(
   floors: number,
   rnd: () => number,
   roof = 'dark_oak',
+  extra: { interior?: RoomKind; sign?: string; wood?: string } = {},
 ): void {
-  const right: Record<Facing, Facing> = { north: 'west', south: 'east', east: 'north', west: 'south' };
-  const [rx, rz] = STEP[right[front]];
+  const [rx, rz] = STEP[RIGHT_SEEN_FROM_FRONT[front]];
   const half = Math.floor((width - 1) / 2);
-  alpineHouse(c, { x: cx - rx * half, y, z: cz - rz * half, front, width, depth, floors, rnd, roof });
+  alpineHouse(c, {
+    x: cx - rx * half,
+    y,
+    z: cz - rz * half,
+    front,
+    width,
+    depth,
+    floors,
+    rnd,
+    roof,
+    ...extra,
+  });
 }
+
+/** Rechts aus Sicht von jemandem, der vor dem Gebäude steht und es anschaut. */
+const RIGHT_SEEN_FROM_FRONT: Readonly<Record<Facing, Facing>> = {
+  north: 'west',
+  south: 'east',
+  east: 'north',
+  west: 'south',
+};
 
 /** Portal mittig an (cx, cz) ausrichten. */
 export function portalAt(c: Canvas, cx: number, y: number, cz: number, front: Facing, mode: Mode): void {
-  const right: Record<Facing, Facing> = { north: 'west', south: 'east', east: 'north', west: 'south' };
-  const [rx, rz] = STEP[right[front]];
-  portalArch(c, { x: cx - rx * 4, y, z: cz - rz * 4, front, colour: mode.colour, name: mode.name, line: mode.line, npc: true });
+  const [rx, rz] = STEP[RIGHT_SEEN_FROM_FRONT[front]];
+  portalArch(c, {
+    x: cx - rx * 4,
+    y,
+    z: cz - rz * 4,
+    front,
+    colour: mode.colour,
+    name: mode.name,
+    line: mode.line,
+    npc: true,
+  });
+}
+
+/** Marktstand mit Modus-Figur mittig an (cx, cz) ausrichten. */
+export function stallAt(c: Canvas, cx: number, y: number, cz: number, front: Facing, mode: Mode): void {
+  const [rx, rz] = STEP[RIGHT_SEEN_FROM_FRONT[front]];
+  marketStall(c, {
+    x: cx - rx * 3,
+    y,
+    z: cz - rz * 3,
+    front,
+    colour: mode.colour,
+    skin: mode.skin,
+    name: mode.name,
+    line: mode.line,
+    status: mode.status,
+    mode: mode.id,
+    goods: mode.goods,
+  });
 }
 
 /** Garten-Zaun um ein Rechteck (mit Lücke vorne in der Mitte). */
-export function fence(c: Canvas, x1: number, z1: number, x2: number, z2: number, y: number, gapAt?: [number, number]): void {
+export function fence(
+  c: Canvas,
+  x1: number,
+  z1: number,
+  x2: number,
+  z2: number,
+  y: number,
+  gapAt?: [number, number],
+): void {
   pairs(range(x1, x2), range(z1, z2))
     .filter(([x, z]) => x === x1 || x === x2 || z === z1 || z === z2)
     .filter(([x, z]) => !gapAt || Math.abs(x - gapAt[0]) + Math.abs(z - gapAt[1]) > 1)
@@ -86,7 +204,15 @@ export function fence(c: Canvas, x1: number, z1: number, x2: number, z2: number,
 }
 
 /** Feld mit reifem Weizen (oder Karotten) in Reihen, dazwischen Wasser. */
-export function field(c: Canvas, x1: number, z1: number, x2: number, z2: number, y: number, crop = 'wheat[age=7]'): void {
+export function field(
+  c: Canvas,
+  x1: number,
+  z1: number,
+  x2: number,
+  z2: number,
+  y: number,
+  crop = 'wheat[age=7]',
+): void {
   pairs(range(x1, x2), range(z1, z2)).forEach(([x, z]) => {
     const water = (x - x1) % 5 === 2;
     c.set(x, y, z, water ? 'water' : 'farmland[moisture=7]');

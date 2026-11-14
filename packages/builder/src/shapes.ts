@@ -8,7 +8,12 @@ export type Axis = 'x' | 'z';
 const HALF = 0.5;
 const SQUARE = 2;
 
-export const OPPOSITE: Readonly<Record<Facing, Facing>> = { north: 'south', south: 'north', east: 'west', west: 'east' };
+export const OPPOSITE: Readonly<Record<Facing, Facing>> = {
+  north: 'south',
+  south: 'north',
+  east: 'west',
+  west: 'east',
+};
 /** Richtung → Schritt in x/z. */
 export const STEP: Readonly<Record<Facing, readonly [number, number]>> = {
   north: [0, -1],
@@ -35,7 +40,16 @@ export function slab(material: string, type: 'bottom' | 'top' | 'double' = 'bott
 }
 
 /** Nur die vier Außenwände eines Quaders. */
-export function walls(c: Canvas, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, block: string): void {
+export function walls(
+  c: Canvas,
+  x1: number,
+  y1: number,
+  z1: number,
+  x2: number,
+  y2: number,
+  z2: number,
+  block: string,
+): void {
   c.fill(x1, y1, z1, x2, y2, z1, block);
   c.fill(x1, y1, z2, x2, y2, z2, block);
   c.fill(x1, y1, z1, x1, y2, z2, block);
@@ -43,7 +57,14 @@ export function walls(c: Canvas, x1: number, y1: number, z1: number, x2: number,
 }
 
 /** Kreisfläche (y fest). */
-export function discAt(c: Canvas, cx: number, y: number, cz: number, r: number, block: string | ((x: number, z: number) => string)): void {
+export function discAt(
+  c: Canvas,
+  cx: number,
+  y: number,
+  cz: number,
+  r: number,
+  block: string | ((x: number, z: number) => string),
+): void {
   disc(cx, cz, r).forEach(([x, z]) => c.set(x, y, z, typeof block === 'string' ? block : block(x, z)));
 }
 
@@ -65,7 +86,14 @@ export function cylinder(
 }
 
 /** Drehkörper: `profile[i]` = Radius in Höhe y + i (für Kuppeln, Zwiebeltürme, Kegel). */
-export function lathe(c: Canvas, cx: number, y: number, cz: number, profile: readonly number[], block: string): void {
+export function lathe(
+  c: Canvas,
+  cx: number,
+  y: number,
+  cz: number,
+  profile: readonly number[],
+  block: string,
+): void {
   profile.forEach((r, i) => {
     if (r > 0) discAt(c, cx, y + i, cz, r, block);
     else c.set(cx, y + i, cz, block);
@@ -137,7 +165,8 @@ export function gableRoof(c: Canvas, spec: RoofSpec): void {
       });
     });
   });
-  if (width % SQUARE === 1) range(a1, a2).forEach((a) => put(a, b1 + layers, spec.y + layers, slab(spec.material)));
+  if (width % SQUARE === 1)
+    range(a1, a2).forEach((a) => put(a, b1 + layers, spec.y + layers, slab(spec.material)));
 }
 
 /** Weg aus Punkten (x, z) mit Breite, Steine aus einer Auswahl. */
@@ -155,7 +184,9 @@ export function path(
       const t = s / len;
       const x = q[0] + (p[0] - q[0]) * t;
       const z = q[1] + (p[1] - q[1]) * t;
-      disc(Math.round(x), Math.round(z), width * HALF).forEach(([px, pz]) => c.set(px, y(px, pz), pz, block(px, pz)));
+      disc(Math.round(x), Math.round(z), width * HALF).forEach(([px, pz]) =>
+        c.set(px, y(px, pz), pz, block(px, pz)),
+      );
     });
   });
 }
@@ -163,7 +194,15 @@ export function path(
 const BIOME_STEP = 32;
 
 /** `fillbiome` in Stücken von höchstens 32×32×32 Blöcken (Minecrafts Grenze sind 32 768 Blöcke pro Befehl). */
-export function biomeCommands(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, biome: string): string[] {
+export function biomeCommands(
+  x1: number,
+  y1: number,
+  z1: number,
+  x2: number,
+  y2: number,
+  z2: number,
+  biome: string,
+): string[] {
   const starts = (a: number, b: number): number[] => range(a, b).filter((v) => (v - a) % BIOME_STEP === 0);
   return starts(x1, x2).flatMap((x) =>
     starts(z1, z2).flatMap((z) =>

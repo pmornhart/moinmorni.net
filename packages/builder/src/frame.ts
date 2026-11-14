@@ -9,7 +9,12 @@ import { OPPOSITE, STEP, type Facing } from './shapes.js';
 export type Local = 'front' | 'back' | 'left' | 'right';
 
 /** Rechts von jemandem, der in Richtung `f` schaut. */
-const RIGHT_OF: Readonly<Record<Facing, Facing>> = { north: 'east', east: 'south', south: 'west', west: 'north' };
+const RIGHT_OF: Readonly<Record<Facing, Facing>> = {
+  north: 'east',
+  east: 'south',
+  south: 'west',
+  west: 'north',
+};
 
 export class Frame {
   readonly back: Facing;

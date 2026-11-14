@@ -43,7 +43,8 @@
 - **Recherche:** `docs/recherche/` (Discord: Bots legen keine Server mehr an; Voice: Velocity-Plugin, eigene Brücke über Server, kein Bedrock-Voice; NetBird nach Port; Versionen 26.3).
 - **Lobby (Philip, 14.11. nachmittags):** keine Portale, sondern **Menschen (NPCs) zum Anklicken** → verbindet in den Modus (Name, Spielerzahl, Status über dem Kopf); **Leben im Dorf**: herumlaufende NPCs, **begehbare, eingerichtete Häuser**, Biergarten mit Wirt und Gästen. NPC-Outfits eigene Pixel-Skins über unser Texturpaket (keine fremden Skins).
 - **Voice (Philip):** immer auch **gemeinsame Sprachkanäle über alle Modi** (feste Kanäle, z. B. „Dorfplatz“, von jedem Server aus), dazu Party- und eigene Gruppen netzwerkweit.
-- Lobby-Entwürfe A/B/C fertig (Bilder an Philip) – Auswahl offen.
+- Lobby-Entwürfe A/B/C fertig – **Philip wählt A** und will ihn ausgebaut (mehr Häuser, NPCs statt Portale, Leben im Dorf).
+- **Webseite (Philip):** Aufbau wie gommehd.net (nur Gliederung: News, Modi, Statistiken, Team, Regeln, Hilfe – keine fremden Texte/Grafiken).
 - Repos zum Anlegen (Philip): MoinMorni-Lobby, -Duels, -Party, -Gipfelsturm, -Burgverlies, -Bollwerk.
 
 ## Stand
@@ -57,7 +58,9 @@
 - 14.11. abends: Webseite + Panel (`apps/web`) fertig für den ersten Stand (Helfer-Agent, von mir geprüft): Startseite, Panel mit Einrichtung, Übersicht, Modi, Einstellungen mit Suche, Rollen (ansehen), eingebettete MorniHosting-Server-Seiten. Mojang-Bilder (Spielbilder, Item-Texturen) gehen nicht durch die Motor-Weiterleitung.
 - 14.11. nachts: Freunde + Party (`hub/social.ts`, Party folgt dem Leiter), Schlaf-Modus (`network/sleep.ts` + `connecting`-Anfrage im Proxy, echt geprüft: Duels wacht in 21 s auf), Panel-APIs Spieler/Strafen (`panel/player-routes.ts`, gemeinsame `hub/moderation.ts`), Discord-Bot (`apps/server/src/discord/`: eigener Client mit Gateway, Server einrichten, Status, /verbinden, Rang- und Straf-Abgleich, Tickets; `docs/discord.md`; Tests gegen `test/fake-discord.ts`), Sprachchat-Brücke (`hub/voice.ts`, Binär-Rahmen im Protokoll, `paper/VoiceBridge.java` mit Simple-Voice-Chat-API 2.6.25 – Gruppen über `getGroups()` suchen, `getGroup(id)` liefert sonst eine leere Hülle), Panel-Seiten Spieler/Strafen/Rollen/Rundgang (Helfer-Agent, geprüft). 48 Server-Tests grün.
 
+- 14.11. spätabends: **Lobby Entwurf A ausgebaut** (Philips Wahl, `docs/lobby.md`): statt Portalen 7 Marktstände mit Figuren (eigene Pixel-Skins aus `packages/builder/src/skins.ts` + `cast.ts`, 27 Leute, Texturpaket `castPack()`), alle Häuser begehbar und eingerichtet (`village.ts`: Wohnhaus, Wirtshaus, Bäckerei, Krämer, Apotheke, Rathaus, Gäste-Info, Schmiede, Schreinerei), Handwerkergasse (8 Häuser, Vorgärten, Brunnen), Oberdorf (4 Häuser), Wirtshaus mit Wirt und Stammtisch, Biergarten mit Wirt und 12 Gästen (Tische niedriger), Leute im Dorf. Netzwerk-Plugin `LobbyNpcs.java`: Figur anklicken → Hub `play` → Modus (schläft → wecken), Schilder mit Live-Zahlen je Sprache (Hub `lobby`), Dorfleute laufen herum, Figuren schauen Spieler an. Echt getestet mit Paper 26.3 + echtem Client 26.3: Klick auf Duels → auf dem Duels-Server, englisches Schild nach `/sprache en`. 52 Server-Tests grün. Offen: Skins auch ohne Paket/für Bedrock (signierte Skin-Daten), Paket in der Lobby verpflichtend.
+
 ## Offen
 
-- Offen: Gefängnis (mit der Lobby), Spielerzahlen für Lobby-Figuren, Discord-Seite + Team-Konten im Panel, Webseite (Regeln, Team, Hilfe, News), Updates, Proxmox-Einzeiler, Lobby (wartet auf Philips Wahl), Modi.
+- Offen: Gefängnis (mit der Lobby), Discord-Seite + Team-Konten im Panel, Webseite (Regeln, Team, Hilfe, News), Updates, Proxmox-Einzeiler, Modi.
 - Bausteine siehe Fortschrittsseite (`docs/fortschritt/index.html`, Artefakt https://claude.ai/artifact/FDBGtjXT6fgaY85Z1AvTsR).

@@ -42,6 +42,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private HubClient hub;
     /** Sprachchat-Brücke, nur mit Simple Voice Chat (sonst null). */
     private Object voice;
+    /** Figuren der Lobby (anklicken, Live-Zahlen, Dorfleute) – tut nur etwas, wo es Figuren gibt. */
+    private LobbyNpcs lobby;
 
     @Override
     public void onEnable() {
@@ -54,6 +56,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             getLogger().warning("MoinMorni ist nicht eingerichtet (" + e.getMessage() + ") – der Server läuft ohne Netzwerk-Chat.");
         }
         getServer().getPluginManager().registerEvents(this, this);
+        lobby = new LobbyNpcs(this, hub, this::langOf);
+        lobby.start();
     }
 
     /** Brücke anmelden, wenn Simple Voice Chat da ist – die Klasse wird sonst nie geladen. */
@@ -97,6 +101,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p != null) {
                         apply(p);
+                        lobby.showLabels(p);
                     }
                 });
             }
@@ -111,6 +116,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                     Bukkit.getConsoleSender().sendMessage(de);
                 });
             }
+            case "lobby" -> lobby.onModes(m);
             case "voice" -> {
                 if (voice != null) {
                     VoiceSetup.apply(voice, m);

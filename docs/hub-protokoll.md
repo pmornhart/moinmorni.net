@@ -68,6 +68,7 @@ des Spielers.
 | `complete` (Anfrage) | Proxy | `uuid, command, args[]` → `{suggestions[]}` |
 | `chat` | Spielserver | `uuid, text` |
 | `voice-group` | Spielserver | `uuid, group` (UUID oder null) – Gruppe im Sprachchat gewechselt |
+| `play` | Spielserver | `uuid, mode` – Figur in der Lobby angeklickt: Modus beitreten (geschlossen/bald/Wartung → Hinweis, schläft → wecken) |
 | *(binär)* Audio | Spielserver | Sprache aus einem Netzwerk-Kanal oder einer Party |
 
 ### Hub → Plugin
@@ -82,6 +83,7 @@ des Spielers.
 | `msg` | Proxy | `uuid, text` (Nachricht an einen Spieler, egal wo er ist) |
 | `kick` | Proxy | `uuid, text` |
 | `connect` | Proxy | `uuid, server` |
+| `lobby` | Spielserver | `modes[{id, name{de,en}, state, access, max, players, hasServer, awake}]` – für die Schilder der Lobby-Figuren; höchstens einmal pro Sekunde |
 | `voice` | Spielserver | `channels[{id, name}], muted[], parties[{id, name, members[]}]` – Kanäle mit gleicher ID auf jedem Server |
 | `voice-join` | Spielserver | `uuid, group, force?` – Spieler in eine Gruppe setzen (Team ohne Passwort) |
 | *(binär)* Audio | Spielserver | Sprache von anderen Servern zum Abspielen |

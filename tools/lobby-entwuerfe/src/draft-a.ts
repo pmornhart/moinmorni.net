@@ -1,8 +1,10 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a building plan: block offsets as the build needs them */
 /**
- * Entwurf A – „Dorfplatz am Schlossberg“: runder Dorfplatz mit Maibaum, Prachtstraße hinauf zum Schloss auf dem
- * Hügel, Portale links und rechts der Achse, Dorfstraße mit Alpenhäusern bis zur Kapelle, Biergarten mit Wirtshaus,
- * Obstgarten, Felder und Teich, ringsum Alpengipfel mit Schnee.
+ * Entwurf A – „Dorfplatz am Schlossberg“ (von Philip gewählt, ausgebaut): runder Dorfplatz mit Maibaum,
+ * Prachtstraße hinauf zum Schloss auf dem Hügel, statt Portalen Marktstände mit Figuren für die Spielmodi (anklicken →
+ * Modus), Dorfstraße und Handwerkergasse mit begehbaren, eingerichteten Häusern (Bäckerei, Krämer, Apotheke, Rathaus,
+ * Gäste-Info, Schmiede, Schreinerei, Wohnhäuser), Wirtshaus mit Wirt und Stammtisch, Biergarten mit Gästen,
+ * Leute im Dorf, Obstgarten, Weide, Felder und Teich, ringsum Alpengipfel mit Schnee.
  */
 import {
   biergarten,
@@ -12,33 +14,88 @@ import {
   disc,
   discAt,
   fbm,
+  fountain,
   GROUND,
   launchpad,
   maypole,
   meadow,
+  npc,
   path,
   pick,
   random,
   range,
   roundTree,
   terrain,
+  type Facing,
 } from '@moinmorni/builder';
-import { fence, field, forest, houseAt, lampPost, MODES, mountains, portalAt, ramp } from './common.js';
+import { fence, field, forest, houseAt, lampPost, MODES, mountains, ramp, stallAt } from './common.js';
 
 export const A = { cx: 0, cz: 0, name: 'Dorfplatz am Schlossberg' };
 
 const HILL = { x: 0, z: -119, top: 44, foot: 92, height: 26 };
-const PAVING = ['stone_bricks', 'cobblestone', 'polished_andesite', 'andesite', 'stone_bricks', 'mossy_cobblestone'];
-const POND = { x: -62, z: 34, r: 11 };
+const PAVING = [
+  'stone_bricks',
+  'cobblestone',
+  'polished_andesite',
+  'andesite',
+  'stone_bricks',
+  'mossy_cobblestone',
+];
+const POND = { x: -66, z: 42, r: 11 };
+
+/** Handwerkergasse nach Westen (zwischen den Ständen hindurch). */
+const LANE = { z1: 4, z2: 10, x1: -116, x2: -47 };
+/** Oberdorf im Nordosten: kleiner Platz mit Brunnen und Linde, Häuser rundherum. */
+const UPPER = { x: 80, z: -40 };
+const LANE_HOUSES = [-58, -72, -86, -100] as const;
 
 /** Aussichtspunkte für die Bilder: Name, Kamera, Blickziel. */
 export const VIEWS_A = [
   '1-ankunft 9.5 65 12.5 @ 0 92 -120',
-  '2-portale -12 65 -12 @ -40 70 -30',
-  '3-von-oben 75 148 45 @ 0 78 -75',
-  '4-biergarten 30 66 26 @ 50 66 -6',
-  '5-schloss 17 92 -104 @ 0 104 -140',
-  '6-dorfstrasse 0.5 66 100 @ 0 70 20',
+  '2-marktstaende -6 66 -12 @ -33 66.5 -33',
+  '3-stand-nah 24.5 65.4 -26.5 @ 24.5 66.8 -33',
+  '4-von-oben 75 148 45 @ 0 78 -75',
+  '5-biergarten 33 66.2 -11 @ 47 65.5 2',
+  '6-wirtshaus-innen 73.5 65.2 6.5 @ 79 65.4 -3',
+  '7-wirtshaus-schank 75.5 65.2 0.5 @ 81.5 66.2 3.5',
+  '8-baeckerei-innen -10.5 65.2 34.5 @ -14.5 66.2 31.5',
+  '9-handwerkergasse -48 67 7 @ -104 66 7',
+  '13-oberdorf 62 68 -30 @ 84 66 -42',
+  '14-schmiede-innen -57.5 65.2 0.5 @ -58.5 65.8 -6',
+  '10-dorfstrasse 0.5 66 100 @ 0 70 20',
+  '11-schloss 17 92 -104 @ 0 104 -140',
+  '12-dorfplatz-leute 14 66 18 @ -2 65.5 2',
+];
+
+/** Gäste im Biergarten: [Tisch-x, Tisch-z, Platz, Seite (1 = Süden), Skin, in der Hand]. */
+const BEER_GUESTS: readonly (readonly [number, number, number, 1 | -1, string, string?])[] = [
+  [32, -6, 1, -1, 'gast1', 'honey_bottle'],
+  [32, -6, 3, 1, 'gast2'],
+  [32, -6, 2, 1, 'gast3', 'honey_bottle'],
+  [40, -2, 0, -1, 'gast4'],
+  [40, -2, 2, -1, 'gast5', 'honey_bottle'],
+  [40, -2, 3, 1, 'gast6', 'bread'],
+  [48, 2, 1, -1, 'gast7', 'honey_bottle'],
+  [48, 2, 2, 1, 'gast8'],
+  [40, 6, 1, 1, 'kellnerin2'],
+  [32, 10, 2, -1, 'schreiner', 'honey_bottle'],
+  [32, 10, 3, -1, 'gast2', 'cookie'],
+  [48, -10, 0, 1, 'gast3'],
+];
+
+/** Leute, die später im Dorf herumlaufen (Lobby-Plugin): [x, z, Blick, Skin, Weg, Kind?]. */
+const WALKERS: readonly (readonly [number, number, Facing, string, string, boolean?])[] = [
+  [6, 12, 'west', 'gast6', 'dorfplatz'],
+  [-9, -6, 'south', 'gast4', 'dorfplatz'],
+  [3, 7, 'north', 'bua', 'dorfplatz', true],
+  [5, 6, 'west', 'madl', 'dorfplatz', true],
+  [1, 48, 'south', 'gast7', 'dorfstrasse'],
+  [-1, 70, 'north', 'gast8', 'dorfstrasse'],
+  [-70, 7, 'east', 'gast1', 'gasse'],
+  [-92, 6, 'west', 'gast5', 'gasse'],
+  [76, -36, 'south', 'gast2', 'oberdorf'],
+  [44, 8, 'north', 'kellnerin', 'biergarten'],
+  [2, -27, 'north', 'gast3', 'prachtstrasse'],
 ];
 
 export function draftA(): { canvas: Canvas; height: (x: number, z: number) => number } {
@@ -51,11 +108,23 @@ export function draftA(): { canvas: Canvas; height: (x: number, z: number) => nu
     const pond = Math.hypot(x - POND.x, z - POND.z) < POND.r ? -3 : 0;
     return Math.round(GROUND + Math.max(hill, mtn(x, z)) + roll + pond);
   };
-  terrain(c, { x1: -215, z1: -215, x2: 215, z2: 215, height, snowLine: 150, seed: 101, skipFlat: true, waterLevel: GROUND - 1 });
+  terrain(c, {
+    x1: -215,
+    z1: -215,
+    x2: 215,
+    z2: 215,
+    height,
+    snowLine: 150,
+    seed: 101,
+    skipFlat: true,
+    waterLevel: GROUND - 1,
+  });
 
   // Dorfplatz: Kopfsteinpflaster, Rand mit Laternen, Maibaum
   discAt(c, 0, GROUND, 0, 22, () => pick(rnd, PAVING));
-  disc(0, 0, 22.6).filter(([x, z]) => Math.hypot(x, z) > 21.5).forEach(([x, z]) => c.set(x, GROUND, z, 'polished_andesite'));
+  disc(0, 0, 22.6)
+    .filter(([x, z]) => Math.hypot(x, z) > 21.5)
+    .forEach(([x, z]) => c.set(x, GROUND, z, 'polished_andesite'));
   range(0, 13).forEach((i) => {
     const a = (i / 14) * Math.PI * 2;
     const [lx, lz] = [Math.round(Math.cos(a) * 23.5), Math.round(Math.sin(a) * 23.5)];
@@ -64,58 +133,297 @@ export function draftA(): { canvas: Canvas; height: (x: number, z: number) => nu
   maypole(c, 0, GROUND, 0, 30);
 
   // Prachtstraße zum Schloss (Achse x = 0), Portale links und rechts
-  range(-5, 5).forEach((x) => range(-82, -22).forEach((z) => c.set(x, Math.max(GROUND, Math.round(height(x, z))), z, Math.abs(x) === 5 ? 'polished_andesite' : pick(rnd, PAVING))));
-  range(-80, -24).filter((z) => z % 8 === 0).forEach((z) => [-6, 6].forEach((x) => lampPost(c, x, Math.max(GROUND, Math.round(height(x, z))), z)));
+  range(-5, 5).forEach((x) =>
+    range(-82, -22).forEach((z) =>
+      c.set(
+        x,
+        Math.max(GROUND, Math.round(height(x, z))),
+        z,
+        Math.abs(x) === 5 ? 'polished_andesite' : pick(rnd, PAVING),
+      ),
+    ),
+  );
+  range(-80, -24)
+    .filter((z) => z % 8 === 0)
+    .forEach((z) => [-6, 6].forEach((x) => lampPost(c, x, Math.max(GROUND, Math.round(height(x, z))), z)));
   range(-50, 50).forEach((x) => range(-38, -23).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));
-  [-42, -24, 24, 42].forEach((x, i) => portalAt(c, x, GROUND, -32, 'south', MODES[i]!));
+  [-42, -24, 24, 42].forEach((x, i) => stallAt(c, x, GROUND, -32, 'south', MODES[i]!));
   range(-46, -30).forEach((x) => range(-20, 20).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));
-  [-14, 0, 14].forEach((z, i) => portalAt(c, -38, GROUND, z, 'east', MODES[4 + i]!));
+  [-14, 0, 14].forEach((z, i) => stallAt(c, -38, GROUND, z, 'east', MODES[4 + i]!));
 
-  // Dorfstraße nach Süden mit Häusern auf beiden Seiten, Kapelle am Ende
-  range(-3, 3).forEach((x) => range(22, 104).forEach((z) => c.set(x, GROUND, z, Math.abs(x) === 3 ? 'stone_bricks' : pick(rnd, ['gravel', 'cobblestone', 'gravel', 'coarse_dirt']))));
+  // Dorfstraße nach Süden: Läden und Wohnhäuser (alle begehbar), Kapelle am Ende
+  range(-3, 3).forEach((x) =>
+    range(22, 104).forEach((z) =>
+      c.set(
+        x,
+        GROUND,
+        z,
+        Math.abs(x) === 3 ? 'stone_bricks' : pick(rnd, ['gravel', 'cobblestone', 'gravel', 'coarse_dirt']),
+      ),
+    ),
+  );
+  const west = [
+    { interior: 'baeckerei', sign: 'Bäckerei' },
+    { interior: 'wohnhaus' },
+    { interior: 'laden', sign: 'Krämerladen' },
+    { interior: 'wohnhaus' },
+  ] as const;
+  const east = [
+    { interior: 'apotheke', sign: 'Apotheke' },
+    { interior: 'wohnhaus' },
+    { interior: 'wohnhaus' },
+    { interior: 'wohnhaus' },
+  ] as const;
   [32, 50, 68, 86].forEach((z, i) => {
-    houseAt(c, -10, GROUND, z, 'east', 11, 11, 2 + (i % 2), rnd);
-    houseAt(c, 10, GROUND, z + 6, 'west', 11, 11, 3 - (i % 2), rnd, i % 2 === 0 ? 'spruce' : 'dark_oak');
+    houseAt(c, -10, GROUND, z, 'east', 11, 11, 2 + (i % 2), rnd, 'dark_oak', west[i]);
+    houseAt(
+      c,
+      10,
+      GROUND,
+      z + 6,
+      'west',
+      11,
+      11,
+      3 - (i % 2),
+      rnd,
+      i % 2 === 0 ? 'spruce' : 'dark_oak',
+      east[i],
+    );
     fence(c, -26, z - 7, -15, z + 7, GROUND + 1);
     fence(c, 15, z - 1, 26, z + 13, GROUND + 1);
     roundTree(c, -21, GROUND + 1, z, { height: 8, radius: 3, leaves: 'oak_leaves', rnd });
   });
   chapel(c, -4, GROUND, 108, 'north');
-  houseAt(c, -30, GROUND, 30, 'north', 11, 11, 3, rnd);
-  houseAt(c, 30, GROUND, 30, 'north', 9, 10, 2, rnd);
+  houseAt(c, -30, GROUND, 30, 'north', 11, 11, 3, rnd, 'dark_oak', { interior: 'rathaus', sign: 'Rathaus' });
+  houseAt(c, 30, GROUND, 30, 'north', 9, 10, 2, rnd, 'dark_oak', { interior: 'info', sign: 'Gäste-Info' });
 
-  // Biergarten im Osten mit Wirtshaus
+  // Handwerkergasse nach Westen: Vorgärten, Häuser auf beiden Seiten, Brunnen am Ende
+  range(LANE.x1, LANE.x2).forEach((x) =>
+    range(LANE.z1, LANE.z2).forEach((z) =>
+      c.set(
+        x,
+        GROUND,
+        z,
+        z === LANE.z1 || z === LANE.z2
+          ? 'stone_bricks'
+          : pick(rnd, ['gravel', 'cobblestone', 'gravel', 'coarse_dirt']),
+      ),
+    ),
+  );
+  const north = [
+    { interior: 'schmiede', sign: 'Schmiede' },
+    { interior: 'wohnhaus' },
+    { interior: 'wohnhaus' },
+    { interior: 'wohnhaus' },
+  ] as const;
+  const south = [
+    { interior: 'wohnhaus' },
+    { interior: 'wohnhaus' },
+    { interior: 'laden', sign: 'Trachten' },
+    { interior: 'schreinerei', sign: 'Schreinerei' },
+  ] as const;
+  const gardens = [
+    'poppy',
+    'cornflower',
+    'oxeye_daisy',
+    'allium',
+    'pink_tulip',
+    'short_grass',
+    'short_grass',
+  ];
+  LANE_HOUSES.forEach((x, i) => {
+    houseAt(
+      c,
+      x,
+      GROUND,
+      LANE.z1 - 5,
+      'south',
+      11,
+      10,
+      2 + (i % 2),
+      rnd,
+      i % 2 === 0 ? 'dark_oak' : 'spruce',
+      north[i],
+    );
+    houseAt(
+      c,
+      x,
+      GROUND,
+      LANE.z2 + 5,
+      'north',
+      11,
+      10,
+      3 - (i % 2),
+      rnd,
+      i % 2 === 0 ? 'spruce' : 'dark_oak',
+      south[i],
+    );
+    [LANE.z1 - 1, LANE.z2 + 1].forEach((z) => lampPost(c, x + 7, GROUND, z));
+    // Vorgärten: Blumen, Hecke vorne, Weg zur Tür frei
+    [
+      [LANE.z1 - 4, LANE.z1 - 1],
+      [LANE.z2 + 1, LANE.z2 + 4],
+    ].forEach(([za = 0, zb = 0]) =>
+      range(x - 5, x + 5).forEach((gx) =>
+        range(za, zb).forEach((gz) => {
+          if (Math.abs(gx - x) < 1) return c.set(gx, GROUND, gz, 'gravel');
+          const edge = gz === LANE.z1 - 1 || gz === LANE.z2 + 1;
+          c.set(gx, GROUND + 1, gz, edge ? 'azalea_leaves[persistent=true]' : pick(rnd, gardens));
+        }),
+      ),
+    );
+  });
+  discAt(c, LANE.x1 + 2, GROUND, 7, 9, () => pick(rnd, PAVING));
+  fountain(c, LANE.x1 + 2, GROUND, 7, 3);
+
+  // Oberdorf: Platz mit Brunnen und Linde, vier Häuser rundherum, Weg zum Vorplatz
+  discAt(c, UPPER.x, GROUND, UPPER.z, 10, () => pick(rnd, PAVING));
+  fountain(c, UPPER.x - 4, GROUND, UPPER.z + 2, 2);
+  roundTree(c, UPPER.x + 4, GROUND + 1, UPPER.z - 2, { height: 12, radius: 5, leaves: 'oak_leaves', rnd });
+  houseAt(c, UPPER.x - 8, GROUND, UPPER.z - 11, 'south', 11, 10, 3, rnd, 'dark_oak', {
+    interior: 'wohnhaus',
+  });
+  houseAt(c, UPPER.x + 8, GROUND, UPPER.z - 11, 'south', 11, 11, 2, rnd, 'spruce', { interior: 'wohnhaus' });
+  houseAt(c, UPPER.x + 12, GROUND, UPPER.z + 3, 'west', 11, 10, 2, rnd, 'dark_oak', { interior: 'wohnhaus' });
+  houseAt(c, UPPER.x + 2, GROUND, UPPER.z + 12, 'north', 9, 10, 2, rnd, 'spruce', { interior: 'wohnhaus' });
+  lampPost(c, UPPER.x - 9, GROUND, UPPER.z + 4);
+  lampPost(c, UPPER.x + 9, GROUND, UPPER.z + 8);
+
+  // Biergarten im Osten mit Wirtshaus (Wirt hinterm Tresen, Stammtisch, Gäste)
   biergarten(c, 30, -16, 60, 16, GROUND, rnd);
-  houseAt(c, 72, GROUND, 0, 'west', 15, 13, 3, rnd);
+  houseAt(c, 72, GROUND, 0, 'west', 15, 13, 3, rnd, 'dark_oak', {
+    interior: 'wirtshaus',
+    sign: 'Wirtshaus Zum Morni',
+  });
+  npc(c, {
+    x: 56,
+    y: GROUND + 1,
+    z: -18,
+    look: 'south',
+    skin: 'wirt',
+    hand: 'honey_bottle',
+    tags: ['mm_village'],
+  });
+  BEER_GUESTS.forEach(([tx, tz, seat, side, skin, hand]) =>
+    npc(c, {
+      x: tx + seat,
+      y: GROUND + 1,
+      z: tz + side,
+      look: side === 1 ? 'north' : 'south',
+      skin,
+      hand,
+      sit: true,
+      tags: ['mm_village'],
+    }),
+  );
+  WALKERS.forEach(([x, z, look, skin, route, small]) =>
+    npc(c, { x, y: GROUND + 1, z, look, skin, small, tags: ['mm_walker', `mm_route_${route}`] }),
+  );
 
   // Obstgarten, Felder, Teich
-  range(0, 4).forEach((i) => range(0, 3).forEach((j) => roundTree(c, 40 + i * 9, GROUND + 1, 44 + j * 10, { height: 7, radius: 2.6, leaves: (i + j) % 3 === 0 ? 'flowering_azalea_leaves' : 'oak_leaves', rnd })));
+  range(0, 4).forEach((i) =>
+    range(0, 3).forEach((j) =>
+      roundTree(c, 40 + i * 9, GROUND + 1, 44 + j * 10, {
+        height: 7,
+        radius: 2.6,
+        leaves: (i + j) % 3 === 0 ? 'flowering_azalea_leaves' : 'oak_leaves',
+        rnd,
+      }),
+    ),
+  );
   field(c, 40, 82, 70, 98, GROUND);
   field(c, -60, 70, -36, 96, GROUND, 'carrots[age=7]');
   fence(c, -61, 69, -35, 97, GROUND + 1, [-48, 69]);
-  disc(POND.x, POND.z, POND.r + 1.5).filter(([x, z]) => Math.hypot(x - POND.x, z - POND.z) >= POND.r).forEach(([x, z]) => c.set(x, GROUND + 1, z, rnd() < 0.3 ? 'sugar_cane' : 'short_grass'));
+  disc(POND.x, POND.z, POND.r + 1.5)
+    .filter(([x, z]) => Math.hypot(x - POND.x, z - POND.z) >= POND.r)
+    .forEach(([x, z]) => c.set(x, GROUND + 1, z, rnd() < 0.3 ? 'sugar_cane' : 'short_grass'));
 
   // Schloss auf dem Hügel, Freitreppe nach Süden
   castle(c, { x: 0, y: GROUND + HILL.height, z: -96, front: 'south', wallDrop: 14, rnd });
   launchpad(c, -14, GROUND, -26);
   launchpad(c, 14, GROUND, -26);
   // Parkour vom Westhang zum Schloss: schwebende Smaragd- und Goldblöcke
-  range(0, 15).forEach((i) => c.set(-70 + i * 3, GROUND + 4 + i * 2, -50 - i * 3 - (i % 2) * 2, i % 2 === 0 ? 'emerald_block' : 'gold_block'));
+  range(0, 15).forEach((i) =>
+    c.set(
+      -70 + i * 3,
+      GROUND + 4 + i * 2,
+      -50 - i * 3 - (i % 2) * 2,
+      i % 2 === 0 ? 'emerald_block' : 'gold_block',
+    ),
+  );
 
   const pathBlocks = ['gravel', 'coarse_dirt', 'gravel', 'cobblestone'];
-  path(c, [[50, 16], [62, 40], [62, 70]], 3, (x, z) => height(x, z), () => pick(rnd, pathBlocks));
-  path(c, [[-46, 20], [-50, 40], [-48, 68]], 3, (x, z) => height(x, z), () => pick(rnd, pathBlocks));
+  path(
+    c,
+    [
+      [50, 16],
+      [62, 40],
+      [62, 70],
+    ],
+    3,
+    (x, z) => height(x, z),
+    () => pick(rnd, pathBlocks),
+  );
+  path(
+    c,
+    [
+      [-46, 20],
+      [-50, 40],
+      [-48, 68],
+    ],
+    3,
+    (x, z) => height(x, z),
+    () => pick(rnd, pathBlocks),
+  );
+  path(
+    c,
+    [
+      [50, -30],
+      [62, -34],
+      [70, -40],
+    ],
+    3,
+    (x, z) => height(x, z),
+    () => pick(rnd, pathBlocks),
+  );
 
   const castleArea = (x: number, z: number): boolean => Math.abs(x) < 42 && z < -78 && z > -168;
-  forest(c, -215, -215, 215, 215, height, (x, z, h) => {
-    const d = Math.hypot(x, z);
-    const onHill = Math.hypot(x - HILL.x, z - HILL.z) < HILL.top + 6;
-    return h < 150 && !onHill && !castleArea(x, z) && d > 112;
-  }, 101, rnd);
-  forest(c, -100, -100, 100, 120, height, (x, z, h) => {
-    const nearHill = Math.hypot(x - HILL.x, z - HILL.z);
-    return nearHill > HILL.top + 6 && nearHill < HILL.foot && Math.abs(x) > 14 && h > GROUND + 2 && !castleArea(x, z);
-  }, 202, rnd);
+  const laneArea = (x: number, z: number): boolean => x < -40 && x > LANE.x1 - 14 && z > -12 && z < 26;
+  forest(
+    c,
+    -215,
+    -215,
+    215,
+    215,
+    height,
+    (x, z, h) => {
+      const d = Math.hypot(x, z);
+      const onHill = Math.hypot(x - HILL.x, z - HILL.z) < HILL.top + 6;
+      return h < 150 && !onHill && !castleArea(x, z) && !laneArea(x, z) && d > 112;
+    },
+    101,
+    rnd,
+  );
+  forest(
+    c,
+    -100,
+    -100,
+    100,
+    120,
+    height,
+    (x, z, h) => {
+      const nearHill = Math.hypot(x - HILL.x, z - HILL.z);
+      return (
+        nearHill > HILL.top + 6 &&
+        nearHill < HILL.foot &&
+        Math.abs(x) > 14 &&
+        h > GROUND + 2 &&
+        !castleArea(x, z)
+      );
+    },
+    202,
+    rnd,
+  );
   meadow(c, -125, -125, 125, 125, height, 0.16, rnd);
   return { canvas: c, height };
 }

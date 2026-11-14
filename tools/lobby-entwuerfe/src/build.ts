@@ -15,7 +15,12 @@ const SLICE = 128;
 const TOP = 320;
 const MS = 1000;
 
-type Draft = { readonly cx: number; readonly cz: number; readonly name: string; readonly build: () => { canvas: Canvas } };
+type Draft = {
+  readonly cx: number;
+  readonly cz: number;
+  readonly name: string;
+  readonly build: () => { canvas: Canvas };
+};
 const DRAFTS: Readonly<Record<string, Draft>> = {
   a: { ...A, build: draftA },
   b: { ...B, build: draftB },
@@ -26,8 +31,12 @@ const DRAFTS: Readonly<Record<string, Draft>> = {
 function forceload(cx: number, cz: number, action: 'add' | 'remove'): string[] {
   const from = (v: number): number => Math.floor((v - RADIUS) / CHUNK);
   const to = (v: number): number => Math.floor((v + RADIUS) / CHUNK);
-  const xs = Array.from({ length: to(cx) - from(cx) + 1 }, (_, i) => from(cx) + i).filter((v, i) => i % FORCELOAD_SPAN === 0);
-  const zs = Array.from({ length: to(cz) - from(cz) + 1 }, (_, i) => from(cz) + i).filter((v, i) => i % FORCELOAD_SPAN === 0);
+  const xs = Array.from({ length: to(cx) - from(cx) + 1 }, (_, i) => from(cx) + i).filter(
+    (v, i) => i % FORCELOAD_SPAN === 0,
+  );
+  const zs = Array.from({ length: to(cz) - from(cz) + 1 }, (_, i) => from(cz) + i).filter(
+    (v, i) => i % FORCELOAD_SPAN === 0,
+  );
   return xs.flatMap((x) =>
     zs.map((z) => {
       const x2 = Math.min(to(cx), x + FORCELOAD_SPAN - 1);
@@ -70,7 +79,9 @@ async function main(): Promise<void> {
     const t0 = Date.now();
     const { canvas } = d.build();
     const cmds = canvas.commands();
-    console.log(`Entwurf ${id} (${d.name}): ${canvas.size} Blöcke → ${cmds.length} Befehle (${Date.now() - t0} ms)`);
+    console.log(
+      `Entwurf ${id} (${d.name}): ${canvas.size} Blöcke → ${cmds.length} Befehle (${Date.now() - t0} ms)`,
+    );
     await runAll(rcon, forceload(d.cx, d.cz, 'add'));
     await runAll(rcon, [`kill @e[type=!player,x=${d.cx},y=64,z=${d.cz},distance=..320]`]);
     await runAll(rcon, clear(d.cx, d.cz));

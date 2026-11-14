@@ -50,7 +50,13 @@ const ROCKS = ['stone', 'stone', 'andesite', 'cobblestone', 'tuff'] as const;
 const LAKE_BED = ['gravel', 'sand', 'clay', 'gravel'] as const;
 
 /** Oberfläche einer Säule: See-Grund, Schnee, Fels oder Gras. */
-function surfaceBlock(s: { underWater: boolean; snowy: boolean; bare: boolean; rock: string; bed: string }): string {
+function surfaceBlock(s: {
+  underWater: boolean;
+  snowy: boolean;
+  bare: boolean;
+  rock: string;
+  bed: string;
+}): string {
   if (s.underWater) return s.bed;
   if (s.snowy) return 'snow_block';
   return s.bare ? s.rock : 'grass_block';
@@ -73,7 +79,9 @@ export function terrain(c: Canvas, t: TerrainSpec): void {
   pairs(range(t.x1, t.x2), range(t.z1, t.z2)).forEach(([x, z]) => {
     const h = Math.round(t.height(x, z));
     if (t.skipFlat && h === GROUND && !t.surface?.(x, z, h)) return;
-    const around = [t.height(x + 1, z), t.height(x - 1, z), t.height(x, z + 1), t.height(x, z - 1)].map(Math.round);
+    const around = [t.height(x + 1, z), t.height(x - 1, z), t.height(x, z + 1), t.height(x, z - 1)].map(
+      Math.round,
+    );
     const low = Math.min(...around, h);
     const steep = Math.max(...around.map((n) => Math.abs(n - h))) >= STEEP;
     const mix = fbm(seed + SNOW_SEED_OFFSET, x, z, SNOW_NOISE_SCALE, OCTAVES);
@@ -81,8 +89,11 @@ export function terrain(c: Canvas, t: TerrainSpec): void {
     const underWater = h < water;
     const rock = pick(() => mix, ROCKS);
     const custom = t.surface?.(x, z, h) ?? null;
-    const bare = (steep && (mix > ROCK_MIX || h > GROUND + ALPINE / TWICE)) || (h > GROUND + ALPINE && mix > ROCK_MIX / TWICE);
-    const top = custom ?? surfaceBlock({ underWater, snowy, bare, rock, bed: pick(() => mix, t.lakeBed ?? LAKE_BED) });
+    const bare =
+      (steep && (mix > ROCK_MIX || h > GROUND + ALPINE / TWICE)) ||
+      (h > GROUND + ALPINE && mix > ROCK_MIX / TWICE);
+    const top =
+      custom ?? surfaceBlock({ underWater, snowy, bare, rock, bed: pick(() => mix, t.lakeBed ?? LAKE_BED) });
     const floor = h < GROUND ? h - TWICE : GROUND - 1;
     const from = Math.max(Math.min(low, h) - 1, floor);
     range(from, h - 1).forEach((y) => c.set(x, y, z, fillBlock(h - y, top, rock)));
@@ -136,8 +147,20 @@ export function spruce(c: Canvas, x: number, y: number, z: number, height: numbe
 }
 
 const MEADOW = [
-  'short_grass', 'short_grass', 'short_grass', 'short_grass', 'tall_grass[half=lower]', 'dandelion', 'poppy',
-  'cornflower', 'azure_bluet', 'oxeye_daisy', 'allium', 'white_tulip', 'pink_tulip', 'blue_orchid',
+  'short_grass',
+  'short_grass',
+  'short_grass',
+  'short_grass',
+  'tall_grass[half=lower]',
+  'dandelion',
+  'poppy',
+  'cornflower',
+  'azure_bluet',
+  'oxeye_daisy',
+  'allium',
+  'white_tulip',
+  'pink_tulip',
+  'blue_orchid',
 ] as const;
 
 /** Blumenwiese auf Grasblöcken: `density` = Anteil bewachsener Felder. */

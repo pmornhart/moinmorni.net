@@ -70,6 +70,9 @@ const connectingSchema = z.object({
   uuid: uuidField,
   server: z.string().min(1).max(32),
 });
+const playSchema = z.object({ uuid: uuidField, mode: z.string().min(1).max(32) });
+/** Lobby-Zahlen höchstens so oft an die Server schicken (viele Wechsel auf einmal = eine Nachricht). */
+const LOBBY_DEBOUNCE_MS = 1_000;
 /** So lange darf ein Modus zum Aufwachen brauchen, dann gibt es eine Meldung. */
 const WAKE_TIMEOUT_MS = 180_000;
 
@@ -260,29 +263,83 @@ export function createHub(options: HubOptions): Hub {
       (err: unknown) => log.error({ err, server }, 'Hub: Wecken fehlgeschlagen'),
     );
   };
-  /** Darf der Spieler auf diesen Server? Schläft er, wird er geweckt und der Spieler kommt danach von selbst. */
+  /**
+   * Darf der Spieler jetzt auf diesen Server? Geschlossen/bald/Wartung → Meldung. Schläft er, wird er geweckt und der
+   * Spieler kommt danach von selbst hinein.
+   */
+  const admit = (uuid: string, server: string, lang: Lang): 'go' | 'stop' => {
+    const mode = stores.modes().find((md) => md.server === server);
+    const stop = (line: string): 'stop' => {
+      ctx.msg(uuid, line);
+      return 'stop';
+    };
+    const name = mm(modeName(server, lang));
+    if (mode?.state === 'off') return stop(text(lang, 'mode.closed', { mode: name }));
+    if (mode?.state === 'soon') return stop(text(lang, 'mode.soon', { mode: name }));
+    if (mode?.state === 'maintenance' && !hasRight(players.roleOf(uuid), 'maintenance-join'))
+      return stop(text(lang, 'mode.maintenance', { mode: name }));
+    if (!mode || conns.backends.has(server) || !options.wake) return 'go';
+    const list = waiting.get(server) ?? new Set<string>();
+    const first = !waiting.has(server);
+    list.add(uuid);
+    waiting.set(server, list);
+    if (first) wakeUp(server);
+    return stop(text(lang, 'mode.waking', { mode: name }));
+  };
   const connecting = (conn: Connection, body: unknown): void => {
     const m = connectingSchema.parse(body);
     const uuid = normalUuid(m.uuid);
+    const lang: Lang = presence.get(uuid)?.lang ?? defaultLang();
+    reply(conn, m.id, { allow: admit(uuid, m.server, lang) === 'go' });
+  };
+  /** Figur in der Lobby angeklickt: in den Modus (oder wecken, oder sagen, warum nicht). */
+  const play = (conn: Connection, body: unknown): void => {
+    if (conn.kind !== 'backend') return;
+    const m = playSchema.parse(body);
+    const uuid = normalUuid(m.uuid);
     const p = presence.get(uuid);
-    const lang: Lang = p?.lang ?? defaultLang();
-    const mode = stores.modes().find((md) => md.server === m.server);
-    const deny = (line: string): void => {
-      ctx.msg(uuid, line);
-      reply(conn, m.id, { allow: false });
-    };
-    const name = mm(modeName(m.server, lang));
-    if (mode?.state === 'off') return deny(text(lang, 'mode.closed', { mode: name }));
-    if (mode?.state === 'soon') return deny(text(lang, 'mode.soon', { mode: name }));
-    if (mode?.state === 'maintenance' && !hasRight(players.roleOf(uuid), 'maintenance-join'))
-      return deny(text(lang, 'mode.maintenance', { mode: name }));
-    if (!mode || conns.backends.has(m.server) || !options.wake) return reply(conn, m.id, { allow: true });
-    const list = waiting.get(m.server) ?? new Set<string>();
-    const first = !waiting.has(m.server);
-    list.add(uuid);
-    waiting.set(m.server, list);
-    if (first) wakeUp(m.server);
-    return deny(text(lang, 'mode.waking', { mode: name }));
+    const mode = stores.modes().find((md) => md.id === m.mode);
+    if (!p || !mode) return;
+    const name = mm(mode.name[p.lang]);
+    if (!mode.server) {
+      ctx.msg(uuid, text(p.lang, 'mode.soon', { mode: name }));
+      return;
+    }
+    if (p.server === mode.server) {
+      ctx.msg(uuid, text(p.lang, 'mode.already', { mode: name }));
+      return;
+    }
+    if (admit(uuid, mode.server, p.lang) !== 'go') return;
+    if (mode.access === 'whitelist') ctx.msg(uuid, text(p.lang, 'mode.invite_only', { mode: name }));
+    ctx.msg(uuid, text(p.lang, 'mode.joining', { mode: name }));
+    ctx.connect(uuid, mode.server);
+  };
+
+  /** Was die Figuren in der Lobby über ihren Modus zeigen: Name, Zustand, Spielerzahl, wach oder schlafend. */
+  const lobbyState = (): Body => ({
+    t: 'lobby',
+    modes: [...stores.modes()]
+      .sort((a, b) => a.position - b.position)
+      .map((md) => ({
+        id: md.id,
+        name: md.name,
+        state: md.state,
+        access: md.access,
+        max: md.maxPlayers,
+        players: md.server ? presence.on(md.server).length : 0,
+        hasServer: md.server !== null,
+        awake: md.server !== null && conns.backends.has(md.server),
+      })),
+  });
+  let lobbyTimer: ReturnType<typeof setTimeout> | null = null;
+  const lobbySoon = (): void => {
+    if (lobbyTimer) return;
+    lobbyTimer = setTimeout(() => {
+      lobbyTimer = null;
+      const body = lobbyState();
+      conns.backends.forEach((c) => c.send(body));
+    }, LOBBY_DEBOUNCE_MS);
+    lobbyTimer.unref();
   };
 
   const reply = (conn: Connection, id: number, data: unknown): void =>
@@ -346,11 +403,14 @@ export function createHub(options: HubOptions): Hub {
         if (p.server) presence.move(uuid, p.server);
         sendProfile(uuid);
       });
+      lobbySoon();
     },
     login,
     connecting,
+    play,
     switch: (_conn, body) => {
       const m = switchSchema.parse(body);
+      lobbySoon();
       const first = presence.get(m.uuid)?.server === null;
       presence.move(m.uuid, m.server);
       sendProfile(m.uuid);
@@ -358,7 +418,10 @@ export function createHub(options: HubOptions): Hub {
       if (first) social.joined(normalUuid(m.uuid));
       social.switched(normalUuid(m.uuid), m.server);
     },
-    leave: (_conn, body) => leave(leaveSchema.parse(body).uuid),
+    leave: (_conn, body) => {
+      leave(leaveSchema.parse(body).uuid);
+      lobbySoon();
+    },
     // Die Sprache des Clients kommt erst nach der Anmeldung; wer sie selbst gewählt hat (/sprache), behält sie.
     locale: (_conn, body) => {
       const m = localeSchema.parse(body);
@@ -417,6 +480,8 @@ export function createHub(options: HubOptions): Hub {
       conns.backends.set(conn.server, conn);
       conn.send({ t: 'welcome', server: conn.server, kind: conn.kind });
       conn.send(voice.config());
+      conn.send(lobbyState());
+      lobbySoon();
       presence.on(conn.server).forEach((p) => sendProfile(p.uuid));
       // Aufgewacht: wer gewartet hat, kommt jetzt hinein.
       const list = waiting.get(conn.server);
@@ -440,7 +505,10 @@ export function createHub(options: HubOptions): Hub {
     },
     onClose: (conn) => {
       if (conns.proxy === conn) conns.proxy = null;
-      if (conns.backends.get(conn.server) === conn) conns.backends.delete(conn.server);
+      if (conns.backends.get(conn.server) === conn) {
+        conns.backends.delete(conn.server);
+        lobbySoon();
+      }
     },
   });
 
@@ -449,6 +517,7 @@ export function createHub(options: HubOptions): Hub {
     if (area === 'voice') voice.broadcast();
   });
   events.on('roles.changed', () => presence.all().forEach((p) => sendProfile(p.uuid)));
+  events.on('modes.changed', lobbySoon);
 
   return {
     listen: transport.listen,
