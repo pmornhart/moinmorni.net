@@ -101,14 +101,14 @@ ul.files { margin: 0; padding-left: 18px; font-family: var(--mono); font-size: 1
 <script>
 /* Stand – wird nach jedem Baustein aktualisiert. Status: open | run | wait | done | prob */
 const STAND = {
-  updated: '14.11.2026, 17:00',
-  now: { title: 'Baustein 3 · MorniHosting als Motor', text: 'Die drei Lobby-Entwürfe sind fertig und warten auf deine Wahl. In der Zwischenzeit baue ich in MorniHosting den Motor-Modus und die Netzwerke (eigener Branch).' },
+  updated: '14.11.2026, 18:45',
+  now: { title: 'Baustein 4 · MoinMorni-Grundgerüst', text: 'MorniHosting-Teil ist fertig (PR #116 wartet auf dein Go). Jetzt baue ich das MoinMorni-Grundgerüst: Container mit eingebautem Motor, Webseite, Panel, Datenbank und Einstellungs-Katalog.' },
   blocks: [
     ['Verstehen und Plan', 'Fragerunden, Recherche, Architektur (eigenständig, MorniHosting-Kern als Motor)', 'done'],
     ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder wie im echten Minecraft', 'done', 'Echter Minecraft-Client 26.3 läuft ohne Bildschirm (Vulkan in Software) und macht echte Screenshots; Test-Spieler (mineflayer) treten bei.'],
     ['Lobby-Entwürfe', '3 Entwürfe als Bilder: Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen', 'wait', 'Fertig gebaut und mit dem echten Client fotografiert – welcher soll es werden (oder eine Mischung)?'],
-    ['MorniHosting als Motor', 'Motor-Modus ohne Oberfläche, Netzwerke, Schlüssel mit begrenzten Rechten, Server-Seiten als Baustein, Ereignisse (Branch + PR in MorniHosting)', 'run'],
-    ['MoinMorni-Grundgerüst', 'Eigener Container mit Motor, Login mit Passkeys und 2FA, Datenbank, Einstellungs-Katalog, Deutsch/Englisch, Tests', 'open'],
+    ['MorniHosting als Motor', 'Motor-Modus ohne Oberfläche, Netzwerke, Schlüssel mit begrenzten Rechten, Server-Seiten als Baustein, Ereignisse (Branch + PR in MorniHosting)', 'done', 'PR #116 in MorniHosting: Netzwerke (Velocity + Paper automatisch verbunden), Voice am Proxy, Motor-Modus, Schlüssel mit Bereichen, einbettbare Server-Seiten; behoben: Velocity verlor seine Plugins bei jedem Start. 407 Tests + 5 Browser-Tests grün. Wartet auf dein Go.'],
+    ['MoinMorni-Grundgerüst', 'Eigener Container mit Motor, Login mit Passkeys und 2FA, Datenbank, Einstellungs-Katalog, Deutsch/Englisch, Tests', 'run'],
     ['Netzwerk-Plugin', 'Sichere Verbindung zum Hub, Ränge, Chat, Freunde, Party, Strafen, Statistiken, Sprache, Status, Schlaf-Modus', 'open'],
     ['Panel', 'Alles einstellbar und sortiert: Modi, Lobby, Spieler, Strafen, Rollen, Chat, Inhalte, Updates, Server. Suche und Rundgang', 'open'],
     ['Webseite', 'Startseite mit Adresse und Online-Zahl, Modi, News, Changelog, Regeln, Team, Ranglisten, Profile, Modpack, Hilfe-Seiten', 'open'],
@@ -126,6 +126,7 @@ const STAND = {
     ['Abschluss', 'Jede Motor-Funktion aus MoinMorni prüfen, Sicherheitsprüfung, Liste: geht / geht noch nicht / warum', 'open']
   ],
   results: [
+    { img: 'bilder/mh-netzwerke.png', time: '18:40', caption: 'MorniHosting – neue Seite „Netzwerke“: Proxy vorne, Lobby und Duels dahinter, Startserver, Konten prüfen (Branch claude/moinmorni-motor)' },
     { img: 'bilder/entwurf-a.jpg', time: '17:00', caption: 'Entwurf A – Dorfplatz am Schlossberg: Ankunft am Maibaum, Freitreppe zum Schloss, Portale am Fuß des Bergs, Biergarten, Dorfstraße bis zur Kapelle' },
     { img: 'bilder/entwurf-b.jpg', time: '17:00', caption: 'Entwurf B – Schlossinsel im Smaragdsee: Aussichtsterrasse mit Maibaum, Brücke zur Insel, Portale an der Seepromenade, Felswände im Norden' },
     { img: 'bilder/entwurf-c.jpg', time: '17:00', caption: 'Entwurf C – Bergschloss mit Terrassen: Dorfplatz unten, Portale auf zwei Terrassen, Biergarten mit Talblick, Seilbahn, Schloss oben' },

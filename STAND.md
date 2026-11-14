@@ -50,6 +50,8 @@
 
 - 14.11.: Projekt angelegt (Cloud-Hooks, CLAUDE.md, STAND.md). Fragerunden 1+2 beantwortet, Recherche gesichert, Architektur festgelegt. Baustein 1 (Test- und Bildwerkzeug) läuft: Paper 26.1.2/26.3 + Velocity 4.3.1 + Java 25 laufen in der Sandbox (Cache unter `/home/user/mm-cache`, nicht im Repo).
 
+- 14.11.: Baustein 1 fertig (echter Client 26.3 ohne Bildschirm, `tools/mc-client/`), Baustein 2 Entwürfe A/B/C fertig (`packages/builder`, `tools/lobby-entwuerfe`) – Wahl offen. Baustein 3 fertig: MorniHosting-PR https://github.com/pmornhart/MorniHosting/pull/116 (Netzwerke, Voice am Proxy, Motor-Modus `MH_HEADLESS`, Schlüssel mit Bereichen + `service-token`, `/api/ws` mit Schlüssel, `embed.ts` + `setApiBase`; Velocity-Volume-Fehler behoben) – wartet auf Philips Go.
+
 ## Offen
 
 - Bausteine siehe Fortschrittsseite (`docs/fortschritt/index.html`, Artefakt https://claude.ai/artifact/FDBGtjXT6fgaY85Z1AvTsR).
