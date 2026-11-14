@@ -13,4 +13,7 @@
 - Nach jeder sichtbaren Änderung im Spiel Bilder wie im echten Minecraft (Test-Spieler + prismarine-viewer oder Chunky, echte Client-Texturen **nur lokal**, nie ins Repo oder auf die Webseite); bei Webseite/Panel Screenshots Computer + Handy.
 - Sicherheit ist nicht verhandelbar: keine Geheimnisse im Repo (nur `.env`), keine Standard-Passwörter, Docker nur über den Socket-Proxy, keine offenen Ports außer Proxy und Webseite.
 - Keine fremden Marken, Figuren oder Grafiken nachbauen (keine Mojang-, Nintendo- oder Hypixel-Inhalte).
+- **Eigenständig:** MoinMorni läuft im eigenen Container mit eigener Webseite und eigenem Login; Philips MorniHosting-Panel hat keinen Zugriff. Der MorniHosting-Kern steckt als unsichtbarer „Motor“ drin (siehe `docs/architektur.md`).
 - Nichts doppelt bauen, was MorniHosting schon kann; fehlt dort etwas, in MorniHosting einbauen (eigener Branch + PR).
+- **Alles im Panel:** Jede Einstellung, die per Befehl geht, muss auch im Panel gehen (Einstellungs-Katalog), sortiert nach Bereichen/Modi, mit Suche, Erklärungen und Rundgang.
+- Rundgänge: Panel (Team), Lobby (neue Spieler), Hilfe-Seiten auf der Webseite, `/hilfe` im Discord.

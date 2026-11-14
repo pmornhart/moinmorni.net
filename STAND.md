@@ -1,6 +1,6 @@
 # Stand – MoinMorni
 
-**Ziel:** Eigenes Minecraft-Netzwerk unter moinmorni.net (Java + Bedrock) mit Lobby und mehreren Spielmodi, öffentlicher Webseite mit Panel, eigenem Discord-Bot und Modpack – läuft auf MorniHosting, richtet sich selbst ein und hält sich aktuell.
+**Ziel:** Eigenes Minecraft-Netzwerk unter moinmorni.net (Java + Bedrock) mit Lobby und mehreren Spielmodi, öffentlicher Webseite mit Panel, eigenem Discord-Bot und Modpack – **eigenständig** im eigenen Container (MorniHosting-Kern als eingebauter Motor), richtet sich selbst ein und hält sich aktuell. Architektur: `docs/architektur.md`.
 
 ## Entscheidungen (14.11.2026)
 
@@ -32,12 +32,21 @@
 - **MorniCraft-Netzwerk-Modus (Q24):** ja, Ränge usw. in beiden Repos (MorniCraft + MorniHosting) anpassen.
 - **RAM (Q25):** so viel wie nötig, Schlaf-Modus für leere Modi.
 - **Bau-Server (Q26):** ja, Bauteam mit passenden Einstellungen.
-- Offen: Folgefragen aus der Recherche (Runde 2).
+
+## Antworten Runde 2 + Änderung (14.11.)
+
+- **Eigenständig (ersetzt Q21/Q22-Anbindung):** eigener Container, eigene Webseite, eigener Login; Philips MorniHosting-Panel hat keinen Zugriff. MorniHosting-Kern als unsichtbarer Motor (Motor-Modus) – kein „Mit MorniHosting anmelden“ mehr. Team-Konten mit Passkeys/2FA leben im Motor.
+- **Leistung:** Container 32 GB RAM, 8 Kerne; leere Modi schlafen.
+- **Alles im Panel:** jede per Befehl änderbare Einstellung auch im Panel, sortiert, Suche, Rundgang.
+- **Rundgänge:** Panel (Team), Lobby (neue Spieler), Hilfe-Seiten (Webseite), Discord `/hilfe` + Begrüßung.
+- **Runde 2 – alle Empfehlungen:** Duels mit Klassisch (Suppe, ohne Abklingzeit) / Modern / Fähigkeiten + Kit-Editor, gewertet + locker; Morni Party mit Gipfelrennen + Edelweiß-Jagd, 3 Spielfelder (Almsommer am Morni-Kogel, Schloss Weißenstein, Goldstollen) + 12 Minispiele; Modpack Zoom an, keine Minimap, ohne Axiom (später nach Freigabe); MorniCraft-Bewerbung über Webseite (Discord-Login) und Discord-Knopf, Schalter „Bewerbungen offen“; Admin = alles außer Owner/Admin vergeben, Vorlage Owner/Admin, Bot verbinden, Server löschen; Party = gemeinsame Sprachgruppe über Server hinweg, eigene Gruppen netzwerkweit, Nähe-Chat pro Server, Team-Funk in Runden.
+- **Recherche:** `docs/recherche/` (Discord: Bots legen keine Server mehr an; Voice: Velocity-Plugin, eigene Brücke über Server, kein Bedrock-Voice; NetBird nach Port; Versionen 26.3).
+- Repos zum Anlegen (Philip): MoinMorni-Lobby, -Duels, -Party, -Gipfelsturm, -Burgverlies, -Bollwerk.
 
 ## Stand
 
-- 14.11.: Projekt angelegt (Cloud-Hooks, CLAUDE.md, STAND.md). Phase „Erst verstehen“ läuft: Fragerunden mit Philip.
+- 14.11.: Projekt angelegt (Cloud-Hooks, CLAUDE.md, STAND.md). Fragerunden 1+2 beantwortet, Recherche gesichert, Architektur festgelegt. Baustein 1 (Test- und Bildwerkzeug) läuft: Paper 26.1.2/26.3 + Velocity 4.3.1 + Java 25 laufen in der Sandbox (Cache unter `/home/user/mm-cache`, nicht im Repo).
 
 ## Offen
 
-- Fragerunden abschließen, Verständnis bestätigen lassen, dann Plan in Bausteinen + Fortschrittsseite.
+- Bausteine siehe Fortschrittsseite (`docs/fortschritt/index.html`, Artefakt https://claude.ai/artifact/FDBGtjXT6fgaY85Z1AvTsR).

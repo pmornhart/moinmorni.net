@@ -101,33 +101,32 @@ ul.files { margin: 0; padding-left: 18px; font-family: var(--mono); font-size: 1
 <script>
 /* Stand – wird nach jedem Baustein aktualisiert. Status: open | run | wait | done | prob */
 const STAND = {
-  updated: '14.11.2026, 13:40',
-  now: { title: 'Baustein 0 · Verstehen und Plan', text: 'Fragerunde 1 ist beantwortet. Drei Helfer prüfen gerade Fakten (MCPVP, Cytooxien, Discord, Voice-Chat, NetBird, Modpack). Danach kommen Zusammenfassung und letzte Annahmen.' },
+  updated: '14.11.2026, 15:10',
+  now: { title: 'Baustein 1 · Test- und Bildwerkzeug', text: 'Paper 26.3, Paper 26.1.2, Velocity 4.3.1 und Java 25 laufen in der Sandbox. Jetzt teste ich, ob ein echter Minecraft-Client ohne Bildschirm startet, damit die Bilder echte Spiel-Screenshots werden.' },
   blocks: [
-    ['Verstehen und Plan', 'Fragerunden, Recherche, Zusammenfassung zum Bestätigen', 'run'],
-    ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder mit echten Texturen, Licht und Himmel', 'open'],
-    ['Lobby-Entwürfe', '2–3 Entwürfe als Bilder: Alpendorf, Maibaum, Biergarten, Schloss. Du wählst aus.', 'open'],
-    ['MorniHosting: Netzwerke', 'Proxy und Server als Gruppe, Geyser, Floodgate, Via und Voice-Chat am Proxy, eigene Domain über NetBird (Branch + PR in MorniHosting)', 'open'],
-    ['MorniHosting: ein Login für beides', '„Mit MorniHosting anmelden“, Schlüssel mit begrenzten Rechten, Server-Seiten als einbettbarer Baustein', 'open'],
-    ['MoinMorni-Grundgerüst', 'Webseite, Panel und Bot in einem Repo, Datenbank, Deutsch/Englisch, Tests', 'open'],
-    ['Netzwerk-Plugin', 'Sichere Verbindung zum Panel, Ränge, Chat, Freunde, Party, Strafen, Statistiken, Sprache, Status, Schlaf-Modus', 'open'],
-    ['Panel', 'Modi, Lobby, Spieler und Strafen, Rollen, Inhalte, Updates, alle MorniHosting-Funktionen pro Server', 'open'],
-    ['Webseite', 'Startseite mit Adresse, Online-Zahl, Modi, News, Changelog, Regeln, Team, Ranglisten, Profile, Modpack', 'open'],
-    ['Discord-Bot', 'Richtet den Server ein, Live-Status, Konten verbinden, Ränge, Tickets, News, Meldungen, Strafen', 'open'],
-    ['Voice-Chat', 'Über den Proxy, Gruppen über Server hinweg, Team darf beitreten und stummschalten', 'open'],
-    ['Lobby bauen', 'Gewählter Entwurf, Portale und NPCs mit Spielerzahl, Launchpads, Parkour, Kompass-Menü, Saison-Deko', 'open'],
-    ['MorniCraft im Netzwerk', 'Netzwerk-Modus in MorniCraft und MorniHosting, Whitelist mit Bewerbung, Mirni SMP als „bald“', 'open'],
-    ['Bau-Server', 'Kreativ-Server fürs Bauteam, Bauten per Knopf in die Modi übernehmen', 'open'],
-    ['Duels', '1v1 und 2v2, Kits, Arenen, Warteschlange, /duel, Ranglisten (Spielgefühl wie bei MCPVP)', 'open'],
-    ['Morni Party', 'Brettspiel für 2–8 Spieler, mehrere Spielfelder, Taler und Edelweiß, Minispiele', 'open'],
-    ['Modi allein und zusammen', 'Erste Modi zum Anschauen: Gipfelsturm, Burgverlies, Bollwerk', 'open'],
-    ['Modpack', 'Voice-Chat, Leistung, schöne Optik, Bau-Werkzeuge, Server schon eingetragen, Modrinth', 'open'],
-    ['Updates', 'Modi, MorniHosting, MorniCraft und Plugins halten sich aktuell: vorher Backup, bei Fehler zurück, Meldung in Discord', 'open'],
-    ['Proxmox-Quick-Start', 'Einzeiler, Installation, Update-Befehl, Anleitung, README', 'open'],
-    ['Abschluss', 'Jede MorniHosting-Funktion von MoinMorni aus prüfen, Sicherheitsprüfung, Liste: geht / geht noch nicht / warum', 'open']
+    ['Verstehen und Plan', 'Fragerunden, Recherche, Architektur (eigenständig, MorniHosting-Kern als Motor)', 'done'],
+    ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder wie im echten Minecraft', 'run'],
+    ['Lobby-Entwürfe', '3 Entwürfe als Bilder: Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen', 'open'],
+    ['MorniHosting als Motor', 'Motor-Modus ohne Oberfläche, Netzwerke, Schlüssel mit begrenzten Rechten, Server-Seiten als Baustein, Ereignisse (Branch + PR in MorniHosting)', 'open'],
+    ['MoinMorni-Grundgerüst', 'Eigener Container mit Motor, Login mit Passkeys und 2FA, Datenbank, Einstellungs-Katalog, Deutsch/Englisch, Tests', 'open'],
+    ['Netzwerk-Plugin', 'Sichere Verbindung zum Hub, Ränge, Chat, Freunde, Party, Strafen, Statistiken, Sprache, Status, Schlaf-Modus', 'open'],
+    ['Panel', 'Alles einstellbar und sortiert: Modi, Lobby, Spieler, Strafen, Rollen, Chat, Inhalte, Updates, Server. Suche und Rundgang', 'open'],
+    ['Webseite', 'Startseite mit Adresse und Online-Zahl, Modi, News, Changelog, Regeln, Team, Ranglisten, Profile, Modpack, Hilfe-Seiten', 'open'],
+    ['Discord-Bot', 'Richtet den Server ein, Live-Status, Konten verbinden, Ränge, Tickets, News, Meldungen, Strafen, /hilfe', 'open'],
+    ['Voice-Chat', 'Über den Proxy, Party-Sprachgruppe über Server hinweg, Team darf beitreten und stummschalten', 'open'],
+    ['Lobby bauen', 'Gewählter Entwurf, Portale und NPCs mit Spielerzahl, Launchpads, Parkour, Kompass-Menü, Saison-Deko, Rundgang für Neue', 'open'],
+    ['MorniCraft im Netzwerk', 'Netzwerk-Modus, Whitelist mit Bewerbung, abschaltbar; Mirni SMP als „bald“', 'open'],
+    ['Bau-Server', 'Kreativ-Server fürs Bauteam mit WorldEdit, Bauten per Knopf in die Modi übernehmen', 'open'],
+    ['Duels', 'Klassisch (Suppe), Modern, Fähigkeiten, Kit-Editor, 1v1/2v2, gewertet und locker, /duel, Ranglisten', 'open'],
+    ['Morni Party', 'Gipfelrennen und Edelweiß-Jagd, 3 Spielfelder, 12 Minispiele, Taler, Laden, Würfel', 'open'],
+    ['Modi allein und zusammen', 'Gipfelsturm, Burgverlies, Bollwerk zum Anschauen', 'open'],
+    ['Modpack', 'Minecraft 26.3, Voice-Chat, Leistung, schöne Optik, Bau-Werkzeuge, Server eingetragen, Modrinth', 'open'],
+    ['Updates', 'Modi, Motor (MorniHosting), MorniCraft und Plugins aktuell: Backup vorher, bei Fehler zurück, Meldung in Discord', 'open'],
+    ['Proxmox-Quick-Start', 'Einzeiler, fragt Domain, Bot-Token, Mail; speichert sicher in .env; Anleitung, README', 'open'],
+    ['Abschluss', 'Jede Motor-Funktion aus MoinMorni prüfen, Sicherheitsprüfung, Liste: geht / geht noch nicht / warum', 'open']
   ],
   results: [],
-  files: ['CLAUDE.md', 'STAND.md', '.claude/settings.json + Hooks', 'docs/fortschritt/index.html']
+  files: ['docs/architektur.md', 'docs/recherche/ (3 Berichte)', 'CLAUDE.md, STAND.md', 'docs/fortschritt/index.html']
 };
 const LABEL = { open: 'offen', run: 'läuft gerade', wait: 'wartet auf dich', done: 'fertig', prob: 'Problem' };
 const WEIGHT = { done: 1, run: 0.4, wait: 0.8 };
