@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 import type { PanelArea, Role, SettingArea } from '@moinmorni/shared';
 import { setCsrfToken } from '@/lib/api';
@@ -10,6 +10,8 @@ export interface PanelMe {
   readonly role: Role;
   readonly areas: readonly PanelArea[];
   readonly minecraftUuid: string | null;
+  /** Signed in with a start password: an own one must be set before working in the panel. */
+  readonly mustChangePassword: boolean;
   readonly csrfToken: string;
 }
 
@@ -27,6 +29,8 @@ const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
 const MAX_RETRIES = 2;
 const MINUTE_MS = 60_000;
+/** MoinMorni's server keeps "who is signed in" for 10 s (apps/server/src/panel/auth.ts); ask again after that. */
+const PANEL_ME_CACHE_MS = 11_000;
 
 /** No retry for "not signed in" or "not in the team": those are answers, not hiccups. */
 function retryUnlessAnswer(failures: number, err: Error): boolean {
@@ -48,6 +52,15 @@ export function usePanelMeQuery(): UseQueryResult<PanelMe> {
     retry: retryUnlessAnswer,
     staleTime: MINUTE_MS,
   });
+}
+
+/**
+ * Ask again who is signed in, e.g. after a new password or a linked Minecraft account: right away and once more
+ * when the server's short memory of the session has run out.
+ */
+export function refreshPanelMe(client: QueryClient): void {
+  void client.invalidateQueries({ queryKey: PANEL_ME_KEY });
+  window.setTimeout(() => void client.invalidateQueries({ queryKey: PANEL_ME_KEY }), PANEL_ME_CACHE_MS);
 }
 
 /** Does MoinMorni still need its first owner account? */

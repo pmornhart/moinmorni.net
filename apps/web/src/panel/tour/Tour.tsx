@@ -10,6 +10,7 @@ import {
   Server,
   Settings2,
   ShieldHalf,
+  UserCog,
   UsersRound,
   type LucideIcon,
 } from 'lucide-react';
@@ -44,7 +45,16 @@ import { usePanel, useSettingsQuery } from '../session';
  */
 
 type StepId =
-  'overview' | 'modes' | 'settings' | 'news' | 'players' | 'punishments' | 'roles' | 'discord' | 'servers';
+  | 'overview'
+  | 'modes'
+  | 'settings'
+  | 'news'
+  | 'players'
+  | 'punishments'
+  | 'roles'
+  | 'team'
+  | 'discord'
+  | 'servers';
 
 interface TourStep {
   readonly id: StepId;
@@ -61,6 +71,7 @@ const STEPS: readonly TourStep[] = [
   { id: 'players', icon: UsersRound, area: 'players' },
   { id: 'punishments', icon: Gavel, area: 'punishments' },
   { id: 'roles', icon: ShieldHalf, area: 'roles' },
+  { id: 'team', icon: UserCog, area: 'roles' },
   { id: 'discord', icon: MessagesSquare, area: 'discord' },
   { id: 'servers', icon: Server, area: 'servers' },
 ];
@@ -323,11 +334,13 @@ export function TourProvider({ children }: { readonly children: ReactNode }): Re
   const [index, setIndex] = useState<number | null>(null);
   const ready = !settings.isPending;
 
+  // Not while a start password still has to be replaced (that window comes first).
+  const waiting = me.mustChangePassword;
   useEffect(() => {
-    if (!ready || !steps.length || seen(me.username)) return undefined;
+    if (!ready || waiting || !steps.length || seen(me.username)) return undefined;
     const timer = window.setTimeout(() => setIndex(0), START_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [ready, steps.length, me.username]);
+  }, [ready, waiting, steps.length, me.username]);
 
   const finish = useCallback(() => {
     markSeen(me.username);

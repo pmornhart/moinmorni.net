@@ -16,16 +16,19 @@ import {
   Server,
   Settings2,
   ShieldHalf,
+  UserCog,
+  UserRoundCog,
   Users,
   UsersRound,
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { useState, type ReactElement } from 'react';
+import { lazy, Suspense, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, ScrollRestoration } from 'react-router';
 import { Lozenge, Wordmark } from '~/components/brand';
 import { LanguageSwitch, ThemeToggle } from '~/components/controls';
+import { MinecraftHead } from '~/components/minecraft-head';
 import { Button } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -49,6 +52,11 @@ const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
 export function areaIcon(name: string): LucideIcon {
   return AREA_ICONS[name] ?? Settings2;
 }
+
+/** The window that asks for an own password after a start password – only loaded when needed. */
+const ForcePassword = lazy(async () => ({
+  default: (await import('./account/ForcePassword')).ForcePassword,
+}));
 
 /** Areas listed under "Verwaltung". */
 const MANAGE_AREAS = ['players', 'punishments', 'roles', 'discord', 'servers'] as const;
@@ -93,28 +101,6 @@ function Group({ label }: { readonly label: string }): ReactElement {
     <p className="px-3 pb-1 pt-4 text-[11px] font-bold uppercase tracking-[0.16em] text-band-muted/70">
       {label}
     </p>
-  );
-}
-
-function Avatar({ uuid, name }: { readonly uuid: string | null; readonly name: string }): ReactElement {
-  const [failed, setFailed] = useState(false);
-  if (uuid && !failed) {
-    return (
-      <img
-        src={`/panel/motor/api/heads/${uuid}`}
-        alt=""
-        className="size-10 shrink-0 rounded-[10px] bg-white/10 [image-rendering:pixelated]"
-        onError={() => setFailed(true)}
-      />
-    );
-  }
-  return (
-    <span
-      className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-white/10 font-display text-lg font-semibold uppercase text-band-foreground"
-      aria-hidden
-    >
-      {name.slice(0, 1)}
-    </span>
   );
 }
 
@@ -194,6 +180,9 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
             onNavigate={onNavigate}
           />
         ) : null}
+        {can('roles') ? (
+          <Item to="/team" icon={UserCog} label={t('shell.team')} tour="team" onNavigate={onNavigate} />
+        ) : null}
         {can('discord') ? (
           <Item
             to="/discord"
@@ -215,14 +204,35 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
       </nav>
       <div className="mt-auto grid gap-3 pt-6">
         <div className="grid gap-3 rounded-[14px] border border-band-line bg-white/[0.04] p-3">
-          <div className="flex items-center gap-3">
-            <Avatar uuid={me.minecraftUuid} name={me.username} />
-            <div className="grid min-w-0 gap-1">
+          <NavLink
+            to="/konto"
+            onClick={onNavigate}
+            title={t('shell.myAccount')}
+            className={({ isActive }) =>
+              cn(
+                'group -m-1.5 flex items-center gap-3 rounded-[11px] p-1.5 transition-colors hover:bg-white/[0.06]',
+                isActive && 'bg-white/[0.09]',
+              )
+            }
+          >
+            <MinecraftHead
+              uuid={me.minecraftUuid}
+              name={me.username}
+              className="size-10 rounded-[10px] bg-white/10 text-lg"
+              letterClassName="text-band-foreground"
+            />
+            <div className="grid min-w-0 flex-1 gap-1">
               <span className="sr-only">{t('shell.account')}</span>
               <span className="truncate text-sm font-bold text-band-foreground">{me.username}</span>
               <RoleBadge role={me.role} onBand />
             </div>
-          </div>
+            <span className="grid shrink-0 justify-items-center gap-0.5 text-band-muted transition-colors group-hover:text-band-foreground">
+              <UserRoundCog className="size-[18px]" aria-hidden />
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em]">
+                {t('shell.accountShort')}
+              </span>
+            </span>
+          </NavLink>
           <Button
             variant="band"
             size="sm"
@@ -268,13 +278,27 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
 
 function MobileBar(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const me = usePanel();
   const [open, setOpen] = useState(false);
   return (
     <header className="band sticky top-0 z-30 flex items-center gap-3 px-4 py-3 lg:hidden">
       <Wordmark tag={t('brand.panelTag')} crestClassName="size-8" />
+      <NavLink
+        to="/konto"
+        className="ml-auto rounded-[10px] p-1 transition-colors hover:bg-white/[0.08]"
+        aria-label={t('shell.myAccount')}
+        title={t('shell.myAccount')}
+      >
+        <MinecraftHead
+          uuid={me.minecraftUuid}
+          name={me.username}
+          className="size-8 rounded-[8px] bg-white/10 text-base"
+          letterClassName="text-band-foreground"
+        />
+      </NavLink>
       <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
         <DialogPrimitive.Trigger asChild>
-          <Button variant="bandGhost" size="icon" className="ml-auto" aria-label={t('nav.menu')}>
+          <Button variant="bandGhost" size="icon" aria-label={t('nav.menu')}>
             <Menu />
           </Button>
         </DialogPrimitive.Trigger>
@@ -314,6 +338,7 @@ export function PanelShell(): ReactElement {
 }
 
 function Frame(): ReactElement {
+  const me = usePanel();
   return (
     <div className="grid min-h-dvh lg:grid-cols-[264px_minmax(0,1fr)]">
       <aside className="band sticky top-0 hidden h-dvh overflow-y-auto lg:block" data-tour-scope="desktop">
@@ -327,6 +352,11 @@ function Frame(): ReactElement {
         </div>
       </main>
       <ScrollRestoration />
+      {me.mustChangePassword ? (
+        <Suspense fallback={null}>
+          <ForcePassword />
+        </Suspense>
+      ) : null}
     </div>
   );
 }

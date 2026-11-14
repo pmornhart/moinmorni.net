@@ -414,7 +414,10 @@
     "tour": "Start the tour",
     "content": "Content",
     "news": "News",
-    "discord": "Discord"
+    "discord": "Discord",
+    "team": "Team",
+    "myAccount": "My account",
+    "accountShort": "Account"
   },
   "overview": {
     "greeting": "Hello, {{name}}!",
@@ -876,6 +879,10 @@
     "servers": {
       "title": "Servers",
       "text": "The single Minecraft servers with console, files, backups and plugins. Look here when something is stuck."
+    },
+    "team": {
+      "title": "Team",
+      "text": "Create panel accounts here, give everyone a role and help out when someone forgot their password. Your own account is at the bottom left, next to your name."
     }
   },
   "newsAdmin": {
@@ -1061,6 +1068,124 @@
       "safe": "Tip: you can press “Set up the server” again at any time, e.g. after adding new roles."
     }
   },
+  "teamAdmin": {
+    "title": "Team",
+    "text": "Everyone who may use the panel. Create new accounts, change roles, reset forgotten passwords or lock an account.",
+    "add": "Create account",
+    "cancel": "Cancel",
+    "listTitle": "Team accounts",
+    "members_one": "{{count}} account",
+    "members_other": "{{count}} accounts",
+    "you": "You",
+    "ownAccount": "My account",
+    "twoFactor": "2FA on",
+    "twoFactorHelp": "Signs in in two steps: password plus a code from their phone.",
+    "startPassword": "Start password still active",
+    "startPasswordHelp": "Hasn't set an own password yet – that happens at the first sign-in.",
+    "disabled": "Locked",
+    "lastLogin": "Last signed in {{time}}",
+    "neverLoggedIn": "Never signed in",
+    "since": "Member since {{date}}",
+    "minecraft": "Minecraft: {{name}}",
+    "noMinecraft": "No Minecraft account linked",
+    "roleLabel": "Role of {{name}}",
+    "roleChanged": "{{name}} now has the role {{role}}.",
+    "resetPassword": "New password",
+    "disable": "Lock",
+    "enable": "Unlock",
+    "removeLabel": "Remove {{name}}'s account",
+    "disabledDone": "{{name}} is locked.",
+    "enabledDone": "{{name}} can sign in again.",
+    "removedDone": "{{name}}'s account is removed.",
+    "how": {
+      "title": "How it works",
+      "login": "Every team member signs in here with their own username and password:",
+      "roles": "What someone sees in the panel and may do in the game depends on their role. You set up the roles themselves under “Roles”.",
+      "rolesLink": "To the roles",
+      "security": "Passkeys and two-step sign-in are set up by each person under “My account”.",
+      "accountLink": "To “My account”"
+    },
+    "create": {
+      "title": "New team account",
+      "text": "The person gets a start password. At the first sign-in they set their own.",
+      "username": "Username",
+      "usernamePlaceholder": "e.g. lena.mod",
+      "usernameHelp": "This is what the person signs in with: 3 to 32 characters – letters, digits, dot, underscore or dash.",
+      "usernameInvalid": "Only letters without accents, digits, dot, underscore and dash, please – at least 3 characters.",
+      "email": "Email address (optional)",
+      "emailPlaceholder": "name@example.com",
+      "emailHelp": "Only for “forgot password”. Can stay empty – the person can add it later.",
+      "role": "Role",
+      "roleHelp": "You can only give roles below your own (the owner can give all). Ranks without the panel (e.g. VIP or Media) don't need an account – give those under “Players”.",
+      "sees": "Sees in the panel: {{areas}}",
+      "seesAll": "Sees everything in the panel",
+      "noRoles": "There's no role you may give. Create roles with panel areas under “Roles”.",
+      "submit": "Create account",
+      "busy": "Creating …"
+    },
+    "result": {
+      "createdTitle": "The account for {{name}} is ready!",
+      "resetTitle": "New start password for {{name}}",
+      "text": "Give {{name}} these sign-in details – ideally in person or by direct message. You only see the start password now.",
+      "change": "At the first sign-in, {{name}} has to set their own password. After that the start password no longer works.",
+      "address": "Sign in at",
+      "username": "Username",
+      "password": "Start password",
+      "copyAll": "Copy everything",
+      "allText": "MoinMorni panel\nAddress: {{address}}\nUsername: {{username}}\nStart password: {{password}}\nAt the first sign-in you set your own password.",
+      "done": "Done",
+      "copyAddress": "Copy address",
+      "copyUsername": "Copy username",
+      "copyPassword": "Copy start password"
+    },
+    "reset": {
+      "title": "New password for {{name}}?",
+      "text": "{{name}} gets a new start password. The old password stops working, and at the next sign-in {{name}} has to set their own.",
+      "secondFactors": "Also remove 2FA and passkeys",
+      "secondFactorsHelp": "Only needed if {{name}} lost their phone or security key. Afterwards {{name}} sets both up again under “My account”.",
+      "confirm": "Create new password"
+    },
+    "disableConfirm": {
+      "title": "Lock {{name}}?",
+      "text": "{{name}} can no longer sign in until you unlock the account. If they are signed in right now, they are signed out.",
+      "confirm": "Lock"
+    },
+    "removeConfirm": {
+      "title": "Remove {{name}}'s account?",
+      "text": "The account is deleted – with password, passkeys and 2FA. {{name}} can no longer sign in, and the team role no longer counts in the game either. This can't be undone.",
+      "confirm": "Remove for good"
+    }
+  },
+  "account": {
+    "title": "My account",
+    "text": "Your access to the panel: Minecraft account, password, passkeys, two-step sign-in and email.",
+    "signedInAs": "Signed in as",
+    "roleText": "Your role decides what you see in the panel and may do in the game. Someone with a higher role can change it.",
+    "toTeam": "To the team",
+    "minecraftTitle": "Link your Minecraft account",
+    "minecraftText": "Enter your Minecraft name (Java Edition) below. Then MoinMorni recognises you in the game, and your team role counts there too – with its symbol in the chat and the rights of your role.",
+    "minecraftLinkedTitle": "Your Minecraft account is linked",
+    "minecraftLinked": "MoinMorni recognises you in the game: your team role counts there too – with its symbol in the chat and the rights of your role.",
+    "terms": {
+      "title": "In short",
+      "password": {
+        "title": "Password",
+        "text": "At least 10 characters. Pick one you don't use anywhere else."
+      },
+      "passkey": {
+        "title": "Passkey",
+        "text": "Sign in without a password – with your fingerprint, face or your device's PIN. Safer than any password."
+      },
+      "twoFactor": {
+        "title": "Two-step sign-in (2FA)",
+        "text": "After the password the panel asks for a code from an app on your phone (e.g. Aegis or Google Authenticator). Someone who only knows your password can't get in."
+      },
+      "email": {
+        "title": "Email",
+        "text": "Only for “forgot password” and important notices. Optional."
+      }
+    }
+  },
   "errors": {
     "generic": "Something went wrong. Please try again in a moment.",
     "network": "No connection to the server. Check your internet and try again.",
@@ -1098,6 +1223,14 @@
     "role_owner_missing": "The owner role has to stay.",
     "news_unknown": "This post doesn't exist (anymore). Reload the page.",
     "discord_no_guild": "The bot isn't on a Discord server yet. Invite it first (step 4).",
-    "discord_not_configured": "No bot token has been added yet. Start with step 1."
+    "discord_not_configured": "No bot token has been added yet. Start with step 1.",
+    "username_taken": "This username is already taken. Please pick another one.",
+    "email_taken": "This email address already belongs to another account.",
+    "team_higher": "That's not possible: the role is as high as yours or higher. Only the owner may do that.",
+    "team_not_self": "You don't change your own account here – set your password and sign-in under “My account”.",
+    "team_last_owner": "There always has to be at least one owner. Make someone else owner first.",
+    "team_role_fallback": "The role “for everyone else” isn't a team rank. Please pick another one.",
+    "team_role_no_panel": "This role sees nothing in the panel – it doesn't need an account. Give ranks like VIP under “Players”.",
+    "team_member_unknown": "This account doesn't exist (anymore). Reload the page."
   }
 }

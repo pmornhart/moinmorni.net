@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { meQuery } from '@/features/auth/session';
 import { FieldBlock } from '~/components/controls';
 import { Button, Input, Kbd, NativeSelect, Skeleton } from '~/components/ui';
-import { MM_NAMESPACE, setLanguage, SUPPORTED_LANGUAGES, type Language } from '~/i18n';
+import { chooseLanguage, MM_NAMESPACE, SUPPORTED_LANGUAGES, type Language } from '~/i18n';
 import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
 import { useLanguage } from '~/lib/text';
@@ -63,7 +63,7 @@ export function SetupPage(): ReactElement {
       }
     },
     onSuccess: async (result) => {
-      setLanguage(locale);
+      chooseLanguage(locale);
       if (result?.status === 'ok') queryClient.setQueryData(meQuery.queryKey, result.me);
       queryClient.setQueryData(SETUP_KEY, { required: false });
       await queryClient.invalidateQueries({ queryKey: PANEL_ME_KEY });
@@ -167,7 +167,7 @@ export function SetupPage(): ReactElement {
             onChange={(e) => {
               const next = SUPPORTED_LANGUAGES.find((l) => l === e.target.value) ?? 'de';
               setLocale(next);
-              setLanguage(next);
+              chooseLanguage(next);
             }}
           >
             {SUPPORTED_LANGUAGES.map((l) => (

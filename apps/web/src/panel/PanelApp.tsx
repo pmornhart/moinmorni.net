@@ -19,6 +19,7 @@ import { PunishmentsPage } from './players/PunishmentsPage';
 import { RolesPage } from './roles/RolesPage';
 import { SettingsPage } from './settings/SettingsPage';
 import { SetupPage } from './SetupPage';
+import { TeamPage } from './team/TeamPage';
 
 /** The motor (MorniHosting) answers under /panel/motor/api/… – sign-in, server pages, live connection. */
 setApiBase('/panel/motor');
@@ -29,6 +30,8 @@ const TOAST_MS = 3500;
 const MotorLayout = lazy(async () => ({ default: (await import('./servers/motor')).MotorLayout }));
 const ServerListPage = lazy(async () => ({ default: (await import('./servers/motor')).ServerListPage }));
 const MotorServerPage = lazy(async () => ({ default: (await import('./servers/motor')).MotorServerPage }));
+// "Mein Konto" shows MorniHosting's account cards – also only when opened.
+const AccountPage = lazy(async () => ({ default: (await import('./account/AccountPage')).AccountPage }));
 
 function Lazy({ children }: { readonly children: ReactNode }): ReactElement {
   return <Suspense fallback={<Skeleton className="h-96 rounded-[16px]" />}>{children}</Suspense>;
@@ -48,6 +51,15 @@ const router = createBrowserRouter(
         { path: 'spieler/:uuid', element: <PlayerPage /> },
         { path: 'strafen', element: <PunishmentsPage /> },
         { path: 'rollen', element: <RolesPage /> },
+        { path: 'team', element: <TeamPage /> },
+        {
+          path: 'konto',
+          element: (
+            <Lazy>
+              <AccountPage />
+            </Lazy>
+          ),
+        },
         { path: 'news', element: <NewsPage /> },
         { path: 'news/:newsId', element: <NewsEditorPage /> },
         { path: 'discord', element: <DiscordPage /> },

@@ -84,7 +84,8 @@ export function currentLanguage(): Language {
   return isLanguage(i18n.language) ? i18n.language : FALLBACK;
 }
 
-export function setLanguage(language: Language): void {
+/** MoinMorni's language switch: shows `language` and remembers it in this browser. */
+export function chooseLanguage(language: Language): void {
   document.documentElement.lang = language;
   try {
     localStorage.setItem(STORAGE_KEY, language);
@@ -95,6 +96,15 @@ export function setLanguage(language: Language): void {
     await ensureLanguage(language);
     await i18n.changeLanguage(language);
   })();
+}
+
+/**
+ * The name MorniHosting's pages call with the language stored in their session (e.g. right after turning on
+ * two-factor login). In the panel MoinMorni's own switch decides the language, so this never switches – it only makes
+ * sure MorniHosting's texts for the language shown are there.
+ */
+export function setLanguage(_language: Language): void {
+  void ensureLanguage(currentLanguage());
 }
 
 export default i18n;

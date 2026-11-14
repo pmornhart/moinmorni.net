@@ -1,7 +1,7 @@
 import { Check, Copy, Moon, Sun } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MM_NAMESPACE, setLanguage, SUPPORTED_LANGUAGES } from '~/i18n';
+import { chooseLanguage, MM_NAMESPACE, SUPPORTED_LANGUAGES } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useLanguage } from '~/lib/text';
 import { useTheme } from '~/lib/theme';
@@ -113,7 +113,7 @@ export function LanguageSwitch({
           lang={lang}
           aria-pressed={language === lang}
           title={t(`language.${lang}`)}
-          onClick={() => setLanguage(lang)}
+          onClick={() => chooseLanguage(lang)}
           className={cn(
             'cursor-pointer rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.08em] transition-colors',
             language === lang ? active : idle,

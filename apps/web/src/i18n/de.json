@@ -414,7 +414,10 @@
     "tour": "Rundgang starten",
     "content": "Inhalte",
     "news": "News",
-    "discord": "Discord"
+    "discord": "Discord",
+    "team": "Team",
+    "myAccount": "Mein Konto",
+    "accountShort": "Konto"
   },
   "overview": {
     "greeting": "Servus, {{name}}!",
@@ -876,6 +879,10 @@
     "servers": {
       "title": "Server",
       "text": "Die einzelnen Minecraft-Server mit Konsole, Dateien, Backups und Plugins. Hier schaust du nach, wenn mal etwas klemmt."
+    },
+    "team": {
+      "title": "Team",
+      "text": "Hier legst du Konten fürs Panel an, gibst jeder Person eine Rolle und hilfst, wenn jemand sein Passwort vergessen hat. Dein eigenes Konto findest du unten links bei deinem Namen."
     }
   },
   "newsAdmin": {
@@ -1061,6 +1068,124 @@
       "safe": "Tipp: „Server einrichten“ kannst du jederzeit nochmal drücken, z. B. nach neuen Rollen."
     }
   },
+  "teamAdmin": {
+    "title": "Team",
+    "text": "Alle, die ins Panel dürfen. Lege neue Konten an, ändere Rollen, setze vergessene Passwörter zurück oder sperre ein Konto.",
+    "add": "Konto anlegen",
+    "cancel": "Abbrechen",
+    "listTitle": "Team-Konten",
+    "members_one": "{{count}} Konto",
+    "members_other": "{{count}} Konten",
+    "you": "Du",
+    "ownAccount": "Mein Konto",
+    "twoFactor": "2FA an",
+    "twoFactorHelp": "Meldet sich in zwei Schritten an: Passwort und ein Code vom Handy.",
+    "startPassword": "Startpasswort noch aktiv",
+    "startPasswordHelp": "Hat noch kein eigenes Passwort gesetzt – das passiert beim ersten Anmelden.",
+    "disabled": "Gesperrt",
+    "lastLogin": "Zuletzt angemeldet {{time}}",
+    "neverLoggedIn": "Noch nie angemeldet",
+    "since": "Dabei seit {{date}}",
+    "minecraft": "Minecraft: {{name}}",
+    "noMinecraft": "Kein Minecraft-Konto verbunden",
+    "roleLabel": "Rolle von {{name}}",
+    "roleChanged": "{{name}} hat jetzt die Rolle {{role}}.",
+    "resetPassword": "Neues Passwort",
+    "disable": "Sperren",
+    "enable": "Entsperren",
+    "removeLabel": "Konto von {{name}} entfernen",
+    "disabledDone": "{{name}} ist gesperrt.",
+    "enabledDone": "{{name}} kann sich wieder anmelden.",
+    "removedDone": "Das Konto von {{name}} ist entfernt.",
+    "how": {
+      "title": "So funktioniert's",
+      "login": "Jedes Team-Mitglied meldet sich mit eigenem Benutzernamen und Passwort hier an:",
+      "roles": "Was jemand im Panel sieht und im Spiel darf, hängt an der Rolle. Die Rollen selbst stellst du unter „Rollen“ ein.",
+      "rolesLink": "Zu den Rollen",
+      "security": "Passkeys und die Anmeldung in zwei Schritten richtet jede Person selbst unter „Mein Konto“ ein.",
+      "accountLink": "Zu „Mein Konto“"
+    },
+    "create": {
+      "title": "Neues Team-Konto",
+      "text": "Die Person bekommt ein Startpasswort. Beim ersten Anmelden setzt sie ein eigenes.",
+      "username": "Benutzername",
+      "usernamePlaceholder": "z. B. lena.mod",
+      "usernameHelp": "Damit meldet sich die Person an: 3 bis 32 Zeichen – Buchstaben, Ziffern, Punkt, Unterstrich oder Bindestrich.",
+      "usernameInvalid": "Bitte nur Buchstaben ohne Umlaute, Ziffern, Punkt, Unterstrich und Bindestrich – mindestens 3 Zeichen.",
+      "email": "E-Mail-Adresse (freiwillig)",
+      "emailPlaceholder": "name@beispiel.de",
+      "emailHelp": "Nur für „Passwort vergessen“. Kann leer bleiben – die Person kann sie später selbst eintragen.",
+      "role": "Rolle",
+      "roleHelp": "Du kannst nur Rollen unter deiner eigenen vergeben (der Owner alle). Ränge ohne Panel (z. B. VIP oder Media) brauchen kein Konto – die vergibst du unter „Spieler“.",
+      "sees": "Sieht im Panel: {{areas}}",
+      "seesAll": "Sieht im Panel alles",
+      "noRoles": "Es gibt keine Rolle, die du vergeben darfst. Rollen mit Bereichen im Panel legst du unter „Rollen“ an.",
+      "submit": "Konto anlegen",
+      "busy": "Wird angelegt …"
+    },
+    "result": {
+      "createdTitle": "Das Konto für {{name}} ist da!",
+      "resetTitle": "Neues Startpasswort für {{name}}",
+      "text": "Gib {{name}} diese Zugangsdaten – am besten persönlich oder per Direktnachricht. Das Startpasswort siehst du nur jetzt.",
+      "change": "Beim ersten Anmelden muss {{name}} ein eigenes Passwort setzen. Danach gilt das Startpasswort nicht mehr.",
+      "address": "Anmelden unter",
+      "username": "Benutzername",
+      "password": "Startpasswort",
+      "copyAll": "Alles kopieren",
+      "allText": "MoinMorni-Panel\nAdresse: {{address}}\nBenutzername: {{username}}\nStartpasswort: {{password}}\nBeim ersten Anmelden setzt du ein eigenes Passwort.",
+      "done": "Fertig",
+      "copyAddress": "Adresse kopieren",
+      "copyUsername": "Benutzername kopieren",
+      "copyPassword": "Startpasswort kopieren"
+    },
+    "reset": {
+      "title": "Neues Passwort für {{name}}?",
+      "text": "{{name}} bekommt ein neues Startpasswort. Das bisherige Passwort gilt dann nicht mehr, und beim nächsten Anmelden muss {{name}} ein eigenes setzen.",
+      "secondFactors": "Auch 2FA und Passkeys entfernen",
+      "secondFactorsHelp": "Nur nötig, wenn {{name}} das Handy oder den Sicherheitsschlüssel verloren hat. Danach richtet {{name}} beides unter „Mein Konto“ neu ein.",
+      "confirm": "Neues Passwort erzeugen"
+    },
+    "disableConfirm": {
+      "title": "{{name}} sperren?",
+      "text": "{{name}} kann sich dann nicht mehr anmelden, bis du das Konto wieder entsperrst. Wer gerade angemeldet ist, wird abgemeldet.",
+      "confirm": "Sperren"
+    },
+    "removeConfirm": {
+      "title": "Konto von {{name}} entfernen?",
+      "text": "Das Konto wird gelöscht – mit Passwort, Passkeys und 2FA. {{name}} kann sich nicht mehr anmelden, und die Team-Rolle gilt auch im Spiel nicht mehr. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Endgültig entfernen"
+    }
+  },
+  "account": {
+    "title": "Mein Konto",
+    "text": "Dein Zugang zum Panel: Minecraft-Konto, Passwort, Passkeys, Anmeldung in zwei Schritten und E-Mail.",
+    "signedInAs": "Angemeldet als",
+    "roleText": "Deine Rolle bestimmt, was du im Panel siehst und im Spiel darfst. Ändern kann sie jemand mit einer höheren Rolle.",
+    "toTeam": "Zum Team",
+    "minecraftTitle": "Verbinde dein Minecraft-Konto",
+    "minecraftText": "Trag unten deinen Minecraft-Namen (Java Edition) ein. Dann erkennt MoinMorni dich im Spiel, und deine Team-Rolle gilt dort auch – mit Symbol im Chat und den Rechten deiner Rolle.",
+    "minecraftLinkedTitle": "Dein Minecraft-Konto ist verbunden",
+    "minecraftLinked": "MoinMorni erkennt dich im Spiel: Deine Team-Rolle gilt dort auch – mit Symbol im Chat und den Rechten deiner Rolle.",
+    "terms": {
+      "title": "Kurz erklärt",
+      "password": {
+        "title": "Passwort",
+        "text": "Mindestens 10 Zeichen. Nimm eins, das du nirgends sonst benutzt."
+      },
+      "passkey": {
+        "title": "Passkey",
+        "text": "Anmelden ohne Passwort – mit Fingerabdruck, Gesicht oder der PIN deines Geräts. Sicherer als jedes Passwort."
+      },
+      "twoFactor": {
+        "title": "Anmeldung in zwei Schritten (2FA)",
+        "text": "Nach dem Passwort fragt das Panel noch einen Code aus einer App auf deinem Handy (z. B. Aegis oder Google Authenticator). Wer nur dein Passwort kennt, kommt so nicht rein."
+      },
+      "email": {
+        "title": "E-Mail",
+        "text": "Nur für „Passwort vergessen“ und wichtige Hinweise. Freiwillig."
+      }
+    }
+  },
   "errors": {
     "generic": "Da ist etwas schiefgegangen. Versuch es bitte gleich nochmal.",
     "network": "Keine Verbindung zum Server. Prüf dein Internet und versuch es nochmal.",
@@ -1098,6 +1223,14 @@
     "role_owner_missing": "Die Owner-Rolle muss bleiben.",
     "news_unknown": "Diese News gibt es nicht (mehr). Lade die Seite neu.",
     "discord_no_guild": "Der Bot ist noch auf keinem Discord-Server. Lade ihn zuerst ein (Schritt 4).",
-    "discord_not_configured": "Es ist noch kein Bot-Token hinterlegt. Fang mit Schritt 1 an."
+    "discord_not_configured": "Es ist noch kein Bot-Token hinterlegt. Fang mit Schritt 1 an.",
+    "username_taken": "Diesen Benutzernamen gibt es schon. Nimm bitte einen anderen.",
+    "email_taken": "Diese E-Mail-Adresse gehört schon zu einem anderen Konto.",
+    "team_higher": "Das geht nicht: Die Rolle ist so hoch wie deine oder höher. Das darf nur der Owner.",
+    "team_not_self": "Dein eigenes Konto änderst du hier nicht – Passwort und Anmeldung stellst du unter „Mein Konto“ ein.",
+    "team_last_owner": "Es muss immer mindestens einen Owner geben. Mach zuerst jemand anderen zum Owner.",
+    "team_role_fallback": "Die Rolle „für alle anderen“ ist kein Team-Rang. Wähl bitte eine andere.",
+    "team_role_no_panel": "Diese Rolle sieht im Panel nichts – dafür braucht es kein Konto. Ränge wie VIP vergibst du unter „Spieler“.",
+    "team_member_unknown": "Dieses Konto gibt es nicht (mehr). Lade die Seite neu."
   }
 }
