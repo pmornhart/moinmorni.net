@@ -101,13 +101,13 @@ ul.files { margin: 0; padding-left: 18px; font-family: var(--mono); font-size: 1
 <script>
 /* Stand – wird nach jedem Baustein aktualisiert. Status: open | run | wait | done | prob */
 const STAND = {
-  updated: '14.11.2026, 16:05',
-  now: { title: 'Baustein 2 · Lobby-Entwürfe', text: 'Ich baue drei grobe Lobby-Entwürfe (Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen) und fotografiere sie mit dem echten Client.' },
+  updated: '14.11.2026, 17:00',
+  now: { title: 'Baustein 3 · MorniHosting als Motor', text: 'Die drei Lobby-Entwürfe sind fertig und warten auf deine Wahl. In der Zwischenzeit baue ich in MorniHosting den Motor-Modus und die Netzwerke (eigener Branch).' },
   blocks: [
     ['Verstehen und Plan', 'Fragerunden, Recherche, Architektur (eigenständig, MorniHosting-Kern als Motor)', 'done'],
     ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder wie im echten Minecraft', 'done', 'Echter Minecraft-Client 26.3 läuft ohne Bildschirm (Vulkan in Software) und macht echte Screenshots; Test-Spieler (mineflayer) treten bei.'],
-    ['Lobby-Entwürfe', '3 Entwürfe als Bilder: Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen', 'run'],
-    ['MorniHosting als Motor', 'Motor-Modus ohne Oberfläche, Netzwerke, Schlüssel mit begrenzten Rechten, Server-Seiten als Baustein, Ereignisse (Branch + PR in MorniHosting)', 'open'],
+    ['Lobby-Entwürfe', '3 Entwürfe als Bilder: Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen', 'wait', 'Fertig gebaut und mit dem echten Client fotografiert – welcher soll es werden (oder eine Mischung)?'],
+    ['MorniHosting als Motor', 'Motor-Modus ohne Oberfläche, Netzwerke, Schlüssel mit begrenzten Rechten, Server-Seiten als Baustein, Ereignisse (Branch + PR in MorniHosting)', 'run'],
     ['MoinMorni-Grundgerüst', 'Eigener Container mit Motor, Login mit Passkeys und 2FA, Datenbank, Einstellungs-Katalog, Deutsch/Englisch, Tests', 'open'],
     ['Netzwerk-Plugin', 'Sichere Verbindung zum Hub, Ränge, Chat, Freunde, Party, Strafen, Statistiken, Sprache, Status, Schlaf-Modus', 'open'],
     ['Panel', 'Alles einstellbar und sortiert: Modi, Lobby, Spieler, Strafen, Rollen, Chat, Inhalte, Updates, Server. Suche und Rundgang', 'open'],
@@ -126,10 +126,13 @@ const STAND = {
     ['Abschluss', 'Jede Motor-Funktion aus MoinMorni prüfen, Sicherheitsprüfung, Liste: geht / geht noch nicht / warum', 'open']
   ],
   results: [
+    { img: 'bilder/entwurf-a.jpg', time: '17:00', caption: 'Entwurf A – Dorfplatz am Schlossberg: Ankunft am Maibaum, Freitreppe zum Schloss, Portale am Fuß des Bergs, Biergarten, Dorfstraße bis zur Kapelle' },
+    { img: 'bilder/entwurf-b.jpg', time: '17:00', caption: 'Entwurf B – Schlossinsel im Smaragdsee: Aussichtsterrasse mit Maibaum, Brücke zur Insel, Portale an der Seepromenade, Felswände im Norden' },
+    { img: 'bilder/entwurf-c.jpg', time: '17:00', caption: 'Entwurf C – Bergschloss mit Terrassen: Dorfplatz unten, Portale auf zwei Terrassen, Biergarten mit Talblick, Seilbahn, Schloss oben' },
     { img: 'bilder/echter-client-ohne-leiste.jpg', time: '16:00', caption: 'Echter Minecraft-Client 26.3 in der Sandbox, Leiste ausgeblendet – so entstehen ab jetzt alle Bilder' },
     { img: 'bilder/echter-client-erster-blick.jpg', time: '15:56', caption: 'Erster Blick des echten Clients auf einen Test-Server (Paper 26.3)' }
   ],
-  files: ['tools/mc-client/ (launch.py, shots.py, rcon.py)', 'docs/architektur.md', 'docs/recherche/ (3 Berichte)', 'CLAUDE.md, STAND.md', 'docs/fortschritt/index.html']
+  files: ['packages/builder/ (Bau-Baukasten)', 'tools/lobby-entwuerfe/ (Entwürfe A, B, C)', 'tools/mc-client/ (launch.py, shots.py, rcon.py)', 'docs/architektur.md', 'docs/recherche/ (3 Berichte)', 'CLAUDE.md, STAND.md', 'docs/fortschritt/index.html']
 };
 const LABEL = { open: 'offen', run: 'läuft gerade', wait: 'wartet auf dich', done: 'fertig', prob: 'Problem' };
 const WEIGHT = { done: 1, run: 0.4, wait: 0.8 };

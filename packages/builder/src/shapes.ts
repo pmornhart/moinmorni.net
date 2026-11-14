@@ -159,3 +159,18 @@ export function path(
     });
   });
 }
+
+const BIOME_STEP = 32;
+
+/** `fillbiome` in Stücken von höchstens 32×32×32 Blöcken (Minecrafts Grenze sind 32 768 Blöcke pro Befehl). */
+export function biomeCommands(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, biome: string): string[] {
+  const starts = (a: number, b: number): number[] => range(a, b).filter((v) => (v - a) % BIOME_STEP === 0);
+  return starts(x1, x2).flatMap((x) =>
+    starts(z1, z2).flatMap((z) =>
+      starts(y1, y2).map((y) => {
+        const end = BIOME_STEP - 1;
+        return `fillbiome ${x} ${y} ${z} ${Math.min(x + end, x2)} ${Math.min(y + end, y2)} ${Math.min(z + end, z2)} ${biome}`;
+      }),
+    ),
+  );
+}

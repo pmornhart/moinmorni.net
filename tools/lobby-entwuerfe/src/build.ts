@@ -5,6 +5,8 @@
 import fs from 'node:fs';
 import { Rcon, runAll, type Canvas } from '@moinmorni/builder';
 import { A, draftA } from './draft-a.js';
+import { B, draftB } from './draft-b.js';
+import { C, draftC } from './draft-c.js';
 
 const CHUNK = 16;
 const FORCELOAD_SPAN = 12;
@@ -16,6 +18,8 @@ const MS = 1000;
 type Draft = { readonly cx: number; readonly cz: number; readonly name: string; readonly build: () => { canvas: Canvas } };
 const DRAFTS: Readonly<Record<string, Draft>> = {
   a: { ...A, build: draftA },
+  b: { ...B, build: draftB },
+  c: { ...C, build: draftC },
 };
 
 /** forceload-Befehle in Stücken (Minecraft erlaubt höchstens 256 Chunks pro Befehl). */
