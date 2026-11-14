@@ -349,8 +349,8 @@ export const VOICE_AREA: SettingArea = {
           default: true,
           label: t('Eigene Gruppen erlaubt', 'Own groups allowed'),
           help: t(
-            'Spieler dürfen eigene Gruppen (mit Passwort) anlegen, netzwerkweit.',
-            'Players may create own groups (with password), network-wide.',
+            'Spieler dürfen eigene Gruppen anlegen: mit /voice gruppe <name> [passwort] für alle Server (leer nach 5 Minuten weg), im Sprachchat-Menü nur für den eigenen Server. Aus = auch das Menü legt keine Gruppen mehr an.',
+            'Players may create own groups: with /voice group <name> [password] on every server (removed after 5 minutes empty), in the voice chat menu only on their own server. Off = the menu cannot create groups either.',
           ),
           command: '/voiceconfig gruppen an|aus',
         },
@@ -385,7 +385,10 @@ export const VOICE_AREA: SettingArea = {
           max: 96,
           unit: blocks,
           label: t('Hörweite', 'Hearing distance'),
-          help: t('So weit hört man andere ohne Gruppe.', 'How far you hear others without a group.'),
+          help: t(
+            'So weit hört man andere ohne Gruppe. Gilt nach dem nächsten Neustart eines Servers.',
+            'How far you hear others without a group. Applies after the next restart of a server.',
+          ),
           command: '/voiceconfig weite <bloecke>',
         },
       ],

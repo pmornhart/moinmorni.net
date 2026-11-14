@@ -8,6 +8,7 @@ import de.maxhenkel.voicechat.api.VoicechatConnection;
 import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import de.maxhenkel.voicechat.api.VoicechatServerApi;
 import de.maxhenkel.voicechat.api.audiochannel.StaticAudioChannel;
+import de.maxhenkel.voicechat.api.events.CreateGroupEvent;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
 import de.maxhenkel.voicechat.api.events.JoinGroupEvent;
 import de.maxhenkel.voicechat.api.events.LeaveGroupEvent;
@@ -16,9 +17,14 @@ import de.maxhenkel.voicechat.api.events.PlayerDisconnectedEvent;
 import de.maxhenkel.voicechat.api.events.VoicechatServerStartedEvent;
 import de.moinmorni.network.common.HubClient;
 import java.nio.ByteBuffer;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -28,8 +34,10 @@ import java.util.logging.Logger;
 /**
  * Sprachchat-Brücke mit Simple Voice Chat: Auf jedem Server gibt es dieselben Kanäle (gleiche Gruppen-ID). Was
  * jemand in so einer Gruppe sagt, geht als Binär-Rahmen an den Hub; was von anderen Servern kommt, spielt dieser
- * Server allen eigenen Leuten in derselben Gruppe vor. Partys bekommen eine versteckte Gruppe über alle Server.
- * Nur geladen, wenn Simple Voice Chat installiert ist.
+ * Server allen eigenen Leuten in derselben Gruppe vor. Partys bekommen eine versteckte Gruppe über alle Server,
+ * eigene Gruppen ({@code /voice gruppe}) eine sichtbare mit demselben Passwort überall. Sind eigene Gruppen im Panel
+ * aus, legt auch das Sprachchat-Menü keine an. Die Hörweite trägt das Plugin in die Einstellungen von Simple Voice
+ * Chat ein (gilt nach dem nächsten Neustart). Nur geladen, wenn Simple Voice Chat installiert ist.
  */
 final class VoiceBridge implements VoicechatPlugin {
 
@@ -45,6 +53,10 @@ final class VoiceBridge implements VoicechatPlugin {
     /** Brücken-Gruppen (Kanäle + Partys): ID → Name. */
     private final Map<UUID, String> bridged = new ConcurrentHashMap<>();
     private final Set<UUID> parties = ConcurrentHashMap.newKeySet();
+    /** Eigene Gruppen über alle Server. */
+    private final Set<UUID> own = ConcurrentHashMap.newKeySet();
+    private volatile boolean ownAllowed = true;
+    private final Path voiceConfig;
     /** Party-Gruppe → Mitglieder (für den automatischen Beitritt). */
     private final Map<UUID, Set<UUID>> partyMembers = new ConcurrentHashMap<>();
     private volatile Set<UUID> muted = Set.of();
@@ -54,9 +66,10 @@ final class VoiceBridge implements VoicechatPlugin {
     private final Map<UUID, StaticAudioChannel> channels = new ConcurrentHashMap<>();
     private volatile JsonObject pending;
 
-    VoiceBridge(HubClient hub, Logger log) {
+    VoiceBridge(HubClient hub, Logger log, Path voiceConfig) {
         this.hub = hub;
         this.log = log;
+        this.voiceConfig = voiceConfig;
         hub.onBinary(this::onAudio);
     }
 
@@ -78,6 +91,7 @@ final class VoiceBridge implements VoicechatPlugin {
         events.registerEvent(JoinGroupEvent.class, e -> report(e.getConnection(), e.getGroup()));
         events.registerEvent(LeaveGroupEvent.class, e -> report(e.getConnection(), null));
         events.registerEvent(PlayerDisconnectedEvent.class, e -> groupOf.remove(e.getPlayerUuid()));
+        events.registerEvent(CreateGroupEvent.class, this::onCreateGroup);
     }
 
     // ---------- vom Hub ----------
@@ -128,6 +142,25 @@ final class VoiceBridge implements VoicechatPlugin {
         });
         parties.retainAll(partyIds);
         parties.addAll(partyIds);
+        // Eigene Gruppen: sichtbar, mit dem Passwort aus dem Hub (gleich auf jedem Server).
+        Set<UUID> ownIds = new HashSet<>();
+        JsonArray ownList = config.getAsJsonArray("own");
+        if (ownList != null) {
+            for (JsonElement e : ownList) {
+                JsonObject g = e.getAsJsonObject();
+                UUID id = UUID.fromString(HubClient.str(g, "id"));
+                ensure(voice, id, HubClient.str(g, "name"), false, HubClient.str(g, "password"));
+                ownIds.add(id);
+                wanted.add(id);
+            }
+        }
+        own.stream().filter(id -> !ownIds.contains(id)).forEach(voice::removeGroup);
+        own.retainAll(ownIds);
+        own.addAll(ownIds);
+        ownAllowed = !config.has("ownGroups") || config.get("ownGroups").getAsBoolean();
+        if (config.has("distance")) {
+            writeDistance(config.get("distance").getAsInt());
+        }
         bridged.keySet().retainAll(wanted);
         Set<UUID> mutedNow = new HashSet<>();
         config.getAsJsonArray("muted").forEach(m -> mutedNow.add(UUID.fromString(m.getAsString())));
@@ -149,6 +182,16 @@ final class VoiceBridge implements VoicechatPlugin {
     }
 
     private Group ensure(VoicechatServerApi voice, UUID id, String name, boolean party) {
+        String password = null;
+        if (party) {
+            byte[] secret = new byte[PASSWORD_BYTES];
+            RANDOM.nextBytes(secret);
+            password = java.util.HexFormat.of().formatHex(secret);
+        }
+        return ensure(voice, id, name, party, password);
+    }
+
+    private Group ensure(VoicechatServerApi voice, UUID id, String name, boolean hidden, String password) {
         bridged.put(id, name);
         Group existing = find(voice, id);
         if (existing != null) {
@@ -158,15 +201,62 @@ final class VoiceBridge implements VoicechatPlugin {
                 .setId(id)
                 .setName(name)
                 .setPersistent(true)
-                .setType(Group.Type.OPEN);
-        if (party) {
-            byte[] secret = new byte[PASSWORD_BYTES];
-            RANDOM.nextBytes(secret);
-            builder.setHidden(true).setPassword(java.util.HexFormat.of().formatHex(secret)).setType(Group.Type.NORMAL);
+                .setType(password == null && !hidden ? Group.Type.OPEN : Group.Type.NORMAL)
+                .setHidden(hidden);
+        if (password != null) {
+            builder.setPassword(password);
         }
         Group group = builder.build();
         log.info("Sprachkanal bereit: " + name + (find(voice, id) != null ? "" : " (erscheint, sobald jemand beitritt)"));
         return group;
+    }
+
+    /** Eigene Gruppen aus dem Sprachchat-Menü: nur, wenn das Panel sie erlaubt (unsere eigenen immer). */
+    private void onCreateGroup(CreateGroupEvent event) {
+        Group group = event.getGroup();
+        if (ownAllowed || group == null || bridged.containsKey(group.getId()) || event.getConnection() == null) {
+            return;
+        }
+        event.cancel();
+        if (event.getConnection().getPlayer() != null) {
+            org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(event.getConnection().getPlayer().getUuid());
+            if (p != null) {
+                p.sendMessage(net.kyori.adventure.text.Component.text(
+                        "Eigene Gruppen sind gerade aus. · Own groups are switched off.",
+                        net.kyori.adventure.text.format.NamedTextColor.GRAY));
+            }
+        }
+    }
+
+    /** Hörweite in voicechat-server.properties (nur wenn anders); Simple Voice Chat liest sie beim Start. */
+    private void writeDistance(int blocks) {
+        if (voiceConfig == null || !Files.isRegularFile(voiceConfig)) {
+            return;
+        }
+        try {
+            String wantedLine = "max_voice_distance=" + blocks;
+            List<String> lines = new ArrayList<>(Files.readAllLines(voiceConfig, StandardCharsets.UTF_8));
+            boolean found = false;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).startsWith("max_voice_distance=")) {
+                    if (lines.get(i).trim().equals(wantedLine)) {
+                        return;
+                    }
+                    lines.set(i, wantedLine);
+                    found = true;
+                }
+            }
+            if (!found) {
+                lines.add(wantedLine);
+            }
+            Path tmp = voiceConfig.resolveSibling(voiceConfig.getFileName() + ".tmp");
+            Files.write(tmp, lines, StandardCharsets.UTF_8);
+            Files.move(tmp, voiceConfig, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            log.info("Sprachchat: Hörweite " + blocks + " Blöcke eingetragen – gilt nach dem nächsten Neustart");
+        } catch (IOException e) {
+            log.warning("Sprachchat: Hörweite nicht eingetragen (" + e.getMessage() + ")");
+        }
     }
 
     /** Simple Voice Chat gibt bei unbekannter ID eine leere Hülle statt null zurück – darum über die Liste. */

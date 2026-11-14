@@ -46,6 +46,26 @@ export interface PartyVoice {
   readonly members: readonly string[];
 }
 
+/** Eigene Gruppe über alle Server (`/voice gruppe <name> [passwort]`). */
+interface OwnGroup {
+  readonly id: string;
+  readonly name: string;
+  readonly password: string | null;
+  readonly owner: string;
+  /** Seit wann niemand mehr drin ist (ms), null = gerade jemand drin. */
+  emptySince: number | null;
+}
+
+/** Leere eigene Gruppen verschwinden nach fünf Minuten. */
+const OWN_EMPTY_MS = 5 * 60_000;
+const SWEEP_MS = 60_000;
+// Name einer eigenen Gruppe: 3–16 Buchstaben, Ziffern, _ oder -, z. B. "Bergsteiger_2".
+// https://regex101.com/?flavor=javascript&flags=u&regex=%5E%5B%5Cp%7BL%7D%5Cp%7BN%7D_-%5D%7B3%2C16%7D%24&testString=Bergsteiger_2
+const OWN_NAME = /^[\p{L}\p{N}_-]{3,16}$/u;
+const PASSWORD_MIN = 4;
+const PASSWORD_MAX = 32;
+const DISTANCE_DEFAULT = 32;
+
 export interface Voice {
   /** Was ein Spielserver über den Sprachchat wissen muss. */
   readonly config: () => Body;
@@ -55,6 +75,7 @@ export interface Voice {
   /** Spielserver meldet, in welcher Gruppe jemand ist. */
   readonly onGroup: (uuid: string, group: string | null) => void;
   readonly commands: Command[];
+  readonly stop: () => void;
 }
 
 export function createVoice(
@@ -62,23 +83,50 @@ export function createVoice(
   backends: () => Connection[],
   backend: (server: string) => Connection | undefined,
   parties: () => PartyVoice[],
+  now: () => number = Date.now,
 ): Voice {
   const voice = (): Record<string, unknown> => ctx.stores.settings('voice');
   const channels = (): Array<{ id: string; name: string }> =>
     ((voice()['channels'] as string[] | undefined) ?? []).map((name) => ({ id: groupId(name), name }));
   const groups = new Map<string, string>();
+  const own = new Map<string, OwnGroup>();
   const muted = (): Set<string> => new Set(ctx.punish.activeOf('voice'));
+  const ownAllowed = (): boolean => voice()['ownGroups'] === true;
+  const distance = (): number => Number(voice()['distance'] ?? DISTANCE_DEFAULT) || DISTANCE_DEFAULT;
+  /** Brücken-Gruppe: Kanal, Party oder eigene Gruppe – das hört man auf allen Servern. */
+  const isBridged = (group: string): boolean =>
+    channels().some((c) => c.id === group) || parties().some((p) => p.id === group) || own.has(group);
+  const ownByName = (name: string): OwnGroup | undefined =>
+    [...own.values()].find((g) => g.name.toLowerCase() === name.toLowerCase());
+  const members = (group: string): number => [...groups.values()].filter((g) => g === group).length;
 
   const config = (): Body => ({
     t: 'voice',
     channels: channels(),
     muted: [...muted()],
     parties: voice()['partyVoice'] === true ? parties() : [],
+    own: ownAllowed() ? [...own.values()].map((g) => ({ id: g.id, name: g.name, password: g.password })) : [],
+    ownGroups: ownAllowed(),
+    distance: distance(),
   });
   const broadcast = (): void => {
     const body = config();
     backends().forEach((c) => c.send(body));
   };
+
+  /** Leere eigene Gruppen nach fünf Minuten weg; alle weg, wenn eigene Gruppen im Panel aus sind. */
+  const sweep = (): void => {
+    const t = now();
+    const gone = [...own.values()].filter((g) => {
+      if (members(g.id) > 0) g.emptySince = null;
+      else g.emptySince ??= t;
+      return !ownAllowed() || (g.emptySince !== null && t - g.emptySince >= OWN_EMPTY_MS);
+    });
+    gone.forEach((g) => own.delete(g.id));
+    if (gone.length > 0) broadcast();
+  };
+  const sweepTimer = setInterval(sweep, SWEEP_MS);
+  sweepTimer.unref();
 
   const say = (actor: Actor, line: string): void => ctx.msg(actor.uuid, line);
   const sendTo = (uuid: string, body: Body): boolean => {
@@ -91,6 +139,60 @@ export function createVoice(
     iso
       ? text(lang, 'punish.until', { date: iso.slice(0, 16).replace('T', ' ') })
       : text(lang, 'punish.forever');
+
+  /** /voice gruppe <name> [passwort] | /voice gruppe weg [name] */
+  const ownGroup = (actor: Actor, args: readonly string[]): void => {
+    const first = args[0] ?? '';
+    if (['weg', 'remove', 'löschen', 'loeschen'].includes(first.toLowerCase())) {
+      const team = hasRight(actor.role, 'voice-mute');
+      const g = args[1] ? ownByName(args[1]) : [...own.values()].find((x) => x.owner === actor.uuid);
+      if (!g || (g.owner !== actor.uuid && !team)) {
+        say(actor, text(actor.lang, 'voice.own_none'));
+        return;
+      }
+      own.delete(g.id);
+      broadcast();
+      say(actor, text(actor.lang, 'voice.own_removed', { name: mm(g.name) }));
+      return;
+    }
+    if (!ownAllowed()) {
+      say(actor, text(actor.lang, 'voice.own_off'));
+      return;
+    }
+    const password = args[1] ?? null;
+    if (!OWN_NAME.test(first)) {
+      say(actor, text(actor.lang, 'voice.own_usage'));
+      return;
+    }
+    if (password !== null && (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX)) {
+      say(actor, text(actor.lang, 'voice.own_password_rule'));
+      return;
+    }
+    const taken = ownByName(first) || channels().some((c) => c.name.toLowerCase() === first.toLowerCase());
+    if (taken) {
+      say(actor, text(actor.lang, 'voice.own_taken', { name: mm(first) }));
+      return;
+    }
+    const before = [...own.values()].find((x) => x.owner === actor.uuid);
+    if (before) own.delete(before.id);
+    const g: OwnGroup = {
+      id: groupId(`own:${first}`),
+      name: first,
+      password,
+      owner: actor.uuid,
+      emptySince: now(),
+    };
+    own.set(g.id, g);
+    broadcast();
+    sendTo(actor.uuid, { t: 'voice-join', uuid: actor.uuid, group: g.id, force: true });
+    say(
+      actor,
+      text(actor.lang, password ? 'voice.own_made_locked' : 'voice.own_made', {
+        name: mm(g.name),
+        password: mm(password ?? ''),
+      }),
+    );
+  };
 
   const commands: Command[] = [
     {
@@ -109,6 +211,21 @@ export function createVoice(
             .map((c) => text(actor.lang, 'voice.channel', { name: mm(c.name), count: counts[c.id] ?? 0 }))
             .join('<dark_gray>, </dark_gray>');
           say(actor, text(actor.lang, 'voice.list', { channels: names }));
+          const mine = [...own.values()].map((g) =>
+            text(actor.lang, g.password ? 'voice.own_locked' : 'voice.channel', {
+              name: mm(g.name),
+              count: counts[g.id] ?? 0,
+            }),
+          );
+          if (mine.length > 0)
+            say(
+              actor,
+              text(actor.lang, 'voice.own_list', { groups: mine.join('<dark_gray>, </dark_gray>') }),
+            );
+          return;
+        }
+        if (['gruppe', 'group'].includes(word)) {
+          ownGroup(actor, args.slice(1));
           return;
         }
         if (['raus', 'leave', 'verlassen'].includes(word)) {
@@ -128,7 +245,7 @@ export function createVoice(
             say(actor, text(actor.lang, t ? 'voice.no_group' : 'cmd.offline', { name: mm(args[1] ?? '') }));
             return;
           }
-          const bridged = list.some((c) => c.id === g) || parties().some((p) => p.id === g);
+          const bridged = isBridged(g);
           const here = ctx.presence.get(actor.uuid)?.server === t.server;
           if (!bridged && !here) {
             say(actor, text(actor.lang, 'voice.other_server', { name: mm(t.name) }));
@@ -140,6 +257,17 @@ export function createVoice(
           return;
         }
         const channel = list.find((c) => c.name.toLowerCase() === args.join(' ').toLowerCase());
+        const group = channel ? undefined : ownByName(args[0] ?? '');
+        if (group) {
+          const team = voice()['teamJoinAny'] === true && hasRight(actor.role, 'voice-join-any');
+          if (group.password && group.password !== args[1] && !team) {
+            say(actor, text(actor.lang, 'voice.own_password', { name: mm(group.name) }));
+            return;
+          }
+          sendTo(actor.uuid, { t: 'voice-join', uuid: actor.uuid, group: group.id, force: true });
+          say(actor, text(actor.lang, 'voice.joined', { name: mm(group.name) }));
+          return;
+        }
         if (!channel) {
           say(actor, text(actor.lang, 'voice.unknown', { name: mm(args.join(' ')) }));
           return;
@@ -149,10 +277,14 @@ export function createVoice(
       },
       complete: (actor, args) => {
         const typed = (args[0] ?? '').toLowerCase();
-        const words = ['raus', ...(hasRight(actor.role, 'voice-join-any') ? ['zu'] : [])];
+        const words = [
+          'raus',
+          ...(ownAllowed() ? ['gruppe'] : []),
+          ...(hasRight(actor.role, 'voice-join-any') ? ['zu'] : []),
+        ];
         if (args.length <= 1)
-          return [...channels().map((c) => c.name), ...words].filter((w) =>
-            w.toLowerCase().startsWith(typed),
+          return [...channels().map((c) => c.name), ...[...own.values()].map((g) => g.name), ...words].filter(
+            (w) => w.toLowerCase().startsWith(typed),
           );
         return ctx.presence
           .all()
@@ -240,6 +372,7 @@ export function createVoice(
     onGroup: (uuid, group) => {
       if (group) groups.set(uuid, group);
       else groups.delete(uuid);
+      sweep();
     },
     onAudio: (from, payload) => {
       if (payload.length <= HEADER || payload[0] !== AUDIO) return;
@@ -247,12 +380,12 @@ export function createVoice(
       const speaker = uuidOf(payload.subarray(1 + UUID_BYTES, HEADER));
       // Nur wer wirklich auf diesem Server ist und nicht stumm – kein Server spricht für einen anderen.
       if (ctx.presence.get(speaker)?.server !== from.server || muted().has(speaker)) return;
-      const bridged = channels().some((c) => c.id === group) || parties().some((p) => p.id === group);
-      if (!bridged) return;
+      if (!isBridged(group)) return;
       backends()
         .filter((c) => c.server !== from.server)
         .forEach((c) => c.sendBinary(payload));
     },
     commands,
+    stop: () => clearInterval(sweepTimer),
   };
 }

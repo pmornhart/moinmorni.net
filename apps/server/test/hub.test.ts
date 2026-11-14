@@ -576,6 +576,53 @@ describe('Hub', () => {
     expect(duels.binaries.at(-1)?.at(-1)).toBe(7);
   });
 
+  test('Eigene Sprachgruppen für alle Server: Passwort, besetzter Name, leer → weg, im Panel aus, Hörweite', async () => {
+    const { proxy, lobby, duels } = await network();
+    const cmd = (uuid: string, command: string, ...args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+    const settle = () => new Promise((r) => setTimeout(r, 80));
+    const ownCount = (n: number) => (m: Msg) => (m['own'] as unknown[]).length === n;
+    expect(await duels.next('voice')).toMatchObject({ ownGroups: true, distance: 32, own: [] });
+
+    // Lena legt eine Gruppe mit Passwort an – auf jedem Server, sie selbst ist gleich drin.
+    await cmd(LENA, 'voice', 'gruppe', 'Gipfel', 'geheim1');
+    const made = await lobby.next('voice', ownCount(1));
+    const g = (made['own'] as Array<{ id: string; name: string; password: string | null }>)[0];
+    expect(g).toMatchObject({ name: 'Gipfel', password: 'geheim1' });
+    expect(await duels.next('voice-join', (m) => m['uuid'] === LENA)).toMatchObject({
+      group: g?.id,
+      force: true,
+    });
+    duels.send({ t: 'voice-group', uuid: LENA, group: g?.id ?? null });
+    duels.sendBinary(audioFrame(g?.id ?? '', LENA, Buffer.from([3])));
+    await settle();
+    expect(lobby.binaries.at(-1)?.at(-1)).toBe(3);
+
+    // Ohne Team-Recht nur mit Passwort; gleicher Name geht nicht.
+    hub.players.setRole(PHILIP, 'player');
+    await cmd(PHILIP, 'voice', 'Gipfel');
+    await said(PHILIP, 'Passwort');
+    await cmd(PHILIP, 'voice', 'Gipfel', 'geheim1');
+    expect(await lobby.next('voice-join', (m) => m['uuid'] === PHILIP)).toMatchObject({ group: g?.id });
+    await cmd(PHILIP, 'voice', 'gruppe', 'gipfel');
+    await said(PHILIP, 'gibt es schon');
+
+    // Leer: nach fünf Minuten weg.
+    duels.send({ t: 'voice-group', uuid: LENA, group: null });
+    await settle();
+    clock.now += 6 * 60_000;
+    duels.send({ t: 'voice-group', uuid: LENA, group: null });
+    await lobby.next('voice', ownCount(0));
+
+    // Im Panel aus + Hörweite: kommt sofort an, Anlegen wird abgelehnt.
+    stores.patchSettings('voice', { ownGroups: false, distance: 48 }, 'test');
+    expect(await duels.next('voice', (m) => m['ownGroups'] === false)).toMatchObject({ distance: 48 });
+    await cmd(LENA, 'voice', 'gruppe', 'Neu');
+    await said(LENA, 'switched off');
+  });
+
   test('Proxy meldet nach dem Neuverbinden alle Spieler – Spielzeit wird gezählt', async () => {
     const { proxy } = await network();
     clock.now += 30 * 60_000;

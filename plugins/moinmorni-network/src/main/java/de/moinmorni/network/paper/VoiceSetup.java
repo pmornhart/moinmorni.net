@@ -16,7 +16,10 @@ final class VoiceSetup {
         if (service == null) {
             return null;
         }
-        VoiceBridge bridge = new VoiceBridge(hub, plugin.getLogger());
+        org.bukkit.plugin.Plugin voicechat = plugin.getServer().getPluginManager().getPlugin("voicechat");
+        java.nio.file.Path config = voicechat == null ? null
+                : voicechat.getDataFolder().toPath().resolve("voicechat-server.properties");
+        VoiceBridge bridge = new VoiceBridge(hub, plugin.getLogger(), config);
         service.registerPlugin(bridge);
         plugin.getLogger().info("Sprachchat-Brücke ist aktiv");
         return bridge;

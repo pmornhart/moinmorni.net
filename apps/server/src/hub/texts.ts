@@ -387,8 +387,8 @@ const TEXTS = {
     en: `${P}<gold><white>{mode}</white> is under maintenance right now.`,
   },
   'voice.list': {
-    de: `${V}<gray>Kanäle für alle Server: {channels}</gray>\n<gray>Beitreten: <yellow>/voice <kanal></yellow> oder im Sprachchat-Menü (Taste <white>G</white>) unter „Gruppen“.`,
-    en: `${VE}<gray>Channels on every server: {channels}</gray>\n<gray>Join: <yellow>/voice <channel></yellow> or in the voice chat menu (key <white>G</white>) under "Groups".`,
+    de: `${V}<gray>Kanäle für alle Server: {channels}</gray>\n<gray>Beitreten: <yellow>/voice <kanal></yellow> oder im Sprachchat-Menü (Taste <white>G</white>) unter „Gruppen“. Eigene Gruppe für alle Server: <yellow>/voice gruppe <name> [passwort]</yellow>.`,
+    en: `${VE}<gray>Channels on every server: {channels}</gray>\n<gray>Join: <yellow>/voice <channel></yellow> or in the voice chat menu (key <white>G</white>) under "Groups". Own group on every server: <yellow>/voice group <name> [password]</yellow>.`,
   },
   'voice.channel': {
     de: "<click:run_command:'/voice {name}'><hover:show_text:'Beitreten'><white>{name}</white> <dark_gray>({count})</dark_gray></hover></click>",
@@ -414,6 +414,50 @@ const TEXTS = {
   'voice.followed': {
     de: `${V}<gray>Du bist jetzt in der Gruppe von <white>{name}</white>.`,
     en: `${VE}<gray>You joined <white>{name}</white>'s group.`,
+  },
+  'voice.own_list': {
+    de: `${V}<gray>Eigene Gruppen: {groups}</gray> <dark_gray>(🔒 = mit Passwort: /voice <name> <passwort>)`,
+    en: `${VE}<gray>Own groups: {groups}</gray> <dark_gray>(🔒 = password: /voice <name> <password>)`,
+  },
+  'voice.own_locked': {
+    de: "<click:suggest_command:'/voice {name} '><hover:show_text:'Mit Passwort beitreten'><white>🔒 {name}</white> <dark_gray>({count})</dark_gray></hover></click>",
+    en: "<click:suggest_command:'/voice {name} '><hover:show_text:'Join with password'><white>🔒 {name}</white> <dark_gray>({count})</dark_gray></hover></click>",
+  },
+  'voice.own_made': {
+    de: `${V}<gray>Gruppe <white>{name}</white> steht – auf allen Servern. Andere kommen mit <yellow>/voice {name}</yellow> dazu.`,
+    en: `${VE}<gray>Group <white>{name}</white> is ready – on every server. Others join with <yellow>/voice {name}</yellow>.`,
+  },
+  'voice.own_made_locked': {
+    de: `${V}<gray>Gruppe <white>{name}</white> steht – auf allen Servern, mit Passwort. Andere kommen mit <yellow>/voice {name} {password}</yellow> dazu (oder im Menü mit dem Passwort).`,
+    en: `${VE}<gray>Group <white>{name}</white> is ready – on every server, with password. Others join with <yellow>/voice {name} {password}</yellow> (or in the menu with the password).`,
+  },
+  'voice.own_usage': {
+    de: `${V}<gray>So geht's: <yellow>/voice gruppe <name> [passwort]</yellow> – Name 3–16 Zeichen (Buchstaben, Ziffern, _ und -).`,
+    en: `${VE}<gray>Usage: <yellow>/voice group <name> [password]</yellow> – name 3–16 characters (letters, digits, _ and -).`,
+  },
+  'voice.own_password_rule': {
+    de: `${V}<red>Das Passwort braucht 4 bis 32 Zeichen.`,
+    en: `${VE}<red>The password needs 4 to 32 characters.`,
+  },
+  'voice.own_taken': {
+    de: `${V}<red>Den Namen <white>{name}</white> gibt es schon.`,
+    en: `${VE}<red>The name <white>{name}</white> is already taken.`,
+  },
+  'voice.own_off': {
+    de: `${V}<gray>Eigene Gruppen sind auf diesem Netzwerk gerade aus.`,
+    en: `${VE}<gray>Own groups are switched off on this network right now.`,
+  },
+  'voice.own_none': {
+    de: `${V}<gray>Du hast gerade keine eigene Gruppe.`,
+    en: `${VE}<gray>You don't have an own group right now.`,
+  },
+  'voice.own_removed': {
+    de: `${V}<gray>Gruppe <white>{name}</white> ist aufgelöst.`,
+    en: `${VE}<gray>Group <white>{name}</white> has been closed.`,
+  },
+  'voice.own_password': {
+    de: `${V}<red><white>{name}</white> hat ein Passwort: <yellow>/voice {name} <passwort>`,
+    en: `${VE}<red><white>{name}</white> has a password: <yellow>/voice {name} <password>`,
   },
   'voice.muted_you': {
     de: `${V}<red>Du bist im Sprachchat stumm{until}. Grund: <white>{reason}`,

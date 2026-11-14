@@ -232,6 +232,7 @@ export function createHub(options: HubOptions): Hub {
     () => [...conns.backends.values()],
     (server) => conns.backends.get(server),
     () => social.voiceGroups(),
+    now,
   );
   voiceRef.broadcast = voice.broadcast;
   // Erst beim ersten Gebrauch zusammenstellen: Zusatzbefehle (Discord-Bot) gibt es erst nach dem Hub.
@@ -566,7 +567,10 @@ export function createHub(options: HubOptions): Hub {
 
   return {
     listen: transport.listen,
-    close: transport.close,
+    close: async () => {
+      voice.stop();
+      await transport.close();
+    },
     keyFor: (server) => serverKeyOf(hubSecret, server),
     presence,
     players,
