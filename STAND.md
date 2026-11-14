@@ -63,6 +63,8 @@
 - 15.11. nachts: **Webseite neu** im Aufbau großer Netzwerke (Helfer-Agent, von mir geprüft): Kopf mit Adresse/Spielerzahl/Discord, eigenes Alpendorf-Kopfbild, News, Spielmodi, Statistiken mit Rangliste und Suche, Spielerprofile, Team, Regeln, Hilfe; Panel-Seiten News und Discord. `/api/site` liefert die Sprachkanäle, `/api/status` den Server-Namen je Modus; Discord „einrichten“ ohne Token meldet `discord_not_configured`.
 - 15.11. nachts: **Lobby baut sich selbst** (`apps/server/src/lobby/`): Bauplan liegt jetzt im Baukasten (`packages/builder/src/lobby/`), `lobbyPack()` als Datenpaket, `world.ts` spielt es über den Motor auf, baut Schritt für Schritt, merkt sich die Version; server.properties der Lobby (Abenteuer, friedlich, Figuren-Paket `/api/public/packs/lobby.zip` mit SHA-1, Pflicht nur per Schalter Lobby → Figuren). Echt mit frischem Paper 26.3 geprüft (Funde behoben: Zeilenumbrüche in Schildern, forceload in kleinen Portionen). 55 Server-Tests grün.
 
+- 15.11.: **Philips Go → MorniHosting-PR #116 gemergt** (https://github.com/pmornhart/MorniHosting/pull/116, Merge 1046a49 auf `main`). Motor-Submodul `vendor/mornihosting` folgt jetzt `main`.
+
 ## Offen
 
 - Offen: Gefängnis (mit der Lobby), Discord-Seite + Team-Konten im Panel, Webseite (Regeln, Team, Hilfe, News), Updates, Proxmox-Einzeiler, Modi.
