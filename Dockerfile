@@ -2,6 +2,14 @@
 # MoinMorni: Webseite, Panel, Hub für die Plugins und Discord-Bot in einem Image. Der Motor (MorniHosting) hat sein
 # eigenes Image aus vendor/mornihosting.
 
+# Das Netzwerk-Plugin (Velocity + Paper, Java 25). Scheitert sein Bau, entsteht das Image trotzdem – MoinMorni
+# meldet dann, dass das Plugin fehlt, statt das ganze Update abzubrechen.
+FROM maven:3.9.16-eclipse-temurin-25 AS plugin
+WORKDIR /src
+COPY plugins/moinmorni-network/pom.xml ./
+COPY plugins/moinmorni-network/src ./src
+RUN mkdir -p target && (mvn -B -q package || echo "Netzwerk-Plugin konnte nicht gebaut werden" > target/BUILD_FAILED.txt)
+
 FROM node:22-alpine AS build
 # Bauwerkzeuge für native Module (better-sqlite3) nur in der Bau-Stufe.
 # hadolint ignore=DL3018
@@ -41,6 +49,7 @@ ENV NODE_ENV=production \
 WORKDIR /app
 COPY --from=build /out /app/server
 COPY --from=build /src/apps/web/dist /app/web
+COPY --from=plugin /src/target/ /app/plugins/
 RUN mkdir -p /data && chown 1000:1000 /data
 USER 1000:1000
 EXPOSE 8080

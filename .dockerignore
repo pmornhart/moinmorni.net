@@ -6,3 +6,4 @@ data
 docs/fortschritt/bilder
 *.log
 .env
+**/target

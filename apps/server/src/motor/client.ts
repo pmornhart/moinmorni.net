@@ -48,6 +48,8 @@ export interface MotorClient {
   /** Wer gehört zu diesem Cookie? null = nicht angemeldet. */
   readonly me: (cookie: string) => Promise<MotorMe | null>;
   readonly servers: () => Promise<MotorServer[]>;
+  /** Datei in den Ordner eines Servers hochladen (z. B. das Netzwerk-Plugin nach plugins/). */
+  readonly upload: (serverId: string, dir: string, filename: string, bytes: Uint8Array) => Promise<void>;
   readonly baseUrl: string;
 }
 
@@ -79,6 +81,25 @@ export function createMotorClient(baseUrl: string, token: string, fetchImpl: Fet
     if (res.status === HTTP_NO_CONTENT) return undefined as T;
     return (await res.json()) as T;
   };
+  const upload = async (
+    serverId: string,
+    dir: string,
+    filename: string,
+    bytes: Uint8Array,
+  ): Promise<void> => {
+    const form = new FormData();
+    form.append('file', new Blob([bytes]), filename);
+    const res = await fetchImpl(
+      `${baseUrl}/api/servers/${encodeURIComponent(serverId)}/files/upload?path=${encodeURIComponent(dir)}`,
+      {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}` },
+        body: form,
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      },
+    );
+    if (!res.ok) throw await errorOf(res);
+  };
 
   return {
     baseUrl,
@@ -94,5 +115,6 @@ export function createMotorClient(baseUrl: string, token: string, fetchImpl: Fet
       return (await res.json()) as MotorMe;
     },
     servers: () => request<MotorServer[]>('GET', '/api/servers'),
+    upload,
   };
 }

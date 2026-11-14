@@ -13,6 +13,7 @@ import { createEventBus, type EventBus } from './lib/events.js';
 import { createMotorClient, MotorError, type FetchLike, type MotorClient } from './motor/client.js';
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
+import { createProvisioner, type NetworkProvisioner } from './network/provision.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { registerPublicRoutes } from './public/routes.js';
@@ -30,12 +31,14 @@ export type Api = FastifyInstance<
 
 export interface BuiltApp {
   readonly app: Api;
+  readonly config: Config;
   readonly db: Db;
   readonly stores: Stores;
   readonly motor: MotorClient;
   readonly events: EventBus;
   readonly setup: SetupService;
   readonly hub: Hub;
+  readonly network: NetworkProvisioner;
   /** Nach dem Start im Hintergrund: Einrichtungs-Code bereitlegen, Motor einstellen. */
   readonly start: () => Promise<void>;
   readonly close: () => Promise<void>;
@@ -91,7 +94,21 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     timeZone: config.timeZone,
   });
   const status = createStatusService(config, motor, stores, hub);
-  const setup = createSetupService(config, handle.db, motor, app.log);
+  const network = createProvisioner(config, motor, hub, app.log);
+  const provision = async (): Promise<void> => {
+    if (!config.autoNetwork) return;
+    try {
+      const result = await network.ensure();
+      app.log.info(result, 'Netzwerk geprüft');
+    } catch (err) {
+      app.log.error(
+        { err },
+        'Netzwerk konnte nicht eingerichtet werden – nächster Versuch beim nächsten Start',
+      );
+    }
+  };
+  events.on('setup.done', () => void provision());
+  const setup = createSetupService(config, handle.db, motor, app.log, events);
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
   registerPanelRoutes(app, auth, stores);
@@ -123,13 +140,18 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
 
   return {
     app,
+    config,
     db: handle.db,
     stores,
     motor,
     events,
     setup,
     hub,
-    start: setup.start,
+    network,
+    start: async () => {
+      await setup.start();
+      if (!(await setup.required())) await provision();
+    },
     close: async () => {
       await hub.close();
       await app.close();

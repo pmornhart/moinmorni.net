@@ -107,6 +107,7 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
         MM_MOTOR_TOKEN: token,
         MM_PORT: '0',
         MM_WEB_DIR: mmDir,
+        MM_AUTO_NETWORK: 'false',
       },
       mmDir,
     ),

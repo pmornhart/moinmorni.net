@@ -5,6 +5,8 @@ export interface Events {
   'settings.changed': { area: string; values: Record<string, unknown>; by: string };
   'modes.changed': { by: string };
   'roles.changed': { by: string };
+  /** Owner-Konto angelegt – jetzt richtet sich das Netzwerk ein. */
+  'setup.done': { owner: string };
 }
 
 export interface EventBus {

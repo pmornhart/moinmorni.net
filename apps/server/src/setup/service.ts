@@ -7,6 +7,7 @@ import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
 import { teamMembers } from '../db/schema.js';
 import { badRequest, conflict } from '../lib/errors.js';
+import type { EventBus } from '../lib/events.js';
 import { retry } from '../lib/retry.js';
 import { MotorError, type MotorClient, type MotorMe } from '../motor/client.js';
 
@@ -70,6 +71,7 @@ export function createSetupService(
   db: Db,
   motor: MotorClient,
   log: FastifyBaseLogger,
+  events: EventBus,
 ): SetupService {
   const codeFile = path.join(config.dataDir, CODE_FILE);
   const state = { done: false };
@@ -132,6 +134,7 @@ export function createSetupService(
       if (host === config.domain) await motor.request('PUT', '/api/settings', { panelDomain: config.domain });
       await motorDefaults();
       log.info({ owner: created.user.username }, 'Einrichtung abgeschlossen');
+      events.emit('setup.done', { owner: created.user.username });
     },
     start: async () => {
       const needed = await retry(required, START_TRIES, START_DELAY_MS);
