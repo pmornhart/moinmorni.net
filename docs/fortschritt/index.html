@@ -101,12 +101,12 @@ ul.files { margin: 0; padding-left: 18px; font-family: var(--mono); font-size: 1
 <script>
 /* Stand – wird nach jedem Baustein aktualisiert. Status: open | run | wait | done | prob */
 const STAND = {
-  updated: '14.11.2026, 15:10',
-  now: { title: 'Baustein 1 · Test- und Bildwerkzeug', text: 'Paper 26.3, Paper 26.1.2, Velocity 4.3.1 und Java 25 laufen in der Sandbox. Jetzt teste ich, ob ein echter Minecraft-Client ohne Bildschirm startet, damit die Bilder echte Spiel-Screenshots werden.' },
+  updated: '14.11.2026, 16:05',
+  now: { title: 'Baustein 2 · Lobby-Entwürfe', text: 'Ich baue drei grobe Lobby-Entwürfe (Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen) und fotografiere sie mit dem echten Client.' },
   blocks: [
     ['Verstehen und Plan', 'Fragerunden, Recherche, Architektur (eigenständig, MorniHosting-Kern als Motor)', 'done'],
-    ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder wie im echten Minecraft', 'run'],
-    ['Lobby-Entwürfe', '3 Entwürfe als Bilder: Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen', 'open'],
+    ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder wie im echten Minecraft', 'done', 'Echter Minecraft-Client 26.3 läuft ohne Bildschirm (Vulkan in Software) und macht echte Screenshots; Test-Spieler (mineflayer) treten bei.'],
+    ['Lobby-Entwürfe', '3 Entwürfe als Bilder: Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen', 'run'],
     ['MorniHosting als Motor', 'Motor-Modus ohne Oberfläche, Netzwerke, Schlüssel mit begrenzten Rechten, Server-Seiten als Baustein, Ereignisse (Branch + PR in MorniHosting)', 'open'],
     ['MoinMorni-Grundgerüst', 'Eigener Container mit Motor, Login mit Passkeys und 2FA, Datenbank, Einstellungs-Katalog, Deutsch/Englisch, Tests', 'open'],
     ['Netzwerk-Plugin', 'Sichere Verbindung zum Hub, Ränge, Chat, Freunde, Party, Strafen, Statistiken, Sprache, Status, Schlaf-Modus', 'open'],
@@ -125,8 +125,11 @@ const STAND = {
     ['Proxmox-Quick-Start', 'Einzeiler, fragt Domain, Bot-Token, Mail; speichert sicher in .env; Anleitung, README', 'open'],
     ['Abschluss', 'Jede Motor-Funktion aus MoinMorni prüfen, Sicherheitsprüfung, Liste: geht / geht noch nicht / warum', 'open']
   ],
-  results: [],
-  files: ['docs/architektur.md', 'docs/recherche/ (3 Berichte)', 'CLAUDE.md, STAND.md', 'docs/fortschritt/index.html']
+  results: [
+    { img: 'bilder/echter-client-ohne-leiste.jpg', time: '16:00', caption: 'Echter Minecraft-Client 26.3 in der Sandbox, Leiste ausgeblendet – so entstehen ab jetzt alle Bilder' },
+    { img: 'bilder/echter-client-erster-blick.jpg', time: '15:56', caption: 'Erster Blick des echten Clients auf einen Test-Server (Paper 26.3)' }
+  ],
+  files: ['tools/mc-client/ (launch.py, shots.py, rcon.py)', 'docs/architektur.md', 'docs/recherche/ (3 Berichte)', 'CLAUDE.md, STAND.md', 'docs/fortschritt/index.html']
 };
 const LABEL = { open: 'offen', run: 'läuft gerade', wait: 'wartet auf dich', done: 'fertig', prob: 'Problem' };
 const WEIGHT = { done: 1, run: 0.4, wait: 0.8 };

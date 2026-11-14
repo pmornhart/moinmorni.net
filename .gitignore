@@ -12,3 +12,5 @@ data/
 # Minecraft-Client-Texturen nur lokal zum Rendern
 .mc-assets/
 render-cache/
+# Spiel-Screenshots nur lokal (Mojang-Texturen)
+docs/fortschritt/bilder/
