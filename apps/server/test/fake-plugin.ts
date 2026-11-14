@@ -3,7 +3,16 @@
  * (Handschlag, signierte Rahmen) – und kann absichtlich falsch spielen.
  */
 import { WebSocket } from 'ws';
-import { authProof, frameMac, newNonce, seal, sessionKeyOf, type ServerKind } from '../src/hub/protocol.js';
+import {
+  authProof,
+  frameMac,
+  newNonce,
+  openBinary,
+  seal,
+  sealBinary,
+  sessionKeyOf,
+  type ServerKind,
+} from '../src/hub/protocol.js';
 
 export interface Msg {
   readonly t: string;
@@ -16,6 +25,9 @@ export interface FakePlugin {
   /** Wartet auf die nächste (noch nicht abgeholte) Nachricht dieses Typs. */
   readonly next: (t: string, match?: (m: Msg) => boolean) => Promise<Msg>;
   readonly received: Msg[];
+  /** Empfangene Binär-Rahmen (Sprache), schon geprüft. */
+  readonly binaries: Buffer[];
+  readonly sendBinary: (payload: Buffer) => void;
   /** Rohtext schicken (für Angriffe). */
   readonly raw: (text: string) => void;
   /** Zuletzt gesendeter Rahmen (für Wiederholungs-Angriff). */
@@ -34,12 +46,21 @@ export async function connectPlugin(
 ): Promise<FakePlugin> {
   const socket = new WebSocket(url);
   const received: Msg[] = [];
+  const binaries: Buffer[] = [];
   const taken = new Set<Msg>();
   const waiters: Array<() => void> = [];
   const state = { sessionKey: '', outSeq: 0, inSeq: 0, last: '', nextId: 1 };
   const closed = new Promise<number>((resolve) => socket.on('close', (code) => resolve(code)));
   const ready = new Promise<void>((resolve, reject) => {
-    socket.on('message', (data) => {
+    socket.on('message', (data, isBinary) => {
+      if (isBinary) {
+        const payload = openBinary(state.sessionKey, state.inSeq + 1, data as Buffer);
+        if (!payload) throw new Error('Hub hat falsch signiert (binär)');
+        state.inSeq += 1;
+        binaries.push(Buffer.from(payload));
+        waiters.splice(0).forEach((w) => w());
+        return;
+      }
       const raw = JSON.parse(data.toString()) as Record<string, unknown>;
       if (raw['t'] === 'hello') {
         const pluginNonce = newNonce();
@@ -93,6 +114,11 @@ export async function connectPlugin(
 
   const plugin: FakePlugin = {
     send,
+    binaries,
+    sendBinary: (payload) => {
+      state.outSeq += 1;
+      socket.send(sealBinary(state.sessionKey, state.outSeq, payload));
+    },
     request: async (body) => {
       const id = state.nextId;
       state.nextId += 1;

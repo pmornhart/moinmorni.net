@@ -4,7 +4,7 @@ import { punishments } from '../db/schema.js';
 
 /** Strafen im ganzen Netzwerk: Bann, Stumm, Verwarnung, Rauswurf (Gefängnis kommt mit der Lobby). */
 
-export type PunishKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick';
+export type PunishKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick' | 'voice';
 export type Punishment = typeof punishments.$inferSelect;
 
 const MINUTE_MS = 60_000;
@@ -40,6 +40,8 @@ export interface PunishService {
   readonly active: (uuid: string, kind: PunishKind) => Punishment | undefined;
   readonly revoke: (uuid: string, kind: PunishKind, by: string) => boolean;
   readonly history: (uuid: string) => Punishment[];
+  /** Wer gerade im Sprachchat stumm ist. */
+  readonly activeOf: (kind: PunishKind) => string[];
   /** Alle gültigen Banns – der Proxy hält sie vor, falls der Hub kurz weg ist. */
   readonly activeBans: () => { uuid: string; until: string | null }[];
 }
@@ -89,6 +91,14 @@ export function createPunishService(db: Db, now: () => Date = () => new Date()):
         .where(eq(punishments.playerUuid, uuid))
         .orderBy(desc(punishments.id))
         .all(),
+    activeOf: (kind) =>
+      db
+        .select()
+        .from(punishments)
+        .where(and(eq(punishments.kind, kind), isNull(punishments.revokedAt)))
+        .all()
+        .filter(valid)
+        .map((p) => p.playerUuid),
     activeBans: () =>
       db
         .select()

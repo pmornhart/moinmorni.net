@@ -13,6 +13,8 @@ public final class HubCrypto {
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int NONCE_BYTES = 16;
+    /** Binär-Rahmen: 8 Byte Zähler + 32 Byte HMAC, dann der Inhalt. */
+    public static final int BINARY_HEADER = 40;
 
     private HubCrypto() {
     }
@@ -44,6 +46,18 @@ public final class HubCrypto {
 
     public static String frameMac(String sessionKey, long seq, String body) {
         return hmac(sessionKey, seq + "." + body);
+    }
+
+    /** HMAC über Zähler (8 Byte, big endian) + Inhalt – wie `binaryMac` im Hub. */
+    public static byte[] binaryMac(String sessionKey, long seq, byte[] payload) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(sessionKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            mac.update(java.nio.ByteBuffer.allocate(8).putLong(seq).array());
+            return mac.doFinal(payload);
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /** Vergleich in fester Zeit. */

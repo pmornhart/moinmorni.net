@@ -32,6 +32,7 @@ describe('Netzwerk richtet sich selbst ein', () => {
     const config = { ...h.mm.config, pluginFile: jar };
     const provisioner = createProvisioner(config, h.mm.motor, h.mm.hub, quiet, {
       proxyAddOns: {},
+      lobbyAddOns: {},
       versions: { paper: '1.21.4', velocity: '3.4.0' },
     });
 

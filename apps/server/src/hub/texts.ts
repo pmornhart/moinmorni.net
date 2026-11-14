@@ -22,6 +22,9 @@ const F = '<dark_gray>[<aqua>Freunde</aqua>]</dark_gray> ';
 const FE = '<dark_gray>[<aqua>Friends</aqua>]</dark_gray> ';
 const Y = '<dark_gray>[<light_purple>Party</light_purple>]</dark_gray> ';
 
+const V = '<dark_gray>[<green>Sprachchat</green>]</dark_gray> ';
+const VE = '<dark_gray>[<green>Voice</green>]</dark_gray> ';
+
 const TEXTS = {
   'lang.set': {
     de: `${P}<gray>Deine Sprache ist jetzt <green>Deutsch</green>.`,
@@ -338,6 +341,55 @@ const TEXTS = {
   'mode.maintenance': {
     de: `${P}<gold><white>{mode}</white> ist gerade in Wartung.`,
     en: `${P}<gold><white>{mode}</white> is under maintenance right now.`,
+  },
+  'voice.list': {
+    de: `${V}<gray>Kanäle für alle Server: {channels}</gray>\n<gray>Beitreten: <yellow>/voice <kanal></yellow> oder im Sprachchat-Menü (Taste <white>G</white>) unter „Gruppen“.`,
+    en: `${VE}<gray>Channels on every server: {channels}</gray>\n<gray>Join: <yellow>/voice <channel></yellow> or in the voice chat menu (key <white>G</white>) under "Groups".`,
+  },
+  'voice.channel': {
+    de: "<click:run_command:'/voice {name}'><hover:show_text:'Beitreten'><white>{name}</white> <dark_gray>({count})</dark_gray></hover></click>",
+    en: "<click:run_command:'/voice {name}'><hover:show_text:'Join'><white>{name}</white> <dark_gray>({count})</dark_gray></hover></click>",
+  },
+  'voice.joined': {
+    de: `${V}<gray>Du bist jetzt in <white>{name}</white> – alle Server hören dich.`,
+    en: `${VE}<gray>You're in <white>{name}</white> now – every server can hear you.`,
+  },
+  'voice.left': { de: `${V}<gray>Du hast den Kanal verlassen.`, en: `${VE}<gray>You left the channel.` },
+  'voice.unknown': {
+    de: `${V}<red>Diesen Kanal gibt es nicht: <white>{name}`,
+    en: `${VE}<red>There is no channel called <white>{name}`,
+  },
+  'voice.no_group': {
+    de: `${V}<gray><white>{name}</white> ist in keiner Gruppe.`,
+    en: `${VE}<gray><white>{name}</white> is not in a group.`,
+  },
+  'voice.other_server': {
+    de: `${V}<gray><white>{name}</white> ist in einer eigenen Gruppe auf einem anderen Server.`,
+    en: `${VE}<gray><white>{name}</white> is in a private group on another server.`,
+  },
+  'voice.followed': {
+    de: `${V}<gray>Du bist jetzt in der Gruppe von <white>{name}</white>.`,
+    en: `${VE}<gray>You joined <white>{name}</white>'s group.`,
+  },
+  'voice.muted_you': {
+    de: `${V}<red>Du bist im Sprachchat stumm{until}. Grund: <white>{reason}`,
+    en: `${VE}<red>You are muted in voice chat{until}. Reason: <white>{reason}`,
+  },
+  'voice.unmuted_you': {
+    de: `${V}<green>Du kannst im Sprachchat wieder sprechen.`,
+    en: `${VE}<green>You can speak in voice chat again.`,
+  },
+  'team.voicemute': {
+    de: `${P}<red>{actor}</red> <gray>hat <white>{name}</white> im Sprachchat stummgeschaltet{until}. Grund: <white>{reason}`,
+    en: `${P}<red>{actor}</red> <gray>muted <white>{name}</white> in voice chat{until}. Reason: <white>{reason}`,
+  },
+  'team.voiceunmute': {
+    de: `${P}<green>{actor}</green> <gray>hat <white>{name}</white> im Sprachchat freigegeben.`,
+    en: `${P}<green>{actor}</green> <gray>unmuted <white>{name}</white> in voice chat.`,
+  },
+  'voice.not_muted': {
+    de: `${V}<gray><white>{name}</white> ist im Sprachchat nicht stumm.`,
+    en: `${VE}<gray><white>{name}</white> is not muted in voice chat.`,
   },
   'lobby.missing': {
     de: `${P}<red>Die Lobby ist gerade nicht da.`,

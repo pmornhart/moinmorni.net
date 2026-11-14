@@ -14,6 +14,7 @@ import { hubSecretOf, serverKeyOf } from './protocol.js';
 import { createPunishService, type PunishService } from './punish.js';
 import { createSettingCommands, mergeCommands } from './setting-commands.js';
 import { createSocial } from './social.js';
+import { createVoice } from './voice.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
 
@@ -63,6 +64,7 @@ const commandSchema = z.object({
   args: z.array(z.string().max(TEXT_MAX)).max(ARGS_MAX),
 });
 const chatSchema = z.object({ uuid: uuidField, text: z.string().min(1).max(TEXT_MAX) });
+const voiceGroupSchema = z.object({ uuid: uuidField, group: z.string().max(40).nullable() });
 const connectingSchema = z.object({
   id: z.number().int(),
   uuid: uuidField,
@@ -203,12 +205,25 @@ export function createHub(options: HubOptions): Hub {
     },
   };
   const moderation = createModeration(ctx, (change) => events.emit('punishments.changed', change));
-  const social = createSocial(ctx, db, now);
+  const voiceRef: { broadcast: () => void } = { broadcast: () => undefined };
+  const social = createSocial(ctx, db, now, () => voiceRef.broadcast());
+  const voice = createVoice(
+    ctx,
+    () => [...conns.backends.values()],
+    (server) => conns.backends.get(server),
+    () => social.voiceGroups(),
+  );
+  voiceRef.broadcast = voice.broadcast;
   // Erst beim ersten Gebrauch zusammenstellen: Zusatzbefehle (Discord-Bot) gibt es erst nach dem Hub.
   const cache: { commands: Command[] | null } = { commands: null };
   const commands = (): Command[] => {
     cache.commands ??= mergeCommands(
-      [...createCommands(ctx, moderation), ...social.commands, ...(options.extraCommands?.(ctx) ?? [])],
+      [
+        ...createCommands(ctx, moderation),
+        ...social.commands,
+        ...voice.commands,
+        ...(options.extraCommands?.(ctx) ?? []),
+      ],
       createSettingCommands(ctx),
     );
     return cache.commands;
@@ -274,6 +289,7 @@ export function createHub(options: HubOptions): Hub {
 
   const leave = (uuid: string): void => {
     if (presence.get(uuid)) social.left(normalUuid(uuid));
+    voice.onGroup(normalUuid(uuid), null);
     const gone = presence.leave(uuid);
     if (gone) players.addMinutes(gone.uuid, Math.round((now() - gone.since) / MINUTE_MS));
   };
@@ -369,6 +385,11 @@ export function createHub(options: HubOptions): Hub {
       const ok = actor && command && allowed(command, actor.role);
       reply(conn, m.id, { suggestions: ok && command.complete ? command.complete(actor, m.args) : [] });
     },
+    'voice-group': (conn, body) => {
+      if (conn.kind !== 'backend') return;
+      const m = voiceGroupSchema.parse(body);
+      voice.onGroup(normalUuid(m.uuid), m.group);
+    },
     chat: (conn, body) => {
       if (conn.kind !== 'backend') return;
       const m = chatSchema.parse(body);
@@ -392,6 +413,7 @@ export function createHub(options: HubOptions): Hub {
       }
       conns.backends.set(conn.server, conn);
       conn.send({ t: 'welcome', server: conn.server, kind: conn.kind });
+      conn.send(voice.config());
       presence.on(conn.server).forEach((p) => sendProfile(p.uuid));
       // Aufgewacht: wer gewartet hat, kommt jetzt hinein.
       const list = waiting.get(conn.server);
@@ -410,6 +432,9 @@ export function createHub(options: HubOptions): Hub {
       if (handler) handler(conn, body);
       else log.warn({ server: conn.server, t: body.t }, 'Hub: unbekannte Nachricht');
     },
+    onBinary: (conn, payload) => {
+      if (conn.kind === 'backend') voice.onAudio(conn, payload);
+    },
     onClose: (conn) => {
       if (conns.proxy === conn) conns.proxy = null;
       if (conns.backends.get(conn.server) === conn) conns.backends.delete(conn.server);
@@ -418,6 +443,7 @@ export function createHub(options: HubOptions): Hub {
 
   events.on('settings.changed', ({ area }) => {
     if (area === 'network') toProxy(network());
+    if (area === 'voice') voice.broadcast();
   });
   events.on('roles.changed', () => presence.all().forEach((p) => sendProfile(p.uuid)));
 

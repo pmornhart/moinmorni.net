@@ -42,6 +42,11 @@ Danach ist jede Nachricht in beide Richtungen ein signierter Rahmen:
 
 Falscher Zähler oder falsche Signatur → Verbindung zu (Code 4002).
 
+**Binär-Rahmen** (Sprache) laufen über denselben Zähler: `[8 Byte Zähler, big endian][32 Byte HMAC-SHA256(sessionKey,
+Zähler-Bytes + Inhalt)][Inhalt]`. Inhalt eines Audio-Rahmens: `[1 = Audio][16 Byte Gruppe][16 Byte Sprecher][Opus]`.
+Der Hub reicht ihn nur weiter, wenn der Sprecher wirklich auf dem sendenden Server ist, nicht stumm ist und die Gruppe
+ein Netzwerk-Kanal oder eine Party ist.
+
 ## Nachrichten
 
 Jede Nachricht hat `t` (Typ). Anfragen haben zusätzlich `id` (Zahl); die Antwort ist
@@ -62,6 +67,8 @@ des Spielers.
 | `command` (Anfrage) | Proxy | `uuid, command, args[]` → `{}` (Antworten kommen als `msg`) |
 | `complete` (Anfrage) | Proxy | `uuid, command, args[]` → `{suggestions[]}` |
 | `chat` | Spielserver | `uuid, text` |
+| `voice-group` | Spielserver | `uuid, group` (UUID oder null) – Gruppe im Sprachchat gewechselt |
+| *(binär)* Audio | Spielserver | Sprache aus einem Netzwerk-Kanal oder einer Party |
 
 ### Hub → Plugin
 
@@ -75,6 +82,9 @@ des Spielers.
 | `msg` | Proxy | `uuid, text` (Nachricht an einen Spieler, egal wo er ist) |
 | `kick` | Proxy | `uuid, text` |
 | `connect` | Proxy | `uuid, server` |
+| `voice` | Spielserver | `channels[{id, name}], muted[], parties[{id, name, members[]}]` – Kanäle mit gleicher ID auf jedem Server |
+| `voice-join` | Spielserver | `uuid, group, force?` – Spieler in eine Gruppe setzen (Team ohne Passwort) |
+| *(binär)* Audio | Spielserver | Sprache von anderen Servern zum Abspielen |
 
 Fällt der Hub aus, läuft das Netzwerk weiter: Chat bleibt auf dem eigenen Server, Banns aus der letzten `bans`-Liste
 gelten weiter, das Plugin verbindet sich alle paar Sekunden neu.

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { and, eq, or } from 'drizzle-orm';
 import type { Db } from '../db/index.js';
 import { friendRequests, friends } from '../db/schema.js';
@@ -26,6 +27,8 @@ const FRIEND_WORDS = ['add', 'annehmen', 'ablehnen', 'entfernen', 'liste'];
 const PARTY_WORDS = ['einladen', 'annehmen', 'verlassen', 'kick', 'leiter', 'auflösen', 'liste'];
 
 interface Party {
+  /** Gleiche Sprachgruppe auf allen Servern. */
+  readonly id: string;
   leader: string;
   readonly members: Set<string>;
   /** Eingeladen → bis wann (ms). */
@@ -34,6 +37,8 @@ interface Party {
 
 export interface Social {
   readonly commands: Command[];
+  /** Partys als Sprachgruppen (für die Sprachchat-Brücke). */
+  readonly voiceGroups: () => Array<{ id: string; name: string; members: string[] }>;
   readonly joined: (uuid: string) => void;
   readonly left: (uuid: string) => void;
   readonly switched: (uuid: string, server: string) => void;
@@ -41,7 +46,12 @@ export interface Social {
 
 const pair = (x: string, y: string): [string, string] => (x < y ? [x, y] : [y, x]);
 
-export function createSocial(ctx: HubContext, db: Db, now: () => number): Social {
+export function createSocial(
+  ctx: HubContext,
+  db: Db,
+  now: () => number,
+  onParty: () => void = () => undefined,
+): Social {
   const social = (): Record<string, unknown> => ctx.stores.settings('social');
   const say = (uuid: string, line: string): void => ctx.msg(uuid, line);
   const langOf = (uuid: string): 'de' | 'en' => ctx.presence.get(uuid)?.lang ?? 'de';
@@ -204,9 +214,11 @@ export function createSocial(ctx: HubContext, db: Db, now: () => number): Social
     const name = nameOf(uuid);
     tell(party, (lang) => text(lang, key, { name: mm(name) }));
     party.members.delete(uuid);
+    onParty();
     if (party.members.size < 2) {
       tell(party, (lang) => text(lang, 'party.disbanded'));
       parties.delete(party);
+      onParty();
       return;
     }
     if (party.leader === uuid) {
@@ -235,7 +247,8 @@ export function createSocial(ctx: HubContext, db: Db, now: () => number): Social
       say(actor.uuid, text(actor.lang, 'party.in_other', { name: mm(t.name) }));
       return;
     }
-    const party = mine ?? {
+    const party: Party = mine ?? {
+      id: crypto.randomUUID(),
       leader: actor.uuid,
       members: new Set([actor.uuid]),
       invites: new Map<string, number>(),
@@ -267,6 +280,7 @@ export function createSocial(ctx: HubContext, db: Db, now: () => number): Social
     party.invites.delete(actor.uuid);
     party.members.add(actor.uuid);
     tell(party, (lang) => text(lang, 'party.joined', { name: mm(actor.name) }));
+    onParty();
   };
 
   const partyList = (actor: Actor, party: Party): void => {
@@ -366,6 +380,7 @@ export function createSocial(ctx: HubContext, db: Db, now: () => number): Social
           if (leaderOnly(actor, party)) {
             tell(party, (lang) => text(lang, 'party.disbanded'));
             parties.delete(party);
+            onParty();
           }
         } else if (word && !['liste', 'list'].includes(word)) invite(actor, args[0]);
         else if (party) partyList(actor, party);
@@ -405,6 +420,10 @@ export function createSocial(ctx: HubContext, db: Db, now: () => number): Social
 
   return {
     commands,
+    voiceGroups: () =>
+      [...parties]
+        .filter((p) => p.members.size > 1)
+        .map((p) => ({ id: p.id, name: `Party ${nameOf(p.leader)}`.slice(0, 24), members: [...p.members] })),
     joined: (uuid) => {
       const name = nameOf(uuid);
       friendsOf(uuid)

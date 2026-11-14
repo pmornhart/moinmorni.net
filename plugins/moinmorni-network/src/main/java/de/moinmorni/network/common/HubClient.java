@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +35,7 @@ public final class HubClient {
     private final Logger log;
     private final Consumer<JsonObject> onMessage;
     private final Runnable onReady;
+    private volatile Consumer<byte[]> onBinary = b -> { };
     private final HttpClient http = HttpClient.newBuilder()
             .proxy(HttpClient.Builder.NO_PROXY)
             .connectTimeout(CONNECT_TIMEOUT)
@@ -53,6 +55,7 @@ public final class HubClient {
     /** Eine Verbindung: eigener Sitzungsschlüssel und eigene Zähler. */
     private final class Session implements WebSocket.Listener {
         private final StringBuilder buffer = new StringBuilder();
+        private java.io.ByteArrayOutputStream binary = new java.io.ByteArrayOutputStream();
         private WebSocket socket;
         private String sessionKey;
         private long inSeq;
@@ -83,7 +86,7 @@ public final class HubClient {
             return null;
         }
 
-        private void receive(String text) {
+        private synchronized void receive(String text) {
             JsonObject raw = JsonParser.parseString(text).getAsJsonObject();
             if (sessionKey == null) {
                 if (!"hello".equals(str(raw, "t"))) {
@@ -126,6 +129,51 @@ public final class HubClient {
                 return;
             }
             onMessage.accept(message);
+        }
+
+        @Override
+        public CompletionStage<?> onBinary(WebSocket webSocket, ByteBuffer data, boolean last) {
+            byte[] part = new byte[data.remaining()];
+            data.get(part);
+            binary.writeBytes(part);
+            if (last) {
+                byte[] frame = binary.toByteArray();
+                binary = new java.io.ByteArrayOutputStream();
+                byte[] payload = openBinary(frame);
+                if (payload == null) {
+                    log.warning("Hub: Binär-Rahmen falsch signiert – Verbindung wird neu aufgebaut");
+                    webSocket.abort();
+                } else {
+                    onBinary.accept(payload);
+                }
+            }
+            webSocket.request(1);
+            return null;
+        }
+
+        private synchronized byte[] openBinary(byte[] frame) {
+            if (sessionKey == null || frame.length < HubCrypto.BINARY_HEADER) {
+                return null;
+            }
+            long seq = ByteBuffer.wrap(frame, 0, 8).getLong();
+            if (seq != inSeq + 1) {
+                return null;
+            }
+            byte[] payload = java.util.Arrays.copyOfRange(frame, HubCrypto.BINARY_HEADER, frame.length);
+            byte[] mac = java.util.Arrays.copyOfRange(frame, 8, HubCrypto.BINARY_HEADER);
+            if (!java.security.MessageDigest.isEqual(mac, HubCrypto.binaryMac(sessionKey, seq, payload))) {
+                return null;
+            }
+            inSeq = seq;
+            return payload;
+        }
+
+        synchronized void sendBinary(byte[] payload) {
+            outSeq++;
+            byte[] mac = HubCrypto.binaryMac(sessionKey, outSeq, payload);
+            ByteBuffer frame = ByteBuffer.allocate(HubCrypto.BINARY_HEADER + payload.length);
+            frame.putLong(outSeq).put(mac).put(payload).flip();
+            sending = sending.thenCompose(v -> socket.sendBinary(frame, true)).exceptionally(e -> null);
         }
 
         synchronized void send(JsonObject body) {
@@ -197,6 +245,21 @@ public final class HubClient {
 
     public String server() {
         return config.server();
+    }
+
+    /** Binär-Rahmen (Sprache) vom Hub. */
+    public void onBinary(Consumer<byte[]> handler) {
+        this.onBinary = handler;
+    }
+
+    /** Binär-Rahmen an den Hub (Sprache); ohne Verbindung geht er verloren. */
+    public boolean sendBinary(byte[] payload) {
+        Session s = session;
+        if (s == null || !s.ready) {
+            return false;
+        }
+        s.sendBinary(payload);
+        return true;
     }
 
     /** Nachricht ohne Antwort; ohne Verbindung geht sie verloren (false). */

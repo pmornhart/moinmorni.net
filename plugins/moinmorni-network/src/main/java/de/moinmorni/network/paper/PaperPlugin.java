@@ -40,17 +40,32 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
 
     private final Map<UUID, Profile> profiles = new ConcurrentHashMap<>();
     private HubClient hub;
+    /** Sprachchat-Brücke, nur mit Simple Voice Chat (sonst null). */
+    private Object voice;
 
     @Override
     public void onEnable() {
         Path dir = getDataFolder().toPath().getParent().resolve(HUB_DIR);
         try {
             hub = new HubClient(HubConfig.load(dir), getLogger(), this::onHub, () -> { });
+            startVoice();
             hub.start();
         } catch (Exception e) {
             getLogger().warning("MoinMorni ist nicht eingerichtet (" + e.getMessage() + ") – der Server läuft ohne Netzwerk-Chat.");
         }
         getServer().getPluginManager().registerEvents(this, this);
+    }
+
+    /** Brücke anmelden, wenn Simple Voice Chat da ist – die Klasse wird sonst nie geladen. */
+    private void startVoice() {
+        if (getServer().getPluginManager().getPlugin("voicechat") == null) {
+            return;
+        }
+        try {
+            voice = VoiceSetup.register(this, hub);
+        } catch (LinkageError | RuntimeException e) {
+            getLogger().warning("Sprachchat-Brücke nicht gestartet: " + e.getMessage());
+        }
     }
 
     @Override
@@ -95,6 +110,16 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                     }
                     Bukkit.getConsoleSender().sendMessage(de);
                 });
+            }
+            case "voice" -> {
+                if (voice != null) {
+                    VoiceSetup.apply(voice, m);
+                }
+            }
+            case "voice-join" -> {
+                if (voice != null) {
+                    Bukkit.getScheduler().runTask(this, () -> VoiceSetup.join(voice, m));
+                }
             }
             case "msg" -> Bukkit.getScheduler().runTask(this, () -> {
                 Player p = Bukkit.getPlayer(UUID.fromString(HubClient.str(m, "uuid")));

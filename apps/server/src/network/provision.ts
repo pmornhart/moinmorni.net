@@ -46,11 +46,15 @@ export interface ProvisionResult {
 export interface ProvisionOptions {
   /** Add-ons des Proxys (Tests: keine Downloads). */
   readonly proxyAddOns?: Readonly<Record<string, boolean>>;
+  /** Add-ons der Lobby (Sprachchat für die Brücke). */
+  readonly lobbyAddOns?: Readonly<Record<string, boolean>>;
   /** Feste Versionen statt der neuesten (Tests). */
   readonly versions?: Readonly<Record<'paper' | 'velocity', string>>;
 }
 
 const PROXY_ADD_ONS = { geyser: true, via: true, voice: true };
+/** Spielserver brauchen Simple Voice Chat, damit die Sprachkanäle über alle Server gehen. */
+const BACKEND_ADD_ONS = { voice: true };
 
 export interface NetworkProvisioner {
   /** Alles prüfen und fehlende Teile anlegen. */
@@ -93,7 +97,10 @@ export function createProvisioner(
       eula: true,
       autoStart: true,
       startNow: false,
-      ...(software === 'velocity' ? { addOns: options.proxyAddOns ?? PROXY_ADD_ONS } : {}),
+      addOns:
+        software === 'velocity'
+          ? (options.proxyAddOns ?? PROXY_ADD_ONS)
+          : (options.lobbyAddOns ?? BACKEND_ADD_ONS),
     };
     return motor.request<{ id: string }>('POST', '/api/servers', body);
   };

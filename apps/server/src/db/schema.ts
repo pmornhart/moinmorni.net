@@ -71,7 +71,7 @@ export const punishments = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     playerUuid: text('player_uuid').notNull(),
-    kind: text('kind').$type<'ban' | 'mute' | 'jail' | 'warn' | 'kick'>().notNull(),
+    kind: text('kind').$type<'ban' | 'mute' | 'jail' | 'warn' | 'kick' | 'voice'>().notNull(),
     reason: text('reason').notNull(),
     /** Wer bestraft hat (Team-Name). */
     byName: text('by_name').notNull(),

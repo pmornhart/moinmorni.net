@@ -4,6 +4,7 @@ import { openDatabase } from '../src/db/index.js';
 import { createHub, type Hub } from '../src/hub/index.js';
 import { createEventBus } from '../src/lib/events.js';
 import { createStores, type Stores } from '../src/panel/stores.js';
+import { audioFrame, groupId } from '../src/hub/voice.js';
 import { connectPlugin, type FakePlugin, type Msg } from './fake-plugin.js';
 
 const SECRET = 'test-geheimnis-test-geheimnis-test-geheimnis-1234';
@@ -423,6 +424,57 @@ describe('Hub', () => {
     expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: false } });
     await said(LENA, 'maintenance');
     expect(await go(PHILIP, 'duels')).toMatchObject({ data: { allow: true } });
+  });
+
+  test('Sprachchat-Brücke: Kanäle über alle Server, kein Sprechen für andere, Stumm, Party, Team folgt', async () => {
+    const { proxy, lobby, duels } = await network();
+    const cmd = (uuid: string, command: string, ...args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    const dorf = groupId('Dorfplatz');
+    const config = await duels.next('voice');
+    expect(config['channels']).toEqual(expect.arrayContaining([{ id: dorf, name: 'Dorfplatz' }]));
+    const settle = () => new Promise((r) => setTimeout(r, 80));
+
+    lobby.sendBinary(audioFrame(dorf, PHILIP, Buffer.from([1, 2, 3])));
+    await settle();
+    expect(duels.binaries.at(-1)).toEqual(audioFrame(dorf, PHILIP, Buffer.from([1, 2, 3])));
+    expect(lobby.binaries).toHaveLength(0);
+
+    // Duels behauptet, Philip spreche dort – er ist aber in der Lobby: wird verworfen. Fremde Gruppe ebenso.
+    duels.sendBinary(audioFrame(dorf, PHILIP, Buffer.from([9])));
+    lobby.sendBinary(audioFrame(groupId('Geheim'), PHILIP, Buffer.from([9])));
+    await settle();
+    expect(lobby.binaries).toHaveLength(0);
+    expect(duels.binaries).toHaveLength(1);
+
+    await cmd(PHILIP, 'voicemute', 'Lena', '10m', 'Lärm');
+    expect(await duels.next('voice', (m) => (m['muted'] as string[]).includes(LENA))).toBeTruthy();
+    duels.sendBinary(audioFrame(dorf, LENA, Buffer.from([4])));
+    await settle();
+    expect(lobby.binaries).toHaveLength(0);
+    await cmd(PHILIP, 'voiceunmute', 'Lena');
+    duels.sendBinary(audioFrame(dorf, LENA, Buffer.from([5])));
+    await settle();
+    expect(lobby.binaries).toHaveLength(1);
+
+    await cmd(LENA, 'voice', 'Dorfplatz');
+    expect(await duels.next('voice-join', (m) => m['uuid'] === LENA)).toMatchObject({ group: dorf });
+    duels.send({ t: 'voice-group', uuid: LENA, group: dorf });
+    await settle();
+    await cmd(PHILIP, 'voice', 'zu', 'Lena');
+    expect(await lobby.next('voice-join', (m) => m['uuid'] === PHILIP)).toMatchObject({
+      group: dorf,
+      force: true,
+    });
+
+    await cmd(PHILIP, 'party', 'einladen', 'Lena');
+    await cmd(LENA, 'party', 'annehmen', 'Philip');
+    const withParty = await duels.next('voice', (m) => (m['parties'] as unknown[]).length === 1);
+    const party = (withParty['parties'] as Array<{ id: string; name: string; members: string[] }>)[0];
+    expect(party).toMatchObject({ name: 'Party Philip', members: [PHILIP, LENA] });
+    lobby.sendBinary(audioFrame(party?.id ?? '', PHILIP, Buffer.from([7])));
+    await settle();
+    expect(duels.binaries.at(-1)?.at(-1)).toBe(7);
   });
 
   test('Proxy meldet nach dem Neuverbinden alle Spieler – Spielzeit wird gezählt', async () => {

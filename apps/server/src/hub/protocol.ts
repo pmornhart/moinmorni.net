@@ -72,3 +72,31 @@ export function seal(sessionKey: string, seq: number, body: unknown): string {
   const b = JSON.stringify(body);
   return JSON.stringify({ s: seq, b, h: frameMac(sessionKey, seq, b) });
 }
+
+/** Binär-Rahmen (Sprache): 8 Byte Zähler, 32 Byte HMAC über Zähler + Inhalt, dann der Inhalt. */
+const SEQ_BYTES = 8;
+const MAC_BYTES = 32;
+export const BINARY_HEADER = SEQ_BYTES + MAC_BYTES;
+
+const seqBytes = (seq: number): Buffer => {
+  const b = Buffer.alloc(SEQ_BYTES);
+  b.writeBigUInt64BE(BigInt(seq));
+  return b;
+};
+
+export const binaryMac = (sessionKey: string, seq: number, payload: Buffer): Buffer =>
+  crypto.createHmac('sha256', sessionKey).update(seqBytes(seq)).update(payload).digest();
+
+export function sealBinary(sessionKey: string, seq: number, payload: Buffer): Buffer {
+  return Buffer.concat([seqBytes(seq), binaryMac(sessionKey, seq, payload), payload]);
+}
+
+/** Prüft einen Binär-Rahmen; null = falsch (Zähler oder Signatur). */
+export function openBinary(sessionKey: string, expectedSeq: number, frame: Buffer): Buffer | null {
+  if (frame.length < BINARY_HEADER) return null;
+  const seq = Number(frame.readBigUInt64BE(0));
+  if (seq !== expectedSeq) return null;
+  const payload = frame.subarray(BINARY_HEADER);
+  const mac = frame.subarray(SEQ_BYTES, BINARY_HEADER);
+  return crypto.timingSafeEqual(mac, binaryMac(sessionKey, seq, payload)) ? payload : null;
+}

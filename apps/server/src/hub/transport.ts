@@ -7,9 +7,11 @@ import {
   frameMac,
   frameSchema,
   newNonce,
+  openBinary,
   PROTOCOL_VERSION,
   sameMac,
   seal,
+  sealBinary,
   serverKeyOf,
   sessionKeyOf,
   type ServerKind,
@@ -38,12 +40,15 @@ export interface Connection {
   readonly server: string;
   readonly kind: ServerKind;
   readonly send: (body: Body) => void;
+  /** Binär-Rahmen (Sprache). */
+  readonly sendBinary: (payload: Buffer) => void;
   readonly close: (code: number, reason: string) => void;
 }
 
 export interface TransportHandlers {
   readonly onOpen: (conn: Connection) => void;
   readonly onMessage: (conn: Connection, body: Body) => void;
+  readonly onBinary: (conn: Connection, payload: Buffer) => void;
   readonly onClose: (conn: Connection) => void;
 }
 
@@ -103,6 +108,11 @@ export function createTransport(
           state.outSeq += 1;
           if (socket.readyState === socket.OPEN) socket.send(seal(state.sessionKey, state.outSeq, body));
         },
+        sendBinary: (payload) => {
+          state.outSeq += 1;
+          if (socket.readyState === socket.OPEN)
+            socket.send(sealBinary(state.sessionKey, state.outSeq, payload));
+        },
         close: (code, reason) => socket.close(code, reason),
       };
       state.conn = conn;
@@ -133,8 +143,25 @@ export function createTransport(
       }
     };
 
-    socket.on('message', (data) => {
-      const raw = parseJson(data.toString());
+    const receiveBinary = (frame: Buffer, conn: Connection): void => {
+      const payload = openBinary(state.sessionKey, state.inSeq + 1, frame);
+      if (!payload) {
+        log.warn({ server: conn.server }, 'Hub: ungültiger Binär-Rahmen – Verbindung zu');
+        socket.close(CLOSE_FRAME, 'bad frame');
+        return;
+      }
+      state.inSeq += 1;
+      handlers.onBinary(conn, payload);
+    };
+
+    socket.on('message', (data, isBinary) => {
+      const buffer = Array.isArray(data) ? Buffer.concat(data) : Buffer.from(data as ArrayBuffer);
+      if (isBinary) {
+        if (state.conn) receiveBinary(buffer, state.conn);
+        else socket.close(CLOSE_AUTH, 'auth first');
+        return;
+      }
+      const raw = parseJson(buffer.toString());
       if (state.conn) receive(raw, state.conn);
       else authenticate(raw);
     });
