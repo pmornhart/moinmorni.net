@@ -83,7 +83,7 @@ describe('Hub', () => {
   test('Handschlag: richtiger Schlüssel → welcome, falscher → zu', async () => {
     const proxy = await plugin('proxy', 'proxy');
     expect(proxy.received[0]).toMatchObject({ t: 'welcome', server: 'proxy', kind: 'proxy' });
-    const welcome = proxy.received[0] as { commands: Array<{ name: string }> };
+    const welcome = proxy.received[0] as unknown as { commands: Array<{ name: string }> };
     expect(welcome.commands.map((c) => c.name)).toContain('ban');
     await proxy.next('network');
     await proxy.next('bans');
@@ -217,8 +217,8 @@ describe('Hub', () => {
     expect(await duels.next('profile', (m) => m['uuid'] === LENA)).toMatchObject({ role: { id: 'player' } });
   });
 
-  test('/msg und /r über Server hinweg, /sprache wechselt die Sprache', async () => {
-    const { proxy, duels } = await network();
+  test('/msg und /r über Server hinweg, Sprache aus dem Client und /sprache', async () => {
+    const { proxy, lobby, duels } = await network();
     await proxy.request({ t: 'command', uuid: PHILIP, command: 'msg', args: ['lena', 'Kommst', 'du?'] });
     expect(await proxy.next('msg', (m) => m['uuid'] === LENA)).toMatchObject({
       text: expect.stringContaining('Philip → you'),
@@ -229,9 +229,15 @@ describe('Hub', () => {
     ).toMatchObject({
       text: expect.stringContaining('Lena → dich'),
     });
+    proxy.send({ t: 'locale', uuid: PHILIP, locale: 'en_gb' });
+    expect(await lobby.next('profile', (m) => m['uuid'] === PHILIP && m['lang'] === 'en')).toBeTruthy();
     await proxy.request({ t: 'command', uuid: LENA, command: 'sprache', args: ['de'] });
     expect(await duels.next('profile', (m) => m['uuid'] === LENA)).toMatchObject({ lang: 'de' });
     expect(hub.players.get(LENA)?.language).toBe('de');
+    // Selbst gewählt bleibt: eine englische Client-Einstellung ändert nichts mehr.
+    proxy.send({ t: 'locale', uuid: LENA, locale: 'en_us' });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(hub.presence.get(LENA)?.lang).toBe('de');
   });
 
   test('Wartung: nur das Team kommt rein; volles Netzwerk nur mit Reserveplatz', async () => {

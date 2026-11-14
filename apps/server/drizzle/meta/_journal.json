@@ -15,6 +15,13 @@
       "when": 1794664661927,
       "tag": "0001_team_minecraft",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794665689839,
+      "tag": "0002_client_locale",
+      "breakpoints": true
     }
   ]
 }

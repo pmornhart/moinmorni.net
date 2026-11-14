@@ -52,6 +52,7 @@ const loginSchema = z.object({
 });
 const switchSchema = z.object({ uuid: uuidField, server: z.string().min(1).max(32) });
 const leaveSchema = z.object({ uuid: uuidField });
+const localeSchema = z.object({ uuid: uuidField, locale: z.string().max(20) });
 const commandSchema = z.object({
   id: z.number().int(),
   uuid: uuidField,
@@ -114,8 +115,10 @@ export function createHub(options: HubOptions): Hub {
   const defaultLang = (): Lang =>
     stores.settings('network')['defaultLanguage'] === 'en' ? 'en' : LANG_FALLBACK;
   const langOf = (uuid: string, locale: string | null | undefined): Lang => {
-    const stored = players.get(uuid)?.language;
-    return stored === 'de' || stored === 'en' ? stored : langOfLocale(locale, defaultLang());
+    const known = players.get(uuid);
+    const stored = known?.language;
+    if (stored === 'de' || stored === 'en') return stored;
+    return langOfLocale(locale ?? known?.clientLocale, defaultLang());
   };
   const profile = (uuid: string): Body | null => {
     const p = presence.get(uuid);
@@ -244,6 +247,16 @@ export function createHub(options: HubOptions): Hub {
       sendProfile(m.uuid);
     },
     leave: (_conn, body) => leave(leaveSchema.parse(body).uuid),
+    // Die Sprache des Clients kommt erst nach der Anmeldung; wer sie selbst gewählt hat (/sprache), behält sie.
+    locale: (_conn, body) => {
+      const m = localeSchema.parse(body);
+      players.setClientLocale(m.uuid, m.locale);
+      const p = presence.get(m.uuid);
+      const lang = langOf(m.uuid, m.locale);
+      if (!p || p.lang === lang) return;
+      p.lang = lang;
+      sendProfile(p.uuid);
+    },
     command: (conn, body) => {
       const m = commandSchema.parse(body);
       const actor = actorOf(m.uuid);

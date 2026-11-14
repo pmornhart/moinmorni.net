@@ -33,6 +33,7 @@ export interface PlayerService {
   readonly byName: (name: string) => PlayerRow | undefined;
   readonly addMinutes: (uuid: string, minutes: number) => void;
   readonly setLanguage: (uuid: string, lang: Lang | null) => void;
+  readonly setClientLocale: (uuid: string, locale: string) => void;
   readonly setRole: (uuid: string, roleId: string | null) => void;
   /** Rang im Spiel: der höhere aus eigenem Rang und Team-Rolle (verbundenes Minecraft-Konto), sonst „für alle“. */
   readonly roleOf: (uuid: string) => Role;
@@ -81,6 +82,12 @@ export function createPlayerService(db: Db, stores: Stores): PlayerService {
     setLanguage: (uuid, lang) => {
       db.update(players)
         .set({ language: lang })
+        .where(eq(players.uuid, normalUuid(uuid)))
+        .run();
+    },
+    setClientLocale: (uuid, locale) => {
+      db.update(players)
+        .set({ clientLocale: locale })
         .where(eq(players.uuid, normalUuid(uuid)))
         .run();
     },

@@ -51,7 +51,10 @@ export const players = sqliteTable(
     name: text('name').notNull(),
     /** Vergebener Rang; null = Rang „für alle anderen“. */
     roleId: text('role_id'),
+    /** Selbst gewählte Sprache (/sprache); null = nach dem Client. */
     language: text('language'),
+    /** Zuletzt gemeldete Sprache des Clients (für Meldungen schon bei der Anmeldung). */
+    clientLocale: text('client_locale'),
     bedrock: integer('bedrock', { mode: 'boolean' }).notNull().default(false),
     privateProfile: integer('private_profile', { mode: 'boolean' }).notNull().default(false),
     discordId: text('discord_id'),

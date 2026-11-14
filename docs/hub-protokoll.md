@@ -57,6 +57,7 @@ des Spielers.
 | `login` (Anfrage) | Proxy | `uuid, name, locale, bedrock` → `{allow, message?, server?}` |
 | `switch` | Proxy | `uuid, server` – Spieler ist auf einem anderen Server |
 | `leave` | Proxy | `uuid` |
+| `locale` | Proxy | `uuid, locale` – Sprache des Clients (kommt erst nach der Anmeldung) |
 | `command` (Anfrage) | Proxy | `uuid, command, args[]` → `{}` (Antworten kommen als `msg`) |
 | `complete` (Anfrage) | Proxy | `uuid, command, args[]` → `{suggestions[]}` |
 | `chat` | Spielserver | `uuid, text` |

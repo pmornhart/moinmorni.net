@@ -1,0 +1,1 @@
+ALTER TABLE `players` ADD `client_locale` text;
