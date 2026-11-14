@@ -747,6 +747,36 @@ export const MORNICRAFT_AREA: SettingArea = {
   ],
 };
 
+export const BUILD_AREA: SettingArea = {
+  id: 'build',
+  title: t('Bau-Server', 'Build server'),
+  text: t(
+    'Kreativ-Server fürs Bauteam: flache Welt, friedlich, WorldEdit. Hinein kommt nur, wer das Recht „Bauen“ hat (/bau). Mit //schem save gespeicherte Bauten kopierst du im Panel unter Bau-Server in einen Modus.',
+    'Creative server for the build team: flat world, peaceful, WorldEdit. Only players with the right “build” get in (/bau). Builds saved with //schem save can be copied into a mode in the panel under Build server.',
+  ),
+  icon: 'Hammer',
+  panel: 'build',
+  sections: [
+    {
+      id: 'server',
+      title: t('Server', 'Server'),
+      settings: [
+        {
+          key: 'sleepWhenEmpty',
+          type: 'boolean',
+          default: true,
+          label: t('Schlafen, wenn niemand baut', 'Sleep when nobody is building'),
+          help: t(
+            'Spart Arbeitsspeicher; /bau weckt ihn wieder (dauert ein paar Sekunden).',
+            'Saves memory; /bau wakes it up again (takes a few seconds).',
+          ),
+          command: '/bauserver schlafen an|aus',
+        },
+      ],
+    },
+  ],
+};
+
 export const UPDATES_AREA: SettingArea = {
   id: 'updates',
   title: t('Updates', 'Updates'),
@@ -827,6 +857,7 @@ export const SETTING_AREAS: readonly SettingArea[] = [
   LOBBY_AREA,
   WEBSITE_AREA,
   MORNICRAFT_AREA,
+  BUILD_AREA,
   UPDATES_AREA,
 ];
 

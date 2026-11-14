@@ -201,6 +201,16 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       },
     },
     {
+      name: 'bau',
+      aliases: ['build', 'bauserver'],
+      right: 'build',
+      usage: { de: '/bau', en: '/build' },
+      run: (actor) => {
+        say(actor, text(actor.lang, 'build.going'));
+        ctx.goTo(actor.uuid, 'bau');
+      },
+    },
+    {
       name: 'ban',
       aliases: [],
       right: 'ban',

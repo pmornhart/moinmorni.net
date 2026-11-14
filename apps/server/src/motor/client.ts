@@ -52,6 +52,8 @@ export interface MotorClient {
   readonly servers: () => Promise<MotorServer[]>;
   /** Datei in den Ordner eines Servers hochladen (z. B. das Netzwerk-Plugin nach plugins/). */
   readonly upload: (serverId: string, dir: string, filename: string, bytes: Uint8Array) => Promise<void>;
+  /** Datei aus dem Ordner eines Servers holen (z. B. eine WorldEdit-Schematic). */
+  readonly download: (serverId: string, path: string) => Promise<Uint8Array>;
   readonly baseUrl: string;
 }
 
@@ -103,9 +105,23 @@ export function createMotorClient(baseUrl: string, token: string, fetchImpl: Fet
     if (!res.ok) throw await errorOf(res);
   };
 
+  const download = async (serverId: string, path: string): Promise<Uint8Array> => {
+    const res = await fetchImpl(
+      `${baseUrl}/api/servers/${encodeURIComponent(serverId)}/files/download?path=${encodeURIComponent(path)}`,
+      // identity: Schematics sind selbst gzip – ohne das würde unterwegs entpackt und die Datei kaputt.
+      {
+        headers: { authorization: `Bearer ${token}`, 'accept-encoding': 'identity' },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      },
+    );
+    if (!res.ok) throw await errorOf(res);
+    return new Uint8Array(await res.arrayBuffer());
+  };
+
   return {
     baseUrl,
     request,
+    download,
     me: async (cookie) => {
       if (!cookie) return null;
       const res = await fetchImpl(`${baseUrl}/api/auth/me`, {

@@ -53,6 +53,7 @@ describe('Team-Konten', () => {
     await createProvisioner({ ...h.mm.config, pluginFile: jar }, h.mm.motor, h.mm.hub, quiet, {
       proxyAddOns: {},
       lobbyAddOns: {},
+      buildContent: false,
       versions: { paper: '1.21.4', velocity: '3.4.0' },
     }).ensure();
   }, 60_000);
@@ -98,7 +99,7 @@ describe('Team-Konten', () => {
   test('Server-Zugriff im Motor nach Rolle: Admin als Besitzer, Moderator ohne Server-Bereich keinen', async () => {
     const res = await call('POST', '/api/panel/team', owner, { username: 'max', roleId: 'admin' });
     const max = await motorUser('max');
-    expect(max?.access).toHaveLength(2);
+    expect(max?.access).toHaveLength(3);
     expect((await motorUser('lena'))?.access).toEqual([]);
 
     // Admin darf keine Admins/Owner anlegen und den Owner nicht anfassen, Moderatoren schon.

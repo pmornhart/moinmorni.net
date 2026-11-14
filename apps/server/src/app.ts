@@ -19,6 +19,8 @@ import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerUpdateRoutes } from './system/routes.js';
+import { createBuildService } from './build/service.js';
+import { registerBuildRoutes } from './build/routes.js';
 import { createApplicationService } from './mornicraft/applications.js';
 import { registerApplyRoutes } from './mornicraft/routes.js';
 import { createUpdateService } from './system/update.js';
@@ -126,7 +128,11 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     season: () => seasonOf(stores.settings('lobby')['season']),
   });
   const lobbyRef = { id: '', season: seasonOf(stores.settings('lobby')['season']) };
-  const network = createProvisioner(config, motor, hub, app.log, { configureLobby: lobbyWorld.configure });
+  const build = createBuildService(motor, stores);
+  const network = createProvisioner(config, motor, hub, app.log, {
+    configureLobby: lobbyWorld.configure,
+    configureBuild: build.configure,
+  });
   const sleep = createSleepService(motor, hub, stores, app.log);
   sleepRef.service = sleep;
   const bot = createMoinMorniBot({
@@ -184,6 +190,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerNewsRoutes(app, auth, handle.db, events);
   const updates = createUpdateService(config, motor, stores, options.githubFetch);
   registerUpdateRoutes(app, auth, updates);
+  registerBuildRoutes(app, auth, build);
   registerApplyRoutes(app, {
     config,
     auth,

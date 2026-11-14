@@ -76,6 +76,7 @@ const playSchema = z.object({ uuid: uuidField, mode: z.string().min(1).max(32) }
 const LOBBY_DEBOUNCE_MS = 1_000;
 /** Name der Lobby im Netzwerk – nur sie bekommt die Lobby-Einstellungen. */
 const LOBBY_SERVER = 'lobby';
+const BUILD_SERVER = 'bau';
 /** So lange darf ein Modus zum Aufwachen brauchen, dann gibt es eine Meldung. */
 const WAKE_TIMEOUT_MS = 180_000;
 
@@ -168,6 +169,8 @@ export function createHub(options: HubOptions): Hub {
         colour: role.colour,
         position: role.position,
       },
+      /** Rechte im Spiel (das Plugin gibt z. B. auf dem Bau-Server Kreativ und WorldEdit). */
+      rights: role.game,
     };
   };
   const sendProfile = (uuid: string): void => {
@@ -200,6 +203,10 @@ export function createHub(options: HubOptions): Hub {
     connect: (uuid, server) => {
       if (!conns.backends.has(server) || !conns.proxy) return false;
       return toProxy({ t: 'connect', uuid, server });
+    },
+    goTo: (uuid, server) => {
+      const lang: Lang = presence.get(uuid)?.lang ?? defaultLang();
+      if (admit(uuid, server, lang) === 'go') ctx.connect(uuid, server);
     },
     chat: (servers, line) => {
       const targets = servers === 'all' ? [...conns.backends.values()] : [conns.backends.get(servers)];
@@ -258,6 +265,7 @@ export function createHub(options: HubOptions): Hub {
   const wakeTimers = new Map<string, ReturnType<typeof setTimeout>>();
   const modeName = (server: string, lang: Lang): string => {
     const mode = stores.modes().find((md) => md.server === server);
+    if (server === BUILD_SERVER) return lang === 'en' ? 'Build server' : 'Bau-Server';
     return mode ? mode.name[lang] : server;
   };
   const wakeUp = (server: string): void => {
@@ -291,6 +299,9 @@ export function createHub(options: HubOptions): Hub {
       return 'stop';
     };
     const name = mm(modeName(server, lang));
+    // Bau-Server: nur fürs Bauteam.
+    if (server === BUILD_SERVER && !hasRight(players.roleOf(uuid), 'build'))
+      return stop(text(lang, 'build.no_right'));
     const jail = server === LOBBY_SERVER ? undefined : punish.active(uuid, 'jail');
     if (jail)
       return stop(
@@ -315,7 +326,8 @@ export function createHub(options: HubOptions): Hub {
       return stop(
         text(lang, 'mode.not_listed', { mode: name, url: mm(`https://${ctx.domain}/mornicraft/bewerben`) }),
       );
-    if (!mode || conns.backends.has(server) || !options.wake) return 'go';
+    const sleeps = mode !== undefined || server === BUILD_SERVER;
+    if (!sleeps || conns.backends.has(server) || !options.wake) return 'go';
     const list = waiting.get(server) ?? new Set<string>();
     const first = !waiting.has(server);
     list.add(uuid);

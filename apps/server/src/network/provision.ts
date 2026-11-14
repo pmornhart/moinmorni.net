@@ -15,6 +15,8 @@ import { NETWORK_NAME } from '../public/status.js';
 
 export const PROXY_MEMBER = 'proxy';
 export const LOBBY_MEMBER = 'lobby';
+/** Bau-Server fürs Bauteam (Kreativ, flach, WorldEdit) – kein Modus, nur mit dem Recht „Bauen“. */
+export const BUILD_MEMBER = 'bau';
 const PLUGIN_DIR = 'plugins';
 const HUB_FILE = 'plugins/moinmorni/hub.json';
 const STAMP_FILE = 'plugins/moinmorni/plugin.sha256';
@@ -22,6 +24,10 @@ const PROXY_MEMORY_MB = 1024;
 const LOBBY_MEMORY_MB = 4096;
 const PROXY_PORT = 25565;
 const LOBBY_PORT = 25566;
+const BUILD_MEMORY_MB = 3072;
+const BUILD_PORT = 25567;
+/** WorldEdit von Modrinth (der Motor lädt es mit Prüfsumme). */
+const WORLDEDIT = { source: 'modrinth', projectId: 'worldedit' } as const;
 /** Falls der Motor gerade keine Versionsliste bekommt (PaperMC nicht erreichbar). */
 const FALLBACK_VERSION: Readonly<Record<'paper' | 'velocity', string>> = { paper: '26.3', velocity: '4.3.1' };
 
@@ -54,6 +60,10 @@ export interface ProvisionOptions {
   readonly versions?: Readonly<Record<'paper' | 'velocity', string>>;
   /** Stellt die server.properties der Lobby ein (vor dem ersten Start); true = geändert. */
   readonly configureLobby?: (serverId: string) => Promise<boolean>;
+  /** Stellt den Bau-Server ein (Kreativ, flach, friedlich); true = geändert. */
+  readonly configureBuild?: (serverId: string) => Promise<boolean>;
+  /** WorldEdit auf den Bau-Server laden (Tests: nein – kein Internet). */
+  readonly buildContent?: boolean;
 }
 
 const PROXY_ADD_ONS = { geyser: true, via: true, voice: true };
@@ -178,6 +188,22 @@ export function createProvisioner(
         created.push(LOBBY_MEMBER);
         log.info('Netzwerk: Lobby angelegt');
       }
+      if (!network.members.some((m) => m.name === BUILD_MEMBER)) {
+        const bau = await createServer('MoinMorni Bau', 'paper', BUILD_MEMORY_MB, BUILD_PORT);
+        await motor.request('POST', `/api/networks/${network.id}/members`, {
+          serverId: bau.id,
+          name: BUILD_MEMBER,
+        });
+        created.push(BUILD_MEMBER);
+        log.info('Netzwerk: Bau-Server angelegt');
+        if (options.buildContent !== false) {
+          try {
+            await motor.request('POST', `/api/servers/${bau.id}/market/install`, WORLDEDIT);
+          } catch (err) {
+            log.warn({ err }, 'Bau-Server: WorldEdit ließ sich nicht laden');
+          }
+        }
+      }
       const fresh = await motor.request<MotorNetwork>('GET', `/api/networks/${network.id}`);
       if (fresh.defaultMember !== LOBBY_MEMBER)
         await motor.request('PATCH', `/api/networks/${network.id}`, { defaultMember: LOBBY_MEMBER });
@@ -196,6 +222,8 @@ export function createProvisioner(
         options.configureLobby && lobbyServerId ? await options.configureLobby(lobbyServerId) : false;
       if (lobbyChanged && !created.includes(LOBBY_MEMBER))
         log.info('Lobby: Einstellungen geändert – gelten nach dem nächsten Neustart der Lobby');
+      const buildServerId = fresh.members.find((m) => m.name === BUILD_MEMBER)?.serverId;
+      if (buildServerId && options.configureBuild) await options.configureBuild(buildServerId);
 
       // Neu angelegte Server erst jetzt starten – mit Plugin, Schlüssel und Einstellungen.
       await Promise.all(

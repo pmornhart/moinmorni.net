@@ -5,6 +5,7 @@ import de.moinmorni.network.common.HubClient;
 import de.moinmorni.network.common.HubConfig;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,8 +36,19 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private static final int TEAM_NAME_MAX = 16;
 
     /** Was der Hub über einen Spieler sagt (Rang, Sprache). */
-    private record Profile(String name, String lang, String roleId, String symbol, String colour, int position) {
+    private record Profile(String name, String lang, String roleId, String symbol, String colour, int position,
+                           java.util.Set<String> rights) {
     }
+
+    /** Name dieses Servers im Netzwerk (aus hub.json), z. B. „lobby“ oder „bau“. */
+    private String serverName = "";
+    /** Rechte aus dem Rang, pro Spieler (wird bei jedem neuen Profil ersetzt). */
+    private final Map<UUID, org.bukkit.permissions.PermissionAttachment> attachments = new ConcurrentHashMap<>();
+    private static final String BUILD_SERVER = "bau";
+    /** Rang-Recht → Minecraft-Befehle (auf allen Spielservern). */
+    private static final Map<String, List<String>> RIGHT_PERMISSIONS = Map.of(
+            "teleport", List.of("minecraft.command.teleport", "minecraft.command.tp"),
+            "spectate", List.of("minecraft.command.spectate", "minecraft.command.gamemode"));
 
     private final Map<UUID, Profile> profiles = new ConcurrentHashMap<>();
     private HubClient hub;
@@ -53,7 +65,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         Path dir = getDataFolder().toPath().getParent().resolve(HUB_DIR);
         try {
-            hub = new HubClient(HubConfig.load(dir), getLogger(), this::onHub, () -> { });
+            HubConfig hubConfig = HubConfig.load(dir);
+            serverName = hubConfig.server();
+            hub = new HubClient(hubConfig, getLogger(), this::onHub, () -> { });
             startVoice();
         } catch (Exception e) {
             getLogger().warning("MoinMorni ist nicht eingerichtet (" + e.getMessage() + ") – der Server läuft ohne Netzwerk-Chat.");
@@ -112,7 +126,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                         HubClient.str(role, "id"),
                         HubClient.str(role, "symbol"),
                         HubClient.str(role, "colour"),
-                        role.get("position").getAsInt()));
+                        role.get("position").getAsInt(),
+                        rightsOf(m)));
                 Bukkit.getScheduler().runTask(this, () -> {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p != null) {
@@ -184,10 +199,47 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         apply(event.getPlayer());
     }
 
+    private static java.util.Set<String> rightsOf(JsonObject m) {
+        java.util.Set<String> rights = new java.util.HashSet<>();
+        if (m.has("rights") && m.get("rights").isJsonArray()) {
+            m.getAsJsonArray("rights").forEach(r -> rights.add(r.getAsString()));
+        }
+        return rights;
+    }
+
+    /**
+     * Rechte aus dem Rang: Teleport/Zuschauen überall fürs Team. Auf dem Bau-Server: wer bauen darf, ist im
+     * Kreativmodus; wer WorldEdit darf, ist dort OP (WorldEdit fragt viele einzelne Rechte ab). Alle anderen sind
+     * dort Gast im Abenteuermodus ohne OP.
+     */
+    private void applyRights(Player p, Profile profile) {
+        org.bukkit.permissions.PermissionAttachment old = attachments.remove(p.getUniqueId());
+        if (old != null) {
+            p.removeAttachment(old);
+        }
+        org.bukkit.permissions.PermissionAttachment attachment = p.addAttachment(this);
+        profile.rights().forEach(r -> RIGHT_PERMISSIONS.getOrDefault(r, List.of())
+                .forEach(node -> attachment.setPermission(node, true)));
+        attachments.put(p.getUniqueId(), attachment);
+        if (!BUILD_SERVER.equals(serverName)) {
+            return;
+        }
+        boolean build = profile.rights().contains("build");
+        p.setOp(build && profile.rights().contains("worldedit"));
+        org.bukkit.GameMode wanted = build ? org.bukkit.GameMode.CREATIVE : org.bukkit.GameMode.ADVENTURE;
+        if (p.getGameMode() != wanted && p.getGameMode() != org.bukkit.GameMode.SPECTATOR) {
+            p.setGameMode(wanted);
+        }
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Player p = event.getPlayer();
         profiles.remove(p.getUniqueId());
+        org.bukkit.permissions.PermissionAttachment attachment = attachments.remove(p.getUniqueId());
+        if (attachment != null) {
+            p.removeAttachment(attachment);
+        }
         Team team = Bukkit.getScoreboardManager().getMainScoreboard().getEntryTeam(p.getName());
         if (team != null && team.getName().startsWith(TEAM_PREFIX)) {
             team.removeEntry(p.getName());
@@ -200,6 +252,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         if (profile == null) {
             return;
         }
+        applyRights(p, profile);
         TextColor colour = TextColor.fromHexString(profile.colour());
         Component prefix = profile.symbol() == null || profile.symbol().isEmpty()
                 ? Component.empty()

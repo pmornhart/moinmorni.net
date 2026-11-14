@@ -474,6 +474,19 @@ describe('Hub', () => {
     expect(await go(PHILIP, 'duels')).toMatchObject({ data: { allow: true } });
   });
 
+  test('Bau-Server nur fürs Bauteam: /bau weckt ihn, Spieler kommen nicht hinein', async () => {
+    const { proxy } = await network();
+    const go = (uuid: string) => proxy.request({ t: 'connecting', uuid, server: 'bau' });
+    expect(await go(LENA)).toMatchObject({ data: { allow: false } });
+    await proxy.next('msg', (m) => m['uuid'] === LENA && String(m['text']).includes('build team'));
+    // Philip (Owner, darf bauen): der Bau-Server schläft → /bau weckt ihn, danach geht es von selbst hinein.
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'bau', args: [] });
+    await proxy.next('msg', (m) => m['uuid'] === PHILIP && String(m['text']).includes('Bau-Server'));
+    expect(woken).toContain('bau');
+    await plugin('bau', 'backend');
+    expect(await proxy.next('connect', (m) => m['uuid'] === PHILIP)).toMatchObject({ server: 'bau' });
+  });
+
   test('Lobby-Figuren: Klick bringt in den Modus, Spielerzahlen kommen live an die Server', async () => {
     const { proxy, lobby } = await network();
     type Row = { id: string; players: number; awake: boolean };

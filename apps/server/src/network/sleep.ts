@@ -11,6 +11,7 @@ import { NETWORK_NAME } from '../public/status.js';
  */
 
 const CHECK_MS = 30_000;
+const BUILD_SERVER = 'bau';
 const MINUTE_MS = 60_000;
 const IDS_CACHE_MS = 60_000;
 
@@ -58,10 +59,16 @@ export function createSleepService(
     const minutes = Number(stores.settings('network')['sleepMinutes']);
     const counts = hub.presence.counts();
     const awake = new Set(hub.connectedServers());
-    const sleepy = stores
-      .modes()
-      .filter((m) => m.sleepWhenEmpty && m.server && awake.has(m.server))
-      .map((m) => m.server ?? '');
+    const sleepy = [
+      ...stores
+        .modes()
+        .filter((m) => m.sleepWhenEmpty && m.server && awake.has(m.server))
+        .map((m) => m.server ?? ''),
+      // Der Bau-Server ist kein Modus, schläft aber auf Wunsch genauso.
+      ...(stores.settings('build')['sleepWhenEmpty'] === true && awake.has(BUILD_SERVER)
+        ? [BUILD_SERVER]
+        : []),
+    ];
     const due = sleepy.filter((server) => {
       if ((counts[server] ?? 0) > 0) {
         emptySince.delete(server);

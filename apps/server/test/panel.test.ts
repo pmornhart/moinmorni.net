@@ -88,6 +88,7 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
       'lobby',
       'website',
       'mornicraft',
+      'build',
       'updates',
     ]);
     const saved = await call('PUT', '/api/panel/settings/chat', owner, { slowMode: 5, badWords: ['doof'] });
