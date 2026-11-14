@@ -631,7 +631,10 @@ export const WEBSITE_AREA: SettingArea = {
     {
       id: 'rules',
       title: t('Regeln', 'Rules'),
-      text: t('Eine Regel pro Zeile. Gilt im Spiel, im Discord und auf der Webseite.', 'One rule per line. Applies in game, on Discord and on the website.'),
+      text: t(
+        'Eine Regel pro Zeile. Gilt im Spiel, im Discord und auf der Webseite.',
+        'One rule per line. Applies in game, on Discord and on the website.',
+      ),
       settings: [
         {
           key: 'rulesDe',
@@ -640,7 +643,10 @@ export const WEBSITE_AREA: SettingArea = {
           maxLength: 4000,
           multiline: true,
           label: t('Regeln (Deutsch)', 'Rules (German)'),
-          help: t('So stehen sie auf der Webseite unter „Regeln“.', 'This is how they appear on the website under “Rules”.'),
+          help: t(
+            'So stehen sie auf der Webseite unter „Regeln“.',
+            'This is how they appear on the website under “Rules”.',
+          ),
         },
         {
           key: 'rulesEn',
