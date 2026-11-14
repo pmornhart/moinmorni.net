@@ -24,22 +24,29 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
 
 Die Figuren sind Mannequins (Minecraft 1.21.9+) mit **eigenen Pixel-Skins** – gezeichnet in
 `packages/builder/src/skins.ts`, die Leute stehen in `cast.ts` (27 Stück: Modus-Figuren, Wirt, Kellnerinnen, Bäcker,
-Schmied, Bürgermeister, Gäste, Kinder). Das Texturpaket (`castPack()`, `tsx tools/lobby-entwuerfe/src/pack.ts
-<ziel.zip> [vorschau.png]`) legt sie unter `assets/moinmorni/textures/npc/<id>.png` ab; die Figur nutzt sie mit
-`profile:{texture:'moinmorni:npc/<id>'}`.
+Schmied, Bürgermeister, Gäste, Kinder).
 
-> Ohne Texturpaket zeigt Minecraft dort ein Fehlerbild, Bedrock-Spieler sehen die Skins über Geyser nicht. Die Lobby
-> bietet das Paket beim Betreten an (Pflicht per Schalter). Noch offen: die Skins zusätzlich als signierte
-> Skin-Daten hinterlegen, dann sehen auch Bedrock-Spieler und Spieler ohne Paket die Trachten.
+Die Skins sind **von Mojang signiert** (Philips Go, 15.11.): `tools/lobby-entwuerfe/src/sign-skins.ts` lädt jede Tracht
+einmal bei [MineSkin](https://docs.mineskin.org) hoch (ohne Schlüssel, nicht öffentlich gelistet) und schreibt Adresse
+
+- Signatur nach `packages/builder/src/cast-textures.ts` (öffentliche Daten, keine Geheimnisse). Die Figur trägt sie als
+  `profile:{properties:[{name:'textures',value:…,signature:…}]}` – so sieht **jeder Java-Spieler die Trachten ohne
+  Texturpaket** (echt geprüft mit Client 26.3 ohne Paket), und Geyser kann sie an Bedrock weitergeben (ohne
+  Bedrock-Client nicht prüfbar). Ändert sich eine Tracht, schlägt der Test `packages/builder/test/cast.test.ts` an:
+  dann `npx tsx tools/lobby-entwuerfe/src/sign-skins.ts` (lädt nur Geändertes neu hoch, ~10 pro Minute).
+
+`castPack()` / `tools/lobby-entwuerfe/src/pack.ts` bauen weiterhin ein Texturpaket mit allen Trachten – nur noch für
+Vorschaubilder.
 
 ## Im Netzwerk-Plugin (`LobbyNpcs.java`)
 
-| Tag | Bedeutung |
-| --- | --- |
-| `mm_npc` | Figur der Lobby: nimmt keinen Schaden |
-| `mm_mode_<id>` | Anklicken (rechts oder links) → Nachricht `play` an den Hub → Modus beitreten bzw. wecken |
-| `mm_mode_label` | Schild aus dem Bau – das Plugin ersetzt es durch eigene Schilder mit Live-Zahlen |
-| `mm_walker` | läuft gemütlich in bis zu 8 Blöcken um den Platz herum (nur auf freiem, ebenem Boden) |
+| Tag                               | Bedeutung                                                                                                                                                   |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mm_npc`                          | Figur der Lobby: nimmt keinen Schaden                                                                                                                       |
+| `mm_mode_<id>`                    | Anklicken (rechts oder links) → Nachricht `play` an den Hub → Modus beitreten bzw. wecken                                                                   |
+| `mm_mode_label`                   | Schild aus dem Bau – das Plugin ersetzt es durch eigene Schilder mit Live-Zahlen                                                                            |
+| `mm_walker`                       | läuft gemütlich in bis zu 8 Blöcken um den Platz herum (nur auf freiem, ebenem Boden)                                                                       |
+| `mm_lobby` + `mm_build_<version>` | alles, was der Lobby-Bau setzt; Wesen aus älteren Bauten entfernt das Plugin, sobald sie geladen werden (Version in `plugins/moinmorni/lobby-world.target`) |
 
 Der Hub schickt allen Spielservern `lobby` mit Zustand und Spielerzahl je Modus (`docs/hub-protokoll.md`). Das Plugin
 hält je Figur zwei Schilder (Deutsch/Englisch); jeder Spieler sieht nur das in seiner Sprache (`/sprache` gilt sofort).
@@ -49,14 +56,15 @@ hält je Figur zwei Schilder (Deutsch/Englisch); jeder Spieler sieht nur das in 
 Beim Einrichten (und nach jedem Update, wenn sich der Bauplan geändert hat) baut MoinMorni die Welt auf dem
 Lobby-Server auf – ohne RCON von außen, nur über den Motor (`apps/server/src/lobby/world.ts`):
 
-1. server.properties der Lobby: Abenteuermodus, friedlich, kein PvP, kein Nether, Texturpaket der Figuren
-   (`https://<domain>/api/public/packs/lobby.zip` + SHA-1; Pflicht nur mit Schalter **Lobby → Figuren**,
-   `/lobby paket an|aus`).
+1. server.properties der Lobby: Abenteuermodus, friedlich, kein PvP, kein Nether, kein Texturpaket (die Skins sind
+   signiert).
 2. Bauplan als Datenpaket nach `world/datapacks/moinmorni-lobby/` (`lobbyPack()` in
    `packages/builder/src/lobby/datapack.ts`, ~83 Funktionen à 3000 Befehle).
 3. `minecraft:reload`, Welt-Stücke in kleinen Portionen festhalten (`forceload`, 4×4 Stücke pro Befehl – alles auf
-   einmal ließ den Server minutenlang hängen), warten bis geladen, Bau-Funktionen nacheinander, `finish`
-   (Spielregeln, Ankunftspunkt, Weltgrenze), Stücke loslassen, Datenpaket wieder ausschalten.
+   einmal ließ den Server minutenlang hängen), warten bis geladen, `clean` (alte Wesen weg), Bau-Funktionen
+   nacheinander, `finish` (Spielregeln, Ankunftspunkt, Weltgrenze, Reste älterer Bauten), Stücke loslassen,
+   Datenpaket wieder ausschalten. Minecraft lädt die Wesen eines Stücks erst nach den Blöcken – was dabei noch nicht
+   geladen war, räumt das Lobby-Plugin über die Bau-Version weg.
 4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun.
 
 Echt geprüft mit einem frischen Paper 26.3 (`apps/server/scripts/lobby-selbstbau.ts`, Brücke statt Motor):

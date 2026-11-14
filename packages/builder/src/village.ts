@@ -8,6 +8,7 @@
  * Im Block stehen {F} {B} {L} {R} für vorne/hinten/links/rechts (aus Sicht vor dem Haus) und {W} für die Holzart.
  */
 import type { Canvas } from './canvas.js';
+import { signedSkin } from './cast.js';
 import { Frame, type Local } from './frame.js';
 import { STEP, YAW, type Facing } from './shapes.js';
 
@@ -91,9 +92,31 @@ function snbtText(parts: readonly TextPart[]): string {
     .join(',')}]`;
 }
 
-/** Figur aufstellen (Mannequin mit eigenem Skin aus dem Texturpaket, unverwundbar, nicht schiebbar). */
+/**
+ * Jedes Wesen, das die Lobby setzt, trägt `mm_lobby` und die Bau-Version (`mm_build_<version>`; beim Bauen setzt
+ * `lobbyPack()` die echte Version für den Platzhalter ein). Das Lobby-Plugin entfernt Wesen aus älteren Bauten, sobald
+ * sie geladen werden – auch in Stücken, die beim Neubau gerade nicht geladen waren.
+ */
+export const LOBBY_TAG = 'mm_lobby';
+export const BUILD_TAG_PREFIX = 'mm_build_';
+export const BUILD_PLACEHOLDER = `${BUILD_TAG_PREFIX}dev`;
+const LOBBY_TAGS = [LOBBY_TAG, BUILD_PLACEHOLDER];
+const tagList = (tags: readonly string[]): string => [...tags, ...LOBBY_TAGS].map((t) => `'${t}'`).join(',');
+
+/**
+ * Skin einer Figur: von Mojang signiert (sieht jeder, auch ohne Texturpaket und über Geyser), sonst – solange eine
+ * geänderte Tracht noch nicht neu signiert ist – aus dem Texturpaket.
+ */
+function profileOf(skin: string): string {
+  const signed = signedSkin(skin);
+  return signed
+    ? `profile:{properties:[{name:'textures',value:'${signed.value}',signature:'${signed.signature}'}]}`
+    : `profile:{texture:'moinmorni:npc/${skin}',model:'wide'}`;
+}
+
+/** Figur aufstellen (Mannequin mit eigenem Skin, unverwundbar, nicht schiebbar). */
 export function npc(c: Canvas, n: NpcSpec): void {
-  const tags = ['mm_npc', `mm_skin_${n.skin}`, ...(n.tags ?? [])].map((t) => `'${t}'`).join(',');
+  const tags = tagList(['mm_npc', `mm_skin_${n.skin}`, ...(n.tags ?? [])]);
   const parts = [
     `Tags:[${tags}]`,
     `Rotation:[${YAW[n.look]}f,0f]`,
@@ -101,7 +124,7 @@ export function npc(c: Canvas, n: NpcSpec): void {
     'hide_description:true',
     'Invulnerable:1b',
     'Silent:1b',
-    `profile:{texture:'moinmorni:npc/${n.skin}',model:'wide'}`,
+    profileOf(n.skin),
     ...(n.hand ? [`equipment:{mainhand:{id:'minecraft:${n.hand}',count:1}}`] : []),
     ...(n.small ? [`attributes:[{id:'minecraft:scale',base:${SMALL}d}]`] : []),
   ];
@@ -110,14 +133,14 @@ export function npc(c: Canvas, n: NpcSpec): void {
   const z = n.z + HALF;
   c.extra.push(
     n.sit
-      ? `summon block_display ${x} ${n.y + SEAT_Y} ${z} {Tags:['mm_seat'],Passengers:[${body}]}`
+      ? `summon block_display ${x} ${n.y + SEAT_Y} ${z} {Tags:[${tagList(['mm_seat'])}],Passengers:[${body}]}`
       : `summon mannequin ${x} ${n.y} ${z} {${parts.join(',')}}`,
   );
   if (n.label) {
     const scale = n.small ? SMALL : 1;
     const up = (n.sit ? LABEL_SITTING : LABEL_STANDING) * scale;
     c.extra.push(
-      `summon text_display ${x} ${n.y + up} ${z} {Tags:[${['mm_npc_label', `mm_label_${n.skin}`, ...(n.labelTags ?? [])].map((t) => `'${t}'`).join(',')}],billboard:'center',text:${snbtText(n.label)},background:1073741824,shadow:true}`,
+      `summon text_display ${x} ${n.y + up} ${z} {Tags:[${tagList(['mm_npc_label', `mm_label_${n.skin}`, ...(n.labelTags ?? [])])}],billboard:'center',text:${snbtText(n.label)},background:1073741824,shadow:true}`,
     );
   }
 }
@@ -135,7 +158,7 @@ export function signText(
   /** Dunkles Holzbraun, leicht durchsichtig (ARGB als vorzeichenbehaftete Zahl, wie Minecraft sie erwartet). */
   const BACKDROP = 0xcc3b2a1a | 0;
   c.extra.push(
-    `summon text_display ${x} ${y} ${z} {Tags:['mm_sign'],billboard:'fixed',Rotation:[${YAW[look]}f,0f],text:${snbtText(parts)},background:${BACKDROP},shadow:true,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[${scale}f,${scale}f,${scale}f]}}`,
+    `summon text_display ${x} ${y} ${z} {Tags:[${tagList(['mm_sign'])}],billboard:'fixed',Rotation:[${YAW[look]}f,0f],text:${snbtText(parts)},background:${BACKDROP},shadow:true,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[${scale}f,${scale}f,${scale}f]}}`,
   );
 }
 

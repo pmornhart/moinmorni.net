@@ -1,10 +1,12 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a building plan: layer heights and the arrival point as the world needs them */
 /**
  * Die Lobby als Datenpaket: Der Server spielt es auf den Lobby-Server und ruft die Funktionen nacheinander auf
- * (`prepare` → `part/000` … → `finish`). So baut sich die Lobby beim Einrichten selbst – ohne RCON von außen.
+ * (`prepare` = nur „geladen?“, `clean` → `part/000` … → `finish`). So baut sich die Lobby beim Einrichten selbst – ohne
+ * RCON von außen.
  * Gleicher Bauplan = gleiche `version`; ändert sich der Plan, baut der Server neu.
  */
 import crypto from 'node:crypto';
+import { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG } from '../village.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
 
 export const LOBBY_NAMESPACE = 'moinmorni_lobby';
@@ -109,7 +111,10 @@ export function lobbyPack(): LobbyPack {
   const parts = Array.from({ length: Math.ceil(body.length / PART_SIZE) }, (_, i) =>
     body.slice(i * PART_SIZE, (i + 1) * PART_SIZE),
   );
-  const prepare = [`kill @e[type=!player,x=${cx},y=64,z=${cz},distance=..320]`];
+  // `prepare` ändert nichts – MoinMorni ruft es so lange, bis das Paket geladen ist. Aufgeräumt wird erst in `clean`,
+  // wenn alle Stücke geladen sind (sonst blieben alte Figuren in nicht geladenen Stücken stehen).
+  const prepare = ['# MoinMorni: Lobby-Datenpaket ist geladen'];
+  const clean = [`kill @e[type=!player,x=${cx},y=64,z=${cz},distance=..320]`];
   const finish = [
     `kill @e[type=item,x=${cx},y=64,z=${cz},distance=..320]`,
     `setworldspawn ${LOBBY_SPAWN.x} ${LOBBY_SPAWN.y} ${LOBBY_SPAWN.z}`,
@@ -133,6 +138,7 @@ export function lobbyPack(): LobbyPack {
   const files: Record<string, string> = {
     'pack.mcmeta': `${JSON.stringify(meta, null, 2)}\n`,
     [fn('prepare')]: `${prepare.join('\n')}\n`,
+    [fn('clean')]: `${clean.join('\n')}\n`,
     [fn('finish')]: `${finish.join('\n')}\n`,
     ...Object.fromEntries(parts.map((p, i) => [fn(partName(i)), `${p.join('\n')}\n`])),
   };
@@ -140,9 +146,17 @@ export function lobbyPack(): LobbyPack {
   Object.keys(files)
     .sort()
     .forEach((k) => hash.update(k).update(files[k] ?? ''));
+  const version = hash.digest('hex').slice(0, VERSION_LENGTH);
+  // Erst jetzt die echte Version in die Tags der Wesen (der Platzhalter ging in die Prüfsumme ein, nicht die Version).
+  const build = `${BUILD_TAG_PREFIX}${version}`;
+  const stamped = Object.fromEntries(
+    Object.entries(files).map(([k, v]) => [k, v.replaceAll(BUILD_PLACEHOLDER, build)]),
+  );
+  // Zum Schluss: alles, was noch aus einem älteren Bau geladen ist, weg (den Rest räumt das Lobby-Plugin beim Laden).
+  stamped[fn('finish')] += `kill @e[tag=${LOBBY_TAG},tag=!${build}]\n`;
   cached = {
-    version: hash.digest('hex').slice(0, VERSION_LENGTH),
-    files,
+    version,
+    files: stamped,
     parts: parts.length,
     load: forceloadCommands(cx, cz, 'add', RADIUS, LOAD_SPAN),
     unload: forceloadCommands(cx, cz, 'remove'),

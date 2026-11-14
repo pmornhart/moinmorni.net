@@ -3,7 +3,6 @@ import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, describe, expect, test } from 'vitest';
 import { createLobbyWorld, patchProperties } from '../src/lobby/world.js';
-import { lobbyPackInfo } from '../src/lobby/packs.js';
 import type { MotorClient } from '../src/motor/client.js';
 import { createProvisioner } from '../src/network/provision.js';
 import { createHarness, type Harness } from './harness.js';
@@ -22,7 +21,8 @@ const tinyPack = (version: string) => () => ({
   unload: ['forceload remove 0 0 15 15'],
   files: {
     'pack.mcmeta': '{"pack":{"description":"Test","pack_format":48}}\n',
-    'data/moinmorni_lobby/function/prepare.mcfunction': 'forceload add 0 0\n',
+    'data/moinmorni_lobby/function/prepare.mcfunction': '# geladen\n',
+    'data/moinmorni_lobby/function/clean.mcfunction': 'kill @e[type=!player,x=0,y=64,z=0,distance=..320]\n',
     'data/moinmorni_lobby/function/part/000.mcfunction': 'setblock 0 64 0 stone strict\n',
     'data/moinmorni_lobby/function/part/001.mcfunction': 'setblock 1 64 0 stone strict\n',
     'data/moinmorni_lobby/function/finish.mcfunction': 'forceload remove 0 0\n',
@@ -66,7 +66,7 @@ describe('Lobby baut sich selbst', () => {
         return h.mm.motor.request<T>(method, url, body);
       },
     };
-    const world = createLobbyWorld(motor, 'moinmorni.net', quiet, {
+    const world = createLobbyWorld(motor, quiet, {
       pack: tinyPack('v1'),
       sleep: () => new Promise((r) => setTimeout(r, 20)),
       settleMs: 0,
@@ -96,12 +96,8 @@ describe('Lobby baut sich selbst', () => {
     const props = await read('server.properties');
     expect(props).toContain('gamemode=adventure');
     expect(props).toContain('difficulty=peaceful');
-    // Der Motor schreibt die Datei im Java-Format zurück („:“ als „\\:“) – beides liest Minecraft gleich.
-    expect(props.replaceAll('\\:', ':')).toContain(
-      'resource-pack=https://moinmorni.net/api/public/packs/lobby.zip',
-    );
-    expect(props).toContain(`resource-pack-sha1=${lobbyPackInfo().sha1}`);
-    // Standard: nur anbieten, nicht erzwingen (sonst sperrt eine nicht erreichbare Webseite alle aus).
+    // Kein Texturpaket mehr: die Figuren tragen signierte Skins, die jeder ohne Paket sieht.
+    expect(props).toMatch(/^resource-pack=$/m); // eslint-disable-line ts-patterns/require-regex-example -- empty pack line: "resource-pack=" yes, "resource-pack=https://…" no
     expect(props).toContain('require-resource-pack=false');
 
     expect(await world.build(result.lobbyServerId)).toBe('built');
@@ -109,8 +105,15 @@ describe('Lobby baut sich selbst', () => {
       await read('world/datapacks/moinmorni-lobby/data/moinmorni_lobby/function/part/001.mcfunction'),
     ).toContain('setblock 1 64 0');
     expect((await read('plugins/moinmorni/lobby-world.version')).trim()).toBe('v1');
+    expect((await read('plugins/moinmorni/lobby-world.target')).trim()).toBe('v1');
     expect(commands[0]).toBe('minecraft:reload');
-    expect(commands).toContain('minecraft:function moinmorni_lobby:part/000');
+    // Aufräumen erst nach dem Laden der Stücke, vor dem ersten Bau-Schritt.
+    expect(commands.indexOf('minecraft:function moinmorni_lobby:clean')).toBeGreaterThan(
+      commands.indexOf('minecraft:forceload add 0 0 15 15'),
+    );
+    expect(commands.indexOf('minecraft:function moinmorni_lobby:clean')).toBeLessThan(
+      commands.indexOf('minecraft:function moinmorni_lobby:part/000'),
+    );
     expect(commands).toContain('minecraft:function moinmorni_lobby:part/001');
     expect(commands.indexOf('minecraft:function moinmorni_lobby:finish')).toBeGreaterThan(
       commands.indexOf('minecraft:function moinmorni_lobby:part/001'),
@@ -120,14 +123,5 @@ describe('Lobby baut sich selbst', () => {
     commands.length = 0;
     expect(await world.build(result.lobbyServerId)).toBe('current');
     expect(commands).toEqual([]);
-  });
-
-  test('Figuren-Paket ist öffentlich abrufbar, mit gleicher SHA-1 wie in der server.properties', async () => {
-    const h = await harness();
-    const res = await h.mm.app.inject({ method: 'GET', url: '/api/public/packs/lobby.zip' });
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toBe('application/zip');
-    expect(res.rawPayload.subarray(0, 2).toString()).toBe('PK');
-    expect(res.rawPayload.equals(lobbyPackInfo().bytes)).toBe(true);
   });
 });

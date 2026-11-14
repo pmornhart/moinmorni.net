@@ -46,7 +46,7 @@ async function main(): Promise<void> {
   const say = (o: unknown, m?: string): void => console.log(m ?? o, m ? JSON.stringify(o) : '');
   const log = { info: say, warn: say, error: say } as unknown as FastifyBaseLogger;
   const t0 = Date.now();
-  const world = createLobbyWorld(motor, 'moinmorni.net', log, { settleMs: 8000 });
+  const world = createLobbyWorld(motor, log, { settleMs: 8000 });
   console.log('Eigenschaften geändert:', await world.configure('lobby'));
   console.log('Ergebnis:', await world.build('lobby'), `nach ${Math.round((Date.now() - t0) / 1000)} s`);
   rcon.close();

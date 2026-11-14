@@ -1,16 +1,16 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { LOBBY_NAMESPACE, LOBBY_PACK_DIR, lobbyPack, partName, type LobbyPack } from '@moinmorni/builder';
 import { MotorError, type MotorClient } from '../motor/client.js';
-import { lobbyPackInfo, lobbyPackUrl } from './packs.js';
 
 /**
  * Die Lobby baut sich selbst: Der Bauplan (`packages/builder/src/lobby/`) kommt als Datenpaket auf den Lobby-Server,
  * MoinMorni ruft die Bau-Funktionen über den Motor nacheinander auf und merkt sich die gebaute Version. Ändert sich
- * der Plan (Update), wird neu gebaut. Dazu stellt es die server.properties der Lobby ein (Abenteuermodus, friedlich,
- * Texturpaket mit den Figuren).
+ * der Plan (Update), wird neu gebaut. Dazu stellt es die server.properties der Lobby ein (Abenteuermodus, friedlich).
  */
 
 const STAMP_FILE = 'plugins/moinmorni/lobby-world.version';
+/** Version, die gerade gebaut wird – das Lobby-Plugin entfernt Wesen aus anderen Bauten, sobald sie geladen werden. */
+const TARGET_FILE = 'plugins/moinmorni/lobby-world.target';
 const PROPERTIES_FILE = 'server.properties';
 const DEFAULT_LEVEL = 'world';
 const PACK_ID = `file/${LOBBY_PACK_DIR}`;
@@ -43,8 +43,6 @@ const HEX = 16;
 const UNICODE_DIGITS = 4;
 
 export interface LobbyWorldOptions {
-  /** Texturpaket verpflichtend (Panel: Lobby → Figuren). */
-  readonly packRequired?: () => boolean;
   /** Bauplan (Tests: ein kleiner). */
   readonly pack?: () => LobbyPack;
   readonly sleep?: (ms: number) => Promise<void>;
@@ -138,9 +136,13 @@ export function patchProperties(
   return { text: `${[...updated, ...added].join('\n')}\n`, changed };
 }
 
-/** Was die Lobby in ihrer server.properties braucht. Ohne eigene Domain kein Texturpaket (Minecraft lädt nur von außen). */
-export function lobbyProperties(domain: string, required = false): Record<string, string> {
-  const base: Record<string, string> = {
+/**
+ * Was die Lobby in ihrer server.properties braucht. Kein Texturpaket: die Figuren tragen von Mojang signierte Skins
+ * (`packages/builder/src/cast-textures.ts`), die sieht jeder Java-Spieler auch ohne Paket. Ein früher eingetragenes
+ * Paket wird wieder ausgetragen.
+ */
+export function lobbyProperties(): Record<string, string> {
+  return {
     gamemode: 'adventure',
     'force-gamemode': 'true',
     difficulty: 'peaceful',
@@ -148,20 +150,10 @@ export function lobbyProperties(domain: string, required = false): Record<string
     'spawn-protection': '0',
     'allow-nether': 'false',
     'generate-structures': 'false',
-  };
-  const url = lobbyPackUrl(domain);
-  if (!url)
-    return { ...base, 'resource-pack': '', 'resource-pack-sha1': '', 'require-resource-pack': 'false' };
-  const prompt = {
-    text: 'Die Leute im Dorf tragen unsere eigenen Trachten – dafür brauchst du unser kleines Texturpaket. / Our villagers wear our own outfits – this needs our small pack.',
-    color: 'gold',
-  };
-  return {
-    ...base,
-    'resource-pack': url,
-    'resource-pack-sha1': lobbyPackInfo().sha1,
-    'require-resource-pack': String(required),
-    'resource-pack-prompt': JSON.stringify(prompt),
+    'resource-pack': '',
+    'resource-pack-sha1': '',
+    'require-resource-pack': 'false',
+    'resource-pack-prompt': '',
   };
 }
 
@@ -176,7 +168,6 @@ function readProperty(text: string, key: string): string | null {
 
 export function createLobbyWorld(
   motor: MotorClient,
-  domain: string,
   log: FastifyBaseLogger,
   options: LobbyWorldOptions = {},
 ): LobbyWorld {
@@ -235,6 +226,7 @@ export function createLobbyWorld(
       await prev;
       await writeFile(serverId, `${level}/datapacks/${LOBBY_PACK_DIR}/${file}`, content);
     }, Promise.resolve());
+    await writeFile(serverId, TARGET_FILE, `${pack.version}\n`);
     // Paper kennt „reload“ selbst (lädt Plugins neu) – darum immer mit „minecraft:“.
     await run(serverId, 'minecraft:reload');
     await sleep(opts.settleMs);
@@ -260,6 +252,8 @@ export function createLobbyWorld(
       return answers.every((a) => !a.includes('failed'));
     }, opts.loadTimeoutMs);
     if (!loaded) log.warn('Lobby: nicht alle Stücke der Welt geladen – baue trotzdem');
+    // Erst jetzt aufräumen: alle Stücke sind geladen, alte Figuren und Schilder verschwinden wirklich.
+    await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:clean`);
     await Array.from({ length: pack.parts }, (_, i) => i).reduce(async (prev, i) => {
       await prev;
       await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:${partName(i)}`);
@@ -280,7 +274,7 @@ export function createLobbyWorld(
   return {
     configure: async (serverId) => {
       const current = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
-      const next = patchProperties(current, lobbyProperties(domain, options.packRequired?.() ?? false));
+      const next = patchProperties(current, lobbyProperties());
       if (!next.changed) return false;
       await writeFile(serverId, PROPERTIES_FILE, next.text);
       return true;

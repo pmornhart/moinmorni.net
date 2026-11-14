@@ -36,6 +36,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.event.world.EntitiesUnloadEvent;
+import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
@@ -54,6 +56,13 @@ final class LobbyNpcs implements Listener {
     private static final String WORLD_LABEL_TAG = "mm_mode_label";
     private static final String LABEL_TAG = "mm_live_label";
     private static final String WALKER_TAG = "mm_walker";
+    /** Alles, was der Lobby-Bau setzt; dazu `mm_build_<version>`. */
+    private static final String LOBBY_TAG = "mm_lobby";
+    private static final String BUILD_PREFIX = "mm_build_";
+    /** Ältere Bauten hatten nur diese Tags. */
+    private static final List<String> OLD_LOBBY_TAGS = List.of("mm_npc", "mm_seat", "mm_sign", "mm_npc_label");
+    /** Version, die gerade gebaut wird bzw. zuletzt gebaut wurde (schreibt MoinMorni beim Bauen). */
+    private static final String TARGET_FILE = "moinmorni/lobby-world.target";
     private static final List<String> LANGS = List.of("de", "en");
     private static final double LABEL_UP = 2.15;
     private static final int LABEL_SHADE = 64;
@@ -99,6 +108,8 @@ final class LobbyNpcs implements Listener {
     private final Map<UUID, Long> lastClick = new HashMap<>();
     private final Random rnd = new Random();
     private int ticks;
+    private long buildCheckedAt = -1;
+    private String build;
 
     LobbyNpcs(JavaPlugin plugin, HubClient hub, Function<Player, String> langOf) {
         this.plugin = plugin;
@@ -192,8 +203,38 @@ final class LobbyNpcs implements Listener {
                 .findFirst();
     }
 
+    /** Aktuelle Bau-Version (Datei wird nur neu gelesen, wenn sie sich geändert hat). */
+    private String currentBuild() {
+        java.io.File file = new java.io.File(plugin.getDataFolder().getParentFile(), TARGET_FILE);
+        long modified = file.lastModified();
+        if (modified != buildCheckedAt) {
+            buildCheckedAt = modified;
+            try {
+                build = file.isFile() ? java.nio.file.Files.readString(file.toPath()).trim() : null;
+            } catch (java.io.IOException ex) {
+                build = null;
+            }
+        }
+        return build == null || build.isEmpty() ? null : build;
+    }
+
+    private static boolean fromLobbyBuild(java.util.Set<String> tags) {
+        return tags.contains(LOBBY_TAG) || OLD_LOBBY_TAGS.stream().anyMatch(tags::contains);
+    }
+
+    /** Wesen aus einem älteren Lobby-Bau? (Ohne Bau-Version gilt alles.) */
+    private boolean outdated(java.util.Set<String> tags) {
+        String current = currentBuild();
+        return current != null && fromLobbyBuild(tags) && !tags.contains(BUILD_PREFIX + current);
+    }
+
     private void adopt(Entity e) {
         var tags = e.getScoreboardTags();
+        if (outdated(tags)) {
+            e.getPassengers().forEach(Entity::remove);
+            e.remove();
+            return;
+        }
         // Feste Schilder aus dem Bau ersetzen wir durch eigene (mit Live-Zahlen, je Sprache).
         if (tags.contains(WORLD_LABEL_TAG) || tags.contains(LABEL_TAG)) {
             e.remove();
@@ -202,7 +243,12 @@ final class LobbyNpcs implements Listener {
         if (!tags.contains(NPC_TAG)) {
             return;
         }
-        modeOf(e).ifPresent(id -> addLabels(e, id));
+        modeOf(e).ifPresent(id -> {
+            Map<String, TextDisplay> have = labels.get(e.getUniqueId());
+            if (have == null || have.values().stream().anyMatch(l -> !l.isValid())) {
+                addLabels(e, id);
+            }
+        });
         if (tags.contains(WALKER_TAG)) {
             walkers.putIfAbsent(e.getUniqueId(), new Walk(e.getLocation(), rnd.nextInt(PAUSE_SPREAD)));
         } else if (!e.isInsideVehicle()) {
@@ -254,6 +300,39 @@ final class LobbyNpcs implements Listener {
         // Erst im nächsten Tick: während des Ladens keine neuen Wesen (Schilder) in die Welt setzen.
         List<Entity> loaded = List.copyOf(event.getEntities());
         Bukkit.getScheduler().runTask(plugin, () -> loaded.stream().filter(Entity::isValid).forEach(this::adopt));
+    }
+
+    /** Figuren, die neu in die Welt kommen (z. B. beim Neubau der Lobby während des Betriebs). */
+    @EventHandler
+    public void onAdd(EntityAddToWorldEvent event) {
+        Entity e = event.getEntity();
+        var tags = e.getScoreboardTags();
+        if (!fromLobbyBuild(tags) && !tags.contains(WORLD_LABEL_TAG)) {
+            return;
+        }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (e.isValid()) {
+                adopt(e);
+            }
+        });
+    }
+
+    /** Figur weg (z. B. beim Neubau entfernt): ihre Schilder auch. */
+    @EventHandler
+    public void onRemove(EntityRemoveFromWorldEvent event) {
+        UUID id = event.getEntity().getUniqueId();
+        if (!labels.containsKey(id) && !walkers.containsKey(id) && !standing.containsKey(id)) {
+            return;
+        }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Entity still = Bukkit.getEntity(id);
+            if (still != null && still.isValid()) {
+                return;
+            }
+            removeLabels(id);
+            walkers.remove(id);
+            standing.remove(id);
+        });
     }
 
     @EventHandler

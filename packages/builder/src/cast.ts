@@ -4,6 +4,8 @@
  * (`skins.ts`); das Texturpaket legt sie unter `assets/moinmorni/textures/npc/<id>.png` ab, Figuren nutzen sie mit
  * `profile:{texture:'moinmorni:npc/<id>'}`.
  */
+import crypto from 'node:crypto';
+import { CAST_TEXTURES } from './cast-textures.js';
 import { zipOf } from './png.js';
 import { skinPicture, type Outfit } from './skins.js';
 
@@ -294,11 +296,41 @@ export const VILLAGE_CAST: Readonly<Record<string, Outfit>> = {
 
 export const CAST: Readonly<Record<string, Outfit>> = { ...MODE_CAST, ...VILLAGE_CAST };
 
+/** Von Mojang signierte Skin-Daten einer Figur (über MineSkin, siehe `cast-textures.ts`). */
+export interface SignedSkin {
+  /** SHA-256 des Skin-Bilds, aus dem signiert wurde. */
+  readonly hash: string;
+  readonly value: string;
+  readonly signature: string;
+  /** Kennung bei MineSkin (zum Nachschlagen). */
+  readonly mineskin: string;
+}
+
+export { CAST_TEXTURES };
+
+/** Skin-Bild einer Figur (immer dasselbe Bild für dieselbe Tracht). */
+export function castSkinPng(id: string): Buffer {
+  const outfit = CAST[id];
+  if (!outfit) throw new Error(`Unbekannte Figur: ${id}`);
+  return skinPicture(outfit, Object.keys(CAST).sort().indexOf(id) + 1).png();
+}
+
+export function skinHash(png: Buffer): string {
+  return crypto.createHash('sha256').update(png).digest('hex');
+}
+
+/** Signierte Skin-Daten, wenn sie zur aktuellen Tracht passen – sonst null (dann neu signieren). */
+export function signedSkin(id: string): SignedSkin | null {
+  const signed = CAST_TEXTURES[id];
+  if (!signed || !CAST[id]) return null;
+  return signed.hash === skinHash(castSkinPng(id)) ? signed : null;
+}
+
 /** Texturpaket-Bereich (Minecraft liest `pack_format` bzw. ab 1.21.9 `min_format`/`max_format`). */
 const PACK_FORMAT = 15;
 const PACK_FORMAT_MAX = 999;
 
-/** Texturpaket mit allen Figuren-Skins als ZIP (gleiche Figuren = gleiche Bytes). */
+/** Texturpaket mit allen Figuren-Skins als ZIP (nur noch für Vorschauen; im Spiel kommen die Skins signiert). */
 export function castPack(): Buffer {
   const meta = {
     pack: {
@@ -312,9 +344,6 @@ export function castPack(): Buffer {
   const ids = Object.keys(CAST).sort();
   return zipOf([
     { name: 'pack.mcmeta', data: Buffer.from(JSON.stringify(meta, null, 2)) },
-    ...ids.map((id, i) => ({
-      name: `assets/moinmorni/textures/npc/${id}.png`,
-      data: skinPicture(CAST[id]!, i + 1).png(),
-    })),
+    ...ids.map((id) => ({ name: `assets/moinmorni/textures/npc/${id}.png`, data: castSkinPng(id) })),
   ]);
 }
