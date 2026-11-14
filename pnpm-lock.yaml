@@ -181,6 +181,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/builder
 
+  tools/modpack:
+    dependencies:
+      '@moinmorni/builder':
+        specifier: workspace:*
+        version: link:../../packages/builder
+
 packages:
 
   '@babel/code-frame@7.29.7':

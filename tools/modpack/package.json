@@ -1,0 +1,16 @@
+{
+  "name": "@moinmorni/modpack",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "MoinMorni-Modpack im Modrinth-Format (.mrpack): Mods von Modrinth zusammenstellen, Packung bauen, hochladen",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "build": "tsx src/build.ts",
+    "publish:modrinth": "tsx src/publish.ts"
+  },
+  "dependencies": {
+    "@moinmorni/builder": "workspace:*"
+  }
+}
