@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+target/
+*.log
+.env
+.env.*
+!.env.example
+data/
+.claude/fortschritt/
+.claude/settings.local.json
+# Minecraft-Client-Texturen nur lokal zum Rendern
+.mc-assets/
+render-cache/
