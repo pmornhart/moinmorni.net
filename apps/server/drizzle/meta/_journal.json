@@ -29,6 +29,13 @@
       "when": 1794667133261,
       "tag": "0003_friends",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794668016243,
+      "tag": "0004_discord",
+      "breakpoints": true
     }
   ]
 }

@@ -38,7 +38,16 @@ const TEAM_KEY = { ban: 'team.ban', mute: 'team.mute', warn: 'team.warn', kick: 
 // https://regex101.com/?flavor=javascript&regex=%5E%5B0-9a-f%5D%7B8%7D-%3F(%5B0-9a-f%5D%7B4%7D-%3F)%7B3%7D%5B0-9a-f%5D%7B12%7D%24&flags=i&testString=069a79f4-44e9-4726-a5be-fca90e38aaf5
 const UUID = /^[0-9a-f]{8}-?([0-9a-f]{4}-?){3}[0-9a-f]{12}$/i;
 
-export function createModeration(ctx: HubContext, onChange: () => void): Moderation {
+export interface ModChange {
+  readonly uuid: string;
+  readonly kind: ModKind;
+  readonly action: 'add' | 'lift';
+  readonly until: string | null;
+  readonly reason: string;
+  readonly by: string;
+}
+
+export function createModeration(ctx: HubContext, onChange: (change: ModChange) => void): Moderation {
   const untilText = (lang: Lang, iso: string | null): string =>
     iso
       ? text(lang, 'punish.until', { date: dateText(lang, iso, ctx.timeZone) })
@@ -74,7 +83,7 @@ export function createModeration(ctx: HubContext, onChange: () => void): Moderat
       if (kind === 'mute' && t.online) ctx.msg(t.uuid, text(t.lang, 'mute.you', vars(t.lang)));
       if (kind === 'warn' && t.online) ctx.msg(t.uuid, text(t.lang, 'warn.you', vars(t.lang)));
       ctx.team(kind, (lang) => text(lang, TEAM_KEY[kind], vars(lang)));
-      onChange();
+      onChange({ uuid: t.uuid, kind, action: 'add', until: p.expiresAt, reason: why, by });
       return p;
     },
     lift: (t, kind, by) => {
@@ -84,7 +93,7 @@ export function createModeration(ctx: HubContext, onChange: () => void): Moderat
       ctx.team(kind, (lang) =>
         text(lang, kind === 'ban' ? 'team.unban' : 'team.unmute', { actor: mm(by), name: mm(t.name) }),
       );
-      onChange();
+      onChange({ uuid: t.uuid, kind, action: 'lift', until: null, reason: '', by });
       return true;
     },
   };

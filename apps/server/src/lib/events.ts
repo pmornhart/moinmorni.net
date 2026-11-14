@@ -8,7 +8,16 @@ export interface Events {
   /** Owner-Konto angelegt – jetzt richtet sich das Netzwerk ein. */
   'setup.done': { owner: string };
   /** Strafe verhängt oder aufgehoben (Panel lädt neu, Discord zieht nach). */
-  'punishments.changed': Record<string, never>;
+  'punishments.changed': {
+    uuid: string;
+    kind: 'ban' | 'mute' | 'warn' | 'kick' | 'jail';
+    action: 'add' | 'lift';
+    until: string | null;
+    reason: string;
+    by: string;
+  };
+  /** Rang oder Name eines Spielers geändert (Discord zieht die Rolle nach). */
+  'player.changed': { uuid: string };
 }
 
 export interface EventBus {

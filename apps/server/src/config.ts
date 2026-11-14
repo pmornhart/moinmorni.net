@@ -33,6 +33,10 @@ const envSchema = z.object({
   MM_PLUGIN_FILE: z.string().default('/app/plugins/MoinMorni-Network.jar'),
   /** Netzwerk (Proxy + Lobby) nach der Einrichtung selbst anlegen; false nur für Tests. */
   MM_AUTO_NETWORK: z.enum(['true', 'false']).default('true'),
+  /** Token des eigenen Discord-Bots (optional; lässt sich auch im Panel eintragen). */
+  MM_DISCORD_TOKEN: z.string().optional(),
+  /** Discord-API (nur Tests zeigen auf ein nachgebautes Discord). */
+  MM_DISCORD_API: z.string().url().default('https://discord.com/api/v10'),
   /** Zeitzone für Zeiten im Spiel (bis wann ein Bann gilt). */
   TZ: z.string().default('Europe/Berlin'),
 });
@@ -52,6 +56,8 @@ export interface Config {
   readonly hubUrl: string;
   readonly pluginFile: string;
   readonly autoNetwork: boolean;
+  readonly discordToken: string | null;
+  readonly discordApi: string;
 }
 
 export function loadConfig(env: Record<string, string | undefined>, here: string): Config {
@@ -71,5 +77,7 @@ export function loadConfig(env: Record<string, string | undefined>, here: string
     hubUrl: e.MM_HUB_URL,
     pluginFile: path.resolve(e.MM_PLUGIN_FILE),
     autoNetwork: e.MM_AUTO_NETWORK === 'true',
+    discordToken: e.MM_DISCORD_TOKEN?.trim() || null,
+    discordApi: e.MM_DISCORD_API.replace(TRAILING_SLASHES, ''),
   };
 }

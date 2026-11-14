@@ -105,3 +105,10 @@ export const friendRequests = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.from, t.to] }), index('friend_requests_to').on(t.to)],
 );
+
+/** Was der Discord-Bot angelegt hat (Server, Rollen, Kanäle, Nachrichten): Schlüssel → Discord-ID. */
+export const discordObjects = sqliteTable('discord_objects', {
+  key: text('key').primaryKey(),
+  discordId: text('discord_id').notNull(),
+  updatedAt: text('updated_at').notNull().default(now),
+});

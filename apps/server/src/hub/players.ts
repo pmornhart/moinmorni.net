@@ -35,6 +35,9 @@ export interface PlayerService {
   readonly setLanguage: (uuid: string, lang: Lang | null) => void;
   readonly setClientLocale: (uuid: string, locale: string) => void;
   readonly setRole: (uuid: string, roleId: string | null) => void;
+  /** Discord-Konto verbinden (null = trennen); ein Discord-Konto gehört höchstens zu einem Spieler. */
+  readonly setDiscord: (uuid: string, discordId: string | null) => void;
+  readonly byDiscord: (discordId: string) => PlayerRow | undefined;
   /** Rang im Spiel: der höhere aus eigenem Rang und Team-Rolle (verbundenes Minecraft-Konto), sonst „für alle“. */
   readonly roleOf: (uuid: string) => Role;
 }
@@ -91,6 +94,15 @@ export function createPlayerService(db: Db, stores: Stores): PlayerService {
         .where(eq(players.uuid, normalUuid(uuid)))
         .run();
     },
+    setDiscord: (uuid, discordId) => {
+      if (discordId)
+        db.update(players).set({ discordId: null }).where(eq(players.discordId, discordId)).run();
+      db.update(players)
+        .set({ discordId })
+        .where(eq(players.uuid, normalUuid(uuid)))
+        .run();
+    },
+    byDiscord: (discordId) => db.select().from(players).where(eq(players.discordId, discordId)).get(),
     setRole: (uuid, roleId) => {
       db.update(players)
         .set({ roleId })

@@ -71,4 +71,35 @@ const mm = await buildApp({
   logger: false,
 });
 await mm.app.listen({ host: '127.0.0.1', port: MM_PORT });
+
+// Beispiel-Spieler, damit Spieler- und Strafen-Seiten im Panel etwas zeigen (nur lokal).
+const DEMO = [
+  { uuid: '0f6b8a2e-1c4d-4e5f-9a7b-1c2d3e4f5a61', name: 'Lena_Baut', role: 'vip', minutes: 1260 },
+  { uuid: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c52', name: 'Finn2015', role: null, minutes: 340 },
+  { uuid: '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d63', name: 'KaiKocht', role: 'media', minutes: 2210 },
+  { uuid: '3c4d5e6f-7a8b-4c9d-0e1f-2a3b4c5d6e74', name: 'Mia_Mausi', role: null, minutes: 95 },
+  { uuid: '00000000-0000-0000-0009-01f2a3b4c5d6', name: '.Tobi_04', role: null, minutes: 610 },
+] as const;
+if (!mm.hub.players.get(DEMO[0].uuid)) {
+  DEMO.forEach((p) => {
+    mm.hub.players.seen({ uuid: p.uuid, name: p.name, bedrock: p.name.startsWith('.') });
+    mm.hub.players.setRole(p.uuid, p.role);
+    mm.hub.players.addMinutes(p.uuid, p.minutes);
+  });
+  mm.hub.punish.add({ uuid: DEMO[1].uuid, kind: 'mute', reason: 'Spam im Chat', by: 'philip', minutes: 120 });
+  mm.hub.punish.add({
+    uuid: DEMO[3].uuid,
+    kind: 'warn',
+    reason: 'Bitte nicht beleidigen',
+    by: 'philip',
+    minutes: null,
+  });
+  mm.hub.punish.add({
+    uuid: DEMO[4].uuid,
+    kind: 'ban',
+    reason: 'Hacks (Fly)',
+    by: 'philip',
+    minutes: 7 * 24 * 60,
+  });
+}
 console.log(`Motor: ${motorUrl} · MoinMorni: http://127.0.0.1:${MM_PORT} · Login: philip / ${PASSWORD}`);

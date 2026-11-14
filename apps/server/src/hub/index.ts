@@ -5,7 +5,7 @@ import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
 import { createChat, type ChatSettings } from './chat.js';
-import { allowed, createCommands, findCommand, type Actor } from './commands.js';
+import { allowed, createCommands, findCommand, type Actor, type Command } from './commands.js';
 import { hasRight, type HubContext } from './context.js';
 import { createModeration, type Moderation } from './moderation.js';
 import { createPlayerService, normalUuid, type PlayerService } from './players.js';
@@ -79,6 +79,8 @@ export interface HubOptions {
   readonly log: FastifyBaseLogger;
   readonly timeZone: string;
   readonly now?: () => number;
+  /** Weitere Befehle im Spiel (z. B. /discord vom Discord-Bot). */
+  readonly extraCommands?: (ctx: HubContext) => Command[];
   /** Schlafenden Server wecken (Motor starten); false = ging nicht. */
   readonly wake?: (server: string) => Promise<boolean>;
 }
@@ -93,6 +95,8 @@ export interface Hub {
   readonly punish: PunishService;
   /** Strafen mit Rauswurf, Bann-Liste und Hinweis ans Team (auch fürs Panel). */
   readonly moderation: Moderation;
+  /** Nachricht an einen Spieler, egal wo er ist (MiniMessage). */
+  readonly tell: (uuid: string, text: string) => void;
   /** Rang eines Spielers hat sich geändert (Panel) → Spielserver informieren. */
   readonly refreshProfile: (uuid: string) => void;
   /** Ist der Proxy gerade mit dem Hub verbunden? */
@@ -160,6 +164,11 @@ export function createHub(options: HubOptions): Hub {
     if (p?.server && body) toBackend(p.server, body);
   };
   const bans = (): Body => ({ t: 'bans', list: punish.activeBans() });
+  /** Rang/Sprache geändert: Spielserver und Discord ziehen nach. */
+  const refresh = (uuid: string): void => {
+    sendProfile(uuid);
+    events.emit('player.changed', { uuid: normalUuid(uuid) });
+  };
 
   const ctx: HubContext = {
     presence,
@@ -188,17 +197,22 @@ export function createHub(options: HubOptions): Hub {
         .all()
         .filter((p) => hasRight(players.roleOf(p.uuid), right))
         .forEach((p) => ctx.msg(p.uuid, build(p.lang))),
-    refreshProfile: sendProfile,
+    refreshProfile: refresh,
     syncBans: () => {
       toProxy(bans());
     },
   };
-  const moderation = createModeration(ctx, () => events.emit('punishments.changed', {}));
+  const moderation = createModeration(ctx, (change) => events.emit('punishments.changed', change));
   const social = createSocial(ctx, db, now);
-  const commands = mergeCommands(
-    [...createCommands(ctx, moderation), ...social.commands],
-    createSettingCommands(ctx),
-  );
+  // Erst beim ersten Gebrauch zusammenstellen: Zusatzbefehle (Discord-Bot) gibt es erst nach dem Hub.
+  const cache: { commands: Command[] | null } = { commands: null };
+  const commands = (): Command[] => {
+    cache.commands ??= mergeCommands(
+      [...createCommands(ctx, moderation), ...social.commands, ...(options.extraCommands?.(ctx) ?? [])],
+      createSettingCommands(ctx),
+    );
+    return cache.commands;
+  };
   const chat = createChat(ctx, () => stores.settings('chat') as unknown as ChatSettings);
 
   /** Wer auf einen aufwachenden Server wartet: Server → Spieler. */
@@ -339,7 +353,7 @@ export function createHub(options: HubOptions): Hub {
     command: (conn, body) => {
       const m = commandSchema.parse(body);
       const actor = actorOf(m.uuid);
-      const command = findCommand(commands, m.command);
+      const command = findCommand(commands(), m.command);
       if (!actor || !command) {
         fail(conn, m.id, 'unknown');
         return;
@@ -351,7 +365,7 @@ export function createHub(options: HubOptions): Hub {
     complete: (conn, body) => {
       const m = commandSchema.parse(body);
       const actor = actorOf(m.uuid);
-      const command = findCommand(commands, m.command);
+      const command = findCommand(commands(), m.command);
       const ok = actor && command && allowed(command, actor.role);
       reply(conn, m.id, { suggestions: ok && command.complete ? command.complete(actor, m.args) : [] });
     },
@@ -370,7 +384,7 @@ export function createHub(options: HubOptions): Hub {
           t: 'welcome',
           server: conn.server,
           kind: conn.kind,
-          commands: commands.map((c) => ({ name: c.name, aliases: c.aliases })),
+          commands: commands().map((c) => ({ name: c.name, aliases: c.aliases })),
         });
         conn.send(network());
         conn.send(bans());
@@ -415,7 +429,8 @@ export function createHub(options: HubOptions): Hub {
     players,
     punish,
     moderation,
-    refreshProfile: sendProfile,
+    tell: (uuid, line) => ctx.msg(normalUuid(uuid), line),
+    refreshProfile: refresh,
     proxyOnline: () => conns.proxy !== null,
     connectedServers: () => [...conns.backends.keys()],
   };

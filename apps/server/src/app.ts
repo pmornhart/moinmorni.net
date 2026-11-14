@@ -7,6 +7,7 @@ import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod';
 import type { Config } from './config.js';
 import { openDatabase, type Db } from './db/index.js';
+import { createMoinMorniBot, type MoinMorniBot } from './discord/bot.js';
 import { createHub, type Hub } from './hub/index.js';
 import { AppError } from './lib/errors.js';
 import { createEventBus, type EventBus } from './lib/events.js';
@@ -15,6 +16,7 @@ import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
 import { createProvisioner, type NetworkProvisioner } from './network/provision.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
+import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
@@ -42,6 +44,7 @@ export interface BuiltApp {
   readonly hub: Hub;
   readonly network: NetworkProvisioner;
   readonly sleep: SleepService;
+  readonly bot: MoinMorniBot;
   /** Nach dem Start im Hintergrund: Einrichtungs-Code bereitlegen, Motor einstellen. */
   readonly start: () => Promise<void>;
   readonly close: () => Promise<void>;
@@ -52,6 +55,8 @@ export interface BuildOptions {
   readonly logger?: boolean;
   /** Tests: eigener Weg zum Motor. */
   readonly motorFetch?: FetchLike;
+  /** Tests: eigener Weg zu Discord. */
+  readonly discordFetch?: typeof fetch;
 }
 
 const HTTP_NOT_FOUND = 404;
@@ -90,8 +95,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const auth = createPanelAuth(handle.db, motor, stores);
   // Der Hub weckt schlafende Modi über den Schlaf-Dienst (der wiederum den Hub fragt, wer wo ist).
   const sleepRef: { service: SleepService | null } = { service: null };
+  const botRef: { bot: MoinMorniBot | null } = { bot: null };
   const hub = createHub({
     wake: (server) => sleepRef.service?.wake(server) ?? Promise.resolve(false),
+    extraCommands: (ctx) => botRef.bot?.commands(ctx) ?? [],
     secret: config.secret,
     db: handle.db,
     stores,
@@ -103,6 +110,17 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const network = createProvisioner(config, motor, hub, app.log);
   const sleep = createSleepService(motor, hub, stores, app.log);
   sleepRef.service = sleep;
+  const bot = createMoinMorniBot({
+    config,
+    db: handle.db,
+    stores,
+    hub,
+    events,
+    status,
+    log: app.log,
+    ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
+  });
+  botRef.bot = bot;
   const provision = async (): Promise<void> => {
     if (!config.autoNetwork) return;
     try {
@@ -121,6 +139,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerPublicRoutes(app, status);
   registerPanelRoutes(app, auth, stores);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
+  registerDiscordRoutes(app, auth, bot);
   await registerMotorProxy(app, config.motorUrl);
 
   const hasWeb = fs.existsSync(path.join(config.webDir, 'index.html'));
@@ -158,13 +177,16 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     hub,
     network,
     sleep,
+    bot,
     start: async () => {
       sleep.start();
+      bot.start();
       await setup.start();
       if (!(await setup.required())) await provision();
     },
     close: async () => {
       sleep.stop();
+      bot.stop();
       await hub.close();
       await app.close();
       handle.close();

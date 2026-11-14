@@ -68,6 +68,8 @@ export interface HarnessOptions {
   readonly webDir?: string;
   /** Fester Port für MoinMorni (Browser-Tests). */
   readonly port?: number;
+  /** Weitere Einstellungen (z. B. MM_DISCORD_TOKEN). */
+  readonly env?: Record<string, string>;
 }
 
 export async function createHarness(options: HarnessOptions = {}): Promise<Harness> {
@@ -112,6 +114,7 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
         MM_PORT: '0',
         MM_WEB_DIR: options.webDir ?? mmDir,
         MM_AUTO_NETWORK: 'false',
+        ...options.env,
       },
       mmDir,
     ),
