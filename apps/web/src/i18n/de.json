@@ -176,7 +176,10 @@
     "logout": "Abmelden",
     "website": "Zur Webseite",
     "account": "Angemeldet als",
-    "manage": "Verwaltung"
+    "manage": "Verwaltung",
+    "players": "Spieler",
+    "punishments": "Strafen",
+    "tour": "Rundgang starten"
   },
   "overview": {
     "greeting": "Servus, {{name}}!",
@@ -246,7 +249,6 @@
   "roles": {
     "title": "Rollen",
     "text": "Eine Rolle gilt überall: Symbol und Farbe im Chat, Rechte im Spiel, Bereiche im Panel und die passende Rolle im Discord.",
-    "editLater": "Bearbeiten kommt im nächsten Schritt – bis dahin siehst du hier die Vorlage.",
     "panel": "Im Panel",
     "game": "Im Spiel",
     "discord": "Im Discord",
@@ -308,7 +310,103 @@
       "links": "Links posten"
     },
     "chatSample": "Servus!",
-    "everything": "Alles – alle {{count}}"
+    "everything": "Alles – alle {{count}}",
+    "howTo": "Klapp eine Rolle auf, um sie zu ändern. Erst „Speichern“ übernimmt alles – dann gilt es sofort im Spiel, im Panel und im Discord.",
+    "ownerOnlyNote": "Owner und Admin kann nur der Owner ändern.",
+    "countOf": "{{count}} von {{total}}",
+    "selectAll": "Alle an",
+    "selectNone": "Alle aus",
+    "mighty": "Vorsicht: gibt sehr viel Macht",
+    "preview": "So sieht es im Chat aus",
+    "previewServer": "Lobby",
+    "nameDe": "Name auf Deutsch",
+    "nameEn": "Name auf Englisch",
+    "symbol": "Symbol",
+    "symbolHelp": "Steht vor dem Namen im Chat, in der Spielerliste und über dem Kopf. Höchstens 4 Zeichen.",
+    "symbolIdeas": "Symbol-Vorschläge",
+    "symbolNone": "Keins",
+    "colour": "Farbe",
+    "colourHelp": "Farbe des Namens im Chat und über dem Kopf – als #rrggbb.",
+    "colourInvalid": "Die Farbe passt noch nicht: bitte als #rrggbb, z. B. #55ff55.",
+    "colourPicker": "Farbe auswählen",
+    "fallbackLabel": "Für alle anderen",
+    "fallbackHelp": "Diesen Rang hat jeder, der keinen anderen hat. Genau eine Rolle ist das – schalte es bei einer anderen Rolle an, um es zu verschieben.",
+    "up": "Weiter nach oben (mehr Rang)",
+    "down": "Weiter nach unten (weniger Rang)",
+    "delete": "Rolle löschen",
+    "deleteConfirm": "Wirklich löschen?",
+    "deleteHelp": "Wer diese Rolle hat, bekommt danach den Rang für alle anderen.",
+    "cantDelete": {
+      "owner": "Die Owner-Rolle bleibt immer.",
+      "fallback": "Die Rolle für alle anderen bleibt – mach zuerst eine andere zur Standard-Rolle."
+    },
+    "locked": "Owner und Admin kann nur der Owner ändern.",
+    "lockedPill": "Nur Owner",
+    "id": "Kennung: {{id}}",
+    "changed": "Geändert, noch nicht gespeichert",
+    "newPill": "Neu",
+    "problem": "Bitte prüfen",
+    "new": "Neue Rolle",
+    "newPlaceholder": "z. B. Helfer",
+    "newHint": "Gib der Rolle einen Namen. Symbol, Farbe und Rechte stellst du danach ein.",
+    "newHelp": "Die Kennung wird „{{id}}“ – sie bleibt, auch wenn du den Namen später änderst.",
+    "create": "Anlegen",
+    "saved": "Rollen gespeichert – gelten ab sofort überall.",
+    "fixFirst": "Bitte zuerst prüfen: {{names}} (Name, Symbol oder Farbe passt noch nicht).",
+    "areaHelp": {
+      "overview": "Startseite des Panels mit Netzwerk-Status.",
+      "modes": "Spielmodi an- und ausschalten, Reihenfolge, wer hinein darf.",
+      "lobby": "Einstellungen der Lobby (Dorf, Figuren, Deko).",
+      "players": "Spieler suchen, Profile ansehen, Ränge vergeben.",
+      "punishments": "Strafen verhängen und aufheben.",
+      "chat": "Chat-Regeln wie Langsam-Modus, Links und Schimpfwort-Filter.",
+      "voice": "Sprachchat und feste Sprachkanäle.",
+      "roles": "Diese Seite: Rollen und ihre Rechte ändern.",
+      "content": "Texte und Neuigkeiten auf der Webseite.",
+      "discord": "Den Discord-Bot und seine Kanäle einstellen.",
+      "updates": "Updates von MoinMorni einspielen.",
+      "servers": "Die einzelnen Server mit Konsole, Dateien und Backups.",
+      "build": "Der Bau-Server fürs Bauteam.",
+      "settings": "Allgemeine Einstellungen des ganzen Netzwerks."
+    },
+    "gameHelp": {
+      "kick": "Spieler vom Netzwerk werfen (sie können gleich wieder rein).",
+      "ban": "Spieler für eine Zeit oder für immer aussperren.",
+      "mute": "Spieler im Chat stummschalten.",
+      "jail": "Spieler ins Gefängnis in der Lobby stecken.",
+      "warn": "Eine Verwarnung aussprechen, die im Verlauf bleibt.",
+      "teleport": "Sich zu Spielern teleportieren oder sie herholen.",
+      "vanish": "Für andere unsichtbar werden, z. B. zum Beobachten.",
+      "spectate": "Runden als Zuschauer ansehen.",
+      "inspect": "Inventar und Infos anderer Spieler ansehen.",
+      "voice-join-any": "Jeder Sprachgruppe ohne Passwort beitreten.",
+      "voice-mute": "Andere im Sprachchat stummschalten.",
+      "build": "Blöcke setzen und abbauen, wo sonst geschützt ist.",
+      "worldedit": "Große Bau-Werkzeuge (ganze Bereiche auf einmal).",
+      "lobby-edit": "Die Lobby umbauen.",
+      "gamemode": "Den Spielmodus wechseln (Überleben, Zuschauer …).",
+      "creative": "In den Kreativmodus wechseln.",
+      "streamer": "Streamer-Modus: versteckt Adressen und Koordinaten.",
+      "reserved-slot": "Darf auch bei vollem Netzwerk rein.",
+      "bigger-party": "Größere Party mit mehr Freunden.",
+      "lobby-extras": "Extras in der Lobby, z. B. Partikel oder Hüte.",
+      "chat-colour": "Farben im eigenen Chat-Text.",
+      "maintenance-join": "Darf auch während der Wartung rein.",
+      "ranks": "Anderen im Spiel Ränge geben (nur unter dem eigenen).",
+      "admin": "Alles im Spiel – nur für ganz wenige."
+    },
+    "discordHelp": {
+      "administrator": "Darf im Discord wirklich alles.",
+      "manage-server": "Kanäle, Rollen und Einstellungen des Discord-Servers ändern.",
+      "manage-messages": "Nachrichten anderer löschen und anpinnen.",
+      "timeout": "Leuten eine Auszeit geben (sie können kurz nicht schreiben).",
+      "tickets": "Support-Tickets ansehen und beantworten.",
+      "team-area": "Sieht die Team-Kanäle.",
+      "builder-area": "Sieht die Kanäle fürs Bauteam.",
+      "media-area": "Sieht die Kanäle für Streamer und Videos.",
+      "vip-area": "Sieht die VIP-Kanäle.",
+      "links": "Darf Links posten."
+    }
   },
   "servers": {
     "title": "Server",
@@ -324,6 +422,213 @@
     "title": "Hier ist nichts",
     "text": "Diese Seite gibt es im Panel nicht.",
     "back": "Zur Übersicht"
+  },
+  "panel": {
+    "forbidden": "Diesen Bereich darf deine Rolle nicht sehen. Frag den Owner, wenn du ihn brauchst."
+  },
+  "time": {
+    "justNow": "gerade eben",
+    "playBoth": "{{h}} Std. {{m}} Min.",
+    "playHours": "{{h}} Std.",
+    "playMinutes": "{{m}} Min.",
+    "minutes_one": "{{count}} Minute",
+    "minutes_other": "{{count}} Minuten",
+    "hours_one": "{{count}} Stunde",
+    "hours_other": "{{count}} Stunden",
+    "days_one": "{{count}} Tag",
+    "days_other": "{{count}} Tage"
+  },
+  "players": {
+    "title": "Spieler",
+    "text": "Alle, die schon einmal auf MoinMorni waren – mit Rang, Spielzeit und Strafen. Wer gerade online ist, steht oben.",
+    "search": "Spieler suchen …",
+    "searchLabel": "Nach einem Spielernamen suchen",
+    "searchHint": "Tipp: Namen von Bedrock-Spielern (Handy, Konsole) beginnen mit einem Punkt, z. B. „.Tobi_04“.",
+    "onlineNow_one": "{{count}} gerade online",
+    "onlineNow_other": "{{count}} gerade online",
+    "more": "Mehr anzeigen",
+    "limitHint": "Hier stehen die {{count}} zuletzt aktiven. Such nach einem Namen, um weitere zu finden.",
+    "empty": "Hier war noch niemand. Sobald jemand das Netzwerk betritt, taucht er hier auf.",
+    "noMatch": "Niemand mit „{{q}}“ im Namen gefunden. Prüf die Schreibweise.",
+    "onlineOn": "Online auf {{server}}",
+    "onlineNoServer": "Gerade online",
+    "lastSeen": "Zuletzt da {{when}}",
+    "playtime": "Spielzeit",
+    "bedrock": "Bedrock",
+    "bedrockHelp": "Spielt mit der Bedrock Edition (Handy, Konsole oder Windows).",
+    "banned": "Gebannt",
+    "muted": "Stumm",
+    "open": "Profil von {{name}} öffnen",
+    "back": "Alle Spieler",
+    "unknown": "Diesen Spieler kennt MoinMorni nicht (mehr).",
+    "profile": "Profil",
+    "firstSeen": "Zum ersten Mal da",
+    "lastSeenLabel": "Zuletzt da",
+    "language": "Sprache",
+    "languageUnknown": "Noch unbekannt",
+    "edition": "Spielt mit",
+    "editionJava": "Java Edition (PC)",
+    "editionBedrock": "Bedrock Edition (Handy, Konsole, Windows)",
+    "uuid": "Spieler-ID (UUID)",
+    "uuidHelp": "Bleibt gleich, auch wenn sich der Name ändert.",
+    "rank": {
+      "title": "Rang",
+      "current": "Gilt gerade:",
+      "own": "Eigener Rang",
+      "none": "Kein eigener Rang ({{fallback}})",
+      "save": "Rang speichern",
+      "saved": "{{name}} hat jetzt den Rang „{{rank}}“.",
+      "savedNone": "{{name}} hat jetzt keinen eigenen Rang mehr.",
+      "team": "Gilt gerade als {{rank}}, weil das Minecraft-Konto mit einem Team-Konto im Panel verbunden ist. Es zählt immer der höhere Rang – der eigene Rang hier greift, sobald die Person nicht mehr im Team ist.",
+      "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – diesen Rang kannst du nicht ändern.",
+      "noRoles": "Ränge vergeben kann, wer im Panel auch die Rollen sehen darf.",
+      "help": "Du kannst nur Ränge unter deinem eigenen vergeben. Owner und Admin vergibt nur der Owner. Gilt sofort im Spiel."
+    },
+    "act": {
+      "title": "Strafe verhängen",
+      "help": "Wirkt sofort im ganzen Netzwerk. Das Team bekommt einen Hinweis.",
+      "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – bestrafen kann hier nur jemand mit höherem Rang."
+    },
+    "active": {
+      "title": "Gerade aktiv",
+      "until": "bis {{date}} · {{rest}}",
+      "lift": "Aufheben"
+    },
+    "history": {
+      "title": "Verlauf",
+      "count_one": "{{count}} Eintrag",
+      "count_other": "{{count}} Einträge",
+      "empty": "Bisher eine weiße Weste – noch keine Strafen.",
+      "by": "von {{name}}",
+      "until": "bis {{date}}",
+      "forever": "für immer",
+      "revokedBy": "Aufgehoben von {{name}} · {{date}}",
+      "active": "Aktiv",
+      "revoked": "Aufgehoben",
+      "expired": "Abgelaufen",
+      "replaced": "Durch eine neuere ersetzt",
+      "once": "Einmalig"
+    }
+  },
+  "punish": {
+    "kinds": {
+      "ban": "Bann",
+      "mute": "Stumm",
+      "warn": "Verwarnung",
+      "kick": "Rauswurf",
+      "jail": "Gefängnis"
+    },
+    "verbs": {
+      "ban": "Bannen",
+      "mute": "Stummschalten",
+      "warn": "Verwarnen",
+      "kick": "Rauswerfen"
+    },
+    "title": "Neue Strafe",
+    "titleFor": "Strafe für {{name}}",
+    "text": "Wirkt sofort im ganzen Netzwerk – die Person sieht den Grund, das Team bekommt einen Hinweis.",
+    "player": "Spieler",
+    "playerHelp": "Der Name, wie er im Spiel steht. Die Person muss schon einmal auf dem Netzwerk gewesen sein.",
+    "playerPlaceholder": "z. B. Lena_Baut",
+    "someone": "Die Person",
+    "kind": "Was soll passieren?",
+    "kickOffline": "Rauswerfen geht nur, solange {{name}} online ist.",
+    "duration": "Wie lange?",
+    "forever": "Für immer",
+    "custom": "Eigene Dauer",
+    "amount": "Anzahl",
+    "unit": "Einheit",
+    "units": {
+      "minutes": "Minuten",
+      "hours": "Stunden",
+      "days": "Tage",
+      "weeks": "Wochen"
+    },
+    "customInvalid": "Bitte eine ganze Zahl ab 1 eingeben (höchstens 10 Jahre).",
+    "reason": "Grund",
+    "reasonHelp": "Sieht die Person selbst. Leer geht auch – dann steht „kein Grund angegeben“.",
+    "reasonPlaceholder": "z. B. Beleidigung im Chat",
+    "reasons": {
+      "spam": "Spam im Chat",
+      "insult": "Beleidigung",
+      "cheats": "Hacks / Cheats",
+      "grief": "Griefing",
+      "ads": "Werbung für andere Server"
+    },
+    "summary": {
+      "ban": "{{name}} fliegt sofort vom Netzwerk und kommt {{duration}} lang nicht mehr herein.",
+      "banForever": "{{name}} fliegt sofort vom Netzwerk und kommt nicht mehr herein – bis jemand den Bann aufhebt.",
+      "mute": "{{name}} kann {{duration}} lang nicht im Chat schreiben.",
+      "muteForever": "{{name}} kann nicht mehr im Chat schreiben – bis jemand die Stummschaltung aufhebt.",
+      "warn": "{{name}} bekommt die Verwarnung im Spiel angezeigt (wenn online). Sie bleibt im Verlauf stehen.",
+      "kick": "{{name}} fliegt sofort vom Netzwerk, kann aber gleich wieder herein."
+    },
+    "busy": "Einen Moment …",
+    "cancel": "Abbrechen",
+    "done": {
+      "ban": "{{name}} ist jetzt gebannt.",
+      "mute": "{{name}} ist jetzt stummgeschaltet.",
+      "warn": "{{name}} wurde verwarnt.",
+      "kick": "{{name}} wurde rausgeworfen."
+    },
+    "lifted": {
+      "ban": "Der Bann von {{name}} ist aufgehoben.",
+      "mute": "{{name}} darf wieder schreiben."
+    }
+  },
+  "punishments": {
+    "title": "Strafen",
+    "text": "Alle Strafen im Netzwerk – Banns, Stummschaltungen, Verwarnungen und Rauswürfe. Aktive kannst du hier aufheben.",
+    "new": "Neue Strafe",
+    "search": "Nach Spieler suchen …",
+    "searchLabel": "Strafen nach Spielername durchsuchen",
+    "stateLabel": "Welche Strafen",
+    "kindLabel": "Art der Strafe",
+    "all": "Alle",
+    "onlyActive": "Nur aktive ({{count}})",
+    "kindAll": "Alle Arten",
+    "emptyTitle": "Alles friedlich",
+    "empty": "Noch keine Strafen – das Netzwerk benimmt sich vorbildlich.",
+    "noMatch": "Keine Strafe passt zu deiner Auswahl.",
+    "reset": "Filter zurücksetzen",
+    "count": "{{count}} von {{total}} Strafen",
+    "latest": "Die letzten {{count}} Strafen, neueste zuerst."
+  },
+  "tour": {
+    "step": "Schritt {{n}} von {{total}}",
+    "next": "Weiter",
+    "back": "Zurück",
+    "skip": "Überspringen",
+    "done": "Los geht's",
+    "again": "Den Rundgang kannst du jederzeit neu starten – unten links bei deinem Namen.",
+    "overview": {
+      "title": "Willkommen im Panel!",
+      "text": "Kurzer Rundgang gefällig? Die Übersicht zeigt dir auf einen Blick, ob das Netzwerk läuft, wie viele Spieler online sind und welche Modi offen haben."
+    },
+    "modes": {
+      "title": "Modi",
+      "text": "Hier schaltest du Spielmodi an und aus, setzt sie auf Wartung und legst fest, in welcher Reihenfolge sie in der Lobby stehen."
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und mehr. Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst."
+    },
+    "players": {
+      "title": "Spieler",
+      "text": "Alle, die schon einmal da waren: suchen, Profil mit Spielzeit ansehen und Ränge vergeben."
+    },
+    "punishments": {
+      "title": "Strafen",
+      "text": "Verwarnen, stummschalten, bannen oder rauswerfen – und alles wieder aufheben. Wirkt sofort im ganzen Netzwerk."
+    },
+    "roles": {
+      "title": "Rollen",
+      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel, im Panel und im Discord. Eine Änderung gilt überall gleichzeitig."
+    },
+    "servers": {
+      "title": "Server",
+      "text": "Die einzelnen Minecraft-Server mit Konsole, Dateien, Backups und Plugins. Hier schaust du nach, wenn mal etwas klemmt."
+    }
   },
   "errors": {
     "generic": "Da ist etwas schiefgegangen. Versuch es bitte gleich nochmal.",
@@ -349,6 +654,16 @@
     "passkey_unknown": "Diesen Passkey kennt MoinMorni nicht.",
     "setup_code_wrong": "Der Einrichtungs-Code stimmt nicht. Schau nochmal genau hin.",
     "setup_done": "MoinMorni ist schon eingerichtet. Melde dich einfach an.",
-    "setup_invalid": "Name oder Passwort passen noch nicht zu den Regeln."
+    "setup_invalid": "Name oder Passwort passen noch nicht zu den Regeln.",
+    "player_unknown": "Diesen Spieler kennt MoinMorni nicht. Er muss mindestens einmal auf dem Netzwerk gewesen sein – prüf auch die Schreibweise.",
+    "player_higher": "Diese Person hat den gleichen oder einen höheren Rang als du – das darfst du nicht.",
+    "player_offline": "Rauswerfen geht nur, solange die Person online ist.",
+    "punishment_none": "Da gibt es gerade nichts aufzuheben – vielleicht ist die Strafe schon abgelaufen.",
+    "role_unknown": "Diesen Rang gibt es nicht (mehr). Lade die Seite neu.",
+    "role_too_high": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher.",
+    "role_owner_only": "Owner und Admin darf nur der Owner ändern.",
+    "role_duplicate": "Zwei Rollen haben dieselbe Kennung. Gib einer einen anderen Namen.",
+    "role_fallback_one": "Genau eine Rolle muss „für alle anderen“ sein.",
+    "role_owner_missing": "Die Owner-Rolle muss bleiben."
   }
 }

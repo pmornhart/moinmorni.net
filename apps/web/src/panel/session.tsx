@@ -21,6 +21,7 @@ export interface SettingsEntry {
 export const PANEL_ME_KEY = ['panel', 'me'] as const;
 export const SETTINGS_KEY = ['panel', 'settings'] as const;
 export const SETUP_KEY = ['setup'] as const;
+export const ROLES_KEY = ['panel', 'roles'] as const;
 
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
@@ -60,6 +61,16 @@ export function useSetupQuery(): UseQueryResult<{ readonly required: boolean }> 
 
 export function useSettingsQuery(): UseQueryResult<SettingsEntry[]> {
   return useQuery({ queryKey: SETTINGS_KEY, queryFn: () => mmApi<SettingsEntry[]>('/api/panel/settings') });
+}
+
+/** The role template, best rank first. Only for people who may see the roles area. */
+export function useRolesQuery(enabled = true): UseQueryResult<Role[]> {
+  return useQuery({
+    queryKey: ROLES_KEY,
+    queryFn: async () => (await mmApi<Role[]>('/api/panel/roles')).sort((a, b) => a.position - b.position),
+    enabled,
+    retry: retryUnlessAnswer,
+  });
 }
 
 export const PanelContext = createContext<PanelMe | null>(null);

@@ -53,8 +53,10 @@ export function registerPanelRoutes(app: Api, auth: PanelAuth, stores: Stores): 
     },
   );
 
+  // Lesen dürfen auch alle mit Bereich „Spieler“ (für die Rang-Auswahl); ändern nur mit Bereich „Rollen“.
   app.get('/api/panel/roles', async (request) => {
-    await auth.require(request, 'roles');
+    const user = await auth.require(request);
+    if (!user.areas.has('roles') && !user.areas.has('players')) throw forbidden('panel_area_forbidden');
     return stores.roles();
   });
 

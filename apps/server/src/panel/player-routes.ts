@@ -39,6 +39,7 @@ const punishBody = z.object({
   reason: z.string().trim().max(REASON_MAX).default(''),
 });
 const liftParams = z.object({ uuid: z.string().min(1).max(40), kind: z.enum(['ban', 'mute']) });
+const LASTING: ReadonlySet<string> = new Set(['ban', 'mute', 'jail', 'voice']);
 
 export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, hub: Hub, db: Db): void {
   const view = (row: typeof players.$inferSelect) => {
@@ -50,7 +51,13 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
       uuid: row.uuid,
       name: row.name,
       bedrock: row.bedrock,
-      role: { id: role.id, name: role.name, symbol: role.symbol, colour: role.colour },
+      role: {
+        id: role.id,
+        name: role.name,
+        symbol: role.symbol,
+        colour: role.colour,
+        position: role.position,
+      },
       ownRole: row.roleId,
       online: online ? { server: online.server } : null,
       firstSeen: row.firstSeen,
@@ -90,7 +97,13 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
     await auth.require(request, 'players');
     const row = hub.players.get(normalUuid(request.params.uuid));
     if (!row) throw notFound('player_unknown');
-    return { ...view(row), history: hub.punish.history(row.uuid) };
+    return {
+      ...view(row),
+      history: hub.punish.history(row.uuid).map((p) => ({
+        ...p,
+        active: LASTING.has(p.kind) && hub.punish.active(row.uuid, p.kind)?.id === p.id,
+      })),
+    };
   });
 
   app.put(
@@ -118,7 +131,8 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
     return rows.map((p) => ({
       ...p,
       playerName: hub.players.get(p.playerUuid)?.name ?? p.playerUuid,
-      active: hub.punish.active(p.playerUuid, p.kind)?.id === p.id,
+      // Nur was dauert, kann „aktiv“ sein – Verwarnung und Rauswurf sind einmalig.
+      active: LASTING.has(p.kind) && hub.punish.active(p.playerUuid, p.kind)?.id === p.id,
     }));
   });
 
@@ -141,6 +155,7 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
     const user = await auth.require(request, 'punishments');
     const t = hub.moderation.target(request.params.uuid);
     if (!t) throw notFound('player_unknown');
+    if (!higher(user, t.uuid)) throw forbidden('player_higher');
     if (!hub.moderation.lift(t, request.params.kind, user.username)) throw notFound('punishment_none');
     return { ok: true };
   });

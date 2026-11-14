@@ -30,12 +30,15 @@ export function textOn(hex: string): string {
   return luminance > LIGHT_THRESHOLD ? DARK_TEXT : LIGHT_TEXT;
 }
 
+/** What a badge needs of a role (players carry only these parts of their rank). */
+export type RoleLook = Pick<Role, 'name' | 'symbol' | 'colour'>;
+
 /** The role's symbol on a tile in its colour (a dot for roles without symbol). */
 export function RoleSymbol({
   role,
   className,
 }: {
-  readonly role: Role;
+  readonly role: RoleLook;
   readonly className?: string;
 }): ReactElement {
   const style: CSSProperties = { backgroundColor: role.colour, color: textOn(role.colour) };
@@ -57,16 +60,19 @@ export function RoleSymbol({
 export function RoleBadge({
   role,
   onBand = false,
+  className,
 }: {
-  readonly role: Role;
+  readonly role: RoleLook;
   readonly onBand?: boolean;
+  readonly className?: string;
 }): ReactElement {
   const pick = usePick();
   return (
     <span
       className={cn(
         'inline-flex max-w-full items-center gap-1.5 justify-self-start rounded-full px-2 py-0.5 text-xs font-bold',
-        onBand ? 'bg-white/[0.07]' : 'bg-[#16201b]',
+        onBand ? 'bg-white/[0.07]' : 'bg-[#16201b] dark:bg-black/50 dark:ring-1 dark:ring-white/10',
+        className,
       )}
       style={{ color: role.colour }}
     >

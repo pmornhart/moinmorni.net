@@ -11,7 +11,10 @@ import { ModesPage } from './ModesPage';
 import { NotFoundPage } from './NotFoundPage';
 import { OverviewPage } from './OverviewPage';
 import { PanelGate } from './PanelGate';
-import { RolesPage } from './RolesPage';
+import { PlayerPage } from './players/PlayerPage';
+import { PlayersPage } from './players/PlayersPage';
+import { PunishmentsPage } from './players/PunishmentsPage';
+import { RolesPage } from './roles/RolesPage';
 import { SettingsPage } from './settings/SettingsPage';
 import { SetupPage } from './SetupPage';
 
@@ -39,6 +42,9 @@ const router = createBrowserRouter(
         { path: 'modi', element: <ModesPage /> },
         { path: 'einstellungen', element: <Navigate to="/einstellungen/network" replace /> },
         { path: 'einstellungen/:areaId', element: <SettingsPage /> },
+        { path: 'spieler', element: <PlayersPage /> },
+        { path: 'spieler/:uuid', element: <PlayerPage /> },
+        { path: 'strafen', element: <PunishmentsPage /> },
         { path: 'rollen', element: <RolesPage /> },
         {
           element: (

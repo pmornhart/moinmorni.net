@@ -1,7 +1,9 @@
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
   Castle,
+  Compass,
   Gamepad2,
+  Gavel,
   Globe,
   House,
   LayoutDashboard,
@@ -13,6 +15,7 @@ import {
   Settings2,
   ShieldHalf,
   Users,
+  UsersRound,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -28,6 +31,7 @@ import { usePick } from '~/lib/text';
 import { useLogout } from './PanelGate';
 import { RoleBadge } from './role-visuals';
 import { usePanel, useSettingsQuery } from './session';
+import { TourProvider, useTour } from './tour/Tour';
 
 /** The catalog names an icon per settings area; these are the ones it uses (others get a cog). */
 const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
@@ -42,6 +46,9 @@ export function areaIcon(name: string): LucideIcon {
   return AREA_ICONS[name] ?? Settings2;
 }
 
+/** Areas listed under "Verwaltung". */
+const MANAGE_AREAS = ['players', 'punishments', 'roles', 'servers'] as const;
+
 const ITEM =
   'group relative flex items-center gap-3 rounded-[11px] px-3 py-2.5 text-[14.5px] font-semibold text-band-muted transition-colors hover:bg-white/[0.06] hover:text-band-foreground';
 const ACTIVE =
@@ -52,18 +59,22 @@ function Item({
   icon: Icon,
   label,
   end,
+  tour,
   onNavigate,
 }: {
   readonly to: string;
   readonly icon: LucideIcon;
   readonly label: string;
   readonly end?: boolean;
+  /** Step of the panel tour that lights up this entry. */
+  readonly tour?: string;
   readonly onNavigate?: () => void;
 }): ReactElement {
   return (
     <NavLink
       to={to}
       end={end}
+      data-tour={tour}
       onClick={onNavigate}
       className={({ isActive }) => cn(ITEM, isActive && ACTIVE)}
     >
@@ -109,6 +120,7 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
   const pick = usePick();
   const settings = useSettingsQuery();
   const { logout, busy } = useLogout();
+  const tour = useTour();
   const can = (area: (typeof me.areas)[number]): boolean => me.areas.includes(area);
   const areas = settings.data ?? [];
   return (
@@ -118,27 +130,68 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
       </div>
       <nav className="grid gap-0.5" aria-label={t('nav.main')}>
         {can('overview') ? (
-          <Item to="/" end icon={LayoutDashboard} label={t('shell.overview')} onNavigate={onNavigate} />
-        ) : null}
-        {can('modes') ? (
-          <Item to="/modi" icon={Gamepad2} label={t('shell.modes')} onNavigate={onNavigate} />
-        ) : null}
-        {areas.length ? <Group label={t('shell.settings')} /> : null}
-        {areas.map(({ area }) => (
           <Item
-            key={area.id}
-            to={`/einstellungen/${area.id}`}
-            icon={areaIcon(area.icon)}
-            label={pick(area.title)}
+            to="/"
+            end
+            icon={LayoutDashboard}
+            label={t('shell.overview')}
+            tour="overview"
             onNavigate={onNavigate}
           />
-        ))}
-        {can('roles') || can('servers') ? <Group label={t('shell.manage')} /> : null}
+        ) : null}
+        {can('modes') ? (
+          <Item to="/modi" icon={Gamepad2} label={t('shell.modes')} tour="modes" onNavigate={onNavigate} />
+        ) : null}
+        {areas.length ? (
+          <div className="grid gap-0.5 rounded-[12px]" data-tour="settings">
+            <Group label={t('shell.settings')} />
+            {areas.map(({ area }) => (
+              <Item
+                key={area.id}
+                to={`/einstellungen/${area.id}`}
+                icon={areaIcon(area.icon)}
+                label={pick(area.title)}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        ) : null}
+        {MANAGE_AREAS.some(can) ? <Group label={t('shell.manage')} /> : null}
+        {can('players') ? (
+          <Item
+            to="/spieler"
+            icon={UsersRound}
+            label={t('shell.players')}
+            tour="players"
+            onNavigate={onNavigate}
+          />
+        ) : null}
+        {can('punishments') ? (
+          <Item
+            to="/strafen"
+            icon={Gavel}
+            label={t('shell.punishments')}
+            tour="punishments"
+            onNavigate={onNavigate}
+          />
+        ) : null}
         {can('roles') ? (
-          <Item to="/rollen" icon={ShieldHalf} label={t('shell.roles')} onNavigate={onNavigate} />
+          <Item
+            to="/rollen"
+            icon={ShieldHalf}
+            label={t('shell.roles')}
+            tour="roles"
+            onNavigate={onNavigate}
+          />
         ) : null}
         {can('servers') ? (
-          <Item to="/server" icon={Server} label={t('shell.servers')} onNavigate={onNavigate} />
+          <Item
+            to="/server"
+            icon={Server}
+            label={t('shell.servers')}
+            tour="servers"
+            onNavigate={onNavigate}
+          />
         ) : null}
       </nav>
       <div className="mt-auto grid gap-3 pt-6">
@@ -151,6 +204,18 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
               <RoleBadge role={me.role} onBand />
             </div>
           </div>
+          <Button
+            variant="band"
+            size="sm"
+            className="w-full"
+            onClick={() => {
+              onNavigate?.();
+              tour.start();
+            }}
+          >
+            <Compass />
+            {t('shell.tour')}
+          </Button>
           <div className="flex items-center gap-1 border-t border-band-line pt-2.5">
             <Button
               asChild
@@ -223,8 +288,16 @@ function MobileBar(): ReactElement {
 /** The panel's frame: menu on the left (a bar with a slide-in menu on phones), pages on the right. */
 export function PanelShell(): ReactElement {
   return (
+    <TourProvider>
+      <Frame />
+    </TourProvider>
+  );
+}
+
+function Frame(): ReactElement {
+  return (
     <div className="grid min-h-dvh lg:grid-cols-[264px_minmax(0,1fr)]">
-      <aside className="band sticky top-0 hidden h-dvh overflow-y-auto lg:block">
+      <aside className="band sticky top-0 hidden h-dvh overflow-y-auto lg:block" data-tour-scope="desktop">
         <SidebarContent />
         <Lozenge className="absolute inset-y-0 right-0 h-full w-1 opacity-70" />
       </aside>

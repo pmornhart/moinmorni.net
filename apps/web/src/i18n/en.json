@@ -176,7 +176,10 @@
     "logout": "Sign out",
     "website": "To the website",
     "account": "Signed in as",
-    "manage": "Management"
+    "manage": "Management",
+    "players": "Players",
+    "punishments": "Punishments",
+    "tour": "Start the tour"
   },
   "overview": {
     "greeting": "Hello, {{name}}!",
@@ -246,7 +249,6 @@
   "roles": {
     "title": "Roles",
     "text": "A role applies everywhere: symbol and colour in chat, rights in game, areas in the panel and the matching role in Discord.",
-    "editLater": "Editing comes in the next step – until then you see the template here.",
     "panel": "In the panel",
     "game": "In game",
     "discord": "In Discord",
@@ -308,7 +310,103 @@
       "links": "Post links"
     },
     "chatSample": "Hello!",
-    "everything": "Everything – all {{count}}"
+    "everything": "Everything – all {{count}}",
+    "howTo": "Unfold a role to change it. Only “Save” applies everything – then it counts right away in the game, the panel and Discord.",
+    "ownerOnlyNote": "Only the owner can change Owner and Admin.",
+    "countOf": "{{count}} of {{total}}",
+    "selectAll": "All on",
+    "selectNone": "All off",
+    "mighty": "Careful: gives a lot of power",
+    "preview": "How it looks in chat",
+    "previewServer": "Lobby",
+    "nameDe": "Name in German",
+    "nameEn": "Name in English",
+    "symbol": "Symbol",
+    "symbolHelp": "Shown before the name in chat, in the player list and above the head. At most 4 characters.",
+    "symbolIdeas": "Symbol ideas",
+    "symbolNone": "None",
+    "colour": "Colour",
+    "colourHelp": "Colour of the name in chat and above the head – as #rrggbb.",
+    "colourInvalid": "The colour does not fit yet: please as #rrggbb, e.g. #55ff55.",
+    "colourPicker": "Pick a colour",
+    "fallbackLabel": "For everyone else",
+    "fallbackHelp": "Everyone without another rank has this one. Exactly one role is it – switch it on for another role to move it.",
+    "up": "Move up (higher rank)",
+    "down": "Move down (lower rank)",
+    "delete": "Delete role",
+    "deleteConfirm": "Really delete?",
+    "deleteHelp": "Whoever has this role gets the rank for everyone else afterwards.",
+    "cantDelete": {
+      "owner": "The owner role always stays.",
+      "fallback": "The role for everyone else stays – make another role the default first."
+    },
+    "locked": "Only the owner can change Owner and Admin.",
+    "lockedPill": "Owner only",
+    "id": "ID: {{id}}",
+    "changed": "Changed, not saved yet",
+    "newPill": "New",
+    "problem": "Please check",
+    "new": "New role",
+    "newPlaceholder": "e.g. Helper",
+    "newHint": "Give the role a name. You set symbol, colour and rights afterwards.",
+    "newHelp": "The ID will be “{{id}}” – it stays even if you change the name later.",
+    "create": "Create",
+    "saved": "Roles saved – they apply everywhere right away.",
+    "fixFirst": "Please check first: {{names}} (name, symbol or colour does not fit yet).",
+    "areaHelp": {
+      "overview": "Start page of the panel with the network status.",
+      "modes": "Switch game modes on and off, order, who may join.",
+      "lobby": "Settings of the lobby (village, figures, decoration).",
+      "players": "Search players, view profiles, give ranks.",
+      "punishments": "Hand out and lift punishments.",
+      "chat": "Chat rules like slow mode, links and the swear filter.",
+      "voice": "Voice chat and fixed voice channels.",
+      "roles": "This page: change roles and their rights.",
+      "content": "Texts and news on the website.",
+      "discord": "Set up the Discord bot and its channels.",
+      "updates": "Install MoinMorni updates.",
+      "servers": "The single servers with console, files and backups.",
+      "build": "The build server for the build team.",
+      "settings": "General settings of the whole network."
+    },
+    "gameHelp": {
+      "kick": "Remove players from the network (they can rejoin straight away).",
+      "ban": "Lock players out for a while or forever.",
+      "mute": "Mute players in chat.",
+      "jail": "Put players into the jail in the lobby.",
+      "warn": "Give a warning that stays in the history.",
+      "teleport": "Teleport to players or bring them over.",
+      "vanish": "Become invisible to others, e.g. to watch.",
+      "spectate": "Watch rounds as a spectator.",
+      "inspect": "See other players' inventory and details.",
+      "voice-join-any": "Join any voice group without a password.",
+      "voice-mute": "Mute others in voice chat.",
+      "build": "Place and break blocks where it is protected otherwise.",
+      "worldedit": "Big building tools (whole areas at once).",
+      "lobby-edit": "Rebuild the lobby.",
+      "gamemode": "Change the game mode (survival, spectator …).",
+      "creative": "Switch to creative mode.",
+      "streamer": "Streamer mode: hides addresses and coordinates.",
+      "reserved-slot": "May join even when the network is full.",
+      "bigger-party": "A bigger party with more friends.",
+      "lobby-extras": "Extras in the lobby, e.g. particles or hats.",
+      "chat-colour": "Colours in their own chat text.",
+      "maintenance-join": "May join during maintenance too.",
+      "ranks": "Give others ranks in the game (only below their own).",
+      "admin": "Everything in the game – only for very few."
+    },
+    "discordHelp": {
+      "administrator": "May really do everything in Discord.",
+      "manage-server": "Change channels, roles and settings of the Discord server.",
+      "manage-messages": "Delete and pin other people's messages.",
+      "timeout": "Give people a time-out (they cannot write for a while).",
+      "tickets": "See and answer support tickets.",
+      "team-area": "Sees the team channels.",
+      "builder-area": "Sees the build team's channels.",
+      "media-area": "Sees the channels for streamers and videos.",
+      "vip-area": "Sees the VIP channels.",
+      "links": "May post links."
+    }
   },
   "servers": {
     "title": "Servers",
@@ -324,6 +422,213 @@
     "title": "Nothing here",
     "text": "This page does not exist in the panel.",
     "back": "To the overview"
+  },
+  "panel": {
+    "forbidden": "Your role may not see this area. Ask the owner if you need it."
+  },
+  "time": {
+    "justNow": "just now",
+    "playBoth": "{{h}} h {{m}} min",
+    "playHours": "{{h}} h",
+    "playMinutes": "{{m}} min",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days"
+  },
+  "players": {
+    "title": "Players",
+    "text": "Everyone who has ever been on MoinMorni – with rank, play time and punishments. Whoever is online right now is at the top.",
+    "search": "Search players …",
+    "searchLabel": "Search for a player name",
+    "searchHint": "Tip: names of Bedrock players (phone, console) start with a dot, e.g. “.Tobi_04”.",
+    "onlineNow_one": "{{count}} online now",
+    "onlineNow_other": "{{count}} online now",
+    "more": "Show more",
+    "limitHint": "These are the {{count}} most recently active. Search for a name to find others.",
+    "empty": "Nobody has been here yet. As soon as someone joins the network, they show up here.",
+    "noMatch": "Nobody with “{{q}}” in their name. Check the spelling.",
+    "onlineOn": "Online on {{server}}",
+    "onlineNoServer": "Online now",
+    "lastSeen": "Last seen {{when}}",
+    "playtime": "Play time",
+    "bedrock": "Bedrock",
+    "bedrockHelp": "Plays the Bedrock Edition (phone, console or Windows).",
+    "banned": "Banned",
+    "muted": "Muted",
+    "open": "Open {{name}}'s profile",
+    "back": "All players",
+    "unknown": "MoinMorni does not know this player (any more).",
+    "profile": "Profile",
+    "firstSeen": "First joined",
+    "lastSeenLabel": "Last seen",
+    "language": "Language",
+    "languageUnknown": "Not known yet",
+    "edition": "Plays",
+    "editionJava": "Java Edition (PC)",
+    "editionBedrock": "Bedrock Edition (phone, console, Windows)",
+    "uuid": "Player ID (UUID)",
+    "uuidHelp": "Stays the same even when the name changes.",
+    "rank": {
+      "title": "Rank",
+      "current": "Counts right now:",
+      "own": "Own rank",
+      "none": "No own rank ({{fallback}})",
+      "save": "Save rank",
+      "saved": "{{name}} now has the rank “{{rank}}”.",
+      "savedNone": "{{name}} no longer has an own rank.",
+      "team": "Counts as {{rank}} right now because the Minecraft account is linked to a team account in the panel. The higher rank always wins – the own rank here applies once the person leaves the team.",
+      "higher": "{{name}} has the same or a higher rank than you – you cannot change this rank.",
+      "noRoles": "Ranks can be given by people who may also see the roles in the panel.",
+      "help": "You can only give ranks below your own. Only the owner gives Owner and Admin. Applies in the game right away."
+    },
+    "act": {
+      "title": "Punish",
+      "help": "Applies across the whole network right away. The team gets a note.",
+      "higher": "{{name}} has the same or a higher rank than you – only someone with a higher rank can punish here."
+    },
+    "active": {
+      "title": "Active right now",
+      "until": "until {{date}} · {{rest}}",
+      "lift": "Lift"
+    },
+    "history": {
+      "title": "History",
+      "count_one": "{{count}} entry",
+      "count_other": "{{count}} entries",
+      "empty": "A clean record so far – no punishments.",
+      "by": "by {{name}}",
+      "until": "until {{date}}",
+      "forever": "forever",
+      "revokedBy": "Lifted by {{name}} · {{date}}",
+      "active": "Active",
+      "revoked": "Lifted",
+      "expired": "Expired",
+      "replaced": "Replaced by a newer one",
+      "once": "One-off"
+    }
+  },
+  "punish": {
+    "kinds": {
+      "ban": "Ban",
+      "mute": "Mute",
+      "warn": "Warning",
+      "kick": "Kick",
+      "jail": "Jail"
+    },
+    "verbs": {
+      "ban": "Ban",
+      "mute": "Mute",
+      "warn": "Warn",
+      "kick": "Kick"
+    },
+    "title": "New punishment",
+    "titleFor": "Punish {{name}}",
+    "text": "Applies across the whole network right away – the person sees the reason, the team gets a note.",
+    "player": "Player",
+    "playerHelp": "The name as shown in the game. The person must have been on the network at least once.",
+    "playerPlaceholder": "e.g. Lena_Baut",
+    "someone": "The person",
+    "kind": "What should happen?",
+    "kickOffline": "Kicking only works while {{name}} is online.",
+    "duration": "How long?",
+    "forever": "Forever",
+    "custom": "Own duration",
+    "amount": "Amount",
+    "unit": "Unit",
+    "units": {
+      "minutes": "Minutes",
+      "hours": "Hours",
+      "days": "Days",
+      "weeks": "Weeks"
+    },
+    "customInvalid": "Please enter a whole number from 1 (at most 10 years).",
+    "reason": "Reason",
+    "reasonHelp": "The person sees it. Leaving it empty is fine – then it says “no reason given”.",
+    "reasonPlaceholder": "e.g. insults in chat",
+    "reasons": {
+      "spam": "Spam in chat",
+      "insult": "Insults",
+      "cheats": "Hacks / cheats",
+      "grief": "Griefing",
+      "ads": "Advertising other servers"
+    },
+    "summary": {
+      "ban": "{{name}} is removed from the network right away and cannot join for {{duration}}.",
+      "banForever": "{{name}} is removed from the network right away and cannot join any more – until someone lifts the ban.",
+      "mute": "{{name}} cannot write in chat for {{duration}}.",
+      "muteForever": "{{name}} cannot write in chat any more – until someone lifts the mute.",
+      "warn": "{{name}} sees the warning in the game (if online). It stays in the history.",
+      "kick": "{{name}} is removed from the network right away, but can join again straight away."
+    },
+    "busy": "One moment …",
+    "cancel": "Cancel",
+    "done": {
+      "ban": "{{name}} is banned now.",
+      "mute": "{{name}} is muted now.",
+      "warn": "{{name}} has been warned.",
+      "kick": "{{name}} has been kicked."
+    },
+    "lifted": {
+      "ban": "{{name}}'s ban is lifted.",
+      "mute": "{{name}} may write again."
+    }
+  },
+  "punishments": {
+    "title": "Punishments",
+    "text": "All punishments in the network – bans, mutes, warnings and kicks. You can lift active ones here.",
+    "new": "New punishment",
+    "search": "Search by player …",
+    "searchLabel": "Search punishments by player name",
+    "stateLabel": "Which punishments",
+    "kindLabel": "Kind of punishment",
+    "all": "All",
+    "onlyActive": "Active only ({{count}})",
+    "kindAll": "All kinds",
+    "emptyTitle": "All peaceful",
+    "empty": "No punishments yet – the network is behaving nicely.",
+    "noMatch": "No punishment matches your selection.",
+    "reset": "Reset filters",
+    "count": "{{count}} of {{total}} punishments",
+    "latest": "The latest {{count}} punishments, newest first."
+  },
+  "tour": {
+    "step": "Step {{n}} of {{total}}",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "done": "Let's go",
+    "again": "You can start the tour again any time – at the bottom left, next to your name.",
+    "overview": {
+      "title": "Welcome to the panel!",
+      "text": "Fancy a quick tour? The overview shows at a glance whether the network is running, how many players are online and which modes are open."
+    },
+    "modes": {
+      "title": "Modes",
+      "text": "Switch game modes on and off here, put them into maintenance and choose their order in the lobby."
+    },
+    "settings": {
+      "title": "Settings",
+      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and more. Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game."
+    },
+    "players": {
+      "title": "Players",
+      "text": "Everyone who has ever been here: search, view profiles with play time and give ranks."
+    },
+    "punishments": {
+      "title": "Punishments",
+      "text": "Warn, mute, ban or kick – and lift it all again. Applies across the whole network right away."
+    },
+    "roles": {
+      "title": "Roles",
+      "text": "Symbol, colour and rights of every role – in the game, the panel and Discord. A change applies everywhere at once."
+    },
+    "servers": {
+      "title": "Servers",
+      "text": "The single Minecraft servers with console, files, backups and plugins. Look here when something is stuck."
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again in a moment.",
@@ -349,6 +654,16 @@
     "passkey_unknown": "MoinMorni does not know this passkey.",
     "setup_code_wrong": "The setup code is not right. Have another close look.",
     "setup_done": "MoinMorni is already set up. Just sign in.",
-    "setup_invalid": "Name or password do not fit the rules yet."
+    "setup_invalid": "Name or password do not fit the rules yet.",
+    "player_unknown": "MoinMorni does not know this player. They must have been on the network at least once – check the spelling too.",
+    "player_higher": "This person has the same or a higher rank than you – you may not do that.",
+    "player_offline": "Kicking only works while the person is online.",
+    "punishment_none": "There is nothing to lift right now – maybe the punishment has already run out.",
+    "role_unknown": "This rank does not exist (any more). Reload the page.",
+    "role_too_high": "You may not give this rank – it is as high as yours or higher.",
+    "role_owner_only": "Only the owner may change Owner and Admin.",
+    "role_duplicate": "Two roles have the same ID. Give one of them another name.",
+    "role_fallback_one": "Exactly one role must be “for everyone else”.",
+    "role_owner_missing": "The owner role has to stay."
   }
 }
