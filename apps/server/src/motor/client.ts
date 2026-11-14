@@ -27,6 +27,8 @@ export interface MotorMe {
     readonly isAdmin: boolean;
     readonly minecraftName?: string | null;
     readonly minecraftUuid?: string | null;
+    /** Mit Startpasswort angemeldet: muss erst ein eigenes setzen. */
+    readonly mustChangePassword?: boolean;
   };
   readonly csrfToken: string;
 }

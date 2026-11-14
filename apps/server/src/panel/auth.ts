@@ -25,6 +25,7 @@ export interface PanelUser {
   readonly role: Role;
   readonly areas: ReadonlySet<PanelArea>;
   readonly minecraftUuid: string | null;
+  readonly mustChangePassword: boolean;
   readonly csrfToken: string;
 }
 
@@ -76,6 +77,7 @@ export function createPanelAuth(db: Db, motor: MotorClient, stores: Stores): Pan
           role,
           areas: new Set(role.panel),
           minecraftUuid,
+          mustChangePassword: me.user.mustChangePassword === true,
           csrfToken: me.csrfToken,
         }
       : null;

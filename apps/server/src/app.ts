@@ -19,6 +19,7 @@ import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
+import { registerTeamRoutes } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { createLobbyWorld, seasonOf } from './lobby/world.js';
@@ -129,6 +130,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
   });
   botRef.bot = bot;
+  const teamRef: { syncAll: () => Promise<void> } = { syncAll: () => Promise.resolve() };
+  /** Server-Zugriff der Team-Konten im Motor nachziehen (neue Server, geänderte Rollen). */
+  const syncTeam = (): void => {
+    teamRef
+      .syncAll()
+      .catch((err: unknown) => app.log.warn({ err }, 'Team-Zugriff im Motor nicht nachgezogen'));
+  };
+  events.on('roles.changed', syncTeam);
   const provision = async (): Promise<void> => {
     if (!config.autoNetwork) return;
     try {
@@ -136,6 +145,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       app.log.info(result, 'Netzwerk geprüft');
       // Die Welt baut sich im Hintergrund (beim ersten Mal ein paar Minuten), die Webseite läuft schon.
       lobbyRef.id = result.lobbyServerId;
+      syncTeam();
       if (result.lobbyServerId) void lobbyWorld.build(result.lobbyServerId);
     } catch (err) {
       app.log.error(
@@ -158,6 +168,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerPublicRoutes(app, status);
   registerPanelRoutes(app, auth, stores);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
+  teamRef.syncAll = registerTeamRoutes(app, auth, stores, handle.db, motor).syncAll;
   registerDiscordRoutes(app, auth, bot);
   registerNewsRoutes(app, auth, handle.db, events);
   registerSiteRoutes(app, handle.db, stores, hub, bot.inviteUrl);

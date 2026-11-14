@@ -16,6 +16,7 @@ export function registerPanelRoutes(app: Api, auth: PanelAuth, stores: Stores): 
       role: user.role,
       areas: [...user.areas],
       minecraftUuid: user.minecraftUuid,
+      mustChangePassword: user.mustChangePassword,
       csrfToken: user.csrfToken,
     };
   });
