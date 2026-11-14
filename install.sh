@@ -192,6 +192,42 @@ wait_for "MoinMorni" docker compose exec -T moinmorni node -e \
   "fetch('http://127.0.0.1:8080/api/setup').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
 msg_ok "MoinMorni läuft"
 
+# Updates: Der Knopf im Panel (oder das automatische Update) legt update/request.json in den Datenordner –
+# systemd sieht die Datei und startet update.sh. agent.json sagt dem Panel, dass der Updater da ist.
+VOLUME_DIR="$(docker volume inspect -f '{{ .Mountpoint }}' moinmorni-data 2>/dev/null || true)"
+ln -sf "${INSTALL_DIR}/update.sh" /usr/local/bin/moinmorni-update
+if [[ -n "${VOLUME_DIR}" && -d /run/systemd/system ]] && command -v systemctl >/dev/null 2>&1; then
+  msg_info "Updates werden eingerichtet"
+  cat >/etc/systemd/system/moinmorni-update.path <<UNIT
+[Unit]
+Description=MoinMorni: Update-Auftrag aus dem Panel
+
+[Path]
+PathExists=${VOLUME_DIR}/update/request.json
+Unit=moinmorni-update.service
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+  cat >/etc/systemd/system/moinmorni-update.service <<UNIT
+[Unit]
+Description=MoinMorni aktualisieren
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=${INSTALL_DIR}/update.sh
+UNIT
+  systemctl daemon-reload
+  systemctl enable --now moinmorni-update.path >/dev/null 2>&1
+  mkdir -p "${VOLUME_DIR}/update"
+  printf '{"installed":"%s"}\n' "$(date -Iseconds)" >"${VOLUME_DIR}/update/agent.json"
+  chown -R 1000:1000 "${VOLUME_DIR}/update"
+  msg_ok "Updates per Knopf im Panel und automatisch (Einstellungen → Updates)"
+else
+  msg_info "Ohne systemd: Updates von Hand mit moinmorni-update"
+fi
+
 DOMAIN="$(get_env MM_DOMAIN)"
 PORT="$(get_env MM_PORT)"
 printf '\n %s🎉 Fertig!%s\n\n' "${GN}" "${CL}"

@@ -18,6 +18,9 @@ import { createProvisioner, type NetworkProvisioner } from './network/provision.
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
+import { registerUpdateRoutes } from './system/routes.js';
+import { createUpdateService } from './system/update.js';
+import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerTeamRoutes } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
@@ -61,9 +64,12 @@ export interface BuildOptions {
   readonly motorFetch?: FetchLike;
   /** Tests: eigener Weg zu Discord. */
   readonly discordFetch?: typeof fetch;
+  /** Tests: eigener Weg zu GitHub (Updates). */
+  readonly githubFetch?: typeof fetch;
 }
 
 const HTTP_NOT_FOUND = 404;
+const ANNOUNCE_DELAY_MS = 15_000;
 const HTTP_BAD_GATEWAY = 502;
 const HTTP_BAD_REQUEST = 400;
 const HTTP_SERVER_ERROR = 500;
@@ -171,6 +177,25 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   teamRef.syncAll = registerTeamRoutes(app, auth, stores, handle.db, motor).syncAll;
   registerDiscordRoutes(app, auth, bot);
   registerNewsRoutes(app, auth, handle.db, events);
+  const updates = createUpdateService(config, motor, stores, options.githubFetch);
+  registerUpdateRoutes(app, auth, updates);
+  const announceUpdate = async (): Promise<void> => {
+    const r = updates.takeResult();
+    if (!r) return;
+    const vars = { from: r.from ?? '?', to: r.to ?? config.version };
+    const key = {
+      done: 'logUpdateDone',
+      rolled_back: 'logUpdateRolledBack',
+      failed: 'logUpdateFailed',
+    } as const;
+    if (r.state !== 'running') await bot.teamLog(bt('de', key[r.state], vars));
+  };
+  const stopAuto = updates.startAuto(
+    () => hub.presence.all().length,
+    (by) => {
+      bot.teamLog(bt('de', 'logUpdateStarted', { by })).catch(() => undefined);
+    },
+  );
   registerSiteRoutes(app, handle.db, stores, hub, bot.inviteUrl);
   await registerMotorProxy(app, config.motorUrl);
 
@@ -213,10 +238,15 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     start: async () => {
       sleep.start();
       bot.start();
+      // Nach einem Update einmal im Team-Log melden, wie es ausging (der Bot braucht kurz für die Verbindung).
+      setTimeout(() => {
+        announceUpdate().catch((err: unknown) => app.log.warn({ err }, 'Update-Meldung nicht gesendet'));
+      }, ANNOUNCE_DELAY_MS).unref();
       await setup.start();
       if (!(await setup.required())) await provision();
     },
     close: async () => {
+      stopAuto();
       sleep.stop();
       bot.stop();
       await hub.close();

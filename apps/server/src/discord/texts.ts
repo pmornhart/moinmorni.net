@@ -99,6 +99,22 @@ export const T = {
     de: '🔓 **{name}** aus dem Gefängnis ({by})',
     en: '🔓 **{name}** released from jail ({by})',
   },
+  logUpdateStarted: {
+    de: '🔄 Update von MoinMorni gestartet ({by}) – das Panel ist gleich ein paar Minuten weg, die Minecraft-Server laufen weiter.',
+    en: '🔄 MoinMorni update started ({by}) – the panel is gone for a few minutes, the Minecraft servers keep running.',
+  },
+  logUpdateDone: {
+    de: '✅ MoinMorni ist aktualisiert: {from} → {to}',
+    en: '✅ MoinMorni is updated: {from} → {to}',
+  },
+  logUpdateRolledBack: {
+    de: '↩️ Das Update von MoinMorni hat nicht geklappt – alles läuft wieder in der alten Fassung {from}. Protokoll im Panel unter Updates.',
+    en: '↩️ The MoinMorni update did not work – everything runs the old version {from} again. Log in the panel under Updates.',
+  },
+  logUpdateFailed: {
+    de: '⚠️ Das Update von MoinMorni ist fehlgeschlagen. Protokoll im Panel unter Updates.',
+    en: '⚠️ The MoinMorni update failed. Log in the panel under Updates.',
+  },
   logLiftBan: { de: '✅ **{name}** entbannt von {by}', en: '✅ **{name}** unbanned by {by}' },
   logLiftMute: {
     de: '🔊 **{name}** darf wieder schreiben ({by})',

@@ -39,6 +39,12 @@ const envSchema = z.object({
   MM_DISCORD_API: z.string().url().default('https://discord.com/api/v10'),
   /** Zeitzone für Zeiten im Spiel (bis wann ein Bann gilt). */
   TZ: z.string().default('Europe/Berlin'),
+  /** Gebaute Version (update.sh/install.sh: „v0.1.2-0-g<commit>“), „dev“ ohne. */
+  MM_VERSION: z.string().default('dev'),
+  /** Updates folgen diesem Branch auf GitHub. */
+  MM_UPDATE_BRANCH: z.string().default('main'),
+  /** GitHub-API (Tests zeigen auf ein nachgebautes GitHub). */
+  MM_GITHUB_API: z.string().url().default('https://api.github.com'),
 });
 
 export interface Config {
@@ -58,6 +64,9 @@ export interface Config {
   readonly autoNetwork: boolean;
   readonly discordToken: string | null;
   readonly discordApi: string;
+  readonly version: string;
+  readonly updateBranch: string;
+  readonly githubApi: string;
 }
 
 export function loadConfig(env: Record<string, string | undefined>, here: string): Config {
@@ -79,5 +88,8 @@ export function loadConfig(env: Record<string, string | undefined>, here: string
     autoNetwork: e.MM_AUTO_NETWORK === 'true',
     discordToken: e.MM_DISCORD_TOKEN?.trim() || null,
     discordApi: e.MM_DISCORD_API.replace(TRAILING_SLASHES, ''),
+    version: e.MM_VERSION,
+    updateBranch: e.MM_UPDATE_BRANCH,
+    githubApi: e.MM_GITHUB_API.replace(TRAILING_SLASHES, ''),
   };
 }

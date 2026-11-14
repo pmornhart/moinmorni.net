@@ -706,6 +706,78 @@ export const WEBSITE_AREA: SettingArea = {
   ],
 };
 
+export const UPDATES_AREA: SettingArea = {
+  id: 'updates',
+  title: t('Updates', 'Updates'),
+  text: t(
+    'MoinMorni hält sich selbst aktuell: vorher eine Sicherung, klappt etwas nicht, geht es zurück auf den alten Stand. Die Minecraft-Server laufen weiter.',
+    'MoinMorni keeps itself up to date: a backup first, and if something goes wrong it goes back to the old version. The Minecraft servers keep running.',
+  ),
+  icon: 'RefreshCw',
+  panel: 'updates',
+  sections: [
+    {
+      id: 'auto',
+      title: t('Automatisch', 'Automatic'),
+      settings: [
+        {
+          key: 'auto',
+          type: 'boolean',
+          default: true,
+          label: t('Updates automatisch einspielen', 'Install updates automatically'),
+          help: t(
+            'Einmal am Tag zur gewählten Stunde, wenn es etwas Neues gibt. Das Team bekommt in Discord Bescheid.',
+            'Once a day at the chosen hour, when there is something new. The team gets a message in Discord.',
+          ),
+          command: '/updates auto an|aus',
+        },
+        {
+          key: 'hour',
+          type: 'number',
+          default: 4,
+          min: 0,
+          max: 23,
+          unit: t('Uhr', 'o’clock'),
+          label: t('Uhrzeit', 'Time'),
+          help: t(
+            'Stunde, in der das Update läuft (Zeit des Servers).',
+            'Hour in which the update runs (server time).',
+          ),
+          command: '/updates uhrzeit <stunde>',
+        },
+        {
+          key: 'whenEmpty',
+          type: 'boolean',
+          default: true,
+          label: t('Nur wenn niemand spielt', 'Only when nobody is playing'),
+          help: t(
+            'Sind gerade Spieler online, wartet das Update bis zum nächsten Tag.',
+            'If players are online, the update waits until the next day.',
+          ),
+          command: '/updates leer an|aus',
+        },
+      ],
+    },
+    {
+      id: 'motor',
+      title: t('Motor (MorniHosting)', 'Engine (MorniHosting)'),
+      settings: [
+        {
+          key: 'motorFollowMain',
+          type: 'boolean',
+          default: false,
+          label: t('Motor immer auf den neuesten Stand', 'Always the newest engine'),
+          help: t(
+            'Aus: der Motor kommt in der Fassung, die zu MoinMorni passt (empfohlen). An: bei jedem Update auch die neueste Fassung von MorniHosting – klappt sie nicht, geht es zurück.',
+            'Off: the engine comes in the version that fits MoinMorni (recommended). On: every update also takes the newest MorniHosting – if it fails, it goes back.',
+          ),
+          command: '/updates motor an|aus',
+        },
+      ],
+    },
+  ],
+};
+
 export const SETTING_AREAS: readonly SettingArea[] = [
   NETWORK_AREA,
   CHAT_AREA,
@@ -713,6 +785,7 @@ export const SETTING_AREAS: readonly SettingArea[] = [
   SOCIAL_AREA,
   LOBBY_AREA,
   WEBSITE_AREA,
+  UPDATES_AREA,
 ];
 
 function validator(def: SettingDef): z.ZodType {

@@ -112,6 +112,8 @@ export interface MoinMorniBot {
   readonly inviteUrl: () => string | null;
   /** Ein Ereignis vom Gateway verarbeiten (Tests rufen das direkt). */
   readonly handle: (e: GatewayEvent) => Promise<void>;
+  /** Zeile in den Team-Log-Kanal (ohne Bot oder Kanal: nichts). */
+  readonly teamLog: (line: string) => Promise<void>;
 }
 
 export interface BotDeps {
@@ -780,6 +782,10 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     },
     setup,
     commands,
+    /** Zeile in den Team-Log-Kanal (z. B. „MoinMorni wurde aktualisiert“). */
+    teamLog: async (line: string) => {
+      if (client) await log2team(line);
+    },
     inviteUrl: () => {
       const code = get('invite');
       return code ? `https://discord.gg/${code}` : null;
