@@ -55,6 +55,7 @@ des Spielers.
 | --- | --- | --- |
 | `online` | Proxy | `players: [{uuid, name, server, locale, bedrock}]` – nach jedem (Wieder-)Verbinden |
 | `login` (Anfrage) | Proxy | `uuid, name, locale, bedrock` → `{allow, message?, server?}` |
+| `connecting` (Anfrage) | Proxy | `uuid, server` → `{allow}` – vor jedem Serverwechsel: Modus offen und wach? Schläft er, weckt ihn der Hub, der Spieler kommt danach per `connect` hinein |
 | `switch` | Proxy | `uuid, server` – Spieler ist auf einem anderen Server |
 | `leave` | Proxy | `uuid` |
 | `locale` | Proxy | `uuid, locale` – Sprache des Clients (kommt erst nach der Anmeldung) |

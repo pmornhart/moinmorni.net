@@ -315,6 +315,30 @@ const TEXTS = {
     de: '<dark_gray>[<light_purple>Party</light_purple>]</dark_gray> <white>{name}</white> <dark_gray>»</dark_gray> <light_purple>{text}',
     en: '<dark_gray>[<light_purple>Party</light_purple>]</dark_gray> <white>{name}</white> <dark_gray>»</dark_gray> <light_purple>{text}',
   },
+  'mode.waking': {
+    de: `${P}<white>{mode}</white> <gray>wacht gerade auf – du wirst gleich automatisch verbunden (etwa eine halbe Minute).`,
+    en: `${P}<white>{mode}</white> <gray>is waking up – you'll be connected automatically in a moment (about half a minute).`,
+  },
+  'mode.ready': {
+    de: `${P}<green><white>{mode}</white> ist wach – ab geht's!`,
+    en: `${P}<green><white>{mode}</white> is awake – off you go!`,
+  },
+  'mode.wake_failed': {
+    de: `${P}<red><white>{mode}</white> ist leider nicht aufgewacht. Probier es gleich nochmal – das Team weiß Bescheid.`,
+    en: `${P}<red><white>{mode}</white> didn't wake up. Please try again in a moment – the team has been told.`,
+  },
+  'mode.closed': {
+    de: `${P}<gray><white>{mode}</white> ist gerade geschlossen.`,
+    en: `${P}<gray><white>{mode}</white> is closed right now.`,
+  },
+  'mode.soon': {
+    de: `${P}<gray><white>{mode}</white> kommt bald – wir bauen noch daran.`,
+    en: `${P}<gray><white>{mode}</white> is coming soon – we're still building it.`,
+  },
+  'mode.maintenance': {
+    de: `${P}<gold><white>{mode}</white> ist gerade in Wartung.`,
+    en: `${P}<gold><white>{mode}</white> is under maintenance right now.`,
+  },
   'lobby.missing': {
     de: `${P}<red>Die Lobby ist gerade nicht da.`,
     en: `${P}<red>The lobby isn't available right now.`,

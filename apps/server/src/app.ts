@@ -14,6 +14,7 @@ import { createMotorClient, MotorError, type FetchLike, type MotorClient } from 
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
 import { createProvisioner, type NetworkProvisioner } from './network/provision.js';
+import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { registerPublicRoutes } from './public/routes.js';
@@ -39,6 +40,7 @@ export interface BuiltApp {
   readonly setup: SetupService;
   readonly hub: Hub;
   readonly network: NetworkProvisioner;
+  readonly sleep: SleepService;
   /** Nach dem Start im Hintergrund: Einrichtungs-Code bereitlegen, Motor einstellen. */
   readonly start: () => Promise<void>;
   readonly close: () => Promise<void>;
@@ -85,7 +87,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   });
 
   const auth = createPanelAuth(handle.db, motor, stores);
+  // Der Hub weckt schlafende Modi über den Schlaf-Dienst (der wiederum den Hub fragt, wer wo ist).
+  const sleepRef: { service: SleepService | null } = { service: null };
   const hub = createHub({
+    wake: (server) => sleepRef.service?.wake(server) ?? Promise.resolve(false),
     secret: config.secret,
     db: handle.db,
     stores,
@@ -95,6 +100,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   });
   const status = createStatusService(config, motor, stores, hub);
   const network = createProvisioner(config, motor, hub, app.log);
+  const sleep = createSleepService(motor, hub, stores, app.log);
+  sleepRef.service = sleep;
   const provision = async (): Promise<void> => {
     if (!config.autoNetwork) return;
     try {
@@ -148,11 +155,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     setup,
     hub,
     network,
+    sleep,
     start: async () => {
+      sleep.start();
       await setup.start();
       if (!(await setup.required())) await provision();
     },
     close: async () => {
+      sleep.stop();
       await hub.close();
       await app.close();
       handle.close();

@@ -29,6 +29,7 @@ describe('Hub', () => {
   let stores: Stores;
   let url: string;
   let clock: { now: number };
+  let woken: string[];
   const open: FakePlugin[] = [];
   const close = (): void => undefined;
 
@@ -37,6 +38,7 @@ describe('Hub', () => {
     const events = createEventBus();
     stores = createStores(handle.db, events);
     clock = { now: Date.parse('2026-11-14T12:00:00Z') };
+    woken = [];
     hub = createHub({
       secret: SECRET,
       db: handle.db,
@@ -45,6 +47,10 @@ describe('Hub', () => {
       log: quiet,
       timeZone: 'Europe/Berlin',
       now: () => clock.now,
+      wake: (server) => {
+        woken.push(server);
+        return Promise.resolve(true);
+      },
     });
     const port = await hub.listen('127.0.0.1', 0);
     url = `ws://127.0.0.1:${port}/hub`;
@@ -389,6 +395,34 @@ describe('Hub', () => {
     await said(PHILIP, 'aufgelöst');
     await cmd(PHILIP, 'party');
     await said(PHILIP, 'in keiner Party');
+  });
+
+  test('Schlafende Modi wachen auf, wer wartet, kommt danach von selbst hinein', async () => {
+    const { proxy } = await network();
+    const go = (uuid: string, server: string) => proxy.request({ t: 'connecting', uuid, server });
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+
+    expect(await go(LENA, 'lobby')).toMatchObject({ data: { allow: true } });
+    expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: true } });
+
+    // Morni Party schläft (kein Plugin verbunden): Lena wartet, der Server wird geweckt.
+    expect(await go(LENA, 'party')).toMatchObject({ data: { allow: false } });
+    await said(LENA, 'waking up');
+    expect(await go(PHILIP, 'party')).toMatchObject({ data: { allow: false } });
+    expect(woken).toEqual(['party']);
+    await plugin('party', 'backend');
+    expect(await proxy.next('connect', (m) => m['uuid'] === LENA)).toMatchObject({ server: 'party' });
+    expect(await proxy.next('connect', (m) => m['uuid'] === PHILIP)).toMatchObject({ server: 'party' });
+    await said(LENA, 'is awake');
+
+    // Geschlossen und Wartung.
+    expect(await go(LENA, 'mornicraft')).toMatchObject({ data: { allow: false } });
+    await said(LENA, 'closed');
+    stores.patchMode('duels', { state: 'maintenance' }, 'test');
+    expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: false } });
+    await said(LENA, 'maintenance');
+    expect(await go(PHILIP, 'duels')).toMatchObject({ data: { allow: true } });
   });
 
   test('Proxy meldet nach dem Neuverbinden alle Spieler – Spielzeit wird gezählt', async () => {

@@ -120,6 +120,20 @@ export const NETWORK_AREA: SettingArea = {
           ),
           command: '/netzwerk max <zahl>',
         },
+        {
+          key: 'sleepMinutes',
+          type: 'number',
+          default: 5,
+          min: 1,
+          max: 120,
+          unit: t('Minuten', 'minutes'),
+          label: t('Leere Modi schlafen nach', 'Empty modes sleep after'),
+          help: t(
+            'Ist so lange niemand in einem Modus, schläft sein Server und spart Speicher. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute).',
+            'When nobody is in a mode for this long, its server sleeps and saves memory. Whoever wants in wakes it up (takes about half a minute).',
+          ),
+          command: '/netzwerk schlaf <minuten>',
+        },
       ],
     },
     {

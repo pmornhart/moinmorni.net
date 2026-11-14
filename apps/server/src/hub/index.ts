@@ -62,6 +62,13 @@ const commandSchema = z.object({
   args: z.array(z.string().max(TEXT_MAX)).max(ARGS_MAX),
 });
 const chatSchema = z.object({ uuid: uuidField, text: z.string().min(1).max(TEXT_MAX) });
+const connectingSchema = z.object({
+  id: z.number().int(),
+  uuid: uuidField,
+  server: z.string().min(1).max(32),
+});
+/** So lange darf ein Modus zum Aufwachen brauchen, dann gibt es eine Meldung. */
+const WAKE_TIMEOUT_MS = 180_000;
 
 export interface HubOptions {
   readonly secret: string;
@@ -71,6 +78,8 @@ export interface HubOptions {
   readonly log: FastifyBaseLogger;
   readonly timeZone: string;
   readonly now?: () => number;
+  /** Schlafenden Server wecken (Motor starten); false = ging nicht. */
+  readonly wake?: (server: string) => Promise<boolean>;
 }
 
 export interface Hub {
@@ -183,6 +192,58 @@ export function createHub(options: HubOptions): Hub {
   const commands = mergeCommands([...createCommands(ctx), ...social.commands], createSettingCommands(ctx));
   const chat = createChat(ctx, () => stores.settings('chat') as unknown as ChatSettings);
 
+  /** Wer auf einen aufwachenden Server wartet: Server → Spieler. */
+  const waiting = new Map<string, Set<string>>();
+  const wakeTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  const modeName = (server: string, lang: Lang): string => {
+    const mode = stores.modes().find((md) => md.server === server);
+    return mode ? mode.name[lang] : server;
+  };
+  const wakeUp = (server: string): void => {
+    if (!options.wake) return;
+    const timer = setTimeout(() => {
+      const list = waiting.get(server);
+      waiting.delete(server);
+      wakeTimers.delete(server);
+      list?.forEach((uuid) => {
+        const p = presence.get(uuid);
+        if (p) ctx.msg(uuid, text(p.lang, 'mode.wake_failed', { mode: mm(modeName(server, p.lang)) }));
+      });
+    }, WAKE_TIMEOUT_MS);
+    timer.unref();
+    wakeTimers.set(server, timer);
+    void options.wake(server).then(
+      (ok) => {
+        if (!ok) log.warn({ server }, 'Hub: Server ließ sich nicht wecken');
+      },
+      (err: unknown) => log.error({ err, server }, 'Hub: Wecken fehlgeschlagen'),
+    );
+  };
+  /** Darf der Spieler auf diesen Server? Schläft er, wird er geweckt und der Spieler kommt danach von selbst. */
+  const connecting = (conn: Connection, body: unknown): void => {
+    const m = connectingSchema.parse(body);
+    const uuid = normalUuid(m.uuid);
+    const p = presence.get(uuid);
+    const lang: Lang = p?.lang ?? defaultLang();
+    const mode = stores.modes().find((md) => md.server === m.server);
+    const deny = (line: string): void => {
+      ctx.msg(uuid, line);
+      reply(conn, m.id, { allow: false });
+    };
+    const name = mm(modeName(m.server, lang));
+    if (mode?.state === 'off') return deny(text(lang, 'mode.closed', { mode: name }));
+    if (mode?.state === 'soon') return deny(text(lang, 'mode.soon', { mode: name }));
+    if (mode?.state === 'maintenance' && !hasRight(players.roleOf(uuid), 'maintenance-join'))
+      return deny(text(lang, 'mode.maintenance', { mode: name }));
+    if (!mode || conns.backends.has(m.server) || !options.wake) return reply(conn, m.id, { allow: true });
+    const list = waiting.get(m.server) ?? new Set<string>();
+    const first = !waiting.has(m.server);
+    list.add(uuid);
+    waiting.set(m.server, list);
+    if (first) wakeUp(m.server);
+    return deny(text(lang, 'mode.waking', { mode: name }));
+  };
+
   const reply = (conn: Connection, id: number, data: unknown): void =>
     conn.send({ t: 'reply', id, ok: true, data });
   const fail = (conn: Connection, id: number, error: string): void =>
@@ -245,6 +306,7 @@ export function createHub(options: HubOptions): Hub {
       });
     },
     login,
+    connecting,
     switch: (_conn, body) => {
       const m = switchSchema.parse(body);
       const first = presence.get(m.uuid)?.server === null;
@@ -308,6 +370,17 @@ export function createHub(options: HubOptions): Hub {
       conns.backends.set(conn.server, conn);
       conn.send({ t: 'welcome', server: conn.server, kind: conn.kind });
       presence.on(conn.server).forEach((p) => sendProfile(p.uuid));
+      // Aufgewacht: wer gewartet hat, kommt jetzt hinein.
+      const list = waiting.get(conn.server);
+      waiting.delete(conn.server);
+      clearTimeout(wakeTimers.get(conn.server));
+      wakeTimers.delete(conn.server);
+      list?.forEach((uuid) => {
+        const p = presence.get(uuid);
+        if (!p) return;
+        ctx.msg(uuid, text(p.lang, 'mode.ready', { mode: mm(modeName(conn.server, p.lang)) }));
+        ctx.connect(uuid, conn.server);
+      });
     },
     onMessage: (conn, body) => {
       const handler = Object.hasOwn(handlers, body.t) ? handlers[body.t] : undefined;

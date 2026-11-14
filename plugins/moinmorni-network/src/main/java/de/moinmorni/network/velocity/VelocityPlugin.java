@@ -12,6 +12,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.PlayerSettingsChangedEvent;
+import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
@@ -20,6 +21,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import de.moinmorni.network.common.HubClient;
 import de.moinmorni.network.common.HubConfig;
@@ -54,6 +56,7 @@ public final class VelocityPlugin {
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
     private static final String HUB_DIR = "moinmorni";
+    private static final String LOBBY = "lobby";
 
     private final ProxyServer proxy;
     private final Logger log;
@@ -165,6 +168,36 @@ public final class VelocityPlugin {
         CompletableFuture<Void> done = hub.request(body).handle((data, error) -> {
             if (error == null && data.has("allow") && !data.get("allow").getAsBoolean()) {
                 event.setResult(ResultedEvent.ComponentResult.denied(MM.deserialize(HubClient.str(data, "message"))));
+            }
+            return null;
+        });
+        return EventTask.resumeWhenComplete(done);
+    }
+
+    /**
+     * Vor jedem Serverwechsel: Ist der Modus offen und wach? Schläft er, weckt ihn der Hub und der Spieler kommt
+     * danach von selbst hinein. Wer gerade erst ins Netzwerk kommt, wartet so lange in der Lobby.
+     */
+    @Subscribe
+    public EventTask onPreConnect(ServerPreConnectEvent event) {
+        Optional<RegisteredServer> target = event.getResult().getServer();
+        if (hub == null || !hub.ready() || target.isEmpty()) {
+            return null;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "connecting");
+        body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
+        body.addProperty("server", target.get().getServerInfo().getName());
+        CompletableFuture<Void> done = hub.request(body).handle((data, error) -> {
+            if (error != null || !data.has("allow") || data.get("allow").getAsBoolean()) {
+                return null;
+            }
+            Optional<RegisteredServer> lobby = proxy.getServer(LOBBY);
+            boolean firstServer = event.getPreviousServer() == null;
+            if (firstServer && lobby.isPresent() && !lobby.get().equals(target.get())) {
+                event.setResult(ServerPreConnectEvent.ServerResult.allowed(lobby.get()));
+            } else {
+                event.setResult(ServerPreConnectEvent.ServerResult.denied());
             }
             return null;
         });

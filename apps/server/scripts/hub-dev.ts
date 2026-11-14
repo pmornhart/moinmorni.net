@@ -1,8 +1,10 @@
 /**
  * Hub allein zum Testen mit echten Servern: lauscht auf 127.0.0.1:8090 und schreibt jedem Server seine hub.json.
- *   tsx scripts/hub-dev.ts <ordner>:<server>:<proxy|backend> … [--rang Name=rolle …]
+ *   tsx scripts/hub-dev.ts <ordner>:<server>:<proxy|backend> … [--rang=Name=rolle …] [--wecken=server:ordner:jar …]
+ * Mit --wecken startet der Hub schlafende Server selbst (java -jar <jar> im Ordner), wie es sonst der Motor tut.
  * Daten unter MM_HUB_DEV_DIR (Standard ~/mm-hub-dev).
  */
+import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -42,7 +44,25 @@ const log = {
 const handle = openDatabase(path.join(DIR, 'hub.db'));
 const events = createEventBus();
 const stores = createStores(handle.db, events);
-const hub = createHub({ secret, db: handle.db, stores, events, log, timeZone: 'Europe/Berlin' });
+const wakeable = new Map(
+  process.argv
+    .filter((a) => a.startsWith('--wecken='))
+    .map((a) => a.slice('--wecken='.length).split(':'))
+    .map(([server = '', dir = '', jar = '']) => [server, { dir, jar }] as const),
+);
+const wake = (server: string): Promise<boolean> => {
+  const spec = wakeable.get(server);
+  if (!spec) return Promise.resolve(false);
+  console.log(`wecke ${server} …`);
+  const child = spawn(process.env['MM_JAVA'] ?? 'java', ['-Xmx1G', '-jar', spec.jar, '--nogui'], {
+    cwd: spec.dir,
+    stdio: 'ignore',
+    detached: true,
+  });
+  child.unref();
+  return Promise.resolve(true);
+};
+const hub = createHub({ secret, db: handle.db, stores, events, log, timeZone: 'Europe/Berlin', wake });
 
 const args = process.argv.slice(2);
 const ranks = args.filter((a) => a.startsWith('--rang=')).map((a) => a.slice('--rang='.length));
