@@ -47,7 +47,10 @@ export const DEFAULT_MODES: readonly Mode[] = [
   {
     id: 'mornicraft',
     name: t('MorniCraft', 'MorniCraft'),
-    description: t('Unser Freunde-Survival mit Clans, Gräbern und einem mächtigen Drachen – nur auf Einladung.', 'Our friends’ survival with clans, graves and a mighty dragon – invitation only.'),
+    description: t(
+      'Unser Freunde-Survival mit Clans, Gräbern und einem mächtigen Drachen – nur auf Einladung.',
+      'Our friends’ survival with clans, graves and a mighty dragon – invitation only.',
+    ),
     state: 'off',
     access: 'whitelist',
     position: 0,
@@ -58,7 +61,10 @@ export const DEFAULT_MODES: readonly Mode[] = [
   {
     id: 'duels',
     name: t('Duels', 'Duels'),
-    description: t('1 gegen 1 und 2 gegen 2: Klassisch mit Suppe, Modern oder mit Fähigkeiten. Gewertet oder locker.', '1v1 and 2v2: classic with soup, modern or with abilities. Ranked or casual.'),
+    description: t(
+      '1 gegen 1 und 2 gegen 2: Klassisch mit Suppe, Modern oder mit Fähigkeiten. Gewertet oder locker.',
+      '1v1 and 2v2: classic with soup, modern or with abilities. Ranked or casual.',
+    ),
     state: 'on',
     access: 'everyone',
     position: 1,
@@ -69,7 +75,10 @@ export const DEFAULT_MODES: readonly Mode[] = [
   {
     id: 'party',
     name: t('Morni Party', 'Morni Party'),
-    description: t('Würfeln, Taler sammeln, Edelweiß kaufen – und zwischendurch schnelle Minispiele. Für 2–8 Spieler.', 'Roll the dice, collect coins, buy edelweiss – with quick minigames in between. For 2–8 players.'),
+    description: t(
+      'Würfeln, Taler sammeln, Edelweiß kaufen – und zwischendurch schnelle Minispiele. Für 2–8 Spieler.',
+      'Roll the dice, collect coins, buy edelweiss – with quick minigames in between. For 2–8 players.',
+    ),
     state: 'on',
     access: 'everyone',
     position: 2,
@@ -80,7 +89,10 @@ export const DEFAULT_MODES: readonly Mode[] = [
   {
     id: 'gipfelsturm',
     name: t('Gipfelsturm', 'Summit Rush'),
-    description: t('Parkour-Strecken von leicht bis extrem, mit Bestzeiten und Strecke der Woche.', 'Parkour courses from easy to extreme, with best times and a course of the week.'),
+    description: t(
+      'Parkour-Strecken von leicht bis extrem, mit Bestzeiten und Strecke der Woche.',
+      'Parkour courses from easy to extreme, with best times and a course of the week.',
+    ),
     state: 'on',
     access: 'everyone',
     position: 3,
@@ -91,7 +103,10 @@ export const DEFAULT_MODES: readonly Mode[] = [
   {
     id: 'burgverlies',
     name: t('Burgverlies', 'Castle Dungeon'),
-    description: t('Koop-Dungeon für 1–4: Fallen, Schätze und ein Endboss tief unter der Burg.', 'Co-op dungeon for 1–4: traps, treasure and a final boss deep below the castle.'),
+    description: t(
+      'Koop-Dungeon für 1–4: Fallen, Schätze und ein Endboss tief unter der Burg.',
+      'Co-op dungeon for 1–4: traps, treasure and a final boss deep below the castle.',
+    ),
     state: 'on',
     access: 'everyone',
     position: 4,
@@ -102,7 +117,10 @@ export const DEFAULT_MODES: readonly Mode[] = [
   {
     id: 'bollwerk',
     name: t('Bollwerk', 'Bulwark'),
-    description: t('Verteidigt das Dorf gegen Welle um Welle – zwischen den Wellen wird aufgerüstet.', 'Defend the village against wave after wave – gear up between the waves.'),
+    description: t(
+      'Verteidigt das Dorf gegen Welle um Welle – zwischen den Wellen wird aufgerüstet.',
+      'Defend the village against wave after wave – gear up between the waves.',
+    ),
     state: 'on',
     access: 'everyone',
     position: 5,

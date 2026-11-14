@@ -97,7 +97,20 @@ export type Role = z.infer<typeof roleSchema>;
 
 const EVERY_PANEL_AREA: PanelArea[] = [...PANEL_AREAS];
 const EVERY_GAME_RIGHT: GameRight[] = [...GAME_RIGHTS];
-const TEAM_GAME_RIGHTS: GameRight[] = ['kick', 'ban', 'mute', 'jail', 'warn', 'teleport', 'vanish', 'spectate', 'inspect', 'voice-join-any', 'voice-mute', 'maintenance-join'];
+const TEAM_GAME_RIGHTS: GameRight[] = [
+  'kick',
+  'ban',
+  'mute',
+  'jail',
+  'warn',
+  'teleport',
+  'vanish',
+  'spectate',
+  'inspect',
+  'voice-join-any',
+  'voice-mute',
+  'maintenance-join',
+];
 const VIP_GAME_RIGHTS: GameRight[] = ['reserved-slot', 'bigger-party', 'lobby-extras', 'chat-colour'];
 
 /** Die Vorlage, mit der MoinMorni startet (Philip, 14.11.: Owner, Admin, Moderator, Builder, Media, VIP, Spieler). */
