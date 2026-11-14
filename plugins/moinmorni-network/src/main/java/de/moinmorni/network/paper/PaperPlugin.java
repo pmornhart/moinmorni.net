@@ -44,6 +44,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private Object voice;
     /** Figuren der Lobby (anklicken, Live-Zahlen, Dorfleute) – tut nur etwas, wo es Figuren gibt. */
     private LobbyNpcs lobby;
+    /** Lobby-Funktionen (Begrüßung, Menü, Parkour …) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
+    private LobbyFeatures features;
 
     @Override
     public void onEnable() {
@@ -58,6 +60,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         lobby = new LobbyNpcs(this, hub, this::langOf);
         lobby.start();
+        features = new LobbyFeatures(this, lobby, this::langOf);
+        features.start();
     }
 
     /** Brücke anmelden, wenn Simple Voice Chat da ist – die Klasse wird sonst nie geladen. */
@@ -117,6 +121,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 });
             }
             case "lobby" -> lobby.onModes(m);
+            case "lobby-settings" -> features.onSettings(m);
             case "voice" -> {
                 if (voice != null) {
                     VoiceSetup.apply(voice, m);

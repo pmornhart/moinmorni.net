@@ -19,6 +19,12 @@ const tinyPack = (version: string) => () => ({
   parts: 2,
   load: ['forceload add 0 0 15 15'],
   unload: ['forceload remove 0 0 15 15'],
+  seasonFiles: {
+    'pack.mcmeta': '{"pack":{"description":"Saison","pack_format":48}}\n',
+    'data/moinmorni_season/function/wiesn.mcfunction': 'kill @e[tag=mm_season]\n',
+  },
+  seasonLoad: ['forceload add 0 0 31 31'],
+  seasonUnload: ['forceload remove 0 0 31 31'],
   files: {
     'pack.mcmeta': '{"pack":{"description":"Test","pack_format":48}}\n',
     'data/moinmorni_lobby/function/prepare.mcfunction': '# geladen\n',
@@ -67,6 +73,7 @@ describe('Lobby baut sich selbst', () => {
       },
     };
     const world = createLobbyWorld(motor, quiet, {
+      season: () => 'wiesn',
       pack: tinyPack('v1'),
       sleep: () => new Promise((r) => setTimeout(r, 20)),
       settleMs: 0,
@@ -118,7 +125,16 @@ describe('Lobby baut sich selbst', () => {
     expect(commands.indexOf('minecraft:function moinmorni_lobby:finish')).toBeGreaterThan(
       commands.indexOf('minecraft:function moinmorni_lobby:part/001'),
     );
-    expect(commands.at(-1)).toBe('minecraft:datapack disable "file/moinmorni-lobby"');
+    expect(commands).toContain('minecraft:datapack disable "file/moinmorni-lobby"');
+    // Danach die Saison-Deko: Bereich festhalten, Funktion, loslassen.
+    expect(commands.filter((c) => !c.includes('execute if loaded')).slice(-3)).toEqual([
+      'minecraft:forceload add 0 0 31 31',
+      'minecraft:function moinmorni_season:wiesn',
+      'minecraft:forceload remove 0 0 31 31',
+    ]);
+    expect(
+      await read('world/datapacks/moinmorni-lobby-season/data/moinmorni_season/function/wiesn.mcfunction'),
+    ).toContain('kill @e[tag=mm_season]');
 
     commands.length = 0;
     expect(await world.build(result.lobbyServerId)).toBe('current');

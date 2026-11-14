@@ -19,6 +19,13 @@ export interface Mode {
   readonly skin: string;
   /** Waren auf der Theke des Marktstands. */
   readonly goods: readonly string[];
+  /** Symbol im Kompass-Menü der Lobby (Minecraft-Gegenstand). */
+  readonly icon: string;
+}
+
+/** Symbol für einen Modus im Kompass-Menü (unbekannte Modi: Kompass). */
+export function modeIcon(id: string): string {
+  return MODES.find((m) => m.id === id)?.icon ?? 'compass';
 }
 
 /** Spielmodi wie im Entwurf (Spielerzahlen sind Beispiele). */
@@ -30,6 +37,7 @@ export const MODES: readonly Mode[] = [
     line: '● Nur auf Einladung',
     status: 'Klick: Bewerben',
     skin: 'mornicraft',
+    icon: 'grass_block',
     goods: ['hay_block', 'pumpkin', 'melon', 'potted_oak_sapling'],
   },
   {
@@ -39,6 +47,7 @@ export const MODES: readonly Mode[] = [
     line: '● 12 Spieler',
     status: 'Klick: Mitspielen',
     skin: 'duels',
+    icon: 'iron_sword',
     goods: ['target', 'anvil', 'iron_block', 'potted_cactus'],
   },
   {
@@ -48,6 +57,7 @@ export const MODES: readonly Mode[] = [
     line: '● 8 Spieler',
     status: 'Klick: Mitspielen',
     skin: 'party',
+    icon: 'cake',
     goods: ['cake', 'yellow_candle[candles=4,lit=true]', 'note_block', 'jukebox'],
   },
   {
@@ -57,6 +67,7 @@ export const MODES: readonly Mode[] = [
     line: '● 5 Spieler',
     status: 'Klick: Mitspielen',
     skin: 'gipfelsturm',
+    icon: 'goat_horn',
     goods: ['blue_ice', 'packed_ice', 'snow_block', 'potted_spruce_sapling'],
   },
   {
@@ -66,6 +77,7 @@ export const MODES: readonly Mode[] = [
     line: '● 3 Spieler',
     status: 'Klick: Mitspielen',
     skin: 'burgverlies',
+    icon: 'skeleton_skull',
     goods: ['skeleton_skull', 'chest', 'iron_bars', 'soul_lantern'],
   },
   {
@@ -75,6 +87,7 @@ export const MODES: readonly Mode[] = [
     line: '● 4 Spieler',
     status: 'Klick: Mitspielen',
     skin: 'bollwerk',
+    icon: 'shield',
     goods: ['dispenser[facing=up]', 'redstone_block', 'target', 'iron_block'],
   },
   {
@@ -84,6 +97,7 @@ export const MODES: readonly Mode[] = [
     line: '○ Bald',
     status: 'Noch geschlossen',
     skin: 'mirni',
+    icon: 'oak_sapling',
     goods: ['grass_block', 'oak_log', 'crafting_table', 'potted_poppy'],
   },
 ];

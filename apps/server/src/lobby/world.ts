@@ -1,5 +1,15 @@
 import type { FastifyBaseLogger } from 'fastify';
-import { LOBBY_NAMESPACE, LOBBY_PACK_DIR, lobbyPack, partName, type LobbyPack } from '@moinmorni/builder';
+import {
+  LOBBY_NAMESPACE,
+  LOBBY_PACK_DIR,
+  lobbyPack,
+  partName,
+  SEASON_NAMESPACE,
+  SEASON_PACK_DIR,
+  SEASONS,
+  type LobbyPack,
+  type Season,
+} from '@moinmorni/builder';
 import { MotorError, type MotorClient } from '../motor/client.js';
 
 /**
@@ -31,18 +41,24 @@ const DEFAULTS = {
 } as const;
 /** Ecken (so weit draußen, wie gebaut wird) und Mitte: sind sie geladen, ist es der Rest auch. */
 const EDGE = 200;
-const PROBES: readonly (readonly [number, number])[] = [
+const SEASON_EDGE = 100;
+const probesAt = (edge: number): readonly (readonly [number, number])[] => [
   [0, 0],
-  [-EDGE, -EDGE],
-  [EDGE, -EDGE],
-  [-EDGE, EDGE],
-  [EDGE, EDGE],
+  [-edge, -edge],
+  [edge, -edge],
+  [-edge, edge],
+  [edge, edge],
 ];
+const PROBES = probesAt(EDGE);
+/** Für die Saison-Deko: Ecken innerhalb ihres (kleineren) Bereichs. */
+const SEASON_PROBES = probesAt(SEASON_EDGE);
 const FIRST_NON_ASCII = 0x7f;
 const HEX = 16;
 const UNICODE_DIGITS = 4;
 
 export interface LobbyWorldOptions {
+  /** Aktuelle Saison-Deko (Panel: Lobby → Saison-Deko). */
+  readonly season?: () => Season;
   /** Bauplan (Tests: ein kleiner). */
   readonly pack?: () => LobbyPack;
   readonly sleep?: (ms: number) => Promise<void>;
@@ -60,6 +76,13 @@ export interface LobbyWorld {
   readonly configure: (serverId: string) => Promise<boolean>;
   /** Welt bauen, wenn der Bauplan neuer ist als die gebaute Welt. */
   readonly build: (serverId: string) => Promise<BuildResult>;
+  /** Saison-Deko umschalten (alte weg, neue hin). */
+  readonly applySeason: (serverId: string) => Promise<boolean>;
+}
+
+/** Saison aus den Einstellungen, unbekannte Werte = keine Deko. */
+export function seasonOf(value: unknown): Season {
+  return SEASONS.find((s) => s === value) ?? 'none';
 }
 
 /** Text für server.properties: Rückstriche verdoppeln, alles außer ASCII als \uXXXX (Minecraft liest Latin-1). */
@@ -226,6 +249,10 @@ export function createLobbyWorld(
       await prev;
       await writeFile(serverId, `${level}/datapacks/${LOBBY_PACK_DIR}/${file}`, content);
     }, Promise.resolve());
+    await Object.entries(pack.seasonFiles).reduce(async (prev, [file, content]) => {
+      await prev;
+      await writeFile(serverId, `${level}/datapacks/${SEASON_PACK_DIR}/${file}`, content);
+    }, Promise.resolve());
     await writeFile(serverId, TARGET_FILE, `${pack.version}\n`);
     // Paper kennt „reload“ selbst (lädt Plugins neu) – darum immer mit „minecraft:“.
     await run(serverId, 'minecraft:reload');
@@ -268,7 +295,32 @@ export function createLobbyWorld(
     await run(serverId, `minecraft:datapack disable "${PACK_ID}"`);
     await writeFile(serverId, STAMP_FILE, `${pack.version}\n`);
     log.info({ version: pack.version }, 'Lobby: Welt fertig gebaut');
+    await season(serverId, pack);
     return 'built';
+  };
+
+  /** Probe-Punkte geladen? (Ecken + Mitte) */
+  const allLoaded = async (serverId: string, probes = PROBES): Promise<boolean> => {
+    const answers = await probes.reduce<Promise<string[]>>(async (acc, [x, z]) => {
+      const list = await acc;
+      return [...list, await run(serverId, `minecraft:execute if loaded ${x} 64 ${z}`)];
+    }, Promise.resolve([]));
+    return answers.every((a) => !a.includes('failed'));
+  };
+  const runAll = (serverId: string, commands: readonly string[]): Promise<void> =>
+    commands.reduce(async (prev, command) => {
+      await prev;
+      await run(serverId, `minecraft:${command}`);
+    }, Promise.resolve());
+
+  /** Deko der eingestellten Saison setzen: Bereich festhalten, Funktion aufrufen, wieder loslassen. */
+  const season = async (serverId: string, pack: LobbyPack): Promise<void> => {
+    const current = options.season?.() ?? 'none';
+    await runAll(serverId, pack.seasonLoad);
+    await until(() => allLoaded(serverId, SEASON_PROBES), opts.loadTimeoutMs);
+    await run(serverId, `minecraft:function ${SEASON_NAMESPACE}:${current}`);
+    await runAll(serverId, pack.seasonUnload);
+    log.info({ season: current }, 'Lobby: Saison-Deko gesetzt');
   };
 
   return {
@@ -278,6 +330,20 @@ export function createLobbyWorld(
       if (!next.changed) return false;
       await writeFile(serverId, PROPERTIES_FILE, next.text);
       return true;
+    },
+    applySeason: async (serverId) => {
+      if (busy.has(serverId)) return false;
+      busy.add(serverId);
+      try {
+        if ((await state(serverId)) !== RUNNING) return false;
+        await season(serverId, plan());
+        return true;
+      } catch (err) {
+        log.error({ err }, 'Lobby: Saison-Deko ließ sich nicht setzen');
+        return false;
+      } finally {
+        busy.delete(serverId);
+      }
     },
     build: async (serverId) => {
       if (busy.has(serverId)) return 'current';

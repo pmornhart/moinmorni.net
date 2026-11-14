@@ -15,7 +15,7 @@ import { createHub } from '../src/hub/index.js';
 import { createEventBus } from '../src/lib/events.js';
 import { createStores } from '../src/panel/stores.js';
 
-const PORT = 8090;
+const PORT = Number(process.env['MM_HUB_DEV_PORT'] ?? 8090);
 const DIR = process.env['MM_HUB_DEV_DIR'] ?? path.join(os.homedir(), 'mm-hub-dev');
 fs.mkdirSync(DIR, { recursive: true });
 const secretFile = path.join(DIR, 'secret');

@@ -12,8 +12,19 @@ import { fbm, pick, random } from '../noise.js';
 import { GROUND, meadow, roundTree, terrain } from '../nature.js';
 import { disc, range } from '../range.js';
 import { discAt, path, type Facing } from '../shapes.js';
-import { npc } from '../village.js';
+import { npc, signText } from '../village.js';
+import { LAUNCHPADS, PARKOUR } from './features.js';
 import { fence, field, forest, houseAt, lampPost, MODES, mountains, ramp, stallAt } from './common.js';
+
+const HALF = 0.5;
+
+/** Block des Parkours an Stelle i: Smaragd = Start, Diamant = Ziel, Gold = Kontrollpunkt, sonst weiß-blau. */
+function parkourBlock(i: number): string {
+  if (i === 0) return 'emerald_block';
+  if (i === PARKOUR.blocks.length - 1) return 'diamond_block';
+  if (PARKOUR.checkpoints.includes(i)) return 'gold_block';
+  return i % 2 === 0 ? 'light_blue_concrete' : 'white_concrete';
+}
 
 export const LOBBY = { cx: 0, cz: 0, name: 'Dorfplatz am Schlossberg' };
 
@@ -325,17 +336,22 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
 
   // Schloss auf dem Hügel, Freitreppe nach Süden
   castle(c, { x: 0, y: GROUND + HILL.height, z: -96, front: 'south', wallDrop: 14, rnd });
-  launchpad(c, -14, GROUND, -26);
-  launchpad(c, 14, GROUND, -26);
-  // Parkour vom Westhang zum Schloss: schwebende Smaragd- und Goldblöcke
-  range(0, 15).forEach((i) =>
-    c.set(
-      -70 + i * 3,
-      GROUND + 4 + i * 2,
-      -50 - i * 3 - (i % 2) * 2,
-      i % 2 === 0 ? 'emerald_block' : 'gold_block',
-    ),
-  );
+  LAUNCHPADS.forEach((l) => launchpad(c, l.x, l.y, l.z));
+  // Parkour im Nordwesten: weiß-blaue Spirale, Smaragd = Start, Gold = Kontrollpunkt, Diamant = Ziel
+  PARKOUR.blocks.forEach((b, i) => c.set(b.x, b.y, b.z, parkourBlock(i)));
+  const goal = PARKOUR.blocks[PARKOUR.blocks.length - 1];
+  if (goal) c.set(goal.x, goal.y + 1, goal.z, 'light_blue_banner[rotation=8]');
+  const start = PARKOUR.blocks[0];
+  if (start)
+    signText(
+      c,
+      start.x + HALF,
+      start.y + 2.2,
+      start.z + HALF,
+      'east',
+      [{ text: 'Parkour', color: 'gold', bold: true }],
+      1.2,
+    );
 
   const pathBlocks = ['gravel', 'coarse_dirt', 'gravel', 'cobblestone'];
   path(

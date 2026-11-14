@@ -456,6 +456,27 @@ describe('Hub', () => {
     await lobby.next('lobby', (m) => row(m, 'duels')?.players === 2);
   });
 
+  test('Lobby-Einstellungen: nur die Lobby bekommt sie, Änderungen im Panel kommen sofort an', async () => {
+    const { lobby, duels } = await network();
+    const first = await lobby.next('lobby-settings');
+    expect(first).toMatchObject({
+      welcome: { title: 'Servus in MoinMorni!' },
+      season: 'none',
+      parkour: true,
+    });
+    const features = first['features'] as {
+      parkour: { blocks: unknown[] };
+      tour: unknown[];
+      launchpads: unknown[];
+    };
+    expect(features.parkour.blocks.length).toBe(25);
+    expect(features.tour.length).toBeGreaterThan(3);
+    expect(features.launchpads.length).toBe(2);
+    stores.patchSettings('lobby', { season: 'wiesn', walkers: 3 }, 'test');
+    expect(await lobby.next('lobby-settings')).toMatchObject({ season: 'wiesn', walkers: 3 });
+    expect(duels.received.some((m) => m.t === 'lobby-settings')).toBe(false);
+  });
+
   test('Sprachchat-Brücke: Kanäle über alle Server, kein Sprechen für andere, Stumm, Party, Team folgt', async () => {
     const { proxy, lobby, duels } = await network();
     const cmd = (uuid: string, command: string, ...args: string[]) =>

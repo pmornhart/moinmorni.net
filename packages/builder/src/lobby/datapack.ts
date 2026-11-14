@@ -8,9 +8,15 @@
 import crypto from 'node:crypto';
 import { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG } from '../village.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
+import { SEASONS, seasonCommands } from './season.js';
 
 export const LOBBY_NAMESPACE = 'moinmorni_lobby';
 export const LOBBY_PACK_DIR = 'moinmorni-lobby';
+/** Kleines Paket, das immer an bleibt: je Saison eine Funktion (Deko an/aus), läuft nur auf Abruf. */
+export const SEASON_NAMESPACE = 'moinmorni_season';
+export const SEASON_PACK_DIR = 'moinmorni-lobby-season';
+/** Bereich der Deko um die Mitte (Dorf, Gassen, Oberdorf). */
+export const SEASON_RADIUS = 120;
 /** So viele Befehle pro Funktion (ein Aufruf läuft in einem Tick; Minecraft erlaubt bis 65 536). */
 const PART_SIZE = 3000;
 const CHUNK = 16;
@@ -40,6 +46,11 @@ export interface LobbyPack {
    */
   readonly load: readonly string[];
   readonly unload: readonly string[];
+  /** Saison-Paket (eigener Ordner, bleibt an): Pfade → Inhalt. */
+  readonly seasonFiles: Readonly<Record<string, string>>;
+  /** Stücke des Deko-Bereichs festhalten bzw. loslassen (für das Umschalten der Saison). */
+  readonly seasonLoad: readonly string[];
+  readonly seasonUnload: readonly string[];
 }
 
 /** forceload-Befehle in Stücken (Minecraft erlaubt höchstens 256 Chunks pro Befehl). */
@@ -142,10 +153,22 @@ export function lobbyPack(): LobbyPack {
     [fn('finish')]: `${finish.join('\n')}\n`,
     ...Object.fromEntries(parts.map((p, i) => [fn(partName(i)), `${p.join('\n')}\n`])),
   };
+  const seasonFiles: Record<string, string> = {
+    'pack.mcmeta': `${JSON.stringify({ ...meta, pack: { ...meta.pack, description: 'MoinMorni – Saison-Deko der Lobby' } }, null, 2)}\n`,
+    ...Object.fromEntries(
+      SEASONS.map((season) => [
+        `data/${SEASON_NAMESPACE}/function/${season}.mcfunction`,
+        `${seasonCommands(season).join('\n')}\n`,
+      ]),
+    ),
+  };
   const hash = crypto.createHash('sha256');
   Object.keys(files)
     .sort()
     .forEach((k) => hash.update(k).update(files[k] ?? ''));
+  Object.keys(seasonFiles)
+    .sort()
+    .forEach((k) => hash.update(`season/${k}`).update(seasonFiles[k] ?? ''));
   const version = hash.digest('hex').slice(0, VERSION_LENGTH);
   // Erst jetzt die echte Version in die Tags der Wesen (der Platzhalter ging in die Prüfsumme ein, nicht die Version).
   const build = `${BUILD_TAG_PREFIX}${version}`;
@@ -160,6 +183,9 @@ export function lobbyPack(): LobbyPack {
     parts: parts.length,
     load: forceloadCommands(cx, cz, 'add', RADIUS, LOAD_SPAN),
     unload: forceloadCommands(cx, cz, 'remove'),
+    seasonFiles,
+    seasonLoad: forceloadCommands(cx, cz, 'add', SEASON_RADIUS, LOAD_SPAN),
+    seasonUnload: forceloadCommands(cx, cz, 'remove', SEASON_RADIUS),
   };
   return cached;
 }

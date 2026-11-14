@@ -69,6 +69,8 @@ final class LobbyNpcs implements Listener {
     private static final long CLICK_COOLDOWN_MS = 1500;
     private static final double LOOK_RANGE = 6;
     private static final int LOOK_EVERY_TICKS = 5;
+    /** Alle zwei Sekunden nachsehen, ob die Lobby neu gebaut wurde (dann alte Wesen wegräumen). */
+    private static final int BUILD_CHECK_TICKS = 40;
     /** Blöcke pro Tick: etwa 1,8 Blöcke pro Sekunde – gemütliches Schlendern. */
     private static final double WALK_SPEED = 0.09;
     private static final double WANDER_MIN = 2;
@@ -82,7 +84,7 @@ final class LobbyNpcs implements Listener {
     private static final int PAUSE_SPREAD = 160;
 
     record ModeInfo(String id, String nameDe, String nameEn, String state, String access, int players,
-                    boolean hasServer, boolean awake) {
+                    boolean hasServer, boolean awake, String icon) {
     }
 
     private static final class Walk {
@@ -110,6 +112,14 @@ final class LobbyNpcs implements Listener {
     private int ticks;
     private long buildCheckedAt = -1;
     private String build;
+    /** Bau-Version, nach der zuletzt aufgeräumt wurde. */
+    private String sweptBuild;
+    /** Saison-Deko, die gerade gilt (vom Hub); Deko anderer Saisons wird beim Laden entfernt. */
+    private volatile String season = null;
+    /** So viele Dorfbewohner laufen herum (die übrigen stehen). */
+    private volatile int walkerLimit = Integer.MAX_VALUE;
+    /** Reihenfolge der Modi wie im Panel. */
+    private volatile List<String> order = List.of();
 
     LobbyNpcs(JavaPlugin plugin, HubClient hub, Function<Player, String> langOf) {
         this.plugin = plugin;
@@ -122,6 +132,7 @@ final class LobbyNpcs implements Listener {
         for (World w : Bukkit.getWorlds()) {
             w.getEntities().forEach(this::adopt);
         }
+        sweptBuild = currentBuild();
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 1L, 1L);
     }
 
@@ -140,10 +151,11 @@ final class LobbyNpcs implements Listener {
             String id = HubClient.str(o, "id");
             fresh.put(id, new ModeInfo(id, HubClient.str(name, "de"), HubClient.str(name, "en"),
                     HubClient.str(o, "state"), HubClient.str(o, "access"), o.get("players").getAsInt(),
-                    o.get("hasServer").getAsBoolean(), o.get("awake").getAsBoolean()));
+                    o.get("hasServer").getAsBoolean(), o.get("awake").getAsBoolean(), HubClient.str(o, "icon")));
         }
         modes.clear();
         modes.putAll(fresh);
+        order = list.asList().stream().map(el -> HubClient.str(el.getAsJsonObject(), "id")).toList();
         Bukkit.getScheduler().runTask(plugin, this::refreshLabels);
     }
 
@@ -230,6 +242,11 @@ final class LobbyNpcs implements Listener {
 
     private void adopt(Entity e) {
         var tags = e.getScoreboardTags();
+        String current = season;
+        if (current != null && tags.contains("mm_season") && !tags.contains("mm_season_" + current)) {
+            e.remove();
+            return;
+        }
         if (outdated(tags)) {
             e.getPassengers().forEach(Entity::remove);
             e.remove();
@@ -307,7 +324,7 @@ final class LobbyNpcs implements Listener {
     public void onAdd(EntityAddToWorldEvent event) {
         Entity e = event.getEntity();
         var tags = e.getScoreboardTags();
-        if (!fromLobbyBuild(tags) && !tags.contains(WORLD_LABEL_TAG)) {
+        if (!fromLobbyBuild(tags) && !tags.contains(WORLD_LABEL_TAG) && !tags.contains("mm_season")) {
             return;
         }
         Bukkit.getScheduler().runTask(plugin, () -> {
@@ -380,12 +397,31 @@ final class LobbyNpcs implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onDamage(EntityDamageEvent event) {
-        if (event.getEntity().getScoreboardTags().contains(NPC_TAG)) {
+        // /kill (z. B. beim Neubau der Lobby) darf die Figuren entfernen, sonst nichts.
+        if (event.getCause() != EntityDamageEvent.DamageCause.KILL
+                && event.getEntity().getScoreboardTags().contains(NPC_TAG)) {
             event.setCancelled(true);
         }
     }
 
-    private void play(Player p, String id) {
+    /** Lobby-Einstellungen: Saison (für das Aufräumen) und wie viele Dorfbewohner laufen. */
+    void configure(String season, int walkers) {
+        this.season = season;
+        this.walkerLimit = Math.max(0, walkers);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for (World w : Bukkit.getWorlds()) {
+                w.getEntities().stream().filter(e -> e.getScoreboardTags().contains("mm_season")).forEach(this::adopt);
+            }
+        });
+    }
+
+    /** Modi mit Zahlen in der Reihenfolge des Panels (für das Kompass-Menü). */
+    List<ModeInfo> orderedModes() {
+        return order.stream().map(modes::get).filter(java.util.Objects::nonNull).toList();
+    }
+
+
+    void play(Player p, String id) {
         long now = System.currentTimeMillis();
         Long last = lastClick.get(p.getUniqueId());
         if (last != null && now - last < CLICK_COOLDOWN_MS) {
@@ -411,14 +447,33 @@ final class LobbyNpcs implements Listener {
 
     private void tick() {
         ticks++;
-        walkers.forEach((uuid, walk) -> {
+        int limit = walkerLimit;
+        walkers.keySet().stream().sorted().limit(limit).forEach(uuid -> {
             Entity e = Bukkit.getEntity(uuid);
             if (e != null && e.isValid()) {
-                step(e, walk);
+                step(e, walkers.get(uuid));
             }
         });
         if (ticks % LOOK_EVERY_TICKS == 0) {
             standing.forEach(this::lookAround);
+        }
+        if (ticks % BUILD_CHECK_TICKS == 0) {
+            sweepIfRebuilt();
+        }
+    }
+
+    /**
+     * Neu gebaut, während Figuren geladen waren? Dann die alten jetzt entfernen – die Figuren sind gegen Schaden
+     * geschützt, und Minecrafts /kill erreicht nur, was gerade geladen ist.
+     */
+    private void sweepIfRebuilt() {
+        String now = currentBuild();
+        if (now == null || now.equals(sweptBuild)) {
+            return;
+        }
+        sweptBuild = now;
+        for (World w : Bukkit.getWorlds()) {
+            w.getEntities().stream().filter(e -> outdated(e.getScoreboardTags())).forEach(this::adopt);
         }
     }
 

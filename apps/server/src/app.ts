@@ -21,7 +21,7 @@ import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
-import { createLobbyWorld } from './lobby/world.js';
+import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
 import { createStatusService } from './public/status.js';
@@ -111,7 +111,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     domain: config.domain,
   });
   const status = createStatusService(config, motor, stores, hub);
-  const lobbyWorld = createLobbyWorld(motor, app.log);
+  const lobbyWorld = createLobbyWorld(motor, app.log, {
+    season: () => seasonOf(stores.settings('lobby')['season']),
+  });
+  const lobbyRef = { id: '', season: seasonOf(stores.settings('lobby')['season']) };
   const network = createProvisioner(config, motor, hub, app.log, { configureLobby: lobbyWorld.configure });
   const sleep = createSleepService(motor, hub, stores, app.log);
   sleepRef.service = sleep;
@@ -132,6 +135,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       const result = await network.ensure();
       app.log.info(result, 'Netzwerk geprüft');
       // Die Welt baut sich im Hintergrund (beim ersten Mal ein paar Minuten), die Webseite läuft schon.
+      lobbyRef.id = result.lobbyServerId;
       if (result.lobbyServerId) void lobbyWorld.build(result.lobbyServerId);
     } catch (err) {
       app.log.error(
@@ -141,6 +145,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     }
   };
   events.on('setup.done', () => void provision());
+  // Saison-Deko umgeschaltet (Panel oder /lobby saison …) → gleich in der Lobby tauschen.
+  events.on('settings.changed', ({ area }) => {
+    if (area !== 'lobby' || !lobbyRef.id) return;
+    const season = seasonOf(stores.settings('lobby')['season']);
+    if (season === lobbyRef.season) return;
+    lobbyRef.season = season;
+    void lobbyWorld.applySeason(lobbyRef.id);
+  });
   const setup = createSetupService(config, handle.db, motor, app.log, events);
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);

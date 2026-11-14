@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
+import { LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
 import type { GameRight, Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
@@ -73,6 +74,8 @@ const connectingSchema = z.object({
 const playSchema = z.object({ uuid: uuidField, mode: z.string().min(1).max(32) });
 /** Lobby-Zahlen höchstens so oft an die Server schicken (viele Wechsel auf einmal = eine Nachricht). */
 const LOBBY_DEBOUNCE_MS = 1_000;
+/** Name der Lobby im Netzwerk – nur sie bekommt die Lobby-Einstellungen. */
+const LOBBY_SERVER = 'lobby';
 /** So lange darf ein Modus zum Aufwachen brauchen, dann gibt es eine Meldung. */
 const WAKE_TIMEOUT_MS = 180_000;
 
@@ -329,8 +332,25 @@ export function createHub(options: HubOptions): Hub {
         players: md.server ? presence.on(md.server).length : 0,
         hasServer: md.server !== null,
         awake: md.server !== null && conns.backends.has(md.server),
+        icon: modeIcon(md.id),
       })),
   });
+  /** Lobby-Einstellungen aus dem Panel + die festen Punkte der Lobby (Ankunft, Launchpads, Parkour, Rundgang). */
+  const lobbySettings = (): Body => {
+    const l = stores.settings('lobby');
+    return {
+      t: 'lobby-settings',
+      welcome: { title: String(l['welcomeTitle'] ?? ''), subtitle: String(l['welcomeSubtitle'] ?? '') },
+      tour: l['tourForNewPlayers'] === true,
+      announcements: Array.isArray(l['announcements']) ? l['announcements'].map(String) : [],
+      announcementSeconds: Number(l['announcementSeconds']),
+      season: String(l['season'] ?? 'none'),
+      launchpads: l['launchpads'] === true,
+      parkour: l['parkour'] === true,
+      walkers: Number(l['walkers']),
+      features: { spawn: LOBBY_SPAWN_VIEW, launchpads: LAUNCHPADS, parkour: PARKOUR, tour: TOUR },
+    };
+  };
   let lobbyTimer: ReturnType<typeof setTimeout> | null = null;
   const lobbySoon = (): void => {
     if (lobbyTimer) return;
@@ -481,6 +501,7 @@ export function createHub(options: HubOptions): Hub {
       conn.send({ t: 'welcome', server: conn.server, kind: conn.kind });
       conn.send(voice.config());
       conn.send(lobbyState());
+      if (conn.server === LOBBY_SERVER) conn.send(lobbySettings());
       lobbySoon();
       presence.on(conn.server).forEach((p) => sendProfile(p.uuid));
       // Aufgewacht: wer gewartet hat, kommt jetzt hinein.
@@ -514,6 +535,7 @@ export function createHub(options: HubOptions): Hub {
 
   events.on('settings.changed', ({ area }) => {
     if (area === 'network') toProxy(network());
+    if (area === 'lobby') toBackend(LOBBY_SERVER, lobbySettings());
     if (area === 'voice') voice.broadcast();
   });
   events.on('roles.changed', () => presence.all().forEach((p) => sendProfile(p.uuid)));

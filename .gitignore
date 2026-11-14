@@ -16,3 +16,4 @@ render-cache/
 docs/fortschritt/bilder/
 __pycache__/
 tools/mc-client/logs/
+.claude/worktrees/

@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import { Rcon } from '@moinmorni/builder';
-import { createLobbyWorld } from '../src/lobby/world.js';
+import { createLobbyWorld, seasonOf } from '../src/lobby/world.js';
 import { MotorError, type MotorClient } from '../src/motor/client.js';
 
 const [dir = '.', addr = '127.0.0.1:25575', passFile = '.rcon-pass'] = process.argv.slice(2);
@@ -46,9 +46,16 @@ async function main(): Promise<void> {
   const say = (o: unknown, m?: string): void => console.log(m ?? o, m ? JSON.stringify(o) : '');
   const log = { info: say, warn: say, error: say } as unknown as FastifyBaseLogger;
   const t0 = Date.now();
-  const world = createLobbyWorld(motor, log, { settleMs: 8000 });
+  const world = createLobbyWorld(motor, log, {
+    settleMs: 8000,
+    season: () => seasonOf(process.env['MM_SEASON']),
+  });
   console.log('Eigenschaften geändert:', await world.configure('lobby'));
-  console.log('Ergebnis:', await world.build('lobby'), `nach ${Math.round((Date.now() - t0) / 1000)} s`);
+  const result = await world.build('lobby');
+  console.log('Ergebnis:', result, `nach ${Math.round((Date.now() - t0) / 1000)} s`);
+  // Schon gebaut: nur die Saison-Deko neu setzen (MM_SEASON).
+  if (result === 'current' && process.env['MM_SEASON'])
+    console.log('Saison:', await world.applySeason('lobby'));
   rcon.close();
 }
 
