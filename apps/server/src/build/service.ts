@@ -27,6 +27,16 @@ export const copySchema = z.object({
   target: z.string().min(1).max(TARGET_MAX),
 });
 
+/** Flache Welt wie Minecrafts „Klassisch flach“: Grundgestein, zwei Erde, Gras, Ebene. */
+const FLAT_WORLD = {
+  biome: 'minecraft:plains',
+  layers: [
+    { block: 'minecraft:bedrock', height: 1 },
+    { block: 'minecraft:dirt', height: 2 },
+    { block: 'minecraft:grass_block', height: 1 },
+  ],
+};
+
 export function buildProperties(): Record<string, string> {
   return {
     gamemode: 'creative',
@@ -35,6 +45,8 @@ export function buildProperties(): Record<string, string> {
     'spawn-monsters': 'false',
     pvp: 'false',
     'level-type': 'minecraft:flat',
+    // Ohne Schichten meldet Minecraft „No key layers“ und nimmt still die Standard-Schichten – so steht es fest.
+    'generator-settings': JSON.stringify(FLAT_WORLD),
     'generate-structures': 'false',
     'allow-nether': 'false',
     'spawn-protection': '0',
