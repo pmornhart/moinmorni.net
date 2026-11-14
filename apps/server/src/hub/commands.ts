@@ -1,6 +1,7 @@
 import { mayAssign, type GameRight, type Role } from '@moinmorni/shared';
 import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
+import type { Moderation, Target } from './moderation.js';
 import { parseDuration, type PunishKind } from './punish.js';
 import { dateText, LANGS, mm, text, type Lang } from './texts.js';
 
@@ -25,27 +26,12 @@ export interface Command {
   readonly complete?: (actor: Actor, args: readonly string[]) => string[];
 }
 
-interface Target {
-  readonly uuid: string;
-  readonly name: string;
-  readonly online: boolean;
-  readonly lang: Lang;
-}
-
 const LOBBY = 'lobby';
 const DURATIONS = ['30m', '1h', '1d', '7d', '30d', 'perm'];
 const REMOVE = new Set(['weg', 'keiner', 'none', 'remove']);
 
-export function createCommands(ctx: HubContext): Command[] {
-  const target = (name: string | undefined): Target | null => {
-    if (!name) return null;
-    const online = ctx.presence.byName(name);
-    if (online) return { uuid: online.uuid, name: online.name, online: true, lang: online.lang };
-    const known = ctx.players.byName(name);
-    return known
-      ? { uuid: known.uuid, name: known.name, online: false, lang: (known.language as Lang | null) ?? 'de' }
-      : null;
-  };
+export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
+  const target = mod.target;
   const say = (actor: Actor, ...lines: string[]): void => lines.forEach((line) => ctx.msg(actor.uuid, line));
   const onlineNames = (prefix = ''): string[] =>
     ctx.presence
@@ -53,10 +39,7 @@ export function createCommands(ctx: HubContext): Command[] {
       .map((p) => p.name)
       .filter((n) => n.toLowerCase().startsWith(prefix.toLowerCase()))
       .sort();
-  const until = (lang: Lang, iso: string | null): string =>
-    iso
-      ? text(lang, 'punish.until', { date: dateText(lang, iso, ctx.timeZone) })
-      : text(lang, 'punish.forever');
+  const until = mod.untilText;
 
   /** Ziel suchen und prüfen: bekannt, nicht man selbst, niedrigerer Rang. */
   const victim = (actor: Actor, name: string | undefined): Target | null => {
@@ -85,25 +68,7 @@ export function createCommands(ctx: HubContext): Command[] {
       const minutes = parseDuration(args[1]);
       const reasonParts = minutes === undefined ? args.slice(1) : args.slice(2);
       const reason = reasonParts.join(' ').trim() || text(t.lang, 'punish.no_reason');
-      const p = ctx.punish.add({ uuid: t.uuid, kind, reason, by: actor.name, minutes: minutes ?? null });
-      if (kind === 'ban') {
-        if (t.online)
-          ctx.kick(
-            t.uuid,
-            text(t.lang, 'ban.screen', { reason: mm(reason), until: until(t.lang, p.expiresAt) }),
-          );
-        ctx.syncBans();
-      } else if (t.online) {
-        ctx.msg(t.uuid, text(t.lang, 'mute.you', { reason: mm(reason), until: until(t.lang, p.expiresAt) }));
-      }
-      ctx.team(kind, (lang) =>
-        text(lang, kind === 'ban' ? 'team.ban' : 'team.mute', {
-          actor: mm(actor.name),
-          name: mm(t.name),
-          reason: mm(reason),
-          until: until(lang, p.expiresAt),
-        }),
-      );
+      mod.punish(t, kind, minutes ?? null, reason, actor.name);
     };
 
   const lifting =
@@ -114,21 +79,11 @@ export function createCommands(ctx: HubContext): Command[] {
         say(actor, text(actor.lang, 'cmd.unknown_player', { name: mm(args[0] ?? '') }));
         return;
       }
-      if (!ctx.punish.revoke(t.uuid, kind, actor.name)) {
+      if (!mod.lift(t, kind, actor.name))
         say(
           actor,
           text(actor.lang, kind === 'ban' ? 'punish.not_banned' : 'punish.not_muted', { name: mm(t.name) }),
         );
-        return;
-      }
-      if (kind === 'ban') ctx.syncBans();
-      if (kind === 'mute' && t.online) ctx.msg(t.uuid, text(t.lang, 'unmute.you'));
-      ctx.team(kind, (lang) =>
-        text(lang, kind === 'ban' ? 'team.unban' : 'team.unmute', {
-          actor: mm(actor.name),
-          name: mm(t.name),
-        }),
-      );
     };
 
   const playerArg = (_: Actor, args: readonly string[]): string[] =>
@@ -261,12 +216,7 @@ export function createCommands(ctx: HubContext): Command[] {
           say(actor, text(actor.lang, 'cmd.offline', { name: mm(t.name) }));
           return;
         }
-        const reason = args.slice(1).join(' ').trim() || text(t.lang, 'punish.no_reason');
-        ctx.punish.add({ uuid: t.uuid, kind: 'kick', reason, by: actor.name, minutes: null });
-        ctx.kick(t.uuid, text(t.lang, 'kick.screen', { reason: mm(reason) }));
-        ctx.team('kick', (lang) =>
-          text(lang, 'team.kick', { actor: mm(actor.name), name: mm(t.name), reason: mm(reason) }),
-        );
+        mod.punish(t, 'kick', null, args.slice(1).join(' '), actor.name);
       },
       complete: playerArg,
     },
@@ -283,11 +233,7 @@ export function createCommands(ctx: HubContext): Command[] {
         }
         const t = victim(actor, args[0]);
         if (!t) return;
-        ctx.punish.add({ uuid: t.uuid, kind: 'warn', reason, by: actor.name, minutes: null });
-        if (t.online) ctx.msg(t.uuid, text(t.lang, 'warn.you', { reason: mm(reason) }));
-        ctx.team('warn', (lang) =>
-          text(lang, 'team.warn', { actor: mm(actor.name), name: mm(t.name), reason: mm(reason) }),
-        );
+        mod.punish(t, 'warn', null, reason, actor.name);
       },
       complete: playerArg,
     },

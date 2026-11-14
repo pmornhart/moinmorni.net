@@ -7,6 +7,8 @@ export interface Events {
   'roles.changed': { by: string };
   /** Owner-Konto angelegt – jetzt richtet sich das Netzwerk ein. */
   'setup.done': { owner: string };
+  /** Strafe verhängt oder aufgehoben (Panel lädt neu, Discord zieht nach). */
+  'punishments.changed': Record<string, never>;
 }
 
 export interface EventBus {

@@ -7,6 +7,7 @@ import type { Stores } from '../panel/stores.js';
 import { createChat, type ChatSettings } from './chat.js';
 import { allowed, createCommands, findCommand, type Actor } from './commands.js';
 import { hasRight, type HubContext } from './context.js';
+import { createModeration, type Moderation } from './moderation.js';
 import { createPlayerService, normalUuid, type PlayerService } from './players.js';
 import { createPresence, type Presence } from './presence.js';
 import { hubSecretOf, serverKeyOf } from './protocol.js';
@@ -90,6 +91,10 @@ export interface Hub {
   readonly presence: Presence;
   readonly players: PlayerService;
   readonly punish: PunishService;
+  /** Strafen mit Rauswurf, Bann-Liste und Hinweis ans Team (auch fürs Panel). */
+  readonly moderation: Moderation;
+  /** Rang eines Spielers hat sich geändert (Panel) → Spielserver informieren. */
+  readonly refreshProfile: (uuid: string) => void;
   /** Ist der Proxy gerade mit dem Hub verbunden? */
   readonly proxyOnline: () => boolean;
   readonly connectedServers: () => string[];
@@ -188,8 +193,12 @@ export function createHub(options: HubOptions): Hub {
       toProxy(bans());
     },
   };
+  const moderation = createModeration(ctx, () => events.emit('punishments.changed', {}));
   const social = createSocial(ctx, db, now);
-  const commands = mergeCommands([...createCommands(ctx), ...social.commands], createSettingCommands(ctx));
+  const commands = mergeCommands(
+    [...createCommands(ctx, moderation), ...social.commands],
+    createSettingCommands(ctx),
+  );
   const chat = createChat(ctx, () => stores.settings('chat') as unknown as ChatSettings);
 
   /** Wer auf einen aufwachenden Server wartet: Server → Spieler. */
@@ -405,6 +414,8 @@ export function createHub(options: HubOptions): Hub {
     presence,
     players,
     punish,
+    moderation,
+    refreshProfile: sendProfile,
     proxyOnline: () => conns.proxy !== null,
     connectedServers: () => [...conns.backends.keys()],
   };

@@ -15,6 +15,7 @@ import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
 import { createProvisioner, type NetworkProvisioner } from './network/provision.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
+import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { registerPublicRoutes } from './public/routes.js';
@@ -119,6 +120,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
   registerPanelRoutes(app, auth, stores);
+  registerPlayerRoutes(app, auth, stores, hub, handle.db);
   await registerMotorProxy(app, config.motorUrl);
 
   const hasWeb = fs.existsSync(path.join(config.webDir, 'index.html'));
