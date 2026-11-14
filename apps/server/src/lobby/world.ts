@@ -1,0 +1,301 @@
+import type { FastifyBaseLogger } from 'fastify';
+import { LOBBY_NAMESPACE, LOBBY_PACK_DIR, lobbyPack, partName, type LobbyPack } from '@moinmorni/builder';
+import { MotorError, type MotorClient } from '../motor/client.js';
+import { lobbyPackInfo, lobbyPackUrl } from './packs.js';
+
+/**
+ * Die Lobby baut sich selbst: Der Bauplan (`packages/builder/src/lobby/`) kommt als Datenpaket auf den Lobby-Server,
+ * MoinMorni ruft die Bau-Funktionen über den Motor nacheinander auf und merkt sich die gebaute Version. Ändert sich
+ * der Plan (Update), wird neu gebaut. Dazu stellt es die server.properties der Lobby ein (Abenteuermodus, friedlich,
+ * Texturpaket mit den Figuren).
+ */
+
+const STAMP_FILE = 'plugins/moinmorni/lobby-world.version';
+const PROPERTIES_FILE = 'server.properties';
+const DEFAULT_LEVEL = 'world';
+const PACK_ID = `file/${LOBBY_PACK_DIR}`;
+const RUNNING = 'running';
+const SECOND_MS = 1000;
+const MINUTE_MS = 60 * SECOND_MS;
+const SETTLE_SECONDS = 5;
+const GAP_MS = 300;
+const READY_MINUTES = 15;
+const LOAD_MINUTES = 5;
+const POLL_SECONDS = 3;
+const DEFAULTS = {
+  settleMs: SETTLE_SECONDS * SECOND_MS,
+  gapMs: GAP_MS,
+  readyTimeoutMs: READY_MINUTES * MINUTE_MS,
+  loadTimeoutMs: LOAD_MINUTES * MINUTE_MS,
+  pollMs: POLL_SECONDS * SECOND_MS,
+} as const;
+/** Ecken (so weit draußen, wie gebaut wird) und Mitte: sind sie geladen, ist es der Rest auch. */
+const EDGE = 200;
+const PROBES: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [-EDGE, -EDGE],
+  [EDGE, -EDGE],
+  [-EDGE, EDGE],
+  [EDGE, EDGE],
+];
+const FIRST_NON_ASCII = 0x7f;
+const HEX = 16;
+const UNICODE_DIGITS = 4;
+
+export interface LobbyWorldOptions {
+  /** Texturpaket verpflichtend (Panel: Lobby → Figuren). */
+  readonly packRequired?: () => boolean;
+  /** Bauplan (Tests: ein kleiner). */
+  readonly pack?: () => LobbyPack;
+  readonly sleep?: (ms: number) => Promise<void>;
+  readonly settleMs?: number;
+  readonly gapMs?: number;
+  readonly readyTimeoutMs?: number;
+  readonly loadTimeoutMs?: number;
+  readonly pollMs?: number;
+}
+
+export type BuildResult = 'built' | 'current' | 'not_running' | 'failed';
+
+export interface LobbyWorld {
+  /** server.properties der Lobby einstellen; true = etwas geändert (gilt nach dem nächsten Start). */
+  readonly configure: (serverId: string) => Promise<boolean>;
+  /** Welt bauen, wenn der Bauplan neuer ist als die gebaute Welt. */
+  readonly build: (serverId: string) => Promise<BuildResult>;
+}
+
+/** Text für server.properties: Rückstriche verdoppeln, alles außer ASCII als \uXXXX (Minecraft liest Latin-1). */
+function escapeValue(value: string): string {
+  return [...value.replaceAll('\\', '\\\\')]
+    .map((ch) => {
+      const code = ch.codePointAt(0) ?? 0;
+      if (code <= FIRST_NON_ASCII) return ch;
+      // Zeichen außerhalb der Grundebene als zwei UTF-16-Hälften, wie Java sie erwartet.
+      return [...Array.from({ length: ch.length }, (_, i) => ch.charCodeAt(i))]
+        .map((c) => `\\u${c.toString(HEX).padStart(UNICODE_DIGITS, '0')}`)
+        .join('');
+    })
+    .join('');
+}
+
+/** Wert aus einer server.properties-Zeile lesen (Java schreibt `\:` und `\=`, Umlaute als `\uXXXX`). */
+function unescapeValue(raw: string): string {
+  const chars = [...raw];
+  const out: string[] = [];
+  const step = (i: number): void => {
+    if (i >= chars.length) return;
+    const ch = chars[i] ?? '';
+    if (ch !== '\\' || i + 1 >= chars.length) {
+      out.push(ch);
+      step(i + 1);
+      return;
+    }
+    const next = chars[i + 1] ?? '';
+    if (next === 'u') {
+      out.push(String.fromCharCode(parseInt(chars.slice(i + 2, i + 2 + UNICODE_DIGITS).join(''), HEX)));
+      step(i + 2 + UNICODE_DIGITS);
+      return;
+    }
+    out.push(next);
+    step(i + 2);
+  };
+  step(0);
+  return out.join('');
+}
+
+interface PropertyLine {
+  readonly key: string;
+  readonly value: string;
+}
+
+function parseLine(line: string): PropertyLine | null {
+  const trimmed = line.trim();
+  if (trimmed === '' || trimmed.startsWith('#') || trimmed.startsWith('!')) return null;
+  const cut = [trimmed.indexOf('='), trimmed.indexOf(':')].filter((i) => i >= 0);
+  if (cut.length === 0) return { key: trimmed, value: '' };
+  const at = Math.min(...cut);
+  return { key: trimmed.slice(0, at).trim(), value: unescapeValue(trimmed.slice(at + 1).trim()) };
+}
+
+/** Nur die genannten Schlüssel setzen; alles andere (auch Kommentare) bleibt, wie es ist. */
+export function patchProperties(
+  text: string,
+  values: Readonly<Record<string, string>>,
+): { text: string; changed: boolean } {
+  const lines = text === '' ? [] : text.replace(/\n$/, '').split('\n'); // eslint-disable-line ts-patterns/require-regex-example -- drops one trailing newline: "a=1\n" → "a=1"
+  const seen = new Set<string>();
+  const updated = lines.map((line) => {
+    const parsed = parseLine(line);
+    if (!parsed || !Object.hasOwn(values, parsed.key)) return line;
+    seen.add(parsed.key);
+    const want = values[parsed.key] ?? '';
+    return parsed.value === want ? line : `${parsed.key}=${escapeValue(want)}`;
+  });
+  const added = Object.entries(values)
+    .filter(([key]) => !seen.has(key))
+    .map(([key, value]) => `${key}=${escapeValue(value)}`);
+  const changed = added.length > 0 || updated.some((l, i) => l !== lines[i]);
+  return { text: `${[...updated, ...added].join('\n')}\n`, changed };
+}
+
+/** Was die Lobby in ihrer server.properties braucht. Ohne eigene Domain kein Texturpaket (Minecraft lädt nur von außen). */
+export function lobbyProperties(domain: string, required = false): Record<string, string> {
+  const base: Record<string, string> = {
+    gamemode: 'adventure',
+    'force-gamemode': 'true',
+    difficulty: 'peaceful',
+    pvp: 'false',
+    'spawn-protection': '0',
+    'allow-nether': 'false',
+    'generate-structures': 'false',
+  };
+  const url = lobbyPackUrl(domain);
+  if (!url)
+    return { ...base, 'resource-pack': '', 'resource-pack-sha1': '', 'require-resource-pack': 'false' };
+  const prompt = {
+    text: 'Die Leute im Dorf tragen unsere eigenen Trachten – dafür brauchst du unser kleines Texturpaket. / Our villagers wear our own outfits – this needs our small pack.',
+    color: 'gold',
+  };
+  return {
+    ...base,
+    'resource-pack': url,
+    'resource-pack-sha1': lobbyPackInfo().sha1,
+    'require-resource-pack': String(required),
+    'resource-pack-prompt': JSON.stringify(prompt),
+  };
+}
+
+function readProperty(text: string, key: string): string | null {
+  return (
+    text
+      .split('\n')
+      .map(parseLine)
+      .find((p) => p?.key === key)?.value ?? null
+  );
+}
+
+export function createLobbyWorld(
+  motor: MotorClient,
+  domain: string,
+  log: FastifyBaseLogger,
+  options: LobbyWorldOptions = {},
+): LobbyWorld {
+  const opts = { ...DEFAULTS, ...options };
+  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const plan = options.pack ?? lobbyPack;
+  const busy = new Set<string>();
+
+  const readFile = async (serverId: string, file: string): Promise<string | null> => {
+    try {
+      const r = await motor.request<{ content: string }>(
+        'GET',
+        `/api/servers/${serverId}/files/content?path=${encodeURIComponent(file)}`,
+      );
+      return r.content;
+    } catch (err) {
+      if (err instanceof MotorError) return null;
+      throw err;
+    }
+  };
+  const writeFile = (serverId: string, file: string, content: string): Promise<void> =>
+    motor.request('PUT', `/api/servers/${serverId}/files/content`, { path: file, content });
+  const run = async (serverId: string, command: string): Promise<string> => {
+    const r = await motor.request<{ answer?: string }>('POST', `/api/servers/${serverId}/command`, {
+      command,
+    });
+    return r.answer ?? '';
+  };
+  const state = async (serverId: string): Promise<string> => {
+    const s = await motor.request<{ live?: { state?: string } }>('GET', `/api/servers/${serverId}`);
+    return s.live?.state ?? 'unknown';
+  };
+  /** Wiederholen, bis `done` passt oder die Zeit um ist. */
+  const until = async (check: () => Promise<boolean>, timeoutMs: number): Promise<boolean> => {
+    const end = Date.now() + timeoutMs;
+    const loop = async (): Promise<boolean> => {
+      if (await check()) return true;
+      if (Date.now() >= end) return false;
+      await sleep(opts.pollMs);
+      return loop();
+    };
+    return loop();
+  };
+
+  const build = async (serverId: string): Promise<BuildResult> => {
+    const pack = plan();
+    if ((await readFile(serverId, STAMP_FILE))?.trim() === pack.version) return 'current';
+    if (!(await until(async () => (await state(serverId)) === RUNNING, opts.readyTimeoutMs))) {
+      log.warn({ serverId }, 'Lobby: Server läuft nicht – Welt wird beim nächsten Start gebaut');
+      return 'not_running';
+    }
+    const properties = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
+    const level = readProperty(properties, 'level-name') || DEFAULT_LEVEL;
+    log.info({ version: pack.version, parts: pack.parts }, 'Lobby: Welt wird gebaut');
+    await Object.entries(pack.files).reduce(async (prev, [file, content]) => {
+      await prev;
+      await writeFile(serverId, `${level}/datapacks/${LOBBY_PACK_DIR}/${file}`, content);
+    }, Promise.resolve());
+    // Paper kennt „reload“ selbst (lädt Plugins neu) – darum immer mit „minecraft:“.
+    await run(serverId, 'minecraft:reload');
+    await sleep(opts.settleMs);
+    await run(serverId, `minecraft:datapack enable "${PACK_ID}"`);
+    const ready = await until(
+      async () =>
+        !(await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:prepare`)).includes('Unknown function'),
+      opts.loadTimeoutMs,
+    );
+    if (!ready) {
+      log.error('Lobby: Datenpaket wurde nicht geladen');
+      return 'failed';
+    }
+    await pack.load.reduce(async (prev, command) => {
+      await prev;
+      await run(serverId, `minecraft:${command}`);
+    }, Promise.resolve());
+    const loaded = await until(async () => {
+      const answers = await PROBES.reduce<Promise<string[]>>(async (acc, [x, z]) => {
+        const list = await acc;
+        return [...list, await run(serverId, `minecraft:execute if loaded ${x} 64 ${z}`)];
+      }, Promise.resolve([]));
+      return answers.every((a) => !a.includes('failed'));
+    }, opts.loadTimeoutMs);
+    if (!loaded) log.warn('Lobby: nicht alle Stücke der Welt geladen – baue trotzdem');
+    await Array.from({ length: pack.parts }, (_, i) => i).reduce(async (prev, i) => {
+      await prev;
+      await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:${partName(i)}`);
+      await sleep(opts.gapMs);
+    }, Promise.resolve());
+    await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:finish`);
+    await pack.unload.reduce(async (prev, command) => {
+      await prev;
+      await run(serverId, `minecraft:${command}`);
+    }, Promise.resolve());
+    // Fertig: das Paket nicht bei jedem Start laden (es wird nur zum Bauen gebraucht).
+    await run(serverId, `minecraft:datapack disable "${PACK_ID}"`);
+    await writeFile(serverId, STAMP_FILE, `${pack.version}\n`);
+    log.info({ version: pack.version }, 'Lobby: Welt fertig gebaut');
+    return 'built';
+  };
+
+  return {
+    configure: async (serverId) => {
+      const current = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
+      const next = patchProperties(current, lobbyProperties(domain, options.packRequired?.() ?? false));
+      if (!next.changed) return false;
+      await writeFile(serverId, PROPERTIES_FILE, next.text);
+      return true;
+    },
+    build: async (serverId) => {
+      if (busy.has(serverId)) return 'current';
+      busy.add(serverId);
+      try {
+        return await build(serverId);
+      } catch (err) {
+        log.error({ err }, 'Lobby: Bau fehlgeschlagen – nächster Versuch beim nächsten Start');
+        return 'failed';
+      } finally {
+        busy.delete(serverId);
+      }
+    },
+  };
+}

@@ -76,7 +76,9 @@ const LABEL_STANDING = 2.15;
 const LABEL_SITTING = 1.6;
 
 function snbtText(parts: readonly TextPart[]): string {
-  const esc = (s: string): string => s.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
+  // Zeilenumbruch als \n: in einer Datenpaket-Funktion steht jeder Befehl auf genau einer Zeile.
+  const esc = (s: string): string =>
+    s.replaceAll('\\', '\\\\').replaceAll("'", "\\'").replaceAll('\n', '\\n');
   return `[${parts
     .map((p) => {
       const extra = [

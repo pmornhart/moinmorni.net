@@ -28,9 +28,9 @@ Schmied, Bürgermeister, Gäste, Kinder). Das Texturpaket (`castPack()`, `tsx to
 <ziel.zip> [vorschau.png]`) legt sie unter `assets/moinmorni/textures/npc/<id>.png` ab; die Figur nutzt sie mit
 `profile:{texture:'moinmorni:npc/<id>'}`.
 
-> Ohne Texturpaket zeigt Minecraft dort ein Fehlerbild, Bedrock-Spieler sehen die Skins über Geyser nicht. Für den
-> Betrieb: Paket in der Lobby verpflichtend anbieten und die Skins zusätzlich als signierte Skin-Daten hinterlegen
-> (dann sehen alle sie) – kommt mit dem Lobby-Server.
+> Ohne Texturpaket zeigt Minecraft dort ein Fehlerbild, Bedrock-Spieler sehen die Skins über Geyser nicht. Die Lobby
+> bietet das Paket beim Betreten an (Pflicht per Schalter). Noch offen: die Skins zusätzlich als signierte
+> Skin-Daten hinterlegen, dann sehen auch Bedrock-Spieler und Spieler ohne Paket die Trachten.
 
 ## Im Netzwerk-Plugin (`LobbyNpcs.java`)
 
@@ -43,6 +43,24 @@ Schmied, Bürgermeister, Gäste, Kinder). Das Texturpaket (`castPack()`, `tsx to
 
 Der Hub schickt allen Spielservern `lobby` mit Zustand und Spielerzahl je Modus (`docs/hub-protokoll.md`). Das Plugin
 hält je Figur zwei Schilder (Deutsch/Englisch); jeder Spieler sieht nur das in seiner Sprache (`/sprache` gilt sofort).
+
+## Die Lobby baut sich selbst
+
+Beim Einrichten (und nach jedem Update, wenn sich der Bauplan geändert hat) baut MoinMorni die Welt auf dem
+Lobby-Server auf – ohne RCON von außen, nur über den Motor (`apps/server/src/lobby/world.ts`):
+
+1. server.properties der Lobby: Abenteuermodus, friedlich, kein PvP, kein Nether, Texturpaket der Figuren
+   (`https://<domain>/api/public/packs/lobby.zip` + SHA-1; Pflicht nur mit Schalter **Lobby → Figuren**,
+   `/lobby paket an|aus`).
+2. Bauplan als Datenpaket nach `world/datapacks/moinmorni-lobby/` (`lobbyPack()` in
+   `packages/builder/src/lobby/datapack.ts`, ~83 Funktionen à 3000 Befehle).
+3. `minecraft:reload`, Welt-Stücke in kleinen Portionen festhalten (`forceload`, 4×4 Stücke pro Befehl – alles auf
+   einmal ließ den Server minutenlang hängen), warten bis geladen, Bau-Funktionen nacheinander, `finish`
+   (Spielregeln, Ankunftspunkt, Weltgrenze), Stücke loslassen, Datenpaket wieder ausschalten.
+4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun.
+
+Echt geprüft mit einem frischen Paper 26.3 (`apps/server/scripts/lobby-selbstbau.ts`, Brücke statt Motor):
+Welt-Stücke erzeugen ~4 Min., Bau 55 s, keine Ladefehler, kein Hänger.
 
 ## Bauen und Bilder
 

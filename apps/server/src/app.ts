@@ -21,6 +21,8 @@ import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
+import { registerPackRoutes } from './lobby/packs.js';
+import { createLobbyWorld } from './lobby/world.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
 import { createStatusService } from './public/status.js';
@@ -110,7 +112,11 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     domain: config.domain,
   });
   const status = createStatusService(config, motor, stores, hub);
-  const network = createProvisioner(config, motor, hub, app.log);
+  const lobbyWorld = createLobbyWorld(motor, config.domain, app.log, {
+    packRequired: () => stores.settings('lobby')['packRequired'] === true,
+  });
+  const lobbyRef = { id: '' };
+  const network = createProvisioner(config, motor, hub, app.log, { configureLobby: lobbyWorld.configure });
   const sleep = createSleepService(motor, hub, stores, app.log);
   sleepRef.service = sleep;
   const bot = createMoinMorniBot({
@@ -129,6 +135,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     try {
       const result = await network.ensure();
       app.log.info(result, 'Netzwerk geprüft');
+      // Die Welt baut sich im Hintergrund (beim ersten Mal ein paar Minuten), die Webseite läuft schon.
+      lobbyRef.id = result.lobbyServerId;
+      if (result.lobbyServerId) void lobbyWorld.build(result.lobbyServerId);
     } catch (err) {
       app.log.error(
         { err },
@@ -137,9 +146,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     }
   };
   events.on('setup.done', () => void provision());
+  // Lobby-Einstellungen, die in der server.properties stehen (Texturpaket Pflicht), gleich mitschreiben.
+  events.on('settings.changed', ({ area }) => {
+    if (area === 'lobby' && lobbyRef.id) void lobbyWorld.configure(lobbyRef.id).catch(() => undefined);
+  });
   const setup = createSetupService(config, handle.db, motor, app.log, events);
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
+  registerPackRoutes(app);
   registerPanelRoutes(app, auth, stores);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   registerDiscordRoutes(app, auth, bot);

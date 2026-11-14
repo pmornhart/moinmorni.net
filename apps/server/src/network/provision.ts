@@ -39,6 +39,8 @@ interface MotorNetwork {
 
 export interface ProvisionResult {
   readonly networkId: string;
+  /** Server-ID der Lobby im Motor (für den Bau der Welt). */
+  readonly lobbyServerId: string;
   readonly created: readonly string[];
   readonly pluginUpdated: readonly string[];
 }
@@ -50,6 +52,8 @@ export interface ProvisionOptions {
   readonly lobbyAddOns?: Readonly<Record<string, boolean>>;
   /** Feste Versionen statt der neuesten (Tests). */
   readonly versions?: Readonly<Record<'paper' | 'velocity', string>>;
+  /** Stellt die server.properties der Lobby ein (vor dem ersten Start); true = geändert. */
+  readonly configureLobby?: (serverId: string) => Promise<boolean>;
 }
 
 const PROXY_ADD_ONS = { geyser: true, via: true, voice: true };
@@ -187,13 +191,19 @@ export function createProvisioner(
         return (await equip(t.serverId, t.member, t.kind)) ? [...list, t.member] : list;
       }, Promise.resolve([]));
 
-      // Neu angelegte Server erst jetzt starten – mit Plugin und Schlüssel.
+      const lobbyServerId = fresh.members.find((m) => m.name === LOBBY_MEMBER)?.serverId ?? '';
+      const lobbyChanged =
+        options.configureLobby && lobbyServerId ? await options.configureLobby(lobbyServerId) : false;
+      if (lobbyChanged && !created.includes(LOBBY_MEMBER))
+        log.info('Lobby: Einstellungen geändert – gelten nach dem nächsten Neustart der Lobby');
+
+      // Neu angelegte Server erst jetzt starten – mit Plugin, Schlüssel und Einstellungen.
       await Promise.all(
         targets
           .filter((t) => created.includes(t.member))
           .map((t) => motor.request('POST', `/api/servers/${t.serverId}/actions/start`)),
       );
-      return { networkId: network.id, created, pluginUpdated: updated };
+      return { networkId: network.id, lobbyServerId, created, pluginUpdated: updated };
     },
   };
 }

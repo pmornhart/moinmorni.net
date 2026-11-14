@@ -18,6 +18,7 @@
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/static": "^10.1.6",
     "@fastify/websocket": "^11.2.0",
+    "@moinmorni/builder": "workspace:*",
     "better-sqlite3": "^12.4.1",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.6.1",

@@ -41,6 +41,9 @@ importers:
       '@fastify/websocket':
         specifier: ^11.2.0
         version: 11.3.7
+      '@moinmorni/builder':
+        specifier: workspace:*
+        version: link:../../packages/builder
       better-sqlite3:
         specifier: ^12.4.1
         version: 12.11.1

@@ -508,6 +508,23 @@ export const LOBBY_AREA: SettingArea = {
       ],
     },
     {
+      id: 'figures',
+      title: t('Figuren', 'Figures'),
+      settings: [
+        {
+          key: 'packRequired',
+          type: 'boolean',
+          default: false,
+          label: t('Texturpaket der Figuren verpflichtend', 'Figure texture pack required'),
+          help: t(
+            'Die Leute im Dorf tragen eigene Trachten aus unserem kleinen Texturpaket (ein paar KB). Aus: Spieler werden gefragt und können ablehnen – dann sehen sie die Figuren nur als Fehlerbild. An: ohne Paket kein Zutritt zur Lobby (nur einschalten, wenn die Webseite von außen erreichbar ist). Gilt nach dem nächsten Neustart der Lobby.',
+            'The villagers wear our own outfits from a small texture pack (a few KB). Off: players are asked and may decline – then they only see a placeholder. On: no pack, no lobby (only switch on once the website is reachable from outside). Applies after the next lobby restart.',
+          ),
+          command: '/lobby paket an|aus',
+        },
+      ],
+    },
+    {
       id: 'announcements',
       title: t('Ankündigungen', 'Announcements'),
       settings: [
