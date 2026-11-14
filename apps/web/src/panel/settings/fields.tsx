@@ -83,6 +83,13 @@ function NumberField({ def, value, onChange }: FieldProps<'number'>): ReactEleme
 
 /** Texts this short (a sign, a word) get a small box instead of a full-width one. */
 const SHORT_TEXT = 8;
+/** A multi-line box grows with its lines (one spare line), between these heights. */
+const MIN_ROWS = 4;
+const MAX_ROWS = 16;
+
+function rowsFor(text: string): number {
+  return Math.min(MAX_ROWS, Math.max(MIN_ROWS, text.split('\n').length + 1));
+}
 
 function TextField({ def, value, onChange }: FieldProps<'text'>): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
@@ -96,7 +103,7 @@ function TextField({ def, value, onChange }: FieldProps<'text'>): ReactElement {
   return (
     <div className="grid gap-1.5">
       {def.multiline ? (
-        <Textarea {...props} rows={3} onChange={(e) => onChange(e.target.value)} />
+        <Textarea {...props} rows={rowsFor(text)} onChange={(e) => onChange(e.target.value)} />
       ) : (
         <Input
           {...props}

@@ -275,6 +275,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
   ];
 
   const setup = async (): Promise<SetupReport> => {
+    // Ohne Bot-Token zuerst das sagen – sonst hieße es „kein Server“, obwohl der Bot fehlt.
+    if (!client) throw new Error('discord_not_configured');
     const g = guildId();
     if (!g) throw new Error('discord_no_guild');
     const roles = await rest<DRole[]>('GET', `/guilds/${g}/roles`);

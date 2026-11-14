@@ -5,14 +5,22 @@
   },
   "nav": {
     "start": "Start",
-    "modes": "Modi",
-    "rules": "Regeln",
+    "news": "News",
+    "modes": "Spielmodi",
+    "stats": "Statistiken",
     "team": "Team",
+    "rules": "Regeln",
+    "help": "Hilfe",
     "panel": "Panel",
     "menu": "Menü öffnen",
     "close": "Schließen",
     "main": "Hauptmenü",
     "skip": "Zum Inhalt springen"
+  },
+  "copy": {
+    "action": "Kopieren",
+    "done": "Kopiert!",
+    "manual": "Markier die Adresse und kopier sie von Hand."
   },
   "theme": {
     "toLight": "Helles Design",
@@ -22,57 +30,6 @@
     "label": "Sprache",
     "de": "Deutsch",
     "en": "English"
-  },
-  "home": {
-    "eyebrow": "Minecraft-Netzwerk · Java & Bedrock",
-    "pitch": "Dein Minecraft-Netzwerk mit Alpendorf, Schloss und vielen Spielmodi.",
-    "online_one": "{{count}} Spieler online",
-    "online_other": "{{count}} Spieler online",
-    "offline": "Gerade offline",
-    "statusLoading": "Schaue nach, wer online ist …",
-    "statusError": "Status gerade nicht abrufbar",
-    "updated": "Aktualisiert sich alle 15 Sekunden",
-    "copy": "Kopieren",
-    "copied": "Kopiert!",
-    "copyManual": "Markier die Adresse und kopier sie von Hand.",
-    "address": "Adresse",
-    "port": "Port",
-    "java": {
-      "title": "Java Edition",
-      "hint": "Am PC: Mehrspieler → Server hinzufügen → Adresse einfügen. Ab Version 1.17."
-    },
-    "bedrock": {
-      "title": "Bedrock Edition",
-      "hint": "Handy, Konsole oder Windows: Spielen → Server → Server hinzufügen, Adresse und Port eintragen."
-    },
-    "modes": {
-      "eyebrow": "Spielmodi",
-      "title": "Such dir dein Abenteuer aus",
-      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Leere Modi schlafen und wachen auf, sobald jemand kommt.",
-      "empty": "Gerade sind noch keine Spielmodi eingetragen."
-    },
-    "soon": {
-      "eyebrow": "Bald hier",
-      "title": "Das Dorf wächst noch",
-      "text": "Diese Teile der Webseite bauen wir gerade. Sobald sie fertig sind, findest du sie hier.",
-      "badge": "Kommt bald",
-      "news": {
-        "title": "Neuigkeiten",
-        "text": "Was sich im Netzwerk tut: neue Modi, Updates und Events."
-      },
-      "discord": {
-        "title": "Discord",
-        "text": "Unser eigener Discord mit Status, Hilfe und Konto-Verknüpfung."
-      },
-      "modpack": {
-        "title": "Modpack",
-        "text": "Schönere Optik, Sprachchat und Bau-Werkzeuge – mit einem Klick installiert."
-      },
-      "leaderboards": {
-        "title": "Ranglisten",
-        "text": "Bestzeiten im Gipfelsturm, Siege in Duels und mehr."
-      }
-    }
   },
   "mode": {
     "state": {
@@ -90,20 +47,11 @@
   },
   "footer": {
     "about": "Ein eigenes Minecraft-Netzwerk aus Bayern – mit Lobby im Alpendorf und Spielmodi für allein und zusammen.",
-    "links": "Mehr",
     "disclaimer": "Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden."
   },
   "pages": {
     "follows": "Inhalt folgt",
     "back": "Zur Startseite",
-    "rules": {
-      "title": "Regeln",
-      "text": "Hier stehen bald die Regeln für das ganze Netzwerk – kurz, freundlich und für alle verständlich."
-    },
-    "team": {
-      "title": "Team",
-      "text": "Hier stellt sich bald das Team vor: wer hinter MoinMorni steckt und wen du bei Fragen ansprechen kannst."
-    },
     "imprint": {
       "title": "Impressum",
       "text": "Das Impressum folgt hier, sobald es fertig ist."
@@ -115,6 +63,290 @@
     "notFound": {
       "title": "Diese Seite gibt es nicht",
       "text": "Vielleicht hat sich ein Tippfehler eingeschlichen. Von der Startseite aus findest du alles."
+    }
+  },
+  "site": {
+    "home": "MoinMorni – zur Startseite",
+    "tagline": "Minecraft-Netzwerk",
+    "playNow": "Jetzt spielen",
+    "panelHint": "Zum Panel – nur fürs Team",
+    "loadError": "Das lässt sich gerade nicht laden. Versuch es gleich nochmal.",
+    "server": {
+      "copyHint": "Klick, um die Adresse zu kopieren",
+      "copyLabel": "Adresse {{address}} kopieren",
+      "online": "online",
+      "refresh": "Aktualisiert sich alle 15 Sekunden"
+    },
+    "hero": {
+      "eyebrow": "Minecraft-Netzwerk · Java & Bedrock",
+      "title": "Servus in MoinMorni",
+      "pitch": "Lobby im Alpendorf, ein Schloss auf dem Berg und viele Spielmodi – für allein und zusammen. Komm vorbei!",
+      "address": "Server-Adresse",
+      "java": "Java",
+      "javaHint": "ab Version 1.17 – einfach die Adresse eintragen.",
+      "bedrock": "Bedrock",
+      "bedrockHint": "Handy, Konsole, Windows – Port",
+      "online_one": "{{count}} Spieler online",
+      "online_other": "{{count}} Spieler online",
+      "offline": "Gerade offline",
+      "statusLoading": "Schaue nach, wer online ist …",
+      "statusError": "Status gerade nicht abrufbar"
+    },
+    "news": {
+      "eyebrow": "Neuigkeiten",
+      "homeTitle": "Was gibt's Neues?",
+      "title": "News",
+      "text": "Updates, Events und alles, was sich im Netzwerk tut.",
+      "all": "Alle News",
+      "allCategories": "Alle",
+      "filter": "Nach Art filtern",
+      "category": {
+        "update": "Update",
+        "event": "Event",
+        "info": "Info"
+      },
+      "categoryPlural": {
+        "update": "Updates",
+        "event": "Events",
+        "info": "Infos"
+      },
+      "by": "von {{name}}",
+      "pinned": "Angeheftet",
+      "readMore": "Weiterlesen",
+      "empty": "Noch keine News – schau bald wieder vorbei.",
+      "emptyTitle": "Noch keine News",
+      "emptyFilter": "Keine News dieser Art",
+      "showAll": "Alle News zeigen",
+      "back": "Zurück zu allen News",
+      "more": "Weitere News",
+      "missingTitle": "Diese News gibt es nicht (mehr)",
+      "missingText": "Vielleicht wurde sie gelöscht oder im Link steckt ein Tippfehler."
+    },
+    "modes": {
+      "eyebrow": "Spielmodi",
+      "title": "Such dir dein Abenteuer aus",
+      "pageTitle": "Spielmodi",
+      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "all": "Alle Spielmodi",
+      "empty": "Gerade sind noch keine Spielmodi eingetragen.",
+      "emptyTitle": "Noch keine Spielmodi"
+    },
+    "modeState": {
+      "open": "Offen",
+      "asleep": "Schläft",
+      "closed": "Geschlossen",
+      "maintenance": "Wartung",
+      "soon": "Bald"
+    },
+    "modeHint": {
+      "on": "Offen",
+      "off": "Gerade geschlossen",
+      "maintenance": "Wir schrauben gerade daran.",
+      "soon": "Wir bauen noch daran."
+    },
+    "modeLookText": {
+      "open": "Offen – komm einfach rein.",
+      "asleep": "Schläft gerade – wacht auf, sobald du kommst.",
+      "closed": "Gerade geschlossen.",
+      "maintenance": "Gerade in Wartung – bald wieder da.",
+      "soon": "Kommt bald – wir bauen noch daran."
+    },
+    "mode": {
+      "eyebrow": "Spielmodus",
+      "howTitle": "So kommst du hin",
+      "step1": "Verbinde dich mit MoinMorni:",
+      "step2": "In der Lobby: Sprich die Figur „{{name}}“ an",
+      "step2Text": "Die Figuren stehen im Dorf und tragen den Namen des Spielmodus über dem Kopf. Ein Rechtsklick (am Handy: antippen) – und los geht's.",
+      "step3": "Oder tippe im Chat:",
+      "asleepText": "Der Modus schläft gerade, weil niemand drin ist. Sobald du kommst, wacht er auf – das dauert einen kleinen Moment.",
+      "whitelistText": "Nur auf Einladung: Du brauchst einen Platz auf der Whitelist. Frag im Discord nach.",
+      "notNow": {
+        "on": "",
+        "off": "Gerade geschlossen – im Moment kommst du nicht hinein.",
+        "maintenance": "Gerade in Wartung – nur das Team kommt hinein.",
+        "soon": "Noch nicht offen – wir bauen noch daran."
+      },
+      "playersNow": "Gerade drin",
+      "playersMax": "Plätze",
+      "lobbyBack": "Zurück in die Lobby geht's jederzeit mit",
+      "others": "Weitere Spielmodi",
+      "missingTitle": "Diesen Spielmodus gibt es nicht",
+      "missingText": "Vielleicht hat sich ein Tippfehler eingeschlichen. Alle Spielmodi findest du in der Übersicht.",
+      "back": "Alle Spielmodi"
+    },
+    "stats": {
+      "eyebrow": "Ranglisten",
+      "title": "Statistiken",
+      "text": "Wer hat am meisten Zeit in MoinMorni verbracht? Such auch nach dir selbst oder deinen Freunden.",
+      "total": "Spieler insgesamt",
+      "totalHint": "Alle, die schon einmal da waren",
+      "online": "Jetzt online",
+      "topTitle": "Top 3 nach Spielzeit",
+      "toLeaderboard": "Zur Rangliste",
+      "noneYet": "Noch hat niemand gespielt – sei die oder der Erste!",
+      "byPlaytime": "Rangliste nach Spielzeit",
+      "privateHint": "Private Profile stehen nicht in der Rangliste.",
+      "emptyTitle": "Noch leer",
+      "place": "Platz {{rank}}"
+    },
+    "players": {
+      "eyebrow": "Spielerprofil",
+      "searchLabel": "Spieler suchen",
+      "searchPlaceholder": "Spielername",
+      "searchButton": "Suchen",
+      "searchHint": "Namen von Bedrock-Spielern (Handy, Konsole) beginnen mit einem Punkt, z. B. „.Name“.",
+      "back": "Zur Rangliste",
+      "unknownTitle": "Diesen Spieler kennen wir noch nicht",
+      "unknownText": "„{{name}}“ war noch nie auf MoinMorni – oder der Name ist anders geschrieben.",
+      "privateTitle": "Dieses Profil ist privat",
+      "privateText": "Dieses Profil ist privat. Mit /profil öffentlich wird es sichtbar.",
+      "privateHow": "Ist es dein Profil? Tippe im Spiel:",
+      "bedrock": "Bedrock",
+      "onlineIn": "Gerade online in {{where}}",
+      "onlineNow": "Gerade online",
+      "lastSeen": "Zuletzt da {{when}}",
+      "playtime": "Spielzeit",
+      "place": "Rangliste",
+      "noPlace": "Nicht unter den Top 50",
+      "firstSeen": "Zum ersten Mal da",
+      "lastSeenLabel": "Zuletzt da",
+      "rightNow": "Gerade jetzt"
+    },
+    "team": {
+      "eyebrow": "Wer hinter MoinMorni steckt",
+      "title": "Das Team",
+      "text": "Diese Leute halten das Netzwerk am Laufen. Bei Fragen kannst du sie im Spiel oder im Discord ansprechen.",
+      "count_one": "{{count}} Person",
+      "count_other": "{{count}} Personen",
+      "onlineCount_one": "{{count}} online",
+      "onlineCount_other": "{{count}} online",
+      "online": "Online",
+      "offline": "Offline",
+      "emptyTitle": "Noch niemand zu sehen",
+      "soon": "Das Team stellt sich bald vor.",
+      "helpText": "Du brauchst Hilfe oder willst etwas melden? Am schnellsten geht's mit einem Ticket im Discord.",
+      "helpLink": "So bekommst du Hilfe"
+    },
+    "rules": {
+      "eyebrow": "Fair spielen",
+      "title": "Regeln",
+      "text": "Damit sich alle wohlfühlen: Diese Regeln gelten überall auf MoinMorni – in jedem Spielmodus und in unserem Discord.",
+      "number": "Regel {{n}}:",
+      "emptyTitle": "Noch keine Regeln",
+      "empty": "Die Regeln stehen hier, sobald das Team sie eingetragen hat.",
+      "punishTitle": "Strafen gelten im Spiel und im Discord",
+      "punishText": "Wer gegen die Regeln verstößt, kann verwarnt, stummgeschaltet oder gebannt werden. Eine Strafe gilt im ganzen Netzwerk und auch in unserem Discord – ein Bann im Spiel ist also auch ein Bann im Discord.",
+      "questions": "Fragen? Hilfe vom Team"
+    },
+    "community": {
+      "eyebrow": "Community",
+      "title": "Mach mit!",
+      "discordTitle": "Unser Discord",
+      "discordText": "Plaudern, Mitspieler finden, Hilfe bekommen – und dein Minecraft-Konto verbinden.",
+      "discordJoin": "Discord beitreten",
+      "discordSoon": "Die Einladung kommt bald.",
+      "teamTitle": "Das Team",
+      "teamText": "Diese Leute kümmern sich um MoinMorni.",
+      "teamAll": "Ganzes Team",
+      "socialTitle": "Folge uns",
+      "socialText": "Videos, Clips und Bilder aus MoinMorni."
+    },
+    "social": {
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "instagram": "Instagram"
+    },
+    "footer": {
+      "network": "Netzwerk",
+      "help": "Hilfe",
+      "legal": "Rechtliches",
+      "panel": "Team-Panel",
+      "follow": "MoinMorni im Netz"
+    },
+    "help": {
+      "eyebrow": "Fragen & Antworten",
+      "title": "Hilfe",
+      "text": "Alles, was du für den Start brauchst – kurz erklärt. Klick auf ein Thema, um es aufzuklappen.",
+      "contents": "Themen",
+      "stillStuck": "Nicht gefunden, was du suchst? Das Team hilft dir gern:",
+      "join": {
+        "title": "So kommst du rein",
+        "short": "Adresse eintragen – mit Java oder Bedrock",
+        "intro": "MoinMorni läuft mit der Java Edition (PC) und der Bedrock Edition (Handy, Konsole, Windows). Du brauchst nur dein Minecraft – anmelden musst du dich bei uns nicht.",
+        "javaTitle": "Java Edition (PC)",
+        "java1": "Starte Minecraft und klicke auf „Mehrspieler“.",
+        "java2": "Klicke auf „Server hinzufügen“.",
+        "java3": "Trage als Server-Adresse ein:",
+        "java4": "Fertig! Doppelklick auf den Server – schon bist du in der Lobby.",
+        "javaVersions": "Geht mit jeder Version ab 1.17 bis zur neuesten.",
+        "bedrockTitle": "Bedrock Edition (Handy, Konsole, Windows)",
+        "bedrock1": "Starte Minecraft und tippe auf „Spielen“.",
+        "bedrock2": "Wechsle zum Reiter „Server“ und tippe auf „Server hinzufügen“.",
+        "bedrock3": "Adresse:",
+        "port": "Port",
+        "bedrock4": "Speichern und beitreten – viel Spaß!",
+        "consoles": "Auf manchen Konsolen fehlt der Knopf „Server hinzufügen“. Dann frag im Discord nach – wir helfen dir weiter."
+      },
+      "voice": {
+        "title": "Sprachchat",
+        "short": "Mit anderen reden – über alle Spielmodi hinweg",
+        "intro": "Auf MoinMorni kannst du mit anderen sprechen: mit Leuten in deiner Nähe, mit deiner Party oder in festen Kanälen, die in allen Spielmodi gleich sind. Dafür brauchst du die kostenlose Mod „Simple Voice Chat“ (nur Java).",
+        "step1": "Installiere die Mod passend zu deiner Minecraft-Version:",
+        "modLink": "Simple Voice Chat auf Modrinth",
+        "step2": "Starte Minecraft mit der Mod und komm auf MoinMorni – der Sprachchat verbindet sich von selbst.",
+        "step3a": "Mit der Taste",
+        "step3b": "öffnest du die Sprachchat-Einstellungen (Mikrofon testen, Lautstärke), mit",
+        "step3c": "die Gruppen. Zum Sprechen hältst du die Sprechtaste gedrückt – oder du stellst in den Einstellungen auf Sprachaktivierung um.",
+        "channelsTitle": "Feste Kanäle für alle",
+        "channelsText": "Von jedem Spielmodus aus erreichbar. Kanäle anzeigen, beitreten und verlassen:",
+        "bedrock": "Mit der Bedrock Edition (Handy, Konsole) gibt es leider keinen Sprachchat – das kann Bedrock nicht."
+      },
+      "discord": {
+        "title": "Discord verbinden",
+        "short": "Dein Minecraft-Konto mit Discord verknüpfen",
+        "intro": "Verbindest du dein Minecraft-Konto mit unserem Discord, bekommst du dort deinen Rang – und das Team kann dir schneller helfen.",
+        "step0": "Tritt unserem Discord bei.",
+        "step0Soon": "Tritt unserem Discord bei – die Einladung steht bald hier.",
+        "step1": "Tippe im Spiel:",
+        "step2": "Du bekommst einen Code. Tippe dann im Discord:",
+        "step3": "Fertig – dein Rang erscheint im Discord und zieht von selbst nach, wenn er sich ändert.",
+        "join": "Discord beitreten"
+      },
+      "commands": {
+        "title": "Befehle",
+        "short": "Die wichtigsten Befehle im Chat",
+        "intro": "Befehle tippst du in den Chat (Taste T) – mit einem Schrägstrich davor.",
+        "tab": "Tipp: Mit der Tab-Taste ergänzt Minecraft Befehle und Namen von selbst.",
+        "list": {
+          "freunde": "Freunde hinzufügen und Anfragen annehmen. Ohne Namen siehst du, wer von deinen Freunden online ist.",
+          "party": "Freunde in deine Party einladen – die Party folgt dir in jeden Spielmodus.",
+          "pc": "Eine Nachricht nur an deine Party schreiben.",
+          "msg": "Jemandem eine private Nachricht schreiben.",
+          "r": "Auf die letzte private Nachricht antworten.",
+          "sprache": "Sprache wechseln: Deutsch oder Englisch.",
+          "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
+          "voice": "Sprachkanäle anzeigen, einem beitreten oder ihn verlassen.",
+          "lobby": "Zurück in die Lobby.",
+          "discord": "Einen Code holen, um dein Konto mit Discord zu verbinden."
+        }
+      },
+      "rules": {
+        "title": "Regeln & Strafen",
+        "short": "Was gilt – und was passiert, wenn nicht",
+        "intro": "Bei uns gilt: freundlich bleiben, nicht schummeln, nicht spammen. Alle Regeln stehen auf einer eigenen Seite.",
+        "punish": "Strafen wie Stummschalten oder Bann gelten im ganzen Netzwerk – und auch in unserem Discord.",
+        "link": "Zu den Regeln"
+      },
+      "team": {
+        "title": "Hilfe vom Team",
+        "short": "Ticket im Discord – oder im Spiel fragen",
+        "intro": "Du steckst fest, hast einen Fehler gefunden oder willst jemanden melden? Wir helfen dir gern.",
+        "step1": "Geh in unserem Discord in den Kanal „hilfe“.",
+        "step2": "Klick auf den Knopf, um ein Ticket zu öffnen – das sehen nur du und das Team.",
+        "step3": "Beschreib kurz, was los ist. Jemand aus dem Team meldet sich bei dir.",
+        "ticket": "Zum Discord",
+        "teamLink": "Wer ist im Team?"
+      }
     }
   },
   "login": {
@@ -179,7 +411,10 @@
     "manage": "Verwaltung",
     "players": "Spieler",
     "punishments": "Strafen",
-    "tour": "Rundgang starten"
+    "tour": "Rundgang starten",
+    "content": "Inhalte",
+    "news": "News",
+    "discord": "Discord"
   },
   "overview": {
     "greeting": "Servus, {{name}}!",
@@ -613,6 +848,10 @@
       "title": "Einstellungen",
       "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und mehr. Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst."
     },
+    "news": {
+      "title": "News",
+      "text": "Hier schreibst du Neuigkeiten für die Webseite – als Entwurf oder gleich veröffentlicht. Veröffentlichte News gehen auch in den Discord."
+    },
     "players": {
       "title": "Spieler",
       "text": "Alle, die schon einmal da waren: suchen, Profil mit Spielzeit ansehen und Ränge vergeben."
@@ -625,9 +864,196 @@
       "title": "Rollen",
       "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel, im Panel und im Discord. Eine Änderung gilt überall gleichzeitig."
     },
+    "discord": {
+      "title": "Discord",
+      "text": "Den eigenen Discord-Bot verbinden und den Discord-Server Schritt für Schritt einrichten lassen."
+    },
     "servers": {
       "title": "Server",
       "text": "Die einzelnen Minecraft-Server mit Konsole, Dateien, Backups und Plugins. Hier schaust du nach, wenn mal etwas klemmt."
+    }
+  },
+  "newsAdmin": {
+    "title": "News",
+    "text": "Neuigkeiten für die Webseite schreiben. Veröffentlichte News stehen sofort auf der Startseite – und beim ersten Veröffentlichen auch im Discord unter #ankündigungen.",
+    "new": "Neue News",
+    "first": "Erste News schreiben",
+    "empty": "Noch keine News geschrieben. Die erste erscheint groß auf der Startseite.",
+    "count_one": "{{count}} News",
+    "count_other": "{{count}} News",
+    "drafts_one": "davon {{count}} Entwurf",
+    "drafts_other": "davon {{count}} Entwürfe",
+    "published": "Veröffentlicht",
+    "draft": "Entwurf",
+    "pinned": "Angeheftet",
+    "publishedAt": "Veröffentlicht {{date}} · {{name}}",
+    "createdAt": "Angelegt {{date}} · {{name}}",
+    "view": "Ansehen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "deleteTitle": "News löschen?",
+    "deleteText": "„{{title}}“ verschwindet von der Webseite. Das lässt sich nicht rückgängig machen.",
+    "deleteConfirm": "Ja, löschen",
+    "cancel": "Abbrechen",
+    "deleted": "„{{title}}“ ist gelöscht.",
+    "newTitle": "Neue News",
+    "editTitle": "News bearbeiten",
+    "editorText": "Schreib einfach drauflos: Jede Zeile wird auf der Webseite ein eigener Absatz. Rechts siehst du, wie es aussieht.",
+    "back": "Alle News",
+    "category": "Art der News",
+    "categoryHelp": "Update = Neues im Spiel, Event = Aktion mit Termin, Info = alles andere.",
+    "textLabel": "Titel und Text",
+    "languageLabel": "Sprache des Textes",
+    "titleDe": "Titel (Deutsch)",
+    "titleEn": "Titel (Englisch, freiwillig)",
+    "titlePlaceholder": "z. B. Neuer Spielmodus: Gipfelsturm",
+    "titleMissing": "Bitte gib einen deutschen Titel ein.",
+    "bodyDe": "Text (Deutsch)",
+    "bodyEn": "Text (Englisch, freiwillig)",
+    "bodyPlaceholder": "Was gibt's Neues? Jede Zeile wird ein Absatz.",
+    "bodyEnPlaceholder": "Leer lassen: Dann sehen auch englische Besucher den deutschen Text.",
+    "bodyMissing": "Bitte schreib einen deutschen Text.",
+    "bodyHelp": "Nur Text – jede Zeile wird ein Absatz.",
+    "englishHelp": "Englisch ist freiwillig. Bleibt ein Feld leer, sehen englische Besucher den deutschen Text.",
+    "pinLabel": "Angeheftet",
+    "pinHelp": "Steht auf der Webseite immer ganz oben – und groß auf der Startseite.",
+    "publish": "Veröffentlichen",
+    "publishAgain": "Änderungen veröffentlichen",
+    "saveDraft": "Als Entwurf speichern",
+    "discordHint": "„Veröffentlichen“ zeigt die News sofort auf der Webseite – und geht auch in Discord #ankündigungen. Ein Entwurf bleibt unsichtbar.",
+    "publishedHint": "Schon veröffentlicht: Änderungen erscheinen sofort auf der Webseite (im Discord bleibt die erste Nachricht stehen). „Als Entwurf speichern“ nimmt die News von der Webseite.",
+    "savedPublished": "Veröffentlicht – steht jetzt auf der Webseite und geht in den Discord.",
+    "savedUpdated": "Änderungen sind online.",
+    "savedDraft": "Als Entwurf gespeichert.",
+    "preview": "Vorschau",
+    "previewNoTitle": "Noch ohne Titel",
+    "previewEmpty": "Hier erscheint dein Text.",
+    "previewFallback": "Ohne englischen Text sehen englische Besucher den deutschen.",
+    "missing": "Diese News gibt es nicht (mehr)."
+  },
+  "discordAdmin": {
+    "title": "Discord",
+    "text": "MoinMorni hat einen eigenen Discord-Bot. Hier verbindest du ihn und lässt ihn deinen Discord-Server einrichten – Schritt für Schritt.",
+    "refresh": "Neu prüfen",
+    "overall": {
+      "missing": {
+        "pill": "Kein Bot verbunden",
+        "text": "Es ist noch kein Bot-Token hinterlegt. Fang mit Schritt 1 an."
+      },
+      "tokenInvalid": {
+        "pill": "Token stimmt nicht",
+        "text": "Discord kennt den hinterlegten Token nicht. Erzeuge im Entwicklerportal einen neuen und trag ihn ein (Schritt 1)."
+      },
+      "connecting": {
+        "pill": "Verbindet sich …",
+        "text": "Der Bot verbindet sich gerade mit Discord. Das dauert meist nur ein paar Sekunden."
+      },
+      "noGuild": {
+        "pill": "Online, ohne Server",
+        "text": "Der Bot ist online, aber noch auf keinem Discord-Server. Leg einen an und lade den Bot ein (Schritte 3 und 4)."
+      },
+      "intent": {
+        "pill": "Ein Schalter fehlt",
+        "text": "Der Bot ist auf „{{guild}}“, aber der Schalter „Server Members Intent“ ist aus. Ohne ihn kann er neue Mitglieder nicht begrüßen (Schritt 2)."
+      },
+      "ready": {
+        "pill": "Bereit zum Einrichten",
+        "text": "Der Bot ist auf „{{guild}}“ und bereit. Ein Klick in Schritt 5 legt Rollen und Kanäle an."
+      },
+      "done": {
+        "pill": "Alles eingerichtet",
+        "text": "Der Bot läuft auf „{{guild}}“: Status, Ränge, Strafen und Tickets sind verbunden."
+      }
+    },
+    "check": {
+      "token": "Bot-Token hinterlegt",
+      "tokenInvalid": "Der Token stimmt nicht – bitte im Entwicklerportal einen neuen erzeugen.",
+      "online": "Mit Discord verbunden",
+      "intent": "„Server Members Intent“ an",
+      "guild": "Auf einem Discord-Server",
+      "noGuild": "Noch auf keinem Server",
+      "setup": "Server eingerichtet"
+    },
+    "stepN": "Schritt {{n}}:",
+    "stepDone": "Erledigt",
+    "steps": {
+      "title": "So richtest du den Discord ein",
+      "text": "Einmal durchgehen – danach erledigt der Bot den Rest allein. Diese Seite prüft alle 10 Sekunden, was schon geklappt hat.",
+      "s1": {
+        "title": "Bot im Discord-Entwicklerportal anlegen",
+        "a": "Öffne das",
+        "portal": "Discord-Entwicklerportal",
+        "b": "Klicke auf „New Application“ und nenne sie „MoinMorni“.",
+        "c": "Links auf „Bot“, dann auf „Reset Token“ und den Token kopieren.",
+        "d": "Gib ihn bei der Installation an (das Skript fragt danach) – oder trag ihn auf dem Server in die .env ein und starte MoinMorni neu:",
+        "secret": "Der Token ist wie ein Passwort: niemals in einen Chat posten oder weitergeben."
+      },
+      "s2": {
+        "title": "„Server Members Intent“ einschalten",
+        "text": "Auf derselben Seite („Bot“) unter „Privileged Gateway Intents“ den Schalter „Server Members Intent“ einschalten und speichern. Damit kann der Bot neue Mitglieder begrüßen und Ränge vergeben."
+      },
+      "s3": {
+        "title": "Leeren Discord-Server anlegen",
+        "text": "In Discord links auf „+“ → „Eigenen erstellen“. Discord erlaubt Bots nicht mehr, selbst Server anzulegen – darum machst du das einmal von Hand. Lass ihn leer, den Rest macht der Bot."
+      },
+      "s4": {
+        "title": "Bot einladen",
+        "text": "Klick auf den Knopf, wähle deinen neuen Server und bestätige. Der Bot bekommt dabei Administrator-Rechte, damit er Rollen und Kanäle anlegen kann.",
+        "done": "Der Bot ist auf „{{guild}}“.",
+        "button": "Bot einladen",
+        "noLink": "Der Knopf erscheint, sobald der Bot-Token stimmt (Schritt 1)."
+      },
+      "s5": {
+        "title": "Server einrichten",
+        "text": "Ein Klick – der Bot legt Rollen, Kanäle und Befehle an. Das dauert etwa eine halbe Minute.",
+        "again": "Schon eingerichtet. „Nochmal abgleichen“ legt nur an, was fehlt (z. B. neue Rollen oder Sprachkanäle) – Vorhandenes bleibt.",
+        "button": "Server einrichten",
+        "buttonAgain": "Nochmal abgleichen",
+        "busy": "Richtet ein …"
+      }
+    },
+    "result": {
+      "title": "Discord-Server eingerichtet!",
+      "counts": "{{roles}} Rollen und {{channels}} Kanäle und Kategorien sind da.",
+      "communityOk": "Der Community-Modus ist an (Regel- und Update-Kanal).",
+      "communityFailed": "Den Community-Modus konnte der Bot nicht einschalten – das geht in Discord unter Servereinstellungen → Community. Alles andere läuft."
+    },
+    "errors": {
+      "discord_no_guild": "Der Bot ist noch auf keinem Discord-Server. Lade ihn zuerst ein (Schritt 4).",
+      "discord_not_configured": "Es ist noch kein Bot-Token hinterlegt. Fang mit Schritt 1 an."
+    },
+    "creates": {
+      "title": "Was der Bot anlegt",
+      "text": "Rollen und Kanäle mit gleichem Namen übernimmt er – nichts wird doppelt angelegt.",
+      "roles": {
+        "title": "Rollen",
+        "text": "Alle Ränge aus deiner Rollen-Vorlage mit Symbol, Farbe und Rechten – dazu „Verbunden“, „Stumm“ und „Gefängnis“."
+      },
+      "info": {
+        "title": "Info",
+        "text": "Willkommen, Regeln, Ankündigungen (hier landen deine News) und ein Status-Kanal, der zeigt, wer gerade spielt."
+      },
+      "community": {
+        "title": "Community",
+        "text": "Allgemein, Bilder, Mitspieler-Suche und Vorschläge."
+      },
+      "help": {
+        "title": "Hilfe",
+        "text": "Ein Kanal mit Ticket-Knopf: Ein Ticket sehen nur die Person und das Team."
+      },
+      "voice": {
+        "title": "Sprachkanäle",
+        "text": "Die gleichen Kanäle wie im Spiel – von jedem Modus aus erreichbar."
+      },
+      "team": {
+        "title": "Team, Bauteam und VIP",
+        "text": "Eigene Bereiche, die nur die passenden Ränge sehen – mit Team-Log und Bewerbungen."
+      },
+      "extras": {
+        "title": "Befehle und Community-Modus",
+        "text": "/verbinden, /hilfe und /status, der Community-Modus mit Regel-Kanal und ein Gefängnis-Kanal für Strafen."
+      },
+      "safe": "Tipp: „Server einrichten“ kannst du jederzeit nochmal drücken, z. B. nach neuen Rollen."
     }
   },
   "errors": {
@@ -664,6 +1090,9 @@
     "role_owner_only": "Owner und Admin darf nur der Owner ändern.",
     "role_duplicate": "Zwei Rollen haben dieselbe Kennung. Gib einer einen anderen Namen.",
     "role_fallback_one": "Genau eine Rolle muss „für alle anderen“ sein.",
-    "role_owner_missing": "Die Owner-Rolle muss bleiben."
+    "role_owner_missing": "Die Owner-Rolle muss bleiben.",
+    "news_unknown": "Diese News gibt es nicht (mehr). Lade die Seite neu.",
+    "discord_no_guild": "Der Bot ist noch auf keinem Discord-Server. Lade ihn zuerst ein (Schritt 4).",
+    "discord_not_configured": "Es ist noch kein Bot-Token hinterlegt. Fang mit Schritt 1 an."
   }
 }

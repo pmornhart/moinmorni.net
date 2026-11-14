@@ -5,6 +5,8 @@ import {
   Gamepad2,
   Gavel,
   LayoutDashboard,
+  MessagesSquare,
+  Newspaper,
   Server,
   Settings2,
   ShieldHalf,
@@ -41,7 +43,8 @@ import { usePanel, useSettingsQuery } from '../session';
  * come as simple cards. It can be started again from the account box at the bottom left.
  */
 
-type StepId = 'overview' | 'modes' | 'settings' | 'players' | 'punishments' | 'roles' | 'servers';
+type StepId =
+  'overview' | 'modes' | 'settings' | 'news' | 'players' | 'punishments' | 'roles' | 'discord' | 'servers';
 
 interface TourStep {
   readonly id: StepId;
@@ -54,9 +57,11 @@ const STEPS: readonly TourStep[] = [
   { id: 'overview', icon: LayoutDashboard, area: 'overview' },
   { id: 'modes', icon: Gamepad2, area: 'modes' },
   { id: 'settings', icon: Settings2, area: null },
+  { id: 'news', icon: Newspaper, area: 'content' },
   { id: 'players', icon: UsersRound, area: 'players' },
   { id: 'punishments', icon: Gavel, area: 'punishments' },
   { id: 'roles', icon: ShieldHalf, area: 'roles' },
+  { id: 'discord', icon: MessagesSquare, area: 'discord' },
   { id: 'servers', icon: Server, area: 'servers' },
 ];
 

@@ -155,6 +155,10 @@ export function registerSiteRoutes(
       typeof v === 'string' && v.startsWith('https://') ? v : null;
     return {
       rules: { de: lines(s['rulesDe']), en: lines(s['rulesEn']) },
+      // Gemeinsame Sprachkanäle (Einstellungen „Sprachchat“), damit die Hilfe-Seite die echten Namen zeigt.
+      voiceChannels: ((stores.settings('voice')['channels'] as string[] | undefined) ?? []).filter(
+        (c) => typeof c === 'string' && c.trim() !== '',
+      ),
       discordInvite: link(s['discordInvite']) ?? discordInvite(),
       socials: {
         youtube: link(s['youtube']),

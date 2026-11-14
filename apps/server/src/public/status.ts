@@ -51,6 +51,7 @@ export function createStatusService(
       players: live ?? member?.players ?? 0,
       maxPlayers: m.maxPlayers,
       awake: member?.state === RUNNING,
+      server: m.server,
     };
   };
   const networksOrNone = async (): Promise<MotorNetwork[]> => {

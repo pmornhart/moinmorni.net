@@ -26,7 +26,7 @@ function same(a: unknown, b: unknown): boolean {
 /** Wide inputs (lists, long texts) go below the explanation, switches stay next to it. */
 function layoutOf(def: SettingDef): 'inline' | 'side' | 'below' {
   if (def.type === 'boolean') return 'inline';
-  if (def.type === 'list') return 'below';
+  if (def.type === 'list' || (def.type === 'text' && def.multiline)) return 'below';
   return 'side';
 }
 

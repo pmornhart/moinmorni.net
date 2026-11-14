@@ -10,10 +10,10 @@ import { useErrorText } from '~/lib/errors';
 import { useTimeText } from '~/lib/time';
 import { AreaGate } from '../AreaGate';
 import { PageHead } from '../PanelShell';
-import { RoleBadge } from '../role-visuals';
+import { RoleBadge } from '~/components/role-visuals';
 import { PlayerFlags, PresenceText } from './badges';
 import { usePlayersQuery, type PlayerView } from './model';
-import { PlayerFace } from './PlayerFace';
+import { PlayerFace } from '~/components/player-face';
 
 const SEARCH_DELAY_MS = 300;
 const PAGE = 50;

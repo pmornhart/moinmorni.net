@@ -5,12 +5,14 @@ import {
   Gamepad2,
   Gavel,
   Globe,
+  Globe2,
   House,
   LayoutDashboard,
   LogOut,
   Menu,
   MessagesSquare,
   Mic,
+  Newspaper,
   Server,
   Settings2,
   ShieldHalf,
@@ -29,15 +31,17 @@ import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { usePick } from '~/lib/text';
 import { useLogout } from './PanelGate';
-import { RoleBadge } from './role-visuals';
+import { RoleBadge } from '~/components/role-visuals';
 import { usePanel, useSettingsQuery } from './session';
 import { TourProvider, useTour } from './tour/Tour';
 
 /** The catalog names an icon per settings area; these are the ones it uses (others get a cog). */
 const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
   Globe,
+  Globe2,
   MessagesSquare,
   Mic,
+  Newspaper,
   Users,
   Castle,
 };
@@ -47,7 +51,7 @@ export function areaIcon(name: string): LucideIcon {
 }
 
 /** Areas listed under "Verwaltung". */
-const MANAGE_AREAS = ['players', 'punishments', 'roles', 'servers'] as const;
+const MANAGE_AREAS = ['players', 'punishments', 'roles', 'discord', 'servers'] as const;
 
 const ITEM =
   'group relative flex items-center gap-3 rounded-[11px] px-3 py-2.5 text-[14.5px] font-semibold text-band-muted transition-colors hover:bg-white/[0.06] hover:text-band-foreground';
@@ -156,6 +160,12 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
             ))}
           </div>
         ) : null}
+        {can('content') ? (
+          <>
+            <Group label={t('shell.content')} />
+            <Item to="/news" icon={Newspaper} label={t('shell.news')} tour="news" onNavigate={onNavigate} />
+          </>
+        ) : null}
         {MANAGE_AREAS.some(can) ? <Group label={t('shell.manage')} /> : null}
         {can('players') ? (
           <Item
@@ -181,6 +191,15 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
             icon={ShieldHalf}
             label={t('shell.roles')}
             tour="roles"
+            onNavigate={onNavigate}
+          />
+        ) : null}
+        {can('discord') ? (
+          <Item
+            to="/discord"
+            icon={MessagesSquare}
+            label={t('shell.discord')}
+            tour="discord"
             onNavigate={onNavigate}
           />
         ) : null}

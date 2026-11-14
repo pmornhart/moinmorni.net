@@ -71,8 +71,13 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
       Array<{ role: { id: string }; members: Array<{ name: string }> }>
     >();
     expect(team.find((t) => t.role.id === 'moderator')?.members.map((m) => m.name)).toEqual(['Lena']);
-    const site = (await anon('/api/site')).json<{ rules: { de: string[] }; discordInvite: string | null }>();
+    const site = (await anon('/api/site')).json<{
+      rules: { de: string[] };
+      discordInvite: string | null;
+      voiceChannels: string[];
+    }>();
     expect(site.rules.de.length).toBe(5);
+    expect(site.voiceChannels.length).toBeGreaterThan(0);
     expect(site.discordInvite).toBeNull();
     await call('PUT', '/api/panel/settings/website', { discordInvite: 'https://discord.gg/moinmorni' });
     expect((await anon('/api/site')).json()).toMatchObject({ discordInvite: 'https://discord.gg/moinmorni' });

@@ -152,6 +152,8 @@ export interface ModeStatus {
   readonly maxPlayers: number;
   /** Server läuft gerade (sonst schläft er oder ist aus). */
   readonly awake: boolean;
+  /** Name im Netzwerk (für `/server <name>`); null = noch keiner. */
+  readonly server: string | null;
 }
 
 export interface NetworkStatus {

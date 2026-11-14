@@ -2,9 +2,15 @@ import '~/styles/public.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
+import { HelpPage } from './HelpPage';
 import { HomePage } from './HomePage';
 import { InfoPage } from './InfoPage';
+import { ModePage, ModesListPage } from './ModePages';
+import { NewsArticlePage, NewsListPage } from './NewsPages';
+import { PlayerProfilePage, StatsPage } from './PlayerPages';
 import { PublicLayout } from './PublicLayout';
+import { RulesPage } from './RulesPage';
+import { TeamPage } from './TeamPage';
 
 const MAX_RETRIES = 2;
 const queryClient = new QueryClient({
@@ -16,8 +22,15 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'regeln', element: <InfoPage page="rules" /> },
-      { path: 'team', element: <InfoPage page="team" /> },
+      { path: 'news', element: <NewsListPage /> },
+      { path: 'news/:slug', element: <NewsArticlePage /> },
+      { path: 'spielmodi', element: <ModesListPage /> },
+      { path: 'spielmodi/:id', element: <ModePage /> },
+      { path: 'statistiken', element: <StatsPage /> },
+      { path: 'spieler/:name', element: <PlayerProfilePage /> },
+      { path: 'team', element: <TeamPage /> },
+      { path: 'regeln', element: <RulesPage /> },
+      { path: 'hilfe', element: <HelpPage /> },
       { path: 'impressum', element: <InfoPage page="imprint" /> },
       { path: 'datenschutz', element: <InfoPage page="privacy" /> },
       { path: '*', element: <InfoPage page="notFound" follows={false} /> },
@@ -25,7 +38,7 @@ const router = createBrowserRouter([
   },
 ]);
 
-/** The public website: start page, game modes and the simple pages. */
+/** The public website: start page, news, game modes, statistics, team, rules and help. */
 export function PublicApp(): ReactElement {
   return (
     <QueryClientProvider client={queryClient}>

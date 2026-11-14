@@ -18,7 +18,7 @@ import { Button, Card, Input, Pill, Switch } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { usePick } from '~/lib/text';
-import { RoleSymbol } from '../role-visuals';
+import { RoleSymbol } from '~/components/role-visuals';
 import { inOrder, NAME_MAX, problemsOf, SYMBOL_IDEAS, SYMBOL_MAX, validColour } from './role-draft';
 
 const CONFIRM_MS = 4000;

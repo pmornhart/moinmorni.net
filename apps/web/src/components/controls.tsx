@@ -55,7 +55,7 @@ export function CopyButton({
       aria-live="polite"
     >
       {copied ? <Check /> : <Copy />}
-      {copied ? t('home.copied') : t('home.copy')}
+      {copied ? t('copy.done') : t('copy.action')}
     </Button>
   );
 }

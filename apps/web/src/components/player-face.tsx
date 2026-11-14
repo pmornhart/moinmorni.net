@@ -56,12 +56,18 @@ export function PlayerFace({
   colour,
   online = false,
   className,
+  faceClassName,
+  dotClassName,
 }: {
   readonly uuid: string;
   /** The rank colour (#rrggbb). */
   readonly colour: string;
   readonly online?: boolean;
   readonly className?: string;
+  /** Extra classes for the rounded tile (e.g. a bigger radius for big faces). */
+  readonly faceClassName?: string;
+  /** Extra classes for the green dot (e.g. its ring on a dark band). */
+  readonly dotClassName?: string;
 }): ReactElement {
   const seed = hash(uuid);
   const pixels = useMemo(() => {
@@ -84,7 +90,13 @@ export function PlayerFace({
   const style: CSSProperties = { backgroundColor: darken(colour, 0.62) };
   return (
     <span className={cn('relative inline-grid size-11 shrink-0', className)}>
-      <span className="grid size-full place-items-center overflow-hidden rounded-[12px] p-[8%]" style={style}>
+      <span
+        className={cn(
+          'grid size-full place-items-center overflow-hidden rounded-[12px] p-[8%]',
+          faceClassName,
+        )}
+        style={style}
+      >
         <svg viewBox={`0 0 ${SIZE} ${SIZE}`} shapeRendering="crispEdges" className="size-full" aria-hidden>
           {pixels.map((p) => (
             <g key={p.key}>
@@ -96,7 +108,10 @@ export function PlayerFace({
       </span>
       {online ? (
         <span
-          className="mm-pulse absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-card bg-success"
+          className={cn(
+            'mm-pulse absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-card bg-success',
+            dotClassName,
+          )}
           aria-hidden
         />
       ) : null}

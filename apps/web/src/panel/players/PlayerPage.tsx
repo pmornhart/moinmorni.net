@@ -27,7 +27,7 @@ import { mmApi } from '~/lib/mm-api';
 import { useLanguage, usePick } from '~/lib/text';
 import { languageName, useTimeText } from '~/lib/time';
 import { AreaGate } from '../AreaGate';
-import { RoleBadge } from '../role-visuals';
+import { RoleBadge } from '~/components/role-visuals';
 import { useCan, usePanel, useRolesQuery } from '../session';
 import { KIND_ICON, KindBadge, PlayerFlags, PresenceText } from './badges';
 import { useLiftPunishment } from './lift';
@@ -44,7 +44,7 @@ import {
   type Punishment,
   type PunishmentState,
 } from './model';
-import { PlayerFace } from './PlayerFace';
+import { PlayerFace } from '~/components/player-face';
 import { PunishDialog } from './PunishDialog';
 
 const OWNER = 'owner';
