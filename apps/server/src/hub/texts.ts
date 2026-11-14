@@ -18,6 +18,10 @@ export const mm = (text: string): string => text.replace(MM_SPECIAL, '\\$&');
 
 const P = '<dark_gray>[<gradient:#3ddc84:#1fa463>MoinMorni</gradient>]</dark_gray> ';
 
+const F = '<dark_gray>[<aqua>Freunde</aqua>]</dark_gray> ';
+const FE = '<dark_gray>[<aqua>Friends</aqua>]</dark_gray> ';
+const Y = '<dark_gray>[<light_purple>Party</light_purple>]</dark_gray> ';
+
 const TEXTS = {
   'lang.set': {
     de: `${P}<gray>Deine Sprache ist jetzt <green>Deutsch</green>.`,
@@ -189,6 +193,128 @@ const TEXTS = {
   'set.on': { de: 'an', en: 'on' },
   'set.off': { de: 'aus', en: 'off' },
   'set.empty': { de: '(leer)', en: '(empty)' },
+  'friend.request_sent': {
+    de: `${F}<gray>Anfrage an <white>{name}</white> ist raus.`,
+    en: `${FE}<gray>Request sent to <white>{name}</white>.`,
+  },
+  'friend.request_got': {
+    de: `${F}<white>{name}</white> <gray>möchte mit dir befreundet sein.</gray> <click:run_command:'/freunde annehmen {name}'><hover:show_text:'<green>Annehmen'><green><bold>[Annehmen]</bold></green></hover></click> <click:run_command:'/freunde ablehnen {name}'><hover:show_text:'<red>Ablehnen'><red>[Ablehnen]</red></hover></click>`,
+    en: `${FE}<white>{name}</white> <gray>wants to be your friend.</gray> <click:run_command:'/friends accept {name}'><hover:show_text:'<green>Accept'><green><bold>[Accept]</bold></green></hover></click> <click:run_command:'/friends deny {name}'><hover:show_text:'<red>Deny'><red>[Deny]</red></hover></click>`,
+  },
+  'friend.now': {
+    de: `${F}<green>Du und <white>{name}</white> seid jetzt Freunde!`,
+    en: `${FE}<green>You and <white>{name}</white> are friends now!`,
+  },
+  'friend.denied': {
+    de: `${F}<gray>Anfrage von <white>{name}</white> abgelehnt.`,
+    en: `${FE}<gray>Request from <white>{name}</white> denied.`,
+  },
+  'friend.removed': {
+    de: `${F}<gray><white>{name}</white> ist nicht mehr in deiner Freundesliste.`,
+    en: `${FE}<gray><white>{name}</white> is no longer on your friends list.`,
+  },
+  'friend.already': { de: `${F}<gray>Ihr seid schon befreundet.`, en: `${FE}<gray>You are already friends.` },
+  'friend.pending': {
+    de: `${F}<gray>Die Anfrage an <white>{name}</white> läuft schon.`,
+    en: `${FE}<gray>Your request to <white>{name}</white> is still open.`,
+  },
+  'friend.no_request': {
+    de: `${F}<gray>Von <white>{name}</white> gibt es keine Anfrage.`,
+    en: `${FE}<gray>There is no request from <white>{name}</white>.`,
+  },
+  'friend.not_friends': {
+    de: `${F}<gray>Du bist nicht mit <white>{name}</white> befreundet.`,
+    en: `${FE}<gray>You are not friends with <white>{name}</white>.`,
+  },
+  'friend.full': {
+    de: `${F}<red>Die Freundesliste ist voll ({max}).`,
+    en: `${FE}<red>The friends list is full ({max}).`,
+  },
+  'friend.head': {
+    de: `${F}<gray>Deine Freunde ({online} online, {total} insgesamt):`,
+    en: `${FE}<gray>Your friends ({online} online, {total} in total):`,
+  },
+  'friend.none': {
+    de: `${F}<gray>Noch keine Freunde. So geht's: <yellow>/freunde add <name>`,
+    en: `${FE}<gray>No friends yet. Try <yellow>/friends add <name>`,
+  },
+  'friend.line_online': {
+    de: '<dark_gray> • </dark_gray><green>●</green> <white>{name}</white> <gray>auf {server}',
+    en: '<dark_gray> • </dark_gray><green>●</green> <white>{name}</white> <gray>on {server}',
+  },
+  'friend.line_offline': {
+    de: '<dark_gray> • ● <gray>{name}</gray> <dark_gray>zuletzt {date}',
+    en: '<dark_gray> • ● <gray>{name}</gray> <dark_gray>last seen {date}',
+  },
+  'friend.requests': {
+    de: `${F}<gray>Offene Anfragen: <white>{names}`,
+    en: `${FE}<gray>Open requests: <white>{names}`,
+  },
+  'friend.joined': {
+    de: `${F}<white>{name}</white> <green>ist jetzt online.`,
+    en: `${FE}<white>{name}</white> <green>is online now.`,
+  },
+  'friend.left': {
+    de: `${F}<white>{name}</white> <gray>ist offline gegangen.`,
+    en: `${FE}<white>{name}</white> <gray>went offline.`,
+  },
+  'party.invited': {
+    de: `${Y}<gray>Einladung an <white>{name}</white> ist raus.`,
+    en: `${Y}<gray>Invitation sent to <white>{name}</white>.`,
+  },
+  'party.invite_got': {
+    de: `${Y}<white>{name}</white> <gray>lädt dich in die Party ein.</gray> <click:run_command:'/party annehmen {name}'><hover:show_text:'<green>Beitreten'><green><bold>[Beitreten]</bold></green></hover></click>`,
+    en: `${Y}<white>{name}</white> <gray>invites you to their party.</gray> <click:run_command:'/party accept {name}'><hover:show_text:'<green>Join'><green><bold>[Join]</bold></green></hover></click>`,
+  },
+  'party.joined': {
+    de: `${Y}<white>{name}</white> <green>ist der Party beigetreten.`,
+    en: `${Y}<white>{name}</white> <green>joined the party.`,
+  },
+  'party.left': {
+    de: `${Y}<white>{name}</white> <gray>hat die Party verlassen.`,
+    en: `${Y}<white>{name}</white> <gray>left the party.`,
+  },
+  'party.kicked': {
+    de: `${Y}<white>{name}</white> <gray>wurde aus der Party genommen.`,
+    en: `${Y}<white>{name}</white> <gray>was removed from the party.`,
+  },
+  'party.leader': {
+    de: `${Y}<white>{name}</white> <gray>leitet jetzt die Party.`,
+    en: `${Y}<white>{name}</white> <gray>leads the party now.`,
+  },
+  'party.disbanded': { de: `${Y}<gray>Die Party wurde aufgelöst.`, en: `${Y}<gray>The party was disbanded.` },
+  'party.none': {
+    de: `${Y}<gray>Du bist in keiner Party. So geht's: <yellow>/party einladen <name>`,
+    en: `${Y}<gray>You are not in a party. Try <yellow>/party invite <name>`,
+  },
+  'party.not_leader': {
+    de: `${Y}<red>Das darf nur der Party-Leiter.`,
+    en: `${Y}<red>Only the party leader can do that.`,
+  },
+  'party.full': { de: `${Y}<red>Die Party ist voll ({max}).`, en: `${Y}<red>The party is full ({max}).` },
+  'party.in_other': {
+    de: `${Y}<gray><white>{name}</white> ist schon in einer Party.`,
+    en: `${Y}<gray><white>{name}</white> is already in a party.`,
+  },
+  'party.no_invite': {
+    de: `${Y}<gray>Von <white>{name}</white> gibt es keine Einladung (gilt 5 Minuten).`,
+    en: `${Y}<gray>There is no invitation from <white>{name}</white> (valid for 5 minutes).`,
+  },
+  'party.head': { de: `${Y}<gray>Deine Party ({count}/{max}):`, en: `${Y}<gray>Your party ({count}/{max}):` },
+  'party.line': {
+    de: '<dark_gray> • </dark_gray>{lead}<white>{name}</white> <gray>{where}',
+    en: '<dark_gray> • </dark_gray>{lead}<white>{name}</white> <gray>{where}',
+  },
+  'party.lead_mark': { de: '<gold>♚</gold> ', en: '<gold>♚</gold> ' },
+  'party.offline': { de: '(offline)', en: '(offline)' },
+  'party.follow': {
+    de: `${Y}<gray>Die Party geht nach <white>{server}</white> – du kommst mit.`,
+    en: `${Y}<gray>The party is heading to <white>{server}</white> – you're coming along.`,
+  },
+  'party.chat': {
+    de: '<dark_gray>[<light_purple>Party</light_purple>]</dark_gray> <white>{name}</white> <dark_gray>»</dark_gray> <light_purple>{text}',
+    en: '<dark_gray>[<light_purple>Party</light_purple>]</dark_gray> <white>{name}</white> <dark_gray>»</dark_gray> <light_purple>{text}',
+  },
   'lobby.missing': {
     de: `${P}<red>Die Lobby ist gerade nicht da.`,
     en: `${P}<red>The lobby isn't available right now.`,

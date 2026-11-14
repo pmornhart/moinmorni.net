@@ -12,6 +12,7 @@ import { createPresence, type Presence } from './presence.js';
 import { hubSecretOf, serverKeyOf } from './protocol.js';
 import { createPunishService, type PunishService } from './punish.js';
 import { createSettingCommands, mergeCommands } from './setting-commands.js';
+import { createSocial } from './social.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
 
@@ -178,7 +179,8 @@ export function createHub(options: HubOptions): Hub {
       toProxy(bans());
     },
   };
-  const commands = mergeCommands(createCommands(ctx), createSettingCommands(ctx));
+  const social = createSocial(ctx, db, now);
+  const commands = mergeCommands([...createCommands(ctx), ...social.commands], createSettingCommands(ctx));
   const chat = createChat(ctx, () => stores.settings('chat') as unknown as ChatSettings);
 
   const reply = (conn: Connection, id: number, data: unknown): void =>
@@ -187,6 +189,7 @@ export function createHub(options: HubOptions): Hub {
     conn.send({ t: 'reply', id, ok: false, error });
 
   const leave = (uuid: string): void => {
+    if (presence.get(uuid)) social.left(normalUuid(uuid));
     const gone = presence.leave(uuid);
     if (gone) players.addMinutes(gone.uuid, Math.round((now() - gone.since) / MINUTE_MS));
   };
@@ -244,8 +247,12 @@ export function createHub(options: HubOptions): Hub {
     login,
     switch: (_conn, body) => {
       const m = switchSchema.parse(body);
+      const first = presence.get(m.uuid)?.server === null;
       presence.move(m.uuid, m.server);
       sendProfile(m.uuid);
+      // Erst jetzt ist der Spieler wirklich da: Freunde erfahren es, offene Anfragen kommen an.
+      if (first) social.joined(normalUuid(m.uuid));
+      social.switched(normalUuid(m.uuid), m.server);
     },
     leave: (_conn, body) => leave(leaveSchema.parse(body).uuid),
     // Die Sprache des Clients kommt erst nach der Anmeldung; wer sie selbst gewählt hat (/sprache), behält sie.

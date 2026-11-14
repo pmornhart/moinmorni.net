@@ -331,6 +331,66 @@ describe('Hub', () => {
     expect(season).toMatchObject({ data: { suggestions: ['wiesn', 'winter'] } });
   });
 
+  test('Freunde: Anfrage mit Knopf, annehmen, Liste, online/offline-Hinweis', async () => {
+    const { proxy } = await network();
+    const cmd = (uuid: string, command: string, ...args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+
+    await cmd(PHILIP, 'freunde', 'add', 'Lena');
+    await said(PHILIP, 'Anfrage an');
+    const got = await said(LENA, 'wants to be your friend');
+    expect(got['text']).toContain("<click:run_command:'/friends accept Philip'>");
+    await cmd(LENA, 'friends', 'accept', 'Philip');
+    await said(LENA, 'friends now');
+    await said(PHILIP, 'jetzt Freunde');
+
+    await cmd(PHILIP, 'freunde');
+    await said(PHILIP, '1 online');
+    await said(PHILIP, 'auf duels');
+
+    proxy.send({ t: 'leave', uuid: LENA });
+    await said(PHILIP, 'offline gegangen');
+    await proxy.request({ t: 'login', uuid: LENA, name: 'Lena', locale: 'en_us', bedrock: false });
+    proxy.send({ t: 'switch', uuid: LENA, server: 'duels' });
+    await said(PHILIP, 'ist jetzt online');
+
+    await cmd(PHILIP, 'freunde', 'entfernen', 'Lena');
+    await said(PHILIP, 'nicht mehr in deiner Freundesliste');
+  });
+
+  test('Party: einladen, beitreten, Party-Chat, folgt dem Leiter, auflösen', async () => {
+    const { proxy } = await network();
+    const cmd = (uuid: string, command: string, ...args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+
+    await cmd(PHILIP, 'party', 'einladen', 'Lena');
+    expect((await said(LENA, 'invites you'))['text']).toContain("'/party accept Philip'");
+    await cmd(LENA, 'party', 'accept', 'Philip');
+    await said(PHILIP, 'beigetreten');
+
+    await cmd(LENA, 'pc', 'Bin', 'dabei!');
+    await said(PHILIP, 'Bin dabei!');
+
+    // Philip (Leiter) geht nach Duels und wieder in die Lobby – Lena kommt mit.
+    proxy.send({ t: 'switch', uuid: PHILIP, server: 'lobby' });
+    proxy.send({ t: 'switch', uuid: PHILIP, server: 'duels' });
+    proxy.send({ t: 'switch', uuid: LENA, server: 'duels' });
+    proxy.send({ t: 'switch', uuid: PHILIP, server: 'lobby' });
+    expect(await proxy.next('connect', (m) => m['uuid'] === LENA)).toMatchObject({ server: 'lobby' });
+    await said(LENA, 'coming along');
+
+    await cmd(LENA, 'party', 'kick', 'Philip');
+    await said(LENA, 'Only the party leader');
+    await cmd(LENA, 'party', 'leave');
+    await said(PHILIP, 'aufgelöst');
+    await cmd(PHILIP, 'party');
+    await said(PHILIP, 'in keiner Party');
+  });
+
   test('Proxy meldet nach dem Neuverbinden alle Spieler – Spielzeit wird gezählt', async () => {
     const { proxy } = await network();
     clock.now += 30 * 60_000;

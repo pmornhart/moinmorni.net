@@ -83,3 +83,25 @@ export const punishments = sqliteTable(
   },
   (t) => [index('punishments_player').on(t.playerUuid)],
 );
+
+/** Freundschaften: ein Eintrag pro Paar, kleinere UUID zuerst. */
+export const friends = sqliteTable(
+  'friends',
+  {
+    a: text('a').notNull(),
+    b: text('b').notNull(),
+    since: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.a, t.b] }), index('friends_b').on(t.b)],
+);
+
+/** Offene Freundschaftsanfragen. */
+export const friendRequests = sqliteTable(
+  'friend_requests',
+  {
+    from: text('from_uuid').notNull(),
+    to: text('to_uuid').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.from, t.to] }), index('friend_requests_to').on(t.to)],
+);
