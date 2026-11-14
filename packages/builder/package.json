@@ -1,0 +1,14 @@
+{
+  "name": "@moinmorni/builder",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Bau-Baukasten: Bauwerke in Code beschreiben und als Minecraft-Befehle ausgeben",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@moinmorni/lobby-entwuerfe",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Drei Lobby-Entwürfe zum Anschauen (werden in einer Test-Welt gebaut und mit dem echten Client fotografiert)",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "tsx src/build.ts"
+  },
+  "dependencies": {
+    "@moinmorni/builder": "workspace:*"
+  }
+}

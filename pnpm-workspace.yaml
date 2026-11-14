@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+  - tools/*
+onlyBuiltDependencies:
+  - esbuild
+# Lieferketten-Schutz wie bei MorniHosting: neue Paketversionen erst nach 7 Tagen (10080 Minuten), keine Unterpakete aus
+# Git- oder Tarball-Quellen, kein Update, das schwächer abgesichert veröffentlicht wurde als sein Vorgänger.
+minimumReleaseAge: 10080
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 43200

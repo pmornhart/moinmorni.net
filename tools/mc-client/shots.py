@@ -5,9 +5,10 @@ und macht Screenshots vom virtuellen Bildschirm.
   python3 shots.py --rcon 127.0.0.1:25702 --password-file .rcon-pass --player MorniTest --out bilder/ \
       --shot "ankunft 0 70 0 180 5" --shot "von-oben 0 160 0 0 70" [--hud] [--wait 15]
 
-Ein --shot ist "name x y z yaw pitch". Ohne --hud wird die Leiste (F1) ausgeblendet.
+Ein --shot ist "name x y z yaw pitch" oder "name x y z @ zx zy zz" (schaut auf den Punkt zx zy zz).
+Ohne --hud wird die Leiste (F1) ausgeblendet.
 """
-import argparse, os, subprocess, sys, time
+import argparse, math, os, subprocess, sys, time
 sys.path.insert(0, os.path.dirname(__file__))
 from rcon import run as rcon  # noqa: E402
 
@@ -47,7 +48,14 @@ def main():
     rcon(a.rcon, password, [f'gamemode {a.mode} {a.player}'] + a.before)
     hud_hidden = False
     for spec in a.shot:
-        name, x, y, z, yaw, pitch = spec.split()
+        parts = spec.split()
+        if '@' in parts:
+            name, x, y, z, _, tx, ty, tz = parts
+            dx, dy, dz = float(tx) - float(x), float(ty) - (float(y) + 1.62), float(tz) - float(z)
+            yaw = f'{math.degrees(math.atan2(-dx, dz)):.1f}'
+            pitch = f'{-math.degrees(math.atan2(dy, math.hypot(dx, dz))):.1f}'
+        else:
+            name, x, y, z, yaw, pitch = parts
         rcon(a.rcon, password, [f'tp {a.player} {x} {y} {z} {yaw} {pitch}'])
         if not a.hud and not hud_hidden:
             key(a.display, 'F1')
