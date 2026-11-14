@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
+import { news } from '../src/db/schema.js';
 
 const VENDOR = path.resolve(import.meta.dirname, '../../../vendor/mornihosting/apps/server/src');
 const DIR = process.env['MM_DEV_DIR'] ?? path.join(os.homedir(), 'mm-dev');
@@ -103,3 +104,60 @@ if (!mm.hub.players.get(DEMO[0].uuid)) {
   });
 }
 console.log(`Motor: ${motorUrl} · MoinMorni: http://127.0.0.1:${MM_PORT} · Login: philip / ${PASSWORD}`);
+
+// Beispiel-News (nur lokal).
+if (!mm.db.select().from(news).get()) {
+  const day = 86_400_000;
+  const items = [
+    {
+      slug: 'willkommen-in-moinmorni',
+      category: 'info' as const,
+      titleDe: 'Servus in MoinMorni!',
+      titleEn: 'Welcome to MoinMorni!',
+      bodyDe:
+        'Unser Netzwerk ist da: Lobby im Alpendorf, Duels, Morni Party und mehr. Komm vorbei auf moinmorni.net!',
+      bodyEn:
+        'Our network is here: a lobby in an alpine village, Duels, Morni Party and more. Join us at moinmorni.net!',
+      pinned: true,
+      at: 3,
+    },
+    {
+      slug: 'morni-party-drei-spielfelder',
+      category: 'update' as const,
+      titleDe: 'Morni Party: drei Spielfelder, zwölf Minispiele',
+      titleEn: 'Morni Party: three boards, twelve minigames',
+      bodyDe:
+        'Almsommer am Morni-Kogel, Schloss Weißenstein und der Goldstollen warten. Würfeln, Taler sammeln, Edelweiß kaufen!',
+      bodyEn:
+        'Alpine summer, Weissenstein castle and the gold mine are waiting. Roll, collect coins, buy edelweiss!',
+      pinned: false,
+      at: 1,
+    },
+    {
+      slug: 'wiesn-event',
+      category: 'event' as const,
+      titleDe: 'Wiesn-Event in der Lobby',
+      titleEn: 'Oktoberfest event in the lobby',
+      bodyDe: 'Biergarten, Brezn und ein Maßkrug-Parkour: das Wiesn-Event startet am Wochenende.',
+      bodyEn: 'Beer garden, pretzels and a beer-mug parkour: the Oktoberfest event starts this weekend.',
+      pinned: false,
+      at: 0,
+    },
+  ];
+  items.forEach((n) =>
+    mm.db
+      .insert(news)
+      .values({
+        slug: n.slug,
+        category: n.category,
+        titleDe: n.titleDe,
+        titleEn: n.titleEn,
+        bodyDe: n.bodyDe,
+        bodyEn: n.bodyEn,
+        pinned: n.pinned,
+        publishedAt: new Date(Date.now() - n.at * day).toISOString(),
+        author: 'philip',
+      })
+      .run(),
+  );
+}
