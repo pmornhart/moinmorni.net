@@ -40,6 +40,9 @@ const FLAT_WORLD = {
 export function buildProperties(): Record<string, string> {
   return {
     gamemode: 'creative',
+    // Minecraft ab 26.x legt neue Server mit eingeschalteter Whitelist an – wer hinein darf, entscheidet der Hub.
+    'white-list': 'false',
+    'enforce-whitelist': 'false',
     'force-gamemode': 'false',
     difficulty: 'peaceful',
     'spawn-monsters': 'false',

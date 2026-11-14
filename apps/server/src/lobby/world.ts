@@ -167,6 +167,9 @@ export function patchProperties(
 export function lobbyProperties(): Record<string, string> {
   return {
     gamemode: 'adventure',
+    // Minecraft ab 26.x legt neue Server mit eingeschalteter Whitelist an – wer hinein darf, entscheidet der Hub.
+    'white-list': 'false',
+    'enforce-whitelist': 'false',
     'force-gamemode': 'true',
     difficulty: 'peaceful',
     pvp: 'false',
