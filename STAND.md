@@ -27,7 +27,12 @@
 - **Impressum:** gibt Philip bei Bedarf später; nie im Repo.
 - **Panel:** unter `moinmorni.net/panel`.
 - **Repos:** je Modus ein eigenes Repo; Philip legt sie an (Namensliste folgt).
-- Offen: Anbindung an MorniHosting (Q21–Q26), Folgefragen aus der Recherche.
+- **Anbindung (Q21/Q23):** wie vorgeschlagen – in MorniHosting einbauen: Netzwerke (allgemeine Funktion), „Mit MorniHosting anmelden“, Schlüssel mit begrenzten Rechten, Server-Seiten als einbettbarer Baustein; MoinMorni bettet sie ein.
+- **Login (Q22):** alle aus dem Team; Spieler nur optional (z. B. für Fragen/Support).
+- **MorniCraft-Netzwerk-Modus (Q24):** ja, Ränge usw. in beiden Repos (MorniCraft + MorniHosting) anpassen.
+- **RAM (Q25):** so viel wie nötig, Schlaf-Modus für leere Modi.
+- **Bau-Server (Q26):** ja, Bauteam mit passenden Einstellungen.
+- Offen: Folgefragen aus der Recherche (Runde 2).
 
 ## Stand
 
