@@ -1,0 +1,354 @@
+{
+  "brand": {
+    "tagline": "Your Minecraft network with an alpine village, a castle and lots of game modes.",
+    "panelTag": "Panel"
+  },
+  "nav": {
+    "start": "Home",
+    "modes": "Modes",
+    "rules": "Rules",
+    "team": "Team",
+    "panel": "Panel",
+    "menu": "Open menu",
+    "close": "Close",
+    "main": "Main menu",
+    "skip": "Skip to content"
+  },
+  "theme": {
+    "toLight": "Light design",
+    "toDark": "Dark design"
+  },
+  "language": {
+    "label": "Language",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "home": {
+    "eyebrow": "Minecraft network · Java & Bedrock",
+    "pitch": "Your Minecraft network with an alpine village, a castle and lots of game modes.",
+    "online_one": "{{count}} player online",
+    "online_other": "{{count}} players online",
+    "offline": "Offline right now",
+    "statusLoading": "Checking who is online …",
+    "statusError": "Status unavailable right now",
+    "updated": "Refreshes every 15 seconds",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "copyManual": "Select the address and copy it by hand.",
+    "address": "Address",
+    "port": "Port",
+    "java": {
+      "title": "Java Edition",
+      "hint": "On PC: Multiplayer → Add Server → paste the address. Version 1.17 or newer."
+    },
+    "bedrock": {
+      "title": "Bedrock Edition",
+      "hint": "Phone, console or Windows: Play → Servers → Add Server, enter address and port."
+    },
+    "modes": {
+      "eyebrow": "Game modes",
+      "title": "Pick your adventure",
+      "text": "In the lobby you simply talk to a villager – and you are in the game. Empty modes sleep and wake up as soon as someone comes.",
+      "empty": "No game modes yet."
+    },
+    "soon": {
+      "eyebrow": "Coming here",
+      "title": "The village is still growing",
+      "text": "We are building these parts of the website right now. You will find them here once they are ready.",
+      "badge": "Coming soon",
+      "news": {
+        "title": "News",
+        "text": "What is happening on the network: new modes, updates and events."
+      },
+      "discord": {
+        "title": "Discord",
+        "text": "Our own Discord with live status, help and account linking."
+      },
+      "modpack": {
+        "title": "Modpack",
+        "text": "Nicer looks, voice chat and building tools – installed with one click."
+      },
+      "leaderboards": {
+        "title": "Leaderboards",
+        "text": "Best times in Summit Rush, wins in Duels and more."
+      }
+    }
+  },
+  "mode": {
+    "state": {
+      "on": "Open",
+      "off": "Off",
+      "maintenance": "Maintenance",
+      "soon": "Soon"
+    },
+    "whitelist": "Invitation only",
+    "players": "{{players}} / {{max}} players",
+    "asleep": "Asleep – wakes up as soon as you come",
+    "maintenanceText": "We are working on it right now.",
+    "soonText": "Still being built.",
+    "closed": "Closed right now"
+  },
+  "footer": {
+    "about": "A Minecraft network of our own from Bavaria – with a lobby in an alpine village and game modes to play alone or together.",
+    "links": "More",
+    "disclaimer": "Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft."
+  },
+  "pages": {
+    "follows": "Content follows",
+    "back": "Back to the start page",
+    "rules": {
+      "title": "Rules",
+      "text": "The rules for the whole network will be here soon – short, friendly and easy to understand."
+    },
+    "team": {
+      "title": "Team",
+      "text": "The team will introduce itself here soon: who is behind MoinMorni and whom to ask."
+    },
+    "imprint": {
+      "title": "Legal notice",
+      "text": "The legal notice will follow here once it is ready."
+    },
+    "privacy": {
+      "title": "Privacy",
+      "text": "Soon you will read here which data MoinMorni keeps and why."
+    },
+    "notFound": {
+      "title": "This page does not exist",
+      "text": "Maybe there is a typo. Everything can be found from the start page."
+    }
+  },
+  "login": {
+    "title": "Team area",
+    "subtitle": "Sign in with your MoinMorni account.",
+    "username": "Name or email",
+    "password": "Password",
+    "submit": "Sign in",
+    "busy": "One moment …",
+    "or": "or",
+    "passkey": "Sign in with a passkey",
+    "passkeyWaiting": "Waiting for your passkey …",
+    "passkeyHint": "A passkey signs you in with your fingerprint, face or a security key – no password needed.",
+    "twoFactorTitle": "One more step",
+    "twoFactorText": "Enter the 6-digit code from your authenticator app.",
+    "code": "Code",
+    "twoFactorSubmit": "Confirm",
+    "backToLogin": "Back to sign in",
+    "home": "Back to the start page",
+    "forTeam": "For the team only. You do not need an account to play."
+  },
+  "notInTeam": {
+    "title": "You are not on the team (yet)",
+    "text": "You are signed in, but you have no role in MoinMorni yet. Ask the owner to give you one – then you can continue here.",
+    "logout": "Sign out"
+  },
+  "gate": {
+    "loading": "Loading the panel …",
+    "errorTitle": "The panel is not answering right now",
+    "retry": "Try again"
+  },
+  "setup": {
+    "title": "Welcome to MoinMorni!",
+    "text": "Create your owner account. You will manage the whole network with it.",
+    "codeHelp": "The installation script showed the setup code. Lost it? This command on the server shows it:",
+    "code": "Setup code",
+    "username": "Your name",
+    "usernameHelp": "3–32 characters: letters, numbers, dot, dash and underscore.",
+    "password": "Password",
+    "passwordHelp": "At least 10 characters – a whole sentence is easier to remember and safe.",
+    "passwordRepeat": "Repeat password",
+    "language": "Language",
+    "submit": "Create account and start",
+    "busy": "Creating …",
+    "mismatch": "The two passwords are not the same.",
+    "nameInvalid": "The name does not fit yet: 3–32 characters, only letters, numbers, dot, dash and underscore.",
+    "passwordShort": "The password needs at least 10 characters.",
+    "codeMissing": "Please enter the setup code.",
+    "doneTitle": "MoinMorni is already set up",
+    "doneText": "There is an owner account already. Just sign in.",
+    "toLogin": "Go to sign in"
+  },
+  "shell": {
+    "overview": "Overview",
+    "modes": "Modes",
+    "settings": "Settings",
+    "roles": "Roles",
+    "servers": "Servers",
+    "logout": "Sign out",
+    "website": "To the website",
+    "account": "Signed in as",
+    "manage": "Management"
+  },
+  "overview": {
+    "greeting": "Hello, {{name}}!",
+    "text": "How the network is doing, at a glance.",
+    "network": "Network",
+    "online": "Online",
+    "offline": "Offline",
+    "players": "players online right now",
+    "of": "of {{max}} slots",
+    "proxyOff": "The network's entrance (proxy) is not running right now – players cannot join.",
+    "modes": "Game modes",
+    "modesCount": "{{on}} of {{total}} open",
+    "allModes": "Edit all modes",
+    "shortcuts": "Jump to",
+    "refresh": "Numbers refresh every 15 seconds."
+  },
+  "settings": {
+    "search": "Search settings …",
+    "searchLabel": "Search all settings",
+    "searchHint": "e.g. “maintenance”, “slow” or “/chatconfig”",
+    "noResults": "Nothing found. Try another word.",
+    "inGame": "In game:",
+    "save": "Save",
+    "saving": "Saving …",
+    "saved": "Saved – applies right away.",
+    "discard": "Discard",
+    "unsaved_one": "{{count}} unsaved change",
+    "unsaved_other": "{{count}} unsaved changes",
+    "range": "{{min}} to {{max}}",
+    "chars": "{{count}} / {{max}} characters",
+    "listAdd": "Add",
+    "listPlaceholder": "New entry",
+    "listEmpty": "Nothing here yet.",
+    "listCount": "{{count}} of at most {{max}}",
+    "listFull": "The list is full.",
+    "listRemove": "Remove “{{item}}”",
+    "listDuplicate": "Already in the list.",
+    "on": "On",
+    "off": "Off",
+    "missing": "This area does not exist – or you may not see it.",
+    "default": "Default: {{value}}"
+  },
+  "modes": {
+    "title": "Modes",
+    "text": "Which game modes exist, their order in the lobby and on the website, and who may join.",
+    "state": "State",
+    "stateHelp": "“Soon” already shows the mode, but nobody can join yet.",
+    "access": "Who may join?",
+    "accessEveryone": "Everyone",
+    "accessWhitelist": "Invitation only (whitelist)",
+    "nameDe": "Name in German",
+    "nameEn": "Name in English",
+    "descDe": "Description in German",
+    "descEn": "Description in English",
+    "maxPlayers": "Players at most",
+    "sleep": "Sleep when empty",
+    "sleepHelp": "When nobody is inside, the server goes to sleep and saves memory. It wakes up as soon as someone clicks the villager.",
+    "up": "Move forward",
+    "down": "Move back",
+    "position": "Place {{n}}",
+    "server": "Server in the network: {{name}}",
+    "noServer": "No server assigned yet",
+    "save": "Save",
+    "saved": "“{{name}}” saved.",
+    "moved": "Order saved."
+  },
+  "roles": {
+    "title": "Roles",
+    "text": "A role applies everywhere: symbol and colour in chat, rights in game, areas in the panel and the matching role in Discord.",
+    "editLater": "Editing comes in the next step – until then you see the template here.",
+    "panel": "In the panel",
+    "game": "In game",
+    "discord": "In Discord",
+    "none": "Nothing",
+    "fallback": "For everyone without another role",
+    "rank": "Rank {{n}}",
+    "areas": {
+      "overview": "Overview",
+      "modes": "Modes",
+      "lobby": "Lobby",
+      "players": "Players",
+      "punishments": "Punishments",
+      "chat": "Chat",
+      "voice": "Voice chat",
+      "roles": "Roles",
+      "content": "Website & news",
+      "discord": "Discord",
+      "updates": "Updates",
+      "servers": "Servers",
+      "build": "Build server",
+      "settings": "Settings"
+    },
+    "gameRights": {
+      "kick": "Kick",
+      "ban": "Ban",
+      "mute": "Mute",
+      "jail": "Put in jail",
+      "warn": "Warn",
+      "teleport": "Teleport",
+      "vanish": "Become invisible",
+      "spectate": "Spectate",
+      "inspect": "Inspect players",
+      "voice-join-any": "Join any voice group",
+      "voice-mute": "Mute in voice chat",
+      "build": "Build",
+      "worldedit": "WorldEdit",
+      "lobby-edit": "Edit the lobby",
+      "gamemode": "Change game mode",
+      "creative": "Creative mode",
+      "streamer": "Streamer mode",
+      "reserved-slot": "A slot even when full",
+      "bigger-party": "Bigger party",
+      "lobby-extras": "Lobby extras",
+      "chat-colour": "Colour in chat",
+      "maintenance-join": "Join during maintenance",
+      "ranks": "Give ranks",
+      "admin": "Everything (admin)"
+    },
+    "discordRights": {
+      "administrator": "Everything (administrator)",
+      "manage-server": "Manage server",
+      "manage-messages": "Manage messages",
+      "timeout": "Give timeouts",
+      "tickets": "Handle tickets",
+      "team-area": "Team channels",
+      "builder-area": "Builder channels",
+      "media-area": "Media channels",
+      "vip-area": "VIP channels",
+      "links": "Post links"
+    },
+    "chatSample": "Hello!",
+    "everything": "Everything – all {{count}}"
+  },
+  "servers": {
+    "title": "Servers",
+    "text": "All of MoinMorni's Minecraft servers: console, files, backups, plugins and more – click a server.",
+    "empty": "No servers yet. MoinMorni creates them itself when it sets up the network.",
+    "players": "{{online}} / {{max}} players",
+    "open": "Open",
+    "loading": "Loading servers …",
+    "motorSignedOut": "Your sign-in has expired. Please sign in again.",
+    "back": "All servers"
+  },
+  "notFound": {
+    "title": "Nothing here",
+    "text": "This page does not exist in the panel.",
+    "back": "To the overview"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again in a moment.",
+    "network": "No connection to the server. Check your internet and try again.",
+    "unauthorized": "Please sign in (again).",
+    "invalid_credentials": "Name or password is not right.",
+    "invalid_code": "The code is not right. Use the current one from your app.",
+    "no_pending_login": "The sign-in has expired. Please start again.",
+    "email_unconfirmed": "Please confirm your email address first.",
+    "account_pending_approval": "Your account is still waiting for approval.",
+    "not_in_team": "Your account has no role in MoinMorni yet.",
+    "panel_area_forbidden": "Your role may not change this area.",
+    "csrf": "Your session has expired. Reload the page and try again.",
+    "bad_origin": "The request came from another site and was refused.",
+    "invalid_request": "One of the inputs does not fit yet.",
+    "settings_invalid": "A value is outside the allowed range.",
+    "settings_area_unknown": "This settings area does not exist.",
+    "mode_unknown": "This mode does not exist (any more).",
+    "motor_unreachable": "The motor (the server management) is not answering right now.",
+    "internal": "An error happened in the panel. Please try again in a moment.",
+    "too_many": "Too many attempts. Wait a little and try again.",
+    "passkey_cancelled": "Passkey sign-in cancelled.",
+    "passkey_unknown": "MoinMorni does not know this passkey.",
+    "setup_code_wrong": "The setup code is not right. Have another close look.",
+    "setup_done": "MoinMorni is already set up. Just sign in.",
+    "setup_invalid": "Name or password do not fit the rules yet."
+  }
+}

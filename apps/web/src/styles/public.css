@@ -1,0 +1,6 @@
+/* The public website: Tailwind with MoinMorni's tokens only (no panel code). */
+@import 'tailwindcss';
+@import './tokens.css';
+@import './base.css';
+
+@custom-variant dark (&:is(.dark *));

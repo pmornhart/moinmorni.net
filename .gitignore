@@ -14,3 +14,4 @@ data/
 render-cache/
 # Spiel-Screenshots nur lokal (Mojang-Texturen)
 docs/fortschritt/bilder/
+__pycache__/

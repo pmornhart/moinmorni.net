@@ -276,6 +276,61 @@ describe('Hub', () => {
     expect(full).toMatchObject({ data: { allow: false, message: expect.stringContaining('voll') } });
   });
 
+  test('Einstellungen per Befehl im Spiel – gleiche Prüfung und Rechte wie im Panel', async () => {
+    const { proxy } = await network();
+    const cmd = (uuid: string, command: string, ...args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+
+    await cmd(PHILIP, 'chatconfig', 'langsam', '5');
+    await said(PHILIP, 'Gespeichert');
+    expect(stores.settings('chat')['slowMode']).toBe(5);
+
+    await cmd(PHILIP, 'chatconfig', 'langsam', '999');
+    await said(PHILIP, 'passt nicht');
+    expect(stores.settings('chat')['slowMode']).toBe(5);
+
+    await cmd(PHILIP, 'wartung', 'an');
+    expect(await proxy.next('network', (m) => m['maintenance'] === true)).toBeTruthy();
+    await cmd(PHILIP, 'lobby', 'saison', 'ostern');
+    expect(stores.settings('lobby')['season']).toBe('easter');
+    await cmd(PHILIP, 'chatconfig', 'wort', 'hinzu', 'blöd');
+    await cmd(PHILIP, 'chatconfig', 'wort', 'hinzu', 'mist');
+    await cmd(PHILIP, 'chatconfig', 'wort', 'weg', 'blöd');
+    expect(stores.settings('chat')['badWords']).toEqual(['mist']);
+    await cmd(PHILIP, 'netzwerk', 'motd', '1', '§aHallo', 'Welt');
+    expect(stores.settings('network')['motd1']).toBe('§aHallo Welt');
+
+    await cmd(PHILIP, 'chatconfig');
+    await said(PHILIP, 'auch im Panel');
+
+    await cmd(LENA, 'chatconfig', 'langsam', '0');
+    await said(LENA, 'not allowed');
+    expect(stores.settings('chat')['slowMode']).toBe(5);
+
+    // /lobby ohne Wörter bleibt „ab in die Lobby“.
+    await cmd(LENA, 'lobby');
+    await said(LENA, 'lobby');
+
+    const tab = await proxy.request({ t: 'complete', uuid: PHILIP, command: 'chatconfig', args: ['l'] });
+    expect(tab).toMatchObject({ data: { suggestions: ['langsam', 'links'] } });
+    const onOff = await proxy.request({
+      t: 'complete',
+      uuid: PHILIP,
+      command: 'chatconfig',
+      args: ['links', ''],
+    });
+    expect(onOff).toMatchObject({ data: { suggestions: ['an', 'aus'] } });
+    const season = await proxy.request({
+      t: 'complete',
+      uuid: PHILIP,
+      command: 'lobby',
+      args: ['saison', 'w'],
+    });
+    expect(season).toMatchObject({ data: { suggestions: ['wiesn', 'winter'] } });
+  });
+
   test('Proxy meldet nach dem Neuverbinden alle Spieler – Spielzeit wird gezählt', async () => {
     const { proxy } = await network();
     clock.now += 30 * 60_000;

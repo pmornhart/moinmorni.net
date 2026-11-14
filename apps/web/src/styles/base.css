@@ -1,0 +1,99 @@
+/* Base rules shared by the website and the panel. */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 88px;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'cv11';
+    min-height: 100dvh;
+  }
+  body > * {
+    @apply text-foreground;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  /* A grid without own columns: one column as wide as the grid, so long words cannot push it wider. */
+  :where(.grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The white-blue lozenge stripe: used sparingly at the edge of bands and between sections. */
+.lozenge {
+  background: repeating-linear-gradient(135deg, var(--lozenge-white) 0 9px, var(--lozenge-blue) 9px 18px);
+}
+
+.font-display {
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+/* The forest band: deep green with a soft emerald and gold glow. */
+.band {
+  background:
+    radial-gradient(120% 90% at 85% -10%, rgba(231, 187, 77, 0.16), transparent 55%),
+    radial-gradient(90% 80% at 0% 0%, rgba(16, 185, 129, 0.22), transparent 60%), var(--band);
+  color: var(--band-foreground);
+}
+
+@keyframes mm-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(52, 211, 153, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+  }
+}
+.mm-pulse {
+  animation: mm-pulse 2.2s ease-out infinite;
+}
+
+@keyframes mm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.mm-rise {
+  animation: mm-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes mm-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  30% {
+    box-shadow: 0 0 0 3px var(--gold);
+  }
+}
+.mm-flash {
+  border-radius: 12px;
+  animation: mm-flash 1.6s ease-in-out 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

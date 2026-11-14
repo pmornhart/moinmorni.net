@@ -11,6 +11,7 @@ import { createPlayerService, normalUuid, type PlayerService } from './players.j
 import { createPresence, type Presence } from './presence.js';
 import { hubSecretOf, serverKeyOf } from './protocol.js';
 import { createPunishService, type PunishService } from './punish.js';
+import { createSettingCommands, mergeCommands } from './setting-commands.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
 
@@ -177,7 +178,7 @@ export function createHub(options: HubOptions): Hub {
       toProxy(bans());
     },
   };
-  const commands = createCommands(ctx);
+  const commands = mergeCommands(createCommands(ctx), createSettingCommands(ctx));
   const chat = createChat(ctx, () => stores.settings('chat') as unknown as ChatSettings);
 
   const reply = (conn: Connection, id: number, data: unknown): void =>

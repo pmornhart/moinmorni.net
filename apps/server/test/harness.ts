@@ -64,6 +64,10 @@ export interface Harness {
 export interface HarnessOptions {
   /** false = der Motor ist frisch, noch ohne Konto (Ersteinrichtung über MoinMorni testen). */
   readonly motorSetup?: boolean;
+  /** Gebaute Webseite ausliefern (Browser-Tests). */
+  readonly webDir?: string;
+  /** Fester Port für MoinMorni (Browser-Tests). */
+  readonly port?: number;
 }
 
 export async function createHarness(options: HarnessOptions = {}): Promise<Harness> {
@@ -106,14 +110,14 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
         MM_MOTOR_URL: motorUrl,
         MM_MOTOR_TOKEN: token,
         MM_PORT: '0',
-        MM_WEB_DIR: mmDir,
+        MM_WEB_DIR: options.webDir ?? mmDir,
         MM_AUTO_NETWORK: 'false',
       },
       mmDir,
     ),
     logger: false,
   });
-  await mm.app.listen({ host: '127.0.0.1', port: 0 });
+  await mm.app.listen({ host: '127.0.0.1', port: options.port ?? 0 });
   const mmAddress = mm.app.server.address();
   const mmUrl = `http://127.0.0.1:${typeof mmAddress === 'object' && mmAddress ? mmAddress.port : 0}`;
 

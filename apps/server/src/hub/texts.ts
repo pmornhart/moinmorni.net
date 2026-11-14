@@ -166,6 +166,29 @@ const TEXTS = {
     en: `${P}<red>You may not give this rank.`,
   },
   'lobby.going': { de: `${P}<gray>Ab in die Lobby!`, en: `${P}<gray>Off to the lobby!` },
+  'set.saved': {
+    de: `${P}<green>Gespeichert:</green> <gray>{label} <dark_gray>→</dark_gray> <white>{value}`,
+    en: `${P}<green>Saved:</green> <gray>{label} <dark_gray>→</dark_gray> <white>{value}`,
+  },
+  'set.current': {
+    de: `${P}<gray>{label}: <white>{value}</white> <dark_gray>·</dark_gray> ändern: <yellow>{usage}`,
+    en: `${P}<gray>{label}: <white>{value}</white> <dark_gray>·</dark_gray> change: <yellow>{usage}`,
+  },
+  'set.invalid': {
+    de: `${P}<red>Das passt nicht für „{label}“.</red> <gray>So geht's: <yellow>{usage}`,
+    en: `${P}<red>That doesn't fit "{label}".</red> <gray>Usage: <yellow>{usage}`,
+  },
+  'set.head': {
+    de: `${P}<gray>Einstellungen – alles auch im Panel unter <white>{area}</white>:`,
+    en: `${P}<gray>Settings – everything is in the panel too, under <white>{area}</white>:`,
+  },
+  'set.line': {
+    de: '<dark_gray> • </dark_gray><yellow>{usage}</yellow> <dark_gray>–</dark_gray> <gray>{label}: <white>{value}',
+    en: '<dark_gray> • </dark_gray><yellow>{usage}</yellow> <dark_gray>–</dark_gray> <gray>{label}: <white>{value}',
+  },
+  'set.on': { de: 'an', en: 'on' },
+  'set.off': { de: 'aus', en: 'off' },
+  'set.empty': { de: '(leer)', en: '(empty)' },
   'lobby.missing': {
     de: `${P}<red>Die Lobby ist gerade nicht da.`,
     en: `${P}<red>The lobby isn't available right now.`,

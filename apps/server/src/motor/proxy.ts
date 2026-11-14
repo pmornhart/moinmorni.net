@@ -5,7 +5,8 @@ import { notFound } from '../lib/errors.js';
 /**
  * moinmorni.net/panel/motor/api/* → Motor /api/*: Login (Passkeys, 2FA), die eingebetteten Server-Seiten und die
  * Live-Verbindung des Motors. Nur freigegebene Pfade gehen durch – Registrieren, Einrichten, Schlüssel,
- * Hoster-Funktionen (Bestellungen, Zahlungen, Freigaben) und Umzug gibt es über MoinMorni nicht.
+ * Hoster-Funktionen (Bestellungen, Zahlungen, Freigaben) und Umzug gibt es über MoinMorni nicht. Bilder von Mojang
+ * (Spielbilder, Item-Texturen aus dem Wiki) bleiben draußen – der Motor zeigt dann seine eigenen Zeichnungen.
  */
 
 export const MOTOR_PREFIX = '/panel/motor';
@@ -17,8 +18,6 @@ const ALLOW: readonly string[] = [
   '/api/networks',
   '/api/ws',
   '/api/heads/',
-  '/api/item-icons/',
-  '/api/game-art/',
   '/api/versions',
   '/api/content/',
   '/api/host',

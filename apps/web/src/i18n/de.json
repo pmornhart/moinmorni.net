@@ -1,0 +1,354 @@
+{
+  "brand": {
+    "tagline": "Dein Minecraft-Netzwerk mit Alpendorf, Schloss und vielen Spielmodi.",
+    "panelTag": "Panel"
+  },
+  "nav": {
+    "start": "Start",
+    "modes": "Modi",
+    "rules": "Regeln",
+    "team": "Team",
+    "panel": "Panel",
+    "menu": "Menü öffnen",
+    "close": "Schließen",
+    "main": "Hauptmenü",
+    "skip": "Zum Inhalt springen"
+  },
+  "theme": {
+    "toLight": "Helles Design",
+    "toDark": "Dunkles Design"
+  },
+  "language": {
+    "label": "Sprache",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "home": {
+    "eyebrow": "Minecraft-Netzwerk · Java & Bedrock",
+    "pitch": "Dein Minecraft-Netzwerk mit Alpendorf, Schloss und vielen Spielmodi.",
+    "online_one": "{{count}} Spieler online",
+    "online_other": "{{count}} Spieler online",
+    "offline": "Gerade offline",
+    "statusLoading": "Schaue nach, wer online ist …",
+    "statusError": "Status gerade nicht abrufbar",
+    "updated": "Aktualisiert sich alle 15 Sekunden",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "copyManual": "Markier die Adresse und kopier sie von Hand.",
+    "address": "Adresse",
+    "port": "Port",
+    "java": {
+      "title": "Java Edition",
+      "hint": "Am PC: Mehrspieler → Server hinzufügen → Adresse einfügen. Ab Version 1.17."
+    },
+    "bedrock": {
+      "title": "Bedrock Edition",
+      "hint": "Handy, Konsole oder Windows: Spielen → Server → Server hinzufügen, Adresse und Port eintragen."
+    },
+    "modes": {
+      "eyebrow": "Spielmodi",
+      "title": "Such dir dein Abenteuer aus",
+      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "empty": "Gerade sind noch keine Spielmodi eingetragen."
+    },
+    "soon": {
+      "eyebrow": "Bald hier",
+      "title": "Das Dorf wächst noch",
+      "text": "Diese Teile der Webseite bauen wir gerade. Sobald sie fertig sind, findest du sie hier.",
+      "badge": "Kommt bald",
+      "news": {
+        "title": "Neuigkeiten",
+        "text": "Was sich im Netzwerk tut: neue Modi, Updates und Events."
+      },
+      "discord": {
+        "title": "Discord",
+        "text": "Unser eigener Discord mit Status, Hilfe und Konto-Verknüpfung."
+      },
+      "modpack": {
+        "title": "Modpack",
+        "text": "Schönere Optik, Sprachchat und Bau-Werkzeuge – mit einem Klick installiert."
+      },
+      "leaderboards": {
+        "title": "Ranglisten",
+        "text": "Bestzeiten im Gipfelsturm, Siege in Duels und mehr."
+      }
+    }
+  },
+  "mode": {
+    "state": {
+      "on": "Offen",
+      "off": "Aus",
+      "maintenance": "Wartung",
+      "soon": "Bald"
+    },
+    "whitelist": "Nur auf Einladung",
+    "players": "{{players}} / {{max}} Spieler",
+    "asleep": "Schläft gerade – wacht auf, sobald du kommst",
+    "maintenanceText": "Wir schrauben gerade daran.",
+    "soonText": "Wir bauen noch daran.",
+    "closed": "Gerade geschlossen"
+  },
+  "footer": {
+    "about": "Ein eigenes Minecraft-Netzwerk aus Bayern – mit Lobby im Alpendorf und Spielmodi für allein und zusammen.",
+    "links": "Mehr",
+    "disclaimer": "Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden."
+  },
+  "pages": {
+    "follows": "Inhalt folgt",
+    "back": "Zur Startseite",
+    "rules": {
+      "title": "Regeln",
+      "text": "Hier stehen bald die Regeln für das ganze Netzwerk – kurz, freundlich und für alle verständlich."
+    },
+    "team": {
+      "title": "Team",
+      "text": "Hier stellt sich bald das Team vor: wer hinter MoinMorni steckt und wen du bei Fragen ansprechen kannst."
+    },
+    "imprint": {
+      "title": "Impressum",
+      "text": "Das Impressum folgt hier, sobald es fertig ist."
+    },
+    "privacy": {
+      "title": "Datenschutz",
+      "text": "Hier steht bald, welche Daten MoinMorni speichert und warum."
+    },
+    "notFound": {
+      "title": "Diese Seite gibt es nicht",
+      "text": "Vielleicht hat sich ein Tippfehler eingeschlichen. Von der Startseite aus findest du alles."
+    }
+  },
+  "login": {
+    "title": "Team-Bereich",
+    "subtitle": "Melde dich mit deinem MoinMorni-Konto an.",
+    "username": "Name oder E-Mail",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "busy": "Einen Moment …",
+    "or": "oder",
+    "passkey": "Mit Passkey anmelden",
+    "passkeyWaiting": "Warte auf deinen Passkey …",
+    "passkeyHint": "Ein Passkey meldet dich per Fingerabdruck, Gesicht oder Sicherheitsschlüssel an – ganz ohne Passwort.",
+    "twoFactorTitle": "Noch ein Schritt",
+    "twoFactorText": "Gib den 6-stelligen Code aus deiner Authenticator-App ein.",
+    "code": "Code",
+    "twoFactorSubmit": "Bestätigen",
+    "backToLogin": "Zurück zur Anmeldung",
+    "home": "Zur Startseite",
+    "forTeam": "Nur für das Team. Zum Spielen brauchst du kein Konto."
+  },
+  "notInTeam": {
+    "title": "Du bist (noch) nicht im Team",
+    "text": "Du bist angemeldet, hast in MoinMorni aber noch keine Rolle. Frag den Owner, ob er dir eine gibt – dann geht es hier weiter.",
+    "logout": "Abmelden"
+  },
+  "gate": {
+    "loading": "Panel wird geladen …",
+    "errorTitle": "Das Panel antwortet gerade nicht",
+    "retry": "Nochmal versuchen"
+  },
+  "setup": {
+    "title": "Willkommen bei MoinMorni!",
+    "text": "Leg dein Owner-Konto an. Damit verwaltest du später das ganze Netzwerk.",
+    "codeHelp": "Den Einrichtungs-Code hat das Installationsskript angezeigt. Verlegt? Auf dem Server zeigt ihn dieser Befehl:",
+    "code": "Einrichtungs-Code",
+    "username": "Dein Name",
+    "usernameHelp": "3–32 Zeichen: Buchstaben, Zahlen, Punkt, Minus und Unterstrich.",
+    "password": "Passwort",
+    "passwordHelp": "Mindestens 10 Zeichen – ein ganzer Satz ist leichter zu merken und sicher.",
+    "passwordRepeat": "Passwort wiederholen",
+    "language": "Sprache",
+    "submit": "Konto anlegen und loslegen",
+    "busy": "Wird angelegt …",
+    "mismatch": "Die beiden Passwörter sind nicht gleich.",
+    "nameInvalid": "Der Name passt noch nicht: 3–32 Zeichen, nur Buchstaben, Zahlen, Punkt, Minus und Unterstrich.",
+    "passwordShort": "Das Passwort braucht mindestens 10 Zeichen.",
+    "codeMissing": "Bitte gib den Einrichtungs-Code ein.",
+    "doneTitle": "MoinMorni ist schon eingerichtet",
+    "doneText": "Es gibt bereits ein Owner-Konto. Melde dich einfach an.",
+    "toLogin": "Zur Anmeldung"
+  },
+  "shell": {
+    "overview": "Übersicht",
+    "modes": "Modi",
+    "settings": "Einstellungen",
+    "roles": "Rollen",
+    "servers": "Server",
+    "logout": "Abmelden",
+    "website": "Zur Webseite",
+    "account": "Angemeldet als",
+    "manage": "Verwaltung"
+  },
+  "overview": {
+    "greeting": "Servus, {{name}}!",
+    "text": "Hier siehst du auf einen Blick, wie es dem Netzwerk geht.",
+    "network": "Netzwerk",
+    "online": "Online",
+    "offline": "Offline",
+    "players": "Spieler gerade online",
+    "of": "von {{max}} Plätzen",
+    "proxyOff": "Der Eingang zum Netzwerk (Proxy) läuft gerade nicht – Spieler kommen nicht herein.",
+    "modes": "Spielmodi",
+    "modesCount": "{{on}} von {{total}} laufen",
+    "allModes": "Alle Modi bearbeiten",
+    "shortcuts": "Schnell zu",
+    "refresh": "Zahlen aktualisieren sich alle 15 Sekunden."
+  },
+  "settings": {
+    "search": "Einstellung suchen …",
+    "searchLabel": "Alle Einstellungen durchsuchen",
+    "searchHint": "z. B. „Wartung“, „Langsam“ oder „/chatconfig“",
+    "noResults": "Nichts gefunden. Versuch ein anderes Wort.",
+    "inGame": "Im Spiel:",
+    "save": "Speichern",
+    "saving": "Speichert …",
+    "saved": "Gespeichert – gilt ab sofort.",
+    "discard": "Verwerfen",
+    "unsaved_one": "{{count}} ungespeicherte Änderung",
+    "unsaved_other": "{{count}} ungespeicherte Änderungen",
+    "range": "{{min}} bis {{max}}",
+    "chars": "{{count}} / {{max}} Zeichen",
+    "listAdd": "Hinzufügen",
+    "listPlaceholder": "Neuer Eintrag",
+    "listEmpty": "Noch nichts eingetragen.",
+    "listCount": "{{count}} von höchstens {{max}}",
+    "listFull": "Die Liste ist voll.",
+    "listRemove": "„{{item}}“ entfernen",
+    "listDuplicate": "Steht schon in der Liste.",
+    "on": "An",
+    "off": "Aus",
+    "missing": "Diesen Bereich gibt es nicht – oder du darfst ihn nicht sehen.",
+    "default": "Standard: {{value}}"
+  },
+  "modes": {
+    "title": "Modi",
+    "text": "Welche Spielmodi es gibt, in welcher Reihenfolge sie in der Lobby und auf der Webseite stehen und wer hinein darf.",
+    "state": "Zustand",
+    "stateHelp": "„Bald“ zeigt den Modus schon an, man kann aber noch nicht hinein.",
+    "access": "Wer darf hinein?",
+    "accessEveryone": "Alle",
+    "accessWhitelist": "Nur auf Einladung (Whitelist)",
+    "nameDe": "Name auf Deutsch",
+    "nameEn": "Name auf Englisch",
+    "descDe": "Beschreibung auf Deutsch",
+    "descEn": "Beschreibung auf Englisch",
+    "maxPlayers": "Spieler höchstens",
+    "sleep": "Schlafen, wenn leer",
+    "sleepHelp": "Ist niemand drin, legt sich der Server schlafen und spart Arbeitsspeicher. Er wacht auf, sobald jemand die Figur anklickt.",
+    "up": "Weiter nach vorne",
+    "down": "Weiter nach hinten",
+    "position": "Platz {{n}}",
+    "server": "Server im Netzwerk: {{name}}",
+    "noServer": "Noch kein Server zugeordnet",
+    "save": "Speichern",
+    "saved": "„{{name}}“ gespeichert.",
+    "moved": "Reihenfolge gespeichert."
+  },
+  "roles": {
+    "title": "Rollen",
+    "text": "Eine Rolle gilt überall: Symbol und Farbe im Chat, Rechte im Spiel, Bereiche im Panel und die passende Rolle im Discord.",
+    "editLater": "Bearbeiten kommt im nächsten Schritt – bis dahin siehst du hier die Vorlage.",
+    "panel": "Im Panel",
+    "game": "Im Spiel",
+    "discord": "Im Discord",
+    "none": "Nichts",
+    "fallback": "Für alle ohne andere Rolle",
+    "rank": "Rang {{n}}",
+    "areas": {
+      "overview": "Übersicht",
+      "modes": "Modi",
+      "lobby": "Lobby",
+      "players": "Spieler",
+      "punishments": "Strafen",
+      "chat": "Chat",
+      "voice": "Sprachchat",
+      "roles": "Rollen",
+      "content": "Webseite & News",
+      "discord": "Discord",
+      "updates": "Updates",
+      "servers": "Server",
+      "build": "Bau-Server",
+      "settings": "Einstellungen"
+    },
+    "gameRights": {
+      "kick": "Rauswerfen",
+      "ban": "Bannen",
+      "mute": "Stummschalten",
+      "jail": "Ins Gefängnis stecken",
+      "warn": "Verwarnen",
+      "teleport": "Teleportieren",
+      "vanish": "Unsichtbar werden",
+      "spectate": "Zuschauen",
+      "inspect": "Spieler ansehen",
+      "voice-join-any": "Jeder Sprachgruppe beitreten",
+      "voice-mute": "Im Sprachchat stummschalten",
+      "build": "Bauen",
+      "worldedit": "WorldEdit",
+      "lobby-edit": "Lobby bearbeiten",
+      "gamemode": "Spielmodus wechseln",
+      "creative": "Kreativmodus",
+      "streamer": "Streamer-Modus",
+      "reserved-slot": "Platz, auch wenn voll",
+      "bigger-party": "Größere Party",
+      "lobby-extras": "Extras in der Lobby",
+      "chat-colour": "Farbe im Chat",
+      "maintenance-join": "Rein trotz Wartung",
+      "ranks": "Ränge vergeben",
+      "admin": "Alles (Verwaltung)"
+    },
+    "discordRights": {
+      "administrator": "Alles (Administrator)",
+      "manage-server": "Server verwalten",
+      "manage-messages": "Nachrichten verwalten",
+      "timeout": "Timeout geben",
+      "tickets": "Tickets bearbeiten",
+      "team-area": "Team-Kanäle",
+      "builder-area": "Bau-Kanäle",
+      "media-area": "Media-Kanäle",
+      "vip-area": "VIP-Kanäle",
+      "links": "Links posten"
+    },
+    "chatSample": "Servus!",
+    "everything": "Alles – alle {{count}}"
+  },
+  "servers": {
+    "title": "Server",
+    "text": "Alle Minecraft-Server von MoinMorni: Konsole, Dateien, Backups, Plugins und mehr – mit einem Klick auf den Server.",
+    "empty": "Noch keine Server angelegt. Die legt MoinMorni bei der Einrichtung des Netzwerks selbst an.",
+    "players": "{{online}} / {{max}} Spieler",
+    "open": "Öffnen",
+    "loading": "Server werden geladen …",
+    "motorSignedOut": "Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.",
+    "back": "Alle Server"
+  },
+  "notFound": {
+    "title": "Hier ist nichts",
+    "text": "Diese Seite gibt es im Panel nicht.",
+    "back": "Zur Übersicht"
+  },
+  "errors": {
+    "generic": "Da ist etwas schiefgegangen. Versuch es bitte gleich nochmal.",
+    "network": "Keine Verbindung zum Server. Prüf dein Internet und versuch es nochmal.",
+    "unauthorized": "Bitte melde dich (neu) an.",
+    "invalid_credentials": "Name oder Passwort stimmen nicht.",
+    "invalid_code": "Der Code stimmt nicht. Nimm den aktuellen aus deiner App.",
+    "no_pending_login": "Die Anmeldung ist abgelaufen. Bitte fang nochmal an.",
+    "email_unconfirmed": "Bitte bestätige zuerst deine E-Mail-Adresse.",
+    "account_pending_approval": "Dein Konto wartet noch auf Freigabe.",
+    "not_in_team": "Dein Konto hat noch keine Rolle in MoinMorni.",
+    "panel_area_forbidden": "Diesen Bereich darf deine Rolle nicht ändern.",
+    "csrf": "Deine Sitzung ist abgelaufen. Lade die Seite neu und versuch es nochmal.",
+    "bad_origin": "Die Anfrage kam von einer fremden Seite und wurde abgelehnt.",
+    "invalid_request": "Da passt eine Eingabe noch nicht.",
+    "settings_invalid": "Ein Wert liegt außerhalb des erlaubten Bereichs.",
+    "settings_area_unknown": "Diesen Einstellungs-Bereich gibt es nicht.",
+    "mode_unknown": "Diesen Modus gibt es nicht (mehr).",
+    "motor_unreachable": "Der Motor (die Server-Verwaltung) antwortet gerade nicht.",
+    "internal": "Im Panel ist ein Fehler passiert. Versuch es bitte gleich nochmal.",
+    "too_many": "Zu viele Versuche. Warte kurz und versuch es dann nochmal.",
+    "passkey_cancelled": "Passkey-Anmeldung abgebrochen.",
+    "passkey_unknown": "Diesen Passkey kennt MoinMorni nicht.",
+    "setup_code_wrong": "Der Einrichtungs-Code stimmt nicht. Schau nochmal genau hin.",
+    "setup_done": "MoinMorni ist schon eingerichtet. Melde dich einfach an.",
+    "setup_invalid": "Name oder Passwort passen noch nicht zu den Regeln."
+  }
+}

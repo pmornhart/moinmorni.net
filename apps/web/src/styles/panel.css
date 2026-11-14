@@ -1,0 +1,10 @@
+/*
+ * The panel: MorniHosting's panel styles (its embedded server pages need them: animations, console, fonts), then
+ * MoinMorni's tokens on top, so both look like one app.
+ */
+@import 'tailwindcss';
+@import '../../../../vendor/mornihosting/apps/web/src/styles/panel.css';
+@import './tokens.css';
+@import './base.css';
+
+@source '../../../../vendor/mornihosting/apps/web/src';
