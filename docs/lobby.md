@@ -71,6 +71,20 @@ schickt sie zusammen mit den Panel-Einstellungen als `lobby-settings` an den Lob
   doppelt (`Name` bis 26.2, `id` ab 26.3 – sonst zeigt 26.3 nur Luft).
 - **Dorfleute:** wie viele herumlaufen, stellt das Panel ein.
 
+## Gefängnis (`LobbyJail.java`, Zelle in `packages/builder/src/lobby/jail.ts`)
+
+`/gefaengnis <spieler> [dauer] [grund]` (auch `/jail`, ohne Dauer zehn Minuten) oder im Panel unter Spieler/Strafen.
+Die Strafe gilt im ganzen Netzwerk:
+
+- Wer gerade einen Modus spielt, kommt in die Lobby; andere Server lehnt der Hub ab, solange die Strafe läuft.
+- Die Zelle liegt im Keller des Rathauses. Das Plugin hält Eingesperrte darin (auch Teleports nach draußen), zeigt
+  eine Leiste mit der Restzeit und lässt nur `/msg`, `/r`, `/regeln`, `/hilfe`, `/sprache` zu.
+- Chat aus der Zelle lesen nur das Team (Recht „Gefängnis“) und andere Eingesperrte; `/msg` geht nur ans Team.
+- Nach Ablauf oder `/frei <spieler>` zurück auf den Dorfplatz mit Kompass und Buch. Wer offline eingesperrt wird,
+  landet beim Betreten direkt in der Zelle.
+- Discord: Rolle „⛓ Gefängnis“ (sieht nur den Gefängnis-Kanal), wird nach Ablauf wieder abgenommen; Eintrag im
+  Team-Log.
+
 ## Die Lobby baut sich selbst
 
 Beim Einrichten (und nach jedem Update, wenn sich der Bauplan geändert hat) baut MoinMorni die Welt auf dem

@@ -743,7 +743,8 @@
       "expired": "Expired",
       "replaced": "Replaced by a newer one",
       "once": "One-off"
-    }
+    },
+    "jailed": "In jail"
   },
   "punish": {
     "kinds": {
@@ -757,7 +758,8 @@
       "ban": "Ban",
       "mute": "Mute",
       "warn": "Warn",
-      "kick": "Kick"
+      "kick": "Kick",
+      "jail": "Jail"
     },
     "title": "New punishment",
     "titleFor": "Punish {{name}}",
@@ -796,7 +798,9 @@
       "mute": "{{name}} cannot write in chat for {{duration}}.",
       "muteForever": "{{name}} cannot write in chat any more – until someone lifts the mute.",
       "warn": "{{name}} sees the warning in the game (if online). It stays in the history.",
-      "kick": "{{name}} is removed from the network right away, but can join again straight away."
+      "kick": "{{name}} is removed from the network right away, but can join again straight away.",
+      "jail": "{{name}} goes to the lobby jail cell for {{duration}}: no game modes, can only write to the team. Discord: jail role.",
+      "jailForever": "{{name}} goes to the lobby jail cell until someone releases them: no game modes, can only write to the team. Discord: jail role."
     },
     "busy": "One moment …",
     "cancel": "Cancel",
@@ -804,7 +808,8 @@
       "ban": "{{name}} is banned now.",
       "mute": "{{name}} is muted now.",
       "warn": "{{name}} has been warned.",
-      "kick": "{{name}} has been kicked."
+      "kick": "{{name}} has been kicked.",
+      "jail": "{{name}} is in jail now."
     },
     "lifted": {
       "ban": "{{name}}'s ban is lifted.",

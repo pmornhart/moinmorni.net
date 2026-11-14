@@ -14,6 +14,7 @@ import { disc, range } from '../range.js';
 import { discAt, path, type Facing } from '../shapes.js';
 import { npc, signText } from '../village.js';
 import { LAUNCHPADS, PARKOUR } from './features.js';
+import { buildJail } from './jail.js';
 import { fence, field, forest, houseAt, lampPost, MODES, mountains, ramp, stallAt } from './common.js';
 
 const HALF = 0.5;
@@ -337,6 +338,9 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
   // Schloss auf dem Hügel, Freitreppe nach Süden
   castle(c, { x: 0, y: GROUND + HILL.height, z: -96, front: 'south', wallDrop: 14, rnd });
   LAUNCHPADS.forEach((l) => launchpad(c, l.x, l.y, l.z));
+  // Gefängnis: Arrestzelle im Rathauskeller (das Lobby-Plugin hält Eingesperrte dort)
+  buildJail(c);
+
   // Parkour im Nordwesten: weiß-blaue Spirale, Smaragd = Start, Gold = Kontrollpunkt, Diamant = Ziel
   PARKOUR.blocks.forEach((b, i) => c.set(b.x, b.y, b.z, parkourBlock(i)));
   const goal = PARKOUR.blocks[PARKOUR.blocks.length - 1];

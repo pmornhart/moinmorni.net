@@ -33,12 +33,12 @@ const uuidParams = z.object({ uuid: z.string().min(1).max(40) });
 const roleBody = z.object({ roleId: z.string().min(1).max(24).nullable() });
 const punishBody = z.object({
   player: z.string().trim().min(1).max(40),
-  kind: z.enum(['ban', 'mute', 'warn', 'kick']),
-  /** null = für immer (nur Bann und Stumm). */
+  kind: z.enum(['ban', 'mute', 'jail', 'warn', 'kick']),
+  /** null = für immer (nur Bann, Stumm und Gefängnis). */
   minutes: z.number().int().min(1).max(MINUTES_MAX).nullable(),
   reason: z.string().trim().max(REASON_MAX).default(''),
 });
-const liftParams = z.object({ uuid: z.string().min(1).max(40), kind: z.enum(['ban', 'mute']) });
+const liftParams = z.object({ uuid: z.string().min(1).max(40), kind: z.enum(['ban', 'mute', 'jail']) });
 const LASTING: ReadonlySet<string> = new Set(['ban', 'mute', 'jail', 'voice']);
 
 export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, hub: Hub, db: Db): void {
@@ -47,6 +47,7 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
     const role = hub.players.roleOf(row.uuid);
     const ban = hub.punish.active(row.uuid, 'ban');
     const mute = hub.punish.active(row.uuid, 'mute');
+    const jail = hub.punish.active(row.uuid, 'jail');
     return {
       uuid: row.uuid,
       name: row.name,
@@ -66,6 +67,7 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
       language: row.language ?? row.clientLocale,
       banned: ban ? { until: ban.expiresAt, reason: ban.reason } : null,
       muted: mute ? { until: mute.expiresAt, reason: mute.reason } : null,
+      jailed: jail ? { until: jail.expiresAt, reason: jail.reason } : null,
     };
   };
 

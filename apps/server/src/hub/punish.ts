@@ -2,7 +2,7 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import type { Db } from '../db/index.js';
 import { punishments } from '../db/schema.js';
 
-/** Strafen im ganzen Netzwerk: Bann, Stumm, Verwarnung, Rauswurf (Gefängnis kommt mit der Lobby). */
+/** Strafen im ganzen Netzwerk: Bann, Stumm, Gefängnis (Zelle in der Lobby), Verwarnung, Rauswurf, Sprachchat-Stumm. */
 
 export type PunishKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick' | 'voice';
 export type Punishment = typeof punishments.$inferSelect;
@@ -42,6 +42,8 @@ export interface PunishService {
   readonly history: (uuid: string) => Punishment[];
   /** Wer gerade im Sprachchat stumm ist. */
   readonly activeOf: (kind: PunishKind) => string[];
+  /** Alle gerade gültigen Strafen einer Art (z. B. wer im Gefängnis sitzt und bis wann). */
+  readonly activeAll: (kind: PunishKind) => Punishment[];
   /** Alle gültigen Banns – der Proxy hält sie vor, falls der Hub kurz weg ist. */
   readonly activeBans: () => { uuid: string; until: string | null }[];
 }
@@ -99,6 +101,13 @@ export function createPunishService(db: Db, now: () => Date = () => new Date()):
         .all()
         .filter(valid)
         .map((p) => p.playerUuid),
+    activeAll: (kind) =>
+      db
+        .select()
+        .from(punishments)
+        .where(and(eq(punishments.kind, kind), isNull(punishments.revokedAt)))
+        .all()
+        .filter(valid),
     activeBans: () =>
       db
         .select()

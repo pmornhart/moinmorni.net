@@ -434,6 +434,10 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         rest('DELETE', `/guilds/${g}/members/${player.discordId}/roles/${id}`, undefined, 'MoinMorni: Rang'),
       ),
     ]);
+    // Wer erst nach der Strafe sein Konto verbindet, bekommt die Gefängnis-Rolle trotzdem.
+    const jail = get('role:jail');
+    if (jail && hub.punish.active(uuid, 'jail') && !m.roles.includes(jail))
+      await setExtra(uuid, 'jail', true, 'MoinMorni: Gefängnis');
   };
 
   const setExtra = async (uuid: string, extra: ExtraRole, on: boolean, reason: string): Promise<void> => {
@@ -505,6 +509,15 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         await setExtra(c.uuid, 'muted', false, 'MoinMorni: Stumm vorbei');
         await log2team(bt('de', 'logLiftMute', vars));
       },
+      // Gefängnis: Rolle „⛓ Gefängnis“ – sieht dann nur noch den Gefängnis-Kanal.
+      'jail:add': async () => {
+        await setExtra(c.uuid, 'jail', true, `MoinMorni: ${c.reason}`);
+        await log2team(bt('de', 'logJail', vars));
+      },
+      'jail:lift': async () => {
+        await setExtra(c.uuid, 'jail', false, 'MoinMorni: Gefängnis vorbei');
+        await log2team(bt('de', 'logLiftJail', vars));
+      },
       'warn:add': () => log2team(bt('de', 'logWarn', vars)),
       'kick:add': () => log2team(bt('de', 'logKick', vars)),
     };
@@ -531,14 +544,18 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     });
   };
 
+  /** Abgelaufene Stumm- und Gefängnis-Strafen: die Rolle in Discord wieder abnehmen. */
   const cleanup = async (): Promise<void> => {
-    const muted = db.select().from(discordObjects).where(like(discordObjects.key, 'muted:%')).all();
-    await Promise.all(
-      muted
-        .map((row) => row.key.slice('muted:'.length))
-        .filter((uuid) => !hub.punish.active(uuid, 'mute'))
-        .map((uuid) => setExtra(uuid, 'muted', false, 'MoinMorni: Stumm vorbei')),
-    );
+    const expired = (extra: 'muted' | 'jail', kind: 'mute' | 'jail'): Promise<void>[] =>
+      db
+        .select()
+        .from(discordObjects)
+        .where(like(discordObjects.key, `${extra}:%`))
+        .all()
+        .map((row) => row.key.slice(extra.length + 1))
+        .filter((uuid) => !hub.punish.active(uuid, kind))
+        .map((uuid) => setExtra(uuid, extra, false, 'MoinMorni: Strafe vorbei'));
+    await Promise.all([...expired('muted', 'mute'), ...expired('jail', 'jail')]);
   };
 
   // ---------- Verbinden ----------

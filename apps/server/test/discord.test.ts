@@ -120,7 +120,7 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(mem?.roles).not.toContain(roleByName('★ VIP')?.id);
   });
 
-  test('Strafen gelten auch in Discord: Timeout, Stumm-Rolle, Bann, Team-Log', async () => {
+  test('Strafen gelten auch in Discord: Timeout, Stumm-Rolle, Gefängnis-Rolle, Bann, Team-Log', async () => {
     const teamlog = channelByName('📋・team-log');
     await call('POST', '/api/panel/punishments', {
       player: 'Lena',
@@ -144,6 +144,18 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await call('DELETE', `/api/panel/punishments/${LENA}/mute`);
     await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(roleByName('🔇 Stumm')?.id ?? '-'));
 
+    // Gefängnis: Rolle „⛓ Gefängnis“ (sieht nur noch den Gefängnis-Kanal), Aufheben nimmt sie wieder.
+    const jailRole = roleByName('⛓ Gefängnis')?.id ?? '-';
+    await call('POST', '/api/panel/punishments', {
+      player: 'Lena',
+      kind: 'jail',
+      minutes: 15,
+      reason: 'Beleidigung',
+    });
+    await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(jailRole)));
+    await call('DELETE', `/api/panel/punishments/${LENA}/jail`);
+    await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(jailRole));
+
     await call('POST', '/api/panel/punishments', {
       player: 'Lena',
       kind: 'ban',
@@ -157,6 +169,8 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(log).toContain('gebannt');
     expect(log).toContain('Hacks');
     expect(log).toContain('entbannt');
+    expect(log).toContain('Gefängnis');
+    expect(log).toContain('Beleidigung');
   });
 
   test('Ticket öffnen und schließen, Begrüßung neuer Mitglieder', async () => {

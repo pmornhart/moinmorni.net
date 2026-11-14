@@ -6,13 +6,13 @@ import { mmApi } from '~/lib/mm-api';
 
 export type PunishKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick';
 /** What the panel can hand out. */
-export type ModKind = 'ban' | 'mute' | 'warn' | 'kick';
+export type ModKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick';
 /** What lasts and can be lifted. */
-export type LiftKind = 'ban' | 'mute';
+export type LiftKind = 'ban' | 'mute' | 'jail';
 
-export const MOD_KINDS: readonly ModKind[] = ['warn', 'mute', 'ban', 'kick'];
+export const MOD_KINDS: readonly ModKind[] = ['warn', 'mute', 'jail', 'ban', 'kick'];
 export const PUNISH_KINDS: readonly PunishKind[] = ['ban', 'mute', 'warn', 'kick', 'jail'];
-const LASTING: readonly PunishKind[] = ['ban', 'mute'];
+const LASTING: readonly PunishKind[] = ['ban', 'mute', 'jail'];
 
 export function isLasting(kind: PunishKind): kind is LiftKind {
   return LASTING.includes(kind);
@@ -45,6 +45,7 @@ export interface PlayerView {
   readonly language: string | null;
   readonly banned: ActivePunishment | null;
   readonly muted: ActivePunishment | null;
+  readonly jailed: ActivePunishment | null;
 }
 
 export interface Punishment {

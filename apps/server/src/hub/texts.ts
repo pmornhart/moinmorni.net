@@ -143,6 +143,38 @@ const TEXTS = {
     en: `${P}<red>You were muted{until}. Reason: <white>{reason}`,
   },
   'unmute.you': { de: `${P}<green>Du kannst wieder schreiben.`, en: `${P}<green>You can chat again.` },
+  'jail.you': {
+    de: `${P}<red>Du kommst ins Gefängnis{until}. Grund: <white>{reason}</white>. <gray>Schreiben kannst du nur ans Team.`,
+    en: `${P}<red>You are going to jail{until}. Reason: <white>{reason}</white>. <gray>You can only write to the team.`,
+  },
+  'unjail.you': {
+    de: `${P}<green>Du bist wieder frei – willkommen zurück!`,
+    en: `${P}<green>You are free again – welcome back!`,
+  },
+  'jail.blocked': {
+    de: `${P}<red>Du sitzt im Gefängnis{until} und kannst die Lobby nicht verlassen.`,
+    en: `${P}<red>You are in jail{until} and cannot leave the lobby.`,
+  },
+  'jail.msg_team_only': {
+    de: `${P}<red>Aus dem Gefängnis kannst du nur dem Team schreiben.`,
+    en: `${P}<red>From jail you can only write to the team.`,
+  },
+  'jail.chat': {
+    de: '<dark_gray>[</dark_gray><gray>⛓ Gefängnis</gray><dark_gray>]</dark_gray> <gray>{name}</gray> <dark_gray>»</dark_gray> <white>{text}',
+    en: '<dark_gray>[</dark_gray><gray>⛓ Jail</gray><dark_gray>]</dark_gray> <gray>{name}</gray> <dark_gray>»</dark_gray> <white>{text}',
+  },
+  'punish.not_jailed': {
+    de: `${P}<gray><white>{name}</white> sitzt nicht im Gefängnis.`,
+    en: `${P}<gray><white>{name}</white> is not in jail.`,
+  },
+  'team.jail': {
+    de: `${P}<red>{actor}</red> <gray>hat <white>{name}</white> ins Gefängnis gesteckt{until}. Grund: <white>{reason}`,
+    en: `${P}<red>{actor}</red> <gray>jailed <white>{name}</white>{until}. Reason: <white>{reason}`,
+  },
+  'team.unjail': {
+    de: `${P}<green>{actor}</green> <gray>hat <white>{name}</white> aus dem Gefängnis gelassen.`,
+    en: `${P}<green>{actor}</green> <gray>released <white>{name}</white> from jail.`,
+  },
   'history.head': {
     de: `${P}<gray>Strafen von <white>{name}</white>:`,
     en: `${P}<gray>Punishments of <white>{name}</white>:`,

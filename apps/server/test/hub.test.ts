@@ -192,6 +192,54 @@ describe('Hub', () => {
     await lobby.next('chat', (m) => JSON.stringify(m).includes('wieder da'));
   });
 
+  test('/gefaengnis: in die Zelle der Lobby, keine Modi, Chat nur ans Team, /frei und Ablauf', async () => {
+    const { proxy, lobby, duels } = await network();
+    const go = (uuid: string, server: string) => proxy.request({ t: 'connecting', uuid, server });
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+    const jailedNow = (n: number) => (m: Msg) => (m['players'] as unknown[]).length === n;
+    await lobby.next('jail', jailedNow(0));
+
+    // Ohne Dauer zehn Minuten; Lena spielt Duels → kommt in die Lobby.
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'gefaengnis', args: ['Lena', 'Beleidigung'] });
+    await said(LENA, 'going to jail');
+    expect(await proxy.next('connect', (m) => m['uuid'] === LENA)).toMatchObject({ server: 'lobby' });
+    const state = await lobby.next('jail', jailedNow(1));
+    expect(state).toMatchObject({
+      cell: { spawn: { y: 58 }, min: { x: -33 }, max: { x: -27 } },
+      players: [
+        { uuid: LENA, reason: 'Beleidigung', until: new Date(clock.now + 10 * 60_000).toISOString() },
+      ],
+    });
+
+    // Kein Modus, nur die Lobby.
+    expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: false } });
+    await said(LENA, 'in jail');
+    expect(await go(LENA, 'lobby')).toMatchObject({ data: { allow: true } });
+
+    // Chat aus der Zelle: nur Team (und andere Eingesperrte), nicht an alle.
+    proxy.send({ t: 'switch', uuid: LENA, server: 'lobby' });
+    lobby.send({ t: 'chat', uuid: LENA, text: 'lasst mich raus' });
+    const toTeam = await said(PHILIP, 'lasst mich raus');
+    expect(toTeam['text']).toContain('⛓');
+    expect(duels.received.some((m) => m.t === 'chat' && JSON.stringify(m).includes('lasst mich raus'))).toBe(
+      false,
+    );
+
+    // /frei: wieder überall hin.
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'frei', args: ['Lena'] });
+    await said(LENA, 'free again');
+    await lobby.next('jail', jailedNow(0));
+    expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: true } });
+
+    // Dauer läuft ab.
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'jail', args: ['Lena', '5m', 'Spam'] });
+    await lobby.next('jail', jailedNow(1));
+    expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: false } });
+    clock.now += 6 * 60_000;
+    expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: true } });
+  });
+
   test('Rechte: Spieler darf nicht bannen, niemand bestraft einen höheren Rang', async () => {
     const { proxy } = await network();
     await proxy.request({ t: 'command', uuid: LENA, command: 'ban', args: ['Philip'] });

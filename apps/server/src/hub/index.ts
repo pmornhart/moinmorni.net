@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
-import { LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
+import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
 import type { GameRight, Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
@@ -213,7 +213,18 @@ export function createHub(options: HubOptions): Hub {
       toProxy(bans());
     },
   };
-  const moderation = createModeration(ctx, (change) => events.emit('punishments.changed', change));
+  /** Wer im Gefängnis sitzt (mit Ende und Grund) und wo die Zelle ist – für das Lobby-Plugin. */
+  const jailState = (): Body => ({
+    t: 'jail',
+    cell: JAIL,
+    players: punish
+      .activeAll('jail')
+      .map((p) => ({ uuid: p.playerUuid, until: p.expiresAt, reason: p.reason })),
+  });
+  const moderation = createModeration(ctx, (change) => {
+    if (change.kind === 'jail') toBackend(LOBBY_SERVER, jailState());
+    events.emit('punishments.changed', change);
+  });
   const voiceRef: { broadcast: () => void } = { broadcast: () => undefined };
   const social = createSocial(ctx, db, now, () => voiceRef.broadcast());
   const voice = createVoice(
@@ -277,6 +288,15 @@ export function createHub(options: HubOptions): Hub {
       return 'stop';
     };
     const name = mm(modeName(server, lang));
+    const jail = server === LOBBY_SERVER ? undefined : punish.active(uuid, 'jail');
+    if (jail)
+      return stop(
+        text(lang, 'jail.blocked', {
+          until: jail.expiresAt
+            ? text(lang, 'punish.until', { date: dateText(lang, jail.expiresAt, ctx.timeZone) })
+            : text(lang, 'punish.forever'),
+        }),
+      );
     if (mode?.state === 'off') return stop(text(lang, 'mode.closed', { mode: name }));
     if (mode?.state === 'soon') return stop(text(lang, 'mode.soon', { mode: name }));
     if (mode?.state === 'maintenance' && !hasRight(players.roleOf(uuid), 'maintenance-join'))
@@ -501,7 +521,10 @@ export function createHub(options: HubOptions): Hub {
       conn.send({ t: 'welcome', server: conn.server, kind: conn.kind });
       conn.send(voice.config());
       conn.send(lobbyState());
-      if (conn.server === LOBBY_SERVER) conn.send(lobbySettings());
+      if (conn.server === LOBBY_SERVER) {
+        conn.send(lobbySettings());
+        conn.send(jailState());
+      }
       lobbySoon();
       presence.on(conn.server).forEach((p) => sendProfile(p.uuid));
       // Aufgewacht: wer gewartet hat, kommt jetzt hinein.

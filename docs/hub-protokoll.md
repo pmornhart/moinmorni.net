@@ -56,37 +56,38 @@ des Spielers.
 
 ### Plugin → Hub
 
-| Typ | Von | Inhalt |
-| --- | --- | --- |
-| `online` | Proxy | `players: [{uuid, name, server, locale, bedrock}]` – nach jedem (Wieder-)Verbinden |
-| `login` (Anfrage) | Proxy | `uuid, name, locale, bedrock` → `{allow, message?, server?}` |
-| `connecting` (Anfrage) | Proxy | `uuid, server` → `{allow}` – vor jedem Serverwechsel: Modus offen und wach? Schläft er, weckt ihn der Hub, der Spieler kommt danach per `connect` hinein |
-| `switch` | Proxy | `uuid, server` – Spieler ist auf einem anderen Server |
-| `leave` | Proxy | `uuid` |
-| `locale` | Proxy | `uuid, locale` – Sprache des Clients (kommt erst nach der Anmeldung) |
-| `command` (Anfrage) | Proxy | `uuid, command, args[]` → `{}` (Antworten kommen als `msg`) |
-| `complete` (Anfrage) | Proxy | `uuid, command, args[]` → `{suggestions[]}` |
-| `chat` | Spielserver | `uuid, text` |
-| `voice-group` | Spielserver | `uuid, group` (UUID oder null) – Gruppe im Sprachchat gewechselt |
-| `play` | Spielserver | `uuid, mode` – Figur in der Lobby angeklickt: Modus beitreten (geschlossen/bald/Wartung → Hinweis, schläft → wecken) |
-| *(binär)* Audio | Spielserver | Sprache aus einem Netzwerk-Kanal oder einer Party |
+| Typ                    | Von         | Inhalt                                                                                                                                                   |
+| ---------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `online`               | Proxy       | `players: [{uuid, name, server, locale, bedrock}]` – nach jedem (Wieder-)Verbinden                                                                       |
+| `login` (Anfrage)      | Proxy       | `uuid, name, locale, bedrock` → `{allow, message?, server?}`                                                                                             |
+| `connecting` (Anfrage) | Proxy       | `uuid, server` → `{allow}` – vor jedem Serverwechsel: Modus offen und wach? Schläft er, weckt ihn der Hub, der Spieler kommt danach per `connect` hinein |
+| `switch`               | Proxy       | `uuid, server` – Spieler ist auf einem anderen Server                                                                                                    |
+| `leave`                | Proxy       | `uuid`                                                                                                                                                   |
+| `locale`               | Proxy       | `uuid, locale` – Sprache des Clients (kommt erst nach der Anmeldung)                                                                                     |
+| `command` (Anfrage)    | Proxy       | `uuid, command, args[]` → `{}` (Antworten kommen als `msg`)                                                                                              |
+| `complete` (Anfrage)   | Proxy       | `uuid, command, args[]` → `{suggestions[]}`                                                                                                              |
+| `chat`                 | Spielserver | `uuid, text`                                                                                                                                             |
+| `voice-group`          | Spielserver | `uuid, group` (UUID oder null) – Gruppe im Sprachchat gewechselt                                                                                         |
+| `play`                 | Spielserver | `uuid, mode` – Figur in der Lobby angeklickt: Modus beitreten (geschlossen/bald/Wartung → Hinweis, schläft → wecken)                                     |
+| _(binär)_ Audio        | Spielserver | Sprache aus einem Netzwerk-Kanal oder einer Party                                                                                                        |
 
 ### Hub → Plugin
 
-| Typ | An | Inhalt |
-| --- | --- | --- |
-| `welcome` | alle | `server, kind, commands[], network{…}, bans[]` |
-| `network` | Proxy | MOTD, Spielerzahl, Wartung (bei Änderung im Panel) |
-| `bans` | Proxy | `[{uuid, until}]` – damit Banns auch gelten, wenn der Hub kurz weg ist |
-| `profile` | Spielserver | `uuid, name, prefix, colour` (Rang im Chat, in der Tab-Liste, über dem Kopf) |
-| `chat` | Spielserver | `text` (fertige Zeile) |
-| `msg` | Proxy | `uuid, text` (Nachricht an einen Spieler, egal wo er ist) |
-| `kick` | Proxy | `uuid, text` |
-| `connect` | Proxy | `uuid, server` |
-| `lobby` | Spielserver | `modes[{id, name{de,en}, state, access, max, players, hasServer, awake}]` – für die Schilder der Lobby-Figuren; höchstens einmal pro Sekunde |
-| `voice` | Spielserver | `channels[{id, name}], muted[], parties[{id, name, members[]}]` – Kanäle mit gleicher ID auf jedem Server |
-| `voice-join` | Spielserver | `uuid, group, force?` – Spieler in eine Gruppe setzen (Team ohne Passwort) |
-| *(binär)* Audio | Spielserver | Sprache von anderen Servern zum Abspielen |
+| Typ             | An          | Inhalt                                                                                                                                             |
+| --------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `welcome`       | alle        | `server, kind, commands[], network{…}, bans[]`                                                                                                     |
+| `network`       | Proxy       | MOTD, Spielerzahl, Wartung (bei Änderung im Panel)                                                                                                 |
+| `bans`          | Proxy       | `[{uuid, until}]` – damit Banns auch gelten, wenn der Hub kurz weg ist                                                                             |
+| `profile`       | Spielserver | `uuid, name, prefix, colour` (Rang im Chat, in der Tab-Liste, über dem Kopf)                                                                       |
+| `chat`          | Spielserver | `text` (fertige Zeile)                                                                                                                             |
+| `msg`           | Proxy       | `uuid, text` (Nachricht an einen Spieler, egal wo er ist)                                                                                          |
+| `kick`          | Proxy       | `uuid, text`                                                                                                                                       |
+| `connect`       | Proxy       | `uuid, server`                                                                                                                                     |
+| `lobby`         | Spielserver | `modes[{id, name{de,en}, state, access, max, players, hasServer, awake, icon}]` – für die Schilder der Lobby-Figuren; höchstens einmal pro Sekunde |
+| `jail`          | nur Lobby   | `cell{spawn, min, max}`, `players[{uuid, until, reason}]` – wer im Gefängnis sitzt; beim Verbinden und bei jeder Änderung                          |
+| `voice`         | Spielserver | `channels[{id, name}], muted[], parties[{id, name, members[]}]` – Kanäle mit gleicher ID auf jedem Server                                          |
+| `voice-join`    | Spielserver | `uuid, group, force?` – Spieler in eine Gruppe setzen (Team ohne Passwort)                                                                         |
+| _(binär)_ Audio | Spielserver | Sprache von anderen Servern zum Abspielen                                                                                                          |
 
 Fällt der Hub aus, läuft das Netzwerk weiter: Chat bleibt auf dem eigenen Server, Banns aus der letzten `bans`-Liste
 gelten weiter, das Plugin verbindet sich alle paar Sekunden neu.

@@ -250,7 +250,7 @@ function ActionsCard({
   return (
     <Card className="grid gap-4 p-5 sm:p-6">
       <SectionHead icon={ShieldAlert} title={t('players.act.title')} />
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {MOD_KINDS.map((kind) => {
           const Icon = KIND_ICON[kind];
           const offline = kind === 'kick' && !player.online;
@@ -357,7 +357,7 @@ function HistoryRow({
   );
 }
 
-/** Ids of the ban and mute that count right now: the newest one of each that is neither lifted nor over. */
+/** Ids of the ban, mute and jail that count right now: the newest one of each that is neither lifted nor over. */
 function activeIds(player: PlayerDetail): ReadonlySet<number> {
   const now = Date.now();
   const current = (kind: LiftKind): Punishment | undefined =>
@@ -366,7 +366,8 @@ function activeIds(player: PlayerDetail): ReadonlySet<number> {
     );
   const ban = player.banned ? current('ban') : undefined;
   const mute = player.muted ? current('mute') : undefined;
-  return new Set([ban?.id, mute?.id].filter((n): n is number => n !== undefined));
+  const jail = player.jailed ? current('jail') : undefined;
+  return new Set([ban?.id, mute?.id, jail?.id].filter((n): n is number => n !== undefined));
 }
 
 function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElement {
@@ -437,7 +438,7 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
         </div>
         <div className="grid gap-[22px]">
           {canPunish ? <ActionsCard player={player} blocked={higher === false} onPunish={setDialog} /> : null}
-          {player.banned || player.muted ? (
+          {player.banned || player.muted || player.jailed ? (
             <Card className="grid gap-4 p-5 sm:p-6">
               <SectionHead icon={ShieldAlert} title={t('players.active.title')} />
               <ul className="grid gap-2">
@@ -456,6 +457,15 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
                     kind="mute"
                     until={player.muted.until}
                     reason={player.muted.reason}
+                    canLift={canPunish}
+                  />
+                ) : null}
+                {player.jailed ? (
+                  <ActiveRow
+                    player={player}
+                    kind="jail"
+                    until={player.jailed.until}
+                    reason={player.jailed.reason}
                     canLift={canPunish}
                   />
                 ) : null}

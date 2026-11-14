@@ -46,6 +46,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private LobbyNpcs lobby;
     /** Lobby-Funktionen (Begrüßung, Menü, Parkour …) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyFeatures features;
+    /** Gefängnis-Zelle der Lobby – nur aktiv, wenn der Hub die Zelle schickt. */
+    private LobbyJail jail;
 
     @Override
     public void onEnable() {
@@ -53,7 +55,6 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         try {
             hub = new HubClient(HubConfig.load(dir), getLogger(), this::onHub, () -> { });
             startVoice();
-            hub.start();
         } catch (Exception e) {
             getLogger().warning("MoinMorni ist nicht eingerichtet (" + e.getMessage() + ") – der Server läuft ohne Netzwerk-Chat.");
         }
@@ -61,7 +62,18 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         lobby = new LobbyNpcs(this, hub, this::langOf);
         lobby.start();
         features = new LobbyFeatures(this, lobby, this::langOf);
+        jail = new LobbyJail(this, features, this::langOf);
+        features.setJail(jail::isJailed);
+        jail.start();
         features.start();
+        // Erst verbinden, wenn alles steht – die ersten Nachrichten des Hubs gehen sonst ins Leere.
+        if (hub != null) {
+            try {
+                hub.start();
+            } catch (Exception e) {
+                getLogger().warning("Hub nicht erreichbar (" + e.getMessage() + ") – der Server läuft ohne Netzwerk-Chat.");
+            }
+        }
     }
 
     /** Brücke anmelden, wenn Simple Voice Chat da ist – die Klasse wird sonst nie geladen. */
@@ -122,6 +134,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             }
             case "lobby" -> lobby.onModes(m);
             case "lobby-settings" -> features.onSettings(m);
+            case "jail" -> jail.onState(m);
             case "voice" -> {
                 if (voice != null) {
                     VoiceSetup.apply(voice, m);

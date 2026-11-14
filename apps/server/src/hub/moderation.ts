@@ -8,8 +8,8 @@ import { dateText, mm, text, type Lang } from './texts.js';
  * Grund, Bann-Liste an den Proxy, Nachricht an den Spieler, Hinweis ans Team.
  */
 
-export type ModKind = 'ban' | 'mute' | 'warn' | 'kick';
-export type LiftKind = 'ban' | 'mute';
+export type ModKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick';
+export type LiftKind = 'ban' | 'mute' | 'jail';
 
 export interface Target {
   readonly uuid: string;
@@ -33,7 +33,17 @@ export interface Moderation {
   readonly untilText: (lang: Lang, iso: string | null) => string;
 }
 
-const TEAM_KEY = { ban: 'team.ban', mute: 'team.mute', warn: 'team.warn', kick: 'team.kick' } as const;
+const TEAM_KEY = {
+  ban: 'team.ban',
+  mute: 'team.mute',
+  jail: 'team.jail',
+  warn: 'team.warn',
+  kick: 'team.kick',
+} as const;
+const LIFT_KEY = { ban: 'team.unban', mute: 'team.unmute', jail: 'team.unjail' } as const;
+/** Gefängnis ohne Dauer: zehn Minuten (für immer nur ausdrücklich, z. B. „perm“). */
+export const JAIL_DEFAULT_MINUTES = 10;
+const LOBBY = 'lobby';
 // UUID mit oder ohne Bindestriche.
 // https://regex101.com/?flavor=javascript&regex=%5E%5B0-9a-f%5D%7B8%7D-%3F(%5B0-9a-f%5D%7B4%7D-%3F)%7B3%7D%5B0-9a-f%5D%7B12%7D%24&flags=i&testString=069a79f4-44e9-4726-a5be-fca90e38aaf5
 const UUID = /^[0-9a-f]{8}-?([0-9a-f]{4}-?){3}[0-9a-f]{12}$/i;
@@ -67,7 +77,7 @@ export function createModeration(ctx: HubContext, onChange: (change: ModChange) 
     },
     punish: (t, kind, minutes, reason, by) => {
       const why = reason?.trim() || text(t.lang, 'punish.no_reason');
-      const lasting = kind === 'ban' || kind === 'mute';
+      const lasting = kind === 'ban' || kind === 'mute' || kind === 'jail';
       const p = ctx.punish.add({ uuid: t.uuid, kind, reason: why, by, minutes: lasting ? minutes : null });
       const vars = (lang: Lang) => ({
         actor: mm(by),
@@ -82,6 +92,11 @@ export function createModeration(ctx: HubContext, onChange: (change: ModChange) 
       if (kind === 'kick' && t.online) ctx.kick(t.uuid, text(t.lang, 'kick.screen', vars(t.lang)));
       if (kind === 'mute' && t.online) ctx.msg(t.uuid, text(t.lang, 'mute.you', vars(t.lang)));
       if (kind === 'warn' && t.online) ctx.msg(t.uuid, text(t.lang, 'warn.you', vars(t.lang)));
+      // Gefängnis: die Zelle steht in der Lobby – wer woanders spielt, kommt dorthin.
+      if (kind === 'jail' && t.online) {
+        ctx.msg(t.uuid, text(t.lang, 'jail.you', vars(t.lang)));
+        if (ctx.presence.get(t.uuid)?.server !== LOBBY) ctx.connect(t.uuid, LOBBY);
+      }
       ctx.team(kind, (lang) => text(lang, TEAM_KEY[kind], vars(lang)));
       onChange({ uuid: t.uuid, kind, action: 'add', until: p.expiresAt, reason: why, by });
       return p;
@@ -90,9 +105,8 @@ export function createModeration(ctx: HubContext, onChange: (change: ModChange) 
       if (!ctx.punish.revoke(t.uuid, kind, by)) return false;
       if (kind === 'ban') ctx.syncBans();
       if (kind === 'mute' && t.online) ctx.msg(t.uuid, text(t.lang, 'unmute.you'));
-      ctx.team(kind, (lang) =>
-        text(lang, kind === 'ban' ? 'team.unban' : 'team.unmute', { actor: mm(by), name: mm(t.name) }),
-      );
+      if (kind === 'jail' && t.online) ctx.msg(t.uuid, text(t.lang, 'unjail.you'));
+      ctx.team(kind, (lang) => text(lang, LIFT_KEY[kind], { actor: mm(by), name: mm(t.name) }));
       onChange({ uuid: t.uuid, kind, action: 'lift', until: null, reason: '', by });
       return true;
     },

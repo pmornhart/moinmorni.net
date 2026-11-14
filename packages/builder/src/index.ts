@@ -14,4 +14,5 @@ export * from './lobby/common.js';
 export * from './lobby/dorfplatz.js';
 export * from './lobby/datapack.js';
 export * from './lobby/features.js';
+export * from './lobby/jail.js';
 export * from './lobby/season.js';

@@ -77,6 +77,17 @@ export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat 
         ctx.msg(uuid, text(sender.lang, 'msg.muted', { until, reason: mm(mute.reason) }));
         return;
       }
+      // Im Gefängnis: nur das Team (wer einsperren darf) und die anderen Eingesperrten lesen mit.
+      if (ctx.punish.active(sender.uuid, 'jail') && !team) {
+        const jailLine = (lang: Lang): string =>
+          text(lang, 'jail.chat', { name: mm(sender.name), text: mm(censor(raw.trim(), s.badWords)) });
+        const jailed = new Set(ctx.punish.activeAll('jail').map((p) => p.playerUuid));
+        ctx.presence
+          .all()
+          .filter((p) => jailed.has(p.uuid) || hasRight(ctx.players.roleOf(p.uuid), 'jail'))
+          .forEach((p) => ctx.msg(p.uuid, jailLine(p.lang)));
+        return;
+      }
       const wait = Math.ceil((sender.lastChatAt + s.slowMode * SECOND_MS - now) / SECOND_MS);
       if (s.slowMode > 0 && wait > 0 && !team) {
         ctx.msg(uuid, text(sender.lang, 'chat.slow', { seconds: wait }));

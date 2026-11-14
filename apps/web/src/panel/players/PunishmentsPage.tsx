@@ -140,7 +140,7 @@ function Punishments(): ReactElement {
       (!words || row.playerName.toLowerCase().includes(words)),
   );
   // Prison comes with the lobby; its chip only shows once there is a prison sentence.
-  const kinds = PUNISH_KINDS.filter((k) => k !== 'jail' || rows.some((row) => row.kind === 'jail'));
+  const kinds = PUNISH_KINDS;
   const activeCount = rows.filter(isActive).length;
   const filtered = onlyActive || kind !== 'all' || Boolean(words);
   const reset = (): void => {

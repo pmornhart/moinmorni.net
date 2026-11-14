@@ -146,12 +146,45 @@ final class LobbyFeatures implements Listener {
     private YamlConfiguration parkourData;
     private TextDisplay holo;
 
+    /** Sitzt jemand im Gefängnis? Dann gibt es kein Menü, keinen Rundgang, keinen Parkour (setzt {@link LobbyJail}). */
+    private java.util.function.Predicate<UUID> jailed = id -> false;
+
     LobbyFeatures(JavaPlugin plugin, LobbyNpcs npcs, Function<Player, String> langOf) {
         this.plugin = plugin;
         this.npcs = npcs;
         this.langOf = langOf;
         this.itemKey = new NamespacedKey(plugin, ITEM_KEY);
         this.dataDir = plugin.getDataFolder().toPath().getParent().resolve("moinmorni");
+    }
+
+    void setJail(java.util.function.Predicate<UUID> jailed) {
+        this.jailed = jailed;
+    }
+
+    /** Fürs Einsperren: Rundgang und Parkour-Lauf beenden. */
+    void stopActivities(Player p) {
+        BukkitTask task = tours.remove(p.getUniqueId());
+        if (task != null) {
+            task.cancel();
+        }
+        runs.remove(p.getUniqueId());
+        p.hideBossBar(bar);
+    }
+
+    /** Nach dem Gefängnis: zurück auf den Dorfplatz, Kompass und Buch wieder in die Hand. */
+    void welcomeBack(Player p) {
+        if (!p.isOnline()) {
+            return;
+        }
+        p.setGameMode(GameMode.ADVENTURE);
+        if (!active()) {
+            return;
+        }
+        toSpawn(p);
+        equip(p);
+        if (!settings.announcements().isEmpty()) {
+            p.showBossBar(bar);
+        }
     }
 
     void start() {
@@ -293,6 +326,9 @@ final class LobbyFeatures implements Listener {
             return;
         }
         Player p = event.getPlayer();
+        if (jailed.test(p.getUniqueId())) {
+            return;
+        }
         Bukkit.getScheduler().runTask(plugin, () -> {
             toSpawn(p);
             equip(p);
@@ -498,7 +534,7 @@ final class LobbyFeatures implements Listener {
 
     private void launch(Player p, Block plate) {
         Settings s = settings;
-        if (!s.launchpads()) {
+        if (!s.launchpads() || jailed.test(p.getUniqueId())) {
             return;
         }
         long now = System.currentTimeMillis();
@@ -586,6 +622,9 @@ final class LobbyFeatures implements Listener {
         }
         Location to = event.getTo();
         Player p = event.getPlayer();
+        if (jailed.test(p.getUniqueId())) {
+            return;
+        }
         if (to.getY() < VOID_Y) {
             toSpawn(p);
             return;
@@ -755,7 +794,7 @@ final class LobbyFeatures implements Listener {
 
     private void startTour(Player p) {
         Settings s = settings;
-        if (s == null || s.stops().isEmpty() || tours.containsKey(p.getUniqueId())) {
+        if (s == null || s.stops().isEmpty() || tours.containsKey(p.getUniqueId()) || jailed.test(p.getUniqueId())) {
             return;
         }
         runs.remove(p.getUniqueId());

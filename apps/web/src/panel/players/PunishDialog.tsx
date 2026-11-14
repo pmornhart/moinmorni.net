@@ -51,6 +51,7 @@ const QUICK_REASONS = ['spam', 'insult', 'cheats', 'grief', 'ads'] as const;
 const DEFAULT_MINUTES: Readonly<Record<ModKind, number>> = {
   ban: MINUTES_PER_DAY,
   mute: MINUTES_PER_HOUR,
+  jail: HALF_HOUR,
   warn: MINUTES_PER_HOUR,
   kick: MINUTES_PER_HOUR,
 };
@@ -152,7 +153,7 @@ function PunishForm({
 
       <fieldset className="grid gap-2">
         <legend className="mb-2 text-sm font-semibold">{t('punish.kind')}</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {MOD_KINDS.map((k) => {
             const Icon = KIND_ICON[k];
             const offline = k === 'kick' && target?.online === false;

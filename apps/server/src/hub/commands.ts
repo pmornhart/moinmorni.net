@@ -1,7 +1,7 @@
 import { mayAssign, type GameRight, type Role } from '@moinmorni/shared';
 import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
-import type { Moderation, Target } from './moderation.js';
+import { JAIL_DEFAULT_MINUTES, type Moderation, type Target } from './moderation.js';
 import { parseDuration, type PunishKind } from './punish.js';
 import { dateText, LANGS, mm, text, type Lang } from './texts.js';
 
@@ -28,6 +28,11 @@ export interface Command {
 
 const LOBBY = 'lobby';
 const DURATIONS = ['30m', '1h', '1d', '7d', '30d', 'perm'];
+const NOT_PUNISHED = {
+  ban: 'punish.not_banned',
+  mute: 'punish.not_muted',
+  jail: 'punish.not_jailed',
+} as const;
 const REMOVE = new Set(['weg', 'keiner', 'none', 'remove']);
 
 export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
@@ -61,18 +66,20 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
 
   /** Bann und Stumm: `<spieler> [dauer] [grund…]`. */
   const punishing =
-    (kind: Extract<PunishKind, 'ban' | 'mute'>) =>
+    (kind: Extract<PunishKind, 'ban' | 'mute' | 'jail'>) =>
     (actor: Actor, args: readonly string[]): void => {
       const t = victim(actor, args[0]);
       if (!t) return;
       const minutes = parseDuration(args[1]);
       const reasonParts = minutes === undefined ? args.slice(1) : args.slice(2);
       const reason = reasonParts.join(' ').trim() || text(t.lang, 'punish.no_reason');
-      mod.punish(t, kind, minutes ?? null, reason, actor.name);
+      // Ohne Dauer: Bann und Stumm für immer, Gefängnis zehn Minuten.
+      const fallback = kind === 'jail' ? JAIL_DEFAULT_MINUTES : null;
+      mod.punish(t, kind, minutes === undefined ? fallback : minutes, reason, actor.name);
     };
 
   const lifting =
-    (kind: Extract<PunishKind, 'ban' | 'mute'>) =>
+    (kind: Extract<PunishKind, 'ban' | 'mute' | 'jail'>) =>
     (actor: Actor, args: readonly string[]): void => {
       const t = target(args[0]);
       if (!t) {
@@ -80,10 +87,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
         return;
       }
       if (!mod.lift(t, kind, actor.name))
-        say(
-          actor,
-          text(actor.lang, kind === 'ban' ? 'punish.not_banned' : 'punish.not_muted', { name: mm(t.name) }),
-        );
+        say(actor, text(actor.lang, NOT_PUNISHED[kind], { name: mm(t.name) }));
     };
 
   const playerArg = (_: Actor, args: readonly string[]): string[] =>
@@ -105,6 +109,11 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
         actor,
         text(actor.lang, 'msg.muted', { until: until(actor.lang, mute.expiresAt), reason: mm(mute.reason) }),
       );
+      return;
+    }
+    // Aus dem Gefängnis nur ans Team (wer einsperren darf).
+    if (ctx.punish.active(actor.uuid, 'jail') && !hasRight(ctx.players.roleOf(t.uuid), 'jail')) {
+      say(actor, text(actor.lang, 'jail.msg_team_only'));
       return;
     }
     say(actor, text(actor.lang, 'msg.to', { name: mm(t.name), text: mm(message) }));
@@ -220,6 +229,22 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       right: 'mute',
       usage: { de: '/unmute <spieler>', en: '/unmute <player>' },
       run: lifting('mute'),
+      complete: playerArg,
+    },
+    {
+      name: 'gefaengnis',
+      aliases: ['gefängnis', 'jail', 'knast'],
+      right: 'jail',
+      usage: { de: '/gefaengnis <spieler> [dauer] [grund]', en: '/jail <player> [duration] [reason]' },
+      run: punishing('jail'),
+      complete: punishArgs,
+    },
+    {
+      name: 'frei',
+      aliases: ['unjail', 'entlassen'],
+      right: 'jail',
+      usage: { de: '/frei <spieler>', en: '/unjail <player>' },
+      run: lifting('jail'),
       complete: playerArg,
     },
     {

@@ -91,6 +91,14 @@ export const T = {
     de: '👢 **{name}** rausgeworfen von {by} – {reason}',
     en: '👢 **{name}** kicked by {by} – {reason}',
   },
+  logJail: {
+    de: '⛓ **{name}** im Gefängnis{until} von {by} – {reason}',
+    en: '⛓ **{name}** jailed{until} by {by} – {reason}',
+  },
+  logLiftJail: {
+    de: '🔓 **{name}** aus dem Gefängnis ({by})',
+    en: '🔓 **{name}** released from jail ({by})',
+  },
   logLiftBan: { de: '✅ **{name}** entbannt von {by}', en: '✅ **{name}** unbanned by {by}' },
   logLiftMute: {
     de: '🔊 **{name}** darf wieder schreiben ({by})',
