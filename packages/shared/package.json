@@ -1,0 +1,17 @@
+{
+  "name": "@moinmorni/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Gemeinsame Typen, Schemas, Rollen-Vorlage und Einstellungs-Katalog von MoinMorni",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  }
+}

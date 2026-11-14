@@ -1,0 +1,4 @@
+[submodule "vendor/mornihosting"]
+	path = vendor/mornihosting
+	url = https://github.com/pmornhart/MorniHosting.git
+	branch = claude/moinmorni-motor
