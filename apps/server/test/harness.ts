@@ -5,17 +5,50 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { buildApp as buildMotor } from '../../../vendor/mornihosting/apps/server/src/app.js';
-import { runCommand } from '../../../vendor/mornihosting/apps/server/src/admin-cli.js';
-import { loadConfig as loadMotorConfig } from '../../../vendor/mornihosting/apps/server/src/config.js';
-import {
-  createFakeDriver,
-  FAKE_STEP_MS_FAST,
-} from '../../../vendor/mornihosting/apps/server/src/docker/fake-driver.js';
 import { buildApp, type BuiltApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 
 const SECRET = 'test-geheimnis-test-geheimnis-test-geheimnis-1234';
+const VENDOR = path.resolve(import.meta.dirname, '../../../vendor/mornihosting/apps/server/src');
+
+/** Nur was der Test vom Motor braucht – MorniHosting bringt eigene Fastify-Typen mit, die prüfen wir hier nicht. */
+interface MotorApp {
+  readonly app: {
+    listen: (o: { host: string; port: number }) => Promise<string>;
+    server: { address: () => unknown };
+  };
+  readonly ctx: { readonly db: unknown };
+  readonly start: () => Promise<void>;
+  readonly stop: () => Promise<void>;
+}
+interface MotorModules {
+  readonly buildMotor: (o: { config: unknown; logger: boolean; docker: unknown }) => Promise<MotorApp>;
+  readonly runCommand: (
+    db: unknown,
+    command: string,
+    args: string[],
+  ) => Promise<{ ok: boolean; message: string }>;
+  readonly loadMotorConfig: (env: Record<string, string>, version: string) => unknown;
+  readonly createFakeDriver: (o: { stepMs: number; simulatePlayers: boolean }) => unknown;
+  readonly FAKE_STEP_MS_FAST: number;
+}
+
+async function loadMotor(): Promise<MotorModules> {
+  const from = (file: string): Promise<Record<string, unknown>> => import(path.join(VENDOR, file));
+  const [app, cli, config, fake] = await Promise.all([
+    from('app.ts'),
+    from('admin-cli.ts'),
+    from('config.ts'),
+    from('docker/fake-driver.ts'),
+  ]);
+  return {
+    buildMotor: app['buildApp'] as MotorModules['buildMotor'],
+    runCommand: cli['runCommand'] as MotorModules['runCommand'],
+    loadMotorConfig: config['loadConfig'] as MotorModules['loadMotorConfig'],
+    createFakeDriver: fake['createFakeDriver'] as MotorModules['createFakeDriver'],
+    FAKE_STEP_MS_FAST: fake['FAKE_STEP_MS_FAST'] as number,
+  };
+}
 export const OWNER_PASSWORD = 'Test-Passwort-12345';
 
 export interface Harness {
@@ -27,6 +60,7 @@ export interface Harness {
 }
 
 export async function createHarness(): Promise<Harness> {
+  const { buildMotor, runCommand, loadMotorConfig, createFakeDriver, FAKE_STEP_MS_FAST } = await loadMotor();
   const motorDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-motor-'));
   const mmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-data-'));
   const motorConfig = loadMotorConfig(
@@ -47,8 +81,8 @@ export async function createHarness(): Promise<Harness> {
   });
   await motor.start();
   await motor.app.listen({ host: '127.0.0.1', port: 0 });
-  const address = motor.app.server.address();
-  const motorUrl = `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`;
+  const address = motor.app.server.address() as { port: number };
+  const motorUrl = `http://127.0.0.1:${address.port}`;
   // Philip richtet das erste Konto ein (im echten Aufbau über den Einrichtungs-Assistenten von MoinMorni).
   await fetch(`${motorUrl}/api/setup`, {
     method: 'POST',
