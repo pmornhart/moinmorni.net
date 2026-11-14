@@ -4,7 +4,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { Mode, Role } from '@moinmorni/shared';
 import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
-import { discordObjects } from '../db/schema.js';
+import { discordObjects, news } from '../db/schema.js';
 import type { Command } from '../hub/commands.js';
 import type { HubContext } from '../hub/context.js';
 import type { Hub } from '../hub/index.js';
@@ -108,6 +108,8 @@ export interface MoinMorniBot {
   readonly refreshStatus: () => Promise<void>;
   /** Abgelaufene Stumm-Rollen entfernen (läuft sonst alle 5 Minuten). */
   readonly cleanup: () => Promise<void>;
+  /** Einladung in den Discord (legt der Bot beim Einrichten an), sonst null. */
+  readonly inviteUrl: () => string | null;
   /** Ein Ereignis vom Gateway verarbeiten (Tests rufen das direkt). */
   readonly handle: (e: GatewayEvent) => Promise<void>;
 }
@@ -331,6 +333,15 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const rules = get('ch:rules');
     const help = get('ch:help');
     if (rules) await ensureMessage('msg:rules', rules, { content: RULES_TEXT });
+    const welcome = get('ch:welcome');
+    if (welcome && !get('invite')) {
+      const invite = await rest<{ code: string }>('POST', `/channels/${welcome}/invites`, {
+        max_age: 0,
+        max_uses: 0,
+        unique: false,
+      });
+      put('invite', invite.code);
+    }
     if (help) await ensureMessage('msg:help', help, helpMessage());
     await rest('PUT', `/applications/${await appId()}/guilds/${g}/commands`, slashCommands);
     await refreshStatus();
@@ -496,6 +507,26 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       'kick:add': () => log2team(bt('de', 'logKick', vars)),
     };
     await actions[`${c.kind}:${c.action}`]?.();
+  };
+
+  const NEWS_TEXT_MAX = 1500;
+  const postNews = async (slug: string): Promise<void> => {
+    const channel = get('ch:news');
+    const row = db.select().from(news).where(eq(news.slug, slug)).get();
+    if (!client || !channel || !row) return;
+    const text = row.bodyDe.length > NEWS_TEXT_MAX ? `${row.bodyDe.slice(0, NEWS_TEXT_MAX)} …` : row.bodyDe;
+    await rest('POST', `/channels/${channel}/messages`, {
+      embeds: [
+        {
+          title: row.titleDe,
+          description: text,
+          url: `https://${config.domain}/news/${row.slug}`,
+          color: EMERALD,
+          timestamp: row.publishedAt,
+          footer: { text: row.author },
+        },
+      ],
+    });
   };
 
   const cleanup = async (): Promise<void> => {
@@ -688,6 +719,9 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       events.on('punishments.changed', (c) => {
         onPunishment(c).catch((err: unknown) => log.warn({ err }, 'Discord: Strafe nicht übertragen'));
       });
+      events.on('news.published', ({ slug }) => {
+        postNews(slug).catch((err: unknown) => log.warn({ err }, 'Discord: News nicht gepostet'));
+      });
       events.on('player.changed', ({ uuid }) => {
         syncRoles(uuid).catch((err: unknown) => log.warn({ err }, 'Discord: Rang nicht übertragen'));
       });
@@ -727,6 +761,10 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     },
     setup,
     commands,
+    inviteUrl: () => {
+      const code = get('invite');
+      return code ? `https://discord.gg/${code}` : null;
+    },
     refreshStatus,
     cleanup,
     handle,

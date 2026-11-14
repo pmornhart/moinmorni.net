@@ -112,3 +112,24 @@ export const discordObjects = sqliteTable('discord_objects', {
   discordId: text('discord_id').notNull(),
   updatedAt: text('updated_at').notNull().default(now),
 });
+
+/** News für Webseite und Discord (#ankündigungen). Texte auf Deutsch und Englisch. */
+export const news = sqliteTable(
+  'news',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    slug: text('slug').notNull().unique(),
+    category: text('category').$type<'update' | 'event' | 'info'>().notNull(),
+    titleDe: text('title_de').notNull(),
+    titleEn: text('title_en').notNull(),
+    bodyDe: text('body_de').notNull(),
+    bodyEn: text('body_en').notNull(),
+    pinned: integer('pinned', { mode: 'boolean' }).notNull().default(false),
+    /** null = Entwurf (nur im Panel). */
+    publishedAt: text('published_at'),
+    author: text('author').notNull(),
+    createdAt: createdAt(),
+    updatedAt: text('updated_at').notNull().default(now),
+  },
+  (t) => [index('news_published').on(t.publishedAt)],
+);

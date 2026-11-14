@@ -80,7 +80,7 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
 
   test('Einstellungen nach Katalog: geprüft, gespeichert, nur mit CSRF-Token', async () => {
     const areas = (await call('GET', '/api/panel/settings', owner)).json<Array<{ area: { id: string } }>>();
-    expect(areas.map((a) => a.area.id)).toEqual(['network', 'chat', 'voice', 'social', 'lobby']);
+    expect(areas.map((a) => a.area.id)).toEqual(['network', 'chat', 'voice', 'social', 'lobby', 'website']);
     const saved = await call('PUT', '/api/panel/settings/chat', owner, { slowMode: 5, badWords: ['doof'] });
     expect(saved.json()).toMatchObject({ slowMode: 5, badWords: ['doof'], global: true });
     expect((await call('PUT', '/api/panel/settings/chat', owner, { slowMode: 999 })).statusCode).toBe(400);

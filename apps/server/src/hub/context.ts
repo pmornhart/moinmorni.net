@@ -12,6 +12,8 @@ export interface HubContext {
   readonly punish: PunishService;
   readonly stores: Stores;
   readonly timeZone: string;
+  /** Öffentliche Adresse (Links zur Webseite). */
+  readonly domain: string;
   /** Nachricht an einen Spieler, egal auf welchem Server (über den Proxy). */
   readonly msg: (uuid: string, text: string) => void;
   readonly kick: (uuid: string, text: string) => void;

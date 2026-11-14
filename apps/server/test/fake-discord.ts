@@ -156,6 +156,7 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
         return json(res, 200, msg);
       },
     ],
+    ['POST', /^\/channels\/(\d+)\/invites$/, (_m, _b, res) => json(res, 200, { code: 'moinmorni' })],
     [
       'POST',
       /^\/channels\/(\d+)\/threads$/,

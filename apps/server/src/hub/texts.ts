@@ -391,6 +391,18 @@ const TEXTS = {
     de: `${V}<gray><white>{name}</white> ist im Sprachchat nicht stumm.`,
     en: `${VE}<gray><white>{name}</white> is not muted in voice chat.`,
   },
+  'profile.private': {
+    de: `${P}<gray>Dein Profil auf der Webseite ist jetzt <white>privat</white> – niemand sieht deine Spielzeit.`,
+    en: `${P}<gray>Your profile on the website is <white>private</white> now – nobody sees your play time.`,
+  },
+  'profile.public': {
+    de: `${P}<gray>Dein Profil ist jetzt <white>öffentlich</white>: <aqua><click:open_url:'{url}'>{url}</click></aqua>`,
+    en: `${P}<gray>Your profile is <white>public</white> now: <aqua><click:open_url:'{url}'>{url}</click></aqua>`,
+  },
+  'profile.usage': {
+    de: `${P}<gray>Dein Profil: <aqua><click:open_url:'{url}'>{url}</click></aqua> <dark_gray>·</dark_gray> <yellow>/profil privat</yellow> oder <yellow>/profil öffentlich</yellow>`,
+    en: `${P}<gray>Your profile: <aqua><click:open_url:'{url}'>{url}</click></aqua> <dark_gray>·</dark_gray> <yellow>/profile private</yellow> or <yellow>/profile public</yellow>`,
+  },
   'lobby.missing': {
     de: `${P}<red>Die Lobby ist gerade nicht da.`,
     en: `${P}<red>The lobby isn't available right now.`,

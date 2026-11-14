@@ -166,6 +166,24 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       },
     },
     {
+      name: 'profil',
+      aliases: ['profile'],
+      usage: { de: '/profil [privat|öffentlich]', en: '/profile [private|public]' },
+      run: (actor, args) => {
+        const word = args[0]?.toLowerCase() ?? '';
+        const url = `https://${ctx.domain}/spieler/${encodeURIComponent(actor.name)}`;
+        if (['privat', 'private'].includes(word)) {
+          ctx.players.setPrivate(actor.uuid, true);
+          say(actor, text(actor.lang, 'profile.private'));
+        } else if (['öffentlich', 'oeffentlich', 'public'].includes(word)) {
+          ctx.players.setPrivate(actor.uuid, false);
+          say(actor, text(actor.lang, 'profile.public', { url: mm(url) }));
+        } else say(actor, text(actor.lang, 'profile.usage', { url: mm(url) }));
+      },
+      complete: (_, args) =>
+        args.length <= 1 ? ['privat', 'öffentlich'].filter((w) => w.startsWith(args[0] ?? '')) : [],
+    },
+    {
       name: 'lobby',
       aliases: ['hub', 'l'],
       usage: { de: '/lobby', en: '/lobby' },

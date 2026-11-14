@@ -80,6 +80,8 @@ export interface HubOptions {
   readonly events: EventBus;
   readonly log: FastifyBaseLogger;
   readonly timeZone: string;
+  /** Öffentliche Adresse für Links (moinmorni.net). */
+  readonly domain?: string;
   readonly now?: () => number;
   /** Weitere Befehle im Spiel (z. B. /discord vom Discord-Bot). */
   readonly extraCommands?: (ctx: HubContext) => Command[];
@@ -178,6 +180,7 @@ export function createHub(options: HubOptions): Hub {
     punish,
     stores,
     timeZone: options.timeZone,
+    domain: options.domain ?? 'moinmorni.net',
     msg: (uuid, line) => {
       if (toProxy({ t: 'msg', uuid, text: line })) return;
       const server = presence.get(uuid)?.server;

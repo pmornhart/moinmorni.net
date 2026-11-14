@@ -16,6 +16,8 @@ export interface Events {
     reason: string;
     by: string;
   };
+  /** News veröffentlicht (Discord postet sie in #ankündigungen). */
+  'news.published': { slug: string };
   /** Rang oder Name eines Spielers geändert (Discord zieht die Rolle nach). */
   'player.changed': { uuid: string };
 }

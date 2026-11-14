@@ -603,12 +603,107 @@ export const LOBBY_AREA: SettingArea = {
 };
 
 /** Alle Bereiche; die Modi hängen ihre eigenen an. */
+const DEFAULT_RULES_DE = [
+  'Freundlich bleiben: keine Beleidigungen, kein Mobbing, keine Hetze.',
+  'Kein Cheaten: keine Hacks, Fly-, X-Ray- oder Auto-Clicker-Mods.',
+  'Kein Spam und keine Werbung für andere Server.',
+  'Keine Bugs ausnutzen – melde sie uns.',
+  'Höre auf das Team. Fragen? Ticket im Discord.',
+].join('\n');
+const DEFAULT_RULES_EN = [
+  'Be kind: no insults, no bullying, no hate.',
+  'No cheating: no hacks, fly, x-ray or auto-clicker mods.',
+  'No spam and no ads for other servers.',
+  "Don't abuse bugs – report them to us.",
+  'Listen to the team. Questions? Open a ticket on Discord.',
+].join('\n');
+
+export const WEBSITE_AREA: SettingArea = {
+  id: 'website',
+  title: t('Webseite', 'Website'),
+  text: t(
+    'Was auf moinmorni.net steht: Regeln, Discord-Einladung, Kanäle in sozialen Netzen.',
+    'What moinmorni.net shows: rules, Discord invite, social media channels.',
+  ),
+  icon: 'Globe2',
+  panel: 'content',
+  sections: [
+    {
+      id: 'rules',
+      title: t('Regeln', 'Rules'),
+      text: t('Eine Regel pro Zeile. Gilt im Spiel, im Discord und auf der Webseite.', 'One rule per line. Applies in game, on Discord and on the website.'),
+      settings: [
+        {
+          key: 'rulesDe',
+          type: 'text',
+          default: DEFAULT_RULES_DE,
+          maxLength: 4000,
+          multiline: true,
+          label: t('Regeln (Deutsch)', 'Rules (German)'),
+          help: t('So stehen sie auf der Webseite unter „Regeln“.', 'This is how they appear on the website under “Rules”.'),
+        },
+        {
+          key: 'rulesEn',
+          type: 'text',
+          default: DEFAULT_RULES_EN,
+          maxLength: 4000,
+          multiline: true,
+          label: t('Regeln (Englisch)', 'Rules (English)'),
+          help: t('Für Besucher mit englischem Browser.', 'For visitors with an English browser.'),
+        },
+      ],
+    },
+    {
+      id: 'links',
+      title: t('Links', 'Links'),
+      settings: [
+        {
+          key: 'discordInvite',
+          type: 'text',
+          default: '',
+          maxLength: 200,
+          label: t('Discord-Einladung', 'Discord invite'),
+          help: t(
+            'Leer lassen: der Bot legt beim Einrichten selbst eine Einladung an, die nie abläuft.',
+            'Leave empty: the bot creates a never-expiring invite when setting up the server.',
+          ),
+        },
+        {
+          key: 'youtube',
+          type: 'text',
+          default: '',
+          maxLength: 200,
+          label: t('YouTube', 'YouTube'),
+          help: t('Adresse des Kanals (leer = nicht zeigen).', 'Channel address (empty = hide).'),
+        },
+        {
+          key: 'tiktok',
+          type: 'text',
+          default: '',
+          maxLength: 200,
+          label: t('TikTok', 'TikTok'),
+          help: t('Adresse des Kanals (leer = nicht zeigen).', 'Channel address (empty = hide).'),
+        },
+        {
+          key: 'instagram',
+          type: 'text',
+          default: '',
+          maxLength: 200,
+          label: t('Instagram', 'Instagram'),
+          help: t('Adresse des Profils (leer = nicht zeigen).', 'Profile address (empty = hide).'),
+        },
+      ],
+    },
+  ],
+};
+
 export const SETTING_AREAS: readonly SettingArea[] = [
   NETWORK_AREA,
   CHAT_AREA,
   VOICE_AREA,
   SOCIAL_AREA,
   LOBBY_AREA,
+  WEBSITE_AREA,
 ];
 
 function validator(def: SettingDef): z.ZodType {

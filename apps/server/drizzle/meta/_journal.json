@@ -36,6 +36,13 @@
       "when": 1794668016243,
       "tag": "0004_discord",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794670046586,
+      "tag": "0005_news",
+      "breakpoints": true
     }
   ]
 }

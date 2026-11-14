@@ -17,10 +17,12 @@ import { createPanelAuth } from './panel/auth.js';
 import { createProvisioner, type NetworkProvisioner } from './network/provision.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
+import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { registerPublicRoutes } from './public/routes.js';
+import { registerSiteRoutes } from './public/site-routes.js';
 import { createStatusService } from './public/status.js';
 import { registerSetupRoutes } from './setup/routes.js';
 import { createSetupService, type SetupService } from './setup/service.js';
@@ -105,6 +107,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     events,
     log: app.log,
     timeZone: config.timeZone,
+    domain: config.domain,
   });
   const status = createStatusService(config, motor, stores, hub);
   const network = createProvisioner(config, motor, hub, app.log);
@@ -140,6 +143,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerPanelRoutes(app, auth, stores);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   registerDiscordRoutes(app, auth, bot);
+  registerNewsRoutes(app, auth, handle.db, events);
+  registerSiteRoutes(app, handle.db, stores, hub, bot.inviteUrl);
   await registerMotorProxy(app, config.motorUrl);
 
   const hasWeb = fs.existsSync(path.join(config.webDir, 'index.html'));
