@@ -188,7 +188,7 @@
     "of": "von {{max}} Plätzen",
     "proxyOff": "Der Eingang zum Netzwerk (Proxy) läuft gerade nicht – Spieler kommen nicht herein.",
     "modes": "Spielmodi",
-    "modesCount": "{{on}} von {{total}} laufen",
+    "modesCount": "{{on}} von {{total}} offen",
     "allModes": "Alle Modi bearbeiten",
     "shortcuts": "Schnell zu",
     "refresh": "Zahlen aktualisieren sich alle 15 Sekunden."

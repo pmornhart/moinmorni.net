@@ -101,20 +101,20 @@ ul.files { margin: 0; padding-left: 18px; font-family: var(--mono); font-size: 1
 <script>
 /* Stand – wird nach jedem Baustein aktualisiert. Status: open | run | wait | done | prob */
 const STAND = {
-  updated: '14.11.2026, 18:45',
-  now: { title: 'Baustein 4 · MoinMorni-Grundgerüst', text: 'MorniHosting-Teil ist fertig (PR #116 wartet auf dein Go). Jetzt baue ich das MoinMorni-Grundgerüst: Container mit eingebautem Motor, Webseite, Panel, Datenbank und Einstellungs-Katalog.' },
+  updated: '14.11.2026, 20:30',
+  now: { title: 'Baustein 5 · Netzwerk-Plugin (zweite Runde)', text: 'Grundgerüst, Webseite, Panel und der Kern des Netzwerk-Plugins laufen – mit echten Servern getestet. Als Nächstes: Freunde, Party, Gefängnis, Schlaf-Modus und Spielerzahlen für die Lobby-Figuren. Deine Wahl beim Lobby-Entwurf und dein Go für MorniHosting PR #116 stehen noch aus.' },
   blocks: [
     ['Verstehen und Plan', 'Fragerunden, Recherche, Architektur (eigenständig, MorniHosting-Kern als Motor)', 'done'],
-    ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder wie im echten Minecraft', 'done', 'Echter Minecraft-Client 26.3 läuft ohne Bildschirm (Vulkan in Software) und macht echte Screenshots; Test-Spieler (mineflayer) treten bei.'],
+    ['Test- und Bildwerkzeug', 'Paper und Velocity in der Sandbox, Test-Spieler, Bilder wie im echten Minecraft', 'done', 'Echter Minecraft-Client 26.3 läuft ohne Bildschirm und macht echte Screenshots; Test-Spieler (mineflayer) treten bei.'],
     ['Lobby-Entwürfe', '3 Entwürfe als Bilder: Dorfplatz mit Schloss am Hang, Schlossinsel im Smaragdsee, Bergschloss mit Terrassen', 'wait', 'Fertig gebaut und mit dem echten Client fotografiert – welcher soll es werden (oder eine Mischung)?'],
-    ['MorniHosting als Motor', 'Motor-Modus ohne Oberfläche, Netzwerke, Schlüssel mit begrenzten Rechten, Server-Seiten als Baustein, Ereignisse (Branch + PR in MorniHosting)', 'done', 'PR #116 in MorniHosting: Netzwerke (Velocity + Paper automatisch verbunden), Voice am Proxy, Motor-Modus, Schlüssel mit Bereichen, einbettbare Server-Seiten; behoben: Velocity verlor seine Plugins bei jedem Start. 407 Tests + 5 Browser-Tests grün. Wartet auf dein Go.'],
-    ['MoinMorni-Grundgerüst', 'Eigener Container mit Motor, Login mit Passkeys und 2FA, Datenbank, Einstellungs-Katalog, Deutsch/Englisch, Tests', 'run'],
-    ['Netzwerk-Plugin', 'Sichere Verbindung zum Hub, Ränge, Chat, Freunde, Party, Strafen, Statistiken, Sprache, Status, Schlaf-Modus', 'open'],
-    ['Panel', 'Alles einstellbar und sortiert: Modi, Lobby, Spieler, Strafen, Rollen, Chat, Inhalte, Updates, Server. Suche und Rundgang', 'open'],
-    ['Webseite', 'Startseite mit Adresse und Online-Zahl, Modi, News, Changelog, Regeln, Team, Ranglisten, Profile, Modpack, Hilfe-Seiten', 'open'],
+    ['MorniHosting als Motor', 'Motor-Modus ohne Oberfläche, Netzwerke, Schlüssel mit begrenzten Rechten, Server-Seiten als Baustein (Branch + PR in MorniHosting)', 'wait', 'PR #116: Netzwerke, Voice am Proxy, Motor-Modus, Schlüssel mit Bereichen, einbettbare Server-Seiten; neu: Dienst-Konten halten die Ersteinrichtung nicht mehr zu. 408 Tests grün. Wartet auf dein Go.'],
+    ['MoinMorni-Grundgerüst', 'Eigener Container mit Motor, Login mit Passkeys und 2FA, Datenbank, Einstellungs-Katalog, Deutsch/Englisch, Tests', 'done', 'docker-compose (MoinMorni, Motor, Socket-Proxy; nur Port 8080 offen), Dockerfile, install.sh (fragt Domain + Bot-Token, Geheimnisse nur für root), Ersteinrichtung mit einmaligem Code. Danach richtet sich das Netzwerk selbst ein: Proxy (mit Bedrock, allen Versionen, Voice) und Lobby werden angelegt, verdrahtet, Plugin und Schlüssel aufgespielt.'],
+    ['Netzwerk-Plugin', 'Sichere Verbindung zum Hub, Ränge, Chat, Freunde, Party, Strafen, Statistiken, Sprache, Status, Schlaf-Modus', 'run', 'Fertig: ein Plugin für Velocity + Paper, signierte Verbindung zum Hub, Anmeldung mit Bann/Wartung/voll, Chat über alle Server mit Rang und Server-Kürzel, Stumm/Langsam/Links/Großbuchstaben/Schimpfwörter, /ban /mute /kick /warn /strafen /rang /msg /r /sprache /lobby, jede Panel-Einstellung auch per Befehl (/chatconfig, /wartung …). Echte Server: 20/20 Prüfungen + Ausfall-Test. Offen: Freunde, Party, Gefängnis, Schlaf-Modus.'],
+    ['Panel', 'Alles einstellbar und sortiert: Modi, Lobby, Spieler, Strafen, Rollen, Chat, Inhalte, Updates, Server. Suche und Rundgang', 'run', 'Fertig: Anmeldung, Einrichtung, Übersicht, Modi, alle Einstellungen mit Suche und Spielbefehl, Server mit eingebetteter MorniHosting-Seite (Konsole, alle Reiter). Offen: Spieler, Strafen, Rollen bearbeiten, Rundgang.'],
+    ['Webseite', 'Startseite mit Adresse und Online-Zahl, Modi, News, Changelog, Regeln, Team, Ranglisten, Profile, Modpack, Hilfe-Seiten', 'run', 'Startseite mit Live-Spielerzahl, Adressen für Java und Bedrock zum Kopieren, Modi mit Status, hell/dunkel, Handy. News, Regeln, Team, Ranglisten, Hilfe folgen.'],
     ['Discord-Bot', 'Richtet den Server ein, Live-Status, Konten verbinden, Ränge, Tickets, News, Meldungen, Strafen, /hilfe', 'open'],
-    ['Voice-Chat', 'Über den Proxy, Party-Sprachgruppe über Server hinweg, Team darf beitreten und stummschalten', 'open'],
-    ['Lobby bauen', 'Gewählter Entwurf, Portale und NPCs mit Spielerzahl, Launchpads, Parkour, Kompass-Menü, Saison-Deko, Rundgang für Neue', 'open'],
+    ['Voice-Chat', 'Über den Proxy, gemeinsame Kanäle über alle Modi, Party-Sprachgruppe, Team darf beitreten und stummschalten', 'open'],
+    ['Lobby bauen', 'Gewählter Entwurf, Menschen (NPCs) zum Anklicken statt Portale, Leben im Dorf, begehbare Häuser, Biergarten, Launchpads, Parkour, Saison-Deko, Rundgang für Neue', 'open'],
     ['MorniCraft im Netzwerk', 'Netzwerk-Modus, Whitelist mit Bewerbung, abschaltbar; Mirni SMP als „bald“', 'open'],
     ['Bau-Server', 'Kreativ-Server fürs Bauteam mit WorldEdit, Bauten per Knopf in die Modi übernehmen', 'open'],
     ['Duels', 'Klassisch (Suppe), Modern, Fähigkeiten, Kit-Editor, 1v1/2v2, gewertet und locker, /duel, Ranglisten', 'open'],
@@ -122,18 +122,23 @@ const STAND = {
     ['Modi allein und zusammen', 'Gipfelsturm, Burgverlies, Bollwerk zum Anschauen', 'open'],
     ['Modpack', 'Minecraft 26.3, Voice-Chat, Leistung, schöne Optik, Bau-Werkzeuge, Server eingetragen, Modrinth', 'open'],
     ['Updates', 'Modi, Motor (MorniHosting), MorniCraft und Plugins aktuell: Backup vorher, bei Fehler zurück, Meldung in Discord', 'open'],
-    ['Proxmox-Quick-Start', 'Einzeiler, fragt Domain, Bot-Token, Mail; speichert sicher in .env; Anleitung, README', 'open'],
+    ['Proxmox-Quick-Start', 'Einzeiler, fragt Domain, Bot-Token, Mail; speichert sicher in .env; Anleitung, README', 'run', 'install.sh und Anleitung stehen (mit nachgebautem Docker getestet); der Proxmox-Einzeiler, der den Container anlegt, folgt.'],
     ['Abschluss', 'Jede Motor-Funktion aus MoinMorni prüfen, Sicherheitsprüfung, Liste: geht / geht noch nicht / warum', 'open']
   ],
   results: [
-    { img: 'bilder/mh-netzwerke.png', time: '18:40', caption: 'MorniHosting – neue Seite „Netzwerke“: Proxy vorne, Lobby und Duels dahinter, Startserver, Konten prüfen (Branch claude/moinmorni-motor)' },
-    { img: 'bilder/entwurf-a.jpg', time: '17:00', caption: 'Entwurf A – Dorfplatz am Schlossberg: Ankunft am Maibaum, Freitreppe zum Schloss, Portale am Fuß des Bergs, Biergarten, Dorfstraße bis zur Kapelle' },
-    { img: 'bilder/entwurf-b.jpg', time: '17:00', caption: 'Entwurf B – Schlossinsel im Smaragdsee: Aussichtsterrasse mit Maibaum, Brücke zur Insel, Portale an der Seepromenade, Felswände im Norden' },
-    { img: 'bilder/entwurf-c.jpg', time: '17:00', caption: 'Entwurf C – Bergschloss mit Terrassen: Dorfplatz unten, Portale auf zwei Terrassen, Biergarten mit Talblick, Seilbahn, Schloss oben' },
-    { img: 'bilder/echter-client-ohne-leiste.jpg', time: '16:00', caption: 'Echter Minecraft-Client 26.3 in der Sandbox, Leiste ausgeblendet – so entstehen ab jetzt alle Bilder' },
-    { img: 'bilder/echter-client-erster-blick.jpg', time: '15:56', caption: 'Erster Blick des echten Clients auf einen Test-Server (Paper 26.3)' }
+    { img: 'bilder/netz-chat.jpg', time: '20:10', caption: 'Echter Minecraft-Client 26.3 im Test-Netzwerk: Chat über alle Server mit Server-Kürzel und Rang – ♛ Philip (Owner) in der Lobby, ⚔ Modi (Moderator) schreibt aus Duels, ★ MorniTest (VIP). Über den Köpfen der Rang in Farbe.' },
+    { img: 'bilder/netz-tab.jpg', time: '20:10', caption: 'Tab-Liste mit Rang-Symbol und -Farbe, nach Rang sortiert (Hintergrund: Lobby-Entwurf A)' },
+    { img: 'bilder/web-start-desktop-dunkel.jpg', time: '19:50', caption: 'Webseite moinmorni.net (Computer): Live-Spielerzahl, Adressen für Java und Bedrock zum Kopieren, Spielmodi mit Status' },
+    { img: 'bilder/web-start-handy-dunkel.jpg', time: '19:50', caption: 'Webseite auf dem Handy' },
+    { img: 'bilder/web-panel-uebersicht-neu.jpg', time: '20:25', caption: 'Panel direkt nach der Ersteinrichtung: Übersicht mit Netzwerk-Status und Modi' },
+    { img: 'bilder/web-panel-chat-desktop.jpg', time: '19:50', caption: 'Panel – Chat-Einstellungen: jede Einstellung mit Erklärung und dem passenden Befehl im Spiel' },
+    { img: 'bilder/web-panel-uebersicht-handy.jpg', time: '19:50', caption: 'Panel auf dem Handy' },
+    { img: 'bilder/mh-netzwerke.png', time: '18:40', caption: 'MorniHosting – neue Seite „Netzwerke“: Proxy vorne, Lobby und Duels dahinter (Branch claude/moinmorni-motor)' },
+    { img: 'bilder/entwurf-a.jpg', time: '17:00', caption: 'Entwurf A – Dorfplatz am Schlossberg' },
+    { img: 'bilder/entwurf-b.jpg', time: '17:00', caption: 'Entwurf B – Schlossinsel im Smaragdsee' },
+    { img: 'bilder/entwurf-c.jpg', time: '17:00', caption: 'Entwurf C – Bergschloss mit Terrassen' }
   ],
-  files: ['packages/builder/ (Bau-Baukasten)', 'tools/lobby-entwuerfe/ (Entwürfe A, B, C)', 'tools/mc-client/ (launch.py, shots.py, rcon.py)', 'docs/architektur.md', 'docs/recherche/ (3 Berichte)', 'CLAUDE.md, STAND.md', 'docs/fortschritt/index.html']
+  files: ['docker-compose.yml, Dockerfile, install.sh, .env.example', 'apps/server/ (Hub, Panel-API, Einrichtung, Netzwerk-Einrichtung)', 'apps/web/ (Webseite + Panel)', 'plugins/moinmorni-network/ (Velocity + Paper)', 'docs/hub-protokoll.md, docs/proxmox-quickstart.md', 'tools/netz-test/ (Test mit echten Servern)', 'packages/shared/ (Rollen, Einstellungs-Katalog, Modi)', 'packages/builder/, tools/lobby-entwuerfe/', 'docs/architektur.md, CLAUDE.md, STAND.md']
 };
 const LABEL = { open: 'offen', run: 'läuft gerade', wait: 'wartet auf dich', done: 'fertig', prob: 'Problem' };
 const WEIGHT = { done: 1, run: 0.4, wait: 0.8 };
