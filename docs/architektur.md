@@ -61,3 +61,30 @@ Stand: 14.11.2026 (nach Philips Entscheidung „eigenständig, MorniHosting-Kern
   `vendor/mornihosting`, beim Update auf den neuesten Stand gezogen).
 - Vor jedem Update Backup; nach dem Update Gesundheitsprüfung; schlägt sie fehl → alte Version zurück, Meldung in Discord.
 - Modi holen sich neue Releases ihrer Repos; MorniCraft kommt über den Motor; Geyser/Floodgate/Via/Voice hält der Motor aktuell.
+
+## Aufbau im Detail (Baustein 4, 14.11.)
+
+### Repo `moinmorni.net`
+```
+apps/server        Fastify 5 + Zod + SQLite/Drizzle: Webseite-API, Panel-API, Hub, Motor-Anbindung, Bot (später)
+apps/web           React 19 + Vite + Tailwind 4: öffentliche Webseite (/) und Panel (/panel)
+packages/shared    Typen, Zod-Schemas, Rollen-Vorlage, Einstellungs-Katalog
+packages/builder   Bau-Baukasten (Lobby, Arenen, Spielfelder)
+plugins/           Java: Netzwerk-Plugin (Velocity + Paper) und gemeinsame API für die Modi
+vendor/mornihosting  Git-Submodul: MorniHosting (Motor-Image + einbettbare Server-Seiten)
+proxmox/, install.sh, update.sh, docker-compose.yml
+```
+
+### Container (docker compose im LXC)
+| Dienst | Netz | nach außen |
+|---|---|---|
+| `socket-proxy` (tecnativa) | `docker-api` (intern) | – |
+| `motor` = MorniHosting, `MH_HEADLESS=true`, Router aus | `docker-api`, `moinmorni-intern` | – |
+| `moinmorni` (Webseite, Panel, Hub, Bot) | `moinmorni-intern`, `moinmorni-mc` | 8080 (HTTP, NetBird macht HTTPS) |
+| Minecraft-Container (vom Motor angelegt) | `moinmorni-mc` | nur der Proxy: 25565 TCP+UDP, 19132 TCP+UDP |
+
+- Plugins erreichen den Hub als `ws://moinmorni:8090` im Netz `moinmorni-mc` – der Hub-Port ist nie nach außen offen.
+- `moinmorni` spricht den Motor als `http://motor:8080` mit einem Dienst-Schlüssel (`service-token moinmorni`),
+  und leitet `/panel/motor/api/*` (inkl. WebSocket) für angemeldete Team-Mitglieder an den Motor weiter.
+- Login: Team-Konten leben im Motor (Passkeys, 2FA). MoinMorni prüft die Sitzung über `/api/auth/me` des Motors
+  und ordnet dem Konto eine MoinMorni-Rolle zu (Owner, Admin, Moderator …).
