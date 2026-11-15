@@ -5,9 +5,9 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
 
 ## Was drin ist
 
-- **Dorfplatz** mit Maibaum, Vorplatz mit vier Marktständen, Westplatz mit drei Marktständen – je Spielmodus ein Stand
-  mit Markise in der Farbe des Modus und einer Figur in der Mitte. Über ihrem Kopf: Name, Spielerzahl bzw. Zustand,
-  „Klick: Mitspielen“.
+- **Dorfmarkt** um den Maibaum: acht Stände eng im Kreis, je zwei an jeder Ecke, Gassen in alle vier Richtungen –
+  je Spielmodus ein Stand mit Markise in der Farbe des Modus und einer Figur (Name, Spielerzahl bzw. Zustand,
+  „Klick: Mitspielen“), dazu ein Brezn- und Lebkuchenstand. Ankunft in der Gasse südlich vom Markt.
 - **Dorfstraße** nach Süden: Bäckerei, Krämerladen, Apotheke, Wohnhäuser, Kapelle; am Platz Rathaus und Gäste-Info.
 - **Handwerkergasse** nach Westen (zwischen den Ständen hindurch): Schmiede, Trachten, Schreinerei, Wohnhäuser,
   Vorgärten, Brunnen am Ende.
@@ -44,6 +44,20 @@ Ausgeliefert unter `/api/public/packs/lobby.zip`; die Lobby bietet es per `serve
 (`/lobby paket an|aus`). Der Proxy nimmt es beim Wechsel auf einen anderen Server wieder ab. Ohne Paket (abgelehnt,
 Bedrock) sieht man die normalen Blöcke – nichts fehlt. Echt geprüft mit Client 26.3 in der Docker-Lobby: angeboten,
 geladen, `/bau` → weg, `/lobby` → wieder da.
+
+## Trachten in 3D (Ressourcenpaket)
+
+Die Bewohner tragen 3D-Frisuren (kurz, lang, Zöpfe, Dutt), Bärte und Hüte (Trachtenhut mit Gamsbart, Strohhut,
+Kochmütze, Mütze, Kappe, Kopftuch, Krone, Helm, Kapuze) und am Körper Dirndl (Rock, Schürze, Mieder mit Schnürung und
+Bluse), Westen und Hosenträger (`packages/builder/src/trachten.ts`). Farben kommen aus der Tracht der Figur
+(`cast.ts`).
+
+- Kopf-Teile stecken im Kopf-Platz der Figur (drehen und nicken mit), Körper-Teile in einem Anzeige-Objekt, das auf der
+  Figur mitfährt; das Lobby-Plugin dreht es mit, wenn die Figur sich umschaut oder läuft. Sitzende Figuren tragen nur
+  die Kopf-Teile.
+- Alle Teile benutzen das Modell `minecraft:air` – in Minecraft ist es leer. Unser Paket ersetzt
+  `assets/minecraft/items/air.json` und wählt über `custom_model_data` die Teile. **Ohne Paket (oder auf Bedrock)
+  sieht man nichts davon, nur die gewohnten Skins.**
 
 ## Figuren und Skins
 
