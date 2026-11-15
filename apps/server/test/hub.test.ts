@@ -1,6 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { openDatabase } from '../src/db/index.js';
+import { openDatabase, type Db } from '../src/db/index.js';
+import { morniCraftPlayer } from '../src/hub/mornicraft.js';
 import { createHub, type Hub } from '../src/hub/index.js';
 import { createEventBus } from '../src/lib/events.js';
 import { createStores, type Stores } from '../src/panel/stores.js';
@@ -28,6 +29,7 @@ const MODI = '44444444-4444-4444-4444-444444444444';
 describe('Hub', () => {
   let hub: Hub;
   let stores: Stores;
+  let db: Db;
   let url: string;
   let clock: { now: number };
   let woken: string[];
@@ -37,6 +39,7 @@ describe('Hub', () => {
 
   beforeEach(async () => {
     const handle = openDatabase(':memory:');
+    db = handle.db;
     const events = createEventBus();
     connected = [];
     events.on('server.connected', ({ server }) => connected.push(server));
@@ -660,6 +663,30 @@ describe('Hub', () => {
       config: { network: { 'rules-de': ['Eins', 'Zwei'] } },
     });
     expect(duels.received.some((m) => m.t === 'mornicraft-settings')).toBe(false);
+  });
+
+  test('MorniCraft meldet Spieler-Daten fürs Panel: nur der MorniCraft-Server, nur gültige', async () => {
+    const { duels } = await network();
+    const mc = await plugin('mornicraft', 'backend');
+    const data = {
+      online: true,
+      afk: false,
+      homes: [{ name: 'basis', world: 'world', x: 10, y: 64, z: -5 }],
+      clan: { name: 'Testclan', tag: 'TC', colour: '#7dd3fc', leader: true, members: 1 },
+      graves: [{ world: 'world', x: 1, y: 2, z: 3, items: 12, since: 1 }],
+    };
+    duels.send({ t: 'mode-player', mode: 'mornicraft', uuid: LENA, data });
+    mc.send({ t: 'mode-player', mode: 'mornicraft', uuid: PHILIP, data: { ...data, homes: 'kaputt' } });
+    mc.send({ t: 'mode-player', mode: 'mornicraft', uuid: LENA, data: { ...data, extra: '<b>' } });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(morniCraftPlayer(db, PHILIP)).toBeNull();
+    const lena = morniCraftPlayer(db, LENA);
+    expect(lena).toMatchObject({
+      homes: [{ name: 'basis', x: 10 }],
+      clan: { tag: 'TC' },
+      graves: [{ items: 12 }],
+    });
+    expect(lena).not.toHaveProperty('extra');
   });
 
   test('Chat: Clan-Kürzel des Modus-Servers steht nach dem Rang; falsches Kürzel wird abgelehnt', async () => {

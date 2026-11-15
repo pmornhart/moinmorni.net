@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { saveModePlayer } from '../src/hub/mornicraft.js';
 import { createHarness, OWNER_PASSWORD, type Harness } from './harness.js';
 
 const LENA = '22222222-2222-2222-2222-222222222222';
@@ -34,7 +35,16 @@ describe('Panel: Spieler und Strafen', () => {
     expect(role.json()).toMatchObject({ ownRole: 'vip', role: { id: 'vip', symbol: '★' } });
     expect((await call('PUT', `/api/panel/players/${LENA}/role`, { roleId: 'chef' })).statusCode).toBe(400);
     await call('PUT', `/api/panel/players/${LENA}/role`, { roleId: null });
-    expect((await call('GET', `/api/panel/players/${LENA}`)).json()).toMatchObject({ ownRole: null });
+    expect((await call('GET', `/api/panel/players/${LENA}`)).json()).toMatchObject({
+      ownRole: null,
+      mornicraft: null,
+    });
+  });
+
+  test('Spieler-Seite zeigt, was MorniCraft meldet', async () => {
+    const data = { online: false, afk: false, homes: [], clan: null, graves: [] };
+    saveModePlayer(h.mm.db, 'mornicraft', LENA, data);
+    expect((await call('GET', `/api/panel/players/${LENA}`)).json()).toMatchObject({ mornicraft: data });
   });
 
   test('Bann verhängen und aufheben – mit Verlauf; ohne CSRF-Token nichts', async () => {

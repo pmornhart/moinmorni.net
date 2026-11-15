@@ -852,7 +852,26 @@
       "replaced": "Durch eine neuere ersetzt",
       "once": "Einmalig"
     },
-    "jailed": "Im Gefängnis"
+    "jailed": "Im Gefängnis",
+    "mornicraft": {
+      "title": "MorniCraft",
+      "text": "Was MorniCraft meldet – nur zum Ansehen.",
+      "online": "Gerade auf MorniCraft",
+      "afk": "Gerade weg (AFK)",
+      "offline": "Nicht auf MorniCraft",
+      "homes": "Zuhause",
+      "noHomes": "Noch kein Zuhause",
+      "clan": "Clan",
+      "noClan": "In keinem Clan",
+      "leader": "Anführer",
+      "members_one": "{{count}} Mitglied",
+      "members_other": "{{count}} Mitglieder",
+      "graves": "Gräber",
+      "noGraves": "Keine offenen Gräber",
+      "items_one": "{{count}} Sache",
+      "items_other": "{{count}} Sachen",
+      "updated": "Stand: {{time}}"
+    }
   },
   "punish": {
     "kinds": {

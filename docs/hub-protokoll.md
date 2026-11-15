@@ -60,20 +60,21 @@ des Spielers.
 
 ### Plugin → Hub
 
-| Typ                    | Von         | Inhalt                                                                                                                                                   |
-| ---------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `online`               | Proxy       | `players: [{uuid, name, server, locale, bedrock}]` – nach jedem (Wieder-)Verbinden                                                                       |
-| `login` (Anfrage)      | Proxy       | `uuid, name, locale, bedrock` → `{allow, message?, server?}`                                                                                             |
-| `connecting` (Anfrage) | Proxy       | `uuid, server` → `{allow}` – vor jedem Serverwechsel: Modus offen und wach? Schläft er, weckt ihn der Hub, der Spieler kommt danach per `connect` hinein |
-| `switch`               | Proxy       | `uuid, server` – Spieler ist auf einem anderen Server                                                                                                    |
-| `leave`                | Proxy       | `uuid`                                                                                                                                                   |
-| `locale`               | Proxy       | `uuid, locale` – Sprache des Clients (kommt erst nach der Anmeldung)                                                                                     |
-| `command` (Anfrage)    | Proxy       | `uuid, command, args[]` → `{}` (Antworten kommen als `msg`)                                                                                              |
-| `complete` (Anfrage)   | Proxy       | `uuid, command, args[]` → `{suggestions[]}`                                                                                                              |
-| `chat`                 | Spielserver | `uuid, text, tag?{text, colour}` – `tag`: Kürzel nach dem Rang (Clan in MorniCraft; 1–6 Buchstaben/Ziffern, `#rrggbb`)                                   |
-| `voice-group`          | Spielserver | `uuid, group` (UUID oder null) – Gruppe im Sprachchat gewechselt                                                                                         |
-| `play`                 | Spielserver | `uuid, mode` – Figur in der Lobby angeklickt: Modus beitreten (geschlossen/bald/Wartung → Hinweis, schläft → wecken)                                     |
-| _(binär)_ Audio        | Spielserver | Sprache aus einem Netzwerk-Kanal oder einer Party                                                                                                        |
+| Typ                    | Von         | Inhalt                                                                                                                                                                                                   |
+| ---------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `online`               | Proxy       | `players: [{uuid, name, server, locale, bedrock}]` – nach jedem (Wieder-)Verbinden                                                                                                                       |
+| `login` (Anfrage)      | Proxy       | `uuid, name, locale, bedrock` → `{allow, message?, server?}`                                                                                                                                             |
+| `connecting` (Anfrage) | Proxy       | `uuid, server` → `{allow}` – vor jedem Serverwechsel: Modus offen und wach? Schläft er, weckt ihn der Hub, der Spieler kommt danach per `connect` hinein                                                 |
+| `switch`               | Proxy       | `uuid, server` – Spieler ist auf einem anderen Server                                                                                                                                                    |
+| `leave`                | Proxy       | `uuid`                                                                                                                                                                                                   |
+| `locale`               | Proxy       | `uuid, locale` – Sprache des Clients (kommt erst nach der Anmeldung)                                                                                                                                     |
+| `command` (Anfrage)    | Proxy       | `uuid, command, args[]` → `{}` (Antworten kommen als `msg`)                                                                                                                                              |
+| `complete` (Anfrage)   | Proxy       | `uuid, command, args[]` → `{suggestions[]}`                                                                                                                                                              |
+| `chat`                 | Spielserver | `uuid, text, tag?{text, colour}` – `tag`: Kürzel nach dem Rang (Clan in MorniCraft; 1–6 Buchstaben/Ziffern, `#rrggbb`)                                                                                   |
+| `mode-player`          | Spielserver | `mode, uuid, data{…}` – Zusammenfassung eines Spielers fürs Panel (nur vom Server des Modus; geprüft je Modus, bisher MorniCraft: `online, afk, homes[], clan, graves[]`), gespeichert in `mode_players` |
+| `voice-group`          | Spielserver | `uuid, group` (UUID oder null) – Gruppe im Sprachchat gewechselt                                                                                                                                         |
+| `play`                 | Spielserver | `uuid, mode` – Figur in der Lobby angeklickt: Modus beitreten (geschlossen/bald/Wartung → Hinweis, schläft → wecken)                                                                                     |
+| _(binär)_ Audio        | Spielserver | Sprache aus einem Netzwerk-Kanal oder einer Party                                                                                                                                                        |
 
 ### Hub → Plugin
 

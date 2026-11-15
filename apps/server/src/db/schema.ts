@@ -193,3 +193,18 @@ export const modeStats = sqliteTable(
     index('mode_stats_rank').on(t.mode, t.key, t.value),
   ],
 );
+
+/**
+ * Was ein Spielmodus über einen Spieler zeigt (nur lesen, fürs Panel): je Modus und Spieler eine Zusammenfassung,
+ * z. B. MorniCraft: Zuhause, Clan, Gräber, online/AFK. Der Modus-Server meldet sie über den Hub (`mode-player`).
+ */
+export const modePlayers = sqliteTable(
+  'mode_players',
+  {
+    mode: text('mode').notNull(),
+    uuid: text('uuid').notNull(),
+    data: text('data', { mode: 'json' }).$type<unknown>().notNull(),
+    updatedAt: text('updated_at').notNull().default(now),
+  },
+  (t) => [primaryKey({ columns: [t.mode, t.uuid] })],
+);

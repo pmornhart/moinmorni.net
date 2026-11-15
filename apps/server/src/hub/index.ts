@@ -9,7 +9,13 @@ import { createChat, type ChatSettings } from './chat.js';
 import { allowed, createCommands, findCommand, type Actor, type Command } from './commands.js';
 import { hasRight, type HubContext } from './context.js';
 import { createModeration, type Moderation } from './moderation.js';
-import { MORNICRAFT_AREAS, morniCraftServer, morniCraftSettings } from './mornicraft.js';
+import {
+  MODE_PLAYER_SCHEMAS,
+  MORNICRAFT_AREAS,
+  morniCraftServer,
+  morniCraftSettings,
+  saveModePlayer,
+} from './mornicraft.js';
 import { createPlayerService, normalUuid, type PlayerService } from './players.js';
 import { createPresence, type Presence } from './presence.js';
 import { hubSecretOf, serverKeyOf, type ServerKind } from './protocol.js';
@@ -93,6 +99,11 @@ const connectingSchema = z.object({
   id: z.number().int(),
   uuid: uuidField,
   server: z.string().min(1).max(32),
+});
+const modePlayerSchema = z.object({
+  mode: z.string().min(1).max(32),
+  uuid: uuidField,
+  data: z.record(z.string(), z.unknown()),
 });
 const playSchema = z.object({ uuid: uuidField, mode: z.string().min(1).max(32) });
 const partyRequestSchema = z.object({ id: z.number().int(), uuid: uuidField });
@@ -582,6 +593,18 @@ export function createHub(options: HubOptions): Hub {
     stats: (conn, body) => {
       const m = statsSchema.parse(body);
       if (servesMode(conn, m.mode)) stats.record(m);
+    },
+    // Zusammenfassung eines Spielers für das Panel (MorniCraft: Zuhause, Clan, Gräber) – nur vom Server des Modus.
+    'mode-player': (conn, body) => {
+      const m = modePlayerSchema.parse(body);
+      const schema = MODE_PLAYER_SCHEMAS[m.mode];
+      if (!schema || !servesMode(conn, m.mode)) return;
+      const data = schema.safeParse(m.data);
+      if (!data.success) {
+        log.warn({ server: conn.server, mode: m.mode }, 'Hub: Spieler-Daten des Modus passen nicht');
+        return;
+      }
+      saveModePlayer(db, m.mode, normalUuid(m.uuid), data.data);
     },
     'mode-state': (conn, body) => {
       const m = modeStateSchema.parse(body);

@@ -5,6 +5,7 @@ import type { Api } from '../app.js';
 import type { Db } from '../db/index.js';
 import { players, punishments } from '../db/schema.js';
 import type { Hub } from '../hub/index.js';
+import { morniCraftPlayer } from '../hub/mornicraft.js';
 import { normalUuid } from '../hub/players.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import type { PanelAuth, PanelUser } from './auth.js';
@@ -101,6 +102,8 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
     if (!row) throw notFound('player_unknown');
     return {
       ...view(row),
+      // Was MorniCraft über den Spieler meldet (nur lesen); null = nie auf MorniCraft gewesen.
+      mornicraft: morniCraftPlayer(db, row.uuid),
       history: hub.punish.history(row.uuid).map((p) => ({
         ...p,
         active: LASTING.has(p.kind) && hub.punish.active(row.uuid, p.kind)?.id === p.id,

@@ -57,6 +57,13 @@
       "when": 1794746088112,
       "tag": "0007_mode_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794772625551,
+      "tag": "0008_mode_players",
+      "breakpoints": true
     }
   ]
 }

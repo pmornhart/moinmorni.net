@@ -70,12 +70,14 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         try {
             HubConfig hubConfig = HubConfig.load(dir);
             serverName = hubConfig.server();
-            hub = new HubClient(hubConfig, getLogger(), this::onHub, () -> { });
+            // Neu verbunden: MorniCraft-Spieler-Daten alle noch einmal schicken.
+            hub = new HubClient(hubConfig, getLogger(), this::onHub, morniCraftSent::clear);
             startVoice();
         } catch (Exception e) {
             getLogger().warning("MoinMorni ist nicht eingerichtet (" + e.getMessage() + ") – der Server läuft ohne Netzwerk-Chat.");
         }
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getScheduler().runTaskTimerAsynchronously(this, this::morniCraftPlayers, SUMMARY_TICKS, SUMMARY_TICKS);
         // Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni) – auch ohne Hub, dann läuft der Modus allein.
         getServer().getServicesManager().register(de.moinmorni.api.MoinMorni.class,
                 new ModeApi(hub, serverName, this::langOfUuid, this::rankOf,
@@ -239,6 +241,51 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mornicraft reload");
             }
         });
+    }
+
+    /** Zusammenfassungen von MorniCraft (Zuhause, Clan, Gräber) – Datei → zuletzt geschickter Stand. */
+    private final Map<String, Long> morniCraftSent = new ConcurrentHashMap<>();
+    private static final long SUMMARY_TICKS = 100;
+    private static final int SUMMARY_MAX_BYTES = 16_384;
+
+    /**
+     * MorniCraft schreibt pro Spieler plugins/MorniCraft/summary/<uuid>.json; was sich geändert hat, geht als
+     * `mode-player` an den Hub (das Panel zeigt es auf der Spieler-Seite, nur lesen).
+     */
+    private void morniCraftPlayers() {
+        if (hub == null || !hub.ready()) {
+            return;
+        }
+        Path dir = getDataFolder().toPath().getParent().resolve(MORNICRAFT).resolve("summary");
+        if (!java.nio.file.Files.isDirectory(dir)) {
+            return;
+        }
+        try (java.util.stream.Stream<Path> files = java.nio.file.Files.list(dir)) {
+            files.filter(f -> f.getFileName().toString().endsWith(".json")).forEach(f -> {
+                try {
+                    String name = f.getFileName().toString();
+                    long changed = java.nio.file.Files.getLastModifiedTime(f).toMillis();
+                    if (Long.valueOf(changed).equals(morniCraftSent.get(name))
+                            || java.nio.file.Files.size(f) > SUMMARY_MAX_BYTES) {
+                        return;
+                    }
+                    UUID uuid = UUID.fromString(name.substring(0, name.length() - ".json".length()));
+                    JsonObject body = new JsonObject();
+                    body.addProperty("t", "mode-player");
+                    body.addProperty("mode", "mornicraft");
+                    body.addProperty("uuid", uuid.toString());
+                    body.add("data", com.google.gson.JsonParser.parseString(
+                            java.nio.file.Files.readString(f, java.nio.charset.StandardCharsets.UTF_8)));
+                    if (hub.send(body)) {
+                        morniCraftSent.put(name, changed);
+                    }
+                } catch (java.io.IOException | RuntimeException e) {
+                    // Halb geschrieben oder kaputt: beim nächsten Mal wieder.
+                }
+            });
+        } catch (java.io.IOException e) {
+            getLogger().warning("MorniCraft-Spieler-Daten nicht gelesen: " + e.getMessage());
+        }
     }
 
     private String langOf(Player p) {

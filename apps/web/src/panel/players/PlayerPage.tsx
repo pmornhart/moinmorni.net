@@ -46,6 +46,7 @@ import {
 } from './model';
 import { PlayerFace } from '~/components/player-face';
 import { PunishDialog } from './PunishDialog';
+import { MorniCraftCard } from './MorniCraftCard';
 
 const OWNER = 'owner';
 const NO_ROLE = '';
@@ -441,6 +442,7 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
             roles={roles.data}
             higher={higher}
           />
+          {player.mornicraft ? <MorniCraftCard data={player.mornicraft} /> : null}
         </div>
         <div className="grid gap-[22px]">
           {canPunish ? <ActionsCard player={player} blocked={higher === false} onPunish={setDialog} /> : null}

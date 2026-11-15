@@ -9,6 +9,7 @@
  */
 const mineflayer = require('mineflayer');
 const http = require('node:http');
+const crypto = require('node:crypto');
 
 const alone = process.argv.includes('--allein');
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
@@ -75,6 +76,26 @@ function set(area, values) {
   });
 }
 
+/** Offline-UUID wie Minecraft. */
+function offlineUuid(name) {
+  const u = crypto.createHash('md5').update(`OfflinePlayer:${name}`).digest();
+  u[6] = (u[6] & 0x0f) | 0x30;
+  u[8] = (u[8] & 0x3f) | 0x80;
+  const h = u.toString('hex');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+/** Was der Hub über einen Spieler aus MorniCraft gespeichert hat (Steuer-URL, GET). */
+function panelData(name) {
+  return new Promise((resolve, reject) => {
+    http.get(`${CONTROL}?uuid=${offlineUuid(name)}`, (res) => {
+      let body = '';
+      res.on('data', (c) => (body += c));
+      res.on('end', () => resolve(JSON.parse(body)));
+    }).on('error', reject);
+  });
+}
+
 const prefixOf = (team) => plain(team?.prefix?.json ?? team?.prefix ?? '');
 /** Teams des Bots, in denen dieser Spieler steht. */
 const teamsOf = (bot, name) => Object.values(bot.teams).filter((t) => t.members?.includes(name));
@@ -96,6 +117,12 @@ async function network() {
   await sleep(3000);
   philip.lines = [];
   lena.lines = [];
+
+  // ---- Spawn-Insel: gebaut beim ersten Start, Spieler landen darauf ----
+  const pos = philip.entity.position;
+  const ground = philip.blockAt(pos.offset(0, -1, 0));
+  check('Spawn-Insel: Spieler steht in der Luft über dem Meer (y > 165)', pos.y > 165, `y ${pos.y.toFixed(1)}`);
+  check('Spawn-Insel: fester Boden unter den Füßen', Boolean(ground && ground.name !== 'air'), ground?.name ?? '?');
 
   // ---- Rang vom Netzwerk, nur einmal ----
   philip.chat('Servus MorniCraft');
@@ -126,6 +153,19 @@ async function network() {
     && shownPrefix.indexOf('extra') > 0, shownPrefix);
 
   // ---- MorniCraft-Befehle gehen weiter ----
+  philip.chat('/tpa Lena');
+  check('Andere Spieler in ihrer Sprache: Anfrage an Lena auf Englisch', Boolean(await sees(lena, /wants to come to you/)));
+  check('… Philip liest seine Antwort auf Deutsch', Boolean(await sees(philip, /Anfrage an Lena geschickt/)));
+  lena.chat('/tpdeny');
+  check('… Ablehnung bei Philip auf Deutsch', Boolean(await sees(philip, /hat abgelehnt/)));
+
+  philip.chat('/mcadmin reload');
+  check('/mcadmin reload für Admins', Boolean(await sees(philip, /neu geladen/)));
+  lena.chat('/mcadmin reload');
+  check('/mcadmin: Spieler darf nicht', Boolean(await sees(lena, /Unknown or incomplete|permission/i)));
+  philip.chat('/mcadmin drache blitze');
+  check('/mcadmin drache erreichbar', Boolean(await sees(philip, /Drache|drache|End/, 3000)));
+
   philip.chat('/sethome basis');
   check('/sethome', Boolean(await sees(philip, /basis.*(gespeichert|verschoben)/)));
   philip.chat('/info');
@@ -148,6 +188,12 @@ async function network() {
   check('Stumm gilt auf MorniCraft', !(await sees(philip, /Geht das\?/, 2000)));
   philip.chat('/unmute Lena');
   await sees(lena, /chat again|wieder schreiben/);
+
+  // ---- Panel: was MorniCraft über Philip meldet ----
+  await sleep(7000);
+  const data = await panelData('Philip');
+  check('Panel-Daten: Zuhause, Clan, online', Boolean(data && data.online && data.homes.some((h) => h.name === 'basis')
+    && data.clan?.tag === 'TC'), JSON.stringify(data));
 
   // ---- Rechte aus dem Netzwerk ----
   const mia = await join('Mia');

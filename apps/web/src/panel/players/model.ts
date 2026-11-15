@@ -60,8 +60,34 @@ export interface Punishment {
   readonly revokedBy: string | null;
 }
 
+/** A spot in a MorniCraft world. */
+export interface McPlace {
+  readonly world: string;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+/** What MorniCraft reports about a player (read-only). */
+export interface MorniCraftPlayer {
+  readonly online: boolean;
+  readonly afk: boolean;
+  readonly homes: ReadonlyArray<McPlace & { readonly name: string }>;
+  readonly clan: {
+    readonly name: string;
+    readonly tag: string;
+    readonly colour: string;
+    readonly leader: boolean;
+    readonly members: number;
+  } | null;
+  readonly graves: ReadonlyArray<McPlace & { readonly items: number; readonly since: number }>;
+  readonly updatedAt: string;
+}
+
 export interface PlayerDetail extends PlayerView {
   readonly history: readonly Punishment[];
+  /** null: never played MorniCraft. */
+  readonly mornicraft: MorniCraftPlayer | null;
 }
 
 export interface PunishmentRow extends Punishment {
