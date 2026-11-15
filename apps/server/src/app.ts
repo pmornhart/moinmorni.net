@@ -90,6 +90,9 @@ const HTTP_SERVER_ERROR = 500;
 const ASSETS = '/assets/';
 const API = '/api/';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
+/** Bilder der Webseite ändern sich nur mit Updates: einen Tag frisch, danach im Hintergrund prüfen (bis eine Woche). */
+const PICTURE_CACHE = 'public, max-age=86400, stale-while-revalidate=604800';
+const PICTURES = `${path.sep}bilder${path.sep}`;
 
 export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const { config } = options;
@@ -273,9 +276,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       wildcard: false,
       index: false,
       setHeaders: (res, file) => {
+        const assets = file.includes(`${path.sep}assets${path.sep}`);
         res.header(
           'cache-control',
-          file.includes(`${path.sep}assets${path.sep}`) ? IMMUTABLE_CACHE : 'no-cache',
+          assets ? IMMUTABLE_CACHE : file.includes(PICTURES) ? PICTURE_CACHE : 'no-cache',
         );
       },
     });
