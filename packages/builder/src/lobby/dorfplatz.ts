@@ -8,6 +8,7 @@
  */
 import { biergarten, castle, chapel, fountain, launchpad, maypole } from '../bavaria.js';
 import { Canvas } from '../canvas.js';
+import { fitFurniture } from '../furniture.js';
 import { fbm, pick, random } from '../noise.js';
 import { GROUND, meadow, roundTree, terrain } from '../nature.js';
 import { disc, range } from '../range.js';
@@ -430,5 +431,6 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     rnd,
   );
   meadow(c, -125, -125, 125, 125, height, 0.16, rnd);
+  fitFurniture(c);
   return { canvas: c, height };
 }

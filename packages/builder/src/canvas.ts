@@ -237,6 +237,14 @@ export class Canvas {
     return v === undefined ? undefined : this.palette[v];
   }
 
+  /** Alle Stellen, deren Block passt (z. B. für Prüfungen der fertigen Lobby). */
+  find(match: (block: string) => boolean): Array<readonly [number, number, number, string]> {
+    return [...this.cells]
+      .map(([k, v]) => [unkey(k), this.palette[v] ?? 'air'] as const)
+      .filter(([, block]) => match(block))
+      .map(([[x, y, z], block]) => [x, y, z, block] as const);
+  }
+
   /** Steht dort ein fester Block (nicht Luft, nichts Empfindliches)? */
   isSolidAt(x: number, y: number, z: number): boolean {
     const b = this.get(x, y, z);

@@ -1,8 +1,11 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, describe, expect, test } from 'vitest';
-import { createLobbyWorld, patchProperties } from '../src/lobby/world.js';
+import { MOEBEL_PACK_ID } from '@moinmorni/builder';
+import { lobbyPackInfo, lobbyPackUrl } from '../src/lobby/packs.js';
+import { createLobbyWorld, lobbyProperties, patchProperties } from '../src/lobby/world.js';
 import type { MotorClient } from '../src/motor/client.js';
 import { createProvisioner } from '../src/network/provision.js';
 import { createHarness, type Harness } from './harness.js';
@@ -103,7 +106,7 @@ describe('Lobby baut sich selbst', () => {
     const props = await read('server.properties');
     expect(props).toContain('gamemode=adventure');
     expect(props).toContain('difficulty=peaceful');
-    // Kein Texturpaket mehr: die Figuren tragen signierte Skins, die jeder ohne Paket sieht.
+    // Ohne eigene Domain kein Möbel-Paket (Minecraft lädt nur von außen erreichbare Adressen).
     expect(props).toMatch(/^resource-pack=$/m); // eslint-disable-line ts-patterns/require-regex-example -- empty pack line: "resource-pack=" yes, "resource-pack=https://…" no
     expect(props).toContain('require-resource-pack=false');
 
@@ -139,5 +142,21 @@ describe('Lobby baut sich selbst', () => {
     commands.length = 0;
     expect(await world.build(result.lobbyServerId)).toBe('current');
     expect(commands).toEqual([]);
+  });
+
+  test('Möbel-Paket: mit Domain bietet die Lobby es an (feste Kennung, Pflicht per Schalter), die Webseite liefert es', async () => {
+    const offer = { url: lobbyPackUrl('moinmorni.net'), sha1: lobbyPackInfo().sha1, required: true };
+    const props = lobbyProperties(offer);
+    expect(props['resource-pack']).toBe('https://moinmorni.net/api/public/packs/lobby.zip');
+    expect(props['resource-pack-sha1']).toMatch(/^[0-9a-f]{40}$/); // eslint-disable-line ts-patterns/require-regex-example -- SHA-1 hex: "da39a3ee5e6b4b0d3255bfef95601890afd80709" yes, "abc" no
+    expect(props['resource-pack-id']).toBe(MOEBEL_PACK_ID);
+    expect(props['require-resource-pack']).toBe('true');
+    expect(lobbyProperties({ ...offer, url: null })['resource-pack']).toBe('');
+
+    const h = await harness();
+    const res = await h.mm.app.inject({ method: 'GET', url: '/api/public/packs/lobby.zip' });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toBe('application/zip');
+    expect(crypto.createHash('sha1').update(res.rawPayload).digest('hex')).toBe(offer.sha1);
   });
 });

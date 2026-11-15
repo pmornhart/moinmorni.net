@@ -8,6 +8,7 @@
  * Im Block stehen {F} {B} {L} {R} für vorne/hinten/links/rechts (aus Sicht vor dem Haus) und {W} für die Holzart.
  */
 import type { Canvas } from './canvas.js';
+import { MOEBEL } from './furniture.js';
 import { signedSkin } from './cast.js';
 import { Frame, type Local } from './frame.js';
 import { STEP, YAW, type Facing } from './shapes.js';
@@ -162,8 +163,11 @@ export function signText(
   );
 }
 
-const CHAIR = (look: string): string => `{W}_stairs[facing={${look}}]`;
-const TOP = '{W}_slab[type=top]';
+/** Stuhl und Tisch sind Möbel aus dem Ressourcenpaket (ohne Paket: Mangrove-Stufe/-Halbstufe, `furniture.ts`). */
+const CHAIR = (look: string): string => MOEBEL.stuhl(`{${look}}`);
+const TISCH = MOEBEL.wirtstisch;
+/** Ladentheken bleiben Holz-Halbstufen der Hausart. */
+const THEKE = '{W}_slab[type=top]';
 const LANTERN_HANGING = 'lantern[hanging=true]';
 
 /** Erdgeschoss je Hausart. */
@@ -176,7 +180,7 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
       [1, 2, 2, 'potted_red_tulip'],
       [1, 1, -1, CHAIR('B'), 3, -1],
       [1, 1, -3, CHAIR('L'), 1, -2],
-      [2, 1, -3, TOP, 3, -2],
+      [2, 1, -3, TISCH, 3, -2],
       [4, 1, -3, CHAIR('R'), 4, -2],
       [2, 2, -2, 'candle[candles=3,lit=true]'],
       [3, 2, -3, 'potted_blue_orchid'],
@@ -191,14 +195,16 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
   },
   wirtshaus: {
     blocks: [
-      [2, 1, 3, TOP, 5, 3],
+      [2, 1, 3, TISCH, 5, 3],
       [2, 1, 2, CHAIR('F'), 5, 2],
       [2, 1, 4, CHAIR('B'), 5, 4],
-      [2, 1, 7, TOP, 5, 7],
+      [2, 1, 7, TISCH, 5, 7],
       [2, 1, 6, CHAIR('F'), 5, 6],
       [2, 1, 8, CHAIR('B'), 5, 8],
-      [3, 2, 3, 'candle[candles=2,lit=true]'],
-      [5, 2, 7, 'candle[candles=3,lit=true]'],
+      [3, 2, 3, MOEBEL.krug(2)],
+      [5, 2, 3, MOEBEL.krug(1)],
+      [2, 2, 7, MOEBEL.krug(4)],
+      [4, 2, 7, MOEBEL.krug(3)],
       [2, 2, 7, 'potted_red_tulip'],
       [-6, 1, -4, '{W}_planks', -1, -4],
       [-5, 2, -4, 'brewing_stand'],
@@ -230,7 +236,7 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
   },
   baeckerei: {
     blocks: [
-      [1, 1, 3, TOP, -1, 3],
+      [1, 1, 3, THEKE, -1, 3],
       ['M', 1, 3, 'air'],
       [1, 2, 3, 'cake'],
       [2, 2, 3, 'cake[bites=2]'],
@@ -267,8 +273,8 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
   },
   laden: {
     blocks: [
-      [1, 1, 3, TOP, 3, 3],
-      [-3, 1, 3, TOP, -1, 3],
+      [1, 1, 3, THEKE, 3, 3],
+      [-3, 1, 3, THEKE, -1, 3],
       [1, 1, -1, 'barrel[facing={F}]', -3, -1],
       [1, 2, -1, 'barrel[facing={F}]', -3, -1],
       [1, 1, 1, 'decorated_pot'],
@@ -282,7 +288,7 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
   },
   rathaus: {
     blocks: [
-      [2, 1, -3, TOP, -3, -3],
+      [2, 1, -3, THEKE, -3, -3],
       [3, 2, -3, 'lectern[facing={F}]'],
       [-3, 2, -3, 'candle[candles=4,lit=true]'],
       [1, 1, -1, 'bookshelf', -2, -1],
@@ -297,7 +303,7 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
   },
   info: {
     blocks: [
-      [2, 1, 3, TOP, -3, 3],
+      [2, 1, 3, THEKE, -3, 3],
       ['M', 1, 3, 'air'],
       [2, 2, 3, 'cartography_table'],
       [-3, 2, 3, 'lectern[facing={F}]'],
@@ -310,7 +316,7 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
   },
   apotheke: {
     blocks: [
-      [1, 1, 3, TOP, -1, 3],
+      [1, 1, 3, THEKE, -1, 3],
       ['M', 1, 3, 'air'],
       [1, 2, 3, 'brewing_stand'],
       [-1, 2, 3, 'potted_fern'],
@@ -350,7 +356,7 @@ const UPPER_FLOORS: readonly Room[] = [
       [3, 2, -1, 'lantern'],
       [1, 1, 1, 'barrel[facing={R}]', 1, 2],
       [1, 2, 1, 'barrel[facing={R}]', 1, 2],
-      [-1, 1, 1, TOP, -1, 2],
+      [-1, 1, 1, TISCH, -1, 2],
       [-2, 1, 1, CHAIR('L')],
       [-1, 2, 1, 'potted_cornflower'],
       [-1, 1, 4, 'bookshelf'],

@@ -3,6 +3,7 @@ import {
   LOBBY_NAMESPACE,
   LOBBY_PACK_DIR,
   lobbyPack,
+  MOEBEL_PACK_ID,
   partName,
   SEASON_NAMESPACE,
   SEASON_PACK_DIR,
@@ -59,6 +60,8 @@ const UNICODE_DIGITS = 4;
 export interface LobbyWorldOptions {
   /** Aktuelle Saison-Deko (Panel: Lobby → Saison-Deko). */
   readonly season?: () => Season;
+  /** Möbel-Paket, das die Lobby anbieten soll. */
+  readonly packOffer?: () => PackOffer;
   /** Bauplan (Tests: ein kleiner). */
   readonly pack?: () => LobbyPack;
   readonly sleep?: (ms: number) => Promise<void>;
@@ -159,12 +162,39 @@ export function patchProperties(
   return { text: `${[...updated, ...added].join('\n')}\n`, changed };
 }
 
+/** Möbel-Paket, das die Lobby anbietet (`lobby/packs.ts`); ohne Adresse (keine Domain) bietet sie keins an. */
+export interface PackOffer {
+  readonly url: string | null;
+  readonly sha1: string;
+  readonly required: boolean;
+}
+
+const PACK_PROMPT = {
+  text: 'Echte Möbel in der Lobby: Stühle, Eckbänke, Bierbänke und Steinkrüge – dafür unser kleines Paket. / Real furniture in the lobby – needs our small pack.',
+  color: 'gold',
+};
+
 /**
- * Was die Lobby in ihrer server.properties braucht. Kein Texturpaket: die Figuren tragen von Mojang signierte Skins
- * (`packages/builder/src/cast-textures.ts`), die sieht jeder Java-Spieler auch ohne Paket. Ein früher eingetragenes
- * Paket wird wieder ausgetragen.
+ * Was die Lobby in ihrer server.properties braucht. Die Figuren brauchen kein Paket (von Mojang signierte Skins); das
+ * Möbel-Paket bietet sie an, wenn es eine öffentliche Adresse gibt – mit fester Kennung, damit der Proxy es beim
+ * Verlassen der Lobby wieder entfernt.
  */
-export function lobbyProperties(): Record<string, string> {
+export function lobbyProperties(offer?: PackOffer): Record<string, string> {
+  const pack = offer?.url
+    ? {
+        'resource-pack': offer.url,
+        'resource-pack-sha1': offer.sha1,
+        'resource-pack-id': MOEBEL_PACK_ID,
+        'require-resource-pack': String(offer.required),
+        'resource-pack-prompt': JSON.stringify(PACK_PROMPT),
+      }
+    : {
+        'resource-pack': '',
+        'resource-pack-sha1': '',
+        'resource-pack-id': '',
+        'require-resource-pack': 'false',
+        'resource-pack-prompt': '',
+      };
   return {
     gamemode: 'adventure',
     // Minecraft ab 26.x legt neue Server mit eingeschalteter Whitelist an – wer hinein darf, entscheidet der Hub.
@@ -176,10 +206,7 @@ export function lobbyProperties(): Record<string, string> {
     'spawn-protection': '0',
     'allow-nether': 'false',
     'generate-structures': 'false',
-    'resource-pack': '',
-    'resource-pack-sha1': '',
-    'require-resource-pack': 'false',
-    'resource-pack-prompt': '',
+    ...pack,
   };
 }
 
@@ -329,7 +356,7 @@ export function createLobbyWorld(
   return {
     configure: async (serverId) => {
       const current = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
-      const next = patchProperties(current, lobbyProperties());
+      const next = patchProperties(current, lobbyProperties(options.packOffer?.()));
       if (!next.changed) return false;
       await writeFile(serverId, PROPERTIES_FILE, next.text);
       return true;

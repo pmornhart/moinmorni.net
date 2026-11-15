@@ -565,6 +565,23 @@ export const LOBBY_AREA: SettingArea = {
       ],
     },
     {
+      id: 'moebel',
+      title: t('Möbel-Paket', 'Furniture pack'),
+      settings: [
+        {
+          key: 'packRequired',
+          type: 'boolean',
+          default: false,
+          label: t('Möbel-Paket verpflichtend', 'Furniture pack required'),
+          help: t(
+            'Stühle, Eckbänke, Tische, Bierbänke und Steinkrüge in der Lobby sind eigene 3D-Modelle aus einem kleinen Ressourcenpaket. Aus: Java-Spieler werden beim Betreten gefragt; wer ablehnt (oder auf Bedrock spielt), sieht einfache Holzstufen. An: ohne Paket kein Zutritt zur Lobby. Gilt, sobald die Lobby leer ist und neu startet (macht MoinMorni von selbst).',
+            'Chairs, corner benches, tables, beer benches and stone mugs in the lobby are our own 3D models from a small resource pack. Off: Java players are asked when they join; whoever declines (or plays Bedrock) sees simple wooden stairs. On: no pack, no lobby. Applies once the lobby is empty and restarts (MoinMorni does that by itself).',
+          ),
+          command: '/lobby paket an|aus',
+        },
+      ],
+    },
+    {
       id: 'fun',
       title: t('Spaß in der Lobby', 'Fun in the lobby'),
       settings: [

@@ -30,6 +30,7 @@ import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerTeamRoutes } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
+import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
 import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
@@ -134,6 +135,11 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const status = createStatusService(config, motor, stores, hub);
   const lobbyWorld = createLobbyWorld(motor, app.log, {
     season: () => seasonOf(stores.settings('lobby')['season']),
+    packOffer: () => ({
+      url: lobbyPackUrl(config.domain),
+      sha1: lobbyPackInfo().sha1,
+      required: stores.settings('lobby')['packRequired'] === true,
+    }),
   });
   const lobbyRef = { id: '', season: seasonOf(stores.settings('lobby')['season']) };
   const build = createBuildService(motor, stores);
@@ -194,6 +200,15 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   // Saison-Deko umgeschaltet (Panel oder /lobby saison …) → gleich in der Lobby tauschen.
   events.on('settings.changed', ({ area }) => {
     if (area !== 'lobby' || !lobbyRef.id) return;
+    // Möbel-Paket Pflicht an/aus: server.properties der Lobby neu, Neustart sobald niemand drin ist.
+    void (async () => {
+      try {
+        if (await lobbyWorld.configure(lobbyRef.id))
+          restarts.add([{ serverId: lobbyRef.id, member: 'lobby' }]);
+      } catch (err) {
+        app.log.warn({ err }, 'Lobby: Einstellungen ließen sich nicht schreiben');
+      }
+    })();
     const season = seasonOf(stores.settings('lobby')['season']);
     if (season === lobbyRef.season) return;
     lobbyRef.season = season;
@@ -202,6 +217,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const setup = createSetupService(config, handle.db, motor, app.log, events);
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
+  registerPackRoutes(app);
   registerPanelRoutes(app, auth, stores);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   teamRef.syncAll = registerTeamRoutes(app, auth, stores, handle.db, motor).syncAll;

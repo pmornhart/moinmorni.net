@@ -14,6 +14,7 @@ import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.PlayerSettingsChangedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
@@ -57,6 +58,8 @@ public final class VelocityPlugin {
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
     private static final String HUB_DIR = "moinmorni";
     private static final String LOBBY = "lobby";
+    /** Kennung des Möbel-Pakets der Lobby (gleich wie MOEBEL_PACK_ID in packages/builder/src/furniture.ts). */
+    private static final UUID LOBBY_PACK = UUID.fromString("6d6f696e-6d6f-726e-692d-6d6f6562656c");
     private static final String HUB_AWAY =
             "<gold>MoinMorni startet gerade neu</gold> <gray>– versuch es in ein paar Sekunden nochmal.</gray>\n"
             + "<gray>MoinMorni is restarting – try again in a few seconds.</gray>";
@@ -243,6 +246,20 @@ public final class VelocityPlugin {
         body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
         body.addProperty("server", event.getServer().getServerInfo().getName());
         hub.send(body);
+    }
+
+    /**
+     * Das Möbel-Paket gilt nur in der Lobby: Wer sie verlässt, bekommt es wieder abgenommen – sonst wären z. B. in
+     * MorniCraft Mangrove-Stufen plötzlich Stühle. Zurück in der Lobby schickt der Lobby-Server es von selbst wieder.
+     */
+    @Subscribe
+    public void onSwitched(ServerPostConnectEvent event) {
+        Player p = event.getPlayer();
+        boolean inLobby = p.getCurrentServer().map(s -> LOBBY.equals(s.getServerInfo().getName())).orElse(true);
+        boolean hasPack = p.getAppliedResourcePacks().stream().anyMatch(i -> LOBBY_PACK.equals(i.getId()));
+        if (!inLobby && hasPack) {
+            p.removeResourcePacks(LOBBY_PACK);
+        }
     }
 
     @Subscribe

@@ -11,6 +11,7 @@ import { pairs, range } from './range.js';
 import { cylinder, discAt, gableRoof, lathe, slab, stairs, STEP, YAW, type Facing } from './shapes.js';
 import { furnish, signText, type RoomKind } from './village.js';
 import { roundTree } from './nature.js';
+import { MOEBEL, MOEBEL_BODEN } from './furniture.js';
 
 const D = {
   floor: 4,
@@ -29,6 +30,8 @@ const D = {
   tableLen: 5,
   tableGap: 4,
   bench: 1,
+  /** Anteil der Biertisch-Stücke mit Krügen darauf. */
+  mugChance: 0.55,
   domeTip: 3,
   pilasterGap: 4,
   storey: 5,
@@ -226,6 +229,12 @@ export function maypole(c: Canvas, x: number, y: number, z: number, height: numb
 }
 
 /** Biergarten: Kies, Kastanien, lange Tische mit Bänken, Lampions, Ausschank mit weiß-blauer Markise. */
+/** 1 bis 4 Krüge auf einem Tischstück. */
+function mugCount(rnd: () => number): 1 | 2 | 3 | 4 {
+  const MUGS = [1, 2, 3, 4] as const;
+  return MUGS[Math.floor(rnd() * MUGS.length)] ?? 1;
+}
+
 export function biergarten(
   c: Canvas,
   x1: number,
@@ -240,11 +249,15 @@ export function biergarten(
   );
   const rows = range(z1 + 2, z2 - 2).filter((z) => (z - z1 - 2) % D.tableGap === 0);
   const cols = range(x1 + 2, x2 - D.tableLen - 1).filter((x) => (x - x1 - 2) % (D.tableLen + 3) === 0);
+  // Bierbank und Biertisch aus dem Ressourcenpaket; unter den Bänken Kies (das Modell zeichnet ihn mit).
   pairs(cols, rows).forEach(([tx, tz]) => {
     range(tx, tx + D.tableLen - 1).forEach((x) => {
-      c.set(x, y + 1, tz, slab('spruce', 'top'));
-      c.set(x, y + 1, tz - D.bench, slab('spruce'));
-      c.set(x, y + 1, tz + D.bench, slab('spruce'));
+      c.set(x, y + 1, tz, MOEBEL.biertisch);
+      [tz - D.bench, tz + D.bench].forEach((bz) => {
+        c.set(x, y, bz, MOEBEL_BODEN.biergarten);
+        c.set(x, y + 1, bz, MOEBEL.bierbank);
+      });
+      if (rnd() < D.mugChance) c.set(x, y + 2, tz, MOEBEL.krug(mugCount(rnd)));
     });
   });
   const trees = pairs(range(x1, x2), range(z1, z2)).filter(
