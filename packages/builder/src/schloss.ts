@@ -170,6 +170,37 @@ function festsaal(r: Room): void {
   range(3, w - 3)
     .filter((u) => u % 6 === 3)
     .forEach((u) => f.set(u, top - 2, centre, LIGHT));
+  furnishGallery(r, mid, centre);
+}
+
+/**
+ * Galerie (Obergeschoss, drei Blöcke hoch): Teppich durch die Mitte, Sitzgruppen mit Tischchen und Kerzen an den
+ * Fenstern, niedrige Bücherregale an der Rückwand, Laternen unter der Decke. Rotunde und Treppenlöcher bleiben frei.
+ */
+function furnishGallery(r: Room, mid: number, centre: number): void {
+  const { f, w, d } = r;
+  const stand = GALLERY_Y + 1;
+  const nearRotunda = (u: number): boolean => Math.abs(u - mid) <= 8;
+  const nearStairs = (u: number): boolean => Math.abs(u - mid) <= 15;
+  range(2, w - 2)
+    .filter((u) => !nearRotunda(u))
+    .forEach((u) => f.set(u, stand, centre, u % 8 === 0 ? 'yellow_carpet' : 'red_carpet'));
+  // Sitzgruppen: Bank an der Fensterseite (gibt es schon alle 6), davor Tischchen mit Kerze und Blumen
+  range(2, w - 2)
+    .filter((u) => u % 6 === 0 && !nearRotunda(u))
+    .forEach((u) => {
+      f.set(u, stand, 2, 'dark_oak_slab[type=top]');
+      f.set(u, stand + 1, 2, u % 12 === 0 ? 'white_candle[candles=2,lit=true]' : 'potted_blue_orchid');
+      f.set(u, stand, 3, stairs('dark_oak', f.dir('back')));
+    });
+  // Niedrige Regale an der Rückwand zwischen den Fenstern (nicht bei den Treppen)
+  range(2, w - 2)
+    .filter((u) => u % 4 !== 2 && !nearStairs(u))
+    .forEach((u) => f.set(u, stand, d - 1, u % 4 === 0 ? 'chiseled_bookshelf' : 'bookshelf'));
+  // Laternen unter der Decke
+  range(3, w - 3)
+    .filter((u) => u % 6 === 3 && !nearRotunda(u))
+    .forEach((u) => [4, d - 4].forEach((v) => f.set(u, stand + 2, v, 'lantern[hanging=true]')));
 }
 
 function bibliothek(r: Room): void {
@@ -286,6 +317,21 @@ export function rotunda(c: Canvas, cx: number, cz: number, floorY: number, domeT
     [-1, -1],
   ].forEach(([dx = 0, dz = 0]) => c.set(cx + dx, floorY + 7, cz + dz, 'lantern[hanging=true]'));
   c.set(cx, floorY + 7, cz, 'light[level=15]');
+  // Kuppel innen: Himmel in Hellblau mit goldenem Rahmen und Strahlen, in der Mitte eine warme Leuchte; unsichtbares
+  // Licht rundum, damit die Kuppel nicht als schwarzes Loch über dem Saal hängt.
+  const sky = domeTop;
+  range(-6, 6).forEach((dx) =>
+    range(-6, 6).forEach((dz) => {
+      const dist = Math.hypot(dx, dz);
+      if (dist > 6.5) return;
+      const ray = dx === 0 || dz === 0 || Math.abs(dx) === Math.abs(dz);
+      c.set(cx + dx, sky, cz + dz, dist > 5.5 || (ray && dist > 1.5) ? 'gold_block' : 'light_blue_concrete');
+    }),
+  );
+  c.set(cx, sky, cz, 'shroomlight');
+  ring(5)
+    .filter((_, i) => i % 8 === 0)
+    .forEach(([x, z]) => [floorY + 13, floorY + 19].forEach((y) => c.set(x, y, z, 'light[level=15]')));
 }
 
 /** Unsichtbares Licht zum Anstrahlen (wie Scheinwerfer an echten Schlössern). */
