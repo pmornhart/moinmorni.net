@@ -14,7 +14,7 @@ import { createEventBus, type EventBus } from './lib/events.js';
 import { createMotorClient, MotorError, type FetchLike, type MotorClient } from './motor/client.js';
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
-import { createProvisioner, type NetworkProvisioner } from './network/provision.js';
+import { createProvisioner, LOBBY_MEMBER, type NetworkProvisioner } from './network/provision.js';
 import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
@@ -188,7 +188,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       // Die Welt baut sich im Hintergrund (beim ersten Mal ein paar Minuten), die Webseite läuft schon.
       lobbyRef.id = result.lobbyServerId;
       syncTeam();
-      if (result.lobbyServerId) void lobbyWorld.build(result.lobbyServerId);
+      // Startet die Lobby gleich neu (Update), baut sie erst danach – sonst bricht der Bau mittendrin ab.
+      const lobbyRestarts = result.restart.some((s) => s.serverId === result.lobbyServerId);
+      if (result.lobbyServerId && !lobbyRestarts) void lobbyWorld.build(result.lobbyServerId);
     } catch (err) {
       app.log.error(
         { err },
@@ -197,6 +199,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     }
   };
   events.on('setup.done', () => void provision());
+  // Lobby (neu) gestartet und beim Hub angemeldet → Welt prüfen; ist sie aktuell, passiert nichts.
+  events.on('server.connected', ({ server }) => {
+    if (server === LOBBY_MEMBER && lobbyRef.id) void lobbyWorld.build(lobbyRef.id);
+  });
   // Saison-Deko umgeschaltet (Panel oder /lobby saison …) → gleich in der Lobby tauschen.
   events.on('settings.changed', ({ area }) => {
     if (area !== 'lobby' || !lobbyRef.id) return;
@@ -204,7 +210,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     void (async () => {
       try {
         if (await lobbyWorld.configure(lobbyRef.id))
-          restarts.add([{ serverId: lobbyRef.id, member: 'lobby' }]);
+          restarts.add([{ serverId: lobbyRef.id, member: LOBBY_MEMBER }]);
       } catch (err) {
         app.log.warn({ err }, 'Lobby: Einstellungen ließen sich nicht schreiben');
       }

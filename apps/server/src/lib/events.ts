@@ -24,6 +24,8 @@ export interface Events {
   'application.created': { id: number };
   /** Bewerbung entschieden (Discord passt die Nachricht an und sagt es der Person). */
   'application.decided': { id: number };
+  /** Ein Spielserver hat sich beim Hub angemeldet (z. B. nach einem Neustart). */
+  'server.connected': { server: string };
 }
 
 export interface EventBus {

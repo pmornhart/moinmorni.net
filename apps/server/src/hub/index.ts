@@ -560,6 +560,7 @@ export function createHub(options: HubOptions): Hub {
         return;
       }
       conns.backends.set(conn.server, conn);
+      events.emit('server.connected', { server: conn.server });
       conn.send({ t: 'welcome', server: conn.server, kind: conn.kind });
       conn.send(voice.config());
       conn.send(lobbyState());

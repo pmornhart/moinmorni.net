@@ -31,12 +31,15 @@ describe('Hub', () => {
   let url: string;
   let clock: { now: number };
   let woken: string[];
+  let connected: string[];
   const open: FakePlugin[] = [];
   const close = (): void => undefined;
 
   beforeEach(async () => {
     const handle = openDatabase(':memory:');
     const events = createEventBus();
+    connected = [];
+    events.on('server.connected', ({ server }) => connected.push(server));
     stores = createStores(handle.db, events);
     clock = { now: Date.parse('2026-11-14T12:00:00Z') };
     woken = [];
@@ -67,6 +70,12 @@ describe('Hub', () => {
     open.push(p);
     return p;
   };
+
+  test('meldet, wenn sich ein Spielserver anmeldet (Lobby baut danach ihre Welt)', async () => {
+    await plugin('proxy', 'proxy');
+    await plugin('lobby', 'backend');
+    expect(connected).toEqual(['lobby']);
+  });
 
   /** Proxy + zwei Spielserver, Philip (Owner) und Lena (Spielerin) online. */
   const network = async (): Promise<{ proxy: FakePlugin; lobby: FakePlugin; duels: FakePlugin }> => {
