@@ -498,6 +498,9 @@ describe('Hub', () => {
     const go = (uuid: string) => proxy.request({ t: 'connecting', uuid, server: 'bau' });
     expect(await go(LENA)).toMatchObject({ data: { allow: false } });
     await proxy.next('msg', (m) => m['uuid'] === LENA && String(m['text']).includes('build team'));
+    // /bau ohne Recht: die gleiche freundliche Antwort statt „nicht erlaubt“.
+    await proxy.request({ t: 'command', uuid: LENA, command: 'bau', args: [] });
+    await proxy.next('msg', (m) => m['uuid'] === LENA && String(m['text']).includes('build team'));
     // Philip (Owner, darf bauen): der Bau-Server schläft → /bau weckt ihn, danach geht es von selbst hinein.
     await proxy.request({ t: 'command', uuid: PHILIP, command: 'bau', args: [] });
     await proxy.next('msg', (m) => m['uuid'] === PHILIP && String(m['text']).includes('Bau-Server'));

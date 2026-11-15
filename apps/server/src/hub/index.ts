@@ -521,7 +521,8 @@ export function createHub(options: HubOptions): Hub {
         fail(conn, m.id, 'unknown');
         return;
       }
-      if (!allowed(command, actor.role)) ctx.msg(actor.uuid, text(actor.lang, 'cmd.no_right'));
+      if (!allowed(command, actor.role))
+        ctx.msg(actor.uuid, text(actor.lang, command.noRight ?? 'cmd.no_right'));
       else command.run(actor, m.args);
       reply(conn, m.id, {});
     },

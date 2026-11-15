@@ -3,7 +3,7 @@ import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
 import { JAIL_DEFAULT_MINUTES, type Moderation, type Target } from './moderation.js';
 import { parseDuration, type PunishKind } from './punish.js';
-import { dateText, LANGS, mm, text, type Lang } from './texts.js';
+import { dateText, LANGS, mm, text, type Lang, type TextKey } from './texts.js';
 
 /**
  * Befehle im ganzen Netzwerk. Der Proxy meldet sie nur an und reicht sie weiter; was passiert, steht hier.
@@ -22,6 +22,8 @@ export interface Command {
   readonly aliases: readonly string[];
   readonly usage: Readonly<Record<Lang, string>>;
   readonly right?: GameRight;
+  /** Eigene Antwort, wenn das Recht fehlt (sonst die allgemeine). */
+  readonly noRight?: TextKey;
   readonly run: (actor: Actor, args: readonly string[]) => void;
   readonly complete?: (actor: Actor, args: readonly string[]) => string[];
 }
@@ -204,6 +206,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       name: 'bau',
       aliases: ['build', 'bauserver'],
       right: 'build',
+      noRight: 'build.no_right',
       usage: { de: '/bau', en: '/build' },
       run: (actor) => {
         say(actor, text(actor.lang, 'build.going'));
