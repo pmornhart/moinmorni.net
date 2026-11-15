@@ -26,6 +26,19 @@ describe('Einstellungs-Katalog', () => {
     });
   });
 
+  test('MorniCraft: jede Einstellung auch per Befehl, jeder Befehl eindeutig', () => {
+    const area = areaById('mornicraft')!;
+    const defs = settingsOf(area).filter((d) => d.key !== 'acceptMessage');
+    expect(defs.length).toBeGreaterThan(40);
+    defs.forEach((d) => expect(d.command?.startsWith('/mornicraft ')).toBe(true));
+    // Ohne den Wert am Ende: zwei Einstellungen dürfen nicht dieselben Wörter haben.
+    const words = defs.map((d) => (d.command ?? '').split(' ').slice(0, -1).join(' '));
+    expect(new Set(words).size).toBe(words.length);
+    expect(area.sections.map((s) => s.id)).toEqual(
+      expect.arrayContaining(['teleports', 'limits', 'clans', 'dragon', 'dragon-attacks', 'world']),
+    );
+  });
+
   test('Änderungen werden geprüft: Grenzen, Auswahl, unbekannte Schlüssel', () => {
     const chat = patchSchemaFor(areaById('chat')!);
     expect(chat.safeParse({ slowMode: 5 }).success).toBe(true);

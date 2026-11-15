@@ -149,6 +149,8 @@ export const DEFAULT_MODES: readonly Mode[] = [
  * den Server des Modus (und hält sie aktuell).
  */
 export const MODE_REPOS: Readonly<Record<string, string>> = {
+  // MorniCraft läuft auch allein und unter MorniHosting; im Netzwerk schaltet es selbst in den Netzwerk-Modus.
+  mornicraft: 'pmornhart/MorniCraft',
   duels: 'pmornhart/MoinMorni-Duels',
   party: 'pmornhart/Morni-Party',
   gipfelsturm: 'pmornhart/Morni-Gipfelsturm',
@@ -157,8 +159,8 @@ export const MODE_REPOS: Readonly<Record<string, string>> = {
   mirni: 'pmornhart/Morni-SMP',
 };
 
-/** Arbeitsspeicher der Modus-Server in MB, wo der Standard (3 GB) nicht reicht – MorniSMP hat eine große Welt. */
-export const MODE_MEMORY_MB: Readonly<Record<string, number>> = { mirni: 8192 };
+/** Arbeitsspeicher der Modus-Server in MB, wo der Standard (3 GB) nicht reicht – MorniSMP und MorniCraft haben große Welten. */
+export const MODE_MEMORY_MB: Readonly<Record<string, number>> = { mirni: 8192, mornicraft: 6144 };
 
 /** Was Webseite, Lobby und Discord über einen Modus zeigen. */
 export interface ModeStatus {

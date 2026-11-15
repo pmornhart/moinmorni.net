@@ -603,6 +603,77 @@ describe('Hub', () => {
     expect(duels.received.some((m) => m.t === 'lobby-settings')).toBe(false);
   });
 
+  test('MorniCraft-Einstellungen: nur der MorniCraft-Server bekommt sie, Änderungen im Panel und per Befehl sofort', async () => {
+    const { proxy, duels } = await network();
+    const mc = await plugin('mornicraft', 'backend');
+    const first = (await mc.next('mornicraft-settings')) as unknown as { config: Record<string, unknown> };
+    expect(first.config).toMatchObject({
+      'server-name': 'MorniCraft auf MoinMorni',
+      'teleport-delay': 5,
+      'max-homes': 5,
+      limits: { spawn: { uses: 0, hours: 24 } },
+      clans: { enabled: true, 'max-members': 10 },
+      'hard-dragon': true,
+      dragon: { health: 600, damage: 175, egg: true },
+      'update-check': false,
+      network: { address: 'moinmorni.net', 'panel-players': 'https://moinmorni.net/panel/spieler' },
+    });
+    // Regeln wie auf der Webseite, eine pro Zeile, beide Sprachen.
+    const rules = first.config['network'] as { 'rules-de': string[]; 'rules-en': string[] };
+    expect(rules['rules-de'].length).toBe(5);
+    expect(rules['rules-en'][0]).toContain('Be kind');
+
+    stores.patchSettings('mornicraft', { teleportDelay: 0, spawnLimit: 3, dragonHealth: 1200 }, 'test');
+    expect(await mc.next('mornicraft-settings')).toMatchObject({
+      config: { 'teleport-delay': 0, limits: { spawn: { uses: 3, hours: 24 } }, dragon: { health: 1200 } },
+    });
+    // Im Spiel per Befehl (Owner) – gleiche Prüfung wie im Panel.
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'mornicraft',
+      args: ['drache', 'leben', '900'],
+    });
+    expect(await mc.next('mornicraft-settings')).toMatchObject({ config: { dragon: { health: 900 } } });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'mornicraft',
+      args: ['grenze', 'spawn-zeit', '1'],
+    });
+    expect(await mc.next('mornicraft-settings')).toMatchObject({
+      config: { limits: { spawn: { hours: 1 } } },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'mornicraft',
+      args: ['befehl', 'tpa', 'aus'],
+    });
+    expect(await mc.next('mornicraft-settings')).toMatchObject({ config: { tpa: false } });
+    expect(stores.settings('mornicraft')['tpa']).toBe(false);
+    await proxy.request({ t: 'command', uuid: LENA, command: 'mornicraft', args: ['clans', 'aus'] });
+    expect(stores.settings('mornicraft')['clans']).toBe(true);
+    // Neue Regeln auf der Webseite → auch MorniCraft.
+    stores.patchSettings('website', { rulesDe: 'Eins\nZwei' }, 'test');
+    expect(await mc.next('mornicraft-settings')).toMatchObject({
+      config: { network: { 'rules-de': ['Eins', 'Zwei'] } },
+    });
+    expect(duels.received.some((m) => m.t === 'mornicraft-settings')).toBe(false);
+  });
+
+  test('Chat: Clan-Kürzel des Modus-Servers steht nach dem Rang; falsches Kürzel wird abgelehnt', async () => {
+    const { lobby, duels } = await network();
+    lobby.send({ t: 'chat', uuid: PHILIP, text: 'hallo', tag: { text: 'MC', colour: '#ef4444' } });
+    const line = (await duels.next('chat')) as unknown as { text: { de: string } };
+    expect(line.text.de).toContain('<#ff5555>♛</#ff5555> <#ef4444>[MC]</#ef4444> <#ff5555>Philip</#ff5555>');
+    lobby.send({ t: 'chat', uuid: PHILIP, text: 'böse', tag: { text: '<red>x', colour: '#ef4444' } });
+    lobby.send({ t: 'chat', uuid: PHILIP, text: 'danach' });
+    const next = (await duels.next('chat')) as unknown as { text: { de: string } };
+    expect(next.text.de).toContain('danach');
+    expect(duels.received.some((m) => JSON.stringify(m).includes('böse'))).toBe(false);
+  });
+
   test('Sprachchat-Brücke: Kanäle über alle Server, kein Sprechen für andere, Stumm, Party, Team folgt', async () => {
     const { proxy, lobby, duels } = await network();
     const cmd = (uuid: string, command: string, ...args: string[]) =>

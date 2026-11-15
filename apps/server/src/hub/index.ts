@@ -9,6 +9,7 @@ import { createChat, type ChatSettings } from './chat.js';
 import { allowed, createCommands, findCommand, type Actor, type Command } from './commands.js';
 import { hasRight, type HubContext } from './context.js';
 import { createModeration, type Moderation } from './moderation.js';
+import { MORNICRAFT_AREAS, morniCraftServer, morniCraftSettings } from './mornicraft.js';
 import { createPlayerService, normalUuid, type PlayerService } from './players.js';
 import { createPresence, type Presence } from './presence.js';
 import { hubSecretOf, serverKeyOf, type ServerKind } from './protocol.js';
@@ -76,7 +77,17 @@ const commandSchema = z.object({
   command: z.string().min(1).max(32),
   args: z.array(z.string().max(TEXT_MAX)).max(ARGS_MAX),
 });
-const chatSchema = z.object({ uuid: uuidField, text: z.string().min(1).max(TEXT_MAX) });
+// Clan-Kürzel eines Modus (MorniCraft): "MC", "Ö1" – nur Buchstaben und Ziffern, Farbe "#rrggbb".
+// https://regex101.com/?flavor=javascript&regex=%5E%5B%5Cp%7BL%7D%5Cp%7BN%7D%5D%7B1%2C6%7D%24&flags=u&testString=M%C3%961
+const TAG_TEXT = /^[\p{L}\p{N}]{1,6}$/u;
+// https://regex101.com/?flavor=javascript&regex=%5E%23%5B0-9a-fA-F%5D%7B6%7D%24&testString=%2334d399
+const HEX_COLOUR = /^#[0-9a-fA-F]{6}$/;
+const chatSchema = z.object({
+  uuid: uuidField,
+  text: z.string().min(1).max(TEXT_MAX),
+  /** Kürzel vor dem Namen, das der Modus-Server mitschickt (Clan in MorniCraft). */
+  tag: z.object({ text: z.string().regex(TAG_TEXT), colour: z.string().regex(HEX_COLOUR) }).optional(),
+});
 const voiceGroupSchema = z.object({ uuid: uuidField, group: z.string().max(40).nullable() });
 const connectingSchema = z.object({
   id: z.number().int(),
@@ -439,6 +450,9 @@ export function createHub(options: HubOptions): Hub {
       features: { spawn: LOBBY_SPAWN_VIEW, launchpads: LAUNCHPADS, parkour: PARKOUR, tour: TOUR },
     };
   };
+  /** Einstellungen für den MorniCraft-Server (Panel → Einstellungen → MorniCraft, Regeln der Webseite). */
+  const morniCraft = (): Body =>
+    morniCraftSettings(stores, { domain: ctx.domain, timeZone: options.timeZone });
   let lobbyTimer: ReturnType<typeof setTimeout> | null = null;
   const lobbySoon = (): void => {
     if (lobbyTimer) return;
@@ -605,7 +619,7 @@ export function createHub(options: HubOptions): Hub {
     chat: (conn, body) => {
       const m = chatSchema.parse(body);
       if (!isHere(conn, m.uuid)) return;
-      chat.handle(normalUuid(m.uuid), m.text, now());
+      chat.handle(normalUuid(m.uuid), m.text, now(), m.tag);
     },
   };
 
@@ -632,6 +646,7 @@ export function createHub(options: HubOptions): Hub {
         conn.send(lobbySettings());
         conn.send(jailState());
       }
+      if (conn.server === morniCraftServer(stores)) conn.send(morniCraft());
       lobbySoon();
       presence.on(conn.server).forEach((p) => sendProfile(p.uuid));
       // Aufgewacht: wer gewartet hat, kommt jetzt hinein.
@@ -667,6 +682,8 @@ export function createHub(options: HubOptions): Hub {
   });
 
   events.on('settings.changed', ({ area }) => {
+    const mc = morniCraftServer(stores);
+    if (mc && MORNICRAFT_AREAS.has(area)) toBackend(mc, morniCraft());
     if (area === 'network') toProxy(network());
     if (area === 'lobby') toBackend(LOBBY_SERVER, lobbySettings());
     if (area === 'voice') voice.broadcast();

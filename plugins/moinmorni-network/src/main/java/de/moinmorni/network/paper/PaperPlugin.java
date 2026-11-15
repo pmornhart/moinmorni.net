@@ -178,6 +178,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 clock.onSettings(m);
             }
             case "jail" -> jail.onState(m);
+            case "mornicraft-settings" -> morniCraftSettings(m);
             case "voice" -> {
                 if (voice != null) {
                     VoiceSetup.apply(voice, m);
@@ -199,6 +200,47 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    // ---------- MorniCraft (pmornhart/MorniCraft) ----------
+
+    /** MorniCraft legt diese Datei über seine config.yml (nur im Netzwerk). */
+    private static final String MORNICRAFT = "MorniCraft";
+    private static final String MORNICRAFT_FILE = "network.json";
+    /** Clan-Kürzel, das MorniCraft an den Spieler hängt (Metadaten) – kommt im Netzwerk-Chat vor den Namen. */
+    private static final String TAG = "moinmorni:tag";
+    private static final String TAG_COLOUR = "moinmorni:tag-colour";
+
+    /** Ist MorniCraft hier? Dann malt MorniCraft Rang und Clan in Tab-Liste und über den Kopf (eigene Leisten). */
+    private boolean morniCraft() {
+        return getServer().getPluginManager().isPluginEnabled(MORNICRAFT);
+    }
+
+    /**
+     * Einstellungen aus dem Panel (Einstellungen → MorniCraft): als Datei in den Ordner von MorniCraft, dann lädt
+     * MorniCraft neu – sofort, ohne Neustart. Ohne MorniCraft bleibt nur die Datei liegen (für später).
+     */
+    private void morniCraftSettings(JsonObject m) {
+        JsonObject config = m.getAsJsonObject("config");
+        if (config == null) {
+            return;
+        }
+        Path dir = getDataFolder().toPath().getParent().resolve(MORNICRAFT);
+        try {
+            java.nio.file.Files.createDirectories(dir);
+            Path tmp = java.nio.file.Files.createTempFile(dir, "network", ".tmp");
+            java.nio.file.Files.writeString(tmp, config.toString(), java.nio.charset.StandardCharsets.UTF_8);
+            java.nio.file.Files.move(tmp, dir.resolve(MORNICRAFT_FILE), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (java.io.IOException e) {
+            getLogger().warning("MorniCraft-Einstellungen nicht gespeichert: " + e.getMessage());
+            return;
+        }
+        Bukkit.getScheduler().runTask(this, () -> {
+            if (morniCraft()) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mornicraft reload");
+            }
+        });
+    }
+
     private String langOf(Player p) {
         Profile profile = profiles.get(p.getUniqueId());
         return profile == null ? "de" : profile.lang();
@@ -215,9 +257,22 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         body.addProperty("t", "chat");
         body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
         body.addProperty("text", PlainTextComponentSerializer.plainText().serialize(event.message()));
+        String tag = meta(event.getPlayer(), TAG);
+        String colour = meta(event.getPlayer(), TAG_COLOUR);
+        if (!tag.isEmpty() && !colour.isEmpty()) {
+            JsonObject t = new JsonObject();
+            t.addProperty("text", tag);
+            t.addProperty("colour", colour);
+            body.add("tag", t);
+        }
         if (hub.send(body)) {
             event.setCancelled(true);
         }
+    }
+
+    private static String meta(Player p, String key) {
+        List<org.bukkit.metadata.MetadataValue> values = p.getMetadata(key);
+        return values.isEmpty() ? "" : values.get(0).asString();
     }
 
     // ---------- Rang in Tab-Liste und über dem Kopf ----------
@@ -281,6 +336,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             return;
         }
         applyRights(p, profile);
+        if (morniCraft()) {
+            // MorniCraft zeigt den Rang des Netzwerks selbst (mit Clan-Kürzel, auf den Leisten jedes Spielers).
+            return;
+        }
         TextColor colour = TextColor.fromHexString(profile.colour());
         Component prefix = profile.symbol() == null || profile.symbol().isEmpty()
                 ? Component.empty()

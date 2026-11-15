@@ -51,8 +51,14 @@ const censor = (message: string, words: readonly string[]): string =>
       message,
     );
 
+/** Kürzel vor dem Namen (z. B. der Clan in MorniCraft), schon geprüft: Buchstaben/Ziffern und "#rrggbb". */
+export interface ChatTag {
+  readonly text: string;
+  readonly colour: string;
+}
+
 export interface Chat {
-  readonly handle: (uuid: string, message: string, now?: number) => void;
+  readonly handle: (uuid: string, message: string, now?: number, tag?: ChatTag) => void;
 }
 
 export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat {
@@ -63,7 +69,7 @@ export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat 
   };
 
   return {
-    handle: (uuid, raw, now = Date.now()) => {
+    handle: (uuid, raw, now = Date.now(), tag) => {
       const sender = ctx.presence.get(uuid);
       if (!sender?.server) return;
       const s = settings();
@@ -104,11 +110,13 @@ export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat 
       const calm = !team && tooLoud(body, s.capsLimit) ? body.toLowerCase() : body;
       const clean = mm(censor(calm, s.badWords));
       const symbol = role.symbol ? `<${role.colour}>${mm(role.symbol)}</${role.colour}> ` : '';
+      // Nach dem Rang, vor dem Namen: "♛ [MC] Philip".
+      const own = tag ? `<${tag.colour}>[${mm(tag.text)}]</${tag.colour}> ` : '';
       const line = (lang: Lang): string => {
-        const tag = s.showServer
+        const server = s.showServer
           ? `<dark_gray>[</dark_gray><gray>${mm(serverName(sender.server ?? '', lang))}</gray><dark_gray>]</dark_gray> `
           : '';
-        return `${tag}${symbol}<${role.colour}>${mm(sender.name)}</${role.colour}> <dark_gray>»</dark_gray> <white>${clean}`;
+        return `${server}${symbol}${own}<${role.colour}>${mm(sender.name)}</${role.colour}> <dark_gray>»</dark_gray> <white>${clean}`;
       };
       ctx.chat(s.global || shout ? 'all' : sender.server, { de: line('de'), en: line('en') });
     },
