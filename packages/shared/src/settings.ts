@@ -565,6 +565,30 @@ export const LOBBY_AREA: SettingArea = {
       ],
     },
     {
+      id: 'daytime',
+      title: t('Tageszeit', 'Time of day'),
+      settings: [
+        {
+          key: 'daytime',
+          type: 'select',
+          default: 'real',
+          options: [
+            { value: 'real', label: t('Wie in echt (Sonne und Mond)', 'Like real life (sun and moon)') },
+            { value: 'morning', label: t('Immer Morgen', 'Always morning') },
+            { value: 'day', label: t('Immer Mittag', 'Always noon') },
+            { value: 'evening', label: t('Immer Abendrot', 'Always sunset') },
+            { value: 'night', label: t('Immer Nacht', 'Always night') },
+          ],
+          label: t('Tageszeit in der Lobby', 'Time of day in the lobby'),
+          help: t(
+            'Wie in echt: Sonnenaufgang, Sonnenuntergang und Mondphase wie heute in Bayern – um 20 Uhr im Winter ist es Nacht, im Sommer noch hell.',
+            'Like real life: sunrise, sunset and moon phase as today in Bavaria – at 8 pm it is night in winter and still light in summer.',
+          ),
+          command: '/lobby tageszeit <echt|morgen|mittag|abend|nacht>',
+        },
+      ],
+    },
+    {
       id: 'moebel',
       title: t('Möbel-Paket', 'Furniture pack'),
       settings: [

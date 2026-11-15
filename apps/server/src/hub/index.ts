@@ -95,6 +95,9 @@ const modeStateSchema = z.object({
 const LOBBY_DEBOUNCE_MS = 1_000;
 /** Name der Lobby im Netzwerk – nur sie bekommt die Lobby-Einstellungen. */
 const LOBBY_SERVER = 'lobby';
+/** Ort für Sonnenauf- und -untergang in der Lobby: München (Breite, Länge in Grad). */
+const CLOCK_LATITUDE = 48.137;
+const CLOCK_LONGITUDE = 11.575;
 const BUILD_SERVER = 'bau';
 /** So lange darf ein Modus zum Aufwachen brauchen, dann gibt es eine Meldung. */
 const WAKE_TIMEOUT_MS = 180_000;
@@ -430,6 +433,9 @@ export function createHub(options: HubOptions): Hub {
       launchpads: l['launchpads'] === true,
       parkour: l['parkour'] === true,
       walkers: Number(l['walkers']),
+      // Tageszeit: „real“ = Sonne und Mond wie heute in Bayern (Zeitzone des Netzwerks, Ort München)
+      daytime: String(l['daytime'] ?? 'real'),
+      clock: { timeZone: options.timeZone, latitude: CLOCK_LATITUDE, longitude: CLOCK_LONGITUDE },
       features: { spawn: LOBBY_SPAWN_VIEW, launchpads: LAUNCHPADS, parkour: PARKOUR, tour: TOUR },
     };
   };

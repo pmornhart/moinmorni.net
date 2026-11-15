@@ -12,6 +12,7 @@ import { cylinder, discAt, gableRoof, lathe, slab, stairs, STEP, YAW, type Facin
 import { furnish, signText, type RoomKind } from './village.js';
 import { roundTree } from './nature.js';
 import { MOEBEL, MOEBEL_BODEN } from './furniture.js';
+import { hollowWing, rotunda, type WingKind } from './schloss.js';
 
 const D = {
   floor: 4,
@@ -355,6 +356,8 @@ export interface WingSpec {
   readonly width: number;
   readonly depth: number;
   readonly storeys: number;
+  /** Innen hohl und eingerichtet (begehbar); ohne bleibt der Flügel massiv. */
+  readonly interior?: WingKind;
 }
 
 /** Schlossflügel: weiße Fassade mit Pilastern, hohe Fenster, Gold-Gesims, grünes Kupferdach. */
@@ -395,6 +398,7 @@ export function palaceWing(c: Canvas, s: WingSpec): void {
     eaves: 0,
   });
   const door = Math.floor(w / 2);
+  if (s.interior) hollowWing(c, f, s.interior, w, d, top);
   f.fill(door - 1, 2, 0, door + 1, 5, 0, 'air');
   f.fill(door - 2, 6, -1, door + 2, 6, -1, 'gold_block');
   f.set(door, 7, -1, 'emerald_block');
@@ -504,10 +508,31 @@ export function castle(c: Canvas, s: CastleSpec): void {
   const [fx, fy, fz] = f.at(0, 0, 16);
   fountain(c, fx, fy, fz, 4);
   // Seitenflügel (Fronten zum Hof), Hauptflügel hinten
-  palaceWing(c, { ...wingOrigin(f, -W + 2, 1, 31, 'right'), width: 31, depth: 11, storeys: 2 });
-  palaceWing(c, { ...wingOrigin(f, W - 2, 1, 31, 'left'), width: 31, depth: 11, storeys: 2 });
+  palaceWing(c, {
+    ...wingOrigin(f, -W + 2, 1, 31, 'right'),
+    width: 31,
+    depth: 11,
+    storeys: 2,
+    interior: 'bibliothek',
+  });
+  palaceWing(c, {
+    ...wingOrigin(f, W - 2, 1, 31, 'left'),
+    width: 31,
+    depth: 11,
+    storeys: 2,
+    interior: 'rittersaal',
+  });
   const [mx, my, mz] = f.at(-W + 2, 1, 33);
-  palaceWing(c, { x: mx, y: my, z: mz, front: f.dir('front'), width: 2 * W - 3, depth: 15, storeys: 3 });
+  palaceWing(c, {
+    x: mx,
+    y: my,
+    z: mz,
+    front: f.dir('front'),
+    width: 2 * W - 3,
+    depth: 15,
+    storeys: 3,
+    interior: 'festsaal',
+  });
   // Mittelkuppel über dem Hauptflügel
   const [dx, dy, dz] = f.at(0, 1, 40);
   cylinder(c, dx, dz, dy + 15, dy + 23, 8, 'white_concrete');
@@ -523,6 +548,9 @@ export function castle(c: Canvas, s: CastleSpec): void {
   lathe(c, dx, dy + 25, dz, [8, 9, 9, 9, 8, 8, 7, 6, 5, 4, 3, 2, 1, 1], 'waxed_oxidized_copper');
   range(dy + 39, dy + 41).forEach((ty) => c.set(dx, ty, dz, 'gold_block'));
   c.set(dx, dy + 42, dz, 'lightning_rod');
+  // Innen: Rotunde unter der Kuppel mit Brunnen (Festsaal-Boden liegt eine Reihe über dem Flügel-Ursprung)
+  rotunda(c, dx, dz, dy + 1, dy + 24);
+  fountain(c, dx, dy + 1, dz, 3);
   // Türme: vier am Hauptflügel, zwei vorne an den Seitenflügeln
   [
     [-W + 1, 33],

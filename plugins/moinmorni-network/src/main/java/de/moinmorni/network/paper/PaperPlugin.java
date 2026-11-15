@@ -61,6 +61,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private LobbyFeatures features;
     /** Gefängnis-Zelle der Lobby – nur aktiv, wenn der Hub die Zelle schickt. */
     private LobbyJail jail;
+    /** Tageszeit der Lobby (wie in echt) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
+    private LobbyClock clock;
 
     @Override
     public void onEnable() {
@@ -83,6 +85,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         lobby.start();
         features = new LobbyFeatures(this, lobby, this::langOf);
         jail = new LobbyJail(this, features, this::langOf);
+        clock = new LobbyClock(this);
         features.setJail(jail::isJailed);
         jail.start();
         features.start();
@@ -122,6 +125,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (clock != null) {
+            clock.stop();
+        }
         if (hub != null) {
             hub.stop();
         }
@@ -166,7 +172,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 });
             }
             case "lobby" -> lobby.onModes(m);
-            case "lobby-settings" -> features.onSettings(m);
+            case "lobby-settings" -> {
+                features.onSettings(m);
+                clock.onSettings(m);
+            }
             case "jail" -> jail.onState(m);
             case "voice" -> {
                 if (voice != null) {

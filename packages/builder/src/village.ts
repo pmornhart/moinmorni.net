@@ -140,6 +140,21 @@ function bodyDisplay(n: NpcSpec, item: string): string {
   return `{id:'minecraft:item_display',item_display:'none',Tags:[${tagList(['mm_tracht'])}],Rotation:[${YAW[n.look]}f,0f],teleport_duration:2,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,${down}f,0f],scale:[${scale}f,${scale}f,${scale}f]},item:${item}}`;
 }
 
+/** Weiteres Wesen der Lobby (z. B. Rüstungsständer im Schloss) – mit den Kennungen, die der Neubau aufräumt. */
+export function decoEntity(
+  c: Canvas,
+  type: string,
+  x: number,
+  y: number,
+  z: number,
+  look: Facing,
+  nbt: string,
+): void {
+  c.extra.push(
+    `summon ${type} ${x} ${y} ${z} {Tags:[${tagList(['mm_deco'])}],Rotation:[${YAW[look]}f,0f],${nbt}}`,
+  );
+}
+
 /** Figur aufstellen (Mannequin mit eigenem Skin, unverwundbar, nicht schiebbar). */
 export function npc(c: Canvas, n: NpcSpec): void {
   const outfit = CAST[n.skin];
