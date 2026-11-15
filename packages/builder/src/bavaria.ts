@@ -509,7 +509,7 @@ export function castle(c: Canvas, s: CastleSpec): void {
   fountain(c, fx, fy, fz, 4);
   // Seitenflügel (Fronten zum Hof), Hauptflügel hinten
   palaceWing(c, {
-    ...wingOrigin(f, -W + 2, 1, 31, 'right'),
+    ...wingOrigin(f, -W + 2, 1, 1, 'right'),
     width: 31,
     depth: 11,
     storeys: 2,
