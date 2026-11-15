@@ -85,7 +85,7 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
   const f = new Frame(c, h.x, h.y, h.z, h.front);
   const wood = h.wood ?? 'spruce';
   const roof = h.roof ?? 'dark_oak';
-  const shutter = `${h.shutter ?? 'warped'}_trapdoor`;
+  const shutter = `${h.shutter ?? 'waxed_oxidized_copper'}_trapdoor`;
   const w = h.width - 1;
   const d = h.depth - 1;
   const top = h.floors * D.floor;
