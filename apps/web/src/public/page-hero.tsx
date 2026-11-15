@@ -49,7 +49,13 @@ export function PageHero({
         className="mm-settle absolute inset-0 -z-30 size-full object-cover"
       />
       <div className="mm-page-shade absolute inset-0 -z-20" aria-hidden />
-      {tintStyle ? <div className="absolute inset-0 -z-10 opacity-45 mix-blend-soft-light" style={tintStyle} aria-hidden /> : null}
+      {tintStyle ? (
+        <div
+          className="absolute inset-0 -z-10 opacity-45 mix-blend-soft-light"
+          style={tintStyle}
+          aria-hidden
+        />
+      ) : null}
       <div
         className={cn(
           WRAP,
@@ -58,7 +64,9 @@ export function PageHero({
         )}
       >
         <div className="mm-rise grid content-end justify-items-start gap-4">
-          {eyebrow ? <Eyebrow className="text-gold-bright [text-shadow:0_2px_0_rgba(0,0,0,0.6)]">{eyebrow}</Eyebrow> : null}
+          {eyebrow ? (
+            <Eyebrow className="text-gold-bright [text-shadow:0_2px_0_rgba(0,0,0,0.6)]">{eyebrow}</Eyebrow>
+          ) : null}
           <h1
             className={cn(
               'font-pixel text-[clamp(2.5rem,7.4vw,4.6rem)] font-bold leading-[0.95] tracking-[0.005em] text-white text-balance [overflow-wrap:anywhere] [text-shadow:0_4px_0_rgba(0,0,0,0.45)]',

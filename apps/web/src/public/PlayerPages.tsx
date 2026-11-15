@@ -12,14 +12,29 @@ import {
   UserSearch,
   type LucideIcon,
 } from 'lucide-react';
-import { useId, useState, type CSSProperties, type FormEvent, type ReactElement, type ReactNode } from 'react';
+import {
+  useId,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { PlayerFace } from '~/components/player-face';
 import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
-import { findMode, isNotFound, TOP_ALL, usePlayerProfile, useTopPlayers, type PublicProfile, type TopPlayer } from '~/lib/site';
+import {
+  findMode,
+  isNotFound,
+  TOP_ALL,
+  usePlayerProfile,
+  useTopPlayers,
+  type PublicProfile,
+  type TopPlayer,
+} from '~/lib/site';
 import { useNetworkStatus } from '~/lib/status';
 import { useLanguage, usePick } from '~/lib/text';
 import { useTimeText } from '~/lib/time';
@@ -185,7 +200,9 @@ function LeaderRow({ player, best }: { readonly player: TopPlayer; readonly best
             <span className="block h-full opacity-80" style={bar} />
           </span>
         </span>
-        <span className="tabular shrink-0 font-pixel text-[15px] font-semibold">{time.playtime(player.playMinutes)}</span>
+        <span className="tabular shrink-0 font-pixel text-[15px] font-semibold">
+          {time.playtime(player.playMinutes)}
+        </span>
       </Link>
     </li>
   );
@@ -203,7 +220,12 @@ export function StatsPage(): ReactElement {
   const order = [podium[1], podium[0], podium[2]].filter((p): p is TopPlayer => Boolean(p));
   return (
     <>
-      <PageHero eyebrow={t('site.stats.eyebrow')} title={t('site.stats.title')} text={t('site.stats.text')} scene="schloss">
+      <PageHero
+        eyebrow={t('site.stats.eyebrow')}
+        title={t('site.stats.title')}
+        text={t('site.stats.text')}
+        scene="schloss"
+      >
         <PlayerSearch onDark className="max-w-[560px] pt-2" />
       </PageHero>
       <div className={cn(WRAP, 'grid gap-8 py-14 sm:py-16')}>
@@ -285,7 +307,9 @@ function formatTime(ms: number, locale: string): string {
   const seconds = (ms / MS_PER_SECOND) % SECONDS_PER_MINUTE;
   const digits = { minimumFractionDigits: MS_DIGITS, maximumFractionDigits: MS_DIGITS };
   if (!minutes) return `${new Intl.NumberFormat(locale, digits).format(seconds)} s`;
-  const padded = new Intl.NumberFormat(locale, { ...digits, minimumIntegerDigits: TWO_DIGITS }).format(seconds);
+  const padded = new Intl.NumberFormat(locale, { ...digits, minimumIntegerDigits: TWO_DIGITS }).format(
+    seconds,
+  );
   return `${minutes}:${padded}`;
 }
 
@@ -361,7 +385,11 @@ function BackToStats(): ReactElement {
 }
 
 function ProfileTop({ children }: { readonly children: ReactNode }): ReactElement {
-  return <div className={cn(WRAP, 'grid max-w-[820px] gap-6 pb-16 pt-[calc(var(--header-h)+40px)]')}>{children}</div>;
+  return (
+    <div className={cn(WRAP, 'grid max-w-[820px] gap-6 pb-16 pt-[calc(var(--header-h)+40px)]')}>
+      {children}
+    </div>
+  );
 }
 
 /** A player's public profile (or a friendly note when it is private or unknown). */

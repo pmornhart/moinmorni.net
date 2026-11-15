@@ -89,7 +89,7 @@ function AddressChip({ className }: { readonly className?: string }): ReactEleme
         className,
       )}
     >
-      <span className={cn('inline-grid [grid-template-areas:"cell"]')}>
+      <span className="inline-grid [grid-template-areas:'cell']">
         <span className={cn('inline-flex items-center gap-1.5 [grid-area:cell]', copied && 'invisible')}>
           <Copy className="size-3.5 text-band-muted group-hover:text-gold-bright" aria-hidden />
           {address}
@@ -109,14 +109,21 @@ function AddressChip({ className }: { readonly className?: string }): ReactEleme
   );
 }
 
-export function OnlineLine({ className }: { readonly className?: string }): ReactElement {
+/** "● 87 Spieler online"; `announce` reads changes aloud (only once per page, in the hero). */
+export function OnlineLine({
+  className,
+  announce = false,
+}: {
+  readonly className?: string;
+  readonly announce?: boolean;
+}): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const online = useOnlineText();
   return (
     <span
       className={cn('inline-flex items-center gap-2 font-semibold text-band-foreground', className)}
-      role="status"
-      aria-live="polite"
+      role={announce ? 'status' : undefined}
+      aria-live={announce ? 'polite' : undefined}
       title={t('site.server.refresh')}
     >
       <LiveDot live={online.live} />
@@ -145,7 +152,9 @@ function LanguageToggle({ className }: { readonly className?: string }): ReactEl
           onClick={() => chooseLanguage(lang)}
           className={cn(
             'cursor-pointer rounded-[3px] px-2.5 py-1 font-pixel text-[12px] font-bold uppercase tracking-[0.08em] transition-colors',
-            language === lang ? 'bg-gold-bright text-[#2a1b00]' : 'text-band-muted hover:text-band-foreground',
+            language === lang
+              ? 'bg-gold-bright text-[#2a1b00]'
+              : 'text-band-muted hover:text-band-foreground',
           )}
         >
           {lang}
@@ -350,7 +359,7 @@ function Header(): ReactElement {
           'hidden overflow-hidden border-b border-white/10 transition-[height,opacity] duration-300 lg:block',
           scrolled ? 'h-0 opacity-0' : 'h-9 opacity-100',
         )}
-        aria-hidden={scrolled}
+        inert={scrolled}
       >
         <div className={cn(WRAP, 'flex h-9 items-center justify-between gap-4 text-[13px]')}>
           <div className="flex items-center gap-3">
@@ -450,7 +459,13 @@ function Footer(): ReactElement {
             <ul className="flex flex-wrap gap-2" aria-label={t('site.footer.follow')}>
               {invite ? (
                 <li>
-                  <a href={invite} {...EXTERNAL} aria-label="Discord" title="Discord" className={SOCIAL_BUTTON}>
+                  <a
+                    href={invite}
+                    {...EXTERNAL}
+                    aria-label="Discord"
+                    title="Discord"
+                    className={SOCIAL_BUTTON}
+                  >
                     <MessagesSquare className="size-[18px]" aria-hidden />
                   </a>
                 </li>
@@ -507,7 +522,9 @@ function Footer(): ReactElement {
           )}
         >
           <div className="grid gap-1">
-            <span className="font-pixel text-[14px] font-semibold text-band-foreground">© {year} MoinMorni</span>
+            <span className="font-pixel text-[14px] font-semibold text-band-foreground">
+              © {year} MoinMorni
+            </span>
             <span>{t('footer.disclaimer')}</span>
           </div>
           <div className="flex items-center gap-2">

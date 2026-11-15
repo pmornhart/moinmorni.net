@@ -170,8 +170,16 @@ export function NewsArticlePage(): ReactElement {
     <>
       <section className="mm-on-dark relative isolate overflow-hidden bg-band text-white">
         <NewsImage item={news} eager className="mm-settle absolute inset-0 -z-20" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/50 to-black/70" aria-hidden />
-        <div className={cn(WRAP, 'grid min-h-[440px] max-w-[980px] content-end gap-5 pb-16 pt-[calc(var(--header-h)+48px)] sm:min-h-[520px]')}>
+        <div
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/50 to-black/70"
+          aria-hidden
+        />
+        <div
+          className={cn(
+            WRAP,
+            'grid min-h-[440px] max-w-[980px] content-end gap-5 pb-16 pt-[calc(var(--header-h)+48px)] sm:min-h-[520px]',
+          )}
+        >
           <div className="mm-rise grid justify-items-start gap-4">
             <div className="flex flex-wrap items-center gap-2">
               <CategoryChip category={news.category} />

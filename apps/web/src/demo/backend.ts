@@ -1,5 +1,13 @@
 import type { ModeStatus, NetworkStatus, Text } from '@moinmorni/shared';
-import type { NewsCategory, NewsItem, PlayerProfile, PublicRole, SiteInfo, TeamGroup, TopPlayer } from '~/lib/site';
+import type {
+  NewsCategory,
+  NewsItem,
+  PlayerProfile,
+  PublicRole,
+  SiteInfo,
+  TeamGroup,
+  TopPlayer,
+} from '~/lib/site';
 import fixtures from './fixtures.json';
 
 /**
@@ -38,7 +46,11 @@ interface Fixtures {
   readonly roles: Readonly<Record<string, PublicRole>>;
   readonly teamOrder: readonly string[];
   readonly players: readonly FixturePlayer[];
-  readonly apply: { readonly open: boolean; readonly discordLogin: boolean; readonly demoDiscordName: string };
+  readonly apply: {
+    readonly open: boolean;
+    readonly discordLogin: boolean;
+    readonly demoDiscordName: string;
+  };
 }
 
 interface MyApplication {
@@ -96,7 +108,10 @@ const STARTED = Date.now();
 const ago = (ms: number): string => new Date(STARTED - ms).toISOString();
 
 function hash(text: string): number {
-  return Array.from(text).reduce((h, c) => Math.imul(h ^ (c.codePointAt(0) ?? 0), FNV_PRIME) >>> 0, FNV_OFFSET);
+  return Array.from(text).reduce(
+    (h, c) => Math.imul(h ^ (c.codePointAt(0) ?? 0), FNV_PRIME) >>> 0,
+    FNV_OFFSET,
+  );
 }
 
 /** A stable made-up uuid per name, so every player keeps the same pixel face. */
@@ -106,7 +121,9 @@ function uuidOf(name: string): string {
     .join('');
   const filled = Array.from(UUID_PATTERN).reduce<{ readonly at: number; readonly out: string }>(
     (acc, char) =>
-      char === 'x' ? { at: acc.at + 1, out: acc.out + (hex[acc.at] ?? '0') } : { at: acc.at, out: acc.out + char },
+      char === 'x'
+        ? { at: acc.at + 1, out: acc.out + (hex[acc.at] ?? '0') }
+        : { at: acc.at, out: acc.out + char },
     { at: 0, out: '' },
   );
   return filled.out;
@@ -125,7 +142,10 @@ function wiggle(base: number, max: number): number {
 }
 
 function status(): DemoResponse {
-  const modes: ModeStatus[] = DATA.status.modes.map((m) => ({ ...m, players: wiggle(m.players, m.maxPlayers) }));
+  const modes: ModeStatus[] = DATA.status.modes.map((m) => ({
+    ...m,
+    players: wiggle(m.players, m.maxPlayers),
+  }));
   const inModes = modes.reduce((sum, m) => sum + m.players, 0);
   const lobby = wiggle(DATA.status.lobbyPlayers, DATA.status.maxPlayers);
   const body: NetworkStatus = {
@@ -216,7 +236,9 @@ function team(): DemoResponse {
 function newsItem(request: DemoRequest): DemoResponse {
   const slug = decodeURIComponent(request.rest);
   const found = NEWS.find((n) => n.slug === slug);
-  return found ? { status: HTTP_OK, body: found } : { status: HTTP_NOT_FOUND, body: { error: 'news_unknown' } };
+  return found
+    ? { status: HTTP_OK, body: found }
+    : { status: HTTP_NOT_FOUND, body: { error: 'news_unknown' } };
 }
 
 /** The application page: signed in with "Discord" or not, and the one application of this visit. */
@@ -243,12 +265,17 @@ function applyView(): DemoResponse {
 }
 
 function isApplicationBody(body: unknown): body is { readonly minecraftName: string } {
-  return typeof body === 'object' && body !== null && typeof (body as { minecraftName?: unknown }).minecraftName === 'string';
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    typeof (body as { minecraftName?: unknown }).minecraftName === 'string'
+  );
 }
 
 function applySend(request: DemoRequest): DemoResponse {
   if (!applyState.me) return { status: HTTP_UNAUTHORIZED, body: { error: 'apply_login_required' } };
-  if (!isApplicationBody(request.body)) return { status: HTTP_BAD_REQUEST, body: { error: 'invalid_request' } };
+  if (!isApplicationBody(request.body))
+    return { status: HTTP_BAD_REQUEST, body: { error: 'invalid_request' } };
   applyState.application = {
     status: 'pending',
     minecraftName: request.body.minecraftName,
@@ -287,7 +314,9 @@ const PREFIXED: readonly (readonly [method: string, prefix: string, handler: Han
 function route(request: Omit<DemoRequest, 'rest'>): DemoResponse {
   const exact = EXACT[`${request.method} ${request.path}`];
   if (exact) return exact({ ...request, rest: '' });
-  const match = PREFIXED.find(([method, prefix]) => method === request.method && request.path.startsWith(prefix));
+  const match = PREFIXED.find(
+    ([method, prefix]) => method === request.method && request.path.startsWith(prefix),
+  );
   if (!match) return { status: HTTP_NOT_FOUND, body: { error: 'not_found' } };
   const [, prefix, handler] = match;
   return handler({ ...request, rest: request.path.slice(prefix.length) });

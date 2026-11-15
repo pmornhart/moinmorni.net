@@ -61,7 +61,10 @@ function RankGroup({ group }: { readonly group: TeamGroup }): ReactElement {
                   m.online ? 'text-success' : 'text-muted-foreground',
                 )}
               >
-                <span className={cn('size-2', m.online ? 'bg-success' : 'bg-muted-foreground/40')} aria-hidden />
+                <span
+                  className={cn('size-2', m.online ? 'bg-success' : 'bg-muted-foreground/40')}
+                  aria-hidden
+                />
                 {m.online ? t('site.team.online') : t('site.team.offline')}
               </span>
             </Link>
@@ -79,7 +82,12 @@ export function TeamPage(): ReactElement {
   const groups = team.data ?? [];
   return (
     <>
-      <PageHero eyebrow={t('site.team.eyebrow')} title={t('site.team.title')} text={t('site.team.text')} scene="biergarten" />
+      <PageHero
+        eyebrow={t('site.team.eyebrow')}
+        title={t('site.team.title')}
+        text={t('site.team.text')}
+        scene="biergarten"
+      />
       <div className={cn(WRAP, 'grid gap-12 py-14 sm:py-16')}>
         {team.isPending ? (
           <div className="grid gap-4">

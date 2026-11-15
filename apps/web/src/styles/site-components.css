@@ -142,7 +142,8 @@ html {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 3px 0 #0d6b3f) drop-shadow(0 3px 0 #074a2a) drop-shadow(0 10px 16px rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 3px 0 #0d6b3f) drop-shadow(0 3px 0 #074a2a)
+    drop-shadow(0 10px 16px rgba(0, 0, 0, 0.55));
 }
 .mm-wordmark-small {
   filter: drop-shadow(0 2px 0 #0d6b3f) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
@@ -151,7 +152,11 @@ html {
 /* A game mode's colours (set inline as --mode-a and --mode-b): light behind the figure, pixel steps below. */
 .mm-mode-bg {
   background-image:
-    radial-gradient(70% 55% at 50% 78%, color-mix(in srgb, var(--mode-a) 55%, #ffffff 45%) 0%, transparent 70%),
+    radial-gradient(
+      70% 55% at 50% 78%,
+      color-mix(in srgb, var(--mode-a) 55%, #ffffff 45%) 0%,
+      transparent 70%
+    ),
     linear-gradient(165deg, var(--mode-a) 0%, var(--mode-b) 100%);
 }
 .mm-mode-card {
@@ -348,7 +353,7 @@ html {
   transform: scaleX(1);
 }
 
-/* Segments of a player bar: filled ones in the mode's colour. */
+/* Segments of a player bar (as many columns as Segments in public/kit.tsx draws): filled ones in the mode's colour. */
 :root {
   --segment-empty: rgba(26, 35, 30, 0.12);
 }

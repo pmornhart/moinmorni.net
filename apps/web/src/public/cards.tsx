@@ -1,4 +1,14 @@
-import { ArrowRight, Megaphone, Moon, PartyPopper, Pin, Play, Sparkles, Users, type LucideIcon } from 'lucide-react';
+import {
+  ArrowRight,
+  Megaphone,
+  Moon,
+  PartyPopper,
+  Pin,
+  Play,
+  Sparkles,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import type { CSSProperties, ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -75,7 +85,9 @@ function ModeFill({ mode }: { readonly mode: ModeStatus }): ReactElement {
   const art = modeArt(mode.id);
   const look = modeLook(mode);
   if (!modeJoinable(mode)) {
-    return <p className="text-[14px] font-medium text-muted-foreground">{t(`site.modeHint.${mode.state}`)}</p>;
+    return (
+      <p className="text-[14px] font-medium text-muted-foreground">{t(`site.modeHint.${mode.state}`)}</p>
+    );
   }
   return (
     <div className="grid gap-2">
@@ -83,7 +95,9 @@ function ModeFill({ mode }: { readonly mode: ModeStatus }): ReactElement {
       <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[14px]">
         <span className="inline-flex items-center gap-1.5 font-semibold">
           <Users className="size-4 text-muted-foreground" aria-hidden />
-          <span className="tabular">{t('mode.players', { players: mode.players, max: mode.maxPlayers })}</span>
+          <span className="tabular">
+            {t('mode.players', { players: mode.players, max: mode.maxPlayers })}
+          </span>
         </span>
         {look === 'asleep' ? (
           <span className="inline-flex items-center gap-1 text-[13px] font-medium text-blue">
@@ -128,7 +142,10 @@ export function ModeCard({
           </span>
         ) : null}
         {look === 'maintenance' ? (
-          <span className="mm-hazard absolute inset-x-0 bottom-5 h-2.5 opacity-90 sm:bottom-6 sm:h-3" aria-hidden />
+          <span
+            className="mm-hazard absolute inset-x-0 bottom-5 h-2.5 opacity-90 sm:bottom-6 sm:h-3"
+            aria-hidden
+          />
         ) : null}
         <div className="absolute inset-x-2 top-2 flex flex-wrap items-start justify-between gap-1.5 sm:inset-x-3 sm:top-3 sm:gap-2">
           <ModeStateChip mode={mode} onArt />
@@ -281,13 +298,22 @@ function ReadMore(): ReactElement {
 }
 
 /** The big news post: picture with the title on it, then the first paragraph. `wide` for a full-width row. */
-export function FeaturedNews({ item, wide = false }: { readonly item: NewsItem; readonly wide?: boolean }): ReactElement {
+export function FeaturedNews({
+  item,
+  wide = false,
+}: {
+  readonly item: NewsItem;
+  readonly wide?: boolean;
+}): ReactElement {
   const pick = usePick();
   return (
     <Link to={`/news/${item.slug}`} className={CARD_LINK}>
       <div className={cn('relative aspect-[16/9] overflow-hidden', wide && 'lg:aspect-[21/8]')}>
         <NewsImage item={item} className="transition-transform duration-500 group-hover:scale-[1.04]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" aria-hidden />
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent"
+          aria-hidden
+        />
         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
           <CategoryChip category={item.category} />
           {item.pinned ? <PinnedChip /> : null}
@@ -327,7 +353,9 @@ export function NewsCard({ item }: { readonly item: NewsItem }): ReactElement {
         <h3 className="font-pixel text-[1.45rem] font-bold leading-[1.08] text-balance group-hover:text-primary">
           {pick(item.title)}
         </h3>
-        <p className="line-clamp-3 text-[15px] leading-relaxed text-muted-foreground">{teaser(pick(item.body))}</p>
+        <p className="line-clamp-3 text-[15px] leading-relaxed text-muted-foreground">
+          {teaser(pick(item.body))}
+        </p>
         <ReadMore />
       </div>
     </Link>
@@ -347,7 +375,10 @@ export function CompactNews({ item }: { readonly item: NewsItem }): ReactElement
       )}
     >
       <div className="relative min-h-[96px] overflow-hidden border-r-2 border-border">
-        <NewsImage item={item} className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.06]" />
+        <NewsImage
+          item={item}
+          className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.06]"
+        />
       </div>
       <div className="grid content-center gap-1.5 p-3.5 sm:p-4">
         <div className="flex flex-wrap items-center gap-2">

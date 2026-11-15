@@ -114,7 +114,10 @@ const FNV_OFFSET = 2_166_136_261;
 
 /** A small, stable number from a text (FNV-1a). */
 function hash(text: string): number {
-  return Array.from(text).reduce((h, c) => Math.imul(h ^ (c.codePointAt(0) ?? 0), FNV_PRIME) >>> 0, FNV_OFFSET);
+  return Array.from(text).reduce(
+    (h, c) => Math.imul(h ^ (c.codePointAt(0) ?? 0), FNV_PRIME) >>> 0,
+    FNV_OFFSET,
+  );
 }
 
 /** Size of the range of `hash` (2³²). */

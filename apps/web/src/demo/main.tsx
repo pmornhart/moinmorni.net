@@ -85,7 +85,11 @@ document.addEventListener('click', (event) => {
     event.preventDefault();
     demoSignIn();
     void siteQueryClient.invalidateQueries();
-    say(german() ? 'Demo: mit Discord angemeldet als „lena.baut“' : 'Demo: signed in with Discord as “lena.baut”');
+    say(
+      german()
+        ? 'Demo: mit Discord angemeldet als „lena.baut“'
+        : 'Demo: signed in with Discord as “lena.baut”',
+    );
     return;
   }
   if (target.target === '_blank') {

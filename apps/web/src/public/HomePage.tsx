@@ -105,13 +105,18 @@ function AddressBox(): ReactElement {
             {address}
           </span>
         </div>
-        <GameButton onClick={copy} size="lg" className="max-sm:h-12 max-sm:px-4 max-sm:text-[15px]" aria-live="polite">
+        <GameButton
+          onClick={copy}
+          size="lg"
+          className="max-sm:h-12 max-sm:px-4 max-sm:text-[15px]"
+          aria-live="polite"
+        >
           {copied ? <Check /> : <Copy />}
           <span className="max-[359px]:sr-only">{copied ? t('copy.done') : t('copy.action')}</span>
         </GameButton>
       </div>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t-2 border-white/10 px-2.5 pb-1 pt-2 text-[14px] sm:px-3">
-        <OnlineLine />
+        <OnlineLine announce />
         {failed ? <span className="text-white/75">{t('copy.manual')}</span> : null}
       </div>
     </div>
@@ -122,7 +127,8 @@ function EditionHints(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const status = useNetworkStatus();
   const port = status.data?.bedrockPort ?? FALLBACK_BEDROCK_PORT;
-  const hint = 'inline-flex items-center gap-2 rounded-[4px] bg-black/45 px-2.5 py-1.5 text-[13.5px] font-medium text-white/90 backdrop-blur-sm';
+  const hint =
+    'inline-flex items-center gap-2 rounded-[4px] bg-black/45 px-2.5 py-1.5 text-[13.5px] font-medium text-white/90 backdrop-blur-sm';
   return (
     <ul className="flex flex-wrap justify-center gap-2" aria-label={t('site.hero.editions')}>
       <li className={hint}>
@@ -172,7 +178,9 @@ function LineupFigure({
             <span className="text-[13px] font-bold sm:text-[15px]" style={nameStyle}>
               {name}
             </span>
-            {state ? <span className="text-[11px] font-medium text-white/85 sm:text-[12px]">{state}</span> : null}
+            {state ? (
+              <span className="text-[11px] font-medium text-white/85 sm:text-[12px]">{state}</span>
+            ) : null}
           </span>
         ) : null}
         <span className="mm-bob block" style={bob}>
@@ -218,7 +226,10 @@ function Hero(): ReactElement {
   const { resolved } = useTheme();
   const invite = useSite().data?.discordInvite;
   return (
-    <section className="mm-on-dark relative isolate overflow-hidden bg-band text-white" aria-labelledby="hero-title">
+    <section
+      className="mm-on-dark relative isolate overflow-hidden bg-band text-white"
+      aria-labelledby="hero-title"
+    >
       <picture>
         <source media="(max-width: 640px)" srcSet={heroImage(resolved, true)} />
         <img
@@ -482,7 +493,10 @@ function Village(): ReactElement {
               </GameButton>
             </div>
           </figure>
-          <ul className="grid grid-cols-3 gap-2.5 lg:grid-cols-1 lg:gap-2" aria-label={t('site.village.places.label')}>
+          <ul
+            className="grid grid-cols-3 gap-2.5 lg:grid-cols-1 lg:gap-2"
+            aria-label={t('site.village.places.label')}
+          >
             {VILLAGE.map((place, i) => (
               <li key={place.key}>
                 <button
@@ -602,7 +616,10 @@ function PodiumColumn({ player }: { readonly player: TopPlayer }): ReactElement 
         </span>
       </Link>
       <div
-        className={cn('grid w-full place-items-center rounded-t-[6px] border-2 border-black/30', block.height)}
+        className={cn(
+          'grid w-full place-items-center rounded-t-[6px] border-2 border-black/30',
+          block.height,
+        )}
         style={blockStyle}
         aria-label={t('site.stats.place', { rank: player.rank })}
       >
@@ -639,7 +656,12 @@ function StatsSection(): ReactElement {
           link={{ to: '/statistiken', label: t('site.stats.toLeaderboard') }}
         />
         <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-          <StatTile icon={Users} label={t('site.stats.total')} value={total} hint={t('site.stats.totalHint')} />
+          <StatTile
+            icon={Users}
+            label={t('site.stats.total')}
+            value={total}
+            hint={t('site.stats.totalHint')}
+          />
           <StatTile
             icon={Gamepad2}
             label={t('site.stats.online')}
@@ -670,7 +692,9 @@ function StatsSection(): ReactElement {
           </div>
           {top.isPending ? <Skeleton className="h-64 rounded-[8px]" /> : null}
           {top.isError ? <p className="text-muted-foreground">{t('site.loadError')}</p> : null}
-          {top.data && !top.data.length ? <p className="text-muted-foreground">{t('site.stats.noneYet')}</p> : null}
+          {top.data && !top.data.length ? (
+            <p className="text-muted-foreground">{t('site.stats.noneYet')}</p>
+          ) : null}
           {order.length ? (
             <ol className="mx-auto grid w-full max-w-[640px] grid-cols-3 items-end gap-3 pt-8 sm:gap-6">
               {order.map((p) => (
@@ -736,7 +760,9 @@ function TeamSection(): ReactElement {
         />
         {team.isPending ? <Skeleton className="h-40 rounded-[10px]" /> : null}
         {team.isError ? <LoadError /> : null}
-        {team.isSuccess && !people.length ? <p className="text-muted-foreground">{t('site.team.soon')}</p> : null}
+        {team.isSuccess && !people.length ? (
+          <p className="text-muted-foreground">{t('site.team.soon')}</p>
+        ) : null}
         {people.length ? (
           <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {people.map(({ member, group }) => (
@@ -763,15 +789,25 @@ function DiscordBand(): ReactElement {
         <div className="mm-rauten absolute inset-0 opacity-[0.08]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#163d6c] via-[#1d4f8a]/80 to-transparent" />
       </div>
-      <div className={cn(WRAP, 'relative grid items-end gap-8 pt-14 md:grid-cols-[minmax(0,1fr)_300px] md:pt-16')}>
+      <div
+        className={cn(
+          WRAP,
+          'relative grid items-end gap-8 pt-14 md:grid-cols-[minmax(0,1fr)_300px] md:pt-16',
+        )}
+      >
         <div className="grid justify-items-start gap-4 pb-14 md:pb-16">
           <span className="rounded-[4px] bg-white px-2 py-1 font-pixel text-[14px] font-bold uppercase tracking-[0.12em] text-[#1d4f8a]">
             {t('site.community.eyebrow')}
           </span>
-          <h2 id="discord-band" className="font-pixel text-[clamp(2.2rem,5vw,3.4rem)] font-bold leading-[0.95] text-balance">
+          <h2
+            id="discord-band"
+            className="font-pixel text-[clamp(2.2rem,5vw,3.4rem)] font-bold leading-[0.95] text-balance"
+          >
             {t('site.community.discordTitle')}
           </h2>
-          <p className="max-w-[52ch] text-[1.08rem] leading-relaxed text-white/90">{t('site.community.discordText')}</p>
+          <p className="max-w-[52ch] text-[1.08rem] leading-relaxed text-white/90">
+            {t('site.community.discordText')}
+          </p>
           {invite ? (
             <GameButton asChild tone="white" size="lg">
               <a href={invite} {...EXTERNAL}>

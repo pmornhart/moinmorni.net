@@ -302,7 +302,10 @@ function Field({
         <label htmlFor={id} className="font-pixel text-[1.1rem] font-bold">
           {label}
           {optional ? (
-            <span className="font-sans text-[14px] font-normal text-muted-foreground"> · {t('apply.form.optional')}</span>
+            <span className="font-sans text-[14px] font-normal text-muted-foreground">
+              {' '}
+              · {t('apply.form.optional')}
+            </span>
           ) : null}
         </label>
         {count ? <span className="tabular text-xs text-muted-foreground">{count}</span> : null}
@@ -389,7 +392,9 @@ function ApplyForm({ name }: { readonly name: string }): ReactElement {
   return (
     <Panel className="grid content-start gap-6 p-6 sm:p-8">
       <div className="grid gap-3">
-        <h2 className="font-pixel text-[clamp(1.6rem,3.6vw,2rem)] font-bold leading-tight">{t('apply.form.title')}</h2>
+        <h2 className="font-pixel text-[clamp(1.6rem,3.6vw,2rem)] font-bold leading-tight">
+          {t('apply.form.title')}
+        </h2>
         <SignedIn name={name} />
       </div>
       <form onSubmit={submit} noValidate className="grid gap-5">
@@ -481,7 +486,13 @@ function ApplyForm({ name }: { readonly name: string }): ReactElement {
         ) : null}
         <div className="grid gap-4 border-t-2 border-border pt-5">
           <p className="text-[14px] text-muted-foreground text-pretty">{t('apply.form.who', { name })}</p>
-          <GameButton type="submit" tone="emerald" size="lg" className="justify-self-start" disabled={send.isPending}>
+          <GameButton
+            type="submit"
+            tone="emerald"
+            size="lg"
+            className="justify-self-start"
+            disabled={send.isPending}
+          >
             <Send />
             {send.isPending ? t('apply.form.sending') : t('apply.form.send')}
           </GameButton>
@@ -593,7 +604,9 @@ function HowItWorks(): ReactElement {
             </span>
             <span className="grid gap-0.5 pt-0.5">
               <span className="font-semibold leading-snug">{t(`apply.how.${step}`)}</span>
-              <span className="text-[14px] leading-relaxed text-muted-foreground">{t(`apply.how.${step}Text`)}</span>
+              <span className="text-[14px] leading-relaxed text-muted-foreground">
+                {t(`apply.how.${step}Text`)}
+              </span>
             </span>
           </li>
         ))}

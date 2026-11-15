@@ -36,7 +36,10 @@ const safeScript = (code) => code.replaceAll('</script', '<\\/script').replaceAl
 
 const page = html
   .replace(STYLESHEET, (_tag, href) => `<style>${asset(href)}</style>`)
-  .replace(MODULE_SCRIPT, (_tag, src) => `<script type="module">${safeScript(embedPictures(asset(src)))}</script>`);
+  .replace(
+    MODULE_SCRIPT,
+    (_tag, src) => `<script type="module">${safeScript(embedPictures(asset(src)))}</script>`,
+  );
 
 const out = path.join(dir, 'index.html');
 fs.writeFileSync(out, page);

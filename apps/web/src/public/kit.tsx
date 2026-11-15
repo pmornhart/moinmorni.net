@@ -1,13 +1,5 @@
 import { Slot } from 'radix-ui';
-import {
-  ArrowRight,
-  Hourglass,
-  Lock,
-  Moon,
-  Ticket,
-  Wrench,
-  type LucideIcon,
-} from 'lucide-react';
+import { ArrowRight, Hourglass, Lock, Moon, Ticket, Wrench, type LucideIcon } from 'lucide-react';
 import { useId, type ComponentProps, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -361,10 +353,20 @@ export function PixelEdge({ className }: { readonly className?: string }): React
 }
 
 /** A green dot that pulses while something is live. */
-export function LiveDot({ live, className }: { readonly live: boolean; readonly className?: string }): ReactElement {
+export function LiveDot({
+  live,
+  className,
+}: {
+  readonly live: boolean;
+  readonly className?: string;
+}): ReactElement {
   return (
     <span
-      className={cn('size-2.5 shrink-0 rounded-full', live ? 'mm-pulse bg-[#3ddc84]' : 'bg-white/35', className)}
+      className={cn(
+        'size-2.5 shrink-0 rounded-full',
+        live ? 'mm-pulse bg-[#3ddc84]' : 'bg-white/35',
+        className,
+      )}
       aria-hidden
     />
   );

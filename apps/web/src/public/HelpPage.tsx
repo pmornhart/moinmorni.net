@@ -152,7 +152,8 @@ function JoinBody(): ReactElement {
               t('site.help.join.bedrock1'),
               t('site.help.join.bedrock2'),
               <>
-                {t('site.help.join.bedrock3')} <Cmd>{bedrock}</Cmd> · {t('site.help.join.port')} <Cmd>{port}</Cmd>
+                {t('site.help.join.bedrock3')} <Cmd>{bedrock}</Cmd> · {t('site.help.join.port')}{' '}
+                <Cmd>{port}</Cmd>
               </>,
               t('site.help.join.bedrock4'),
             ]}
@@ -206,8 +207,8 @@ function VoiceBody(): ReactElement {
           ))}
         </div>
         <p className="flex flex-wrap items-center gap-1.5 text-[14px] text-muted-foreground">
-          {t('site.help.voice.channelsText')} <Cmd>/voice</Cmd> · <Cmd>/voice {channels[0] ?? 'Dorfplatz'}</Cmd> ·{' '}
-          <Cmd>/voice raus</Cmd>
+          {t('site.help.voice.channelsText')} <Cmd>/voice</Cmd> ·{' '}
+          <Cmd>/voice {channels[0] ?? 'Dorfplatz'}</Cmd> · <Cmd>/voice raus</Cmd>
         </p>
       </div>
       <p className="text-[14px] text-muted-foreground">{t('site.help.voice.bedrock')}</p>
@@ -372,7 +373,12 @@ export function HelpPage(): ReactElement {
   const [open, toggle] = useOpenSections();
   return (
     <>
-      <PageHero eyebrow={t('site.help.eyebrow')} title={t('site.help.title')} text={t('site.help.text')} scene="karte">
+      <PageHero
+        eyebrow={t('site.help.eyebrow')}
+        title={t('site.help.title')}
+        text={t('site.help.text')}
+        scene="karte"
+      >
         <nav className="flex flex-wrap gap-2 pt-2" aria-label={t('site.help.contents')}>
           {SECTIONS.map((s) => {
             const Icon = s.icon;
@@ -418,10 +424,15 @@ export function HelpPage(): ReactElement {
                   <Icon className="size-6" />
                 </span>
                 <span className="grid min-w-0 flex-1 gap-1">
-                  <span className="font-pixel text-[1.45rem] font-bold leading-tight">{t(`site.help.${s.key}.title`)}</span>
+                  <span className="font-pixel text-[1.45rem] font-bold leading-tight">
+                    {t(`site.help.${s.key}.title`)}
+                  </span>
                   <span className="text-[14px] text-muted-foreground">{t(`site.help.${s.key}.short`)}</span>
                 </span>
-                <ChevronDown className="mm-chevron size-6 shrink-0 text-muted-foreground transition-transform" aria-hidden />
+                <ChevronDown
+                  className="mm-chevron size-6 shrink-0 text-muted-foreground transition-transform"
+                  aria-hidden
+                />
               </summary>
               <div className="border-t-2 border-border px-4 pb-6 pt-5 text-[15.5px] leading-relaxed sm:px-6">
                 <Body />

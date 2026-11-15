@@ -238,7 +238,9 @@ function LivePanel({ mode }: { readonly mode: ModeStatus }): ReactElement {
       <div className="relative grid gap-6 p-6 sm:p-7">
         <PixelEdge className="text-card lg:hidden" />
         <div className="grid gap-2">
-          <h2 className="font-pixel text-[1.7rem] font-bold leading-tight">{t('site.mode.about', { name: pick(mode.name) })}</h2>
+          <h2 className="font-pixel text-[1.7rem] font-bold leading-tight">
+            {t('site.mode.about', { name: pick(mode.name) })}
+          </h2>
           <p className="text-[1.08rem] leading-relaxed text-pretty">{pick(mode.description)}</p>
           <p className="text-[15px] text-muted-foreground">{t(`site.modeLookText.${look}`)}</p>
         </div>
@@ -387,7 +389,12 @@ export function ModePage(): ReactElement {
           ) : null}
         </div>
       </PageHero>
-      <div className={cn(WRAP, 'grid items-start gap-6 py-12 sm:py-14 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]')}>
+      <div
+        className={cn(
+          WRAP,
+          'grid items-start gap-6 py-12 sm:py-14 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]',
+        )}
+      >
         <LivePanel mode={mode} />
         <HowToGetThere mode={mode} />
       </div>

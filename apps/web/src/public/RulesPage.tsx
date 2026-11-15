@@ -69,8 +69,12 @@ export function RulesPage(): ReactElement {
             <Gavel className="size-6" />
           </span>
           <div className="grid gap-1.5">
-            <h2 className="font-pixel text-[1.5rem] font-bold leading-tight">{t('site.rules.punishTitle')}</h2>
-            <p className="text-[15px] leading-relaxed text-muted-foreground text-pretty">{t('site.rules.punishText')}</p>
+            <h2 className="font-pixel text-[1.5rem] font-bold leading-tight">
+              {t('site.rules.punishTitle')}
+            </h2>
+            <p className="text-[15px] leading-relaxed text-muted-foreground text-pretty">
+              {t('site.rules.punishText')}
+            </p>
           </div>
         </Panel>
         <div className="flex flex-wrap items-center gap-3">
