@@ -10,6 +10,8 @@ du den Server einmal leer an und holst den Bot dazu. Den Rest macht der Bot.
    später in die `.env` als `MM_DISCORD_TOKEN`. **Nie** in einen Chat oder ins Repo.
 3. Auf derselben Seite unter **Privileged Gateway Intents** den Schalter **Server Members Intent** einschalten
    (sonst kann der Bot neue Mitglieder nicht begrüßen – alles andere geht trotzdem).
+4. Ebenfalls unter **Bot**: **Public Bot** ausschalten. Dann kann nur du ihn auf einen Server holen. (Lädt ihn
+   trotzdem jemand woanders ein, verlässt er diesen Server von selbst wieder – er gehört genau zu deinem.)
 
 ## 2. Server anlegen und Bot holen
 

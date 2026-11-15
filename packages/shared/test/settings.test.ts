@@ -44,12 +44,15 @@ describe('Rollen und Modi', () => {
     expect(DEFAULT_ROLES.filter((r) => r.fallback).map((r) => r.id)).toEqual(['player']);
   });
 
-  test('niemand vergibt Ränge über dem eigenen; Owner und Admin vergibt nur der Owner', () => {
+  test('niemand vergibt Ränge über dem eigenen; Owner, Admin und VIP vergibt nur der Owner', () => {
     expect(mayAssign(DEFAULT_ROLES, 'owner', 'admin')).toBe(true);
     expect(mayAssign(DEFAULT_ROLES, 'admin', 'admin')).toBe(false);
     expect(mayAssign(DEFAULT_ROLES, 'admin', 'owner')).toBe(false);
     expect(mayAssign(DEFAULT_ROLES, 'admin', 'moderator')).toBe(true);
-    expect(mayAssign(DEFAULT_ROLES, 'moderator', 'vip')).toBe(true);
+    expect(mayAssign(DEFAULT_ROLES, 'admin', 'vip')).toBe(false); // VIP vergibt nur der Owner
+    expect(mayAssign(DEFAULT_ROLES, 'owner', 'vip')).toBe(true);
+    expect(mayAssign(DEFAULT_ROLES, 'moderator', 'vip')).toBe(false);
+    expect(mayAssign(DEFAULT_ROLES, 'moderator', 'media')).toBe(true);
     expect(mayAssign(DEFAULT_ROLES, 'moderator', 'moderator')).toBe(false);
     expect(mayAssign(DEFAULT_ROLES, 'vip', 'player')).toBe(true);
   });

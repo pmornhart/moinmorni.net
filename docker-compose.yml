@@ -53,6 +53,8 @@ services:
       MH_LAN_IP: ${MM_LAN_IP:-}
       TZ: ${TZ:-Europe/Berlin}
       MH_HEADLESS: 'true'
+      # Nur MoinMorni reicht Besucher weiter – nur dessen X-Forwarded-For zählt (Anmelde-Grenzen pro Besucher).
+      MH_TRUST_PROXY_FROM: moinmorni
       MH_DOCKER_HOST: tcp://socket-proxy:2375
       MH_DATA_DIR: /data
       MH_MC_NETWORK: moinmorni-mc

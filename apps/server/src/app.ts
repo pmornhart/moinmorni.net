@@ -36,6 +36,9 @@ import { createStatusService } from './public/status.js';
 import { registerSetupRoutes } from './setup/routes.js';
 import { createSetupService, type SetupService } from './setup/service.js';
 
+/** Weiterleiter im eigenen Netz: Docker, Heimnetz, NetBird (100.64.0.0/10). */
+const TRUSTED_HOPS = 'loopback,linklocal,uniquelocal,100.64.0.0/10';
+
 export type Api = FastifyInstance<
   import('node:http').Server,
   import('node:http').IncomingMessage,
@@ -89,7 +92,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const motor = createMotorClient(config.motorUrl, config.motorToken, options.motorFetch);
   const app = Fastify({
     logger: options.logger ?? true,
-    trustProxy: true,
+    // Die echte Adresse eines Besuchers kommt vom Weiterleiter davor (NetBird, Docker) – nur ihm wird geglaubt, nie
+    // einer Adresse, die ein Besucher selbst in X-Forwarded-For schreibt.
+    trustProxy: TRUSTED_HOPS,
   }).withTypeProvider<ZodTypeProvider>();
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);

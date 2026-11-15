@@ -113,6 +113,8 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
     { schema: { params: uuidParams, body: roleBody } },
     async (request) => {
       const user = await auth.require(request, 'players');
+      // Wie /rang im Spiel: nur mit dem Recht „Ränge vergeben“ (Moderatoren haben es nicht).
+      if (user.role.id !== 'owner' && !user.role.game.includes('ranks')) throw forbidden('rank_no_right');
       const row = hub.players.get(normalUuid(request.params.uuid));
       if (!row) throw notFound('player_unknown');
       const roles = stores.roles();

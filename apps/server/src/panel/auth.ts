@@ -19,6 +19,23 @@ const UNSAFE: ReadonlySet<string> = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const SERVICE_PREFIX = 'dienst-';
 const OWNER = 'owner';
 
+/** So heißt das Sitzungs-Cookie des Motors (MorniHosting `auth/sessions.ts`). */
+const SESSION_COOKIE = 'mh_session';
+/** Höchstens so viele Sitzungen merken (Schutz vor Anfragen mit immer neuen Cookies). */
+const CACHE_MAX = 2000;
+// Sitzungs-Token des Motors: base64url, z. B. "mh_session=Qm9vb..." → "Qm9vb..."; mit Leerzeichen oder ";" nicht.
+// https://regex101.com/?flavor=javascript&regex=%5E%5BA-Za-z0-9_-%5D%7B20%2C128%7D%24&testString=Qm9vb2tzX2FyZV9ncmVhdF8xMjM0NTY
+const SESSION_TOKEN = /^[A-Za-z0-9_-]{20,128}$/;
+
+function sessionTokenOf(header: string): string | null {
+  const part = header
+    .split(';')
+    .map((p) => p.trim())
+    .find((p) => p.startsWith(`${SESSION_COOKIE}=`));
+  const value = part ? decodeURIComponent(part.slice(SESSION_COOKIE.length + 1)) : '';
+  return SESSION_TOKEN.test(value) ? value : null;
+}
+
 export interface PanelUser {
   readonly motorUserId: number;
   readonly username: string;
@@ -39,14 +56,29 @@ export interface PanelAuth {
 export function createPanelAuth(db: Db, motor: MotorClient, stores: Stores): PanelAuth {
   const cache = new Map<string, { at: number; user: PanelUser | null; signedIn: boolean }>();
 
-  const lookup = async (cookie: string): Promise<{ user: PanelUser | null; signedIn: boolean }> => {
-    const key = crypto.createHash('sha256').update(cookie).digest('hex');
+  /** Merken, aber nie unbegrenzt: Abgelaufenes fliegt raus, und bei zu vielen Einträgen die ältesten. */
+  const remember = (key: string, value: { at: number; user: PanelUser | null; signedIn: boolean }): void => {
+    const now = Date.now();
+    [...cache].filter(([, v]) => now - v.at >= CACHE_MS).forEach(([k]) => cache.delete(k));
+    [...cache.keys()].slice(0, Math.max(0, cache.size - CACHE_MAX + 1)).forEach((k) => cache.delete(k));
+    cache.set(key, value);
+  };
+
+  const lookup = async (
+    cookieHeader: string,
+    ip: string,
+  ): Promise<{ user: PanelUser | null; signedIn: boolean }> => {
+    // Nur das Sitzungs-Cookie des Motors zählt; ohne (oder mit Unsinn darin) gar nicht erst beim Motor nachfragen.
+    const token = sessionTokenOf(cookieHeader);
+    if (!token) return { user: null, signedIn: false };
+    const cookie = `${SESSION_COOKIE}=${token}`;
+    const key = crypto.createHash('sha256').update(token).digest('hex');
     const hit = cache.get(key);
     if (hit && Date.now() - hit.at < CACHE_MS) return hit;
-    const me = await motor.me(cookie);
+    const me = await motor.me(cookie, ip);
     if (!me) {
       const result = { at: Date.now(), user: null, signedIn: false };
-      cache.set(key, result);
+      remember(key, result);
       return result;
     }
     const member = db.select().from(teamMembers).where(eq(teamMembers.motorUserId, me.user.id)).get();
@@ -82,17 +114,17 @@ export function createPanelAuth(db: Db, motor: MotorClient, stores: Stores): Pan
         }
       : null;
     const result = { at: Date.now(), user, signedIn: true };
-    cache.set(key, result);
+    remember(key, result);
     return result;
   };
 
   const resolve = async (request: FastifyRequest): Promise<PanelUser | null> =>
-    (await lookup(request.headers.cookie ?? '')).user;
+    (await lookup(request.headers.cookie ?? '', request.ip)).user;
 
   return {
     resolve,
     require: async (request, area) => {
-      const { user, signedIn } = await lookup(request.headers.cookie ?? '');
+      const { user, signedIn } = await lookup(request.headers.cookie ?? '', request.ip);
       if (!signedIn) throw unauthorized();
       if (!user) throw forbidden('not_in_team');
       if (area && !user.areas.has(area)) throw forbidden('panel_area_forbidden');

@@ -62,6 +62,8 @@ export async function registerMotorProxy(app: FastifyInstance, motorUrl: string)
       rewriteRequestHeaders: (request, headers) => ({
         ...headers,
         host: request.headers.host ?? headers.host,
+        // Der Motor zählt Anmeldeversuche und Anfragen pro Besucher – er glaubt diese Adresse nur MoinMorni.
+        'x-forwarded-for': request.ip,
       }),
     },
     // Die Live-Verbindung braucht das nicht: Ohne passende Herkunft beweist sie sich mit dem CSRF-Token in der

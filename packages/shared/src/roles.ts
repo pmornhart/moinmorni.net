@@ -197,6 +197,8 @@ export const DEFAULT_ROLES: readonly Role[] = [
 
 /** Rollen, die nur Owner vergeben oder in der Vorlage ändern dürfen. */
 export const OWNER_ONLY_ROLES: readonly string[] = ['owner', 'admin'];
+/** Diese Ränge vergibt nur der Owner – VIP „vergibt nur Philip, nie ein Shop“. */
+export const OWNER_ASSIGNS: readonly string[] = [...OWNER_ONLY_ROLES, 'vip'];
 
 /** Darf jemand mit Rolle `actor` die Rolle `target` vergeben? Niemand über (oder gleich) dem eigenen Rang, außer Owner. */
 export function mayAssign(roles: readonly Role[], actor: string, target: string): boolean {
@@ -204,6 +206,6 @@ export function mayAssign(roles: readonly Role[], actor: string, target: string)
   const t = roles.find((r) => r.id === target);
   if (!a || !t) return false;
   if (a.id === 'owner') return true;
-  if (OWNER_ONLY_ROLES.includes(t.id)) return false;
+  if (OWNER_ASSIGNS.includes(t.id)) return false;
   return t.position > a.position;
 }

@@ -724,6 +724,10 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       if (!guildId()) {
         put('guild', String(d['id']));
         log.info({ guild: d['name'] }, 'Discord: Bot ist auf dem Server');
+      } else if (String(d['id']) !== guildId()) {
+        // Der Bot gehört zu genau einem Server – hat ihn jemand woanders eingeladen, geht er dort wieder.
+        log.warn({ guild: d['name'] }, 'Discord: Bot wurde auf einen fremden Server eingeladen – verlässt ihn');
+        await rest('DELETE', `/users/@me/guilds/${String(d['id'])}`);
       }
       return;
     }
@@ -745,6 +749,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       return;
     }
     if (e.t !== 'INTERACTION_CREATE') return;
+    // Nur der eigene Server (und Direktnachrichten) – Knöpfe und Befehle von fremden Servern zählen nicht.
+    if (d['guild_id'] !== undefined && String(d['guild_id']) !== guildId()) return;
     const lang = botLang(d['locale']);
     const data = (d['data'] ?? {}) as { name?: string; custom_id?: string };
     const type = Number(d['type']);

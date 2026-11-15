@@ -48,7 +48,8 @@ export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
 export interface MotorClient {
   readonly request: <T>(method: string, path: string, body?: unknown) => Promise<T>;
   /** Wer gehört zu diesem Cookie? null = nicht angemeldet. */
-  readonly me: (cookie: string) => Promise<MotorMe | null>;
+  /** Wer ist mit diesem Sitzungs-Cookie angemeldet? `ip` = Adresse des Besuchers (für die Grenzen des Motors). */
+  readonly me: (cookie: string, ip?: string) => Promise<MotorMe | null>;
   readonly servers: () => Promise<MotorServer[]>;
   /** Datei in den Ordner eines Servers hochladen (z. B. das Netzwerk-Plugin nach plugins/). */
   readonly upload: (serverId: string, dir: string, filename: string, bytes: Uint8Array) => Promise<void>;
@@ -122,10 +123,10 @@ export function createMotorClient(baseUrl: string, token: string, fetchImpl: Fet
     baseUrl,
     request,
     download,
-    me: async (cookie) => {
+    me: async (cookie, ip) => {
       if (!cookie) return null;
       const res = await fetchImpl(`${baseUrl}/api/auth/me`, {
-        headers: { cookie },
+        headers: { cookie, ...(ip ? { 'x-forwarded-for': ip } : {}) },
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       if (res.status === HTTP_UNAUTHORIZED) return null;
