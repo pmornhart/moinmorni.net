@@ -2,40 +2,59 @@ import { ArrowLeft, Hourglass } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { Button, Card } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
-import { PageBand, WRAP } from './parts';
+import { GROUP_IMAGE, type Scene } from './art';
+import { GameButton, Panel } from './kit';
+import { PageHero } from './page-hero';
+import { WRAP } from './parts';
+
+type InfoKind = 'imprint' | 'privacy' | 'notFound';
+
+const SCENE_OF: Readonly<Record<InfoKind, Scene>> = {
+  imprint: 'dorfplatz',
+  privacy: 'dorfplatz',
+  notFound: 'karte',
+};
 
 /** A simple page whose content follows later (imprint, privacy) – or the "not found" page. */
 export function InfoPage({
   page,
   follows = true,
 }: {
-  readonly page: 'imprint' | 'privacy' | 'notFound';
+  readonly page: InfoKind;
   readonly follows?: boolean;
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const lost = page === 'notFound';
   return (
     <>
-      <PageBand eyebrow="MoinMorni" title={t(`pages.${page}.title`)} />
-      <div className={cn(WRAP, 'grid max-w-[860px] gap-6 py-12 sm:py-16')}>
-        <Card className="grid gap-3 p-6 sm:p-8">
+      <PageHero eyebrow="MoinMorni" title={t(`pages.${page}.title`)} scene={SCENE_OF[page]} />
+      <div className={cn(WRAP, 'grid max-w-[880px] gap-6 py-14 sm:py-16')}>
+        <Panel className="grid gap-4 p-6 sm:p-8">
           {follows ? (
-            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-gold">
+            <span className="inline-flex items-center gap-2 font-pixel text-[14px] font-semibold uppercase tracking-[0.12em] text-gold">
               <Hourglass className="size-4" aria-hidden />
               {t('pages.follows')}
             </span>
           ) : null}
-          <p className="text-lg leading-relaxed text-pretty">{t(`pages.${page}.text`)}</p>
-        </Card>
+          <p className="text-[1.15rem] leading-relaxed text-pretty">{t(`pages.${page}.text`)}</p>
+          {lost ? (
+            <img
+              src={GROUP_IMAGE}
+              alt={t('pages.notFound.figures')}
+              loading="lazy"
+              className="mx-auto mt-2 w-full max-w-[640px] drop-shadow-[0_10px_12px_rgba(0,0,0,0.3)]"
+            />
+          ) : null}
+        </Panel>
         <div>
-          <Button asChild variant="secondary">
+          <GameButton asChild tone={lost ? 'gold' : 'stone'}>
             <Link to="/">
               <ArrowLeft />
               {t('pages.back')}
             </Link>
-          </Button>
+          </GameButton>
         </div>
       </div>
     </>

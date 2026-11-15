@@ -1,0 +1,374 @@
+/*
+ * The website's own building blocks that utilities cannot express well: game buttons with a bevel that presses in,
+ * pixel textures, the wordmark, the Bavarian lozenges and the animations. public.css puts this file into the
+ * "components" layer, so utilities still win; the demo loads it without a layer (see demo/demo.css).
+ */
+
+:root {
+  --header-h: 64px;
+  --header-h-small: 64px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --header-h: 104px;
+    --header-h-small: 68px;
+  }
+}
+
+html {
+  scroll-padding-top: calc(var(--header-h-small) + 16px);
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+::selection {
+  background: rgba(47, 210, 122, 0.35);
+}
+
+/* Game buttons: chunky, a bevel underneath, press in on click. Colours come from the variant. */
+.mm-btn {
+  --btn-bg: #f6c544;
+  --btn-edge: #a87708;
+  --btn-text: #2a1b00;
+  --btn-glow: rgba(246, 197, 68, 0.5);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55em;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  font-family: var(--font-pixel);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.16),
+    0 4px 0 var(--btn-edge),
+    0 9px 18px -6px rgba(0, 0, 0, 0.55);
+  transition:
+    transform 0.09s ease,
+    box-shadow 0.09s ease,
+    filter 0.15s ease;
+}
+.mm-btn svg {
+  width: 1.15em;
+  height: 1.15em;
+  flex-shrink: 0;
+}
+.mm-btn:hover {
+  filter: brightness(1.07) saturate(1.05);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.16),
+    0 4px 0 var(--btn-edge),
+    0 0 24px var(--btn-glow);
+}
+.mm-btn:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.16),
+    0 1px 0 var(--btn-edge),
+    0 3px 8px -2px rgba(0, 0, 0, 0.45);
+}
+.mm-btn:disabled,
+.mm-btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  filter: saturate(0.7);
+  opacity: 0.55;
+  transform: none;
+}
+.mm-btn-emerald {
+  --btn-bg: #2fd27a;
+  --btn-edge: #12794a;
+  --btn-text: #03240f;
+  --btn-glow: rgba(47, 210, 122, 0.45);
+}
+.mm-btn-blue {
+  --btn-bg: #2f6db3;
+  --btn-edge: #183f6c;
+  --btn-text: #ffffff;
+  --btn-glow: rgba(79, 143, 214, 0.55);
+}
+.mm-btn-stone {
+  --btn-bg: #fffdf8;
+  --btn-edge: #cbbfa6;
+  --btn-text: #1a231e;
+  --btn-glow: rgba(13, 138, 78, 0.18);
+  border-color: rgba(0, 0, 0, 0.16);
+}
+.dark .mm-btn-stone,
+.mm-on-dark .mm-btn-stone {
+  --btn-bg: #24382e;
+  --btn-edge: #0b1510;
+  --btn-text: #eef6f1;
+  --btn-glow: rgba(255, 255, 255, 0.14);
+  border-color: rgba(0, 0, 0, 0.45);
+}
+.mm-btn-white {
+  --btn-bg: #ffffff;
+  --btn-edge: #b8c8dc;
+  --btn-text: #183f6c;
+  --btn-glow: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+/* Pixel texture on coloured or dark areas: 16×16 blocks, scaled up without blur. */
+.mm-noise {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAABGElEQVR42j2PMYrDMAAEZ40RRrgwxrhSnf+/J7UqEYQKI4wI2SsSrluYYmblCKwAXFo8a3NW4klyBRAPN9D7H3VwVeLFQYeJF4PhjzY37S5EunbwDESYOSgELheGA7iocbioEciO01cABFaGTjUeblq9eTjCpDfDM6jorc6LRGeQtXIRtE+gRUULOxGoQGfwcNWilT754xuInoEHkH0TnJWoRM/yydAEHG6/VX2qsHPwJM3AIAEvweQblLjYqf7oAROXFp7g2x/QrkRX8+2o0xkEv7xOJIM3BoGh5Scjuao7Egh6c7gAELS5fF9UdW/A0EZ0U9MJ4MwA33LUTvb27QdHgk460UWr66REZlfzTCQBqLnRXdTorH8baaX+2/tWmAAAAABJRU5ErkJggg==');
+  background-size: 64px 64px;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* The white-blue lozenges of the Bavarian flag – MoinMorni's own accent. */
+.mm-rauten {
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='16'%3E%3Cpath d='M12 0 24 8 12 16 0 8Z' fill='%234f8fd6'/%3E%3C/svg%3E");
+  background-size: 24px 16px;
+}
+
+/* "MoinMorni" as a game title: gold letters with a stepped green edge underneath. */
+.mm-wordmark {
+  background-image: linear-gradient(180deg, #fffbea 0%, #ffe9a6 38%, #f6c544 52%, #e19a17 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #0d6b3f) drop-shadow(0 3px 0 #074a2a) drop-shadow(0 10px 16px rgba(0, 0, 0, 0.55));
+}
+.mm-wordmark-small {
+  filter: drop-shadow(0 2px 0 #0d6b3f) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+}
+
+/* A game mode's colours (set inline as --mode-a and --mode-b): light behind the figure, pixel steps below. */
+.mm-mode-bg {
+  background-image:
+    radial-gradient(70% 55% at 50% 78%, color-mix(in srgb, var(--mode-a) 55%, #ffffff 45%) 0%, transparent 70%),
+    linear-gradient(165deg, var(--mode-a) 0%, var(--mode-b) 100%);
+}
+.mm-mode-card {
+  border-color: color-mix(in srgb, var(--mode-b) 72%, #000000 28%);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--mode-b) 72%, #000000 28%);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.mm-mode-card:hover,
+.mm-mode-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow:
+    0 10px 0 color-mix(in srgb, var(--mode-b) 72%, #000000 28%),
+    0 0 0 3px var(--mode-a),
+    0 22px 44px -12px var(--mode-a);
+}
+.mm-figure {
+  transform: translateX(-50%);
+  transform-origin: 50% 92%;
+}
+.mm-mode-card .mm-figure {
+  transform-origin: 50% 92%;
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.25s ease;
+}
+.mm-mode-card:hover .mm-figure,
+.mm-mode-card:focus-visible .mm-figure {
+  transform: translateX(-50%) translateY(-6px) scale(1.06);
+}
+
+/* Diagonal warning stripes for modes in maintenance. */
+.mm-hazard {
+  background: repeating-linear-gradient(-45deg, #f6c544 0 12px, #1d1a12 12px 24px);
+}
+
+/* Hero: the picture stays readable under the header and towards the next section. */
+.mm-hero-shade {
+  background:
+    radial-gradient(55% 45% at 50% 40%, rgba(3, 10, 7, 0.5) 0%, rgba(3, 10, 7, 0) 72%),
+    linear-gradient(
+      180deg,
+      rgba(3, 10, 7, 0.82) 0%,
+      rgba(3, 10, 7, 0.3) 20%,
+      rgba(3, 10, 7, 0.12) 46%,
+      rgba(3, 10, 7, 0.35) 72%,
+      rgba(3, 10, 7, 0.88) 100%
+    );
+}
+.mm-page-shade {
+  background: linear-gradient(
+    180deg,
+    rgba(3, 10, 7, 0.86) 0%,
+    rgba(3, 10, 7, 0.62) 38%,
+    rgba(3, 10, 7, 0.72) 70%,
+    rgba(3, 10, 7, 0.92) 100%
+  );
+}
+@media (min-width: 1024px) {
+  .mm-page-shade {
+    background: linear-gradient(
+      90deg,
+      rgba(3, 10, 7, 0.92) 0%,
+      rgba(3, 10, 7, 0.74) 42%,
+      rgba(3, 10, 7, 0.35) 72%,
+      rgba(3, 10, 7, 0.55) 100%
+    );
+  }
+}
+
+/* Name tag above a figure, like above a player in the game. */
+.mm-nameplate {
+  background: rgba(10, 12, 11, 0.62);
+  backdrop-filter: blur(2px);
+}
+
+/* Figures breathe a little, each at its own pace (inline animation-delay). */
+@keyframes mm-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.mm-bob {
+  animation: mm-bob 3.6s ease-in-out infinite;
+}
+
+/* Fireflies at night, pollen by day: small squares that drift upwards. */
+@keyframes mm-drift-up {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(var(--drift-x, 12px), -180px, 0);
+    opacity: 0;
+  }
+}
+.mm-mote {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #ffe9a6;
+  box-shadow: 0 0 8px 2px rgba(255, 214, 102, 0.75);
+  animation: mm-drift-up var(--drift-time, 9s) linear infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mm-mote,
+  .mm-bob {
+    animation: none;
+  }
+  .mm-mote {
+    display: none;
+  }
+}
+
+/* A slow settle of the hero picture when the page opens. */
+@keyframes mm-settle {
+  from {
+    transform: scale(1.07);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.mm-settle {
+  animation: mm-settle 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes mm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.mm-fade {
+  animation: mm-fade 0.45s ease both;
+}
+
+/* Thin scrollbars for rows that scroll sideways (figures, pictures). */
+.mm-scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+.mm-scroll-x > * {
+  scroll-snap-align: center;
+}
+
+/* The help page uses <details>: no browser triangle, our own chevron turns instead. */
+.mm-details > summary {
+  list-style: none;
+}
+.mm-details > summary::-webkit-details-marker {
+  display: none;
+}
+.mm-details[open] .mm-chevron {
+  transform: rotate(180deg);
+}
+
+/* Main menu: a gold block under the current page. */
+.mm-nav-link {
+  position: relative;
+}
+.mm-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  height: 3px;
+  background: var(--gold-bright);
+  transform: scaleX(0);
+  transition: transform 0.18s ease;
+}
+.mm-nav-link:hover::after {
+  transform: scaleX(0.45);
+}
+.mm-nav-link[aria-current='page']::after {
+  transform: scaleX(1);
+}
+
+/* Segments of a player bar: filled ones in the mode's colour. */
+:root {
+  --segment-empty: rgba(26, 35, 30, 0.12);
+}
+.dark,
+.mm-on-dark {
+  --segment-empty: rgba(255, 255, 255, 0.13);
+}
+.mm-segments {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 3px;
+}
+.mm-segments > span {
+  height: 8px;
+  background: var(--segment-empty);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+}
+.mm-segments > span[data-on='true'] {
+  background: var(--segment, #2fd27a);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+}

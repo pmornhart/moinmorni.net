@@ -7,88 +7,44 @@ import {
   LogIn,
   MessagesSquare,
   Moon,
+  MousePointerClick,
   Terminal,
   Users,
+  type LucideIcon,
 } from 'lucide-react';
 import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import type { ModeStatus } from '@moinmorni/shared';
 import { useCopy } from '~/components/controls';
-import { ModeGlyph } from '~/components/mode-visuals';
-import { Button, Card, Kbd, Pill, Skeleton } from '~/components/ui';
+import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { findMode, useSite } from '~/lib/site';
 import { modeJoinable, modeLook, useNetworkStatus } from '~/lib/status';
 import { usePick } from '~/lib/text';
-import { ModeTile } from './cards';
-import { EmptyState, EXTERNAL, ModeStateBadge, PageBand, WRAP } from './parts';
-import { FALLBACK_ADDRESS } from './PublicLayout';
+import { modeArt } from './art';
+import { JoinCard, ModeCard, ModeFigure, modeStyle } from './cards';
+import {
+  Chip,
+  Cmd,
+  EmptyState,
+  GameButton,
+  LoadError,
+  ModeStateChip,
+  Panel,
+  PixelEdge,
+  Segments,
+  WhitelistChip,
+} from './kit';
+import { PageHero } from './page-hero';
+import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, WRAP } from './parts';
 
-const SKELETONS = ['a', 'b', 'c', 'd', 'e', 'f'];
+const SKELETONS = ['a', 'b', 'c', 'd'];
+const MODE_COLUMNS = 4;
+/** Applications (website and Discord) exist for MorniCraft. */
 const APPLY_MODE = 'mornicraft';
-const APPLY_PAGE = '/mornicraft/bewerben';
-
-/** All game modes as tiles. */
-export function ModesListPage(): ReactElement {
-  const { t } = useTranslation(MM_NAMESPACE);
-  const status = useNetworkStatus();
-  const modes = status.data?.modes ?? [];
-  return (
-    <>
-      <PageBand
-        eyebrow={t('site.modes.eyebrow')}
-        title={t('site.modes.pageTitle')}
-        text={t('site.modes.text')}
-        icon={Gamepad2}
-      />
-      <div className={cn(WRAP, 'grid gap-6 py-12 sm:py-16')}>
-        {status.isPending ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {SKELETONS.map((k) => (
-              <Skeleton key={k} className="h-60 rounded-[16px]" />
-            ))}
-          </div>
-        ) : null}
-        {status.isError ? <Card className="p-6 text-muted-foreground">{t('site.loadError')}</Card> : null}
-        {status.isSuccess && !modes.length ? (
-          <EmptyState icon={Gamepad2} title={t('site.modes.emptyTitle')} text={t('site.modes.empty')} />
-        ) : null}
-        {modes.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {modes.map((mode, index) => (
-              <ModeTile key={mode.id} mode={mode} index={index} full />
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </>
-  );
-}
-
-function Step({
-  n,
-  title,
-  children,
-}: {
-  readonly n: number;
-  readonly title: string;
-  readonly children?: ReactNode;
-}): ReactElement {
-  return (
-    <li className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3.5 gap-y-1">
-      <span
-        className="row-span-2 grid size-8 place-items-center rounded-full bg-gold-soft font-display text-base font-semibold text-gold"
-        aria-hidden
-      >
-        {n}
-      </span>
-      <span className="pt-1 font-semibold leading-snug">{title}</span>
-      {children ? <div className="text-[15px] leading-relaxed text-muted-foreground">{children}</div> : null}
-    </li>
-  );
-}
+const HOW_ID = 'so-gehts';
 
 function CopyChip({ value }: { readonly value: string }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
@@ -98,17 +54,102 @@ function CopyChip({ value }: { readonly value: string }): ReactElement {
       type="button"
       onClick={copy}
       title={t('copy.action')}
-      className="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-[10px] border border-border bg-muted/70 px-3 py-1.5 font-mono text-sm font-medium text-foreground transition-colors hover:border-primary/40"
+      className="mt-1.5 inline-flex max-w-full cursor-pointer items-center gap-2 rounded-[6px] border-2 border-black/30 bg-[#101814] px-3 py-1.5 font-pixel text-[15px] font-semibold text-[#e8f3ec] shadow-[0_3px_0_rgba(0,0,0,0.3)] transition-colors hover:border-gold-bright/70"
       aria-live="polite"
     >
-      {value}
+      <span className="truncate">{value}</span>
       {copied ? (
-        <Check className="size-3.5 text-primary" aria-hidden />
+        <Check className="size-4 shrink-0 text-[#3ddc84]" aria-hidden />
       ) : (
-        <Copy className="size-3.5" aria-hidden />
+        <Copy className="size-4 shrink-0 opacity-70" aria-hidden />
       )}
       <span className="sr-only">{copied ? t('copy.done') : t('copy.action')}</span>
     </button>
+  );
+}
+
+/** A numbered step with a pixel block for the number. */
+export function Step({
+  n,
+  title,
+  icon: Icon,
+  children,
+}: {
+  readonly n: number;
+  readonly title: string;
+  readonly icon?: LucideIcon;
+  readonly children?: ReactNode;
+}): ReactElement {
+  return (
+    <li className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1">
+      <span
+        className="row-span-2 grid size-10 place-items-center rounded-[6px] border-2 border-black/25 bg-gold-bright font-pixel text-[1.25rem] font-bold text-[#2a1b00] shadow-[inset_0_3px_0_rgba(255,255,255,0.45),inset_0_-3px_0_rgba(0,0,0,0.15)]"
+        aria-hidden
+      >
+        {n}
+      </span>
+      <span className="flex items-center gap-2 pt-1.5 font-semibold leading-snug">
+        {Icon ? <Icon className="size-4 shrink-0 text-gold" aria-hidden /> : null}
+        {title}
+      </span>
+      {children ? <div className="text-[15px] leading-relaxed text-muted-foreground">{children}</div> : null}
+    </li>
+  );
+}
+
+/** All game modes as character-select cards, then how to get in. */
+export function ModesListPage(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const status = useNetworkStatus();
+  const modes = status.data?.modes ?? [];
+  const address = status.data?.javaAddress ?? FALLBACK_ADDRESS;
+  return (
+    <>
+      <PageHero
+        eyebrow={t('site.modes.eyebrow')}
+        title={t('site.modes.pageTitle')}
+        text={t('site.modes.text')}
+        scene="marktstaende"
+      />
+      <div className={cn(WRAP, 'grid gap-12 py-14 sm:py-16')}>
+        {status.isPending ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {SKELETONS.map((k) => (
+              <Skeleton key={k} className="h-[440px] rounded-[10px]" />
+            ))}
+          </div>
+        ) : null}
+        {status.isError ? <LoadError /> : null}
+        {status.isSuccess && !modes.length ? (
+          <EmptyState icon={Gamepad2} title={t('site.modes.emptyTitle')} text={t('site.modes.empty')} />
+        ) : null}
+        {modes.length ? (
+          <div className="grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+            {modes.map((mode) => (
+              <ModeCard key={mode.id} mode={mode} full headingLevel="h2" />
+            ))}
+            {modes.length % MODE_COLUMNS ? <JoinCard /> : null}
+          </div>
+        ) : null}
+        <Panel className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,2fr)] lg:items-center">
+          <div className="grid gap-2">
+            <h2 className="font-pixel text-[1.9rem] font-bold leading-tight">{t('site.mode.howTitle')}</h2>
+            <p className="text-muted-foreground">{t('site.modes.howText')}</p>
+          </div>
+          <ol className="grid gap-5 md:grid-cols-3">
+            <Step n={1} title={t('site.mode.step1')} icon={Copy}>
+              <CopyChip value={address} />
+            </Step>
+            <Step n={2} title={t('site.modes.stepFigure')} icon={MousePointerClick}>
+              {t('site.mode.step2Text')}
+            </Step>
+            <Step n={3} title={t('site.mode.step3')} icon={Terminal}>
+              <Cmd className="mt-1.5">/server duels</Cmd>
+            </Step>
+          </ol>
+        </Panel>
+      </div>
+    </>
   );
 }
 
@@ -121,22 +162,24 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
   const invite = site.data?.discordInvite;
   const command = `/server ${mode.server ?? mode.id}`;
   const look = modeLook(mode);
-  // Applications (website and Discord) exist for MorniCraft.
   const applies = mode.id === APPLY_MODE;
   return (
-    <Card className="grid content-start gap-5 border-gold/30 p-6 sm:p-7">
+    <Panel id={HOW_ID} className="grid scroll-mt-28 content-start gap-6 border-gold/40 p-6 sm:p-7">
       <div className="flex items-center gap-3">
-        <span className="grid size-11 place-items-center rounded-[13px] bg-gold-soft text-gold" aria-hidden>
+        <span
+          className="grid size-11 place-items-center rounded-[6px] border-2 border-black/20 bg-gold-soft text-gold"
+          aria-hidden
+        >
           <LogIn className="size-5" />
         </span>
-        <h2 className="font-display text-[1.45rem] font-semibold">{t('site.mode.howTitle')}</h2>
+        <h2 className="font-pixel text-[1.7rem] font-bold leading-tight">{t('site.mode.howTitle')}</h2>
       </div>
       {modeJoinable(mode) ? null : (
-        <p className="rounded-[12px] bg-muted/70 px-4 py-3 text-sm font-semibold text-muted-foreground">
+        <p className="rounded-[6px] border-2 border-border bg-muted px-4 py-3 text-[15px] font-semibold text-muted-foreground">
           {t(`site.mode.notNow.${mode.state}`)}
         </p>
       )}
-      <ol className="grid gap-4">
+      <ol className="grid gap-5">
         <Step n={1} title={t('site.mode.step1')}>
           <CopyChip value={address} />
         </Step>
@@ -148,39 +191,130 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
         </Step>
       </ol>
       {look === 'asleep' ? (
-        <p className="flex items-start gap-2.5 rounded-[12px] bg-blue-soft px-4 py-3 text-sm text-blue">
+        <p className="flex items-start gap-2.5 rounded-[6px] border-2 border-blue/25 bg-blue-soft px-4 py-3 text-[15px] text-blue">
           <Moon className="mt-0.5 size-4 shrink-0" aria-hidden />
           {t('site.mode.asleepText')}
         </p>
       ) : null}
       {mode.access === 'whitelist' ? (
-        <div className="grid gap-3 rounded-[12px] bg-gold-soft px-4 py-3 text-sm text-gold-strong dark:text-gold">
+        <div className="grid gap-3 rounded-[6px] border-2 border-gold/35 bg-gold-soft px-4 py-4 text-[15px] text-gold-strong">
           <p>{t(applies ? 'site.mode.whitelistApply' : 'site.mode.whitelistText')}</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {applies ? (
-              <Button asChild size="sm">
+              <GameButton asChild size="sm">
                 <Link to={APPLY_PAGE}>
                   <ClipboardList />
                   {t('site.mode.apply')}
                 </Link>
-              </Button>
+              </GameButton>
             ) : null}
             {invite ? (
-              <Button asChild variant="secondary" size="sm">
+              <GameButton asChild tone="blue" size="sm">
                 <a href={invite} {...EXTERNAL}>
                   <MessagesSquare />
                   Discord
                 </a>
-              </Button>
+              </GameButton>
             ) : null}
           </div>
         </div>
       ) : null}
-    </Card>
+    </Panel>
   );
 }
 
-/** One game mode: state, players, description and how to get there. */
+function LivePanel({ mode }: { readonly mode: ModeStatus }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  const look = modeLook(mode);
+  const art = modeArt(mode.id);
+  const joinable = modeJoinable(mode);
+  return (
+    <Panel className="grid content-start overflow-hidden">
+      <div className="mm-mode-bg relative h-56 overflow-hidden lg:hidden" style={modeStyle(mode.id)}>
+        <div className="mm-noise absolute inset-0 opacity-60 mix-blend-overlay" aria-hidden />
+        <ModeFigure id={mode.id} look={look} className="h-[96%]" />
+      </div>
+      <div className="relative grid gap-6 p-6 sm:p-7">
+        <PixelEdge className="text-card lg:hidden" />
+        <div className="grid gap-2">
+          <h2 className="font-pixel text-[1.7rem] font-bold leading-tight">{t('site.mode.about', { name: pick(mode.name) })}</h2>
+          <p className="text-[1.08rem] leading-relaxed text-pretty">{pick(mode.description)}</p>
+          <p className="text-[15px] text-muted-foreground">{t(`site.modeLookText.${look}`)}</p>
+        </div>
+        {joinable ? (
+          <div className="grid gap-4 rounded-[8px] border-2 border-border bg-background-alt p-4">
+            <dl className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1">
+                <dt className="font-pixel text-[13px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  {t('site.mode.playersNow')}
+                </dt>
+                <dd className="tabular font-pixel text-[2.6rem] font-bold leading-none">{mode.players}</dd>
+              </div>
+              <div className="grid gap-1">
+                <dt className="font-pixel text-[13px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  {t('site.mode.playersMax')}
+                </dt>
+                <dd className="tabular font-pixel text-[2.6rem] font-bold leading-none">{mode.maxPlayers}</dd>
+              </div>
+            </dl>
+            <Segments share={mode.maxPlayers ? mode.players / mode.maxPlayers : 0} colour={art.a} />
+          </div>
+        ) : null}
+        <p className="flex flex-wrap items-center gap-2 text-[15px] text-muted-foreground">
+          <Terminal className="size-4" aria-hidden />
+          {t('site.mode.lobbyBack')} <Cmd>/lobby</Cmd>
+        </p>
+      </div>
+    </Panel>
+  );
+}
+
+function OtherModes({ modes }: { readonly modes: readonly ModeStatus[] }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  return (
+    <section className="relative bg-background-alt" aria-labelledby="other-modes">
+      <PixelEdge className="text-background-alt" />
+      <div className={cn(WRAP, 'grid gap-6 py-14')}>
+        <h2 id="other-modes" className="font-pixel text-[2rem] font-bold">
+          {t('site.mode.others')}
+        </h2>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {modes.map((m) => (
+            <li key={m.id}>
+              <Link
+                to={`/spielmodi/${m.id}`}
+                className="mm-mode-card group grid grid-cols-[88px_minmax(0,1fr)] overflow-hidden rounded-[10px] border-2 bg-card"
+                style={modeStyle(m.id)}
+              >
+                <span className="mm-mode-bg relative h-[88px] overflow-hidden">
+                  <ModeFigure id={m.id} look={modeLook(m)} className="bottom-[-30%] h-[150%]" />
+                </span>
+                <span className="grid content-center gap-1.5 px-4 py-3">
+                  <span className="truncate font-pixel text-[1.3rem] font-bold leading-none group-hover:text-primary">
+                    {pick(m.name)}
+                  </span>
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <ModeStateChip mode={m} className="px-1.5 py-0.5 text-[11px]" />
+                    {modeJoinable(m) ? (
+                      <span className="inline-flex items-center gap-1 text-[13px] text-muted-foreground">
+                        <Users className="size-3.5" aria-hidden />
+                        <span className="tabular">{m.players}</span>
+                      </span>
+                    ) : null}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/** One game mode: big header with its figure, live numbers, how to get there and the other modes. */
 export function ModePage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const { id = '' } = useParams();
@@ -188,105 +322,76 @@ export function ModePage(): ReactElement {
   const status = useNetworkStatus();
   const modes = status.data?.modes ?? [];
   const mode = findMode(modes, id);
-  const index = modes.findIndex((m) => m.id === id);
 
   if (status.isPending) {
     return (
-      <div className={cn(WRAP, 'grid gap-5 py-14')}>
-        <Skeleton className="h-12 w-1/2" />
-        <Skeleton className="h-64 rounded-[16px]" />
+      <div className={cn(WRAP, 'grid gap-5 pb-14 pt-[calc(var(--header-h)+40px)]')}>
+        <Skeleton className="h-14 w-1/2" />
+        <Skeleton className="h-72 rounded-[10px]" />
       </div>
     );
   }
   if (!mode) {
     return (
-      <div className={cn(WRAP, 'grid max-w-[860px] gap-6 py-16')}>
+      <div className={cn(WRAP, 'grid max-w-[880px] gap-6 pb-16 pt-[calc(var(--header-h)+40px)]')}>
         <EmptyState
           icon={Gamepad2}
           title={t('site.mode.missingTitle')}
           text={status.isError ? t('site.loadError') : t('site.mode.missingText')}
         >
-          <Button asChild variant="secondary">
+          <GameButton asChild tone="stone">
             <Link to="/spielmodi">
               <ArrowLeft />
               {t('site.mode.back')}
             </Link>
-          </Button>
+          </GameButton>
         </EmptyState>
       </div>
     );
   }
+  const art = modeArt(mode.id);
   const others = modes.filter((m) => m.id !== mode.id);
+  const joinable = modeJoinable(mode);
+  const scrollToHow = (): void => document.getElementById(HOW_ID)?.scrollIntoView({ behavior: 'smooth' });
   return (
     <>
-      <PageBand eyebrow={t('site.mode.eyebrow')} title={pick(mode.name)}>
-        <div className="flex flex-wrap items-center gap-2 pt-2">
-          <ModeStateBadge mode={mode} />
-          {mode.access === 'whitelist' ? <Pill tone="gold">{t('mode.whitelist')}</Pill> : null}
-          {modeJoinable(mode) ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs font-semibold text-band-foreground">
-              <Users className="size-3.5" aria-hidden />
+      <PageHero
+        eyebrow={t('site.mode.eyebrow')}
+        title={pick(mode.name)}
+        text={pick(mode.description)}
+        scene={art.scene}
+        figure={mode.id}
+        tint={art.a}
+      >
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <ModeStateChip mode={mode} onArt />
+          {mode.access === 'whitelist' ? <WhitelistChip onArt /> : null}
+          {joinable ? (
+            <Chip tone="glass" icon={Users}>
               {t('mode.players', { players: mode.players, max: mode.maxPlayers })}
-            </span>
+            </Chip>
           ) : null}
         </div>
-      </PageBand>
-      <div className={cn(WRAP, 'grid items-start gap-6 py-12 sm:py-14 lg:grid-cols-[1.3fr_1fr]')}>
-        <Card className="grid content-start gap-5 p-6 sm:p-8">
-          <div className="flex items-center gap-4">
-            <ModeGlyph
-              id={mode.id}
-              position={Math.max(index, 0)}
-              className="size-16 rounded-[18px] [&_svg]:size-8"
-            />
-            <div className="grid gap-1">
-              <h2 className="font-display text-[1.6rem] font-semibold leading-tight">{pick(mode.name)}</h2>
-              <p className="text-sm text-muted-foreground">{t(`site.modeLookText.${modeLook(mode)}`)}</p>
-            </div>
-          </div>
-          <p className="text-[1.08rem] leading-relaxed text-pretty">{pick(mode.description)}</p>
-          {modeJoinable(mode) ? (
-            <dl className="grid grid-cols-2 gap-3 border-t border-border pt-5">
-              <div className="grid gap-1 rounded-[12px] bg-muted/60 p-4">
-                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                  {t('site.mode.playersNow')}
-                </dt>
-                <dd className="tabular font-display text-3xl font-semibold">{mode.players}</dd>
-              </div>
-              <div className="grid gap-1 rounded-[12px] bg-muted/60 p-4">
-                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                  {t('site.mode.playersMax')}
-                </dt>
-                <dd className="tabular font-display text-3xl font-semibold">{mode.maxPlayers}</dd>
-              </div>
-            </dl>
+        <div className="flex flex-wrap gap-3 pt-2">
+          <GameButton size="lg" tone={joinable ? 'gold' : 'stone'} onClick={scrollToHow}>
+            <LogIn />
+            {t('site.mode.howTitle')}
+          </GameButton>
+          {mode.id === APPLY_MODE ? (
+            <GameButton asChild size="lg" tone="emerald">
+              <Link to={APPLY_PAGE}>
+                <ClipboardList />
+                {t('site.mode.apply')}
+              </Link>
+            </GameButton>
           ) : null}
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Terminal className="size-4" aria-hidden />
-            {t('site.mode.lobbyBack')} <Kbd>/lobby</Kbd>
-          </p>
-        </Card>
+        </div>
+      </PageHero>
+      <div className={cn(WRAP, 'grid items-start gap-6 py-12 sm:py-14 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]')}>
+        <LivePanel mode={mode} />
         <HowToGetThere mode={mode} />
       </div>
-      {others.length ? (
-        <section className="border-t border-border bg-secondary/60 dark:bg-white/[0.015]">
-          <div className={cn(WRAP, 'grid gap-5 py-12')}>
-            <h2 className="font-display text-2xl font-semibold">{t('site.mode.others')}</h2>
-            <div className="flex flex-wrap gap-2">
-              {others.map((m) => (
-                <Link
-                  key={m.id}
-                  to={`/spielmodi/${m.id}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-sm font-semibold shadow-card transition-colors hover:border-primary/40 hover:text-primary"
-                >
-                  {pick(m.name)}
-                  <ModeStateBadge mode={m} className="px-2" />
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
+      {others.length ? <OtherModes modes={others} /> : null}
     </>
   );
 }

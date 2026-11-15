@@ -62,35 +62,35 @@
     },
     "notFound": {
       "title": "Diese Seite gibt es nicht",
-      "text": "Vielleicht hat sich ein Tippfehler eingeschlichen. Von der Startseite aus findest du alles."
+      "text": "Vielleicht hat sich ein Tippfehler eingeschlichen. Von der Startseite aus findest du alles.",
+      "figures": "Die sieben Figuren der Spielmodi"
     }
   },
   "site": {
     "home": "MoinMorni – zur Startseite",
-    "tagline": "Minecraft-Netzwerk",
     "playNow": "Jetzt spielen",
     "panelHint": "Zum Panel – nur fürs Team",
     "loadError": "Das lässt sich gerade nicht laden. Versuch es gleich nochmal.",
     "server": {
       "copyHint": "Klick, um die Adresse zu kopieren",
       "copyLabel": "Adresse {{address}} kopieren",
-      "online": "online",
       "refresh": "Aktualisiert sich alle 15 Sekunden"
     },
     "hero": {
       "eyebrow": "Minecraft-Netzwerk · Java & Bedrock",
-      "title": "Servus in MoinMorni",
-      "pitch": "Lobby im Alpendorf, ein Schloss auf dem Berg und viele Spielmodi – für allein und zusammen. Komm vorbei!",
+      "pitch": "Ein Alpendorf als Lobby, ein Schloss auf dem Berg und Spielmodi für allein und zusammen. Schnapp dir die Adresse – wir sehen uns im Dorf!",
       "address": "Server-Adresse",
-      "java": "Java",
-      "javaHint": "ab Version 1.17 – einfach die Adresse eintragen.",
-      "bedrock": "Bedrock",
-      "bedrockHint": "Handy, Konsole, Windows – Port",
       "online_one": "{{count}} Spieler online",
       "online_other": "{{count}} Spieler online",
       "offline": "Gerade offline",
       "statusLoading": "Schaue nach, wer online ist …",
-      "statusError": "Status gerade nicht abrufbar"
+      "statusError": "Status gerade nicht abrufbar",
+      "imageAlt": "Das Alpendorf von MoinMorni: Häuser, Marktstände um den Maibaum und das Schloss auf dem Berg",
+      "editions": "Java und Bedrock",
+      "javaShort": "Java ab Version 1.17",
+      "bedrockShort": "Bedrock · Port {{port}}",
+      "figurePlayers": "{{count}} online",
+      "lineup": "Die Figuren der Spielmodi – klick eine an"
     },
     "news": {
       "eyebrow": "Neuigkeiten",
@@ -129,7 +129,13 @@
       "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Leere Modi schlafen und wachen auf, sobald jemand kommt.",
       "all": "Alle Spielmodi",
       "empty": "Gerade sind noch keine Spielmodi eingetragen.",
-      "emptyTitle": "Noch keine Spielmodi"
+      "emptyTitle": "Noch keine Spielmodi",
+      "wakes": "wacht auf, wenn du kommst",
+      "joinEyebrow": "Hier geht’s los",
+      "joinTitle": "Alle starten im Dorf",
+      "joinText": "Adresse eintragen, im Alpendorf ankommen und am Dorfmarkt eine Figur ansprechen – schon bist du im Spiel.",
+      "howText": "Jeden Spielmodus erreichst du aus der Lobby im Alpendorf – in drei kleinen Schritten.",
+      "stepFigure": "Sprich die Figur am Dorfmarkt an"
     },
     "modeState": {
       "open": "Offen",
@@ -174,7 +180,8 @@
       "missingText": "Vielleicht hat sich ein Tippfehler eingeschlichen. Alle Spielmodi findest du in der Übersicht.",
       "back": "Alle Spielmodi",
       "whitelistApply": "Nur auf Einladung: Du brauchst einen Platz auf der Whitelist. Bewirb dich einfach – hier auf der Webseite oder im Discord mit /bewerben.",
-      "apply": "Jetzt bewerben"
+      "apply": "Jetzt bewerben",
+      "about": "Über {{name}}"
     },
     "stats": {
       "eyebrow": "Ranglisten",
@@ -189,7 +196,10 @@
       "byPlaytime": "Rangliste nach Spielzeit",
       "privateHint": "Private Profile stehen nicht in der Rangliste.",
       "emptyTitle": "Noch leer",
-      "place": "Platz {{rank}}"
+      "place": "Platz {{rank}}",
+      "homeTitle": "MoinMorni in Zahlen",
+      "modesOpen": "Spielmodi offen",
+      "modesOpenHint": "Leere Modi schlafen und wachen auf, sobald jemand kommt."
     },
     "players": {
       "eyebrow": "Spielerprofil",
@@ -212,7 +222,27 @@
       "noPlace": "Nicht unter den Top 50",
       "firstSeen": "Zum ersten Mal da",
       "lastSeenLabel": "Zuletzt da",
-      "rightNow": "Gerade jetzt"
+      "rightNow": "Gerade jetzt",
+      "modeStats": "Werte in den Spielmodi",
+      "stats": {
+        "wins": "Siege",
+        "losses": "Niederlagen",
+        "kills": "Kills",
+        "deaths": "Tode",
+        "games": "Runden",
+        "points": "Punkte",
+        "rating": "Wertung",
+        "streak": "Serie",
+        "best_streak": "Beste Serie",
+        "best_ms": "Bestzeit",
+        "best_time_ms": "Bestzeit",
+        "courses": "Strecken",
+        "coins": "Taler",
+        "edelweiss": "Edelweiß",
+        "waves": "Wellen",
+        "best_wave": "Beste Welle",
+        "bosses": "Endbosse"
+      }
     },
     "team": {
       "eyebrow": "Wer hinter MoinMorni steckt",
@@ -227,7 +257,8 @@
       "emptyTitle": "Noch niemand zu sehen",
       "soon": "Das Team stellt sich bald vor.",
       "helpText": "Du brauchst Hilfe oder willst etwas melden? Am schnellsten geht's mit einem Ticket im Discord.",
-      "helpLink": "So bekommst du Hilfe"
+      "helpLink": "So bekommst du Hilfe",
+      "homeTitle": "Das Team"
     },
     "rules": {
       "eyebrow": "Fair spielen",
@@ -242,16 +273,12 @@
     },
     "community": {
       "eyebrow": "Community",
-      "title": "Mach mit!",
-      "discordTitle": "Unser Discord",
-      "discordText": "Plaudern, Mitspieler finden, Hilfe bekommen – und dein Minecraft-Konto verbinden.",
+      "discordTitle": "Komm in unseren Discord!",
+      "discordText": "Plaudern, Mitspieler finden, bei Events dabei sein und Hilfe bekommen – und dein Minecraft-Konto verbinden, damit dein Rang auch dort leuchtet.",
       "discordJoin": "Discord beitreten",
       "discordSoon": "Die Einladung kommt bald.",
-      "teamTitle": "Das Team",
-      "teamText": "Diese Leute kümmern sich um MoinMorni.",
       "teamAll": "Ganzes Team",
-      "socialTitle": "Folge uns",
-      "socialText": "Videos, Clips und Bilder aus MoinMorni."
+      "socialTitle": "Folge uns"
     },
     "social": {
       "youtube": "YouTube",
@@ -358,6 +385,55 @@
         "step3": "Beschreib kurz, was los ist. Jemand aus dem Team meldet sich bei dir.",
         "ticket": "Zum Discord",
         "teamLink": "Wer ist im Team?"
+      }
+    },
+    "village": {
+      "eyebrow": "Die Lobby",
+      "title": "Willkommen im Dorf",
+      "text": "Unsere Lobby ist ein ganzes Alpendorf: Markt, Biergarten, Gassen zum Bummeln und ein Schloss auf dem Berg. Jedes Haus kannst du betreten.",
+      "timeLabel": "Tageszeit der Bilder",
+      "day": "Tag",
+      "night": "Nacht",
+      "previous": "Vorheriges Bild",
+      "next": "Nächstes Bild",
+      "places": {
+        "label": "Orte im Dorf",
+        "dorfplatz": {
+          "title": "Der Dorfmarkt",
+          "short": "Ankunft am Maibaum",
+          "text": "Hier kommst du an: Rund um den Maibaum stehen die bunten Marktstände der Spielmodi, dahinter führt die Treppe hinauf zum Schloss.",
+          "alt": "Der Dorfmarkt mit Maibaum und bunten Ständen, dahinter das Schloss"
+        },
+        "stand": {
+          "title": "Die Figuren am Markt",
+          "short": "Ein Klick – und los",
+          "text": "An jedem Stand wartet eine Figur. Über ihrem Kopf stehen Name, Spielerzahl und ob der Modus wach ist. Rechtsklick – schon bist du drin.",
+          "alt": "Ein Marktstand mit rot-weißem Dach und einer Figur dahinter"
+        },
+        "biergarten": {
+          "title": "Der Biergarten",
+          "short": "Wirt, Gäste und Brotzeit",
+          "text": "Unter den Kastanien schenkt der Wirt aus, die Stammgäste sitzen an den Bierbänken. Hier triffst du dich mit Freunden – auch im Sprachkanal „Biergarten“.",
+          "alt": "Der Biergarten mit Bierbänken unter großen Bäumen"
+        },
+        "gasse": {
+          "title": "Die Handwerkergasse",
+          "short": "Häuser zum Reingehen",
+          "text": "Schmiede, Schreinerei, Bäckerei: Jedes Haus ist eingerichtet und begehbar. Schau dich um – manche verstecken kleine Geheimnisse.",
+          "alt": "Eine Gasse zwischen Holzhäusern mit grünen Fensterläden und Laternen"
+        },
+        "schloss": {
+          "title": "Das Schloss",
+          "short": "Ganz oben am Berg",
+          "text": "Mit den Launchpads fliegst du die Treppe hinauf. Am Schloss wartet die Parkour-Spirale mit Bestenliste.",
+          "alt": "Das weiße Schloss mit grünen Turmdächern auf dem Berg"
+        },
+        "karte": {
+          "title": "Das Dorf von oben",
+          "short": "Alles auf einen Blick",
+          "text": "Markt, Gassen, Biergarten, Oberdorf und Schloss – so sieht unser Dorf aus der Luft aus.",
+          "alt": "Das ganze Dorf von oben gesehen"
+        }
       }
     }
   },

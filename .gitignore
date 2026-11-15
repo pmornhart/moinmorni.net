@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# Demo der Webseite als eine Datei (pnpm --filter @moinmorni/web build:demo)
+dist-demo/
 # Bau-Ausgaben (nicht apps/server/src/build – das ist der Bau-Server)
 /build/
 target/

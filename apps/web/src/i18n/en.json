@@ -62,35 +62,35 @@
     },
     "notFound": {
       "title": "This page does not exist",
-      "text": "Maybe there is a typo. Everything can be found from the start page."
+      "text": "Maybe there is a typo. Everything can be found from the start page.",
+      "figures": "The seven game modes' figures"
     }
   },
   "site": {
     "home": "MoinMorni – to the start page",
-    "tagline": "Minecraft network",
     "playNow": "Play now",
     "panelHint": "To the panel – for the team only",
     "loadError": "This can't be loaded right now. Please try again in a moment.",
     "server": {
       "copyHint": "Click to copy the address",
       "copyLabel": "Copy address {{address}}",
-      "online": "online",
       "refresh": "Updates every 15 seconds"
     },
     "hero": {
       "eyebrow": "Minecraft network · Java & Bedrock",
-      "title": "Welcome to MoinMorni",
-      "pitch": "A lobby in an Alpine village, a castle on the mountain and lots of game modes – to play alone or together. Come and join us!",
+      "pitch": "An Alpine village as the lobby, a castle on the mountain and game modes to play alone or together. Grab the address – see you in the village!",
       "address": "Server address",
-      "java": "Java",
-      "javaHint": "from version 1.17 – just add the address.",
-      "bedrock": "Bedrock",
-      "bedrockHint": "phone, console, Windows – port",
       "online_one": "{{count}} player online",
       "online_other": "{{count}} players online",
       "offline": "Offline right now",
       "statusLoading": "Checking who's online …",
-      "statusError": "Status not available right now"
+      "statusError": "Status not available right now",
+      "imageAlt": "MoinMorni's Alpine village: houses, market stalls around the maypole and the castle on the mountain",
+      "editions": "Java and Bedrock",
+      "javaShort": "Java from version 1.17",
+      "bedrockShort": "Bedrock · port {{port}}",
+      "figurePlayers": "{{count}} online",
+      "lineup": "The game modes' figures – pick one"
     },
     "news": {
       "eyebrow": "News",
@@ -129,7 +129,13 @@
       "text": "In the lobby, just talk to a figure in the village – and you're in the game. Empty modes sleep and wake up as soon as someone arrives.",
       "all": "All game modes",
       "empty": "No game modes have been added yet.",
-      "emptyTitle": "No game modes yet"
+      "emptyTitle": "No game modes yet",
+      "wakes": "wakes up when you join",
+      "joinEyebrow": "Start here",
+      "joinTitle": "Everyone starts in the village",
+      "joinText": "Add the address, arrive in the Alpine village and talk to a figure at the market – and you are in the game.",
+      "howText": "You reach every game mode from the lobby in the Alpine village – in three small steps.",
+      "stepFigure": "Talk to the figure at the village market"
     },
     "modeState": {
       "open": "Open",
@@ -174,7 +180,8 @@
       "missingText": "Maybe there's a typo. You'll find all game modes in the overview.",
       "back": "All game modes",
       "whitelistApply": "Invitation only: you need a spot on the whitelist. Just apply – here on the website or in Discord with /bewerben.",
-      "apply": "Apply now"
+      "apply": "Apply now",
+      "about": "About {{name}}"
     },
     "stats": {
       "eyebrow": "Leaderboards",
@@ -189,7 +196,10 @@
       "byPlaytime": "Leaderboard by play time",
       "privateHint": "Private profiles are not on the leaderboard.",
       "emptyTitle": "Still empty",
-      "place": "Place {{rank}}"
+      "place": "Place {{rank}}",
+      "homeTitle": "MoinMorni in numbers",
+      "modesOpen": "Game modes open",
+      "modesOpenHint": "Empty modes sleep and wake up as soon as someone arrives."
     },
     "players": {
       "eyebrow": "Player profile",
@@ -212,7 +222,27 @@
       "noPlace": "Not in the top 50",
       "firstSeen": "First joined",
       "lastSeenLabel": "Last seen",
-      "rightNow": "Right now"
+      "rightNow": "Right now",
+      "modeStats": "Game mode stats",
+      "stats": {
+        "wins": "Wins",
+        "losses": "Losses",
+        "kills": "Kills",
+        "deaths": "Deaths",
+        "games": "Games",
+        "points": "Points",
+        "rating": "Rating",
+        "streak": "Streak",
+        "best_streak": "Best streak",
+        "best_ms": "Best time",
+        "best_time_ms": "Best time",
+        "courses": "Courses",
+        "coins": "Coins",
+        "edelweiss": "Edelweiss",
+        "waves": "Waves",
+        "best_wave": "Best wave",
+        "bosses": "Final bosses"
+      }
     },
     "team": {
       "eyebrow": "Who's behind MoinMorni",
@@ -227,7 +257,8 @@
       "emptyTitle": "Nobody to see yet",
       "soon": "The team will introduce itself soon.",
       "helpText": "Need help or want to report something? The quickest way is a ticket on Discord.",
-      "helpLink": "How to get help"
+      "helpLink": "How to get help",
+      "homeTitle": "The team"
     },
     "rules": {
       "eyebrow": "Play fair",
@@ -242,16 +273,12 @@
     },
     "community": {
       "eyebrow": "Community",
-      "title": "Join in!",
-      "discordTitle": "Our Discord",
-      "discordText": "Chat, find people to play with, get help – and link your Minecraft account.",
+      "discordTitle": "Join our Discord!",
+      "discordText": "Chat, find people to play with, join events and get help – and link your Minecraft account so your rank shines there too.",
       "discordJoin": "Join the Discord",
       "discordSoon": "The invite is coming soon.",
-      "teamTitle": "The team",
-      "teamText": "These people take care of MoinMorni.",
       "teamAll": "Whole team",
-      "socialTitle": "Follow us",
-      "socialText": "Videos, clips and pictures from MoinMorni."
+      "socialTitle": "Follow us"
     },
     "social": {
       "youtube": "YouTube",
@@ -358,6 +385,55 @@
         "step3": "Briefly describe what's going on. Someone from the team will get back to you.",
         "ticket": "To the Discord",
         "teamLink": "Who's on the team?"
+      }
+    },
+    "village": {
+      "eyebrow": "The lobby",
+      "title": "Welcome to the village",
+      "text": "Our lobby is a whole Alpine village: a market, a beer garden, lanes to wander and a castle on the mountain. You can walk into every house.",
+      "timeLabel": "Time of day in the pictures",
+      "day": "Day",
+      "night": "Night",
+      "previous": "Previous picture",
+      "next": "Next picture",
+      "places": {
+        "label": "Places in the village",
+        "dorfplatz": {
+          "title": "The village market",
+          "short": "Arrival at the maypole",
+          "text": "This is where you arrive: the colourful stalls of the game modes stand around the maypole, behind them the stairs lead up to the castle.",
+          "alt": "The village market with maypole and colourful stalls, the castle behind"
+        },
+        "stand": {
+          "title": "The figures at the market",
+          "short": "One click – and go",
+          "text": "A figure waits at every stall. Above its head: the name, the number of players and whether the mode is awake. Right-click – and you are in.",
+          "alt": "A market stall with a red and white roof and a figure behind it"
+        },
+        "biergarten": {
+          "title": "The beer garden",
+          "short": "Landlord, guests and snacks",
+          "text": "Under the chestnut trees the landlord serves, the regulars sit at the benches. Meet your friends here – also in the voice channel “Biergarten”.",
+          "alt": "The beer garden with benches under big trees"
+        },
+        "gasse": {
+          "title": "The craftsmen’s lane",
+          "short": "Houses to walk into",
+          "text": "Smithy, joinery, bakery: every house is furnished and open. Take a look around – some hide little secrets.",
+          "alt": "A lane between wooden houses with green shutters and lanterns"
+        },
+        "schloss": {
+          "title": "The castle",
+          "short": "At the top of the mountain",
+          "text": "Launch pads fly you up the stairs. The parkour spiral with its leaderboard waits at the castle.",
+          "alt": "The white castle with green tower roofs on the mountain"
+        },
+        "karte": {
+          "title": "The village from above",
+          "short": "Everything at a glance",
+          "text": "Market, lanes, beer garden, upper village and castle – this is our village from the air.",
+          "alt": "The whole village seen from above"
+        }
       }
     }
   },

@@ -1,7 +1,7 @@
 import '~/styles/public.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createBrowserRouter, createHashRouter, RouterProvider, type RouteObject } from 'react-router';
 import { ApplyPage } from './ApplyPage';
 import { HelpPage } from './HelpPage';
 import { HomePage } from './HomePage';
@@ -11,14 +11,17 @@ import { NewsArticlePage, NewsListPage } from './NewsPages';
 import { PlayerProfilePage, StatsPage } from './PlayerPages';
 import { PublicLayout } from './PublicLayout';
 import { RulesPage } from './RulesPage';
+import { IS_DEMO } from './site-mode';
 import { TeamPage } from './TeamPage';
 
 const MAX_RETRIES = 2;
-const queryClient = new QueryClient({
+
+/** One cache for the website; the demo asks it to reload after a pretend sign-in. */
+export const siteQueryClient = new QueryClient({
   defaultOptions: { queries: { retry: MAX_RETRIES, refetchOnWindowFocus: true } },
 });
 
-const router = createBrowserRouter([
+const routes: RouteObject[] = [
   {
     element: <PublicLayout />,
     children: [
@@ -38,12 +41,15 @@ const router = createBrowserRouter([
       { path: '*', element: <InfoPage page="notFound" follows={false} /> },
     ],
   },
-]);
+];
+
+// The demo is one file without a server behind it: its addresses live after the "#".
+const router = IS_DEMO ? createHashRouter(routes) : createBrowserRouter(routes);
 
 /** The public website: start page, news, game modes, statistics, team, rules and help. */
 export function PublicApp(): ReactElement {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={siteQueryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>
   );

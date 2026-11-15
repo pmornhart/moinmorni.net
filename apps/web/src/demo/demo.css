@@ -1,0 +1,68 @@
+/*
+ * The demo may run inside a host page that colours text, headings and buttons itself, outside any layer – that
+ * would beat the website's layered styles. So the demo marks every utility as important, loads the building blocks
+ * without a layer, gives the colours the building blocks set the same weight, and lets everything else take its
+ * parent's colour and font again. ":where" has no weight, so every utility still wins.
+ */
+@import 'tailwindcss' important;
+@import '../styles/site-theme.css';
+@import '../styles/base.css';
+@import '../styles/site-components.css';
+
+html,
+body {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  font-family: var(--font-sans) !important;
+}
+
+:where(
+  h1:not([style*='color']),
+  h2:not([style*='color']),
+  h3:not([style*='color']),
+  h4:not([style*='color']),
+  p:not([style*='color']),
+  a:not([style*='color']),
+  span:not([style*='color']),
+  label:not([style*='color']),
+  li:not([style*='color']),
+  dt:not([style*='color']),
+  dd:not([style*='color']),
+  strong:not([style*='color']),
+  b:not([style*='color']),
+  small:not([style*='color']),
+  figcaption:not([style*='color']),
+  time:not([style*='color']),
+  code:not([style*='color']),
+  summary:not([style*='color']),
+  button:not([style*='color'])
+) {
+  color: inherit !important;
+}
+
+:where(h1, h2, h3, h4, p, a, span, li, dt, dd, button, input, textarea, label, summary, code) {
+  font-family: inherit !important;
+}
+
+:where(h1, h2, h3, h4, p, ul, ol, dl, dd, figure) {
+  margin: 0 !important;
+}
+
+:where(a) {
+  text-decoration: none !important;
+}
+
+/* Buttons without their own background stay see-through, as on the real website. */
+:where(button) {
+  background-color: transparent !important;
+}
+
+/* The building blocks that bring their own colours keep them. */
+.mm-btn {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-text) !important;
+  font-family: var(--font-pixel) !important;
+}
+.mm-wordmark {
+  color: transparent !important;
+}

@@ -1,0 +1,579 @@
+{
+  "status": {
+    "online": true,
+    "lobbyPlayers": 23,
+    "maxPlayers": 200,
+    "javaAddress": "moinmorni.net",
+    "bedrockAddress": "moinmorni.net",
+    "bedrockPort": 19132,
+    "modes": [
+      {
+        "id": "mornicraft",
+        "name": {
+          "de": "MorniCraft",
+          "en": "MorniCraft"
+        },
+        "description": {
+          "de": "Unser Freunde-Survival mit Clans, Gräbern und einem mächtigen Drachen – nur auf Einladung.",
+          "en": "Our friends’ survival with clans, graves and a mighty dragon – invitation only."
+        },
+        "state": "on",
+        "access": "whitelist",
+        "players": 12,
+        "maxPlayers": 40,
+        "awake": true,
+        "server": "mornicraft"
+      },
+      {
+        "id": "duels",
+        "name": {
+          "de": "Duels",
+          "en": "Duels"
+        },
+        "description": {
+          "de": "1 gegen 1 und 2 gegen 2: Klassisch mit Suppe, Modern oder mit Fähigkeiten. Gewertet oder locker.",
+          "en": "1v1 and 2v2: classic with soup, modern or with abilities. Ranked or casual."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 34,
+        "maxPlayers": 100,
+        "awake": true,
+        "server": "duels"
+      },
+      {
+        "id": "party",
+        "name": {
+          "de": "Morni Party",
+          "en": "Morni Party"
+        },
+        "description": {
+          "de": "Würfeln, Taler sammeln, Edelweiß kaufen – und zwischendurch schnelle Minispiele. Für 2–8 Spieler.",
+          "en": "Roll the dice, collect coins, buy edelweiss – with quick minigames in between. For 2–8 players."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 18,
+        "maxPlayers": 64,
+        "awake": true,
+        "server": "party"
+      },
+      {
+        "id": "gipfelsturm",
+        "name": {
+          "de": "Gipfelsturm",
+          "en": "Summit Rush"
+        },
+        "description": {
+          "de": "Parkour-Strecken von leicht bis extrem, mit Bestzeiten und Strecke der Woche.",
+          "en": "Parkour courses from easy to extreme, with best times and a course of the week."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 0,
+        "maxPlayers": 60,
+        "awake": false,
+        "server": "gipfelsturm"
+      },
+      {
+        "id": "burgverlies",
+        "name": {
+          "de": "Burgverlies",
+          "en": "Castle Dungeon"
+        },
+        "description": {
+          "de": "Koop-Dungeon für 1–4: Fallen, Schätze und ein Endboss tief unter der Burg.",
+          "en": "Co-op dungeon for 1–4: traps, treasure and a final boss deep below the castle."
+        },
+        "state": "maintenance",
+        "access": "everyone",
+        "players": 0,
+        "maxPlayers": 40,
+        "awake": false,
+        "server": "burgverlies"
+      },
+      {
+        "id": "bollwerk",
+        "name": {
+          "de": "Bollwerk",
+          "en": "Bulwark"
+        },
+        "description": {
+          "de": "Verteidigt das Dorf gegen Welle um Welle – zwischen den Wellen wird aufgerüstet.",
+          "en": "Defend the village against wave after wave – gear up between the waves."
+        },
+        "state": "off",
+        "access": "everyone",
+        "players": 0,
+        "maxPlayers": 40,
+        "awake": false,
+        "server": "bollwerk"
+      },
+      {
+        "id": "mirni",
+        "name": {
+          "de": "MorniSMP",
+          "en": "MorniSMP"
+        },
+        "description": {
+          "de": "Spawn, Zufalls-Teleport und ein Marktplatz, auf dem ihr frei handelt. Bald da!",
+          "en": "Spawn, random teleport and a market where you trade freely. Coming soon!"
+        },
+        "state": "soon",
+        "access": "everyone",
+        "players": 0,
+        "maxPlayers": 60,
+        "awake": false,
+        "server": null
+      }
+    ]
+  },
+  "site": {
+    "rules": {
+      "de": [
+        "Freundlich bleiben: keine Beleidigungen, kein Mobbing, keine Hetze.",
+        "Kein Cheaten: keine Hacks, Fly-, X-Ray- oder Auto-Clicker-Mods.",
+        "Kein Spam und keine Werbung für andere Server.",
+        "Keine Bugs ausnutzen – melde sie uns, dafür gibt es ein Dankeschön.",
+        "Dein Name, dein Skin und deine Bauten bleiben familienfreundlich.",
+        "Teile keine privaten Daten – weder deine noch die von anderen.",
+        "Höre auf das Team. Fragen oder Ärger? Öffne ein Ticket im Discord."
+      ],
+      "en": [
+        "Be kind: no insults, no bullying, no hate.",
+        "No cheating: no hacks, fly, x-ray or auto-clicker mods.",
+        "No spam and no ads for other servers.",
+        "Don't abuse bugs – report them to us and get a thank-you.",
+        "Your name, your skin and your builds stay family-friendly.",
+        "Don't share private details – neither yours nor anybody else's.",
+        "Listen to the team. Questions or trouble? Open a ticket on Discord."
+      ]
+    },
+    "voiceChannels": ["Dorfplatz", "Biergarten", "Turnier", "Gipfelfunk"],
+    "discordInvite": "https://moinmorni.net/discord",
+    "socials": {
+      "youtube": "https://moinmorni.net/youtube",
+      "tiktok": "https://moinmorni.net/tiktok",
+      "instagram": null
+    },
+    "players": 1284
+  },
+  "news": [
+    {
+      "slug": "servus-in-moinmorni",
+      "category": "info",
+      "pinned": true,
+      "daysAgo": 6,
+      "author": "Morni",
+      "title": {
+        "de": "Servus in MoinMorni!",
+        "en": "Welcome to MoinMorni!"
+      },
+      "body": {
+        "de": "Unser Netzwerk hat die Tore geöffnet! Du startest im Alpendorf: Am Dorfmarkt rund um den Maibaum stehen die Figuren der Spielmodi – sprich eine an, und schon bist du im Spiel.\nDuels, Morni Party und Gipfelsturm sind von Anfang an dabei. MorniCraft ist unser Freunde-Survival für alle auf der Whitelist – bewerben kannst du dich hier auf der Webseite.\nDu spielst mit der Java Edition ab Version 1.17 oder mit Bedrock auf Handy, Konsole und Windows. Die Adresse ist moinmorni.net. Wir sehen uns im Biergarten!",
+        "en": "Our network has opened its gates! You start in the alpine village: around the maypole at the village market stand the figures of the game modes – talk to one and you are in the game.\nDuels, Morni Party and Summit Rush are there from day one. MorniCraft is our friends’ survival for everyone on the whitelist – you can apply right here on the website.\nPlay with Java Edition from version 1.17 or with Bedrock on phone, console and Windows. The address is moinmorni.net. See you in the beer garden!"
+      }
+    },
+    {
+      "slug": "wiesn-im-dorf",
+      "category": "event",
+      "pinned": false,
+      "daysAgo": 1,
+      "author": "Sepp_Huber",
+      "title": {
+        "de": "Wiesn im Dorf: Brezn, Blasmusik und Maßkrug-Parkour",
+        "en": "Oktoberfest in the village: pretzels, brass and a beer-mug parkour"
+      },
+      "body": {
+        "de": "Ab Freitag wird das Dorf festlich: Lebkuchenherzen an den Ständen, Girlanden über dem Dorfplatz und Blasmusik im Biergarten.\nNeu ist der Maßkrug-Parkour die Schlosstreppe hinauf. Wer ihn am schnellsten schafft, landet auf der Bestenliste und bekommt einen eigenen Titel im Chat.\nAm Samstagabend treffen wir uns um 20 Uhr im Sprachkanal „Biergarten“ – das Team ist dabei und verteilt Rätsel mit kleinen Preisen.",
+        "en": "From Friday the village dresses up: gingerbread hearts at the stalls, garlands over the village square and brass music in the beer garden.\nNew is the beer-mug parkour up the castle stairs. The fastest climbers make the leaderboard and get their own title in chat.\nOn Saturday evening we meet at 8 pm in the voice channel “Biergarten” – the team joins in with riddles and small prizes."
+      }
+    },
+    {
+      "slug": "morni-party-spielfelder",
+      "category": "update",
+      "pinned": false,
+      "daysAgo": 3,
+      "author": "Vroni_Baut",
+      "title": {
+        "de": "Morni Party: drei Spielfelder und zwölf Minispiele",
+        "en": "Morni Party: three boards and twelve minigames"
+      },
+      "body": {
+        "de": "Morni Party ist fertig! Würfelt euch über den Almsommer am Morni-Kogel, durch Schloss Weißenstein oder tief in den Goldstollen.\nZwischen den Runden warten zwölf Minispiele – vom Gipfelrennen bis zur Edelweiß-Jagd. Wer am Ende die meisten Edelweiß hat, gewinnt.\nIhr spielt zu zweit bis zu acht. Freunde ladet ihr mit /party ein – die Party folgt euch direkt in die Runde.",
+        "en": "Morni Party is ready! Roll your way across the alpine summer on the Morni-Kogel, through Weissenstein Castle or deep into the gold mine.\nBetween rounds, twelve minigames are waiting – from the summit race to the edelweiss hunt. Whoever has the most edelweiss at the end wins.\nPlay with two to eight players. Invite friends with /party – the party follows you straight into the round."
+      }
+    },
+    {
+      "slug": "duels-kit-editor",
+      "category": "update",
+      "pinned": false,
+      "daysAgo": 8,
+      "author": "Finn2015",
+      "title": {
+        "de": "Duels: Kit-Editor und gewertete Runden",
+        "en": "Duels: kit editor and ranked rounds"
+      },
+      "body": {
+        "de": "Ab sofort stellst du dir deine Ausrüstung selbst zusammen: Der Kit-Editor merkt sich für jeden Stil, wo was in deinem Inventar liegt.\nGewertete Runden zählen für die Rangliste, lockere Runden nicht – perfekt zum Üben.\nDrei Stile stehen bereit: Klassisch mit Suppe und ohne Abklingzeit, Modern, und Fähigkeiten mit besonderen Kräften.",
+        "en": "From now on you set up your own gear: the kit editor remembers for every style where everything sits in your inventory.\nRanked rounds count for the leaderboard, casual rounds don't – perfect for practice.\nThree styles are ready: classic with soup and no cooldown, modern, and abilities with special powers."
+      }
+    },
+    {
+      "slug": "gipfelsturm-woche",
+      "category": "event",
+      "pinned": false,
+      "daysAgo": 10,
+      "author": "Toni_Gipfel",
+      "title": {
+        "de": "Gipfelsturm-Woche: Wer knackt die Bestzeit?",
+        "en": "Summit Rush week: who beats the best time?"
+      },
+      "body": {
+        "de": "Eine Woche lang gilt die neue Strecke der Woche „Gletscherspalte“. Sie ist knifflig, aber fair – und hat drei Abkürzungen für Mutige.\nDie besten fünf Zeiten bekommen einen goldenen Rahmen auf ihrem Profil. Zuschauen könnt ihr live in der Lobby am Gipfelsturm-Stand.",
+        "en": "For one week the new course of the week “Crevasse” is on. It is tricky but fair – and has three shortcuts for the brave.\nThe five best times get a golden frame on their profile. Watch live in the lobby at the Summit Rush stall."
+      }
+    },
+    {
+      "slug": "sprachchat-ueberall",
+      "category": "info",
+      "pinned": false,
+      "daysAgo": 12,
+      "author": "Lena_Kocht",
+      "title": {
+        "de": "Sprachchat über alle Spielmodi",
+        "en": "Voice chat across all game modes"
+      },
+      "body": {
+        "de": "Mit der Mod „Simple Voice Chat“ redest du auf MoinMorni mit anderen – mit Leuten in deiner Nähe, mit deiner Party oder in festen Kanälen wie „Dorfplatz“.\nDas Besondere: Die Kanäle sind in jedem Spielmodus gleich. Du kannst also in Duels sein und mit Freunden aus dem Gipfelsturm weiterreden.\nWie es geht, steht auf der Hilfe-Seite. Mit Bedrock gibt es leider keinen Sprachchat.",
+        "en": "With the mod “Simple Voice Chat” you can talk to others on MoinMorni – with people nearby, with your party or in fixed channels like “Dorfplatz”.\nThe special part: the channels are the same in every game mode. You can be in Duels and keep talking to friends in Summit Rush.\nThe help page explains how. Sadly there is no voice chat on Bedrock."
+      }
+    },
+    {
+      "slug": "dorf-zum-reingehen",
+      "category": "update",
+      "pinned": false,
+      "daysAgo": 15,
+      "author": "Vroni_Baut",
+      "title": {
+        "de": "Häuser zum Reingehen und Leben im Dorf",
+        "en": "Houses to walk into and life in the village"
+      },
+      "body": {
+        "de": "Jedes Haus im Dorf ist jetzt begehbar und eingerichtet: Bäckerei, Krämer, Apotheke, Rathaus und die Werkstätten in der Handwerkergasse.\nIm Wirtshaus sitzt der Stammtisch, im Biergarten schenkt der Wirt aus, und überall laufen Dorfleute in Tracht herum.\nSchau dich um – in manchen Häusern sind kleine Geheimnisse versteckt.",
+        "en": "Every house in the village can now be entered and is furnished: bakery, general store, pharmacy, town hall and the workshops in the craftsmen's lane.\nThe regulars sit in the inn, the landlord serves in the beer garden and villagers in traditional dress walk around everywhere.\nTake a look around – some houses hide little secrets."
+      }
+    },
+    {
+      "slug": "mornicraft-bewerbungen",
+      "category": "info",
+      "pinned": false,
+      "daysAgo": 18,
+      "author": "Morni",
+      "title": {
+        "de": "MorniCraft: Bewerbungen sind offen",
+        "en": "MorniCraft: applications are open"
+      },
+      "body": {
+        "de": "MorniCraft ist unser Freunde-Survival mit Clans, Gräbern und einem mächtigen Drachen. Damit es gemütlich bleibt, kommt nur hinein, wer auf der Whitelist steht.\nBewerben kannst du dich auf der Webseite: mit Discord anmelden, ein paar Sätze über dich schreiben, fertig. Das Team antwortet dir als Discord-Nachricht.",
+        "en": "MorniCraft is our friends’ survival with clans, graves and a mighty dragon. To keep it cosy, only people on the whitelist can join.\nApply on the website: sign in with Discord, write a few sentences about yourself, done. The team answers you with a Discord message."
+      }
+    }
+  ],
+  "roles": {
+    "owner": {
+      "id": "owner",
+      "name": {
+        "de": "Owner",
+        "en": "Owner"
+      },
+      "symbol": "♛",
+      "colour": "#ff5555"
+    },
+    "admin": {
+      "id": "admin",
+      "name": {
+        "de": "Admin",
+        "en": "Admin"
+      },
+      "symbol": "✦",
+      "colour": "#ff9f43"
+    },
+    "moderator": {
+      "id": "moderator",
+      "name": {
+        "de": "Moderator",
+        "en": "Moderator"
+      },
+      "symbol": "⚔",
+      "colour": "#55aaff"
+    },
+    "builder": {
+      "id": "builder",
+      "name": {
+        "de": "Builder",
+        "en": "Builder"
+      },
+      "symbol": "⚒",
+      "colour": "#55ff55"
+    },
+    "media": {
+      "id": "media",
+      "name": {
+        "de": "Media",
+        "en": "Media"
+      },
+      "symbol": "▶",
+      "colour": "#ff6ad5"
+    },
+    "vip": {
+      "id": "vip",
+      "name": {
+        "de": "VIP",
+        "en": "VIP"
+      },
+      "symbol": "★",
+      "colour": "#ffd23f"
+    },
+    "player": {
+      "id": "player",
+      "name": {
+        "de": "Spieler",
+        "en": "Player"
+      },
+      "symbol": "",
+      "colour": "#aaaaaa"
+    }
+  },
+  "teamOrder": ["owner", "admin", "moderator", "builder", "media", "vip"],
+  "players": [
+    {
+      "name": "Vroni_Baut",
+      "role": "builder",
+      "playMinutes": 9412,
+      "firstSeenDaysAgo": 44,
+      "lastSeenMinutesAgo": 0,
+      "online": "lobby",
+      "modes": {
+        "party": {
+          "wins": 9,
+          "games": 31,
+          "edelweiss": 212
+        },
+        "gipfelsturm": {
+          "courses": 24,
+          "best_ms": 83456
+        }
+      }
+    },
+    {
+      "name": "Resi_Rennt",
+      "role": "vip",
+      "playMinutes": 8133,
+      "firstSeenDaysAgo": 41,
+      "lastSeenMinutesAgo": 0,
+      "online": "gipfelsturm",
+      "modes": {
+        "gipfelsturm": {
+          "courses": 61,
+          "best_ms": 71230,
+          "wins": 18
+        },
+        "duels": {
+          "wins": 12,
+          "losses": 20
+        }
+      }
+    },
+    {
+      "name": "Finn2015",
+      "role": "moderator",
+      "playMinutes": 7720,
+      "firstSeenDaysAgo": 44,
+      "lastSeenMinutesAgo": 0,
+      "online": "duels",
+      "modes": {
+        "duels": {
+          "wins": 120,
+          "losses": 33,
+          "kills": 410,
+          "best_streak": 14,
+          "rating": 1840
+        }
+      }
+    },
+    {
+      "name": "Wastl",
+      "role": "player",
+      "playMinutes": 6905,
+      "firstSeenDaysAgo": 39,
+      "lastSeenMinutesAgo": 95,
+      "modes": {
+        "duels": {
+          "wins": 54,
+          "losses": 61,
+          "kills": 233
+        },
+        "party": {
+          "wins": 4,
+          "games": 22
+        }
+      }
+    },
+    {
+      "name": "Morni",
+      "role": "owner",
+      "playMinutes": 6488,
+      "firstSeenDaysAgo": 44,
+      "lastSeenMinutesAgo": 0,
+      "online": "lobby"
+    },
+    {
+      "name": ".Tobi_04",
+      "role": "player",
+      "playMinutes": 5920,
+      "firstSeenDaysAgo": 30,
+      "lastSeenMinutesAgo": 0,
+      "online": "party",
+      "bedrock": true,
+      "modes": {
+        "party": {
+          "wins": 17,
+          "games": 40,
+          "edelweiss": 388
+        }
+      }
+    },
+    {
+      "name": "Lena_Kocht",
+      "role": "moderator",
+      "playMinutes": 5311,
+      "firstSeenDaysAgo": 43,
+      "lastSeenMinutesAgo": 260
+    },
+    {
+      "name": "KaiFilmt",
+      "role": "media",
+      "playMinutes": 4876,
+      "firstSeenDaysAgo": 37,
+      "lastSeenMinutesAgo": 1500
+    },
+    {
+      "name": "Lisl_Lacht",
+      "role": "player",
+      "playMinutes": 4310,
+      "firstSeenDaysAgo": 28,
+      "lastSeenMinutesAgo": 33
+    },
+    {
+      "name": "Sepp_Huber",
+      "role": "admin",
+      "playMinutes": 4105,
+      "firstSeenDaysAgo": 44,
+      "lastSeenMinutesAgo": 0,
+      "online": "mornicraft"
+    },
+    {
+      "name": "Bertl99",
+      "role": "vip",
+      "playMinutes": 3790,
+      "firstSeenDaysAgo": 26,
+      "lastSeenMinutesAgo": 2880
+    },
+    {
+      "name": "Toni_Gipfel",
+      "role": "builder",
+      "playMinutes": 3544,
+      "firstSeenDaysAgo": 40,
+      "lastSeenMinutesAgo": 610
+    },
+    {
+      "name": "NinaNacht",
+      "role": "player",
+      "playMinutes": 3102,
+      "firstSeenDaysAgo": 21,
+      "lastSeenMinutesAgo": 0,
+      "online": "duels",
+      "modes": {
+        "duels": {
+          "wins": 77,
+          "losses": 39,
+          "kills": 260,
+          "best_streak": 9
+        }
+      }
+    },
+    {
+      "name": "Xaver_XD",
+      "role": "player",
+      "playMinutes": 2876,
+      "firstSeenDaysAgo": 19,
+      "lastSeenMinutesAgo": 4320
+    },
+    {
+      "name": "Quirin",
+      "role": "player",
+      "playMinutes": 2411,
+      "firstSeenDaysAgo": 17,
+      "lastSeenMinutesAgo": 75
+    },
+    {
+      "name": "Zenzi_Zaubert",
+      "role": "player",
+      "playMinutes": 1987,
+      "firstSeenDaysAgo": 14,
+      "lastSeenMinutesAgo": 0,
+      "online": "lobby"
+    },
+    {
+      "name": "Gustl",
+      "role": "player",
+      "playMinutes": 1640,
+      "firstSeenDaysAgo": 12,
+      "lastSeenMinutesAgo": 9000
+    },
+    {
+      "name": ".Fanny_Fliegt",
+      "role": "player",
+      "playMinutes": 1322,
+      "firstSeenDaysAgo": 9,
+      "lastSeenMinutesAgo": 180,
+      "bedrock": true
+    },
+    {
+      "name": "Maxl_Max",
+      "role": "player",
+      "playMinutes": 905,
+      "firstSeenDaysAgo": 6,
+      "lastSeenMinutesAgo": 1200
+    },
+    {
+      "name": "Annerl",
+      "role": "player",
+      "playMinutes": 488,
+      "firstSeenDaysAgo": 3,
+      "lastSeenMinutesAgo": 50
+    },
+    {
+      "name": "Hansi_HD",
+      "role": "player",
+      "playMinutes": 215,
+      "firstSeenDaysAgo": 1,
+      "lastSeenMinutesAgo": 0,
+      "online": "lobby"
+    },
+    {
+      "name": "Geheimrat",
+      "role": "player",
+      "playMinutes": 7000,
+      "firstSeenDaysAgo": 33,
+      "lastSeenMinutesAgo": 20,
+      "private": true
+    }
+  ],
+  "apply": {
+    "open": true,
+    "discordLogin": true,
+    "demoDiscordName": "lena.baut"
+  }
+}

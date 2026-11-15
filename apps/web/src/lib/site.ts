@@ -45,6 +45,8 @@ export interface PublicProfile {
   readonly firstSeen: string;
   readonly lastSeen: string;
   readonly playMinutes: number;
+  /** Values per game mode, e.g. { duels: { wins: 12, losses: 4 } } – keys ending in "_ms" are times (older servers: none). */
+  readonly modes?: Readonly<Record<string, Readonly<Record<string, number>>>>;
   /** null = offline; `where` null = online, but not in a known mode. */
   readonly online: { readonly where: Text | null } | null;
 }

@@ -1,0 +1,208 @@
+/*
+ * The public website's look: dark first, bold and game-like. Pixel headings in Jersey 10, body text in Rubik
+ * (both OFL, self-hosted – never the Minecraft font), emerald and gold with the Bavarian white-blue as accents.
+ * The token names are the same as the panel's (tokens.css), so shared components keep working on both.
+ */
+
+/*
+ * Only the Latin subsets: German and English need nothing else. Jersey 10 has one weight; the range stops the
+ * browser from smearing a fake bold over the pixels, and size-adjust brings its small letters up to body size.
+ */
+@font-face {
+  font-family: 'Jersey 10';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  size-adjust: 122%;
+  src: url('@fontsource/jersey-10/files/jersey-10-latin-400-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Jersey 10';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  size-adjust: 122%;
+  src: url('@fontsource/jersey-10/files/jersey-10-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url('@fontsource-variable/rubik/files/rubik-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url('@fontsource-variable/rubik/files/rubik-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+/* Light: warm parchment and wood; the bands (header, stats, footer) stay deep green in both designs. */
+:root {
+  --background: #f4f0e6;
+  --background-alt: #ebe4d4;
+  --foreground: #1a231e;
+  --card: #fffdf8;
+  --card-foreground: #1a231e;
+  --card-raised: #ffffff;
+  --popover: #fffdf8;
+  --popover-foreground: #1a231e;
+  --primary: #0d8a4e;
+  --primary-hover: #0b7442;
+  --primary-foreground: #ffffff;
+  --secondary: #efe8d9;
+  --secondary-foreground: #1a231e;
+  --muted: #ece5d5;
+  --muted-foreground: #5b6760;
+  --accent: #d9f2e3;
+  --accent-foreground: #0b4d2c;
+  --destructive: #b42323;
+  --destructive-soft: #fde4e4;
+  --warning: #9a5b00;
+  --warning-soft: #fcefd5;
+  --success: #0b7a45;
+  --success-soft: #d9f2e3;
+  --neutral-soft: #e7e1d3;
+  --border: #ddd3bf;
+  --border-strong: #cbbfa6;
+  --input: #cdc2ab;
+  --ring: #0d8a4e;
+  --shadow-card: 0 4px 0 #ddd3bf, 0 10px 24px rgba(68, 52, 24, 0.08);
+  --shadow-float: 0 6px 0 #d3c8b1, 0 18px 40px rgba(68, 52, 24, 0.16);
+  --slab: #ddd3bf;
+
+  --gold: #a26c05;
+  --gold-soft: #fbefcf;
+  --gold-strong: #7c5200;
+  --gold-bright: #f6c544;
+  --blue: #255fa3;
+  --blue-soft: #dfebf9;
+  --emerald-bright: #2fd27a;
+
+  --band: #0b1d15;
+  --band-raised: #12291e;
+  --band-foreground: #f6f1e2;
+  --band-muted: #b9c8bf;
+  --band-line: rgba(246, 241, 226, 0.12);
+  --lozenge-white: #ffffff;
+  --lozenge-blue: #4f8fd6;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #0a1310;
+  --background-alt: #10201a;
+  --foreground: #eef6f1;
+  --card: #121e19;
+  --card-foreground: #eef6f1;
+  --card-raised: #182821;
+  --popover: #16241e;
+  --popover-foreground: #eef6f1;
+  --primary: #2fd27a;
+  --primary-hover: #52e293;
+  --primary-foreground: #04210f;
+  --secondary: #172620;
+  --secondary-foreground: #eef6f1;
+  --muted: #1a2a23;
+  --muted-foreground: #9db3a8;
+  --accent: rgba(47, 210, 122, 0.14);
+  --accent-foreground: #c9f5dc;
+  --destructive: #ff8b8b;
+  --destructive-soft: rgba(255, 139, 139, 0.13);
+  --warning: #f6b54e;
+  --warning-soft: rgba(246, 181, 78, 0.14);
+  --success: #3ddc84;
+  --success-soft: rgba(61, 220, 132, 0.13);
+  --neutral-soft: rgba(157, 179, 168, 0.12);
+  --border: #213429;
+  --border-strong: #2c4538;
+  --input: #2d463a;
+  --ring: #52e293;
+  --shadow-card: 0 4px 0 #050b08, 0 12px 28px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 6px 0 #040906, 0 20px 44px rgba(0, 0, 0, 0.5);
+  --slab: #050b08;
+
+  --gold: #f4c64e;
+  --gold-soft: rgba(244, 198, 78, 0.14);
+  --gold-strong: #ffd970;
+  --gold-bright: #f6c544;
+  --blue: #7cb6f2;
+  --blue-soft: rgba(124, 182, 242, 0.14);
+
+  --band: #06120d;
+  --band-raised: #0d1f17;
+  --band-foreground: #f6f1e2;
+  --band-muted: #a9bbb1;
+  --band-line: rgba(246, 241, 226, 0.1);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-alt: var(--background-alt);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-raised: var(--card-raised);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-neutral-soft: var(--neutral-soft);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-strong: var(--gold-strong);
+  --color-gold-bright: var(--gold-bright);
+  --color-blue: var(--blue);
+  --color-blue-soft: var(--blue-soft);
+  --color-emerald-bright: var(--emerald-bright);
+  --color-band: var(--band);
+  --color-band-raised: var(--band-raised);
+  --color-band-foreground: var(--band-foreground);
+  --color-band-muted: var(--band-muted);
+  --color-band-line: var(--band-line);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 14px;
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+  --font-sans: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Jersey 10', 'Rubik', system-ui, sans-serif;
+  --font-pixel: 'Jersey 10', 'Rubik', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+}

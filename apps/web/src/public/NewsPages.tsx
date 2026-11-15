@@ -1,34 +1,53 @@
-import { ArrowLeft, Newspaper, Pin } from 'lucide-react';
-import type { ReactElement } from 'react';
+import { ArrowLeft, Newspaper } from 'lucide-react';
+import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { Button, Card, Skeleton } from '~/components/ui';
+import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { isNotFound, NEWS_ALL, NEWS_CATEGORIES, useNews, useNewsItem, type NewsCategory } from '~/lib/site';
 import { usePick } from '~/lib/text';
 import { useTimeText } from '~/lib/time';
-import { NewsCard } from './cards';
-import {
-  CATEGORY_ICON,
-  CategoryBadge,
-  EmptyState,
-  NewsCover,
-  PageBand,
-  Paragraphs,
-  usePageTitle,
-  WRAP,
-} from './parts';
+import { CATEGORY_ICON, CategoryChip, FeaturedNews, NewsCard, NewsImage } from './cards';
+import { EmptyState, GameButton, LoadError, PixelEdge } from './kit';
+import { PageHero } from './page-hero';
+import { Paragraphs, usePageTitle, WRAP } from './parts';
 
 const FILTER_PARAM = 'kategorie';
 const MORE_NEWS = 3;
 const SKELETONS = ['a', 'b', 'c'];
 
 function isCategory(value: string | null): value is NewsCategory {
-  return NEWS_CATEGORIES.includes(value as NewsCategory);
+  return NEWS_CATEGORIES.some((c) => c === value);
 }
 
-/** All news, newest (and pinned) first, with a filter by category. */
+function FilterButton({
+  active,
+  onClick,
+  children,
+}: {
+  readonly active: boolean;
+  readonly onClick: () => void;
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        'inline-flex cursor-pointer items-center gap-2 rounded-[6px] border-2 px-3.5 py-2 font-pixel text-[15px] font-semibold uppercase tracking-[0.04em] transition-colors',
+        active
+          ? 'border-black/40 bg-gold-bright text-[#2a1b00] shadow-[inset_0_2px_0_rgba(255,255,255,0.4),0_3px_0_#a87708]'
+          : 'border-white/20 bg-black/40 text-white/85 backdrop-blur-sm hover:border-white/40 hover:text-white',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** All news, newest (and pinned) first, with a filter by kind. */
 export function NewsListPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const [params, setParams] = useSearchParams();
@@ -37,55 +56,43 @@ export function NewsListPage(): ReactElement {
   const news = useNews(NEWS_ALL);
   const all = news.data ?? [];
   const list = filter ? all.filter((n) => n.category === filter) : all;
+  const [first, ...rest] = list;
   const choose = (category: NewsCategory | null): void =>
     setParams(category ? { [FILTER_PARAM]: category } : {}, { replace: true, preventScrollReset: true });
-  const chip = (active: boolean): string =>
-    cn(
-      'inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors',
-      active
-        ? 'border-band-foreground bg-band-foreground text-band'
-        : 'border-band-line bg-white/[0.05] text-band-muted hover:text-band-foreground',
-    );
   return (
     <>
-      <PageBand
+      <PageHero
         eyebrow={t('site.news.eyebrow')}
         title={t('site.news.title')}
         text={t('site.news.text')}
-        icon={Newspaper}
+        scene="dorfplatz"
       >
-        <div className="flex flex-wrap gap-2 pt-3" role="group" aria-label={t('site.news.filter')}>
-          <button type="button" className={chip(!filter)} aria-pressed={!filter} onClick={() => choose(null)}>
+        <div className="flex flex-wrap gap-2 pt-2" role="group" aria-label={t('site.news.filter')}>
+          <FilterButton active={!filter} onClick={() => choose(null)}>
             {t('site.news.allCategories')}
             <span className="tabular opacity-70">{all.length}</span>
-          </button>
+          </FilterButton>
           {NEWS_CATEGORIES.map((c) => {
             const Icon = CATEGORY_ICON[c];
             return (
-              <button
-                key={c}
-                type="button"
-                className={chip(filter === c)}
-                aria-pressed={filter === c}
-                onClick={() => choose(filter === c ? null : c)}
-              >
-                <Icon className="size-3.5" aria-hidden />
+              <FilterButton key={c} active={filter === c} onClick={() => choose(filter === c ? null : c)}>
+                <Icon className="size-4" aria-hidden />
                 {t(`site.news.categoryPlural.${c}`)}
                 <span className="tabular opacity-70">{all.filter((n) => n.category === c).length}</span>
-              </button>
+              </FilterButton>
             );
           })}
         </div>
-      </PageBand>
-      <div className={cn(WRAP, 'grid gap-6 py-12 sm:py-16')}>
+      </PageHero>
+      <div className={cn(WRAP, 'grid gap-8 py-14 sm:py-16')}>
         {news.isPending ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {SKELETONS.map((k) => (
-              <Skeleton key={k} className="h-80 rounded-[16px]" />
+              <Skeleton key={k} className="h-80 rounded-[10px]" />
             ))}
           </div>
         ) : null}
-        {news.isError ? <Card className="p-6 text-muted-foreground">{t('site.loadError')}</Card> : null}
+        {news.isError ? <LoadError /> : null}
         {news.isSuccess && !list.length ? (
           <EmptyState
             icon={Newspaper}
@@ -93,15 +100,16 @@ export function NewsListPage(): ReactElement {
             text={t('site.news.empty')}
           >
             {filter ? (
-              <Button variant="secondary" onClick={() => choose(null)}>
+              <GameButton tone="stone" onClick={() => choose(null)}>
                 {t('site.news.showAll')}
-              </Button>
+              </GameButton>
             ) : null}
           </EmptyState>
         ) : null}
-        {list.length ? (
+        {first ? <FeaturedNews item={first} wide /> : null}
+        {rest.length ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map((item) => (
+            {rest.map((item) => (
               <NewsCard key={item.slug} item={item} />
             ))}
           </div>
@@ -114,16 +122,16 @@ export function NewsListPage(): ReactElement {
 function BackToNews(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
-    <Button asChild variant="secondary" className="justify-self-start">
+    <GameButton asChild tone="stone" className="justify-self-start">
       <Link to="/news">
         <ArrowLeft />
         {t('site.news.back')}
       </Link>
-    </Button>
+    </GameButton>
   );
 }
 
-/** One news post: picture, text as paragraphs (plain text only), more news below. */
+/** One news post: its picture big on top, the text as paragraphs (plain text only), more news below. */
 export function NewsArticlePage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const { slug = '' } = useParams();
@@ -132,20 +140,21 @@ export function NewsArticlePage(): ReactElement {
   const item = useNewsItem(slug);
   const more = useNews(MORE_NEWS + 1);
   const others = (more.data ?? []).filter((n) => n.slug !== slug).slice(0, MORE_NEWS);
-  usePageTitle(item.isError ? t('site.news.missingTitle') : undefined);
+  const missing = item.isError ? t('site.news.missingTitle') : undefined;
+  usePageTitle(item.data ? pick(item.data.title) : missing);
 
   if (item.isPending) {
     return (
-      <div className={cn(WRAP, 'grid max-w-[860px] gap-5 py-14')}>
-        <Skeleton className="h-10 w-2/3" />
-        <Skeleton className="aspect-[21/9] rounded-[18px]" />
+      <div className={cn(WRAP, 'grid max-w-[880px] gap-5 pb-14 pt-[calc(var(--header-h)+40px)]')}>
+        <Skeleton className="h-12 w-2/3" />
+        <Skeleton className="aspect-[21/9] rounded-[10px]" />
         <Skeleton className="h-40" />
       </div>
     );
   }
   if (item.isError || !item.data) {
     return (
-      <div className={cn(WRAP, 'grid max-w-[860px] gap-6 py-16')}>
+      <div className={cn(WRAP, 'grid max-w-[880px] gap-6 pb-16 pt-[calc(var(--header-h)+40px)]')}>
         <EmptyState
           icon={Newspaper}
           title={t('site.news.missingTitle')}
@@ -159,34 +168,47 @@ export function NewsArticlePage(): ReactElement {
   const news = item.data;
   return (
     <>
-      <PageBand eyebrow={t('site.news.eyebrow')} title={pick(news.title)}>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-2 text-sm text-band-muted">
-          <CategoryBadge category={news.category} onCover />
-          {news.pinned ? (
-            <span className="inline-flex items-center gap-1 font-semibold text-gold">
-              <Pin className="size-3.5" aria-hidden />
-              {t('site.news.pinned')}
-            </span>
-          ) : null}
-          <time dateTime={news.publishedAt}>{time.day(news.publishedAt)}</time>
-          <span aria-hidden>·</span>
-          <span>{t('site.news.by', { name: news.author })}</span>
+      <section className="mm-on-dark relative isolate overflow-hidden bg-band text-white">
+        <NewsImage item={news} eager className="mm-settle absolute inset-0 -z-20" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/50 to-black/70" aria-hidden />
+        <div className={cn(WRAP, 'grid min-h-[440px] max-w-[980px] content-end gap-5 pb-16 pt-[calc(var(--header-h)+48px)] sm:min-h-[520px]')}>
+          <div className="mm-rise grid justify-items-start gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <CategoryChip category={news.category} />
+              {news.pinned ? (
+                <span className="rounded-[4px] bg-black/55 px-2 py-1 font-pixel text-[12.5px] font-semibold uppercase tracking-[0.06em] text-white">
+                  {t('site.news.pinned')}
+                </span>
+              ) : null}
+            </div>
+            <h1 className="font-pixel text-[clamp(2.3rem,6.4vw,4.2rem)] font-bold leading-[0.98] text-white text-balance [overflow-wrap:anywhere] [text-shadow:0_4px_0_rgba(0,0,0,0.45)]">
+              {pick(news.title)}
+            </h1>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] text-white/85">
+              <time dateTime={news.publishedAt}>{time.day(news.publishedAt)}</time>
+              <span aria-hidden>·</span>
+              <span>{t('site.news.by', { name: news.author })}</span>
+            </p>
+          </div>
         </div>
-      </PageBand>
-      <article className={cn(WRAP, 'grid max-w-[860px] gap-8 py-12 sm:py-14')}>
-        <NewsCover category={news.category} big className="aspect-[16/6] rounded-[20px] shadow-card" />
+        <div className="absolute inset-x-0 bottom-0 h-0">
+          <PixelEdge className="text-background" />
+        </div>
+      </section>
+      <article className={cn(WRAP, 'grid max-w-[820px] gap-8 py-12 sm:py-14')}>
         <Paragraphs
           text={pick(news.body)}
-          className="text-[1.08rem] leading-[1.75] text-pretty [overflow-wrap:anywhere] sm:text-[1.15rem]"
+          className="text-[1.1rem] leading-[1.8] text-pretty [overflow-wrap:anywhere] first:[&>p:first-child]:text-[1.22rem] first:[&>p:first-child]:font-medium sm:text-[1.15rem]"
         />
-        <div className="border-t border-border pt-6">
+        <div className="border-t-2 border-border pt-6">
           <BackToNews />
         </div>
       </article>
       {others.length ? (
-        <section className="border-t border-border bg-secondary/60 dark:bg-white/[0.015]">
-          <div className={cn(WRAP, 'grid gap-6 py-12 sm:py-14')}>
-            <h2 className="font-display text-2xl font-semibold">{t('site.news.more')}</h2>
+        <section className="relative bg-background-alt">
+          <PixelEdge className="text-background-alt" />
+          <div className={cn(WRAP, 'grid gap-6 py-14')}>
+            <h2 className="font-pixel text-[2rem] font-bold">{t('site.news.more')}</h2>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {others.map((n) => (
                 <NewsCard key={n.slug} item={n} />

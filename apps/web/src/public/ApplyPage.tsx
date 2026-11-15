@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tan
 import {
   AlertTriangle,
   ArrowRight,
+  Check,
   CheckCircle2,
   ClipboardList,
+  Copy,
   Eye,
   Hourglass,
   Lock,
@@ -19,8 +21,8 @@ import {
 import { useEffect, useId, useState, type FormEvent, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
-import { CopyButton } from '~/components/controls';
-import { Button, Card, Input, Kbd, Skeleton, Textarea } from '~/components/ui';
+import { useCopy } from '~/components/controls';
+import { Input, Skeleton, Textarea } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { errorCode, useErrorText } from '~/lib/errors';
@@ -29,8 +31,10 @@ import { mmApi } from '~/lib/mm-api';
 import { useSite } from '~/lib/site';
 import { useNetworkStatus } from '~/lib/status';
 import { useTimeText } from '~/lib/time';
-import { EXTERNAL, PageBand, WRAP } from './parts';
-import { FALLBACK_ADDRESS } from './PublicLayout';
+import { modeArt } from './art';
+import { Cmd, GameButton, Panel, type GameTone } from './kit';
+import { PageHero } from './page-hero';
+import { EXTERNAL, FALLBACK_ADDRESS, WRAP } from './parts';
 
 /**
  * MorniCraft is invitation only. Here people apply: first sign in with Discord (the server keeps only the Discord
@@ -54,6 +58,9 @@ interface ApplyState {
 }
 
 const APPLY_KEY = ['apply'] as const;
+const APPLY_MODE = 'mornicraft';
+/** Form fields in the website's blocky look. */
+const FIELD = 'rounded-[6px] border-2 bg-card shadow-[inset_0_3px_0_rgba(0,0,0,0.06)] dark:bg-[#0d1512]';
 const LOGIN_URL = '/api/public/apply/login';
 const MODE_PAGE = '/spielmodi/mornicraft';
 /** Limits of the form (apps/server/src/mornicraft/applications.ts). */
@@ -89,44 +96,58 @@ function StateCard({
   readonly children: ReactNode;
 }): ReactElement {
   const tones = {
-    gold: 'bg-gold-soft text-gold',
-    success: 'bg-success-soft text-success',
+    gold: 'bg-gold-bright text-[#2a1b00]',
+    success: 'bg-[#2fd27a] text-[#03240f]',
     neutral: 'bg-muted text-muted-foreground',
-    blue: 'bg-blue-soft text-blue',
+    blue: 'bg-[#2f6db3] text-white',
   } as const;
   return (
-    <Card className="grid content-start gap-5 p-6 sm:p-8">
+    <Panel className="grid content-start gap-5 p-6 sm:p-8">
       <div className="flex items-start gap-4">
         <span
-          className={cn('grid size-12 shrink-0 place-items-center rounded-[14px]', tones[tone])}
+          className={cn(
+            'grid size-14 shrink-0 place-items-center rounded-[6px] border-2 border-black/25 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.15)]',
+            tones[tone],
+          )}
           aria-hidden
         >
-          <Icon className="size-6" />
+          <Icon className="size-7" />
         </span>
-        <h2 className="pt-1.5 font-display text-[1.6rem] font-semibold leading-tight text-balance">
+        <h2 className="pt-1 font-pixel text-[clamp(1.6rem,3.6vw,2rem)] font-bold leading-[1.05] text-balance">
           {title}
         </h2>
       </div>
       <div className="grid gap-4 text-[15.5px] leading-relaxed text-pretty">{children}</div>
-    </Card>
+    </Panel>
   );
 }
 
-function DiscordInvite({
-  variant = 'secondary',
-}: {
-  readonly variant?: 'primary' | 'secondary';
-}): ReactElement | null {
+function DiscordInvite({ tone = 'stone' }: { readonly tone?: GameTone }): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
   const invite = useSite().data?.discordInvite;
   if (!invite) return null;
   return (
-    <Button asChild variant={variant} className="justify-self-start">
+    <GameButton asChild tone={tone} className="justify-self-start">
       <a href={invite} {...EXTERNAL}>
         <MessagesSquare />
         {t('apply.discordJoin')}
       </a>
-    </Button>
+    </GameButton>
+  );
+}
+
+/** The server address with a copy button (shown after an acceptance). */
+function AddressCopy({ address }: { readonly address: string }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const { copied, copy } = useCopy(address);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] border-2 border-black/40 bg-[#0b1511] p-2 pl-4 text-white shadow-[0_4px_0_rgba(0,0,0,0.25)]">
+      <span className="min-w-0 truncate font-pixel text-[1.4rem] font-bold">{address}</span>
+      <GameButton onClick={copy} size="sm" aria-live="polite">
+        {copied ? <Check /> : <Copy />}
+        {copied ? t('copy.done') : t('copy.action')}
+      </GameButton>
+    </div>
   );
 }
 
@@ -141,21 +162,20 @@ function LoginBanner({
   return (
     <div
       role="alert"
-      className="flex items-start gap-3 rounded-[14px] border border-warning/30 bg-warning-soft px-4 py-3.5 text-warning"
+      className="flex items-start gap-3 rounded-[8px] border-2 border-warning/40 bg-warning-soft px-4 py-3.5 text-warning"
     >
       <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
       <p className="flex-1 text-[15px] font-semibold leading-relaxed text-pretty">
         {t(`apply.loginError.${code}`)}
       </p>
-      <Button
-        variant="ghost"
-        size="iconSm"
+      <button
+        type="button"
         onClick={onClose}
         aria-label={t('nav.close')}
-        className="-my-1 text-warning"
+        className="-my-1 grid size-8 cursor-pointer place-items-center rounded-[4px] text-warning hover:bg-black/10"
       >
-        <X />
-      </Button>
+        <X className="size-4" aria-hidden />
+      </button>
     </div>
   );
 }
@@ -168,17 +188,22 @@ function SignedIn({ name }: { readonly name: string }): ReactElement {
     onSettled: () => queryClient.invalidateQueries({ queryKey: APPLY_KEY }),
   });
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] bg-muted/70 px-3.5 py-2 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-[6px] border-2 border-border bg-background-alt px-3.5 py-2 text-[14px]">
       <span className="flex min-w-0 items-center gap-2">
-        <MessagesSquare className="size-4 shrink-0 text-primary" aria-hidden />
+        <MessagesSquare className="size-4 shrink-0 text-blue" aria-hidden />
         <span className="min-w-0 [overflow-wrap:anywhere]">
           {t('apply.signedInAs')} <strong>{name}</strong>
         </span>
       </span>
-      <Button variant="ghost" size="sm" onClick={() => logout.mutate()} disabled={logout.isPending}>
-        <LogOut />
+      <button
+        type="button"
+        onClick={() => logout.mutate()}
+        disabled={logout.isPending}
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-[4px] px-2 py-1 font-pixel text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+      >
+        <LogOut className="size-4" aria-hidden />
         {t('apply.logout')}
-      </Button>
+      </button>
     </div>
   );
 }
@@ -188,17 +213,17 @@ function SignInCard(): ReactElement {
   return (
     <StateCard icon={LogIn} tone="gold" title={t('apply.signIn.title')}>
       <p>{t('apply.signIn.text')}</p>
-      <p className="flex items-start gap-2.5 rounded-[12px] bg-muted/70 px-4 py-3 text-sm text-muted-foreground">
+      <p className="flex items-start gap-2.5 rounded-[6px] border-2 border-border bg-background-alt px-4 py-3 text-[14px] text-muted-foreground">
         <Eye className="mt-0.5 size-4 shrink-0" aria-hidden />
         {t('apply.signIn.privacy')}
       </p>
-      <Button asChild size="lg" className="justify-self-start">
+      <GameButton asChild tone="blue" size="lg" className="justify-self-start">
         {/* A real page change: the server sends the browser on to Discord and back. */}
         <a href={LOGIN_URL}>
           <LogIn />
           {t('apply.signIn.button')}
         </a>
-      </Button>
+      </GameButton>
     </StateCard>
   );
 }
@@ -274,10 +299,10 @@ function Field({
   return (
     <div className="grid content-start gap-1.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <label htmlFor={id} className="font-semibold">
+        <label htmlFor={id} className="font-pixel text-[1.1rem] font-bold">
           {label}
           {optional ? (
-            <span className="font-normal text-muted-foreground"> · {t('apply.form.optional')}</span>
+            <span className="font-sans text-[14px] font-normal text-muted-foreground"> · {t('apply.form.optional')}</span>
           ) : null}
         </label>
         {count ? <span className="tabular text-xs text-muted-foreground">{count}</span> : null}
@@ -362,9 +387,9 @@ function ApplyForm({ name }: { readonly name: string }): ReactElement {
   const bedrock = isBedrockName(draft.minecraftName.trim());
 
   return (
-    <Card className="grid content-start gap-6 p-6 sm:p-8">
+    <Panel className="grid content-start gap-6 p-6 sm:p-8">
       <div className="grid gap-3">
-        <h2 className="font-display text-[1.6rem] font-semibold leading-tight">{t('apply.form.title')}</h2>
+        <h2 className="font-pixel text-[clamp(1.6rem,3.6vw,2rem)] font-bold leading-tight">{t('apply.form.title')}</h2>
         <SignedIn name={name} />
       </div>
       <form onSubmit={submit} noValidate className="grid gap-5">
@@ -385,7 +410,7 @@ function ApplyForm({ name }: { readonly name: string }): ReactElement {
             placeholder={t('apply.form.namePlaceholder')}
             aria-invalid={shown.minecraftName ? true : undefined}
             aria-describedby={describedBy('minecraftName')}
-            className={cn('max-w-sm font-mono', INVALID_FIELD)}
+            className={cn(FIELD, 'max-w-sm font-semibold', INVALID_FIELD)}
           />
         </Field>
         <Field
@@ -404,7 +429,7 @@ function ApplyForm({ name }: { readonly name: string }): ReactElement {
             placeholder={t('apply.form.aboutPlaceholder')}
             aria-invalid={shown.about ? true : undefined}
             aria-describedby={describedBy('about')}
-            className={INVALID_FIELD}
+            className={cn(FIELD, INVALID_FIELD)}
           />
         </Field>
         <Field
@@ -423,7 +448,7 @@ function ApplyForm({ name }: { readonly name: string }): ReactElement {
             placeholder={t('apply.form.whyPlaceholder')}
             aria-invalid={shown.why ? true : undefined}
             aria-describedby={describedBy('why')}
-            className={INVALID_FIELD}
+            className={cn(FIELD, INVALID_FIELD)}
           />
         </Field>
         <Field
@@ -442,27 +467,27 @@ function ApplyForm({ name }: { readonly name: string }): ReactElement {
             autoComplete="off"
             aria-invalid={shown.age ? true : undefined}
             aria-describedby={describedBy('age')}
-            className={cn('w-28', INVALID_FIELD)}
+            className={cn(FIELD, 'w-28 font-semibold', INVALID_FIELD)}
           />
         </Field>
         {failure ? (
           <p
             role="alert"
-            className="flex items-start gap-2.5 rounded-[12px] bg-destructive-soft px-4 py-3 text-sm font-semibold text-destructive"
+            className="flex items-start gap-2.5 rounded-[6px] border-2 border-destructive/30 bg-destructive-soft px-4 py-3 text-[14px] font-semibold text-destructive"
           >
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
             {failure}
           </p>
         ) : null}
-        <div className="grid gap-3 border-t border-border pt-5">
-          <p className="text-sm text-muted-foreground text-pretty">{t('apply.form.who', { name })}</p>
-          <Button type="submit" size="lg" className="justify-self-start" disabled={send.isPending}>
+        <div className="grid gap-4 border-t-2 border-border pt-5">
+          <p className="text-[14px] text-muted-foreground text-pretty">{t('apply.form.who', { name })}</p>
+          <GameButton type="submit" tone="emerald" size="lg" className="justify-self-start" disabled={send.isPending}>
             <Send />
             {send.isPending ? t('apply.form.sending') : t('apply.form.send')}
-          </Button>
+          </GameButton>
         </div>
       </form>
-    </Card>
+    </Panel>
   );
 }
 
@@ -484,15 +509,15 @@ function StatusCard({
   const address = status.data?.javaAddress ?? FALLBACK_ADDRESS;
   const name = application.minecraftName;
   const facts = (
-    <dl className="grid gap-2 rounded-[14px] bg-muted/70 p-4 text-sm sm:grid-cols-2">
-      <div className="grid gap-0.5">
-        <dt className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+    <dl className="grid gap-3 rounded-[8px] border-2 border-border bg-background-alt p-4 text-[14px] sm:grid-cols-2">
+      <div className="grid gap-1">
+        <dt className="font-pixel text-[13px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           {t('apply.status.name')}
         </dt>
-        <dd className="font-mono font-semibold [overflow-wrap:anywhere]">{name}</dd>
+        <dd className="text-[1.05rem] font-bold [overflow-wrap:anywhere]">{name}</dd>
       </div>
-      <div className="grid gap-0.5">
-        <dt className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <div className="grid gap-1">
+        <dt className="font-pixel text-[13px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           {t('apply.status.sent')}
         </dt>
         <dd className="font-semibold">{time.date(application.createdAt)}</dd>
@@ -505,19 +530,16 @@ function StatusCard({
       <StateCard icon={PartyPopper} tone="success" title={t('apply.status.acceptedTitle')}>
         <p>{t('apply.status.acceptedText', { name })}</p>
         {facts}
-        <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-border p-3 pl-4">
-          <span className="font-mono text-lg font-medium">{address}</span>
-          <CopyButton value={address} variant="secondary" />
-        </div>
+        <AddressCopy address={address} />
         <p>
-          {t('apply.status.acceptedHow')} <Kbd>/server mornicraft</Kbd>
+          {t('apply.status.acceptedHow')} <Cmd>/server mornicraft</Cmd>
         </p>
-        <Button asChild variant="secondary" className="justify-self-start">
+        <GameButton asChild tone="stone" className="justify-self-start">
           <Link to={MODE_PAGE}>
             {t('apply.status.modePage')}
             <ArrowRight />
           </Link>
-        </Button>
+        </GameButton>
         {signedIn}
       </StateCard>
     );
@@ -528,12 +550,12 @@ function StatusCard({
         <p>{t('apply.status.rejectedText')}</p>
         {facts}
         {open ? (
-          <Button variant="secondary" className="justify-self-start" onClick={onAgain}>
+          <GameButton tone="stone" className="justify-self-start" onClick={onAgain}>
             <ClipboardList />
             {t('apply.status.again')}
-          </Button>
+          </GameButton>
         ) : (
-          <p className="text-sm text-muted-foreground">{t('apply.status.againLater')}</p>
+          <p className="text-[14px] text-muted-foreground">{t('apply.status.againLater')}</p>
         )}
         {signedIn}
       </StateCard>
@@ -543,7 +565,7 @@ function StatusCard({
     <StateCard icon={Hourglass} tone="blue" title={t('apply.status.pendingTitle')}>
       <p>{t('apply.status.pendingText')}</p>
       {facts}
-      <p className="flex items-start gap-2.5 rounded-[12px] bg-gold-soft px-4 py-3 text-sm text-gold-strong dark:text-gold">
+      <p className="flex items-start gap-2.5 rounded-[6px] border-2 border-gold/30 bg-gold-soft px-4 py-3 text-[14px] text-gold-strong">
         <MessagesSquare className="mt-0.5 size-4 shrink-0" aria-hidden />
         {t('apply.status.pendingTip')}
       </p>
@@ -558,34 +580,32 @@ function HowItWorks(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const steps = ['step1', 'step2', 'step3', 'step4'] as const;
   return (
-    <Card className="grid content-start gap-4 p-6">
-      <h2 className="font-display text-xl font-semibold">{t('apply.how.title')}</h2>
-      <ol className="grid gap-3.5">
+    <Panel className="grid content-start gap-5 p-6">
+      <h2 className="font-pixel text-[1.5rem] font-bold">{t('apply.how.title')}</h2>
+      <ol className="grid gap-4">
         {steps.map((step, i) => (
           <li key={step} className="grid grid-cols-[auto_minmax(0,1fr)] gap-3">
             <span
-              className="grid size-7 place-items-center rounded-full bg-gold-soft text-sm font-bold text-gold"
+              className="grid size-9 place-items-center rounded-[5px] border-2 border-black/25 bg-gold-bright font-pixel text-[1.1rem] font-bold text-[#2a1b00] shadow-[inset_0_2px_0_rgba(255,255,255,0.45)]"
               aria-hidden
             >
               {i + 1}
             </span>
             <span className="grid gap-0.5 pt-0.5">
               <span className="font-semibold leading-snug">{t(`apply.how.${step}`)}</span>
-              <span className="text-sm leading-relaxed text-muted-foreground">
-                {t(`apply.how.${step}Text`)}
-              </span>
+              <span className="text-[14px] leading-relaxed text-muted-foreground">{t(`apply.how.${step}Text`)}</span>
             </span>
           </li>
         ))}
       </ol>
       <Link
         to={MODE_PAGE}
-        className="inline-flex items-center gap-1.5 justify-self-start text-sm font-bold text-primary hover:underline"
+        className="group inline-flex items-center gap-1.5 justify-self-start font-pixel text-[15px] font-semibold uppercase tracking-[0.04em] text-primary"
       >
         {t('apply.how.mode')}
-        <ArrowRight className="size-4" aria-hidden />
+        <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden />
       </Link>
-    </Card>
+    </Panel>
   );
 }
 
@@ -610,9 +630,9 @@ function MainPart({ state }: { readonly state: ApplyState }): ReactElement {
     return (
       <StateCard icon={MessagesSquare} tone="neutral" title={t('apply.noLogin.title')}>
         <p>
-          {t('apply.noLogin.text')} <Kbd>/bewerben</Kbd>
+          {t('apply.noLogin.text')} <Cmd>/bewerben</Cmd>
         </p>
-        <DiscordInvite variant="primary" />
+        <DiscordInvite tone="blue" />
       </StateCard>
     );
   }
@@ -636,31 +656,33 @@ export function ApplyPage(): ReactElement {
     );
   return (
     <>
-      <PageBand
+      <PageHero
         eyebrow={t('apply.eyebrow')}
         title={t('apply.title')}
         text={t('apply.text')}
-        icon={ClipboardList}
+        scene="schloss"
+        figure={APPLY_MODE}
+        tint={modeArt(APPLY_MODE).a}
       />
-      <div className={cn(WRAP, 'grid max-w-[1100px] gap-6 py-12 sm:py-14')}>
+      <div className={cn(WRAP, 'grid max-w-[1140px] gap-6 py-12 sm:py-14')}>
         {isLoginError(loginError) ? <LoginBanner code={loginError} onClose={closeBanner} /> : null}
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
           <div className="grid min-w-0 gap-6">
-            {apply.isPending ? <Skeleton className="h-80 rounded-[16px]" /> : null}
+            {apply.isPending ? <Skeleton className="h-80 rounded-[10px]" /> : null}
             {apply.isError ? (
-              <Card className="flex items-start gap-3 p-6 text-muted-foreground">
+              <Panel className="flex items-start gap-3 p-6 text-muted-foreground">
                 <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
                 {t('site.loadError')}
-              </Card>
+              </Panel>
             ) : null}
             {apply.data ? <MainPart state={apply.data} /> : null}
           </div>
           <div className="grid min-w-0 gap-6">
             <HowItWorks />
-            <Card className="flex items-start gap-3 p-5 text-sm leading-relaxed text-muted-foreground">
+            <Panel className="flex items-start gap-3 p-5 text-[14px] leading-relaxed text-muted-foreground">
               <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
               <span className="text-pretty">{t('apply.fair')}</span>
-            </Card>
+            </Panel>
           </div>
         </div>
       </div>
