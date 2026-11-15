@@ -6,7 +6,7 @@ Nichts davon gehört ins Repo oder auf die Webseite.
 
   python3 launch.py --version 26.3 --name Morni --server 127.0.0.1:25565 [--display :99]
 """
-import argparse, hashlib, json, os, platform, subprocess, sys, urllib.request, uuid
+import argparse, hashlib, json, os, platform, struct, subprocess, sys, urllib.request, uuid
 from concurrent.futures import ThreadPoolExecutor
 
 MANIFEST = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json'
@@ -107,6 +107,24 @@ def apply_options(game_dir, lang, extra):
     open(path, 'w').write('\n'.join(out) + '\n')
 
 
+def nbt_string(s):
+    b = s.encode('utf-8')
+    return struct.pack('>H', len(b)) + b
+
+
+def write_server_list(game_dir, address, packs):
+    """servers.dat mit einem Eintrag für `address`: Server-Ressourcenpakete an (True), aus (False) oder fragen (None).
+
+    Quick Play nimmt den vorhandenen Eintrag – so kommt das Paket der Lobby ohne Rückfrage-Fenster."""
+    entry = b'\x08' + nbt_string('ip') + nbt_string(address)
+    entry += b'\x08' + nbt_string('name') + nbt_string('MoinMorni')
+    if packs is not None:
+        entry += b'\x01' + nbt_string('acceptTextures') + (b'\x01' if packs else b'\x00')
+    entry += b'\x00'
+    servers = b'\x09' + nbt_string('servers') + b'\x0a' + struct.pack('>i', 1) + entry
+    open(f'{game_dir}/servers.dat', 'wb').write(b'\x0a' + nbt_string('') + servers + b'\x00')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--version', default='26.3')
@@ -119,6 +137,8 @@ def main():
     ap.add_argument('--prepare-only', action='store_true')
     ap.add_argument('--lang', default='de_de')
     ap.add_argument('--option', action='append', default=[], help='key:value für options.txt')
+    ap.add_argument('--server-packs', choices=['an', 'aus', 'fragen'], default='fragen',
+                    help='Ressourcenpakete des Servers annehmen (an), ablehnen (aus) oder fragen')
     a = ap.parse_args()
     cache = os.environ.get('MM_CACHE', os.path.expanduser('~/mm-cache/client'))
     meta, cp = prepare(a.version, cache)
@@ -136,6 +156,7 @@ def main():
             '--uuid', player_uuid.replace('-', ''), '--accessToken', '0', '--userType', 'legacy',
             '--versionType', 'release', '--width', str(a.width), '--height', str(a.height)]
     if a.server:
+        write_server_list(game_dir, a.server, {'an': True, 'aus': False, 'fragen': None}[a.server_packs])
         args += ['--quickPlayMultiplayer', a.server]
     env = dict(os.environ, DISPLAY=a.display, LIBGL_ALWAYS_SOFTWARE='1', GALLIUM_DRIVER='llvmpipe')
     os.execvpe(args[0], args, env)

@@ -23,7 +23,8 @@ python3 shots.py --rcon 127.0.0.1:25575 --password-file .rcon-pass --player Morn
   --shot "ankunft 0 70 0 180 5" --wait 20
 ```
 
-- `launch.py` setzt Startwerte (kein Willkommens-Bildschirm, kein Ton, Deutsch, 30 FPS). Der Test-Server muss
+- `launch.py` setzt Startwerte (kein Willkommens-Bildschirm, kein Ton, Deutsch, 30 FPS). `--server-packs an|aus`
+  nimmt das Ressourcenpaket des Servers ohne Rückfrage an bzw. lehnt es ab (Eintrag in `servers.dat`). Der Test-Server muss
   `online-mode=false` haben (nur in der Sandbox).
 - `shots.py` blendet die Leiste mit F1 aus (mit `--hud` bleibt sie für Bilder von Chat, Leiste, Menüs).
 - `rcon.py` schickt Befehle an den Server.
