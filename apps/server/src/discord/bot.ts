@@ -726,7 +726,10 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         log.info({ guild: d['name'] }, 'Discord: Bot ist auf dem Server');
       } else if (String(d['id']) !== guildId()) {
         // Der Bot gehört zu genau einem Server – hat ihn jemand woanders eingeladen, geht er dort wieder.
-        log.warn({ guild: d['name'] }, 'Discord: Bot wurde auf einen fremden Server eingeladen – verlässt ihn');
+        log.warn(
+          { guild: d['name'] },
+          'Discord: Bot wurde auf einen fremden Server eingeladen – verlässt ihn',
+        );
         await rest('DELETE', `/users/@me/guilds/${String(d['id'])}`);
       }
       return;
