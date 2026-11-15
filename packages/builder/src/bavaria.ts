@@ -47,6 +47,20 @@ const D = {
 } as const;
 
 const WALL_PLASTER = ['calcite', 'calcite', 'white_concrete', 'calcite'] as const;
+/** Sockel unten ums Haus (Bruchstein, etwas Moos). */
+const PLINTH = ['stone_bricks', 'stone_bricks', 'cobblestone', 'mossy_stone_bricks', 'andesite'] as const;
+/** Blumen am Fenster: Geranien-Rot überwiegt, wie an echten Alpenhäusern. */
+const WINDOW_FLOWERS = [
+  'potted_red_tulip',
+  'potted_poppy',
+  'potted_red_tulip',
+  'potted_pink_tulip',
+  'potted_poppy',
+  'potted_allium',
+  'potted_orange_tulip',
+] as const;
+/** Ab dieser Breite (u bis w) passt ein Kamin neben den First. */
+const CHIMNEY_MIN_W = 6;
 
 export interface HouseSpec {
   readonly x: number;
@@ -86,6 +100,9 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
     );
   if (h.interior) hollowOut(f, h, w, d, top, wood);
   else f.fill(1, 1, 1, w - 1, top, d - 1, `${wood}_planks`);
+  pairs(range(0, w), range(0, d))
+    .filter(([u, v]) => u === 0 || v === 0 || u === w || v === d)
+    .forEach(([u, v]) => f.set(u, 1, v, pick(h.rnd, PLINTH)));
   [0, w].forEach((u) => [0, d].forEach((v) => f.fill(u, 1, v, u, top, v, `stripped_${wood}_log`)));
   range(0, h.floors - 1).forEach((fl) =>
     f.fill(
@@ -109,12 +126,9 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
         f.set(u - 1, y, -1, `${shutter}[facing=${f.dir('back')},open=true,half=top]`);
         f.set(u + 1, y, -1, `${shutter}[facing=${f.dir('back')},open=true,half=top]`);
       });
-      f.set(
-        u,
-        y0 - 1,
-        -1,
-        h.rnd() < D.half ? 'flowering_azalea_leaves[persistent=true]' : 'azalea_leaves[persistent=true]',
-      );
+      // Fensterbank (schmales Brett) mit einem Blumentopf davor
+      f.set(u, y0 - 1, -1, `${wood}_trapdoor[facing=${f.dir('back')},half=top,open=false]`);
+      f.soft(u, y0, -1, pick(h.rnd, WINDOW_FLOWERS));
     });
   });
   const door = Math.floor(w / 2);
@@ -147,10 +161,12 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
       -D.balconyDepth,
       `${wood}_fence[${f.dir('left')}=true,${f.dir('right')}=true]`,
     );
+    // Blumentöpfe auf dem Geländer – nur wo kein Fensterladen ist
     range(0, w)
       .filter((u) => u % 2 === 0)
-      .forEach((u) => f.set(u, by + 1, -D.balconyDepth, 'flowering_azalea_leaves[persistent=true]'));
+      .forEach((u) => f.soft(u, by + 1, -D.balconyDepth, pick(h.rnd, WINDOW_FLOWERS)));
   }
+  houseBench(f, w, door, windowsAt, wood);
   const [x1, , z1] = f.at(0, 0, 0);
   const [x2, , z2] = f.at(w, 0, d);
   gableRoof(c, {
@@ -165,6 +181,29 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
     overhang: 1,
     eaves: D.eaves,
   });
+  // Laternen unter dem Dachvorsprung an beiden Ecken
+  [0, w].forEach((u) => f.set(u, top, -1, 'lantern[hanging=true]'));
+  if (w >= CHIMNEY_MIN_W) chimney(f, w, d, top);
+}
+
+/** Kamin aus Ziegeln rechts neben dem First, oben ein Lagerfeuer – es raucht. */
+function chimney(f: Frame, w: number, d: number, top: number): void {
+  const u = w - 2;
+  const v = Math.floor((d * 2) / 3);
+  // Dachfläche bei u: unterste Reihe liegt bei u = w + 1 auf top + 1, jede Reihe nach innen eins höher
+  const roofY = top + 1 + (w + 1 - u);
+  range(top + 1, roofY + 1).forEach((y) => f.set(u, y, v, 'bricks'));
+  f.set(u, roofY + 2, v, 'campfire[lit=true,signal_fire=false]');
+}
+
+/** Hausbank an der Vorderwand: zwei Treppen, Lehne zur Wand, wo weder Tür noch Fensterbank ist. */
+function houseBench(f: Frame, w: number, door: number, windowsAt: readonly number[], wood: string): void {
+  const busy = new Set([...windowsAt, door - 1, door, door + 1]);
+  const spot = range(1, w - 2)
+    .filter((u) => !busy.has(u) && !busy.has(u + 1))
+    .sort((a, b) => Math.abs(a - door) - Math.abs(b - door))[0];
+  if (spot === undefined) return;
+  [spot, spot + 1].forEach((u) => f.soft(u, 1, -1, `${wood}_stairs[facing=${f.dir('back')},half=bottom]`));
 }
 
 /** Innen hohl: Dielen, Decken je Stockwerk, Leiter hinten rechts, Fenster an Seiten und Rückwand. */
