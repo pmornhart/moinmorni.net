@@ -64,8 +64,8 @@ export function hollowWing(c: Canvas, f: Frame, kind: WingKind, w: number, d: nu
 /** Kronleuchter: Kette von der Decke, Kreuz aus dunklem Holz, vier Laternen. */
 function chandelier(r: Room, u: number, v: number, ceiling: number): void {
   const { f } = r;
-  f.set(u, ceiling, v, 'chain[axis=y]');
-  f.set(u, ceiling - 1, v, 'chain[axis=y]');
+  f.set(u, ceiling, v, 'iron_chain[axis=y]');
+  f.set(u, ceiling - 1, v, 'iron_chain[axis=y]');
   const arm = ceiling - 2;
   f.set(u, arm, v, 'dark_oak_fence[north=true,south=true,east=true,west=true]');
   f.set(u - 1, arm, v, `dark_oak_fence[${f.dir('right')}=true]`);
@@ -273,7 +273,7 @@ export function rotunda(c: Canvas, cx: number, cz: number, floorY: number, domeT
   ring(5).forEach(([x, z]) => c.set(x, floorY, z, 'gold_block'));
   ring(6).forEach(([x, z]) => c.set(x, floorY, z, 'emerald_block'));
   // Kronleuchter von der Kuppel bis über den Brunnen
-  range(floorY + 9, domeTop - 1).forEach((y) => c.set(cx, y, cz, 'chain[axis=y]'));
+  range(floorY + 9, domeTop - 1).forEach((y) => c.set(cx, y, cz, 'iron_chain[axis=y]'));
   discAt(c, cx, floorY + 8, cz, 2, 'gold_block');
   [
     [2, 0],
@@ -286,4 +286,65 @@ export function rotunda(c: Canvas, cx: number, cz: number, floorY: number, domeT
     [-1, -1],
   ].forEach(([dx = 0, dz = 0]) => c.set(cx + dx, floorY + 7, cz + dz, 'lantern[hanging=true]'));
   c.set(cx, floorY + 7, cz, 'light[level=15]');
+}
+
+/** Unsichtbares Licht zum Anstrahlen (wie Scheinwerfer an echten Schlössern). */
+const FLOOD = 'light[level=15]';
+const LANTERN_POST = ['dark_oak_fence', 'dark_oak_fence', 'lantern[hanging=false]'] as const;
+
+/**
+ * Das Schloss bei Nacht: Fassaden, Kuppel und Türme werden von unsichtbarem Licht angestrahlt (leuchten warm weiß
+ * über dem dunklen Dorf, wie Schlösser in Bayern), im Ehrenhof stehen Laternen an den Wegen. Bei Tag sieht man nichts
+ * davon außer den Laternen. Koordinaten im Rahmen des Schlosses (u quer, v nach hinten, y über dem Hof).
+ *
+ * @param half halbe Breite des Hofs (W), @param dome Mitte der Kuppel in Welt-Koordinaten (Boden des Hauptflügels)
+ */
+export function castleLights(
+  c: Canvas,
+  f: Frame,
+  half: number,
+  dome: readonly [number, number, number],
+  towers: readonly (readonly [number, number, number, number])[],
+): void {
+  const flood = (u: number, y: number, v: number): void => {
+    const [x, wy, z] = f.at(u, y, v);
+    c.soft(x, wy, z, FLOOD);
+  };
+  // Hauptflügel: drei Reihen vor der Fassade (Erdgeschoss, 1. und 2. Stock)
+  range(-half + 4, half - 4)
+    .filter((u) => u % 6 === 0)
+    .forEach((u) => [3, 8, 13].forEach((y) => flood(u, y, 30)));
+  // Seitenflügel: zwei Reihen vor den Hof-Fassaden
+  range(4, 28)
+    .filter((v) => v % 6 === 4)
+    .forEach((v) => [-half + 5, half - 5].forEach((u) => [3, 8].forEach((y) => flood(u, y, v))));
+  // Kuppel: Ring um Trommel und Haube
+  const [dx, dy, dz] = dome;
+  range(0, 7).forEach((i) => {
+    const a = (i / 8) * Math.PI * 2;
+    const x = Math.round(dx + Math.cos(a) * 11);
+    const z = Math.round(dz + Math.sin(a) * 11);
+    [17, 21, 27, 31].forEach((h) => c.soft(x, dy + h, z, FLOOD));
+  });
+  // Türme: vier Seiten, alle 7 Blöcke nach oben
+  towers.forEach(([tx, ty, tz, height]) =>
+    [
+      [7, 0],
+      [-7, 0],
+      [0, 7],
+      [0, -7],
+    ].forEach(([ox = 0, oz = 0]) =>
+      range(4, height)
+        .filter((h) => h % 7 === 4)
+        .forEach((h) => c.soft(tx + ox, ty + h, tz + oz, FLOOD)),
+    ),
+  );
+  // Laternen im Ehrenhof: am Mittelweg und am Querweg
+  const post = (u: number, v: number): void =>
+    LANTERN_POST.forEach((block, i) => {
+      const [x, y, z] = f.at(u, 1 + i, v);
+      c.set(x, y, z, block);
+    });
+  [6, 11, 21, 26].forEach((v) => [-3, 3].forEach((u) => post(u, v)));
+  [-12, -8, 8, 12].forEach((u) => post(u, 15));
 }

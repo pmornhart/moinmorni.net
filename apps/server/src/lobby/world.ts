@@ -27,7 +27,10 @@ const DEFAULT_LEVEL = 'world';
 const PACK_ID = `file/${LOBBY_PACK_DIR}`;
 const RUNNING = 'running';
 const SECOND_MS = 1000;
-const MINUTE_MS = 60 * SECOND_MS;
+const SECONDS_PER_MINUTE = 60;
+const MINUTE_MS = SECONDS_PER_MINUTE * SECOND_MS;
+/** Antwort des Servers, wenn es eine Funktion (ein Stück des Datenpakets) nicht gibt. */
+const UNKNOWN_FUNCTION = 'Unknown function';
 const SETTLE_SECONDS = 5;
 const GAP_MS = 300;
 const READY_MINUTES = 15;
@@ -63,6 +66,8 @@ const SEASON_PROBES = probesAt(SEASON_EDGE);
 const FIRST_NON_ASCII = 0x7f;
 const HEX = 16;
 const UNICODE_DIGITS = 4;
+/** `\uXXXX`: Rückstrich + „u“ vor den Ziffern, Rückstrich + Zeichen bei `\:`. */
+const ESCAPE_PREFIX = 2;
 
 export interface LobbyWorldOptions {
   /** Aktuelle Saison-Deko (Panel: Lobby → Saison-Deko). */
@@ -125,12 +130,16 @@ function unescapeValue(raw: string): string {
     }
     const next = chars[i + 1] ?? '';
     if (next === 'u') {
-      out.push(String.fromCharCode(parseInt(chars.slice(i + 2, i + 2 + UNICODE_DIGITS).join(''), HEX)));
-      step(i + 2 + UNICODE_DIGITS);
+      out.push(
+        String.fromCharCode(
+          parseInt(chars.slice(i + ESCAPE_PREFIX, i + ESCAPE_PREFIX + UNICODE_DIGITS).join(''), HEX),
+        ),
+      );
+      step(i + ESCAPE_PREFIX + UNICODE_DIGITS);
       return;
     }
     out.push(next);
-    step(i + 2);
+    step(i + ESCAPE_PREFIX);
   };
   step(0);
   return out.join('');
@@ -313,7 +322,7 @@ export function createLobbyWorld(
     await run(serverId, `minecraft:datapack enable "${PACK_ID}"`);
     const ready = await until(
       async () =>
-        !(await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:prepare`)).includes('Unknown function'),
+        !(await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:prepare`)).includes(UNKNOWN_FUNCTION),
       opts.loadTimeoutMs,
     );
     if (!ready) {
@@ -334,11 +343,22 @@ export function createLobbyWorld(
     if (!loaded) log.warn('Lobby: nicht alle Stücke der Welt geladen – baue trotzdem');
     // Erst jetzt aufräumen: alle Stücke sind geladen, alte Figuren und Schilder verschwinden wirklich.
     await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:clean`);
-    await Array.from({ length: pack.parts }, (_, i) => i).reduce(async (prev, i) => {
-      await prev;
-      await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:${partName(i)}`);
-      await sleep(opts.gapMs);
-    }, Promise.resolve());
+    // Ein Stück, das der Server nicht laden konnte (z. B. ein Block, den es in dieser Minecraft-Version nicht mehr
+    // gibt), meldet „Unknown function“ – es fehlt dann in der Welt. Das soll im Protokoll auffallen.
+    const missing = await Array.from({ length: pack.parts }, (_, i) => i).reduce<Promise<string[]>>(
+      async (prev, i) => {
+        const list = await prev;
+        const answer = await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:${partName(i)}`);
+        await sleep(opts.gapMs);
+        return answer.includes(UNKNOWN_FUNCTION) ? [...list, partName(i)] : list;
+      },
+      Promise.resolve([]),
+    );
+    if (missing.length > 0)
+      log.error(
+        { parts: missing },
+        'Lobby: Teile der Welt ließen sich nicht laden (Fehler im Server-Protokoll: „Failed to load function“)',
+      );
     await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:finish`);
     await pack.unload.reduce(async (prev, command) => {
       await prev;

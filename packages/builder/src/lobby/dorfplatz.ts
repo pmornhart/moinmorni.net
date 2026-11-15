@@ -73,7 +73,7 @@ const BREZN_STAND = {
 
 /** Aussichtspunkte für die Bilder: Name, Kamera, Blickziel. */
 export const LOBBY_VIEWS = [
-  '1-ankunft 9.5 65 12.5 @ 0 92 -120',
+  '1-ankunft 0.5 67.6 30.5 @ 0 92 -120',
   '2-marktstaende 0.5 67 28 @ 0 68 -10',
   '3-stand-nah -2 66 -6 @ -8 66.8 -14',
   '4-von-oben 75 148 45 @ 0 78 -75',
@@ -87,6 +87,12 @@ export const LOBBY_VIEWS = [
   '10-dorfstrasse 0.5 66 100 @ 0 70 20',
   '11-schloss 17 92 -104 @ 0 104 -140',
   '12-dorfplatz-leute 14 66 18 @ -2 65.5 2',
+  '15-festsaal 0.5 94.6 -130.5 @ 0.5 96 -141',
+  '16-rotunde 4.5 94 -132.5 @ 0.5 108 -136.5',
+  '17-thron 6.5 94.6 -136.5 @ 26 95 -136.5',
+  '18-galerie -20.5 104.6 -131.5 @ 0.5 93 -137',
+  '19-bibliothek -30.5 94.6 -99.5 @ -35 93.5 -124',
+  '20-rittersaal 30.5 94.6 -124.5 @ 35 93.5 -100',
 ];
 
 /** Gäste im Biergarten: [Tisch-x, Tisch-z, Platz, Seite (1 = Süden), Skin, in der Hand]. */

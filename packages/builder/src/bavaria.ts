@@ -12,7 +12,7 @@ import { cylinder, discAt, gableRoof, lathe, slab, stairs, STEP, YAW, type Facin
 import { furnish, signText, type RoomKind } from './village.js';
 import { roundTree } from './nature.js';
 import { MOEBEL, MOEBEL_BODEN } from './furniture.js';
-import { hollowWing, rotunda, type WingKind } from './schloss.js';
+import { castleLights, hollowWing, rotunda, type WingKind } from './schloss.js';
 
 const D = {
   floor: 4,
@@ -552,6 +552,7 @@ export function castle(c: Canvas, s: CastleSpec): void {
   rotunda(c, dx, dz, dy + 1, dy + 24);
   fountain(c, dx, dy + 1, dz, 3);
   // Türme: vier am Hauptflügel, zwei vorne an den Seitenflügeln
+  const towers: [number, number, number, number][] = [];
   [
     [-W + 1, 33],
     [W - 1, 33],
@@ -563,7 +564,9 @@ export function castle(c: Canvas, s: CastleSpec): void {
     const [tx, ty, tz] = f.at(u, 1, v);
     onionTower(c, tx, ty, tz, 5, i < 4 ? 30 : 22);
     c.set(tx, ty + (i < 4 ? 30 : 22) + 1, tz, 'white_banner');
+    towers.push([tx, ty, tz, i < 4 ? 30 : 22]);
   });
+  castleLights(c, f, W, [dx, dy, dz], towers);
 }
 
 /** Ursprung eines Seitenflügels, dessen Vorderseite zur Hofmitte zeigt. */

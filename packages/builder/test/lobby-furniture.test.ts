@@ -47,3 +47,15 @@ describe('Figuren im Datenpaket', () => {
     expect(summonOnce('setblock 0 64 0 stone strict')).toBe('setblock 0 64 0 stone strict');
   });
 });
+
+describe('Blocknamen passen zu Minecraft 26.x', () => {
+  // Umbenannte Blöcke: Ein altes Wort lässt das ganze Stück des Datenpakets nicht laden (es fehlt dann in der Welt).
+  // chain → iron_chain (1.21.9), grass → short_grass (1.20.3).
+  const RENAMED: Readonly<Record<string, string>> = { chain: 'iron_chain', grass: 'short_grass' };
+  const { canvas } = buildLobby();
+
+  it.each(Object.entries(RENAMED))('kein „%s“ (heißt jetzt „%s“)', (old) => {
+    const found = canvas.find((b) => b === old || b.startsWith(`${old}[`));
+    expect(found.map(([x, y, z, b]) => `${b} bei ${x} ${y} ${z}`)).toEqual([]);
+  });
+});

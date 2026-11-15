@@ -184,6 +184,42 @@ describe('Lobby baut sich selbst', () => {
     expect(commands.filter((c) => c.endsWith('part/000'))).toHaveLength(3);
   });
 
+  test('Ein Stück lässt sich auf dem Server nicht laden (z. B. alter Blockname): Bau läuft durch, Fehler im Protokoll', async () => {
+    const h = await harness();
+    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    fs.writeFileSync(jar, 'plugin');
+    const config = { ...h.mm.config, pluginFile: jar };
+    const motor: MotorClient = {
+      ...h.mm.motor,
+      request: async <T>(method: string, url: string, body?: unknown): Promise<T> => {
+        const command = url.endsWith('/command') ? (body as { command: string }).command : '';
+        if (command.endsWith('part/001'))
+          return { answer: 'Unknown function moinmorni_lobby:part/001' } as T;
+        return h.mm.motor.request<T>(method, url, body);
+      },
+    };
+    const errors: unknown[] = [];
+    const log = { ...quiet, error: (obj: unknown) => errors.push(obj) } as unknown as FastifyBaseLogger;
+    const world = createLobbyWorld(motor, log, {
+      pack: tinyPack('v1'),
+      sleep: () => new Promise((r) => setTimeout(r, 5)),
+      settleMs: 0,
+      gapMs: 0,
+      pollMs: 100,
+      readyTimeoutMs: 20_000,
+      loadTimeoutMs: 2_000,
+    });
+    const provisioner = createProvisioner(config, motor, h.mm.hub, quiet, {
+      proxyAddOns: {},
+      lobbyAddOns: {},
+      versions: { paper: '1.21.4', velocity: '3.4.0' },
+      configureLobby: world.configure,
+    });
+    const result = await provisioner.ensure();
+    expect(await world.build(result.lobbyServerId)).toBe('built');
+    expect(errors).toEqual([{ parts: ['part/001'] }]);
+  });
+
   test('Möbel-Paket: mit Domain bietet die Lobby es an (feste Kennung, Pflicht per Schalter), die Webseite liefert es', async () => {
     const offer = { url: lobbyPackUrl('moinmorni.net'), sha1: lobbyPackInfo().sha1, required: true };
     const props = lobbyProperties(offer);
