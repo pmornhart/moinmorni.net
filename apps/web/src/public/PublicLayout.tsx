@@ -44,7 +44,7 @@ interface NavItem {
 const NAV: readonly NavItem[] = [
   { to: '/', key: 'nav.start', icon: House },
   { to: '/news', key: 'nav.news', icon: Newspaper },
-  { to: '/spielmodi', key: 'nav.modes', icon: Gamepad2 },
+  { to: '/spielmodi', key: 'nav.modes', icon: Gamepad2, also: ['/mornicraft'] },
   { to: '/statistiken', key: 'nav.stats', icon: BarChart3, also: ['/spieler'] },
   { to: '/team', key: 'nav.team', icon: Users },
   { to: '/regeln', key: 'nav.rules', icon: ScrollText },
@@ -312,6 +312,7 @@ const FOOTER_COLUMNS: readonly { readonly key: string; readonly links: readonly 
       { to: JOIN_LINK, key: 'site.help.join.title' },
       { to: '/hilfe#sprachchat', key: 'site.help.voice.title' },
       { to: '/hilfe#discord', key: 'site.help.discord.title' },
+      { to: '/mornicraft/bewerben', key: 'site.help.mornicraft.title' },
       { to: '/hilfe#befehle', key: 'site.help.commands.title' },
       { to: '/regeln', key: 'nav.rules' },
     ],

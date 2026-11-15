@@ -161,7 +161,9 @@ function RankCard({
   const fromTeam = player.ownRole ? player.role.id !== player.ownRole : player.role.id !== fallback?.id;
   const options = (roles ?? []).filter((r) => !r.fallback);
   const dirty = draft !== (player.ownRole ?? NO_ROLE);
-  const blocked = higher === false;
+  // Wie /rang im Spiel: Ränge vergibt nur, wer das Recht „Ränge vergeben“ hat (Moderatoren nicht).
+  const mayRank = me.role.id === 'owner' || me.role.game.includes('ranks');
+  const blocked = higher === false || !mayRank;
 
   const save = useMutation({
     mutationFn: () =>
@@ -223,7 +225,11 @@ function RankCard({
             </Button>
           </div>
           <p className="text-[13px] leading-snug text-muted-foreground">
-            {blocked ? t('players.rank.higher', { name: player.name }) : t('players.rank.help')}
+            {!mayRank
+              ? t('players.rank.noRight')
+              : blocked
+                ? t('players.rank.higher', { name: player.name })
+                : t('players.rank.help')}
           </p>
         </div>
       ) : (

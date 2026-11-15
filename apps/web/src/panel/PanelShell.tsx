@@ -6,6 +6,7 @@ import {
   Gavel,
   Globe,
   Globe2,
+  Hammer,
   House,
   LayoutDashboard,
   LogOut,
@@ -13,6 +14,8 @@ import {
   MessagesSquare,
   Mic,
   Newspaper,
+  Pickaxe,
+  RefreshCw,
   Server,
   Settings2,
   ShieldHalf,
@@ -47,6 +50,9 @@ const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
   Newspaper,
   Users,
   Castle,
+  Pickaxe,
+  Hammer,
+  RefreshCw,
 };
 
 export function areaIcon(name: string): LucideIcon {

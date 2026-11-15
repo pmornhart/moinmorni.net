@@ -172,7 +172,9 @@
       "others": "Weitere Spielmodi",
       "missingTitle": "Diesen Spielmodus gibt es nicht",
       "missingText": "Vielleicht hat sich ein Tippfehler eingeschlichen. Alle Spielmodi findest du in der Übersicht.",
-      "back": "Alle Spielmodi"
+      "back": "Alle Spielmodi",
+      "whitelistApply": "Nur auf Einladung: Du brauchst einen Platz auf der Whitelist. Bewirb dich einfach – hier auf der Webseite oder im Discord mit /bewerben.",
+      "apply": "Jetzt bewerben"
     },
     "stats": {
       "eyebrow": "Ranglisten",
@@ -311,6 +313,16 @@
         "step2": "Du bekommst einen Code. Tippe dann im Discord:",
         "step3": "Fertig – dein Rang erscheint im Discord und zieht von selbst nach, wenn er sich ändert.",
         "join": "Discord beitreten"
+      },
+      "mornicraft": {
+        "title": "Bei MorniCraft bewerben",
+        "short": "Unser Freunde-Survival – nur auf Einladung",
+        "intro": "MorniCraft ist unser Freunde-Survival. Damit es gemütlich bleibt, kommt nur hinein, wer auf der Whitelist steht. So bekommst du einen Platz:",
+        "step1": "Öffne die Bewerbungs-Seite und melde dich mit Discord an (wir sehen nur deinen Discord-Namen).",
+        "step2": "Trag deinen Minecraft-Namen ein und erzähl uns ein bisschen von dir.",
+        "step3": "Das Team liest deine Bewerbung und antwortet dir als Discord-Nachricht.",
+        "step4": "Lieber direkt im Discord? Das geht auch – tippe dort",
+        "link": "Zur Bewerbung"
       },
       "commands": {
         "title": "Befehle",
@@ -719,6 +731,7 @@
       "savedNone": "{{name}} hat jetzt keinen eigenen Rang mehr.",
       "team": "Gilt gerade als {{rank}}, weil das Minecraft-Konto mit einem Team-Konto im Panel verbunden ist. Es zählt immer der höhere Rang – der eigene Rang hier greift, sobald die Person nicht mehr im Team ist.",
       "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – diesen Rang kannst du nicht ändern.",
+      "noRight": "Ränge vergeben darf nur, wer das Recht „Ränge vergeben“ hat (wie /rang im Spiel). VIP vergibt nur der Owner.",
       "noRoles": "Ränge vergeben kann, wer im Panel auch die Rollen sehen darf.",
       "help": "Du kannst nur Ränge unter deinem eigenen vergeben. Owner und Admin vergibt nur der Owner. Gilt sofort im Spiel."
     },
@@ -1186,6 +1199,293 @@
       }
     }
   },
+  "updatesCard": {
+    "title": "MoinMorni-Version",
+    "text": "Neue Fassungen kommen von GitHub, wo der Code von MoinMorni liegt. Vor jedem Update gibt es eine Sicherung – klappt etwas nicht, geht MoinMorni von selbst zurück auf den alten Stand.",
+    "look": {
+      "updating": "Update läuft",
+      "failed": "Nicht geprüft",
+      "available": "Update verfügbar",
+      "current": "Alles aktuell",
+      "unknown": "Noch nicht geprüft"
+    },
+    "running": "Läuft gerade",
+    "branch": "Kanal „{{branch}}“",
+    "newest": "Neueste Fassung",
+    "behind_one": "{{count}} Änderung neuer als deine",
+    "behind_other": "{{count}} Änderungen neuer als deine",
+    "isNewest": "Das ist deine Fassung.",
+    "notChecked": "Noch nicht nachgesehen",
+    "motor": "Motor (MorniHosting)",
+    "motorUnknown": "Ob es Neues gibt, ist gerade nicht bekannt.",
+    "motorCurrent": "Auf dem neuesten Stand.",
+    "motorBehind_one": "MorniHosting hat {{count}} neuere Änderung ({{latest}}). Sie kommt mit, wenn",
+    "motorBehind_other": "MorniHosting hat {{count}} neuere Änderungen ({{latest}}). Sie kommen mit, wenn",
+    "motorSetting": "„Motor immer auf den neuesten Stand“ an ist.",
+    "unknown": "unbekannt",
+    "dev": "Entwickler-Fassung",
+    "checkedAt": "Zuletzt nachgesehen {{time}}",
+    "neverChecked": "Noch nicht nachgesehen",
+    "check": "Jetzt nach Updates suchen",
+    "checking": "Sucht …",
+    "start": "Update starten",
+    "noAgentTitle": "Update-Helfer fehlt auf diesem Rechner",
+    "noAgentText": "Das Panel kann sich nicht selbst austauschen – das übernimmt ein kleiner Helfer auf dem Rechner, den install.sh einrichtet (braucht systemd). Hier fehlt er, darum laufen auch die automatischen Updates nicht. Bis dahin startest du ein Update auf dem Rechner selbst:",
+    "checkFailedTitle": "GitHub ist gerade nicht erreichbar",
+    "checkFailedText": "Wir konnten nicht nachsehen, ob es etwas Neues gibt. Meist liegt das an GitHub oder am Internet des Rechners – MoinMorni läuft ganz normal weiter. Versuch es in ein paar Minuten noch mal.",
+    "checkFailedToast": "GitHub antwortet gerade nicht – versuch es später noch mal.",
+    "foundToast": "Es gibt ein Update!",
+    "currentToast": "Alles aktuell – nichts zu tun.",
+    "startedToast": "Update gestartet. Hier kannst du zusehen.",
+    "stuckTitle": "Der Update-Helfer meldet sich nicht",
+    "stuckText": "Der Auftrag liegt seit über 2 Minuten bereit, aber niemand holt ihn ab. Schau auf dem Rechner nach, ob der Update-Helfer läuft:",
+    "waitingTitle": "Update ist angefragt",
+    "waitingText": "Der Update-Helfer auf dem Rechner legt gleich los – meist dauert das nur ein paar Sekunden.",
+    "runningTitle": "Update läuft",
+    "stepNow": {
+      "pull": "Neuer Code wird geholt",
+      "build": "Neue Fassung wird gebaut – das dauert ein paar Minuten",
+      "backup": "Sicherung wird angelegt",
+      "restart": "MoinMorni startet neu",
+      "check": "Prüft, ob alles läuft",
+      "rollback": "Geht zurück auf den alten Stand"
+    },
+    "steps": {
+      "pull": "Code holen",
+      "build": "Bauen",
+      "backup": "Sicherung",
+      "restart": "Neustart",
+      "check": "Prüfen"
+    },
+    "since": "seit {{time}}",
+    "rollingBack": "Etwas hat nicht geklappt – MoinMorni geht gerade von selbst zurück auf den alten Stand (Code und Datenbanken aus der Sicherung).",
+    "reconnecting": "MoinMorni startet gerade neu – die Seite verbindet sich gleich wieder.",
+    "log": "Protokoll des Updates",
+    "logEmpty": "Noch keine Ausgabe.",
+    "showLog": "Protokoll anzeigen",
+    "reload": "Seite neu laden",
+    "result": {
+      "done": {
+        "title": "Letztes Update hat geklappt ({{time}})",
+        "text": "Von {{from}} auf {{to}}."
+      },
+      "rolled_back": {
+        "title": "Letztes Update wurde zurückgenommen ({{time}})",
+        "text": "Bei der neuen Fassung hat etwas nicht geklappt. MoinMorni ist darum von selbst auf den alten Stand ({{from}}) zurück – samt Datenbanken aus der Sicherung. Alles läuft wie vorher; woran es lag, steht im Protokoll."
+      },
+      "failed": {
+        "title": "Letztes Update ist fehlgeschlagen ({{time}})",
+        "text": "Woran es lag, steht im Protokoll. Ließ sich nur der neue Code nicht holen, läuft MoinMorni unverändert weiter ({{from}}). Sonst schau bitte auf dem Rechner nach – die Sicherungen liegen unter /var/backups/moinmorni."
+      }
+    },
+    "allCurrentTitle": "Alles aktuell",
+    "allCurrentText": "Du hast die neueste Fassung von MoinMorni – nichts zu tun.",
+    "devBuild": "Diese Fassung wurde ohne Versionsnummer gebaut. MoinMorni kann darum nicht vergleichen, was neu ist.",
+    "changesTitle": "Was ist neu",
+    "changesCount_one": "{{count}} Update",
+    "changesCount_other": "{{count}} Updates",
+    "changesCountDate_one": "{{count}} Update · neuestes vom {{date}}",
+    "changesCountDate_other": "{{count}} Updates · neuestes vom {{date}}",
+    "kinds": {
+      "new": "Neu",
+      "fixed": "Behoben",
+      "improved": "Verbessert",
+      "removed": "Entfernt",
+      "other": "Weitere Änderungen"
+    },
+    "confirm": {
+      "title": "Update jetzt starten?",
+      "text": "Webseite und Panel sind dabei 1–2 Minuten nicht erreichbar. Die Minecraft-Server laufen weiter.",
+      "step1": "Neuer Code wird geholt und gebaut – die alte Fassung läuft so lange weiter.",
+      "step2": "Sicherung der Datenbanken (Welten haben eigene Backups).",
+      "step3": "Neustart mit der neuen Fassung, dann eine Prüfung.",
+      "step4": "Klappt etwas nicht, geht es von selbst zurück auf den alten Stand.",
+      "go": "Jetzt aktualisieren"
+    }
+  },
+  "applicationsCard": {
+    "title": "Bewerbungen",
+    "text": "Wer auf MorniCraft möchte. Bewerben geht auf der Webseite (mit Discord-Anmeldung) und im Discord mit /bewerben. Eine Zusage setzt den Namen auf die Whitelist.",
+    "open": "Bewerbungen offen",
+    "closed": "Bewerbungen geschlossen",
+    "openSetting": "Zur Einstellung „Bewerbungen offen“",
+    "filter": "Bewerbungen filtern",
+    "status": {
+      "pending": "Offen",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt"
+    },
+    "page": "Bewerbungs-Seite:",
+    "empty": {
+      "pending": "Keine offenen Bewerbungen – alles erledigt.",
+      "accepted": "Noch niemand angenommen.",
+      "rejected": "Noch nichts abgelehnt."
+    },
+    "emptyClosed": "Bewerbungen sind gerade geschlossen. Schalte unten „Bewerbungen offen“ an, damit wieder welche kommen.",
+    "bedrock": "Bedrock",
+    "discord": "Discord: {{name}}",
+    "noDiscord": "Ohne Discord",
+    "via": {
+      "website": "über die Webseite",
+      "discord": "über Discord"
+    },
+    "answers": {
+      "about": "Über sich",
+      "why": "Warum MorniCraft?",
+      "age": "Alter"
+    },
+    "accept": "Annehmen",
+    "reject": "Ablehnen",
+    "acceptTitle": "{{name}} annehmen?",
+    "acceptText": "{{name}} kommt auf die Whitelist und kann MorniCraft sofort betreten. Mit Discord bekommt {{name}} die „Nachricht bei Zusage“ (unten einstellbar) als Direktnachricht – und im Spiel, falls gerade online.",
+    "rejectTitle": "Bewerbung von {{name}} ablehnen?",
+    "rejectText": "{{name}} bekommt eine freundliche Absage als Discord-Nachricht und kann sich später noch mal bewerben.",
+    "noteAccept": "Notiz fürs Team (freiwillig)",
+    "noteAcceptPlaceholder": "z. B. kennen wir aus dem Discord",
+    "noteAcceptHelp": "Sieht nur das Team (hier und im Kanal #bewerbungen) – {{name}} nicht.",
+    "noteReject": "Begründung (freiwillig)",
+    "noteRejectPlaceholder": "z. B. Erzähl uns gern noch etwas mehr über dich.",
+    "noteRejectHelp": "Steht in der Absage an {{name}} – bitte freundlich bleiben.",
+    "acceptedToast": "{{name}} ist angenommen und steht auf der Whitelist.",
+    "rejectedToast": "Bewerbung von {{name}} abgelehnt.",
+    "acceptedBy": "Angenommen von {{name}} · {{time}}",
+    "rejectedBy": "Abgelehnt von {{name}} · {{time}}",
+    "noteShown": "Notiz: {{note}}",
+    "noAccess": "Bewerbungen und Whitelist sieht, wer den Panel-Bereich „Spieler“ hat. Frag den Owner, wenn du sie brauchst."
+  },
+  "whitelistCard": {
+    "title": "Whitelist",
+    "text": "Wer auf MorniCraft darf. Angenommene Bewerbungen landen hier von selbst; du kannst Namen auch direkt eintragen. Das Team kommt immer hinein.",
+    "count_one": "{{count}} Spieler",
+    "count_other": "{{count}} Spieler",
+    "addLabel": "Name hinzufügen",
+    "placeholder": "Minecraft-Name, z. B. Lena_Baut",
+    "add": "Hinzufügen",
+    "addHelp": "So, wie er im Spiel steht. Bedrock-Spieler (Handy, Konsole, Windows) mit Punkt davor, z. B. .Lena",
+    "invalidName": "Das ist kein gültiger Minecraft-Name: 3–16 Buchstaben, Ziffern oder _ – Bedrock-Spieler mit Punkt davor (z. B. .Lena).",
+    "already": "{{name}} steht schon auf der Whitelist.",
+    "addedToast": "{{name}} steht jetzt auf der Whitelist.",
+    "removedToast": "{{name}} ist von der Whitelist runter.",
+    "seen": "War schon da",
+    "seenHelp": "Hat MorniCraft mit diesem Namen schon betreten – der Platz gehört jetzt diesem Konto, auch nach einem Namenswechsel.",
+    "added": "Eingetragen von {{name}} · {{time}}",
+    "removeLabel": "{{name}} von der Whitelist nehmen",
+    "removeTitle": "{{name}} von der Whitelist nehmen?",
+    "removeText": "{{name}} kommt dann ab dem nächsten Betreten nicht mehr auf MorniCraft. Du kannst den Namen jederzeit wieder eintragen.",
+    "remove": "Entfernen",
+    "empty": "Noch niemand auf der Whitelist. Nimm eine Bewerbung an oder trag einen Namen ein.",
+    "search": "Whitelist durchsuchen",
+    "noMatch": "Kein Name passt zur Suche."
+  },
+  "buildCard": {
+    "title": "Gespeicherte Bauten",
+    "text": "Was das Bauteam auf dem Bau-Server mit WorldEdit speichert, landet hier. Mit einem Klick kopierst du einen Bau in die Lobby oder einen Modus – dort setzt ihn jemand mit WorldEdit in die Welt.",
+    "missingTitle": "Den Bau-Server gibt es noch nicht",
+    "missingText": "MoinMorni legt ihn selbst an, wenn es das Netzwerk einrichtet (zusammen mit Proxy und Lobby). Fehlt er hier, läuft die Einrichtung gerade noch oder er wurde im Motor gelöscht – beim nächsten Start von MoinMorni wird er neu angelegt.",
+    "howTitle": "So speichert das Bauteam einen Bau",
+    "how1": "Auf den Bau-Server gehen (nur mit dem Recht „Bauen“):",
+    "how2": "Holzaxt holen mit",
+    "how2b": "und zwei Ecken des Baus markieren: Linksklick = erste Ecke, Rechtsklick = zweite.",
+    "how3": "Kopieren mit",
+    "how3b": "– wo du dabei stehst, ist später der Punkt, an dem der Bau eingesetzt wird.",
+    "how4": "Speichern mit",
+    "how4b": "(statt „rathaus“ ein eigener Name ohne Leerzeichen). Danach steht der Bau hier.",
+    "listTitle": "Bauten",
+    "count_one": "{{count}} gespeichert",
+    "count_other": "{{count}} gespeichert",
+    "saved": "{{size}} · gespeichert {{time}}",
+    "copy": "In einen Modus kopieren",
+    "empty": "Noch keine Bauten gespeichert. Sobald jemand mit //schem save speichert, steht der Bau hier.",
+    "noTargets": "Es gibt noch keine Lobby und keinen Modus mit eigenem Server, in den kopiert werden kann.",
+    "chooseTarget": "Wohin soll der Bau?",
+    "copyTitle": "{{file}} kopieren",
+    "copyText": "Der Bau landet im WorldEdit-Ordner des gewählten Servers. In die Welt kommt er erst, wenn ihn dort jemand einsetzt.",
+    "copyGo": "Kopieren",
+    "copiedToast": "{{file}} liegt jetzt in {{target}}.",
+    "copiedTitle": "{{file}} liegt jetzt in {{target}}",
+    "after1": "Im Spiel nach {{target}} gehen (dort braucht es WorldEdit und das Recht dazu).",
+    "after2": "Bau laden mit",
+    "after3": "An der gewünschten Stelle einsetzen mit",
+    "after3b": "– der Bau erscheint dort, wo du stehst."
+  },
+  "apply": {
+    "eyebrow": "MorniCraft",
+    "title": "Bei MorniCraft bewerben",
+    "text": "MorniCraft ist unser Freunde-Survival mit Clans, Gräbern und einem mächtigen Drachen – nur auf Einladung. Erzähl uns kurz, wer du bist; das Team antwortet dir per Discord.",
+    "discordJoin": "Unserem Discord beitreten",
+    "signedInAs": "Angemeldet mit Discord als",
+    "logout": "Abmelden",
+    "loginError": {
+      "discord_login_off": "Die Anmeldung mit Discord ist gerade nicht eingerichtet. Bewirb dich bitte direkt im Discord mit /bewerben.",
+      "discord_login_failed": "Die Anmeldung mit Discord hat nicht geklappt – vielleicht abgebrochen oder zu lange gewartet. Versuch es einfach noch mal."
+    },
+    "signIn": {
+      "title": "Erst mit Discord anmelden",
+      "text": "So wissen wir, wem wir antworten. Die Antwort vom Team bekommst du dann als Discord-Nachricht.",
+      "privacy": "Wir sehen dabei nur deinen Discord-Namen – kein Passwort, keine Nachrichten, keine Server. Die Anmeldung gilt 2 Stunden und nur für diese Seite.",
+      "button": "Mit Discord anmelden"
+    },
+    "form": {
+      "title": "Deine Bewerbung",
+      "optional": "freiwillig",
+      "name": "Dein Minecraft-Name",
+      "namePlaceholder": "z. B. Lena_Baut",
+      "nameHelp": "Genau so, wie er im Spiel steht. Spielst du auf Handy, Konsole oder Windows (Bedrock)? Dann mit Punkt davor, z. B. .Lena",
+      "nameBedrock": "Bedrock-Name erkannt. Leerzeichen aus deinem Spielernamen schreibst du als _.",
+      "nameProblem": "Das passt noch nicht: 3–16 Buchstaben, Ziffern oder _ – für Bedrock mit Punkt davor (z. B. .Lena).",
+      "about": "Erzähl uns von dir",
+      "aboutPlaceholder": "Wer bist du, was spielst du gern, was baust du am liebsten?",
+      "aboutHelp": "Ein paar Sätze reichen (mindestens {{min}} Zeichen).",
+      "aboutProblem": "Schreib bitte noch ein bisschen mehr – mindestens {{min}} Zeichen.",
+      "why": "Warum MorniCraft?",
+      "whyPlaceholder": "Was reizt dich an MorniCraft? Kennst du schon jemanden hier?",
+      "whyHelp": "Ganz ehrlich – es gibt keine falschen Antworten.",
+      "whyProblem": "Schreib bitte kurz, warum du dabei sein willst.",
+      "age": "Alter",
+      "ageHelp": "Nur Zahlen. Sieht nur das Team.",
+      "ageProblem": "Bitte nur Zahlen (z. B. 15) – oder das Feld leer lassen.",
+      "count": "{{count}} / {{max}}",
+      "who": "Das Team sieht deine Antworten und deinen Discord-Namen ({{name}}).",
+      "send": "Bewerbung abschicken",
+      "sending": "Wird abgeschickt …"
+    },
+    "status": {
+      "name": "Minecraft-Name",
+      "sent": "Abgeschickt",
+      "pendingTitle": "Deine Bewerbung ist beim Team",
+      "pendingText": "Danke! Wir lesen jede Bewerbung selbst und antworten dir als Discord-Nachricht.",
+      "pendingTip": "Damit unsere Antwort ankommt, sei auf unserem Discord-Server – Discord stellt Nachrichten vom Bot nur dann zu.",
+      "acceptedTitle": "Willkommen bei MorniCraft!",
+      "acceptedText": "{{name}} steht auf der Whitelist – du kannst sofort loslegen. So kommst du hin:",
+      "acceptedHow": "In der Lobby die Figur „MorniCraft“ anklicken – oder im Chat tippen:",
+      "modePage": "Mehr zu MorniCraft",
+      "rejectedTitle": "Diesmal hat es leider nicht geklappt",
+      "rejectedText": "Die Antwort vom Team hast du als Discord-Nachricht bekommen. Sei nicht traurig – du kannst dich später gern noch mal bewerben.",
+      "again": "Neue Bewerbung schreiben",
+      "againLater": "Gerade nehmen wir keine neuen Bewerbungen an. Schau später wieder vorbei."
+    },
+    "closed": {
+      "title": "Gerade keine Bewerbungen",
+      "text": "Im Moment nehmen wir keine neuen Bewerbungen an. Schau später wieder vorbei – im Discord sagen wir Bescheid, sobald es wieder geht."
+    },
+    "noLogin": {
+      "title": "Bewerben geht gerade nur im Discord",
+      "text": "Die Anmeldung mit Discord ist auf der Webseite noch nicht eingerichtet. Im Discord geht es trotzdem: Nimm den Knopf im Hilfe-Kanal oder tippe dort"
+    },
+    "how": {
+      "title": "So läuft es ab",
+      "step1": "Mit Discord anmelden",
+      "step1Text": "Damit wir wissen, wem wir antworten.",
+      "step2": "Formular ausfüllen",
+      "step2Text": "Dein Minecraft-Name und ein paar Sätze über dich.",
+      "step3": "Das Team entscheidet",
+      "step3Text": "Meist innerhalb weniger Tage. Die Antwort kommt als Discord-Nachricht.",
+      "step4": "Losspielen",
+      "step4Text": "Bei einer Zusage steht dein Name auf der Whitelist – MorniCraft ist sofort offen für dich.",
+      "mode": "Mehr über MorniCraft"
+    },
+    "fair": "Jede Bewerbung wird von echten Menschen aus dem Team gelesen. Bewerben kostet nichts – einen Platz kann man nicht kaufen."
+  },
   "errors": {
     "generic": "Da ist etwas schiefgegangen. Versuch es bitte gleich nochmal.",
     "network": "Keine Verbindung zum Server. Prüf dein Internet und versuch es nochmal.",
@@ -1216,7 +1516,8 @@
     "player_offline": "Rauswerfen geht nur, solange die Person online ist.",
     "punishment_none": "Da gibt es gerade nichts aufzuheben – vielleicht ist die Strafe schon abgelaufen.",
     "role_unknown": "Diesen Rang gibt es nicht (mehr). Lade die Seite neu.",
-    "role_too_high": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher.",
+    "role_too_high": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher (VIP vergibt nur der Owner).",
+    "rank_no_right": "Ränge vergeben darfst du nicht – dafür braucht deine Rolle das Recht „Ränge vergeben“.",
     "role_owner_only": "Owner und Admin darf nur der Owner ändern.",
     "role_duplicate": "Zwei Rollen haben dieselbe Kennung. Gib einer einen anderen Namen.",
     "role_fallback_one": "Genau eine Rolle muss „für alle anderen“ sein.",
@@ -1231,6 +1532,16 @@
     "team_last_owner": "Es muss immer mindestens einen Owner geben. Mach zuerst jemand anderen zum Owner.",
     "team_role_fallback": "Die Rolle „für alle anderen“ ist kein Team-Rang. Wähl bitte eine andere.",
     "team_role_no_panel": "Diese Rolle sieht im Panel nichts – dafür braucht es kein Konto. Ränge wie VIP vergibst du unter „Spieler“.",
-    "team_member_unknown": "Dieses Konto gibt es nicht (mehr). Lade die Seite neu."
+    "team_member_unknown": "Dieses Konto gibt es nicht (mehr). Lade die Seite neu.",
+    "update_no_agent": "Der Update-Helfer auf dem Rechner fehlt – install.sh richtet ihn ein.",
+    "application_decided": "Über diese Bewerbung hat schon jemand entschieden – vielleicht gerade im Discord. Die Liste ist jetzt aktuell.",
+    "application_unknown": "Diese Bewerbung gibt es nicht (mehr). Lade die Seite neu.",
+    "whitelist_entry_unknown": "Dieser Name steht schon nicht mehr auf der Whitelist.",
+    "build_server_missing": "Den Bau-Server gibt es gerade nicht – darum lässt sich nichts kopieren.",
+    "build_target_unknown": "Dieses Ziel gibt es nicht (mehr). Lade die Seite neu und wähl ein anderes.",
+    "applications_closed": "Gerade nehmen wir keine Bewerbungen an. Schau später wieder vorbei.",
+    "application_already_listed": "Dieser Name steht schon auf der Whitelist – du kannst direkt losspielen!",
+    "application_pending": "Für dich oder diesen Minecraft-Namen liegt schon eine Bewerbung beim Team. Wir melden uns!",
+    "apply_login_required": "Deine Anmeldung ist abgelaufen. Melde dich bitte noch mal mit Discord an – deine Antworten merkt sich die Seite."
   }
 }

@@ -1,4 +1,15 @@
-import { ArrowLeft, Check, Copy, Gamepad2, LogIn, MessagesSquare, Moon, Terminal, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  ClipboardList,
+  Copy,
+  Gamepad2,
+  LogIn,
+  MessagesSquare,
+  Moon,
+  Terminal,
+  Users,
+} from 'lucide-react';
 import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -16,6 +27,8 @@ import { EmptyState, EXTERNAL, ModeStateBadge, PageBand, WRAP } from './parts';
 import { FALLBACK_ADDRESS } from './PublicLayout';
 
 const SKELETONS = ['a', 'b', 'c', 'd', 'e', 'f'];
+const APPLY_MODE = 'mornicraft';
+const APPLY_PAGE = '/mornicraft/bewerben';
 
 /** All game modes as tiles. */
 export function ModesListPage(): ReactElement {
@@ -108,6 +121,8 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
   const invite = site.data?.discordInvite;
   const command = `/server ${mode.server ?? mode.id}`;
   const look = modeLook(mode);
+  // Applications (website and Discord) exist for MorniCraft.
+  const applies = mode.id === APPLY_MODE;
   return (
     <Card className="grid content-start gap-5 border-gold/30 p-6 sm:p-7">
       <div className="flex items-center gap-3">
@@ -140,15 +155,25 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
       ) : null}
       {mode.access === 'whitelist' ? (
         <div className="grid gap-3 rounded-[12px] bg-gold-soft px-4 py-3 text-sm text-gold-strong dark:text-gold">
-          <p>{t('site.mode.whitelistText')}</p>
-          {invite ? (
-            <Button asChild variant="secondary" size="sm" className="justify-self-start">
-              <a href={invite} {...EXTERNAL}>
-                <MessagesSquare />
-                Discord
-              </a>
-            </Button>
-          ) : null}
+          <p>{t(applies ? 'site.mode.whitelistApply' : 'site.mode.whitelistText')}</p>
+          <div className="flex flex-wrap gap-2">
+            {applies ? (
+              <Button asChild size="sm">
+                <Link to={APPLY_PAGE}>
+                  <ClipboardList />
+                  {t('site.mode.apply')}
+                </Link>
+              </Button>
+            ) : null}
+            {invite ? (
+              <Button asChild variant="secondary" size="sm">
+                <a href={invite} {...EXTERNAL}>
+                  <MessagesSquare />
+                  Discord
+                </a>
+              </Button>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </Card>

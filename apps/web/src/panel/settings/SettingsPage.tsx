@@ -13,6 +13,7 @@ import { mmApi } from '~/lib/mm-api';
 import { usePick } from '~/lib/text';
 import { areaIcon, PageHead } from '../PanelShell';
 import { SETTINGS_KEY, useSettingsQuery, type SettingsEntry } from '../session';
+import { AreaExtras } from './extras/AreaExtras';
 import { fieldId, SettingInput, valueValid } from './fields';
 import { SettingsSearch } from './SettingsSearch';
 
@@ -231,6 +232,7 @@ export function SettingsPage(): ReactElement {
             title={pick(entry.area.title)}
             text={pick(entry.area.text)}
           />
+          <AreaExtras key={`extras-${entry.area.id}`} entry={entry} />
           <AreaForm key={entry.area.id} entry={entry} />
         </>
       ) : null}

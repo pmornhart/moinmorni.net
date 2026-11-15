@@ -1,5 +1,6 @@
 import {
   ChevronDown,
+  ClipboardList,
   ExternalLink,
   Gavel,
   Headphones,
@@ -27,7 +28,7 @@ import { FALLBACK_ADDRESS, FALLBACK_BEDROCK_PORT } from './PublicLayout';
 /** The voice chat mod's page (link only – no logo, no picture). */
 const VOICE_MOD_URL = 'https://modrinth.com/plugin/simple-voice-chat';
 
-type SectionId = 'reinkommen' | 'sprachchat' | 'discord' | 'befehle' | 'regeln' | 'team-hilfe';
+type SectionId = 'reinkommen' | 'sprachchat' | 'discord' | 'mornicraft' | 'befehle' | 'regeln' | 'team-hilfe';
 
 interface HelpSection {
   readonly id: SectionId;
@@ -39,6 +40,7 @@ const SECTIONS: readonly HelpSection[] = [
   { id: 'reinkommen', key: 'join', icon: LogIn },
   { id: 'sprachchat', key: 'voice', icon: Headphones },
   { id: 'discord', key: 'discord', icon: Link2 },
+  { id: 'mornicraft', key: 'mornicraft', icon: ClipboardList },
   { id: 'befehle', key: 'commands', icon: Terminal },
   { id: 'regeln', key: 'rules', icon: Gavel },
   { id: 'team-hilfe', key: 'team', icon: LifeBuoy },
@@ -232,6 +234,31 @@ function DiscordBody(): ReactElement {
   );
 }
 
+function MorniCraftBody(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  return (
+    <div className="grid gap-4">
+      <p>{t('site.help.mornicraft.intro')}</p>
+      <Steps
+        items={[
+          t('site.help.mornicraft.step1'),
+          t('site.help.mornicraft.step2'),
+          t('site.help.mornicraft.step3'),
+          <>
+            {t('site.help.mornicraft.step4')} <Kbd>/bewerben</Kbd>
+          </>,
+        ]}
+      />
+      <Button asChild className="justify-self-start">
+        <Link to="/mornicraft/bewerben">
+          <ClipboardList />
+          {t('site.help.mornicraft.link')}
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
 function CommandsBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
@@ -300,6 +327,7 @@ const BODIES: Readonly<Record<SectionId, () => ReactElement>> = {
   reinkommen: JoinBody,
   sprachchat: VoiceBody,
   discord: DiscordBody,
+  mornicraft: MorniCraftBody,
   befehle: CommandsBody,
   regeln: RulesBody,
   'team-hilfe': TeamBody,

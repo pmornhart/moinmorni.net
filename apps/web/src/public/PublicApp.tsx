@@ -2,6 +2,7 @@ import '~/styles/public.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
+import { ApplyPage } from './ApplyPage';
 import { HelpPage } from './HelpPage';
 import { HomePage } from './HomePage';
 import { InfoPage } from './InfoPage';
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: 'news/:slug', element: <NewsArticlePage /> },
       { path: 'spielmodi', element: <ModesListPage /> },
       { path: 'spielmodi/:id', element: <ModePage /> },
+      { path: 'mornicraft/bewerben', element: <ApplyPage /> },
       { path: 'statistiken', element: <StatsPage /> },
       { path: 'spieler/:name', element: <PlayerProfilePage /> },
       { path: 'team', element: <TeamPage /> },
