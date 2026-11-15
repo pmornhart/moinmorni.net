@@ -141,6 +141,18 @@ export const DEFAULT_MODES: readonly Mode[] = [
   },
 ];
 
+/**
+ * Repos der Spielmodi: Dort baut GitHub bei jedem Stand auf `main` ein Release mit der Jar, MoinMorni spielt sie auf
+ * den Server des Modus (und hält sie aktuell).
+ */
+export const MODE_REPOS: Readonly<Record<string, string>> = {
+  duels: 'pmornhart/MoinMorni-Duels',
+  party: 'pmornhart/Morni-Party',
+  gipfelsturm: 'pmornhart/Morni-Gipfelsturm',
+  burgverlies: 'pmornhart/Morni-Burgverlies',
+  bollwerk: 'pmornhart/Morni-Bollwek',
+};
+
 /** Was Webseite, Lobby und Discord über einen Modus zeigen. */
 export interface ModeStatus {
   readonly id: string;

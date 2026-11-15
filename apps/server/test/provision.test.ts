@@ -5,6 +5,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, describe, expect, test } from 'vitest';
 import { createBuildService } from '../src/build/service.js';
 import { createProvisioner } from '../src/network/provision.js';
+import { DEFAULT_MODES } from '@moinmorni/shared';
 import { createHarness, type Harness } from './harness.js';
 
 const quiet = {
@@ -25,6 +26,54 @@ describe('Netzwerk richtet sich selbst ein', () => {
   let h: Harness;
   afterEach(async () => {
     await h.cleanup();
+  });
+
+  test('Spielmodus mit Release bekommt eigenen Server und sein Plugin; neues Release → wieder aufspielen', async () => {
+    h = await createHarness();
+    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    fs.writeFileSync(jar, 'plugin-v1');
+    const config = { ...h.mm.config, pluginFile: jar };
+    const release = { tag: 'v1.0.0', bytes: Buffer.from('duels-v1') };
+    const provisioner = createProvisioner(config, h.mm.motor, h.mm.hub, quiet, {
+      proxyAddOns: {},
+      lobbyAddOns: {},
+      buildContent: false,
+      versions: { paper: '1.21.4', velocity: '3.4.0' },
+      modes: () => DEFAULT_MODES,
+      releases: {
+        // Nur Duels hat schon ein Release, die anderen Modi noch nicht.
+        latest: async (repo) =>
+          repo.endsWith('MoinMorni-Duels')
+            ? { repo, tag: release.tag, fileName: 'MoinMorni-Duels.jar', bytes: release.bytes }
+            : null,
+      },
+    });
+    const first = await provisioner.ensure();
+    expect(first.created).toEqual(['proxy', 'lobby', 'bau', 'duels']);
+    expect(first.modesInstalled).toEqual(['duels']);
+
+    const nets = await h.mm.motor.request<Net[]>('GET', '/api/networks');
+    const duelsId =
+      nets.find((n) => n.name === 'MoinMorni')?.members.find((m) => m.name === 'duels')?.serverId ?? '';
+    const read = (file: string) =>
+      h.mm.motor.request<{ content: string }>(
+        'GET',
+        `/api/servers/${duelsId}/files/content?path=${encodeURIComponent(file)}`,
+      );
+    expect((await read('plugins/moinmorni/mode-release.txt')).content.trim()).toBe(
+      'pmornhart/MoinMorni-Duels@v1.0.0',
+    );
+    expect((await read('plugins/moinmorni/hub.json')).content).toContain('"server": "duels"');
+
+    const again = await provisioner.ensure();
+    expect(again.created).toEqual([]);
+    expect(again.modesInstalled).toEqual([]);
+
+    release.tag = 'v1.1.0';
+    release.bytes = Buffer.from('duels-v2');
+    const update = await provisioner.ensure();
+    expect(update.modesInstalled).toEqual(['duels']);
+    expect(update.restart.map((r) => r.member)).toEqual(['duels']);
   });
 
   test('Proxy und Lobby anlegen, Plugin und Schlüssel aufspielen – beim zweiten Mal nichts doppelt', async () => {

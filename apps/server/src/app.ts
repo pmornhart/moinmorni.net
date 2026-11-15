@@ -14,6 +14,7 @@ import { createEventBus, type EventBus } from './lib/events.js';
 import { createMotorClient, MotorError, type FetchLike, type MotorClient } from './motor/client.js';
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
+import { githubReleases } from './network/mode-releases.js';
 import { createProvisioner, LOBBY_MEMBER, type NetworkProvisioner } from './network/provision.js';
 import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
@@ -40,6 +41,8 @@ import { createSetupService, type SetupService } from './setup/service.js';
 
 /** So lange darf ein Netzwerk-Server nach der Einrichtung brauchen, bis er am Hub hängt. */
 const HUB_GRACE_MS = 120_000;
+/** Neue Releases der Spielmodi: einmal pro Stunde nachsehen (aufgespielt wird, der Neustart wartet, bis leer). */
+const MODE_CHECK_MS = 3_600_000;
 /** Weiterleiter im eigenen Netz: Docker, Heimnetz, NetBird (100.64.0.0/10). */
 const TRUSTED_HOPS = 'loopback,linklocal,uniquelocal,100.64.0.0/10';
 
@@ -146,6 +149,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const network = createProvisioner(config, motor, hub, app.log, {
     configureLobby: lobbyWorld.configure,
     configureBuild: build.configure,
+    modes: () => stores.modes(),
+    // Jars zum Ausprobieren ohne Release: <Datenordner>/mode-jars/<Repo-Name>.jar
+    releases: githubReleases(app.log, path.join(config.dataDir, 'mode-jars')),
   });
   const sleep = createSleepService(motor, hub, stores, app.log);
   sleepRef.service = sleep;
@@ -305,6 +311,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       }, ANNOUNCE_DELAY_MS).unref();
       await setup.start();
       if (!(await setup.required())) await provision();
+      const modeCheck = setInterval(() => {
+        void setup.required().then((required) => (required ? undefined : provision()));
+      }, MODE_CHECK_MS);
+      modeCheck.unref();
     },
     close: async () => {
       stopAuto();
