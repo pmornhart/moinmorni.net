@@ -54,6 +54,8 @@ export interface ProvisionResult {
    * sobald niemand drauf ist.
    */
   readonly restart: ReadonlyArray<{ readonly serverId: string; readonly member: string }>;
+  /** Alle Server des Netzwerks (Proxy und Spielserver). */
+  readonly servers: ReadonlyArray<{ readonly serverId: string; readonly member: string }>;
 }
 
 export interface ProvisionOptions {
@@ -259,7 +261,14 @@ export function createProvisioner(
           .filter((t) => created.includes(t.member))
           .map((t) => motor.request('POST', `/api/servers/${t.serverId}/actions/start`)),
       );
-      return { networkId: network.id, lobbyServerId, created, pluginUpdated: updated, restart };
+      return {
+        networkId: network.id,
+        lobbyServerId,
+        created,
+        pluginUpdated: updated,
+        restart,
+        servers: targets.map((t) => ({ serverId: t.serverId, member: t.member })),
+      };
     },
   };
 }

@@ -37,6 +37,8 @@ import { createStatusService } from './public/status.js';
 import { registerSetupRoutes } from './setup/routes.js';
 import { createSetupService, type SetupService } from './setup/service.js';
 
+/** So lange darf ein Netzwerk-Server nach der Einrichtung brauchen, bis er am Hub hängt. */
+const HUB_GRACE_MS = 120_000;
 /** Weiterleiter im eigenen Netz: Docker, Heimnetz, NetBird (100.64.0.0/10). */
 const TRUSTED_HOPS = 'loopback,linklocal,uniquelocal,100.64.0.0/10';
 
@@ -162,12 +164,21 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   };
   events.on('roles.changed', syncTeam);
   const restarts = createRestartQueue(motor, app.log);
+  const hubCheck: { timer: NodeJS.Timeout | undefined } = { timer: undefined };
   const provision = async (): Promise<void> => {
     if (!config.autoNetwork) return;
     try {
       const result = await network.ensure();
       app.log.info(result, 'Netzwerk geprüft');
       restarts.add(result.restart);
+      // Wer zwei Minuten nach dem Start noch ohne Hub läuft (z. B. alter Schlüssel im Speicher), startet neu, sobald
+      // niemand drauf ist. Schlafende und gestoppte Server holen sich alles beim nächsten Start.
+      clearTimeout(hubCheck.timer);
+      hubCheck.timer = setTimeout(() => {
+        const connected = new Set([...hub.connectedServers(), ...(hub.proxyOnline() ? ['proxy'] : [])]);
+        restarts.add(result.servers.filter((s) => !connected.has(s.member)));
+      }, HUB_GRACE_MS);
+      hubCheck.timer.unref();
       // Die Welt baut sich im Hintergrund (beim ersten Mal ein paar Minuten), die Webseite läuft schon.
       lobbyRef.id = result.lobbyServerId;
       syncTeam();
@@ -278,6 +289,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       sleep.stop();
       bot.stop();
       restarts.stop();
+      clearTimeout(hubCheck.timer);
       await hub.close();
       await app.close();
       handle.close();
