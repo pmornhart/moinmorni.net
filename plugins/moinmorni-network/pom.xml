@@ -14,6 +14,9 @@
     <!-- Velocity 4.3 und Paper 26.x laufen nur mit Java 25. -->
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Gleicher Code = gleiche Jar (feste Zeitstempel): MoinMorni startet Server nach einem Update nur neu, wenn sich
+         das Plugin wirklich geändert hat. -->
+    <project.build.outputTimestamp>2026-01-01T00:00:00Z</project.build.outputTimestamp>
   </properties>
 
   <repositories>
