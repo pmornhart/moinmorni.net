@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 import { buildLobby } from '../src/lobby/dorfplatz.js';
+import { summonOnce } from '../src/lobby/datapack.js';
 import { isPartialBlock, MOEBEL_BODEN } from '../src/furniture.js';
 import { STEP, type Facing } from '../src/shapes.js';
 
@@ -35,5 +36,14 @@ describe('Möbel in der fertigen Lobby', () => {
       expect(b.includes('shape=straight'), `Sitz bei ${x} ${y} ${z}: ${b}`).toBe(wall);
       expect(b.includes('shape=outer_right'), `Sitz bei ${x} ${y} ${z}: ${b}`).toBe(!wall);
     });
+  });
+});
+
+describe('Figuren im Datenpaket', () => {
+  test('summon nur, wenn dort noch keine Figur dieser Art steht (Stück darf wiederholt werden)', () => {
+    expect(summonOnce('summon mannequin 1.5 65 2.5 {Tags:["mm_npc"]}')).toBe(
+      'execute positioned 1.5 65 2.5 unless entity @e[type=mannequin,distance=..0.3] run summon mannequin ~ ~ ~ {Tags:["mm_npc"]}',
+    );
+    expect(summonOnce('setblock 0 64 0 stone strict')).toBe('setblock 0 64 0 stone strict');
   });
 });

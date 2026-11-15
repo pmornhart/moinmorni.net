@@ -33,12 +33,19 @@ const GAP_MS = 300;
 const READY_MINUTES = 15;
 const LOAD_MINUTES = 5;
 const POLL_SECONDS = 3;
+/** Wie oft ein Befehl versucht wird, wenn der Server zu langsam antwortet, und die Pause dazwischen. */
+const COMMAND_TRIES = 5;
+const RETRY_SECONDS = 5;
+const COMMAND_FAILED = 'command_failed';
+const LOG_COMMAND_CHARS = 60;
 const DEFAULTS = {
   settleMs: SETTLE_SECONDS * SECOND_MS,
   gapMs: GAP_MS,
   readyTimeoutMs: READY_MINUTES * MINUTE_MS,
   loadTimeoutMs: LOAD_MINUTES * MINUTE_MS,
   pollMs: POLL_SECONDS * SECOND_MS,
+  commandTries: COMMAND_TRIES,
+  retryMs: RETRY_SECONDS * SECOND_MS,
 } as const;
 /** Ecken (so weit draußen, wie gebaut wird) und Mitte: sind sie geladen, ist es der Rest auch. */
 const EDGE = 200;
@@ -70,6 +77,8 @@ export interface LobbyWorldOptions {
   readonly readyTimeoutMs?: number;
   readonly loadTimeoutMs?: number;
   readonly pollMs?: number;
+  readonly commandTries?: number;
+  readonly retryMs?: number;
 }
 
 export type BuildResult = 'built' | 'current' | 'not_running' | 'failed';
@@ -243,11 +252,25 @@ export function createLobbyWorld(
   };
   const writeFile = (serverId: string, file: string, content: string): Promise<void> =>
     motor.request('PUT', `/api/servers/${serverId}/files/content`, { path: file, content });
-  const run = async (serverId: string, command: string): Promise<string> => {
-    const r = await motor.request<{ answer?: string }>('POST', `/api/servers/${serverId}/command`, {
-      command,
-    });
-    return r.answer ?? '';
+  /**
+   * Ein Befehl über den Motor. Antwortet der Server zu langsam (gleich nach dem Start ist er beschäftigt), kommt
+   * „command_failed“ – dann kurz warten und noch einmal; die Bau-Befehle dürfen doppelt laufen (`summonOnce`).
+   */
+  const run = async (serverId: string, command: string, tries = opts.commandTries): Promise<string> => {
+    try {
+      const r = await motor.request<{ answer?: string }>('POST', `/api/servers/${serverId}/command`, {
+        command,
+      });
+      return r.answer ?? '';
+    } catch (err) {
+      if (!(err instanceof MotorError) || err.code !== COMMAND_FAILED || tries <= 1) throw err;
+      log.warn(
+        { command: command.slice(0, LOG_COMMAND_CHARS) },
+        'Lobby: Server antwortet langsam – gleich noch einmal',
+      );
+      await sleep(opts.retryMs);
+      return run(serverId, command, tries - 1);
+    }
   };
   const state = async (serverId: string): Promise<string> => {
     const s = await motor.request<{ live?: { state?: string } }>('GET', `/api/servers/${serverId}`);

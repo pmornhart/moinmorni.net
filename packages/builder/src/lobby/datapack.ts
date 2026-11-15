@@ -111,6 +111,22 @@ const LOBBY_RULES: Readonly<Record<string, string>> = {
   random_tick_speed: '0',
 };
 
+/**
+ * `summon TYP x y z {…}` → nur, wenn dort noch kein Wesen dieser Art steht. So darf MoinMorni ein Stück noch einmal
+ * aufrufen, wenn der Server bei der ersten Antwort zu langsam war (Figuren erscheinen nicht doppelt).
+ * Beispiel: `summon mannequin 1.5 65 2.5 {…}` → `execute positioned 1.5 65 2.5 unless entity
+ * @e[type=mannequin,distance=..0.3] run summon mannequin ~ ~ ~ {…}`
+ * Muster prüfen: https://regex101.com/?regex=%5Esummon%20(%5CS%2B)%20(%5CS%2B)%20(%5CS%2B)%20(%5CS%2B)(.*)%24
+ */
+const SUMMON = /^summon (\S+) (\S+) (\S+) (\S+)(.*)$/;
+const SAME_SPOT = '..0.3';
+export function summonOnce(line: string): string {
+  const m = SUMMON.exec(line);
+  if (!m) return line;
+  const [, type, x, y, z, rest] = m;
+  return `execute positioned ${x} ${y} ${z} unless entity @e[type=${type},distance=${SAME_SPOT}] run summon ${type} ~ ~ ~${rest}`;
+}
+
 let cached: LobbyPack | null = null;
 
 /** Das Datenpaket der Lobby (einmal berechnet, dauert ein paar Sekunden). */
@@ -118,7 +134,7 @@ export function lobbyPack(): LobbyPack {
   if (cached) return cached;
   const { cx, cz } = LOBBY;
   const { canvas } = buildLobby();
-  const body = [...clearCommands(cx, cz), ...canvas.commands()];
+  const body = [...clearCommands(cx, cz), ...canvas.commands().map(summonOnce)];
   const parts = Array.from({ length: Math.ceil(body.length / PART_SIZE) }, (_, i) =>
     body.slice(i * PART_SIZE, (i + 1) * PART_SIZE),
   );

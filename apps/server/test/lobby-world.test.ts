@@ -6,7 +6,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 import { MOEBEL_PACK_ID } from '@moinmorni/builder';
 import { lobbyPackInfo, lobbyPackUrl } from '../src/lobby/packs.js';
 import { createLobbyWorld, lobbyProperties, patchProperties } from '../src/lobby/world.js';
-import type { MotorClient } from '../src/motor/client.js';
+import { MotorError, type MotorClient } from '../src/motor/client.js';
 import { createProvisioner } from '../src/network/provision.js';
 import { createHarness, type Harness } from './harness.js';
 
@@ -142,6 +142,46 @@ describe('Lobby baut sich selbst', () => {
     commands.length = 0;
     expect(await world.build(result.lobbyServerId)).toBe('current');
     expect(commands).toEqual([]);
+  });
+
+  test('Server antwortet gleich nach dem Start zu langsam: Befehl wird wiederholt, der Bau läuft durch', async () => {
+    const h = await harness();
+    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    fs.writeFileSync(jar, 'plugin');
+    const config = { ...h.mm.config, pluginFile: jar };
+    const slow = { left: 2 };
+    const commands: string[] = [];
+    const motor: MotorClient = {
+      ...h.mm.motor,
+      request: async <T>(method: string, url: string, body?: unknown): Promise<T> => {
+        const command = url.endsWith('/command') ? (body as { command: string }).command : '';
+        if (command) commands.push(command);
+        if (command.endsWith('part/000') && slow.left > 0) {
+          slow.left -= 1;
+          throw new MotorError(409, 'command_failed');
+        }
+        return h.mm.motor.request<T>(method, url, body);
+      },
+    };
+    const world = createLobbyWorld(motor, quiet, {
+      pack: tinyPack('v1'),
+      sleep: () => new Promise((r) => setTimeout(r, 5)),
+      settleMs: 0,
+      gapMs: 0,
+      pollMs: 100,
+      retryMs: 0,
+      readyTimeoutMs: 20_000,
+      loadTimeoutMs: 2_000,
+    });
+    const provisioner = createProvisioner(config, motor, h.mm.hub, quiet, {
+      proxyAddOns: {},
+      lobbyAddOns: {},
+      versions: { paper: '1.21.4', velocity: '3.4.0' },
+      configureLobby: world.configure,
+    });
+    const result = await provisioner.ensure();
+    expect(await world.build(result.lobbyServerId)).toBe('built');
+    expect(commands.filter((c) => c.endsWith('part/000'))).toHaveLength(3);
   });
 
   test('Möbel-Paket: mit Domain bietet die Lobby es an (feste Kennung, Pflicht per Schalter), die Webseite liefert es', async () => {
