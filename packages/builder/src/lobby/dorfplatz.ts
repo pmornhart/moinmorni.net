@@ -74,7 +74,7 @@ const BREZN_STAND = {
 /** Aussichtspunkte für die Bilder: Name, Kamera, Blickziel. */
 export const LOBBY_VIEWS = [
   '1-ankunft 9.5 65 12.5 @ 0 92 -120',
-  '2-marktstaende 0.5 67 21 @ 0 68 -10',
+  '2-marktstaende 0.5 67 28 @ 0 68 -10',
   '3-stand-nah -2 66 -6 @ -8 66.8 -14',
   '4-von-oben 75 148 45 @ 0 78 -75',
   '5-biergarten 33 66.2 -11 @ 47 65.5 2',

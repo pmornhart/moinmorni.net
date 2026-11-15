@@ -460,6 +460,9 @@ export function marketStall(c: Canvas, s: StallSpec): void {
   [0, 6].forEach((u) => [0, 3].forEach((v) => f.fill(u, 1, v, u, 4, v, 'stripped_spruce_log[axis=y]')));
   f.fill(0, 1, 3, 6, 3, 3, 'spruce_planks');
   f.set(3, 2, 2, `${s.colour}_wall_banner[facing=${f.dir('front')}]`);
+  // Rückwand von außen: Banner in der Farbe des Standes und eine Laterne
+  f.set(3, 2, 4, `${s.colour}_wall_banner[facing=${f.dir('back')}]`);
+  [1, 5].forEach((u) => f.set(u, 1, 4, `lantern[hanging=false]`));
   [0, 1, 5, 6].forEach((u, i) => {
     f.set(u, 1, 1, 'barrel[facing=up]');
     f.set(u, 2, 1, s.goods[i % s.goods.length] ?? 'air');
