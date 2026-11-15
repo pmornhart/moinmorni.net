@@ -20,6 +20,31 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   in der Nähe an, Kinder sind kleiner.
 - Schloss auf dem Hügel, Prachtstraße, Obstgarten, Felder, Teich, Alpengipfel ringsum.
 
+## Möbel (Ressourcenpaket)
+
+Stühle mit Herz-Lehne, Eckbänke, Wirtstische, Hocker, Bierbänke, Biertische und Steinkrüge sind **eigene 3D-Modelle**
+(`packages/builder/src/furniture.ts`). Sie hängen an Blöcken, die es in der Lobby **nur als Möbel** gibt – das Paket
+gibt ihnen ein neues Aussehen, Kollision und Sitzhöhe bleiben echt:
+
+| Block | Möbel |
+| --- | --- |
+| Mangroven-Treppe unten, gerade/innen | Eckbank (mit Rückwand) |
+| Mangroven-Treppe sonst | Stuhl |
+| Mangroven-Stufe oben / unten | Wirtstisch / Hocker |
+| Birken-Stufe oben / unten | Biertisch / Bierbank |
+| braune Kerze (1–4, aus) | 1–4 Steinkrüge |
+
+**Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen und keine braunen Kerzen für anderes verbauen.**
+Die Modelle nutzen nur Minecrafts eigene Texturen (es liegen keine Mojang-Dateien im Paket). Weil Minecraft die Fläche
+unter Treppen/Stufen weglässt, malen die Modelle ein Stück Boden (Dielen bzw. Kies) mit; `fitFurniture` setzt vor einer
+Wand eine Eckbank statt eines Stuhls und Kies unter jede Bierbank (Tests in `packages/builder/test/`).
+
+Ausgeliefert unter `/api/public/packs/lobby.zip`; die Lobby bietet es per `server.properties` an (ID
+`6d6f696e-6d6f-726e-692d-6d6f6562656c`), Pflicht nur mit dem Schalter **Lobby → Möbel-Paket → Möbel-Paket verpflichtend**
+(`/lobby paket an|aus`). Der Proxy nimmt es beim Wechsel auf einen anderen Server wieder ab. Ohne Paket (abgelehnt,
+Bedrock) sieht man die normalen Blöcke – nichts fehlt. Echt geprüft mit Client 26.3 in der Docker-Lobby: angeboten,
+geladen, `/bau` → weg, `/lobby` → wieder da.
+
 ## Figuren und Skins
 
 Die Figuren sind Mannequins (Minecraft 1.21.9+) mit **eigenen Pixel-Skins** – gezeichnet in
