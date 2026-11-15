@@ -6,6 +6,7 @@ import {
   Clock,
   Crown,
   Lock,
+  Medal,
   Search,
   Smartphone,
   Trophy,
@@ -30,8 +31,12 @@ import {
   findMode,
   isNotFound,
   TOP_ALL,
+  useModeBoards,
+  useModeTop,
   usePlayerProfile,
   useTopPlayers,
+  type ModeBoard,
+  type ModeTopEntry,
   type PublicProfile,
   type TopPlayer,
 } from '~/lib/site';
@@ -268,8 +273,181 @@ export function StatsPage(): ReactElement {
             </ol>
           </Panel>
         ) : null}
+        <ModeBoards />
       </div>
     </>
+  );
+}
+
+/** One row of a game mode's leaderboard: place, face, name, rank, value (and a bar against the best). */
+function ModeRow({
+  entry,
+  share,
+  value,
+}: {
+  readonly entry: ModeTopEntry;
+  readonly share: number;
+  readonly value: string;
+}): ReactElement {
+  const bar: CSSProperties = { width: `${share}%`, backgroundColor: 'var(--mode-b)' };
+  const medal = MEDALS[entry.rank - 1];
+  const place: CSSProperties | undefined = medal
+    ? { backgroundColor: medal.face, boxShadow: `inset 0 -3px 0 ${medal.edge}` }
+    : undefined;
+  return (
+    <li>
+      <Link
+        to={`/spieler/${encodeURIComponent(entry.name)}`}
+        className="group grid grid-cols-[2.5rem_auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 transition-colors hover:bg-muted/60 sm:gap-4 sm:px-5"
+      >
+        <span
+          className={cn(
+            'tabular grid size-9 place-items-center rounded-[6px] font-pixel text-[1.25rem] font-bold',
+            medal ? 'text-black/60' : 'text-muted-foreground',
+          )}
+          style={place}
+        >
+          {entry.rank}
+        </span>
+        <PlayerFace
+          uuid={entry.uuid}
+          colour={entry.role.colour}
+          className="size-11"
+          faceClassName="rounded-[6px] border-2 border-black/20"
+        />
+        <span className="grid min-w-0 gap-1.5">
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+            <span className="min-w-0 truncate text-[1rem] font-bold leading-tight group-hover:text-primary">
+              {entry.name}
+            </span>
+            {entry.role.symbol ? <RankTag role={entry.role} className="max-sm:hidden" /> : null}
+          </span>
+          <span className="block h-1.5 w-full max-w-[320px] overflow-hidden bg-muted" aria-hidden>
+            <span className="block h-full opacity-80" style={bar} />
+          </span>
+        </span>
+        <span className="tabular shrink-0 font-pixel text-[15px] font-semibold">{value}</span>
+      </Link>
+    </li>
+  );
+}
+
+/** Leaderboards of the game modes: pick a mode, then a value (wins, best time …). Hidden until a mode reports. */
+function ModeBoards(): ReactElement | null {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  const language = useLanguage();
+  const status = useNetworkStatus();
+  const boards = useModeBoards();
+  const [chosenMode, setChosenMode] = useState<string | null>(null);
+  const [chosenKey, setChosenKey] = useState<string | null>(null);
+  const list: readonly ModeBoard[] = boards.data ?? [];
+  const board = list.find((b) => b.mode === chosenMode) ?? list[0];
+  const key = board?.keys.find((k) => k.key === chosenKey) ?? board?.keys[0];
+  const top = useModeTop(board?.mode ?? '', key?.key ?? '', key?.order ?? 'desc');
+  if (!board || !key) return null;
+  const locale = NUMBER_LOCALE[language];
+  const number = new Intl.NumberFormat(locale);
+  const show = (k: string, v: number): string => (k.endsWith(TIME_SUFFIX) ? formatTime(v, locale) : number.format(v));
+  const label = (k: string): string => t(`site.players.stats.${k}`, { defaultValue: readable(k) });
+  const modeName = (id: string): string => {
+    const mode = findMode(status.data?.modes, id);
+    return mode ? pick(mode.name) : readable(id);
+  };
+  const entries = top.data ?? [];
+  const first = entries[0]?.value ?? 0;
+  const shareOf = (v: number): number => {
+    if (!first || !v) return 0;
+    return key.order === 'asc' ? (first / v) * PERCENT : (v / first) * PERCENT;
+  };
+  const choose = (mode: string): void => {
+    setChosenMode(mode);
+    setChosenKey(null);
+  };
+  return (
+    <section className="grid gap-5 pt-6" aria-labelledby="mode-boards" style={modeStyle(board.mode)}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2
+          id="mode-boards"
+          className="flex items-center gap-3 font-pixel text-[clamp(1.8rem,4vw,2.4rem)] font-bold leading-none"
+        >
+          <Medal className="size-7 text-gold" aria-hidden />
+          {t('site.stats.modeBoards')}
+        </h2>
+        <p className="text-[14px] text-muted-foreground">{t('site.stats.modeBoardsText')}</p>
+      </div>
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('site.stats.modeBoardsModes')}>
+        {list.map((b) => {
+          const active = b.mode === board.mode;
+          return (
+            <button
+              key={b.mode}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => choose(b.mode)}
+              style={modeStyle(b.mode)}
+              className={cn(
+                'rounded-[6px] border-2 px-3.5 py-2 font-pixel text-[15px] font-semibold uppercase tracking-[0.06em] transition-colors',
+                active
+                  ? 'border-[color-mix(in_srgb,var(--mode-b)_70%,#000)] bg-[var(--mode-b)] text-white shadow-[0_3px_0_color-mix(in_srgb,var(--mode-b)_60%,#000)]'
+                  : 'border-border bg-card text-foreground hover:border-[var(--mode-b)]',
+              )}
+            >
+              {modeName(b.mode)}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-2" aria-label={t('site.stats.modeBoardsValues')}>
+        {board.keys.map((k) => {
+          const active = k.key === key.key;
+          return (
+            <button
+              key={k.key}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setChosenKey(k.key)}
+              className={cn(
+                'rounded-[4px] px-2.5 py-1.5 font-pixel text-[13px] font-semibold uppercase tracking-[0.06em] transition-colors',
+                active ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {label(k.key)}
+            </button>
+          );
+        })}
+      </div>
+      <Panel className="overflow-hidden" role="tabpanel">
+        <header className="mm-mode-bg relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3 sm:px-5">
+          <div className="mm-noise absolute inset-0 opacity-60 mix-blend-overlay" aria-hidden />
+          <span className="relative font-pixel text-[1.3rem] font-bold leading-none text-white [text-shadow:0_2px_0_rgba(0,0,0,0.4)]">
+            {modeName(board.mode)} · {label(key.key)}
+          </span>
+          <span className="relative font-pixel text-[13px] font-semibold uppercase tracking-[0.08em] text-white/85">
+            {t(key.order === 'asc' ? 'site.stats.lowFirst' : 'site.stats.highFirst')}
+          </span>
+        </header>
+        {top.isPending ? (
+          <div className="grid divide-y-2 divide-border">
+            {SKELETON_ROWS.map((k) => (
+              <div key={k} className="flex items-center gap-4 px-5 py-3.5">
+                <Skeleton className="size-11" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {top.isError ? <LoadError /> : null}
+        {top.isSuccess ? (
+          <ol className="grid divide-y-2 divide-border">
+            {entries.map((e) => (
+              <ModeRow key={e.uuid} entry={e} share={shareOf(e.value)} value={show(key.key, e.value)} />
+            ))}
+          </ol>
+        ) : null}
+      </Panel>
+    </section>
   );
 }
 

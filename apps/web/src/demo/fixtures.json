@@ -149,7 +149,12 @@
         "Listen to the team. Questions or trouble? Open a ticket on Discord."
       ]
     },
-    "voiceChannels": ["Dorfplatz", "Biergarten", "Turnier", "Gipfelfunk"],
+    "voiceChannels": [
+      "Dorfplatz",
+      "Biergarten",
+      "Turnier",
+      "Gipfelfunk"
+    ],
     "discordInvite": "https://moinmorni.net/discord",
     "socials": {
       "youtube": "https://moinmorni.net/youtube",
@@ -345,7 +350,14 @@
       "colour": "#aaaaaa"
     }
   },
-  "teamOrder": ["owner", "admin", "moderator", "builder", "media", "vip"],
+  "teamOrder": [
+    "owner",
+    "admin",
+    "moderator",
+    "builder",
+    "media",
+    "vip"
+  ],
   "players": [
     {
       "name": "Vroni_Baut",
@@ -362,7 +374,14 @@
         },
         "gipfelsturm": {
           "courses": 24,
-          "best_ms": 83456
+          "best_ms": 83456,
+          "finishes": 5
+        },
+        "duels": {
+          "wins": 30,
+          "losses": 23,
+          "kills": 53,
+          "rating": 1207
         }
       }
     },
@@ -377,11 +396,16 @@
         "gipfelsturm": {
           "courses": 61,
           "best_ms": 71230,
-          "wins": 18
+          "finishes": 14
         },
         "duels": {
           "wins": 12,
           "losses": 20
+        },
+        "party": {
+          "games": 16,
+          "wins": 1,
+          "edelweiss": 119
         }
       }
     },
@@ -399,6 +423,11 @@
           "kills": 410,
           "best_streak": 14,
           "rating": 1840
+        },
+        "party": {
+          "games": 32,
+          "wins": 3,
+          "edelweiss": 222
         }
       }
     },
@@ -412,11 +441,17 @@
         "duels": {
           "wins": 54,
           "losses": 61,
-          "kills": 233
+          "kills": 233,
+          "rating": 1426
         },
         "party": {
           "wins": 4,
-          "games": 22
+          "games": 22,
+          "edelweiss": 189
+        },
+        "gipfelsturm": {
+          "finishes": 24,
+          "best_ms": 77722
         }
       }
     },
@@ -426,7 +461,15 @@
       "playMinutes": 6488,
       "firstSeenDaysAgo": 44,
       "lastSeenMinutesAgo": 0,
-      "online": "lobby"
+      "online": "lobby",
+      "modes": {
+        "duels": {
+          "wins": 40,
+          "losses": 35,
+          "kills": 64,
+          "rating": 1256
+        }
+      }
     },
     {
       "name": ".Tobi_04",
@@ -441,6 +484,12 @@
           "wins": 17,
           "games": 40,
           "edelweiss": 388
+        },
+        "duels": {
+          "wins": 25,
+          "losses": 27,
+          "kills": 33,
+          "rating": 1136
         }
       }
     },
@@ -449,21 +498,64 @@
       "role": "moderator",
       "playMinutes": 5311,
       "firstSeenDaysAgo": 43,
-      "lastSeenMinutesAgo": 260
+      "lastSeenMinutesAgo": 260,
+      "modes": {
+        "duels": {
+          "wins": 18,
+          "losses": 25,
+          "kills": 21,
+          "rating": 1103
+        },
+        "party": {
+          "games": 25,
+          "wins": 6,
+          "edelweiss": 108
+        }
+      }
     },
     {
       "name": "KaiFilmt",
       "role": "media",
       "playMinutes": 4876,
       "firstSeenDaysAgo": 37,
-      "lastSeenMinutesAgo": 1500
+      "lastSeenMinutesAgo": 1500,
+      "modes": {
+        "duels": {
+          "wins": 11,
+          "losses": 9,
+          "kills": 12,
+          "rating": 1044
+        },
+        "party": {
+          "games": 16,
+          "wins": 4,
+          "edelweiss": 55
+        }
+      }
     },
     {
       "name": "Lisl_Lacht",
       "role": "player",
       "playMinutes": 4310,
       "firstSeenDaysAgo": 28,
-      "lastSeenMinutesAgo": 33
+      "lastSeenMinutesAgo": 33,
+      "modes": {
+        "duels": {
+          "wins": 16,
+          "losses": 16,
+          "kills": 29,
+          "rating": 1085
+        },
+        "gipfelsturm": {
+          "finishes": 13,
+          "best_ms": 115104
+        },
+        "party": {
+          "games": 9,
+          "wins": 0,
+          "edelweiss": 76
+        }
+      }
     },
     {
       "name": "Sepp_Huber",
@@ -471,21 +563,62 @@
       "playMinutes": 4105,
       "firstSeenDaysAgo": 44,
       "lastSeenMinutesAgo": 0,
-      "online": "mornicraft"
+      "online": "mornicraft",
+      "modes": {
+        "duels": {
+          "wins": 12,
+          "losses": 17,
+          "kills": 23,
+          "rating": 1074
+        },
+        "gipfelsturm": {
+          "finishes": 5,
+          "best_ms": 67962
+        },
+        "party": {
+          "games": 13,
+          "wins": 1,
+          "edelweiss": 104
+        }
+      }
     },
     {
       "name": "Bertl99",
       "role": "vip",
       "playMinutes": 3790,
       "firstSeenDaysAgo": 26,
-      "lastSeenMinutesAgo": 2880
+      "lastSeenMinutesAgo": 2880,
+      "modes": {
+        "duels": {
+          "wins": 18,
+          "losses": 13,
+          "kills": 22,
+          "rating": 1042
+        },
+        "gipfelsturm": {
+          "finishes": 14,
+          "best_ms": 67729
+        }
+      }
     },
     {
       "name": "Toni_Gipfel",
       "role": "builder",
       "playMinutes": 3544,
       "firstSeenDaysAgo": 40,
-      "lastSeenMinutesAgo": 610
+      "lastSeenMinutesAgo": 610,
+      "modes": {
+        "duels": {
+          "wins": 26,
+          "losses": 30,
+          "kills": 44,
+          "rating": 1147
+        },
+        "gipfelsturm": {
+          "finishes": 8,
+          "best_ms": 134883
+        }
+      }
     },
     {
       "name": "NinaNacht",
@@ -499,7 +632,17 @@
           "wins": 77,
           "losses": 39,
           "kills": 260,
-          "best_streak": 9
+          "best_streak": 9,
+          "rating": 1518
+        },
+        "gipfelsturm": {
+          "finishes": 6,
+          "best_ms": 69191
+        },
+        "party": {
+          "games": 16,
+          "wins": 5,
+          "edelweiss": 57
         }
       }
     },
@@ -508,14 +651,48 @@
       "role": "player",
       "playMinutes": 2876,
       "firstSeenDaysAgo": 19,
-      "lastSeenMinutesAgo": 4320
+      "lastSeenMinutesAgo": 4320,
+      "modes": {
+        "duels": {
+          "wins": 17,
+          "losses": 22,
+          "kills": 33,
+          "rating": 1040
+        },
+        "gipfelsturm": {
+          "finishes": 5,
+          "best_ms": 139198
+        },
+        "party": {
+          "games": 2,
+          "wins": 0,
+          "edelweiss": 6
+        }
+      }
     },
     {
       "name": "Quirin",
       "role": "player",
       "playMinutes": 2411,
       "firstSeenDaysAgo": 17,
-      "lastSeenMinutesAgo": 75
+      "lastSeenMinutesAgo": 75,
+      "modes": {
+        "duels": {
+          "wins": 4,
+          "losses": 6,
+          "kills": 4,
+          "rating": 977
+        },
+        "gipfelsturm": {
+          "finishes": 2,
+          "best_ms": 139458
+        },
+        "party": {
+          "games": 12,
+          "wins": 2,
+          "edelweiss": 65
+        }
+      }
     },
     {
       "name": "Zenzi_Zaubert",
@@ -523,14 +700,42 @@
       "playMinutes": 1987,
       "firstSeenDaysAgo": 14,
       "lastSeenMinutesAgo": 0,
-      "online": "lobby"
+      "online": "lobby",
+      "modes": {
+        "duels": {
+          "wins": 15,
+          "losses": 11,
+          "kills": 24,
+          "rating": 1048
+        },
+        "gipfelsturm": {
+          "finishes": 1,
+          "best_ms": 124938
+        },
+        "party": {
+          "games": 3,
+          "wins": 1,
+          "edelweiss": 23
+        }
+      }
     },
     {
       "name": "Gustl",
       "role": "player",
       "playMinutes": 1640,
       "firstSeenDaysAgo": 12,
-      "lastSeenMinutesAgo": 9000
+      "lastSeenMinutesAgo": 9000,
+      "modes": {
+        "gipfelsturm": {
+          "finishes": 2,
+          "best_ms": 115095
+        },
+        "party": {
+          "games": 8,
+          "wins": 1,
+          "edelweiss": 56
+        }
+      }
     },
     {
       "name": ".Fanny_Fliegt",
@@ -538,21 +743,62 @@
       "playMinutes": 1322,
       "firstSeenDaysAgo": 9,
       "lastSeenMinutesAgo": 180,
-      "bedrock": true
+      "bedrock": true,
+      "modes": {
+        "duels": {
+          "wins": 7,
+          "losses": 5,
+          "kills": 12,
+          "rating": 1041
+        },
+        "gipfelsturm": {
+          "finishes": 3,
+          "best_ms": 117353
+        }
+      }
     },
     {
       "name": "Maxl_Max",
       "role": "player",
       "playMinutes": 905,
       "firstSeenDaysAgo": 6,
-      "lastSeenMinutesAgo": 1200
+      "lastSeenMinutesAgo": 1200,
+      "modes": {
+        "duels": {
+          "wins": 10,
+          "losses": 12,
+          "kills": 15,
+          "rating": 1071
+        },
+        "gipfelsturm": {
+          "finishes": 1,
+          "best_ms": 116535
+        }
+      }
     },
     {
       "name": "Annerl",
       "role": "player",
       "playMinutes": 488,
       "firstSeenDaysAgo": 3,
-      "lastSeenMinutesAgo": 50
+      "lastSeenMinutesAgo": 50,
+      "modes": {
+        "duels": {
+          "wins": 9,
+          "losses": 9,
+          "kills": 17,
+          "rating": 1028
+        },
+        "gipfelsturm": {
+          "finishes": 1,
+          "best_ms": 106193
+        },
+        "party": {
+          "games": 4,
+          "wins": 0,
+          "edelweiss": 35
+        }
+      }
     },
     {
       "name": "Hansi_HD",
@@ -560,7 +806,24 @@
       "playMinutes": 215,
       "firstSeenDaysAgo": 1,
       "lastSeenMinutesAgo": 0,
-      "online": "lobby"
+      "online": "lobby",
+      "modes": {
+        "duels": {
+          "wins": 5,
+          "losses": 6,
+          "kills": 9,
+          "rating": 1012
+        },
+        "gipfelsturm": {
+          "finishes": 1,
+          "best_ms": 123103
+        },
+        "party": {
+          "games": 3,
+          "wins": 0,
+          "edelweiss": 16
+        }
+      }
     },
     {
       "name": "Geheimrat",

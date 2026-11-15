@@ -199,7 +199,13 @@
       "place": "Platz {{rank}}",
       "homeTitle": "MoinMorni in Zahlen",
       "modesOpen": "Spielmodi offen",
-      "modesOpenHint": "Leere Modi schlafen und wachen auf, sobald jemand kommt."
+      "modesOpenHint": "Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "modeBoards": "Bestenlisten der Spielmodi",
+      "modeBoardsText": "Wer ist in den Modi ganz vorne? Wähl einen Modus und einen Wert.",
+      "modeBoardsModes": "Spielmodus",
+      "modeBoardsValues": "Wert",
+      "highFirst": "Höchster zuerst",
+      "lowFirst": "Schnellster zuerst"
     },
     "players": {
       "eyebrow": "Spielerprofil",
@@ -241,7 +247,15 @@
         "edelweiss": "Edelweiß",
         "waves": "Wellen",
         "best_wave": "Beste Welle",
-        "bosses": "Endbosse"
+        "bosses": "Endbosse",
+        "finishes": "Ziele erreicht",
+        "attempts": "Versuche",
+        "falls": "Stürze",
+        "balance": "Taler",
+        "sales": "Verkäufe",
+        "purchases": "Käufe",
+        "orders_filled": "Aufträge erfüllt",
+        "playtime_min": "Spielzeit (Min.)"
       }
     },
     "team": {

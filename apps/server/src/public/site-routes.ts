@@ -97,6 +97,15 @@ export function registerSiteRoutes(
       })),
   );
 
+  /** Welche Bestenlisten es gibt: je Modus (in der Reihenfolge des Panels) die gemeldeten Werte. */
+  app.get('/api/stats/boards', async () => {
+    const order = stores.modes().map((m) => m.id);
+    return hub.stats
+      .boards()
+      .filter((b) => order.includes(b.mode))
+      .sort((a, b) => order.indexOf(a.mode) - order.indexOf(b.mode));
+  });
+
   /** Rangliste eines Spielmodus nach einem Wert (Siege, Bestzeit …), private Profile zählen nicht. */
   app.get(
     '/api/stats/:mode/top',

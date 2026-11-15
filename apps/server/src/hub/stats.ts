@@ -44,12 +44,29 @@ export interface TopEntry {
   readonly value: number;
 }
 
+/** Welche Werte ein Modus meldet und wie viele (öffentliche) Spieler einen haben – für Bestenlisten der Webseite. */
+export interface ModeBoard {
+  readonly mode: string;
+  readonly keys: ReadonlyArray<{ readonly key: string; readonly players: number; readonly order: 'asc' | 'desc' }>;
+}
+
+/** Zeiten (…_ms) sind besser, je kleiner sie sind. */
+const TIME_SUFFIX = '_ms';
+/** Diese Werte stehen in einer Bestenliste vorne (wenn ein Modus sie meldet), der Rest nach dem Alphabet. */
+const HEADLINE_KEYS = ['rating', 'wins', 'balance', 'finishes', 'points', 'best_wave', 'kills', 'games'];
+const rankOfKey = (key: string): number => {
+  const i = HEADLINE_KEYS.indexOf(key);
+  return i < 0 ? HEADLINE_KEYS.length : i;
+};
+
 export interface ModeStatsService {
   readonly record: (report: StatsReport) => void;
   /** Rangliste eines Werts (ohne private Profile); `lowFirst` für Zeiten. */
   readonly top: (mode: string, key: string, limit: number, lowFirst?: boolean) => TopEntry[];
   /** Alle Werte eines Spielers, nach Modus. */
   readonly ofPlayer: (uuid: string) => Record<string, Record<string, number>>;
+  /** Je Modus die gemeldeten Werte (nur öffentliche Profile gezählt), wichtige zuerst. */
+  readonly boards: () => ModeBoard[];
 }
 
 export function createModeStats(db: Db): ModeStatsService {
@@ -111,5 +128,26 @@ export function createModeStats(db: Db): ModeStatsService {
           (acc, r) => ({ ...acc, [r.mode]: { ...(acc[r.mode] ?? {}), [r.key]: r.value } }),
           {},
         ),
+    boards: () => {
+      const rows = db
+        .select({ mode: modeStats.mode, key: modeStats.key, players: sql<number>`count(*)` })
+        .from(modeStats)
+        .innerJoin(players, eq(players.uuid, modeStats.uuid))
+        .where(eq(players.privateProfile, false))
+        .groupBy(modeStats.mode, modeStats.key)
+        .all();
+      const byMode = rows.reduce<Map<string, ModeBoard['keys']>>(
+        (acc, r) =>
+          new Map(acc).set(r.mode, [
+            ...(acc.get(r.mode) ?? []),
+            { key: r.key, players: r.players, order: r.key.endsWith(TIME_SUFFIX) ? 'asc' : 'desc' },
+          ]),
+        new Map(),
+      );
+      return [...byMode].map(([mode, keys]) => ({
+        mode,
+        keys: [...keys].sort((a, b) => rankOfKey(a.key) - rankOfKey(b.key) || a.key.localeCompare(b.key)),
+      }));
+    },
   };
 }

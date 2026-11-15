@@ -3,6 +3,7 @@ import { createHarness, OWNER_PASSWORD, type Harness } from './harness.js';
 
 const LENA = '22222222-2222-2222-2222-222222222222';
 const FINN = '33333333-3333-3333-3333-333333333333';
+const MIA = '44444444-4444-4444-4444-444444444444';
 
 describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
   let h: Harness;
@@ -63,6 +64,28 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
       'Lena',
     ]);
     expect((await anon('/api/players/Niemand')).statusCode).toBe(404);
+  });
+
+  test('Bestenlisten der Spielmodi: welche es gibt, Zeiten aufsteigend, private Profile zählen nicht', async () => {
+    // Finn ist seit dem Test oben privat.
+    h.mm.hub.players.seen({ uuid: MIA, name: 'Mia', bedrock: false });
+    h.mm.hub.stats.record({ mode: 'gipfelsturm', uuid: LENA, add: { finishes: 3 }, min: { best_ms: 83_000 } });
+    h.mm.hub.stats.record({ mode: 'gipfelsturm', uuid: FINN, add: { finishes: 5 }, min: { best_ms: 61_000 } });
+    h.mm.hub.stats.record({ mode: 'duels', uuid: MIA, add: { wins: 7 } });
+    h.mm.hub.stats.record({ mode: 'duels', uuid: FINN, add: { wins: 9 } });
+    h.mm.hub.stats.record({ mode: 'gibtsnicht', uuid: MIA, add: { wins: 1 } });
+    const boards = (await anon('/api/stats/boards')).json<
+      Array<{ mode: string; keys: Array<{ key: string; players: number; order: string }> }>
+    >();
+    // Reihenfolge wie im Panel (Duels vor Gipfelsturm), unbekannte Modi fallen weg, Finn zählt nicht mit
+    expect(boards.map((b) => [b.mode, b.keys.map((k) => `${k.key}:${k.players}:${k.order}`)])).toEqual([
+      ['duels', ['wins:1:desc']],
+      ['gipfelsturm', ['finishes:1:desc', 'best_ms:1:asc']],
+    ]);
+    const fastest = (await anon('/api/stats/gipfelsturm/top?key=best_ms&order=asc')).json<
+      Array<{ name: string; value: number }>
+    >();
+    expect(fastest.map((e) => [e.name, e.value])).toEqual([['Lena', 83_000]]);
   });
 
   test('Team, Regeln und Discord-Einladung', async () => {

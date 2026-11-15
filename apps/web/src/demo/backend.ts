@@ -1,5 +1,7 @@
 import type { ModeStatus, NetworkStatus, Text } from '@moinmorni/shared';
 import type {
+  ModeBoard,
+  ModeTopEntry,
   NewsCategory,
   NewsItem,
   PlayerProfile,
@@ -198,6 +200,62 @@ function top(request: DemoRequest): DemoResponse {
   return { status: HTTP_OK, body };
 }
 
+/** Values whose name ends like this are times: lower is better. */
+const TIME_SUFFIX = '_ms';
+const HEADLINE_KEYS = ['rating', 'wins', 'balance', 'finishes', 'points', 'best_wave', 'kills', 'games'];
+const rankOfKey = (key: string): number => {
+  const i = HEADLINE_KEYS.indexOf(key);
+  return i < 0 ? HEADLINE_KEYS.length : i;
+};
+
+/** Like the real server: per mode (in panel order) the values public players have, important ones first. */
+function modeBoards(): DemoResponse {
+  const pairs = DATA.players
+    .filter((p) => !p.private)
+    .flatMap((p) =>
+      Object.entries(p.modes ?? {}).flatMap(([mode, values]) => Object.keys(values).map((key) => `${mode} ${key}`)),
+    );
+  const counts = pairs.reduce<Readonly<Record<string, number>>>(
+    (acc, pair) => ({ ...acc, [pair]: (acc[pair] ?? 0) + 1 }),
+    {},
+  );
+  const body: ModeBoard[] = DATA.status.modes
+    .map((m) => ({
+      mode: m.id,
+      keys: Object.entries(counts)
+        .filter(([pair]) => pair.startsWith(`${m.id} `))
+        .map(([pair, players]) => {
+          const key = pair.slice(m.id.length + 1);
+          return { key, players, order: key.endsWith(TIME_SUFFIX) ? ('asc' as const) : ('desc' as const) };
+        })
+        .toSorted((a, b) => rankOfKey(a.key) - rankOfKey(b.key) || a.key.localeCompare(b.key)),
+    }))
+    .filter((b) => b.keys.length);
+  return { status: HTTP_OK, body };
+}
+
+/** "/api/stats/duels/top?key=wins&order=desc" */
+function modeTop(request: DemoRequest): DemoResponse {
+  const [mode = '', what] = decodeURIComponent(request.rest).split('/');
+  const key = request.params.get('key') ?? '';
+  if (what !== 'top' || !DATA.status.modes.some((m) => m.id === mode))
+    return { status: HTTP_NOT_FOUND, body: { error: 'mode_unknown' } };
+  const low = request.params.get('order') === 'asc';
+  const valueOf = (p: FixturePlayer): number | undefined => p.modes?.[mode]?.[key];
+  const body: ModeTopEntry[] = DATA.players
+    .filter((p) => !p.private && valueOf(p) !== undefined)
+    .toSorted((a, b) => ((valueOf(a) ?? 0) - (valueOf(b) ?? 0)) * (low ? 1 : -1))
+    .slice(0, limitOf(request.params))
+    .map((p, i) => ({
+      rank: i + 1,
+      uuid: uuidOf(p.name),
+      name: p.name,
+      value: valueOf(p) ?? 0,
+      role: roleOf(p.role),
+    }));
+  return { status: HTTP_OK, body };
+}
+
 function whereOf(online: string): Text | null {
   if (online === LOBBY) return LOBBY_NAME;
   return DATA.status.modes.find((m) => m.id === online)?.name ?? null;
@@ -300,6 +358,7 @@ const EXACT: Readonly<Record<string, Handler>> = {
   'GET /api/site': site,
   'GET /api/news': newsList,
   'GET /api/stats/top': top,
+  'GET /api/stats/boards': modeBoards,
   'GET /api/team': team,
   'GET /api/public/apply': applyView,
   'POST /api/public/apply': applySend,
@@ -309,6 +368,7 @@ const EXACT: Readonly<Record<string, Handler>> = {
 const PREFIXED: readonly (readonly [method: string, prefix: string, handler: Handler])[] = [
   ['GET', '/api/news/', newsItem],
   ['GET', '/api/players/', player],
+  ['GET', '/api/stats/', modeTop],
 ];
 
 function route(request: Omit<DemoRequest, 'rest'>): DemoResponse {

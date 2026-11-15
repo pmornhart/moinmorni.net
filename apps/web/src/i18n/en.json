@@ -199,7 +199,13 @@
       "place": "Place {{rank}}",
       "homeTitle": "MoinMorni in numbers",
       "modesOpen": "Game modes open",
-      "modesOpenHint": "Empty modes sleep and wake up as soon as someone arrives."
+      "modesOpenHint": "Empty modes sleep and wake up as soon as someone arrives.",
+      "modeBoards": "Game mode leaderboards",
+      "modeBoardsText": "Who's on top in the modes? Pick a mode and a value.",
+      "modeBoardsModes": "Game mode",
+      "modeBoardsValues": "Value",
+      "highFirst": "Highest first",
+      "lowFirst": "Fastest first"
     },
     "players": {
       "eyebrow": "Player profile",
@@ -241,7 +247,15 @@
         "edelweiss": "Edelweiss",
         "waves": "Waves",
         "best_wave": "Best wave",
-        "bosses": "Final bosses"
+        "bosses": "Final bosses",
+        "finishes": "Finishes",
+        "attempts": "Attempts",
+        "falls": "Falls",
+        "balance": "Taler",
+        "sales": "Sales",
+        "purchases": "Purchases",
+        "orders_filled": "Orders filled",
+        "playtime_min": "Play time (min)"
       }
     },
     "team": {

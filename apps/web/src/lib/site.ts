@@ -82,6 +82,26 @@ const MAX_RETRIES = 2;
 /** The news list asks for this many (the API's limit). */
 export const NEWS_ALL = 50;
 export const TOP_ALL = 50;
+/** Bestenliste eines Spielmodus: so viele Plätze. */
+export const MODE_TOP = 10;
+
+/** Which values a game mode reports (only public profiles counted); important ones first, times ascending. */
+export interface ModeBoard {
+  readonly mode: string;
+  readonly keys: ReadonlyArray<{
+    readonly key: string;
+    readonly players: number;
+    readonly order: 'asc' | 'desc';
+  }>;
+}
+
+export interface ModeTopEntry {
+  readonly rank: number;
+  readonly uuid: string;
+  readonly name: string;
+  readonly value: number;
+  readonly role: PublicRole;
+}
 
 /** No retry for "not found": that is an answer. */
 function retryUnlessMissing(failures: number, err: Error): boolean {
@@ -121,6 +141,30 @@ export function useTopPlayers(limit: number): UseQueryResult<TopPlayer[]> {
   return useQuery({
     queryKey: ['top', limit],
     queryFn: () => mmApi<TopPlayer[]>(`/api/stats/top?limit=${limit}`),
+    staleTime: MINUTE_MS,
+  });
+}
+
+export function useModeBoards(): UseQueryResult<ModeBoard[]> {
+  return useQuery({
+    queryKey: ['mode-boards'],
+    queryFn: () => mmApi<ModeBoard[]>('/api/stats/boards'),
+    staleTime: MINUTE_MS,
+  });
+}
+
+export function useModeTop(
+  mode: string,
+  key: string,
+  order: 'asc' | 'desc',
+): UseQueryResult<ModeTopEntry[]> {
+  return useQuery({
+    queryKey: ['mode-top', mode, key, order],
+    queryFn: () =>
+      mmApi<ModeTopEntry[]>(
+        `/api/stats/${encodeURIComponent(mode)}/top?key=${encodeURIComponent(key)}&order=${order}&limit=${MODE_TOP}`,
+      ),
+    enabled: Boolean(mode && key),
     staleTime: MINUTE_MS,
   });
 }

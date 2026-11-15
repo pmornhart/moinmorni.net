@@ -107,6 +107,17 @@ describe('Hub', () => {
     const top = hub.stats.top('duels', 'wins', 10);
     expect(top.map((e) => [e.name, e.value])).toEqual([['Lena', 2]]);
     expect(hub.stats.ofPlayer(LENA)['duels']).toEqual({ wins: 2, kills: 3, best_ms: 5000 });
+    // Bestenlisten: wichtige Werte zuerst, Zeiten aufsteigend
+    expect(hub.stats.boards()).toEqual([
+      {
+        mode: 'duels',
+        keys: [
+          { key: 'wins', players: 1, order: 'desc' },
+          { key: 'kills', players: 1, order: 'desc' },
+          { key: 'best_ms', players: 1, order: 'asc' },
+        ],
+      },
+    ]);
     expect(hub.modeStates()['duels']).toMatchObject({ state: 'running', players: 2 });
 
     // Party: nur für eigene Spieler; ohne Party null
