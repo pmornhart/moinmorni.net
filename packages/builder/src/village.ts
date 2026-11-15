@@ -9,7 +9,8 @@
  */
 import type { Canvas } from './canvas.js';
 import { MOEBEL } from './furniture.js';
-import { signedSkin } from './cast.js';
+import { CAST, signedSkin } from './cast.js';
+import { trachtItems } from './trachten.js';
 import { Frame, type Local } from './frame.js';
 import { STEP, YAW, type Facing } from './shapes.js';
 
@@ -72,6 +73,13 @@ const HALF = 0.5;
 /** Sitz: Anzeige-Block 0,55 über dem Sitz-Block – die Figur sitzt dann auf der Stufe (wie MorniCraft-Sitze). */
 const SEAT_Y = 0.55;
 const SMALL = 0.62;
+/**
+ * Körper-Tracht als Passagier: Minecraft setzt Passagiere 1,8 Blöcke über die Füße (mal Größe der Figur). Das Modell
+ * ist in Skin-Pixeln gebaut (Mitte bei 8); Figuren zeichnen ein Skin-Pixel 0,9375/16 Block groß.
+ */
+const RIDE_HEIGHT = 1.8;
+const SKIN_SCALE = 0.9375;
+const MODEL_MIDDLE = 0.5;
 /** Schild knapp vor der Markise, damit es nicht in der Wolle steckt. */
 const AHEAD = 0.52;
 const LABEL_STANDING = 2.15;
@@ -115,8 +123,27 @@ function profileOf(skin: string): string {
     : `profile:{texture:'moinmorni:npc/${skin}',model:'wide'}`;
 }
 
+/** Hand und Kopf (3D-Frisur, Hut, Bart – ohne Paket unsichtbar). */
+function equipmentOf(n: NpcSpec, head: string | null): string[] {
+  const slots = [
+    ...(n.hand ? [`mainhand:{id:'minecraft:${n.hand}',count:1}`] : []),
+    ...(head ? [`head:${head}`] : []),
+  ];
+  return slots.length > 0 ? [`equipment:{${slots.join(',')}}`] : [];
+}
+
+/** Anzeige-Objekt mit der Körper-Tracht, fährt auf der Figur mit (das Lobby-Plugin dreht es mit). */
+function bodyDisplay(n: NpcSpec, item: string): string {
+  const size = n.small ? SMALL : 1;
+  const scale = SKIN_SCALE * size;
+  const down = (-RIDE_HEIGHT * size + MODEL_MIDDLE * scale).toFixed(4);
+  return `{id:'minecraft:item_display',item_display:'none',Tags:[${tagList(['mm_tracht'])}],Rotation:[${YAW[n.look]}f,0f],teleport_duration:2,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,${down}f,0f],scale:[${scale}f,${scale}f,${scale}f]},item:${item}}`;
+}
+
 /** Figur aufstellen (Mannequin mit eigenem Skin, unverwundbar, nicht schiebbar). */
 export function npc(c: Canvas, n: NpcSpec): void {
+  const outfit = CAST[n.skin];
+  const tracht = outfit ? trachtItems(outfit, n.sit === true) : { head: null, body: null };
   const tags = tagList(['mm_npc', `mm_skin_${n.skin}`, ...(n.tags ?? [])]);
   const parts = [
     `Tags:[${tags}]`,
@@ -126,8 +153,9 @@ export function npc(c: Canvas, n: NpcSpec): void {
     'Invulnerable:1b',
     'Silent:1b',
     profileOf(n.skin),
-    ...(n.hand ? [`equipment:{mainhand:{id:'minecraft:${n.hand}',count:1}}`] : []),
+    ...equipmentOf(n, tracht.head),
     ...(n.small ? [`attributes:[{id:'minecraft:scale',base:${SMALL}d}]`] : []),
+    ...(tracht.body ? [`Passengers:[${bodyDisplay(n, tracht.body)}]`] : []),
   ];
   const body = `{id:'minecraft:mannequin',${parts.join(',')}}`;
   const x = n.x + HALF;

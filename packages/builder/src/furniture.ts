@@ -1,6 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- Modell-Maße in 1/16 Block (Minecraft-Modellkoordinaten) */
 import type { Canvas } from './canvas.js';
 import { zipOf } from './png.js';
+import { airItemDefinition, TRACHT_NS, trachtModels, trachtTextures } from './trachten.js';
 import { STEP, type Facing } from './shapes.js';
 
 /**
@@ -364,7 +365,7 @@ const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, nu
 export function furniturePack(): Buffer {
   const meta = {
     pack: {
-      description: 'MoinMorni – Möbel der Lobby',
+      description: 'MoinMorni – Möbel und Trachten der Lobby',
       pack_format: PACK_FORMAT,
       supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
       min_format: PACK_FORMAT,
@@ -383,6 +384,14 @@ export function furniturePack(): Buffer {
         name: `assets/${NS}/models/block/moebel/${name}.json`,
         data: json(modelJson(FURNITURE_MODELS[name] ?? [])),
       })),
+    // Trachten: Frisuren, Hüte, Bärte, Dirndl … über das (sonst leere) Luft-Modell, siehe trachten.ts
+    { name: 'assets/minecraft/items/air.json', data: json(airItemDefinition()) },
+    ...Object.entries(trachtModels())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, m]) => ({ name: `assets/${TRACHT_NS}/models/item/tracht/${name}.json`, data: json(m) })),
+    ...Object.entries(trachtTextures())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, png]) => ({ name: `assets/${TRACHT_NS}/textures/item/tracht/${name}.png`, data: png })),
   ]);
 }
 

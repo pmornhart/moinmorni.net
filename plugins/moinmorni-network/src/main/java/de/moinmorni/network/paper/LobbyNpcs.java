@@ -24,6 +24,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
@@ -37,6 +38,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.event.world.EntitiesUnloadEvent;
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
+import io.papermc.paper.entity.TeleportFlag;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -505,7 +507,21 @@ final class LobbyNpcs implements Listener {
             walk.pause = PAUSE_SHORT;
             return;
         }
-        e.teleport(next);
+        // Mit der Tracht (Passagier) zusammen weiterziehen und sie in Laufrichtung drehen.
+        e.teleport(next, TeleportFlag.EntityState.RETAIN_PASSENGERS);
+        turnWith(e, next.getYaw());
+    }
+
+    /** Körper und Tracht (Anzeige-Objekt auf der Figur) schauen in dieselbe Richtung wie der Kopf. */
+    private static void turnWith(Entity e, float yaw) {
+        if (e instanceof LivingEntity living) {
+            living.setBodyYaw(yaw);
+        }
+        for (Entity passenger : e.getPassengers()) {
+            if (passenger instanceof Display) {
+                passenger.setRotation(yaw, 0);
+            }
+        }
     }
 
     /** Ziel in der Nähe des Platzes, zu dem ein freier, ebener Weg führt. */
@@ -564,12 +580,15 @@ final class LobbyNpcs implements Listener {
         if (near == null) {
             if (Math.abs(e.getLocation().getYaw() - homeYaw) > 1) {
                 e.setRotation(homeYaw, 0);
+                turnWith(e, homeYaw);
             }
             return;
         }
         Vector d = near.getEyeLocation().toVector().subtract(eye.toVector());
         float pitch = (float) -Math.toDegrees(Math.atan2(d.getY(), Math.hypot(d.getX(), d.getZ())));
-        e.setRotation(yawOf(d), pitch);
+        float yaw = yawOf(d);
+        e.setRotation(yaw, pitch);
+        turnWith(e, yaw);
     }
 
     private static float yawOf(Vector d) {
