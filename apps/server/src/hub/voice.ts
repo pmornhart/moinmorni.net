@@ -106,7 +106,9 @@ export function createVoice(
     muted: [...muted()],
     parties: voice()['partyVoice'] === true ? parties() : [],
     // Passwörter bleiben im Hub: Spielserver erfahren nur, ob eine Gruppe abgeschlossen ist (beitreten per /voice).
-    own: ownAllowed() ? [...own.values()].map((g) => ({ id: g.id, name: g.name, locked: g.password !== null })) : [],
+    own: ownAllowed()
+      ? [...own.values()].map((g) => ({ id: g.id, name: g.name, locked: g.password !== null }))
+      : [],
     ownGroups: ownAllowed(),
     distance: distance(),
   });

@@ -94,7 +94,15 @@ export function createStores(db: Db, events: EventBus): Stores {
           const fresh = parsed.find((f) => f.id === r.id);
           return JSON.stringify(old) !== JSON.stringify(fresh);
         });
-        if (!changed.every((r) => mayShape(editor, before.find((o) => o.id === r.id), parsed.find((f) => f.id === r.id))))
+        if (
+          !changed.every((r) =>
+            mayShape(
+              editor,
+              before.find((o) => o.id === r.id),
+              parsed.find((f) => f.id === r.id),
+            ),
+          )
+        )
           throw forbidden('role_too_high');
       }
       db.transaction((tx) => {

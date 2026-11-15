@@ -105,7 +105,10 @@ export function createBuildService(motor: MotorClient, stores: Stores): BuildSer
       })();
       const next = patchProperties(current, buildProperties());
       if (!next.changed) return false;
-      await motor.request('PUT', `/api/servers/${serverId}/files/content`, { path: PROPERTIES_FILE, content: next.text });
+      await motor.request('PUT', `/api/servers/${serverId}/files/content`, {
+        path: PROPERTIES_FILE,
+        content: next.text,
+      });
       return true;
     },
     overview: async () => {
