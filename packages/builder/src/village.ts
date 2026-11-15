@@ -448,6 +448,8 @@ export interface StallSpec {
   readonly mode: string;
   /** Waren auf der Theke (Block-Namen). */
   readonly goods: readonly string[];
+  /** Eigene Kennungen der Figur (z. B. ein Marktstand ohne Modus); sonst die eines Modus-Standes. */
+  readonly npcTags?: readonly string[];
 }
 
 /** Marktstand mit Markise in der Farbe des Modus, Figur in der Mitte (anklickbar), Name über dem Kopf. */
@@ -488,8 +490,8 @@ export function marketStall(c: Canvas, s: StallSpec): void {
     z: nz,
     look: f.dir('front'),
     skin: s.skin,
-    tags: ['mm_mode_npc', `mm_mode_${s.mode}`],
-    labelTags: ['mm_mode_label'],
+    tags: s.npcTags ?? ['mm_mode_npc', `mm_mode_${s.mode}`],
+    labelTags: s.npcTags ? [] : ['mm_mode_label'],
     label: [
       { text: `${s.name}\n`, color: 'gold', bold: true },
       { text: `${s.line}\n`, color: 'green' },

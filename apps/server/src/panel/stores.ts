@@ -50,11 +50,25 @@ function mayShape(editor: Role, old: Role | undefined, fresh: Role | undefined):
   return below(old) && below(fresh) && within(fresh);
 }
 
+/** Frühe Fassungen hießen den SMP-Modus „Mirni SMP“ (Tippfehler) – einmal auf „MorniSMP“ umstellen, nur wenn unverändert. */
+const OLD_SMP_NAME = 'Mirni SMP';
+function renameOldSmp(db: Db): void {
+  const row = db.select().from(modes).where(eq(modes.id, 'mirni')).get();
+  if (!row || row.data.name.de !== OLD_SMP_NAME) return;
+  const fresh = DEFAULT_MODES.find((m) => m.id === 'mirni');
+  if (!fresh) return;
+  db.update(modes)
+    .set({ data: { ...row.data, name: fresh.name } })
+    .where(eq(modes.id, 'mirni'))
+    .run();
+}
+
 export function createStores(db: Db, events: EventBus): Stores {
   if (!db.select().from(roles).get())
     DEFAULT_ROLES.forEach((r) => db.insert(roles).values({ id: r.id, data: r }).run());
   if (!db.select().from(modes).get())
     DEFAULT_MODES.forEach((m) => db.insert(modes).values({ id: m.id, data: m }).run());
+  renameOldSmp(db);
 
   const allRoles = (): Role[] =>
     db

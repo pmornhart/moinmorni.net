@@ -130,7 +130,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
   },
   {
     id: 'mirni',
-    name: t('Mirni SMP', 'Mirni SMP'),
+    name: t('MorniSMP', 'MorniSMP'),
     description: t('Bald da!', 'Coming soon!'),
     state: 'soon',
     access: 'everyone',

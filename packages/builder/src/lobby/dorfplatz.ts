@@ -47,11 +47,35 @@ const LANE = { z1: 4, z2: 10, x1: -116, x2: -47 };
 const UPPER = { x: 80, z: -40 };
 const LANE_HOUSES = [-58, -72, -86, -100] as const;
 
+/** Dorfmarkt: Mitte der Standfront (x, z) und Blickrichtung, je zwei Stände an jeder Ecke des Maibaums. */
+const MARKET: readonly (readonly [number, number, Facing])[] = [
+  [-8, -13, 'south'],
+  [8, -13, 'south'],
+  [-13, -8, 'east'],
+  [13, -8, 'west'],
+  [-13, 8, 'east'],
+  [13, 8, 'west'],
+  [-8, 13, 'north'],
+  [8, 13, 'north'],
+];
+
+/** Der achte Stand gehört keinem Modus: Brezn und Lebkuchen. */
+const BREZN_STAND = {
+  id: 'brezn',
+  name: 'Brezn & Lebkuchen',
+  colour: 'brown',
+  line: 'Frisch aus der Backstube',
+  status: 'Servus!',
+  skin: 'kraemer',
+  icon: 'bread',
+  goods: ['cake', 'hay_block', 'barrel[facing=up]', 'potted_red_tulip'],
+} as const;
+
 /** Aussichtspunkte für die Bilder: Name, Kamera, Blickziel. */
 export const LOBBY_VIEWS = [
   '1-ankunft 9.5 65 12.5 @ 0 92 -120',
-  '2-marktstaende -6 66 -12 @ -33 66.5 -33',
-  '3-stand-nah 24.5 65.4 -26.5 @ 24.5 66.8 -33',
+  '2-marktstaende 0.5 67 21 @ 0 68 -10',
+  '3-stand-nah -2 66 -6 @ -8 66.8 -14',
   '4-von-oben 75 148 45 @ 0 78 -75',
   '5-biergarten 33 66.2 -11 @ 47 65.5 2',
   '6-wirtshaus-innen 73.5 65.2 6.5 @ 79 65.4 -3',
@@ -83,8 +107,8 @@ const BEER_GUESTS: readonly (readonly [number, number, number, 1 | -1, string, s
 
 /** Leute, die später im Dorf herumlaufen (Lobby-Plugin): [x, z, Blick, Skin, Weg, Kind?]. */
 const WALKERS: readonly (readonly [number, number, Facing, string, string, boolean?])[] = [
-  [6, 12, 'west', 'gast6', 'dorfplatz'],
-  [-9, -6, 'south', 'gast4', 'dorfplatz'],
+  [2, 9, 'west', 'gast6', 'dorfplatz'],
+  [-3, -5, 'south', 'gast4', 'dorfplatz'],
   [3, 7, 'north', 'bua', 'dorfplatz', true],
   [5, 6, 'west', 'madl', 'dorfplatz', true],
   [1, 48, 'south', 'gast7', 'dorfstrasse'],
@@ -145,9 +169,40 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     .filter((z) => z % 8 === 0)
     .forEach((z) => [-6, 6].forEach((x) => lampPost(c, x, Math.max(GROUND, Math.round(height(x, z))), z)));
   range(-50, 50).forEach((x) => range(-38, -23).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));
-  [-42, -24, 24, 42].forEach((x, i) => stallAt(c, x, GROUND, -32, 'south', MODES[i]!));
-  range(-46, -30).forEach((x) => range(-20, 20).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));
-  [-14, 0, 14].forEach((z, i) => stallAt(c, -38, GROUND, z, 'east', MODES[4 + i]!));
+  // Weg vom Platz zur Handwerkergasse
+  range(-47, -22).forEach((x) => range(3, 11).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));
+
+  // Dorfmarkt: acht Stände eng im Kreis um den Maibaum, je zwei an jeder Ecke, Gassen in alle vier Richtungen
+  MARKET.forEach(([x, z, front], i) => {
+    const mode = MODES[i];
+    if (mode) stallAt(c, x, GROUND, z, front, mode);
+    else stallAt(c, x, GROUND, z, front, BREZN_STAND, ['mm_village', 'mm_market']);
+  });
+  // An den inneren Ecken Heuballen mit Kürbis, an den äußeren Fässer und Kisten
+  [-1, 1].forEach((sx) =>
+    [-1, 1].forEach((sz) => {
+      c.set(sx * 10, GROUND + 1, sz * 10, 'hay_block');
+      c.set(sx * 10, GROUND + 2, sz * 10, pick(rnd, ['carved_pumpkin', 'melon', 'pumpkin']));
+      [
+        [17, 17],
+        [18, 17],
+        [17, 18],
+      ].forEach(([a, b]) =>
+        c.set(
+          sx * a!,
+          GROUND + 1,
+          sz * b!,
+          pick(rnd, ['barrel[facing=up]', 'barrel[facing=up]', 'composter[level=8]']),
+        ),
+      );
+      c.set(
+        sx * 17,
+        GROUND + 2,
+        sz * 17,
+        pick(rnd, ['potted_red_tulip', 'potted_poppy', 'potted_pink_tulip']),
+      );
+    }),
+  );
 
   // Dorfstraße nach Süden: Läden und Wohnhäuser (alle begehbar), Kapelle am Ende
   range(-3, 3).forEach((x) =>

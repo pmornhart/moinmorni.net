@@ -43,8 +43,8 @@ function look(from: LobbyPoint, at: LobbyPoint): LobbyView {
 
 const p = (x: number, y: number, z: number): LobbyPoint => ({ x, y, z });
 
-/** Ankunft: am Dorfplatz, Blick über den Maibaum hinauf zum Schloss. */
-export const LOBBY_SPAWN_VIEW: LobbyView = look(p(9.5, GROUND + 1, 12.5), p(0, 92, -120));
+/** Ankunft: in der Gasse südlich vom Dorfmarkt, Blick über die Stände und den Maibaum hinauf zum Schloss. */
+export const LOBBY_SPAWN_VIEW: LobbyView = look(p(0.5, GROUND + 1, 20.5), p(0, 92, -120));
 
 /** Launchpads auf dem Vorplatz – schießen schräg zur Mitte auf die Schlosstreppe (Landung etwa bei z −50). */
 export const LAUNCHPADS: readonly Launchpad[] = [

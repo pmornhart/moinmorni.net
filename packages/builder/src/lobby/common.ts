@@ -92,7 +92,7 @@ export const MODES: readonly Mode[] = [
   },
   {
     id: 'mirni',
-    name: 'Mirni SMP',
+    name: 'MorniSMP',
     colour: 'gray',
     line: '○ Bald',
     status: 'Noch geschlossen',
@@ -173,7 +173,15 @@ export function portalAt(c: Canvas, cx: number, y: number, cz: number, front: Fa
 }
 
 /** Marktstand mit Modus-Figur mittig an (cx, cz) ausrichten. */
-export function stallAt(c: Canvas, cx: number, y: number, cz: number, front: Facing, mode: Mode): void {
+export function stallAt(
+  c: Canvas,
+  cx: number,
+  y: number,
+  cz: number,
+  front: Facing,
+  mode: Mode,
+  npcTags?: readonly string[],
+): void {
   const [rx, rz] = STEP[RIGHT_SEEN_FROM_FRONT[front]];
   marketStall(c, {
     x: cx - rx * 3,
@@ -187,6 +195,7 @@ export function stallAt(c: Canvas, cx: number, y: number, cz: number, front: Fac
     status: mode.status,
     mode: mode.id,
     goods: mode.goods,
+    ...(npcTags ? { npcTags } : {}),
   });
 }
 
