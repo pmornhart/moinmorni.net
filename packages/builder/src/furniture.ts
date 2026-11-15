@@ -2,6 +2,7 @@
 import type { Canvas } from './canvas.js';
 import { zipOf } from './png.js';
 import { airItemDefinition, TRACHT_NS, trachtModels, trachtTextures } from './trachten.js';
+import { BRUNNEN_ERSATZ, brunnenItemCases, brunnenModels } from './brunnen.js';
 import { STEP, type Facing } from './shapes.js';
 
 /**
@@ -356,6 +357,34 @@ export function furnitureBlockstates(): Readonly<Record<string, unknown>> {
   };
 }
 
+/** Leeres Block-Modell (nur Bruch-Partikel): für Blöcke, die das Paket ausblendet. */
+const EMPTY_MODEL = { textures: { particle: 'minecraft:block/quartz_block_side' }, elements: [] };
+
+/**
+ * Ersatz-Blöcke des Prunkbrunnens (Tuffziegel-Mauer, Endstab) – mit Paket unsichtbar, dort steht das Modell. Beide
+ * haben keine volle Seitenfläche: Minecraft lässt die Flächen daneben stehen, es entstehen keine Löcher.
+ */
+function hiddenBlockstates(): Readonly<Record<string, unknown>> {
+  const hidden = { multipart: [{ apply: { model: `${NS}:block/leer` } }] };
+  return Object.fromEntries(
+    Object.values(BRUNNEN_ERSATZ).map((block) => [block.split('[')[0] ?? block, hidden]),
+  );
+}
+
+/** `items/air.json`: erster Text „brunnen“ → Teil des Prunkbrunnens, sonst wie bisher (Trachten). */
+function airWithFountain(): Record<string, unknown> {
+  const trachten = airItemDefinition() as { readonly model: unknown };
+  return {
+    model: {
+      type: 'minecraft:select',
+      property: 'minecraft:custom_model_data',
+      index: 0,
+      cases: [{ when: 'brunnen', model: brunnenItemCases(NS) }],
+      fallback: trachten.model,
+    },
+  };
+}
+
 /** Texturpaket-Bereich (Minecraft liest `pack_format` bzw. ab 1.21.9 `min_format`/`max_format`). */
 const PACK_FORMAT = 15;
 const PACK_FORMAT_MAX = 999;
@@ -365,14 +394,14 @@ const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, nu
 export function furniturePack(): Buffer {
   const meta = {
     pack: {
-      description: 'MoinMorni – Möbel und Trachten der Lobby',
+      description: 'MoinMorni – Möbel, Trachten und Brunnen der Lobby',
       pack_format: PACK_FORMAT,
       supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
       min_format: PACK_FORMAT,
       max_format: PACK_FORMAT_MAX,
     },
   };
-  const states = furnitureBlockstates();
+  const states = { ...furnitureBlockstates(), ...hiddenBlockstates() };
   return zipOf([
     { name: 'pack.mcmeta', data: json(meta) },
     ...Object.keys(states)
@@ -384,8 +413,12 @@ export function furniturePack(): Buffer {
         name: `assets/${NS}/models/block/moebel/${name}.json`,
         data: json(modelJson(FURNITURE_MODELS[name] ?? [])),
       })),
-    // Trachten: Frisuren, Hüte, Bärte, Dirndl … über das (sonst leere) Luft-Modell, siehe trachten.ts
-    { name: 'assets/minecraft/items/air.json', data: json(airItemDefinition()) },
+    // Trachten und Prunkbrunnen über das (sonst leere) Luft-Modell, siehe trachten.ts und brunnen.ts
+    { name: 'assets/minecraft/items/air.json', data: json(airWithFountain()) },
+    { name: `assets/${NS}/models/block/leer.json`, data: json(EMPTY_MODEL) },
+    ...Object.entries(brunnenModels())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, m]) => ({ name: `assets/${NS}/models/item/brunnen/${name}.json`, data: json(m) })),
     ...Object.entries(trachtModels())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([name, m]) => ({ name: `assets/${TRACHT_NS}/models/item/tracht/${name}.json`, data: json(m) })),

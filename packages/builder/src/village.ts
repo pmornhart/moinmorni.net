@@ -101,16 +101,9 @@ function snbtText(parts: readonly TextPart[]): string {
     .join(',')}]`;
 }
 
-/**
- * Jedes Wesen, das die Lobby setzt, trägt `mm_lobby` und die Bau-Version (`mm_build_<version>`; beim Bauen setzt
- * `lobbyPack()` die echte Version für den Platzhalter ein). Das Lobby-Plugin entfernt Wesen aus älteren Bauten, sobald
- * sie geladen werden – auch in Stücken, die beim Neubau gerade nicht geladen waren.
- */
-export const LOBBY_TAG = 'mm_lobby';
-export const BUILD_TAG_PREFIX = 'mm_build_';
-export const BUILD_PLACEHOLDER = `${BUILD_TAG_PREFIX}dev`;
-const LOBBY_TAGS = [LOBBY_TAG, BUILD_PLACEHOLDER];
-const tagList = (tags: readonly string[]): string => [...tags, ...LOBBY_TAGS].map((t) => `'${t}'`).join(',');
+import { lobbyTags } from './lobby-tags.js';
+export { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG, lobbyTags } from './lobby-tags.js';
+const tagList = lobbyTags;
 
 /**
  * Skin einer Figur: von Mojang signiert (sieht jeder, auch ohne Texturpaket und über Geyser), sonst – solange eine

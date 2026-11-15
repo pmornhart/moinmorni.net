@@ -86,6 +86,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         features = new LobbyFeatures(this, lobby, this::langOf);
         jail = new LobbyJail(this, features, this::langOf);
         clock = new LobbyClock(this);
+        new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
         jail.start();
         features.start();

@@ -13,6 +13,7 @@ import { furnish, signText, type RoomKind } from './village.js';
 import { roundTree } from './nature.js';
 import { MOEBEL, MOEBEL_BODEN } from './furniture.js';
 import { castleLights, hollowWing, rotunda, type WingKind } from './schloss.js';
+import { prunkbrunnen } from './brunnen.js';
 
 const D = {
   floor: 4,
@@ -506,7 +507,7 @@ export function castle(c: Canvas, s: CastleSpec): void {
       f.set(u, 1, v, pick(s.rnd, ['red_tulip', 'white_tulip', 'cornflower', 'allium', 'oxeye_daisy']));
   });
   const [fx, fy, fz] = f.at(0, 0, 16);
-  fountain(c, fx, fy, fz, 4);
+  prunkbrunnen(c, fx, fy, fz, 'gross');
   // Seitenflügel (Fronten zum Hof), Hauptflügel hinten
   palaceWing(c, {
     ...wingOrigin(f, -W + 2, 1, 1, 'right'),
@@ -550,7 +551,7 @@ export function castle(c: Canvas, s: CastleSpec): void {
   c.set(dx, dy + 42, dz, 'lightning_rod');
   // Innen: Rotunde unter der Kuppel mit Brunnen (Festsaal-Boden liegt eine Reihe über dem Flügel-Ursprung)
   rotunda(c, dx, dz, dy + 1, dy + 24);
-  fountain(c, dx, dy + 1, dz, 3);
+  prunkbrunnen(c, dx, dy + 1, dz, 'klein');
   // Türme: vier am Hauptflügel, zwei vorne an den Seitenflügeln
   const towers: [number, number, number, number][] = [];
   [
