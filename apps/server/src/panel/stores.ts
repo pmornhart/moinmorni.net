@@ -52,15 +52,24 @@ function mayShape(editor: Role, old: Role | undefined, fresh: Role | undefined):
 
 /** Frühe Fassungen hießen den SMP-Modus „Mirni SMP“ (Tippfehler) – einmal auf „MorniSMP“ umstellen, nur wenn unverändert. */
 const OLD_SMP_NAME = 'Mirni SMP';
-function renameOldSmp(db: Db): void {
+const OLD_SMP_TEXT = 'Bald da!';
+/**
+ * MorniSMP älterer Installationen nachziehen: Tippfehler „Mirni SMP“, alter Platzhalter-Text „Bald da!“ und noch kein
+ * Server-Name. Was im Panel selbst geändert wurde, bleibt.
+ */
+function updateOldSmp(db: Db): void {
   const row = db.select().from(modes).where(eq(modes.id, 'mirni')).get();
-  if (!row || row.data.name.de !== OLD_SMP_NAME) return;
   const fresh = DEFAULT_MODES.find((m) => m.id === 'mirni');
-  if (!fresh) return;
-  db.update(modes)
-    .set({ data: { ...row.data, name: fresh.name } })
-    .where(eq(modes.id, 'mirni'))
-    .run();
+  if (!row || !fresh) return;
+  const old = row.data;
+  const next: Mode = {
+    ...old,
+    name: old.name.de === OLD_SMP_NAME ? fresh.name : old.name,
+    description: old.description.de === OLD_SMP_TEXT ? fresh.description : old.description,
+    server: old.server ?? fresh.server,
+  };
+  if (JSON.stringify(next) === JSON.stringify(old)) return;
+  db.update(modes).set({ data: next }).where(eq(modes.id, 'mirni')).run();
 }
 
 export function createStores(db: Db, events: EventBus): Stores {
@@ -68,7 +77,7 @@ export function createStores(db: Db, events: EventBus): Stores {
     DEFAULT_ROLES.forEach((r) => db.insert(roles).values({ id: r.id, data: r }).run());
   if (!db.select().from(modes).get())
     DEFAULT_MODES.forEach((m) => db.insert(modes).values({ id: m.id, data: m }).run());
-  renameOldSmp(db);
+  updateOldSmp(db);
 
   const allRoles = (): Role[] =>
     db

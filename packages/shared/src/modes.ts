@@ -131,13 +131,16 @@ export const DEFAULT_MODES: readonly Mode[] = [
   {
     id: 'mirni',
     name: t('MorniSMP', 'MorniSMP'),
-    description: t('Bald da!', 'Coming soon!'),
+    description: t(
+      'Überleben mit freiem Markt: Stadt mit Marktplatz, Auktionshaus, Aufträgen, eigenen Läden und Zufalls-Teleport.',
+      'Survival with a free market: town with market square, auction house, orders, your own shops and random teleport.',
+    ),
     state: 'soon',
     access: 'everyone',
     position: 6,
     maxPlayers: 60,
     sleepWhenEmpty: true,
-    server: null,
+    server: 'smp',
   },
 ];
 
@@ -151,7 +154,11 @@ export const MODE_REPOS: Readonly<Record<string, string>> = {
   gipfelsturm: 'pmornhart/Morni-Gipfelsturm',
   burgverlies: 'pmornhart/Morni-Burgverlies',
   bollwerk: 'pmornhart/Morni-Bollwek',
+  mirni: 'pmornhart/Morni-SMP',
 };
+
+/** Arbeitsspeicher der Modus-Server in MB, wo der Standard (3 GB) nicht reicht – MorniSMP hat eine große Welt. */
+export const MODE_MEMORY_MB: Readonly<Record<string, number>> = { mirni: 8192 };
 
 /** Was Webseite, Lobby und Discord über einen Modus zeigen. */
 export interface ModeStatus {

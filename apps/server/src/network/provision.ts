@@ -6,7 +6,7 @@ import type { Config } from '../config.js';
 import type { Hub } from '../hub/index.js';
 import { MotorError, type MotorClient } from '../motor/client.js';
 import { NETWORK_NAME } from '../public/status.js';
-import { MODE_REPOS, type Mode } from '@moinmorni/shared';
+import { MODE_MEMORY_MB, MODE_REPOS, type Mode } from '@moinmorni/shared';
 import type { ReleaseSource } from './mode-releases.js';
 
 /**
@@ -31,7 +31,8 @@ const BUILD_PORT = 25567;
 /** WorldEdit von Modrinth (der Motor lädt es mit Prüfsumme). */
 const WORLDEDIT = { source: 'modrinth', projectId: 'worldedit' } as const;
 /** Spielmodi: Speicher pro Server, Ports ab hier (dahinter keine Ports nach außen, nur für den Motor). */
-const MODE_MEMORY_MB = 3072;
+/** Standard-Arbeitsspeicher eines Modus-Servers (einzelne Modi brauchen mehr, siehe `MODE_MEMORY_MB`). */
+const MODE_DEFAULT_MEMORY_MB = 3072;
 const MODE_PORT_BASE = 25570;
 const MODE_STAMP_FILE = 'plugins/moinmorni/mode-release.txt';
 /** Falls der Motor gerade keine Versionsliste bekommt (PaperMC nicht erreichbar). */
@@ -253,7 +254,7 @@ export function createProvisioner(
         const server = await createServer(
           `MoinMorni ${mode.name.de}`,
           'paper',
-          MODE_MEMORY_MB,
+          MODE_MEMORY_MB[mode.id] ?? MODE_DEFAULT_MEMORY_MB,
           MODE_PORT_BASE + i,
         );
         await motor.request('POST', `/api/networks/${network.id}/members`, {

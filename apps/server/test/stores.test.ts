@@ -32,4 +32,34 @@ describe('Spielmodi beim Start', () => {
       'Unser Survival',
     );
   });
+
+  test('MorniSMP älterer Installationen: Platzhalter „Bald da!“ wird zur Beschreibung, Server-Name kommt dazu', () => {
+    const handle = openDatabase(':memory:');
+    const placeholder = { de: 'Bald da!', en: 'Coming soon!' };
+    DEFAULT_MODES.forEach((m) =>
+      handle.db
+        .insert(modes)
+        .values({
+          id: m.id,
+          data: m.id === 'mirni' ? { ...m, description: placeholder, server: null } : m,
+        })
+        .run(),
+    );
+    createStores(handle.db, createEventBus());
+    const smp = handle.db.select().from(modes).where(eq(modes.id, 'mirni')).get()?.data;
+    expect(smp?.description.de).toContain('freiem Markt');
+    expect(smp?.server).toBe('smp');
+    expect(smp?.state).toBe('soon');
+
+    const own = { de: 'Unser Markt-Survival', en: 'Our market survival' };
+    handle.db
+      .update(modes)
+      .set({ data: { ...smp!, description: own, server: 'eigener-name' } })
+      .where(eq(modes.id, 'mirni'))
+      .run();
+    createStores(handle.db, createEventBus());
+    const again = handle.db.select().from(modes).where(eq(modes.id, 'mirni')).get()?.data;
+    expect(again?.description).toEqual(own);
+    expect(again?.server).toBe('eigener-name');
+  });
 });
