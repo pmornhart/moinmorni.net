@@ -181,7 +181,9 @@
       "back": "Alle Spielmodi",
       "whitelistApply": "Nur auf Einladung: Du brauchst einen Platz auf der Whitelist. Bewirb dich einfach – hier auf der Webseite oder im Discord mit /bewerben.",
       "apply": "Jetzt bewerben",
-      "about": "Über {{name}}"
+      "about": "Über {{name}}",
+      "topTitle": "Bestenliste · {{value}}",
+      "topAll": "Alle ansehen"
     },
     "stats": {
       "eyebrow": "Ranglisten",

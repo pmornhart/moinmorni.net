@@ -14,7 +14,9 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import {
+  useEffect,
   useId,
+  useRef,
   useState,
   type CSSProperties,
   type FormEvent,
@@ -22,7 +24,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { PlayerFace } from '~/components/player-face';
 import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
@@ -48,6 +50,7 @@ import { ModeFigure, modeStyle } from './cards';
 import { Chip, Cmd, EmptyState, GameButton, LiveDot, LoadError, Panel, RankTag } from './kit';
 import { PageHero } from './page-hero';
 import { usePageTitle, WRAP } from './parts';
+import { formatTime, MODE_PARAM, NUMBER_LOCALE, readable, TIME_SUFFIX, useStatText } from './stat-format';
 
 /** Longest name the API takes (Bedrock names carry a dot in front). */
 const NAME_MAX = 17;
@@ -336,20 +339,26 @@ function ModeRow({
 function ModeBoards(): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
-  const language = useLanguage();
+  const stat = useStatText();
   const status = useNetworkStatus();
   const boards = useModeBoards();
-  const [chosenMode, setChosenMode] = useState<string | null>(null);
+  // Mode pages link here with ?modus=duels
+  const [params] = useSearchParams();
+  const [chosenMode, setChosenMode] = useState<string | null>(params.get(MODE_PARAM));
   const [chosenKey, setChosenKey] = useState<string | null>(null);
   const list: readonly ModeBoard[] = boards.data ?? [];
   const board = list.find((b) => b.mode === chosenMode) ?? list[0];
   const key = board?.keys.find((k) => k.key === chosenKey) ?? board?.keys[0];
   const top = useModeTop(board?.mode ?? '', key?.key ?? '', key?.order ?? 'desc');
+  const section = useRef<HTMLElement>(null);
+  const linked = params.has(MODE_PARAM);
+  const ready = Boolean(board);
+  useEffect(() => {
+    if (linked && ready) section.current?.scrollIntoView({ block: 'start' });
+  }, [linked, ready]);
   if (!board || !key) return null;
-  const locale = NUMBER_LOCALE[language];
-  const number = new Intl.NumberFormat(locale);
-  const show = (k: string, v: number): string => (k.endsWith(TIME_SUFFIX) ? formatTime(v, locale) : number.format(v));
-  const label = (k: string): string => t(`site.players.stats.${k}`, { defaultValue: readable(k) });
+  const show = stat.value;
+  const label = stat.label;
   const modeName = (id: string): string => {
     const mode = findMode(status.data?.modes, id);
     return mode ? pick(mode.name) : readable(id);
@@ -365,7 +374,12 @@ function ModeBoards(): ReactElement | null {
     setChosenKey(null);
   };
   return (
-    <section className="grid gap-5 pt-6" aria-labelledby="mode-boards" style={modeStyle(board.mode)}>
+    <section
+      ref={section}
+      className="grid scroll-mt-[calc(var(--header-h)+16px)] gap-5 pt-6"
+      aria-labelledby="mode-boards"
+      style={modeStyle(board.mode)}
+    >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2
           id="mode-boards"
@@ -469,32 +483,6 @@ function Fact({
       <div className="font-pixel text-[1.25rem] font-bold leading-tight sm:text-[1.5rem]">{children}</div>
     </Panel>
   );
-}
-
-const NUMBER_LOCALE = { de: 'de-DE', en: 'en-GB' } as const;
-/** Values whose name ends like this are times in milliseconds (best times of a course, a round …). */
-const TIME_SUFFIX = '_ms';
-const MS_PER_SECOND = 1000;
-const SECONDS_PER_MINUTE = 60;
-const MS_DIGITS = 3;
-const TWO_DIGITS = 2;
-
-/** "1:23,456" (or "23,456 s" under a minute) for a time in milliseconds. */
-function formatTime(ms: number, locale: string): string {
-  const minutes = Math.floor(ms / (MS_PER_SECOND * SECONDS_PER_MINUTE));
-  const seconds = (ms / MS_PER_SECOND) % SECONDS_PER_MINUTE;
-  const digits = { minimumFractionDigits: MS_DIGITS, maximumFractionDigits: MS_DIGITS };
-  if (!minutes) return `${new Intl.NumberFormat(locale, digits).format(seconds)} s`;
-  const padded = new Intl.NumberFormat(locale, { ...digits, minimumIntegerDigits: TWO_DIGITS }).format(
-    seconds,
-  );
-  return `${minutes}:${padded}`;
-}
-
-/** A value's own name when there is no text for it: "best_streak" → "Best streak". */
-function readable(key: string): string {
-  const words = key.replaceAll('_', ' ');
-  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /** What the player did in each game mode (the modes report it; names of values come from the mode). */

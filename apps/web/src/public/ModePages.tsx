@@ -5,6 +5,7 @@ import {
   Copy,
   Gamepad2,
   LogIn,
+  Medal,
   MessagesSquare,
   Moon,
   MousePointerClick,
@@ -20,10 +21,12 @@ import { useCopy } from '~/components/controls';
 import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
-import { findMode, useSite } from '~/lib/site';
+import { findMode, useModeBoards, useModeTop, useSite } from '~/lib/site';
+import { PlayerFace } from '~/components/player-face';
 import { modeJoinable, modeLook, useNetworkStatus } from '~/lib/status';
 import { usePick } from '~/lib/text';
 import { modeArt } from './art';
+import { MODE_PARAM, PLACE_COLOURS, useStatText } from './stat-format';
 import { JoinCard, ModeCard, ModeFigure, modeStyle } from './cards';
 import {
   Chip,
@@ -263,12 +266,69 @@ function LivePanel({ mode }: { readonly mode: ModeStatus }): ReactElement {
             <Segments share={mode.maxPlayers ? mode.players / mode.maxPlayers : 0} colour={art.a} />
           </div>
         ) : null}
+        <ModeTopThree mode={mode} />
         <p className="flex flex-wrap items-center gap-2 text-[15px] text-muted-foreground">
           <Terminal className="size-4" aria-hidden />
           {t('site.mode.lobbyBack')} <Cmd>/lobby</Cmd>
         </p>
       </div>
     </Panel>
+  );
+}
+
+const TOP_THREE = 3;
+
+/** The best three of this mode in its most important value, with a link to the whole leaderboard. */
+function ModeTopThree({ mode }: { readonly mode: ModeStatus }): ReactElement | null {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const stat = useStatText();
+  const boards = useModeBoards();
+  const key = boards.data?.find((b) => b.mode === mode.id)?.keys[0];
+  const top = useModeTop(mode.id, key?.key ?? '', key?.order ?? 'desc');
+  const entries = (top.data ?? []).slice(0, TOP_THREE);
+  if (!key || !entries.length) return null;
+  return (
+    <div className="grid gap-3 rounded-[8px] border-2 border-border bg-background-alt p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 font-pixel text-[13px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <Medal className="size-4 text-gold" aria-hidden />
+          {t('site.mode.topTitle', { value: stat.label(key.key) })}
+        </h3>
+        <Link
+          to={`/statistiken?${MODE_PARAM}=${encodeURIComponent(mode.id)}`}
+          className="font-pixel text-[13px] font-semibold uppercase tracking-[0.08em] text-primary hover:underline"
+        >
+          {t('site.mode.topAll')}
+        </Link>
+      </div>
+      <ol className="grid gap-2">
+        {entries.map((e) => {
+          const colour = PLACE_COLOURS[e.rank - 1] ?? PLACE_COLOURS[0];
+          return (
+            <li key={e.uuid}>
+              <Link to={`/spieler/${encodeURIComponent(e.name)}`} className="group flex items-center gap-3">
+                <span
+                  className="tabular grid size-7 shrink-0 place-items-center rounded-[5px] font-pixel text-[15px] font-bold text-black/60"
+                  style={{ backgroundColor: colour.face, boxShadow: `inset 0 -3px 0 ${colour.edge}` }}
+                >
+                  {e.rank}
+                </span>
+                <PlayerFace
+                  uuid={e.uuid}
+                  colour={e.role.colour}
+                  className="size-8 shrink-0"
+                  faceClassName="rounded-[4px] border-2 border-black/20"
+                />
+                <span className="min-w-0 flex-1 truncate font-bold group-hover:text-primary">{e.name}</span>
+                <span className="tabular shrink-0 font-pixel text-[15px] font-semibold">
+                  {stat.value(key.key, e.value)}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 

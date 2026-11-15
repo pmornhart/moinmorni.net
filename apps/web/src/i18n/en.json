@@ -181,7 +181,9 @@
       "back": "All game modes",
       "whitelistApply": "Invitation only: you need a spot on the whitelist. Just apply – here on the website or in Discord with /bewerben.",
       "apply": "Apply now",
-      "about": "About {{name}}"
+      "about": "About {{name}}",
+      "topTitle": "Leaderboard · {{value}}",
+      "topAll": "See all"
     },
     "stats": {
       "eyebrow": "Leaderboards",
