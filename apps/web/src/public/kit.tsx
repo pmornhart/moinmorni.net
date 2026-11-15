@@ -66,7 +66,7 @@ export function GameButton({
 }
 
 /** A thick-edged card, like a block in the game. */
-export const PANEL = 'rounded-[10px] border-2 border-border bg-card text-card-foreground shadow-card';
+const PANEL = 'rounded-[10px] border-2 border-border bg-card text-card-foreground shadow-card';
 
 export function Panel({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return <div className={cn(PANEL, className)} {...props} />;
@@ -168,15 +168,13 @@ export type ChipTone = keyof typeof CHIP_TONES;
 export function Chip({
   tone = 'neutral',
   icon: Icon,
-  dot = false,
   pulse = false,
   className,
   children,
 }: {
   readonly tone?: ChipTone;
   readonly icon?: LucideIcon;
-  readonly dot?: boolean;
-  /** A pulsing dot (live). */
+  /** A pulsing dot in front (live). */
   readonly pulse?: boolean;
   readonly className?: string;
   readonly children: ReactNode;
@@ -189,9 +187,7 @@ export function Chip({
         className,
       )}
     >
-      {dot || pulse ? (
-        <span className={cn('size-2 shrink-0 bg-current', pulse && 'mm-pulse rounded-full')} aria-hidden />
-      ) : null}
+      {pulse ? <span className="mm-pulse size-2 shrink-0 rounded-full bg-current" aria-hidden /> : null}
       {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden /> : null}
       <span className="truncate">{children}</span>
     </span>
@@ -343,24 +339,14 @@ const EDGE_PATH = `M0 ${EDGE_HEIGHT} ${Array.from(EDGE_PROFILE)
   .join(' ')} V${EDGE_HEIGHT}Z`;
 
 /**
- * A stepped pixel edge between two sections, in `currentColor` (the colour of the section it belongs to). "top" sits
- * on top of that section, "bottom" hangs below it.
+ * A stepped pixel edge on top of a section, in `currentColor` (the section's own colour): it rises out of the section
+ * into the one above. The section needs `position: relative` and must not clip its overflow.
  */
-export function PixelEdge({
-  side = 'top',
-  className,
-}: {
-  readonly side?: 'top' | 'bottom';
-  readonly className?: string;
-}): ReactElement {
+export function PixelEdge({ className }: { readonly className?: string }): ReactElement {
   const id = useId();
   return (
     <svg
-      className={cn(
-        'pointer-events-none absolute inset-x-0 block h-4 w-full',
-        side === 'top' ? 'bottom-full' : 'top-full -scale-y-100',
-        className,
-      )}
+      className={cn('pointer-events-none absolute inset-x-0 bottom-full block h-4 w-full', className)}
       aria-hidden
       focusable="false"
     >
@@ -419,6 +405,9 @@ export function LoadError({ className }: { readonly className?: string }): React
   return <Panel className={cn('p-6 text-muted-foreground', className)}>{t('site.loadError')}</Panel>;
 }
 
+const SEGMENT_COUNT = 10;
+const SEGMENT_KEYS = Array.from({ length: SEGMENT_COUNT }, (_, i) => `s${i}`);
+
 /** A filled bar of ten blocks: how full something is. */
 export function Segments({
   share,
@@ -430,9 +419,8 @@ export function Segments({
   readonly colour?: string;
   readonly className?: string;
 }): ReactElement {
-  const total = SEGMENT_COUNT;
   // Anything above zero shows at least one block, so a single player is visible.
-  const filled = share > 0 ? Math.max(1, Math.round(Math.min(share, 1) * total)) : 0;
+  const filled = share > 0 ? Math.max(1, Math.round(Math.min(share, 1) * SEGMENT_COUNT)) : 0;
   const style = { '--segment': colour } as CSSProperties;
   return (
     <span className={cn('mm-segments', className)} style={style} aria-hidden>
@@ -442,6 +430,3 @@ export function Segments({
     </span>
   );
 }
-
-const SEGMENT_COUNT = 10;
-const SEGMENT_KEYS = Array.from({ length: SEGMENT_COUNT }, (_, i) => `s${i}`);
