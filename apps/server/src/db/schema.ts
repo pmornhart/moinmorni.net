@@ -174,3 +174,22 @@ export const applications = sqliteTable(
   },
   (t) => [index('applications_status').on(t.status)],
 );
+
+/**
+ * Statistiken der Spielmodi: je Modus, Spieler und Wert (z. B. duels/…/wins). Die Modus-Server melden sie über den Hub
+ * (nur für ihren eigenen Modus); Webseite und Ranglisten lesen sie.
+ */
+export const modeStats = sqliteTable(
+  'mode_stats',
+  {
+    mode: text('mode').notNull(),
+    uuid: text('uuid').notNull(),
+    key: text('key').notNull(),
+    value: integer('value').notNull().default(0),
+    updatedAt: text('updated_at').notNull().default(now),
+  },
+  (t) => [
+    primaryKey({ columns: [t.mode, t.uuid, t.key] }),
+    index('mode_stats_rank').on(t.mode, t.key, t.value),
+  ],
+);

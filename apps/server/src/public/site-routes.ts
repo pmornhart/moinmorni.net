@@ -21,6 +21,11 @@ const NAME_MAX = 17;
 const SLUG_MAX = 80;
 
 const topQuery = z.object({ limit: z.coerce.number().int().min(1).max(TOP_MAX).default(TOP_DEFAULT) });
+/** Rangliste eines Spielmodus: Wert (z. B. wins) und Reihenfolge (asc für Bestzeiten). */
+const modeTopQuery = topQuery.extend({
+  key: z.string().regex(/^[a-z][a-z0-9_]{0,31}$/), // eslint-disable-line ts-patterns/require-regex-example -- stat key: "wins" yes, "Wins!" no
+  order: z.enum(['desc', 'asc']).default('desc'),
+});
 const newsQuery = z.object({ limit: z.coerce.number().int().min(1).max(NEWS_MAX).default(NEWS_DEFAULT) });
 
 export type NewsRow = typeof news.$inferSelect;
@@ -92,6 +97,30 @@ export function registerSiteRoutes(
       })),
   );
 
+  /** Rangliste eines Spielmodus nach einem Wert (Siege, Bestzeit …), private Profile zählen nicht. */
+  app.get(
+    '/api/stats/:mode/top',
+    {
+      schema: {
+        params: z.object({
+          mode: z
+            .string()
+            .min(1)
+            .max(NAME_MAX * 2),
+        }),
+        querystring: modeTopQuery,
+      },
+    },
+    async (request) => {
+      const mode = stores.modes().find((m) => m.id === request.params.mode);
+      if (!mode) throw notFound('mode_unknown');
+      const { key, limit, order } = request.query;
+      return hub.stats
+        .top(mode.id, key, limit, order === 'asc')
+        .map((e) => ({ ...e, role: roleView(e.uuid) }));
+    },
+  );
+
   app.get(
     '/api/players/:name',
     { schema: { params: z.object({ name: z.string().min(1).max(NAME_MAX) }) } },
@@ -110,6 +139,8 @@ export function registerSiteRoutes(
         firstSeen: row.firstSeen,
         lastSeen: row.lastSeen,
         playMinutes: row.playMinutes,
+        /** Werte je Spielmodus, z. B. { duels: { wins: 12, losses: 4 } }. */
+        modes: hub.stats.ofPlayer(row.uuid),
         online: online
           ? { where: mode ? mode.name : online.server === 'lobby' ? { de: 'Lobby', en: 'Lobby' } : null }
           : null,

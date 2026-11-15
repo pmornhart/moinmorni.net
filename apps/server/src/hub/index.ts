@@ -15,6 +15,7 @@ import { hubSecretOf, serverKeyOf, type ServerKind } from './protocol.js';
 import { createPunishService, type PunishService } from './punish.js';
 import { createSettingCommands, mergeCommands } from './setting-commands.js';
 import { createSocial } from './social.js';
+import { createModeStats, statsSchema, type ModeStatsService } from './stats.js';
 import { createVoice } from './voice.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
@@ -83,6 +84,13 @@ const connectingSchema = z.object({
   server: z.string().min(1).max(32),
 });
 const playSchema = z.object({ uuid: uuidField, mode: z.string().min(1).max(32) });
+const partyRequestSchema = z.object({ id: z.number().int(), uuid: uuidField });
+const toLobbySchema = z.object({ uuid: uuidField });
+const modeStateSchema = z.object({
+  mode: z.string().min(1).max(32),
+  state: z.string().min(1).max(32),
+  players: z.number().int().min(0).max(10_000),
+});
 /** Lobby-Zahlen höchstens so oft an die Server schicken (viele Wechsel auf einmal = eine Nachricht). */
 const LOBBY_DEBOUNCE_MS = 1_000;
 /** Name der Lobby im Netzwerk – nur sie bekommt die Lobby-Einstellungen. */
@@ -126,6 +134,18 @@ export interface Hub {
   /** Ist der Proxy gerade mit dem Hub verbunden? */
   readonly proxyOnline: () => boolean;
   readonly connectedServers: () => string[];
+  /** Statistiken der Spielmodi (Ranglisten für Webseite und Panel). */
+  readonly stats: ModeStatsService;
+  /** Was die Modus-Server zuletzt über sich gemeldet haben (Runde läuft, wartet …). */
+  readonly modeStates: () => Record<string, ModeRun>;
+}
+
+/** Zustand eines Spielmodus, wie sein Server ihn meldet. */
+export interface ModeRun {
+  /** z. B. "waiting", "starting", "running" – frei, der Modus entscheidet. */
+  readonly state: string;
+  readonly players: number;
+  readonly at: number;
 }
 
 export function createHub(options: HubOptions): Hub {
@@ -247,6 +267,11 @@ export function createHub(options: HubOptions): Hub {
   });
   const voiceRef: { broadcast: () => void } = { broadcast: () => undefined };
   const social = createSocial(ctx, db, now, () => voiceRef.broadcast());
+  const stats = createModeStats(db);
+  const modeRuns = new Map<string, ModeRun>();
+  /** Gehört dieser Server zu diesem Modus? Nur dann darf er für ihn sprechen. */
+  const servesMode = (conn: Connection, modeId: string): boolean =>
+    conn.kind === 'backend' && stores.modes().some((md) => md.id === modeId && md.server === conn.server);
   const voice = createVoice(
     ctx,
     () => [...conns.backends.values()],
@@ -533,6 +558,39 @@ export function createHub(options: HubOptions): Hub {
       const ok = actor && command && allowed(command, actor.role);
       reply(conn, m.id, { suggestions: ok && command.complete ? command.complete(actor, m.args) : [] });
     },
+    // ---------- Spielmodi ----------
+    stats: (conn, body) => {
+      const m = statsSchema.parse(body);
+      if (servesMode(conn, m.mode)) stats.record(m);
+    },
+    'mode-state': (conn, body) => {
+      const m = modeStateSchema.parse(body);
+      if (!servesMode(conn, m.mode)) return;
+      modeRuns.set(m.mode, { state: m.state, players: m.players, at: now() });
+      lobbySoon();
+    },
+    party: (conn, body) => {
+      const m = partyRequestSchema.parse(body);
+      if (!isHere(conn, m.uuid)) {
+        fail(conn, m.id, 'not_here');
+        return;
+      }
+      const party = social.partyOf(normalUuid(m.uuid));
+      reply(conn, m.id, {
+        party: party && {
+          leader: party.leader,
+          members: party.members.map((u) => ({
+            uuid: u,
+            name: presence.get(u)?.name ?? players.get(u)?.name ?? '?',
+            server: presence.get(u)?.server ?? null,
+          })),
+        },
+      });
+    },
+    'to-lobby': (conn, body) => {
+      const m = toLobbySchema.parse(body);
+      if (isHere(conn, m.uuid) && conn.server !== LOBBY_SERVER) ctx.connect(normalUuid(m.uuid), LOBBY_SERVER);
+    },
     'voice-group': (conn, body) => {
       const m = voiceGroupSchema.parse(body);
       if (!isHere(conn, m.uuid)) return;
@@ -625,5 +683,7 @@ export function createHub(options: HubOptions): Hub {
     refreshProfile: refresh,
     proxyOnline: () => conns.proxy !== null,
     connectedServers: () => [...conns.backends.keys()],
+    stats,
+    modeStates: () => Object.fromEntries(modeRuns),
   };
 }

@@ -7,6 +7,7 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
@@ -73,6 +74,11 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             getLogger().warning("MoinMorni ist nicht eingerichtet (" + e.getMessage() + ") – der Server läuft ohne Netzwerk-Chat.");
         }
         getServer().getPluginManager().registerEvents(this, this);
+        // Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni) – auch ohne Hub, dann läuft der Modus allein.
+        getServer().getServicesManager().register(de.moinmorni.api.MoinMorni.class,
+                new ModeApi(hub, serverName, this::langOfUuid, this::rankOf,
+                        uuid -> Optional.ofNullable(profiles.get(uuid)).map(Profile::rights).orElse(null)),
+                this, org.bukkit.plugin.ServicePriority.Normal);
         lobby = new LobbyNpcs(this, hub, this::langOf);
         lobby.start();
         features = new LobbyFeatures(this, lobby, this::langOf);
@@ -88,6 +94,18 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 getLogger().warning("Hub nicht erreichbar (" + e.getMessage() + ") – der Server läuft ohne Netzwerk-Chat.");
             }
         }
+    }
+
+    /** Sprache nach UUID (Modus-Schnittstelle): aus dem Profil, sonst Deutsch. */
+    private String langOfUuid(UUID uuid) {
+        Profile p = profiles.get(uuid);
+        return p == null || p.lang() == null ? "de" : p.lang();
+    }
+
+    /** Rang für die Modus-Schnittstelle (null, solange der Hub noch kein Profil geschickt hat). */
+    private de.moinmorni.api.MoinMorni.Rank rankOf(UUID uuid) {
+        Profile p = profiles.get(uuid);
+        return p == null ? null : new de.moinmorni.api.MoinMorni.Rank(p.roleId(), p.symbol(), p.colour(), p.position());
     }
 
     /** Brücke anmelden, wenn Simple Voice Chat da ist – die Klasse wird sonst nie geladen. */

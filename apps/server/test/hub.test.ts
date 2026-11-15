@@ -96,6 +96,30 @@ describe('Hub', () => {
     return { proxy, lobby, duels };
   };
 
+  test('Spielmodi: nur der Server des Modus meldet Statistiken; Party abfragen; zurück in die Lobby', async () => {
+    const { proxy, lobby, duels } = await network();
+    duels.send({ t: 'stats', mode: 'duels', uuid: LENA, add: { wins: 1, kills: 3 }, min: { best_ms: 5000 } });
+    duels.send({ t: 'stats', mode: 'duels', uuid: LENA, add: { wins: 1 }, min: { best_ms: 7000 } });
+    // Die Lobby darf nicht für Duels sprechen.
+    lobby.send({ t: 'stats', mode: 'duels', uuid: PHILIP, add: { wins: 99 } });
+    duels.send({ t: 'mode-state', mode: 'duels', state: 'running', players: 2 });
+    await new Promise((r) => setTimeout(r, 150));
+    const top = hub.stats.top('duels', 'wins', 10);
+    expect(top.map((e) => [e.name, e.value])).toEqual([['Lena', 2]]);
+    expect(hub.stats.ofPlayer(LENA)['duels']).toEqual({ wins: 2, kills: 3, best_ms: 5000 });
+    expect(hub.modeStates()['duels']).toMatchObject({ state: 'running', players: 2 });
+
+    // Party: nur für eigene Spieler; ohne Party null
+    const own = await duels.request({ t: 'party', uuid: LENA });
+    expect(own).toMatchObject({ ok: true, data: { party: null } });
+    const foreign = await duels.request({ t: 'party', uuid: PHILIP });
+    expect(foreign).toMatchObject({ ok: false });
+
+    duels.send({ t: 'to-lobby', uuid: LENA });
+    const moved = await proxy.next('connect', (m) => m['uuid'] === LENA);
+    expect(moved['server']).toBe('lobby');
+  });
+
   test('Handschlag: richtiger Schlüssel → welcome, falscher → zu', async () => {
     const proxy = await plugin('proxy', 'proxy');
     expect(proxy.received[0]).toMatchObject({ t: 'welcome', server: 'proxy', kind: 'proxy' });

@@ -42,6 +42,8 @@ export interface Social {
   readonly joined: (uuid: string) => void;
   readonly left: (uuid: string) => void;
   readonly switched: (uuid: string, server: string) => void;
+  /** Party eines Spielers (für Spielmodi: zusammen in eine Runde) – null ohne Party. */
+  readonly partyOf: (uuid: string) => { leader: string; members: string[] } | null;
 }
 
 const pair = (x: string, y: string): [string, string] => (x < y ? [x, y] : [y, x]);
@@ -420,6 +422,10 @@ export function createSocial(
 
   return {
     commands,
+    partyOf: (uuid) => {
+      const party = partyOf(uuid);
+      return party ? { leader: party.leader, members: [...party.members] } : null;
+    },
     voiceGroups: () =>
       [...parties]
         .filter((p) => p.members.size > 1)
