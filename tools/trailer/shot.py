@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+"""Eine Trailer-Einstellung aufnehmen: Kamerafahrt, Darsteller, Ereignisse – alles in Zeitlupe, danach beschleunigt.
+
+  python3 shot.py <einstellung.json> <ausgabe.mp4>
+
+Umgebung: MM_RCON (host:port), MM_RCON_PASS, MM_CAMERA (Spielername des echten Clients), MM_DISPLAY (z. B. :98),
+MM_ACTORS_FIFO (optional: Datei, über die actors.cjs Handlungen bekommt).
+
+Einstellung (JSON):
+  slow      Zeitlupe (Server läuft 20/slow Ticks pro Sekunde), Standard 6
+  setup     Befehle vorher in normaler Geschwindigkeit
+  camera    [{"p":[x,y,z], "look":[x,y,z], "t": Sekunden ab dem vorigen Punkt, "ease":1, "hold": s}]
+  track     Name eines Darstellers: die Kamera schaut immer auf ihn ("look" kann dann fehlen)
+  actors    {"Anna": [{"p":[x,y,z], "t": s, "look":[x,y,z] oder "yaw": Grad, "pitch": Grad, "hold": s}]}
+  events    [{"at": s, "cmd": "..."} oder {"at": s, "actor": "Anna", "act": "swing"}]
+  after     Befehle danach
+Zeiten sind Spielzeit (so wie es im fertigen Video aussieht).
+"""
+import json, math, os, socket, subprocess, sys, time
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'mc-client'))
+import rcon as R
+
+TICK = 0.05
+
+
+class Rcon:
+    def __init__(self, addr, pw):
+        host, port = addr.rsplit(':', 1)
+        self.s = socket.create_connection((host, int(port)), timeout=20)
+        self.s.sendall(R.packet(1, 3, pw)); R.read(self.s)
+        self.i = 2
+
+    def __call__(self, cmd):
+        self.i += 1
+        self.s.sendall(R.packet(self.i, 2, cmd))
+        return R.read(self.s)[1]
+
+
+def cr(p0, p1, p2, p3, t):
+    return [0.5 * ((2 * b) + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t)
+            for a, b, c, d in zip(p0, p1, p2, p3)]
+
+
+def angles(p, l):
+    dx, dy, dz = l[0] - p[0], l[1] - p[1], l[2] - p[2]
+    return math.degrees(math.atan2(-dx, dz)), -math.degrees(math.atan2(dy, math.hypot(dx, dz)))
+
+
+class Path:
+    """Weg aus Stützpunkten; spline=True für die Kamera (weich), sonst gerade Stücke (Darsteller)."""
+
+    def __init__(self, pts, spline):
+        self.pts, self.spline = pts, spline
+        self.times, t = [], 0.0
+        for i, q in enumerate(pts):
+            if i: t += q.get('t', 0)
+            self.times.append(t)
+            t += q.get('hold', 0)
+        self.end = t
+
+    def at(self, t):
+        pts, times = self.pts, self.times
+        if t <= times[0] or len(pts) == 1:
+            return 0, 0.0
+        for i in range(1, len(pts)):
+            start = times[i - 1] + pts[i - 1].get('hold', 0)
+            if t < times[i - 1] + pts[i - 1].get('hold', 0):
+                return i - 1, 0.0
+            if t < times[i]:
+                u = (t - start) / max(1e-6, times[i] - start)
+                if pts[i].get('ease'): u = u * u * (3 - 2 * u)
+                return i - 1, u
+        return len(pts) - 2, 1.0
+
+    def pos(self, t, key='p'):
+        seg, u = self.at(t)
+        P = [q[key] for q in self.pts]
+        if len(P) == 1:
+            return P[0]
+        if not self.spline:
+            a, b = P[seg], P[seg + 1]
+            return [x + (y - x) * u for x, y in zip(a, b)]
+        Q = [P[0]] + P + [P[-1]]
+        return cr(Q[seg], Q[seg + 1], Q[seg + 2], Q[seg + 3], u)
+
+
+def main():
+    spec_file, out = sys.argv[1], sys.argv[2]
+    spec = json.load(open(spec_file))
+    slow = float(spec.get('slow', 6))
+    rc = Rcon(os.environ['MM_RCON'], os.environ['MM_RCON_PASS'])
+    cam_player = os.environ.get('MM_CAMERA', 'MorniTest')
+    display = os.environ.get('MM_DISPLAY', ':98')
+    fifo = os.environ.get('MM_ACTORS_FIFO')
+    act_out = open(fifo, 'a', buffering=1) if fifo else None
+
+    for c in spec.get('setup', []):
+        rc(c)
+    cam = Path(spec['camera'], True)
+    actors = {n: Path(p, False) for n, p in spec.get('actors', {}).items()}
+    last_yaw = {}
+    for n, path in actors.items():
+        q = path.pts[0]
+        rc(f'gamemode adventure {n}')
+        rc(f'tp {n} {q["p"][0]} {q["p"][1]} {q["p"][2]} {q.get("yaw", 0)} {q.get("pitch", 0)}')
+    events = sorted(spec.get('events', []), key=lambda e: e['at'])
+    duration = max([cam.end] + [p.end for p in actors.values()] + [e['at'] for e in events]) + spec.get('tail', 0.5)
+
+    p0 = spec['camera'][0]['p']
+    if spec.get('track') in actors:
+        q = actors[spec['track']].pts[0]['p']
+        for c in spec['camera']:
+            c.setdefault('look', [q[0], q[1] + 1.2, q[2]])
+    yaw0, pitch0 = angles(p0, spec['camera'][0]['look'])
+    rc('kill @e[tag=mmcam]')
+    rc(f'gamemode spectator {cam_player}')
+    rc(f'tp {cam_player} {p0[0]} {p0[1]} {p0[2]} {yaw0:.2f} {pitch0:.2f}')
+    time.sleep(1.5)
+    rc(f'summon item_display {p0[0]} {p0[1]} {p0[2]} {{Tags:["mmcam"],teleport_duration:1,Rotation:[{yaw0:.2f}f,{pitch0:.2f}f]}}')
+    time.sleep(0.5)
+    rc(f'spectate @e[tag=mmcam,limit=1] {cam_player}')
+    time.sleep(float(spec.get('wait', 4)))
+    rc(f'tick rate {20 / slow:g}')
+    time.sleep(1.0)
+
+    raw = out + '.raw.mp4'
+    # Aufnahme-Bildrate: nach dem Beschleunigen ergibt das rate × slow Bilder pro Sekunde – 8 × 12 = 96 reicht für 30.
+    # Mehr kostet nur Rechenzeit, die dem Client fehlt.
+    rate = int(os.environ.get('MM_CAPTURE_FPS', max(6, round(96 / slow))))
+    ff = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'x11grab', '-draw_mouse', '0', '-video_size',
+                           spec.get('size', '1600x900'), '-framerate', str(rate), '-i', display, '-c:v', 'libx264',
+                           '-preset', 'ultrafast', '-crf', '12', '-pix_fmt', 'yuv420p', raw], stdin=subprocess.PIPE)
+    time.sleep(0.3)
+    t0 = time.time()
+    k, ei = 0, 0
+    track_aim = None
+    while True:
+        t = k * TICK
+        if t > duration:
+            break
+        pos = cam.pos(t)
+        if spec.get('track') in actors:  # Kamera schaut auf einen Darsteller (Brusthöhe), sanft nachgeführt
+            ap = actors[spec['track']].pos(t)
+            aim = [ap[0], ap[1] + 1.2, ap[2]]
+            prev = track_aim or aim
+            track_aim = [a + (b - a) * 0.35 for a, b in zip(prev, aim)]
+            look = track_aim
+        else:
+            look = cam.pos(t, 'look')
+        yaw, pitch = angles(pos, look)
+        rc(f'tp @e[tag=mmcam] {pos[0]:.3f} {pos[1]:.3f} {pos[2]:.3f} {yaw:.2f} {pitch:.2f}')
+        for n, path in actors.items():
+            p = path.pos(t)
+            seg, _ = path.at(t)
+            q = path.pts[min(seg + 1, len(path.pts) - 1)]
+            if 'look' in q:
+                ay, ap = angles([p[0], p[1] + 1.62, p[2]], q['look'])
+            elif 'yaw' in q:
+                ay, ap = q['yaw'], q.get('pitch', 0)
+            else:
+                nxt = path.pos(t + 0.25)
+                if math.hypot(nxt[0] - p[0], nxt[2] - p[2]) > 0.01:
+                    ay, ap = angles(p, [nxt[0], p[1], nxt[2]])[0], 0
+                else:
+                    ay, ap = last_yaw.get(n, (0, 0))
+            last_yaw[n] = (ay, ap)
+            rc(f'tp {n} {p[0]:.3f} {p[1]:.3f} {p[2]:.3f} {ay:.1f} {ap:.1f}')
+        while ei < len(events) and events[ei]['at'] <= t:
+            e = events[ei]; ei += 1
+            if 'cmd' in e:
+                rc(e['cmd'])
+            elif act_out:
+                act_out.write(f"{e['actor']} {e['act']} {e.get('arg', '')}\n")
+        k += 1
+        wait = t0 + k * TICK * slow - time.time()
+        if wait > 0:
+            time.sleep(wait)
+    ff.stdin.write(b'q'); ff.stdin.flush(); ff.wait()
+    rc('tick rate 20')
+    rc('spectate')
+    rc('kill @e[tag=mmcam]')
+    for c in spec.get('after', []):
+        rc(c)
+    # Beschleunigen: Zeitlupe herausrechnen, 30 Bilder pro Sekunde
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', raw, '-vf', f'setpts=PTS/{slow},fps=30', '-r', '30',
+                    '-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-pix_fmt', 'yuv420p', '-an', out], check=True)
+    os.remove(raw)
+    print(out, f'{duration:.1f}s')
+
+
+if __name__ == '__main__':
+    main()
