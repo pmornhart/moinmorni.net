@@ -225,8 +225,13 @@ export function createProvisioner(
         { serverId: fresh.proxy.serverId, member: PROXY_MEMBER, kind: 'proxy' },
         ...fresh.members.map((m) => ({ serverId: m.serverId, member: m.name, kind: 'backend' as const })),
       ];
-      const equipped = await targets.reduce<Promise<Array<{ member: string; plugin: boolean; hub: boolean }>>>(
-        async (acc, t) => [...(await acc), { member: t.member, ...(await equip(t.serverId, t.member, t.kind)) }],
+      const equipped = await targets.reduce<
+        Promise<Array<{ member: string; plugin: boolean; hub: boolean }>>
+      >(
+        async (acc, t) => [
+          ...(await acc),
+          { member: t.member, ...(await equip(t.serverId, t.member, t.kind)) },
+        ],
         Promise.resolve([]),
       );
       const updated = equipped.filter((e) => e.plugin).map((e) => e.member);
