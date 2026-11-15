@@ -49,6 +49,11 @@ export interface ProvisionResult {
   readonly lobbyServerId: string;
   readonly created: readonly string[];
   readonly pluginUpdated: readonly string[];
+  /**
+   * Laufende Server, die neu starten müssen, damit Neues gilt (Plugin, Hub-Schlüssel, server.properties) – am besten,
+   * sobald niemand drauf ist.
+   */
+  readonly restart: ReadonlyArray<{ readonly serverId: string; readonly member: string }>;
 }
 
 export interface ProvisionOptions {
@@ -143,23 +148,31 @@ export function createProvisioner(
   const writeFile = (serverId: string, file: string, content: string): Promise<void> =>
     motor.request('PUT', `/api/servers/${serverId}/files/content`, { path: file, content });
 
-  /** hub.json und Plugin auf einen Server; true = Plugin neu (wirkt nach dem nächsten Neustart). */
-  const equip = async (serverId: string, member: string, kind: 'proxy' | 'backend'): Promise<boolean> => {
-    const hubJson = JSON.stringify(
+  /**
+   * hub.json und Plugin auf einen Server. `plugin` = Plugin neu, `hub` = Zugang zum Hub geändert (z. B. neuer
+   * Schlüssel nach einem Update) – beides wirkt erst nach einem Neustart.
+   */
+  const equip = async (
+    serverId: string,
+    member: string,
+    kind: 'proxy' | 'backend',
+  ): Promise<{ plugin: boolean; hub: boolean }> => {
+    const hubJson = `${JSON.stringify(
       { url: config.hubUrl, server: member, kind, key: hub.keyFor(member, kind) },
       null,
       2,
-    );
-    await writeFile(serverId, HUB_FILE, `${hubJson}\n`);
+    )}\n`;
+    const hubChanged = (await readFile(serverId, HUB_FILE)) !== hubJson;
+    if (hubChanged) await writeFile(serverId, HUB_FILE, hubJson);
     const jar = plugin();
     if (!jar) {
       log.warn({ file: config.pluginFile }, 'Netzwerk-Plugin fehlt im Image – Server laufen ohne Hub');
-      return false;
+      return { plugin: false, hub: hubChanged };
     }
-    if ((await readFile(serverId, STAMP_FILE))?.trim() === jar.sha) return false;
+    if ((await readFile(serverId, STAMP_FILE))?.trim() === jar.sha) return { plugin: false, hub: hubChanged };
     await motor.upload(serverId, PLUGIN_DIR, path.basename(config.pluginFile), jar.bytes);
     await writeFile(serverId, STAMP_FILE, `${jar.sha}\n`);
-    return true;
+    return { plugin: true, hub: hubChanged };
   };
 
   return {
@@ -212,10 +225,11 @@ export function createProvisioner(
         { serverId: fresh.proxy.serverId, member: PROXY_MEMBER, kind: 'proxy' },
         ...fresh.members.map((m) => ({ serverId: m.serverId, member: m.name, kind: 'backend' as const })),
       ];
-      const updated = await targets.reduce<Promise<string[]>>(async (acc, t) => {
-        const list = await acc;
-        return (await equip(t.serverId, t.member, t.kind)) ? [...list, t.member] : list;
-      }, Promise.resolve([]));
+      const equipped = await targets.reduce<Promise<Array<{ member: string; plugin: boolean; hub: boolean }>>>(
+        async (acc, t) => [...(await acc), { member: t.member, ...(await equip(t.serverId, t.member, t.kind)) }],
+        Promise.resolve([]),
+      );
+      const updated = equipped.filter((e) => e.plugin).map((e) => e.member);
 
       const lobbyServerId = fresh.members.find((m) => m.name === LOBBY_MEMBER)?.serverId ?? '';
       const lobbyChanged =
@@ -223,7 +237,16 @@ export function createProvisioner(
       if (lobbyChanged && !created.includes(LOBBY_MEMBER))
         log.info('Lobby: Einstellungen geändert – gelten nach dem nächsten Neustart der Lobby');
       const buildServerId = fresh.members.find((m) => m.name === BUILD_MEMBER)?.serverId;
-      if (buildServerId && options.configureBuild) await options.configureBuild(buildServerId);
+      const buildChanged =
+        buildServerId && options.configureBuild ? await options.configureBuild(buildServerId) : false;
+      const stale = new Set([
+        ...equipped.filter((e) => e.plugin || e.hub).map((e) => e.member),
+        ...(lobbyChanged ? [LOBBY_MEMBER] : []),
+        ...(buildChanged ? [BUILD_MEMBER] : []),
+      ]);
+      const restart = targets
+        .filter((t) => stale.has(t.member) && !created.includes(t.member))
+        .map((t) => ({ serverId: t.serverId, member: t.member }));
 
       // Neu angelegte Server erst jetzt starten – mit Plugin, Schlüssel und Einstellungen.
       await Promise.all(
@@ -231,7 +254,7 @@ export function createProvisioner(
           .filter((t) => created.includes(t.member))
           .map((t) => motor.request('POST', `/api/servers/${t.serverId}/actions/start`)),
       );
-      return { networkId: network.id, lobbyServerId, created, pluginUpdated: updated };
+      return { networkId: network.id, lobbyServerId, created, pluginUpdated: updated, restart };
     },
   };
 }

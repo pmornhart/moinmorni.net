@@ -15,6 +15,7 @@ import { createMotorClient, MotorError, type FetchLike, type MotorClient } from 
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
 import { createProvisioner, type NetworkProvisioner } from './network/provision.js';
+import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
@@ -160,11 +161,13 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       .catch((err: unknown) => app.log.warn({ err }, 'Team-Zugriff im Motor nicht nachgezogen'));
   };
   events.on('roles.changed', syncTeam);
+  const restarts = createRestartQueue(motor, app.log);
   const provision = async (): Promise<void> => {
     if (!config.autoNetwork) return;
     try {
       const result = await network.ensure();
       app.log.info(result, 'Netzwerk geprüft');
+      restarts.add(result.restart);
       // Die Welt baut sich im Hintergrund (beim ersten Mal ein paar Minuten), die Webseite läuft schon.
       lobbyRef.id = result.lobbyServerId;
       syncTeam();
@@ -274,6 +277,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       stopAuto();
       sleep.stop();
       bot.stop();
+      restarts.stop();
       await hub.close();
       await app.close();
       handle.close();
