@@ -56,7 +56,7 @@ def main():
             pitch = f'{-math.degrees(math.atan2(dy, math.hypot(dx, dz))):.1f}'
         else:
             name, x, y, z, yaw, pitch = parts
-        rcon(a.rcon, password, [f'tp {a.player} {x} {y} {z} {yaw} {pitch}'])
+        rcon(a.rcon, password, [f'execute at {a.player} run tp {a.player} {x} {y} {z} {yaw} {pitch}'])
         if not a.hud and not hud_hidden:
             key(a.display, 'F1')
             hud_hidden = True
