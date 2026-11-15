@@ -33,6 +33,10 @@ case "$1 $2" in
     [[ "$*" == *moinmorni-motor-data* ]] && echo "${FAKE_VOL}/motor" || echo "${FAKE_VOL}/data"
     exit 0 ;;
   "compose build") [[ -f "${FAKE_VOL}/build-fails" ]] && exit 1; exit 0 ;;
+  "inspect -f")
+    # Version im laufenden Image (nur MoinMorni; der Motor bleibt unbekannt).
+    [[ "$*" == *" moinmorni" && -f "${FAKE_VOL}/running-version" ]] && cat "${FAKE_VOL}/running-version"
+    exit 0 ;;
   "compose exec") [[ -f "${FAKE_VOL}/unhealthy" && ! -f "${FAKE_VOL}/old-running" ]] && exit 1; exit 0 ;;
   "compose up")
     # Neue Fassung = Datei zeigt die gebaute Version; nach dem Rückweg läuft wieder die alte.
@@ -139,6 +143,16 @@ mkdir -p "${WORK}/anderswo"
 ln -s "${WORK}/anderswo" "${WORK}/vol/data/update"
 bash "${INSTALL}/update.sh" >"${WORK}/out.txt" 2>&1
 check "Update-Ordner als Link → Abbruch, nichts geschrieben" "[[ -z \$(ls -A '${WORK}/anderswo') ]] && grep -q 'Verweis' '${WORK}/out.txt'"
+
+echo " 7) Abgebrochenes Update: Code schon neu, läuft aber noch alt → wird trotzdem gebaut"
+rm -f "${WORK}/vol/data/update"; mkdir -p "${WORK}/vol/data/update"
+new_commit "Sieben"
+git -C "${INSTALL}" pull -q --ff-only 2>/dev/null
+: >"${FAKE_LOG}"
+code="$(run_update)"
+check "endet ohne Fehler" "[[ ${code} == 0 ]]"
+check "baut, statt schon aktuell zu melden" "grep -q 'compose build' '${FAKE_LOG}' && ! grep -q 'Schon aktuell' '${WORK}/out.txt'"
+check "läuft jetzt die neue Fassung" "[[ \$(cat '${WORK}/vol/running-version') == \$(status | sed 's/.*\"to\":\"\\([^\"]*\\)\".*/\\1/') ]]"
 
 printf '\n %s bestanden, %s fehlgeschlagen\n' "${PASS}" "${FAIL}"
 [[ ${FAIL} -eq 0 ]]

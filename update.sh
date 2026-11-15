@@ -73,6 +73,22 @@ step() {
   write_status "running"
 }
 
+# Version, mit der das laufende Image gebaut wurde (leer, wenn es nicht läuft).
+running_version() {
+  docker inspect -f '{{index .Config.Labels "org.opencontainers.image.version"}}' "$1" 2>/dev/null || true
+}
+
+# Commit zu einer Version wie „v0.6.9-0-g49239b1“ (falls es ihn im Ordner $2 gibt), sonst der aktuelle Stand.
+commit_of() {
+  local sha=""
+  [[ "$1" =~ -g([0-9a-f]{7,40})$ ]] && sha="${BASH_REMATCH[1]}"
+  if [[ -n "${sha}" ]] && git -C "$2" cat-file -e "${sha}^{commit}" 2>/dev/null; then
+    git -C "$2" rev-parse "${sha}^{commit}"
+  else
+    git -C "$2" rev-parse HEAD
+  fi
+}
+
 cd "${INSTALL_DIR}"
 
 # ---------- 1. Auftrag annehmen, neuen Code holen (dann mit der neuen Fassung dieses Skripts weiter) ----------
@@ -93,10 +109,13 @@ if [[ -z "${MM_UPDATE_PULLED:-}" ]]; then
     MM_MOTOR_MODE="main"
   fi
   export MM_MOTOR_MODE
-  MM_UPDATE_FROM="$(mm_version .)"
-  MM_OLD_HEAD="$(git rev-parse HEAD)"
-  MM_OLD_MOTOR="$(git -C vendor/mornihosting rev-parse HEAD)"
-  export MM_UPDATE_FROM MM_OLD_HEAD MM_OLD_MOTOR
+  # Maßgeblich ist, was wirklich läuft (Version im Image): Nach einem abgebrochenen Update kann der Code auf der Platte
+  # schon neuer sein – dann muss trotzdem gebaut werden, und der Rückweg führt zur laufenden Fassung.
+  MM_RUNNING="$(running_version moinmorni)"
+  MM_UPDATE_FROM="${MM_RUNNING:-$(mm_version .)}"
+  MM_OLD_HEAD="$(commit_of "${MM_RUNNING}" .)"
+  MM_OLD_MOTOR="$(commit_of "$(running_version moinmorni-motor)" vendor/mornihosting)"
+  export MM_RUNNING MM_UPDATE_FROM MM_OLD_HEAD MM_OLD_MOTOR
   # Erst „läuft“ melden, dann den Auftrag wegnehmen: Solange er da ist, startet systemd das Skript immer wieder.
   step "pull"
   [[ -z "${UPDATE_DIR}" ]] || rm -f "${UPDATE_DIR}/request.json"
@@ -119,7 +138,8 @@ MM_BUILD_VERSION="${MM_UPDATE_TO}"
 MH_BUILD_VERSION="$(mm_version vendor/mornihosting)"
 NEW_MOTOR="$(git -C vendor/mornihosting rev-parse HEAD)"
 
-if [[ "$(git rev-parse HEAD)" == "${MM_OLD_HEAD}" && "${NEW_MOTOR}" == "${MM_OLD_MOTOR}" && -z "${MM_FORCE:-}" ]]; then
+if [[ "$(git rev-parse HEAD)" == "${MM_OLD_HEAD}" && "${NEW_MOTOR}" == "${MM_OLD_MOTOR}" &&
+  "${MM_RUNNING:-${MM_UPDATE_TO}}" == "${MM_UPDATE_TO}" && -z "${MM_FORCE:-}" ]]; then
   STEP="null"
   write_status "done"
   msg_ok "Schon aktuell (${MM_UPDATE_TO}) – nichts zu tun"
