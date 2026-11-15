@@ -21,6 +21,12 @@ describe('Weiterleitung an den Motor', () => {
     ['/api/servers/../setup', false],
     ['/api/game-art/java', false],
     ['/api/item-icons/item/diamond', false],
+    ['/api/auth/%72egister', false],
+    ['/api/auth/%63onfirm', false],
+    ['/api/hostx', false],
+    ['/api//setup', false],
+    ['/api/host', true],
+    ['/api/settings/panel', true],
   ])('%s → %s', (path, allowed) => {
     expect(motorPathAllowed(path)).toBe(allowed);
   });

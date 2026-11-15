@@ -43,11 +43,11 @@ const DENY: readonly string[] = [
 
 /** Darf dieser Pfad (ohne /panel/motor davor, ohne ?…) an den Motor? */
 export function motorPathAllowed(path: string): boolean {
-  if (path.includes('..')) return false;
+  // Kodierte Zeichen (%72egister = register) dekodiert der Motor erst hinter dieser Prüfung – die Oberfläche braucht
+  // sie im Pfad nie, also gar nicht erst durchlassen. Doppelte Schrägstriche ebenso nicht.
+  if (path.includes('..') || path.includes('%') || path.includes('//')) return false;
   if (DENY.some((p) => path === p || path.startsWith(`${p}/`))) return false;
-  return ALLOW.some(
-    (p) => path === p || path.startsWith(p) || path.startsWith(`${p}/`) || path.startsWith(`${p}?`),
-  );
+  return ALLOW.some((p) => (p.endsWith('/') ? path.startsWith(p) : path === p || path.startsWith(`${p}/`)));
 }
 
 export async function registerMotorProxy(app: FastifyInstance, motorUrl: string): Promise<void> {

@@ -119,6 +119,29 @@ describe('Team-Konten', () => {
       (await call('PATCH', `/api/panel/team/${lena?.id}`, session, { roleId: 'builder' })).statusCode,
     ).toBe(200);
     expect((await team(owner)).find((m) => m.username === 'lena')?.roleId).toBe('builder');
+    // Owner ist im Motor Admin, wer es nicht mehr ist, verliert das gleich.
+    const isMotorAdmin = async (name: string) =>
+      (await h.mm.motor.request<Array<{ username: string; isAdmin: boolean }>>('GET', '/api/users')).find(
+        (u) => u.username === name,
+      )?.isAdmin;
+    const lenaId = (await team(owner)).find((m) => m.username === 'lena')?.id;
+    await call('PATCH', `/api/panel/team/${lenaId}`, owner, { roleId: 'owner' });
+    expect(await isMotorAdmin('lena')).toBe(true);
+    await call('PATCH', `/api/panel/team/${lenaId}`, owner, { roleId: 'builder' });
+    expect(await isMotorAdmin('lena')).toBe(false);
+
+    // Rollen-Vorlage: ein Admin gibt keiner Rolle Rechte, die er selbst nicht hat, und nie „Admin“/„Administrator“.
+    type R = { id: string; game: string[]; discord: string[]; panel: string[]; fallback: boolean };
+    const roles = (await call('GET', '/api/panel/roles', session)).json<R[]>();
+    const put = (list: R[]) => call('PUT', '/api/panel/roles', session, list);
+    const edit = (id: string, change: (r: R) => R) => roles.map((r) => (r.id === id ? change(r) : r));
+    expect((await put(edit('vip', (r) => ({ ...r, game: [...r.game, 'admin'] })))).statusCode).toBe(403);
+    expect(
+      (await put(edit('moderator', (r) => ({ ...r, discord: [...r.discord, 'administrator'] })))).statusCode,
+    ).toBe(403);
+    expect((await put(edit('player', (r) => ({ ...r, game: [...r.game, 'kick'] })))).statusCode).toBe(403);
+    expect((await put(roles.filter((r) => r.id !== 'moderator'))).statusCode).toBe(200);
+    expect((await put(roles)).statusCode).toBe(200);
   });
 
   test('Passwort zurücksetzen, sperren, entfernen; sich selbst nicht', async () => {

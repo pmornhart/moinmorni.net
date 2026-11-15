@@ -11,7 +11,7 @@ import { hasRight, type HubContext } from './context.js';
 import { createModeration, type Moderation } from './moderation.js';
 import { createPlayerService, normalUuid, type PlayerService } from './players.js';
 import { createPresence, type Presence } from './presence.js';
-import { hubSecretOf, serverKeyOf } from './protocol.js';
+import { hubSecretOf, serverKeyOf, type ServerKind } from './protocol.js';
 import { createPunishService, type PunishService } from './punish.js';
 import { createSettingCommands, mergeCommands } from './setting-commands.js';
 import { createSocial } from './social.js';
@@ -24,6 +24,17 @@ import { createTransport, type Body, type Connection } from './transport.js';
  * Wartung, voll), Anwesenheit, Chat, Befehle und Ränge zusammen.
  */
 
+/** Nachrichten, die nur der Proxy schicken darf (alles andere kommt von den Spielservern). */
+const PROXY_ONLY: ReadonlySet<string> = new Set([
+  'online',
+  'login',
+  'connecting',
+  'switch',
+  'leave',
+  'locale',
+  'command',
+  'complete',
+]);
 const MINUTE_MS = 60_000;
 const NAME_MAX = 16;
 const TEXT_MAX = 256;
@@ -102,7 +113,7 @@ export interface Hub {
   readonly listen: (host: string, port: number) => Promise<number>;
   readonly close: () => Promise<void>;
   /** Schlüssel für die hub.json eines Servers. */
-  readonly keyFor: (server: string) => string;
+  readonly keyFor: (server: string, kind: ServerKind) => string;
   readonly presence: Presence;
   readonly players: PlayerService;
   readonly punish: PunishService;
@@ -348,7 +359,7 @@ export function createHub(options: HubOptions): Hub {
     const uuid = normalUuid(m.uuid);
     const p = presence.get(uuid);
     const mode = stores.modes().find((md) => md.id === m.mode);
-    if (!p || !mode) return;
+    if (!p || !mode || p.server !== conn.server) return;
     const name = mm(mode.name[p.lang]);
     if (!mode.server) {
       ctx.msg(uuid, text(p.lang, 'mode.soon', { mode: name }));
@@ -454,6 +465,10 @@ export function createHub(options: HubOptions): Hub {
     return p ? { uuid: p.uuid, name: p.name, lang: p.lang, role: players.roleOf(p.uuid) } : null;
   };
 
+  /** Spielserver sprechen nur für Spieler, die gerade bei ihnen sind – kein Server spricht für einen anderen. */
+  const isHere = (conn: Connection, uuid: string): boolean =>
+    presence.get(normalUuid(uuid))?.server === conn.server;
+
   const handlers: Readonly<Record<string, (conn: Connection, body: Body) => void>> = {
     online: (_conn, body) => {
       const list = onlineSchema.parse(body).players;
@@ -518,13 +533,13 @@ export function createHub(options: HubOptions): Hub {
       reply(conn, m.id, { suggestions: ok && command.complete ? command.complete(actor, m.args) : [] });
     },
     'voice-group': (conn, body) => {
-      if (conn.kind !== 'backend') return;
       const m = voiceGroupSchema.parse(body);
+      if (!isHere(conn, m.uuid)) return;
       voice.onGroup(normalUuid(m.uuid), m.group);
     },
     chat: (conn, body) => {
-      if (conn.kind !== 'backend') return;
       const m = chatSchema.parse(body);
+      if (!isHere(conn, m.uuid)) return;
       chat.handle(normalUuid(m.uuid), m.text, now());
     },
   };
@@ -567,7 +582,10 @@ export function createHub(options: HubOptions): Hub {
     },
     onMessage: (conn, body) => {
       const handler = Object.hasOwn(handlers, body.t) ? handlers[body.t] : undefined;
-      if (handler) handler(conn, body);
+      // Spieler, Anmeldungen und Befehle meldet nur der Proxy; Spielserver nur, was bei ihnen passiert.
+      if (handler && PROXY_ONLY.has(body.t) !== (conn.kind === 'proxy'))
+        log.warn({ server: conn.server, t: body.t }, 'Hub: Nachricht vom falschen Server abgelehnt');
+      else if (handler) handler(conn, body);
       else log.warn({ server: conn.server, t: body.t }, 'Hub: unbekannte Nachricht');
     },
     onBinary: (conn, payload) => {
@@ -596,7 +614,7 @@ export function createHub(options: HubOptions): Hub {
       voice.stop();
       await transport.close();
     },
-    keyFor: (server) => serverKeyOf(hubSecret, server),
+    keyFor: (server, kind) => serverKeyOf(hubSecret, server, kind),
     presence,
     players,
     punish,

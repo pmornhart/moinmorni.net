@@ -62,7 +62,7 @@ describe('Netzwerk richtet sich selbst ein', () => {
       url: 'ws://moinmorni:8090/hub',
       server: 'lobby',
       kind: 'backend',
-      key: h.mm.hub.keyFor('lobby'),
+      key: h.mm.hub.keyFor('lobby', 'backend'),
     });
     const proxyJson = JSON.parse(
       (await read(net?.proxy.serverId ?? '', 'plugins/moinmorni/hub.json')).content,

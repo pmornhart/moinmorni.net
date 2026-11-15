@@ -51,7 +51,7 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     owner = await h.login('philip', OWNER_PASSWORD);
     h.mm.bot.start();
     const port = await h.mm.hub.listen('127.0.0.1', 0);
-    proxy = await connectPlugin(`ws://127.0.0.1:${port}/hub`, 'proxy', 'proxy', h.mm.hub.keyFor('proxy'));
+    proxy = await connectPlugin(`ws://127.0.0.1:${port}/hub`, 'proxy', 'proxy', h.mm.hub.keyFor('proxy', 'proxy'));
     dc.guild.members.set(LENA_DC, { roles: [], communication_disabled_until: null });
   }, 60_000);
   afterAll(async () => {

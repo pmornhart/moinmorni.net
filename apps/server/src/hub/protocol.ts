@@ -29,8 +29,12 @@ const hmac = (key: string | Buffer, text: string): string =>
 export const hubSecretOf = (secret: string): Buffer =>
   crypto.createHmac('sha256', secret).update('moinmorni-hub').digest();
 
-/** Schlüssel eines Servers – steht in dessen hub.json. */
-export const serverKeyOf = (hubSecret: Buffer, server: string): string => hmac(hubSecret, `server|${server}`);
+/**
+ * Schlüssel eines Servers – steht in dessen hub.json. Die Art (Proxy oder Spielserver) steckt mit drin: ein Spielserver
+ * kann sich mit seinem Schlüssel nie als Proxy anmelden.
+ */
+export const serverKeyOf = (hubSecret: Buffer, server: string, kind: ServerKind): string =>
+  hmac(hubSecret, `server|${kind}|${server}`);
 
 export const newNonce = (): string => crypto.randomBytes(NONCE_BYTES).toString('hex');
 

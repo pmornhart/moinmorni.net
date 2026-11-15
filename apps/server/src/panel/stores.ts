@@ -27,11 +27,27 @@ export interface Stores {
   readonly roles: () => Role[];
   readonly role: (id: string) => Role | undefined;
   /** Ganze Vorlage speichern. `byOwner` = nur dann dürfen Owner/Admin geändert werden. */
-  readonly saveRoles: (list: readonly Role[], by: string, byOwner: boolean) => Role[];
+  /** Rollen-Vorlage speichern; `editor` = Rolle dessen, der speichert (Owner darf alles, sonst nur darunter). */
+  readonly saveRoles: (list: readonly Role[], by: string, editor: Role) => Role[];
   readonly settings: (area: string) => Record<string, unknown>;
   readonly patchSettings: (area: string, patch: unknown, by: string) => Record<string, unknown>;
   readonly modes: () => Mode[];
   readonly patchMode: (id: string, patch: ModePatch, by: string) => Mode;
+}
+
+/**
+ * Darf jemand (nicht Owner) diese Rolle so anlegen, ändern oder löschen? Nur Rollen unter der eigenen, nie die für
+ * alle (Spieler), und nur mit Rechten, die er selbst hat – „Admin“ im Spiel und „Administrator“ in Discord nie.
+ * Sonst könnte ein Admin sich über eine Rolle mehr Rechte geben, als er hat.
+ */
+function mayShape(editor: Role, old: Role | undefined, fresh: Role | undefined): boolean {
+  const below = (r: Role | undefined): boolean => !r || (r.position > editor.position && !r.fallback);
+  const within = (r: Role | undefined): boolean =>
+    !r ||
+    (r.panel.every((a) => editor.panel.includes(a)) &&
+      r.game.every((g) => g !== 'admin' && editor.game.includes(g)) &&
+      r.discord.every((d) => d !== 'administrator' && editor.discord.includes(d)));
+  return below(old) && below(fresh) && within(fresh);
 }
 
 export function createStores(db: Db, events: EventBus): Stores {
@@ -59,7 +75,8 @@ export function createStores(db: Db, events: EventBus): Stores {
   return {
     roles: allRoles,
     role: (id) => allRoles().find((r) => r.id === id),
-    saveRoles: (list, by, byOwner) => {
+    saveRoles: (list, by, editor) => {
+      const byOwner = editor.id === 'owner';
       const parsed = list.map((r) => roleSchema.parse(r));
       if (new Set(parsed.map((r) => r.id)).size !== parsed.length) throw badRequest('role_duplicate');
       if (parsed.filter((r) => r.fallback).length !== 1) throw badRequest('role_fallback_one');
@@ -71,6 +88,15 @@ export function createStores(db: Db, events: EventBus): Stores {
         return JSON.stringify(old) !== JSON.stringify(fresh);
       });
       if (touchesOwnerRoles && !byOwner) throw forbidden('role_owner_only');
+      if (!byOwner) {
+        const changed = [...parsed, ...before].filter((r) => {
+          const old = before.find((o) => o.id === r.id);
+          const fresh = parsed.find((f) => f.id === r.id);
+          return JSON.stringify(old) !== JSON.stringify(fresh);
+        });
+        if (!changed.every((r) => mayShape(editor, before.find((o) => o.id === r.id), parsed.find((f) => f.id === r.id))))
+          throw forbidden('role_too_high');
+      }
       db.transaction((tx) => {
         tx.delete(roles).run();
         parsed.forEach((r) => tx.insert(roles).values({ id: r.id, data: r }).run());

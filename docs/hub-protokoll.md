@@ -11,11 +11,15 @@ Panel einstellen, und Velocity und Paper verhalten sich gleich.
 ## Schlüssel
 
 - Jeder Server hat einen eigenen Schlüssel:
-  `serverKey = hex(HMAC-SHA256(hubSecret, "server|" + server))`, mit
+  `serverKey = hex(HMAC-SHA256(hubSecret, "server|" + kind + "|" + server))`, mit
   `hubSecret = HMAC-SHA256(MM_SECRET, "moinmorni-hub")`.
 - MoinMorni schreibt ihn über den Motor in `plugins/moinmorni/hub.json` des Servers:
   `{ "url": "ws://moinmorni:8090/hub", "server": "lobby", "kind": "backend", "key": "<hex>" }`.
-- Ein Server kann sich nicht als ein anderer ausgeben (anderer Name → anderer Schlüssel).
+- Ein Server kann sich nicht als ein anderer ausgeben (anderer Name → anderer Schlüssel) und ein Spielserver nicht als
+  Proxy (andere Art → anderer Schlüssel).
+- Der Hub nimmt Spieler-, Anmelde- und Befehls-Nachrichten (`online`, `login`, `connecting`, `switch`, `leave`,
+  `locale`, `command`, `complete`) nur vom Proxy an. Spielserver dürfen nur für Spieler sprechen, die gerade bei ihnen
+  sind (`chat`, `play`, `voice-group`, Ton); alles andere wird verworfen.
 
 ## Verbindung aufbauen
 
@@ -85,7 +89,7 @@ des Spielers.
 | `connect`       | Proxy       | `uuid, server`                                                                                                                                                                                                                                                                                                                                                             |
 | `lobby`         | Spielserver | `modes[{id, name{de,en}, state, access, max, players, hasServer, awake, icon}]` – für die Schilder der Lobby-Figuren; höchstens einmal pro Sekunde                                                                                                                                                                                                                         |
 | `jail`          | nur Lobby   | `cell{spawn, min, max}`, `players[{uuid, until, reason}]` – wer im Gefängnis sitzt; beim Verbinden und bei jeder Änderung                                                                                                                                                                                                                                                  |
-| `voice`         | Spielserver | `channels[{id, name}], muted[], parties[{id, name, members[]}], own[{id, name, password}], ownGroups, distance` – Kanäle mit gleicher ID auf jedem Server; eigene Gruppen (`/voice gruppe`) mit gleichem Passwort überall; `ownGroups` aus = auch das Sprachchat-Menü legt keine Gruppen an; `distance` trägt das Plugin als `max_voice_distance` ein (gilt nach Neustart) |
+| `voice`         | Spielserver | `channels[{id, name}], muted[], parties[{id, name, members[]}], own[{id, name, locked}], ownGroups, distance` – Kanäle mit gleicher ID auf jedem Server; eigene Gruppen (`/voice gruppe`) – das Passwort kennt nur der Hub, abgeschlossene Gruppen bekommen auf dem Server ein zufälliges (beitreten über `/voice <name> <passwort>`); Ton geht nur an Server, auf denen gerade jemand aus der Gruppe ist; `ownGroups` aus = auch das Sprachchat-Menü legt keine Gruppen an; `distance` trägt das Plugin als `max_voice_distance` ein (gilt nach Neustart) |
 | `voice-join`    | Spielserver | `uuid, group, force?` – Spieler in eine Gruppe setzen (Team ohne Passwort)                                                                                                                                                                                                                                                                                                 |
 | _(binär)_ Audio | Spielserver | Sprache von anderen Servern zum Abspielen                                                                                                                                                                                                                                                                                                                                  |
 

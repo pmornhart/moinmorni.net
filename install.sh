@@ -221,8 +221,11 @@ UNIT
   systemctl daemon-reload
   systemctl enable --now moinmorni-update.path >/dev/null 2>&1
   mkdir -p "${VOLUME_DIR}/update"
-  printf '{"installed":"%s"}\n' "$(date -Iseconds)" >"${VOLUME_DIR}/update/agent.json"
-  chown -R 1000:1000 "${VOLUME_DIR}/update"
+  agent_tmp="$(mktemp "${VOLUME_DIR}/update/.agent.XXXXXX")"
+  printf '{"installed":"%s"}\n' "$(date -Iseconds)" >"${agent_tmp}"
+  chmod 644 "${agent_tmp}"
+  mv -f "${agent_tmp}" "${VOLUME_DIR}/update/agent.json"
+  chown -hR 1000:1000 "${VOLUME_DIR}/update"
   msg_ok "Updates per Knopf im Panel und automatisch (Einstellungen → Updates)"
 else
   msg_info "Ohne systemd: Updates von Hand mit moinmorni-update"

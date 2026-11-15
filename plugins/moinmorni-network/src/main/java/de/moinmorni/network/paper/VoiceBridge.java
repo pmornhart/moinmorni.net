@@ -142,14 +142,16 @@ final class VoiceBridge implements VoicechatPlugin {
         });
         parties.retainAll(partyIds);
         parties.addAll(partyIds);
-        // Eigene Gruppen: sichtbar, mit dem Passwort aus dem Hub (gleich auf jedem Server).
+        // Eigene Gruppen: sichtbar. Das Passwort kennt nur der Hub – abgeschlossene Gruppen bekommen hier ein
+        // zufälliges, beitreten geht über /voice <name> <passwort> (der Hub prüft und holt einen hinein).
         Set<UUID> ownIds = new HashSet<>();
         JsonArray ownList = config.getAsJsonArray("own");
         if (ownList != null) {
             for (JsonElement e : ownList) {
                 JsonObject g = e.getAsJsonObject();
                 UUID id = UUID.fromString(HubClient.str(g, "id"));
-                ensure(voice, id, HubClient.str(g, "name"), false, HubClient.str(g, "password"));
+                boolean locked = g.has("locked") && g.get("locked").getAsBoolean();
+                ensure(voice, id, HubClient.str(g, "name"), false, locked ? secret() : null);
                 ownIds.add(id);
                 wanted.add(id);
             }
@@ -182,13 +184,14 @@ final class VoiceBridge implements VoicechatPlugin {
     }
 
     private Group ensure(VoicechatServerApi voice, UUID id, String name, boolean party) {
-        String password = null;
-        if (party) {
-            byte[] secret = new byte[PASSWORD_BYTES];
-            RANDOM.nextBytes(secret);
-            password = java.util.HexFormat.of().formatHex(secret);
-        }
-        return ensure(voice, id, name, party, password);
+        return ensure(voice, id, name, party, party ? secret() : null);
+    }
+
+    /** Zufälliges Passwort, das niemand kennt: beitreten nur über den Hub. */
+    private static String secret() {
+        byte[] bytes = new byte[PASSWORD_BYTES];
+        RANDOM.nextBytes(bytes);
+        return java.util.HexFormat.of().formatHex(bytes);
     }
 
     private Group ensure(VoicechatServerApi voice, UUID id, String name, boolean hidden, String password) {

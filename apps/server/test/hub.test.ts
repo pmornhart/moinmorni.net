@@ -63,7 +63,7 @@ describe('Hub', () => {
   });
 
   const plugin = async (server: string, kind: 'proxy' | 'backend'): Promise<FakePlugin> => {
-    const p = await connectPlugin(url, server, kind, hub.keyFor(server));
+    const p = await connectPlugin(url, server, kind, hub.keyFor(server, kind));
     open.push(p);
     return p;
   };
@@ -95,8 +95,27 @@ describe('Hub', () => {
     await proxy.next('network');
     await proxy.next('bans');
 
-    const fake = await connectPlugin(url, 'lobby', 'backend', hub.keyFor('duels'));
+    const fake = await connectPlugin(url, 'lobby', 'backend', hub.keyFor('duels', 'backend'));
     expect(await fake.closed).toBe(4001);
+    // Ein Spielserver kann sich mit seinem Schlüssel nicht als Proxy anmelden.
+    const posing = await connectPlugin(url, 'duels', 'proxy', hub.keyFor('duels', 'backend'));
+    expect(await posing.closed).toBe(4001);
+  });
+
+  test('Spielserver dürfen keine Proxy-Nachrichten schicken und nicht für fremde Spieler sprechen', async () => {
+    const { proxy, lobby, duels } = await network();
+    // Duels gibt sich als Proxy aus und will Philip (Owner) einen Befehl ausführen lassen.
+    duels.send({ t: 'login', id: 'x1', uuid: PHILIP, name: 'Philip', bedrock: false, locale: 'de' });
+    duels.send({ t: 'command', id: 'x2', uuid: PHILIP, command: 'rang', args: ['Lena', 'admin'] });
+    // Duels spricht im Chat für Philip – der ist aber in der Lobby.
+    duels.send({ t: 'chat', uuid: PHILIP, text: 'gefälscht' });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(hub.players.roleOf(LENA).id).not.toBe('admin');
+    const all = [...proxy.received, ...lobby.received, ...duels.received];
+    expect(all.some((m) => JSON.stringify(m).includes('gefälscht'))).toBe(false);
+    // Echte Nachricht aus der Lobby kommt an.
+    lobby.send({ t: 'chat', uuid: PHILIP, text: 'echt' });
+    await duels.next('chat', (m) => JSON.stringify(m).includes('echt'));
   });
 
   test('veränderter oder wiederholter Rahmen → Verbindung zu', async () => {
@@ -502,9 +521,8 @@ describe('Hub', () => {
     // Klick auf die Duels-Figur → Proxy verbindet.
     lobby.send({ t: 'play', uuid: PHILIP, mode: 'duels' });
     expect(await proxy.next('connect', (m) => m['uuid'] === PHILIP)).toMatchObject({ server: 'duels' });
-    // Wer schon drin ist, bekommt nur einen Hinweis.
+    // Die Lobby spricht nicht für Lena – die ist gerade in Duels.
     lobby.send({ t: 'play', uuid: LENA, mode: 'duels' });
-    await said(LENA, 'already');
     // Schlafender Modus wird geweckt, geschlossener sagt Bescheid.
     lobby.send({ t: 'play', uuid: PHILIP, mode: 'party' });
     await said(PHILIP, 'wacht gerade auf');
@@ -546,6 +564,10 @@ describe('Hub', () => {
     const config = await duels.next('voice');
     expect(config['channels']).toEqual(expect.arrayContaining([{ id: dorf, name: 'Dorfplatz' }]));
     const settle = () => new Promise((r) => setTimeout(r, 80));
+    // Philip ist in der Lobby im Dorfplatz, Lena in Duels – Ton geht nur dorthin, wo jemand aus dem Kanal ist.
+    duels.send({ t: 'voice-group', uuid: LENA, group: dorf });
+    lobby.send({ t: 'voice-group', uuid: PHILIP, group: dorf });
+    await settle();
 
     lobby.sendBinary(audioFrame(dorf, PHILIP, Buffer.from([1, 2, 3])));
     await settle();
@@ -584,6 +606,8 @@ describe('Hub', () => {
     const withParty = await duels.next('voice', (m) => (m['parties'] as unknown[]).length === 1);
     const party = (withParty['parties'] as Array<{ id: string; name: string; members: string[] }>)[0];
     expect(party).toMatchObject({ name: 'Party Philip', members: [PHILIP, LENA] });
+    duels.send({ t: 'voice-group', uuid: LENA, group: party?.id ?? null });
+    await settle();
     lobby.sendBinary(audioFrame(party?.id ?? '', PHILIP, Buffer.from([7])));
     await settle();
     expect(duels.binaries.at(-1)?.at(-1)).toBe(7);
@@ -602,16 +626,20 @@ describe('Hub', () => {
     // Lena legt eine Gruppe mit Passwort an – auf jedem Server, sie selbst ist gleich drin.
     await cmd(LENA, 'voice', 'gruppe', 'Gipfel', 'geheim1');
     const made = await lobby.next('voice', ownCount(1));
-    const g = (made['own'] as Array<{ id: string; name: string; password: string | null }>)[0];
-    expect(g).toMatchObject({ name: 'Gipfel', password: 'geheim1' });
+    const g = (made['own'] as Array<{ id: string; name: string; locked: boolean }>)[0];
+    // Das Passwort bleibt im Hub – Spielserver erfahren nur, dass die Gruppe abgeschlossen ist.
+    expect(g).toEqual({ id: g?.id, name: 'Gipfel', locked: true });
+    expect(JSON.stringify(made)).not.toContain('geheim1');
     expect(await duels.next('voice-join', (m) => m['uuid'] === LENA)).toMatchObject({
       group: g?.id,
       force: true,
     });
     duels.send({ t: 'voice-group', uuid: LENA, group: g?.id ?? null });
-    duels.sendBinary(audioFrame(g?.id ?? '', LENA, Buffer.from([3])));
+    // Niemand aus der Gruppe in der Lobby: die Lobby hört nichts mit.
+    const before = lobby.binaries.length;
+    duels.sendBinary(audioFrame(g?.id ?? '', LENA, Buffer.from([2])));
     await settle();
-    expect(lobby.binaries.at(-1)?.at(-1)).toBe(3);
+    expect(lobby.binaries.length).toBe(before);
 
     // Ohne Team-Recht nur mit Passwort; gleicher Name geht nicht.
     hub.players.setRole(PHILIP, 'player');
@@ -619,6 +647,11 @@ describe('Hub', () => {
     await said(PHILIP, 'Passwort');
     await cmd(PHILIP, 'voice', 'Gipfel', 'geheim1');
     expect(await lobby.next('voice-join', (m) => m['uuid'] === PHILIP)).toMatchObject({ group: g?.id });
+    lobby.send({ t: 'voice-group', uuid: PHILIP, group: g?.id ?? null });
+    await settle();
+    duels.sendBinary(audioFrame(g?.id ?? '', LENA, Buffer.from([3])));
+    await settle();
+    expect(lobby.binaries.at(-1)?.at(-1)).toBe(3);
     await cmd(PHILIP, 'voice', 'gruppe', 'gipfel');
     await said(PHILIP, 'gibt es schon');
 

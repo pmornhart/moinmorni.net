@@ -146,7 +146,7 @@ export function createProvisioner(
   /** hub.json und Plugin auf einen Server; true = Plugin neu (wirkt nach dem nächsten Neustart). */
   const equip = async (serverId: string, member: string, kind: 'proxy' | 'backend'): Promise<boolean> => {
     const hubJson = JSON.stringify(
-      { url: config.hubUrl, server: member, kind, key: hub.keyFor(member) },
+      { url: config.hubUrl, server: member, kind, key: hub.keyFor(member, kind) },
       null,
       2,
     );

@@ -105,7 +105,8 @@ export function createVoice(
     channels: channels(),
     muted: [...muted()],
     parties: voice()['partyVoice'] === true ? parties() : [],
-    own: ownAllowed() ? [...own.values()].map((g) => ({ id: g.id, name: g.name, password: g.password })) : [],
+    // Passwörter bleiben im Hub: Spielserver erfahren nur, ob eine Gruppe abgeschlossen ist (beitreten per /voice).
+    own: ownAllowed() ? [...own.values()].map((g) => ({ id: g.id, name: g.name, locked: g.password !== null })) : [],
     ownGroups: ownAllowed(),
     distance: distance(),
   });
@@ -381,8 +382,12 @@ export function createVoice(
       // Nur wer wirklich auf diesem Server ist und nicht stumm – kein Server spricht für einen anderen.
       if (ctx.presence.get(speaker)?.server !== from.server || muted().has(speaker)) return;
       if (!isBridged(group)) return;
+      // Nur dorthin, wo gerade jemand aus der Gruppe ist – andere Server hören nichts mit.
+      const listening = new Set(
+        [...groups].filter(([, g]) => g === group).map(([uuid]) => ctx.presence.get(uuid)?.server),
+      );
       backends()
-        .filter((c) => c.server !== from.server)
+        .filter((c) => c.server !== from.server && listening.has(c.server))
         .forEach((c) => c.sendBinary(payload));
     },
     commands,

@@ -124,5 +124,21 @@ bash "${INSTALL}/update.sh" >"${WORK}/out.txt" 2>&1
 check "Motor-Datei ist neu" "[[ \$(cat '${INSTALL}/vendor/mornihosting/motor.txt') == v2 ]]"
 check "Status done" "status | grep -q '\"state\":\"done\"'"
 
+echo " 6) Links im Update-Ordner (vom Container gelegt) werden nicht verfolgt"
+echo "geheim" >"${WORK}/host-datei"
+rm -f "${WORK}/vol/data/update/log.txt" "${WORK}/vol/data/update/status.json"
+ln -s "${WORK}/host-datei" "${WORK}/vol/data/update/log.txt"
+ln -s "${WORK}/host-datei" "${WORK}/vol/data/update/status.json"
+new_commit "Sechs"
+code="$(run_update)"
+check "endet ohne Fehler" "[[ ${code} == 0 ]]"
+check "fremde Datei unverändert" "[[ \$(cat '${WORK}/host-datei') == geheim ]]"
+check "Protokoll und Status sind eigene Dateien" "[[ ! -L '${WORK}/vol/data/update/log.txt' && ! -L '${WORK}/vol/data/update/status.json' ]] && grep -q 'Update fertig' '${WORK}/vol/data/update/log.txt'"
+rm -rf "${WORK}/vol/data/update"
+mkdir -p "${WORK}/anderswo"
+ln -s "${WORK}/anderswo" "${WORK}/vol/data/update"
+bash "${INSTALL}/update.sh" >"${WORK}/out.txt" 2>&1
+check "Update-Ordner als Link → Abbruch, nichts geschrieben" "[[ -z \$(ls -A '${WORK}/anderswo') ]] && grep -q 'Verweis' '${WORK}/out.txt'"
+
 printf '\n %s bestanden, %s fehlgeschlagen\n' "${PASS}" "${FAIL}"
 [[ ${FAIL} -eq 0 ]]

@@ -112,9 +112,16 @@ export function registerTeamRoutes(
     user.role.id === OWNER || role.position > user.role.position;
   const owners = (): number => members().filter((m) => m.roleId === OWNER).length;
 
-  /** Motor-Zugriff auf die Server passend zur Rolle (Owner ist im Motor Admin und braucht nichts). */
-  const syncAccess = async (motorUserId: number, role: Role): Promise<void> => {
-    if (role.id === OWNER) return;
+  /**
+   * Motor-Zugriff passend zur Rolle: Owner ist im Motor Admin (alle Server und Einstellungen), alle anderen nicht –
+   * wer kein Owner mehr ist, verliert das sofort. Dazu der Zugriff auf die Server-Seiten.
+   */
+  const syncAccess = async (motorUserId: number, role: Role, known?: readonly MotorUser[]): Promise<void> => {
+    const users = known ?? (await ask<MotorUser[]>(motor, 'GET', '/api/users'));
+    const admin = role.id === OWNER;
+    if (users.find((u) => u.id === motorUserId)?.isAdmin !== admin)
+      await ask(motor, 'PATCH', `/api/users/${motorUserId}`, { isAdmin: admin });
+    if (admin) return;
     const wantsServers = role.panel.includes('servers');
     const [servers, roles] = await Promise.all([
       wantsServers ? motor.servers() : Promise.resolve([]),
@@ -246,10 +253,11 @@ export function registerTeamRoutes(
 
   return {
     syncAll: async () => {
+      const users = await ask<MotorUser[]>(motor, 'GET', '/api/users');
       await Promise.all(
         members().map((m) => {
           const role = stores.role(m.roleId);
-          return role ? syncAccess(m.motorUserId, role) : Promise.resolve();
+          return role ? syncAccess(m.motorUserId, role, users) : Promise.resolve();
         }),
       );
     },

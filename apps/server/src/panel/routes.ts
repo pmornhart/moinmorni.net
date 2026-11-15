@@ -64,6 +64,6 @@ export function registerPanelRoutes(app: Api, auth: PanelAuth, stores: Stores): 
   app.put('/api/panel/roles', { schema: { body: z.array(roleSchema).min(1) } }, async (request) => {
     const user = await auth.require(request, 'roles');
     if (user.role.id !== OWNER && !user.role.panel.includes('roles')) throw forbidden();
-    return stores.saveRoles(request.body, user.username, user.role.id === OWNER);
+    return stores.saveRoles(request.body, user.username, user.role);
   });
 }

@@ -90,7 +90,7 @@ export function createTransport(
 
     const authenticate = (raw: unknown): void => {
       const auth = authSchema.safeParse(raw);
-      const key = auth.success ? serverKeyOf(hubSecret, auth.data.server) : '';
+      const key = auth.success ? serverKeyOf(hubSecret, auth.data.server, auth.data.kind) : '';
       const ok =
         auth.success &&
         sameMac(auth.data.proof, authProof(key, hubNonce, auth.data.nonce, auth.data.server, auth.data.kind));

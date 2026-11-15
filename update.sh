@@ -48,15 +48,24 @@ VOLUME_DIR="$(docker volume inspect -f '{{ .Mountpoint }}' "${VOLUME_NAME}" 2>/d
 MOTOR_DIR="$(docker volume inspect -f '{{ .Mountpoint }}' "${MOTOR_VOLUME_NAME}" 2>/dev/null || true)"
 UPDATE_DIR="${VOLUME_DIR:+${VOLUME_DIR}/update}"
 STEP="null"
+# Der Ordner gehört dem MoinMorni-Container. Dieses Skript läuft als root: nie einem Link darin folgen, sonst könnte
+# ein manipulierter Container root fremde Dateien überschreiben lassen.
+if [[ -n "${UPDATE_DIR}" && -L "${UPDATE_DIR}" ]]; then
+  msg_error "${UPDATE_DIR} ist ein Verweis statt eines Ordners – Update abgebrochen."
+  exit 1
+fi
 
 # Für das Panel: Zustand, Schritt und Versionen in status.json (erst Datei daneben, dann umbenennen).
 write_status() {
   [[ -n "${UPDATE_DIR}" ]] || return 0
   mkdir -p "${UPDATE_DIR}"
-  local tmp="${UPDATE_DIR}/status.json.tmp"
+  local tmp
+  # mktemp legt eine neue Datei an (folgt keinem Link), mv ersetzt status.json samt eines dort liegenden Links.
+  tmp="$(mktemp "${UPDATE_DIR}/.status.XXXXXX")"
   printf '{"state":"%s","step":%s,"at":"%s","from":"%s","to":"%s"}\n' "$1" "${STEP}" "$(date -Iseconds)" \
     "${MM_UPDATE_FROM:-}" "${MM_UPDATE_TO:-}" >"${tmp}"
-  chown "${APP_UID}:${APP_UID}" "${tmp}" 2>/dev/null || true
+  chmod 644 "${tmp}"
+  chown -h "${APP_UID}:${APP_UID}" "${tmp}" 2>/dev/null || true
   mv -f "${tmp}" "${UPDATE_DIR}/status.json"
 }
 step() {
@@ -70,9 +79,14 @@ cd "${INSTALL_DIR}"
 if [[ -z "${MM_UPDATE_PULLED:-}" ]]; then
   if [[ -n "${UPDATE_DIR}" ]]; then
     mkdir -p "${UPDATE_DIR}"
-    : >"${UPDATE_DIR}/log.txt"
-    chown "${APP_UID}:${APP_UID}" "${UPDATE_DIR}/log.txt" 2>/dev/null || true
-    exec > >(tee -a "${UPDATE_DIR}/log.txt") 2>&1
+    # Neues Protokoll: erst eine eigene Datei öffnen, dann an ihren Platz schieben – geschrieben wird über die offene
+    # Datei, nie über den Namen (dort könnte inzwischen ein Link liegen).
+    log_tmp="$(mktemp "${UPDATE_DIR}/.log.XXXXXX")"
+    chmod 644 "${log_tmp}"
+    chown -h "${APP_UID}:${APP_UID}" "${log_tmp}" 2>/dev/null || true
+    exec 3>>"${log_tmp}"
+    mv -f "${log_tmp}" "${UPDATE_DIR}/log.txt"
+    exec > >(tee -a /dev/fd/3) 2>&1
   fi
   MM_MOTOR_MODE="pinned"
   if [[ -n "${UPDATE_DIR}" ]] && grep -q '"motor":"main"' "${UPDATE_DIR}/request.json" 2>/dev/null; then
@@ -165,8 +179,10 @@ rollback() {
     docker compose stop moinmorni motor >/dev/null 2>&1 || true
     if [[ -n "${BACKUP_DIR}" ]]; then
       msg_info "Datenbanken aus der Sicherung zurück"
-      [[ -z "${VOLUME_DIR}" ]] || cp -a "${BACKUP_DIR}/moinmorni/." "${VOLUME_DIR}/"
-      [[ -z "${MOTOR_DIR}" || ! -d "${BACKUP_DIR}/motor" ]] || cp -a "${BACKUP_DIR}/motor/." "${MOTOR_DIR}/"
+      # --remove-destination: liegt am Ziel ein Link, wird er ersetzt statt durch ihn hindurch geschrieben.
+      [[ -z "${VOLUME_DIR}" ]] || cp -a --remove-destination "${BACKUP_DIR}/moinmorni/." "${VOLUME_DIR}/"
+      [[ -z "${MOTOR_DIR}" || ! -d "${BACKUP_DIR}/motor" ]] ||
+        cp -a --remove-destination "${BACKUP_DIR}/motor/." "${MOTOR_DIR}/"
     fi
     if build_all && docker compose up -d >/dev/null && wait_healthy; then
       MM_UPDATE_TO="${MM_UPDATE_FROM}"

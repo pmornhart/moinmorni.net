@@ -72,7 +72,7 @@ args
     const [dir = '', server = '', kind = 'backend'] = spec.split(':');
     const target = path.join(dir, 'plugins', 'moinmorni');
     fs.mkdirSync(target, { recursive: true });
-    const config = { url: `ws://127.0.0.1:${PORT}/hub`, server, kind, key: hub.keyFor(server) };
+    const config = { url: `ws://127.0.0.1:${PORT}/hub`, server, kind, key: hub.keyFor(server, kind) };
     fs.writeFileSync(path.join(target, 'hub.json'), JSON.stringify(config, null, 2));
     console.log(`hub.json für ${server} (${kind}) → ${target}`);
   });

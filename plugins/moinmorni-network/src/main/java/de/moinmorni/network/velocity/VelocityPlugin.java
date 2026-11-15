@@ -57,6 +57,9 @@ public final class VelocityPlugin {
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
     private static final String HUB_DIR = "moinmorni";
     private static final String LOBBY = "lobby";
+    private static final String HUB_AWAY =
+            "<gold>MoinMorni startet gerade neu</gold> <gray>– versuch es in ein paar Sekunden nochmal.</gray>\n"
+            + "<gray>MoinMorni is restarting – try again in a few seconds.</gray>";
 
     private final ProxyServer proxy;
     private final Logger log;
@@ -156,6 +159,9 @@ public final class VelocityPlugin {
             if (until != null && until.isAfter(Instant.now())) {
                 event.setResult(ResultedEvent.ComponentResult.denied(MM.deserialize(
                         "<red><bold>Du bist gebannt</bold></red>\n\n<gray>You are banned.")));
+            } else if (network != null && network.has("maintenance") && network.get("maintenance").getAsBoolean()) {
+                // Ohne Hub weiß der Proxy nicht, wer zum Team gehört – bei Wartung bleibt die Tür dann ganz zu.
+                event.setResult(ResultedEvent.ComponentResult.denied(MM.deserialize(HUB_AWAY)));
             }
             return null;
         }
@@ -174,6 +180,20 @@ public final class VelocityPlugin {
         return EventTask.resumeWhenComplete(done);
     }
 
+    /** Ohne Hub: in die Lobby ja, woandershin nein (wer gerade erst kommt, landet in der Lobby). */
+    private void closedWithoutHub(ServerPreConnectEvent event, RegisteredServer target) {
+        if (target.getServerInfo().getName().equals(LOBBY)) {
+            return;
+        }
+        Optional<RegisteredServer> lobby = proxy.getServer(LOBBY);
+        if (event.getPreviousServer() == null && lobby.isPresent()) {
+            event.setResult(ServerPreConnectEvent.ServerResult.allowed(lobby.get()));
+        } else {
+            event.setResult(ServerPreConnectEvent.ServerResult.denied());
+            event.getPlayer().sendMessage(MM.deserialize(HUB_AWAY));
+        }
+    }
+
     /**
      * Vor jedem Serverwechsel: Ist der Modus offen und wach? Schläft er, weckt ihn der Hub und der Spieler kommt
      * danach von selbst hinein. Wer gerade erst ins Netzwerk kommt, wartet so lange in der Lobby.
@@ -181,7 +201,12 @@ public final class VelocityPlugin {
     @Subscribe
     public EventTask onPreConnect(ServerPreConnectEvent event) {
         Optional<RegisteredServer> target = event.getResult().getServer();
-        if (hub == null || !hub.ready() || target.isEmpty()) {
+        if (hub == null || target.isEmpty()) {
+            return null;
+        }
+        if (!hub.ready()) {
+            // Ohne Hub kann niemand prüfen, wer in Bau-Server, Einladungs-Modi oder Wartung darf: nur die Lobby ist offen.
+            closedWithoutHub(event, target.get());
             return null;
         }
         JsonObject body = new JsonObject();
@@ -189,7 +214,11 @@ public final class VelocityPlugin {
         body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
         body.addProperty("server", target.get().getServerInfo().getName());
         CompletableFuture<Void> done = hub.request(body).handle((data, error) -> {
-            if (error != null || !data.has("allow") || data.get("allow").getAsBoolean()) {
+            if (error != null) {
+                closedWithoutHub(event, target.get());
+                return null;
+            }
+            if (!data.has("allow") || data.get("allow").getAsBoolean()) {
                 return null;
             }
             Optional<RegisteredServer> lobby = proxy.getServer(LOBBY);
