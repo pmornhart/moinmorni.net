@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import { alwaysIn, DEFAULT_ROLES, GAME_RIGHTS, mayAssign, mayPunish, ROLE_IDS, roleSchema } from '../src/index.js';
+import {
+  alwaysIn,
+  DEFAULT_ROLES,
+  GAME_RIGHTS,
+  mayAssign,
+  mayPunish,
+  ROLE_IDS,
+  roleSchema,
+} from '../src/index.js';
 
 const role = (id: string) => {
   const found = DEFAULT_ROLES.find((r) => r.id === id);
