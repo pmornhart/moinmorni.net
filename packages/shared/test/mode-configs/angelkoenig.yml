@@ -1,0 +1,36 @@
+# Morni Angelkönig – Einstellungen. Nach Änderungen: /angeladmin neuladen (oder Server neu starten).
+
+# Eigene Welt für das Tal (entsteht beim ersten Start aus dem Code).
+welt: angelkoenig
+
+welt-ablauf:
+  # Läuft die Zeit im Tal (Morgen, Tag, Abend, Nacht)? Sonst bleibt es Morgen.
+  tageszeit-laeuft: true
+  # Wechselt das Wetter (klar, Regen, Gewitter)? Sonst bleibt es klar.
+  wetter-wechselt: true
+  # Ein Wetter-Abschnitt dauert so lange (Sekunden, Regen und Gewitter halb so lang).
+  wetter-min-sekunden: 360
+  wetter-max-sekunden: 900
+
+angeln:
+  # Wartezeit auf den Biss mit der einfachsten Angel (Sekunden). Bessere Angeln sind schneller.
+  biss-min-sekunden: 5
+  biss-max-sekunden: 18
+  # So viele Taler bekommt jeder beim ersten Besuch.
+  startgeld: 25
+
+turnier:
+  # Angel-Turniere an oder aus.
+  an: true
+  # Alle so viele Minuten beginnt ein Turnier (zur vollen Viertelstunde bei 15).
+  alle-minuten: 15
+  # So lange dauert es.
+  dauer-minuten: 5
+  # So viele Sekunden vorher wird es angekündigt.
+  vorwarnung-sekunden: 60
+  # Erst ab so vielen Leuten im Tal gibt es ein Turnier.
+  mindestens-spieler: 2
+  # Taler für Platz 1, 2, 3.
+  preise: [250, 120, 60]
+  # Taler für alle anderen, die etwas gefangen haben.
+  teilnahme: 15

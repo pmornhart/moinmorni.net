@@ -32,13 +32,14 @@ export function createStatusService(
   config: Config,
   motor: MotorClient,
   stores: Stores,
-  hub: Pick<Hub, 'presence' | 'proxyOnline'>,
+  hub: Pick<Hub, 'presence' | 'proxyOnline' | 'modeStates'>,
 ): StatusService {
   const cache: { at: number; value: NetworkStatus | null } = { at: 0, value: null };
   const modeStatus = (
     m: Mode,
     network: MotorNetwork | undefined,
     counts: Record<string, number> | null,
+    runs: Record<string, { readonly state: string }>,
   ): ModeStatus => {
     const member = network?.members.find((s) => s.name === m.server);
     const live = counts && m.server ? (counts[m.server] ?? 0) : null;
@@ -52,6 +53,7 @@ export function createStatusService(
       maxPlayers: m.maxPlayers,
       awake: member?.state === RUNNING,
       server: m.server,
+      phase: runs[m.id]?.state ?? null,
     };
   };
   const networksOrNone = async (): Promise<MotorNetwork[]> => {
@@ -73,7 +75,7 @@ export function createStatusService(
       javaAddress: config.domain,
       bedrockAddress: config.domain,
       bedrockPort: config.bedrockPort,
-      modes: stores.modes().map((m) => modeStatus(m, network, counts)),
+      modes: stores.modes().map((m) => modeStatus(m, network, counts, hub.modeStates())),
       updatedAt: new Date().toISOString(),
     };
   };

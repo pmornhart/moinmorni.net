@@ -17,6 +17,7 @@ import { npc, signText } from '../village.js';
 import { LAUNCHPADS, PARKOUR } from './features.js';
 import { buildJail } from './jail.js';
 import { fence, field, forest, houseAt, lampPost, MODES, mountains, ramp, stallAt } from './common.js';
+import { buildSchlossmarkt, RING_MODES } from './schlossmarkt.js';
 
 const HALF = 0.5;
 
@@ -93,6 +94,11 @@ export const LOBBY_VIEWS = [
   '18-galerie 24.5 103 -136.5 @ 8 104 -136.5',
   '19-bibliothek -30.5 94.6 -99.5 @ -35 93.5 -124',
   '20-rittersaal 30.5 94.6 -124.5 @ 35 93.5 -100',
+  '21-schlossmarkt 0.5 69 -16 @ 0 68 -31',
+  '22-schlossmarkt-west -9 67.5 -22 @ -36 66 -32',
+  '23-schlossmarkt-ost 9 67.5 -22 @ 36 66 -32',
+  '24-marktbogen 0.5 66.6 -19 @ 0.5 70 -28',
+  '25-stand-neu 26 66.8 -25 @ 20 66.6 -33',
 ];
 
 /** Gäste im Biergarten: [Tisch-x, Tisch-z, Platz, Seite (1 = Süden), Skin, in der Hand]. */
@@ -180,7 +186,7 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
 
   // Dorfmarkt: acht Stände eng im Kreis um den Maibaum, je zwei an jeder Ecke, Gassen in alle vier Richtungen
   MARKET.forEach(([x, z, front], i) => {
-    const mode = MODES[i];
+    const mode = i < RING_MODES ? MODES[i] : undefined;
     if (mode) stallAt(c, x, GROUND, z, front, mode);
     else stallAt(c, x, GROUND, z, front, BREZN_STAND, ['mm_village', 'mm_market']);
   });
@@ -209,6 +215,9 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
       );
     }),
   );
+
+  // Schlossmarkt: alle weiteren Modi in einer Marktzeile auf dem Vorplatz vor der Schlosstreppe
+  buildSchlossmarkt(c, height);
 
   // Dorfstraße nach Süden: Läden und Wohnhäuser (alle begehbar), Kapelle am Ende
   range(-3, 3).forEach((x) =>
@@ -484,6 +493,7 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
         nearHill > HILL.top + 6 &&
         nearHill < HILL.foot &&
         Math.abs(x) > 14 &&
+        !(Math.abs(x) < 54 && z > -46) && // Schlossmarkt mit Stützmauer bleibt frei
         h > GROUND + 2 &&
         !castleArea(x, z)
       );

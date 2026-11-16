@@ -1,0 +1,25 @@
+# Morni Adlerflug – Einstellungen. Nach einer Änderung den Server neu starten.
+# (Im MoinMorni-Netzwerk stellt man das im Panel ein.)
+
+# Name der Welt, die Adlerflug anlegt (Basislager + Strecken). Spieler bauen dort nichts; kommt eine neue
+# Version mit geänderter Landschaft oder Strecken, wird sie gelöscht und frisch erzeugt.
+welt: adlerflug
+
+# Schwung beim Absprung von der Schanze in Blöcken pro Tick (1,3 ≈ 94 km/h). 0 = kein Schwung, man fällt
+# einfach von der Kante (die Strecken sind für 1,3 gebaut – weniger macht den ersten Ring schwerer).
+start-schwung: 1.3
+
+# Flügel klappen von selbst auf, wenn man in der Luft fällt (hilft Anfängern und auf dem Handy).
+fluegel-automatisch: true
+
+# Zeiten, die schneller sind als überhaupt möglich (Teleport, Abkürzung), nicht werten.
+plausibel-pruefen: true
+
+# So viele Sekunden haben Party-Mitglieder, um bei einem Rennen mitzumachen.
+rennen-wartezeit: 15
+
+# Geist der eigenen Bestzeit (kleiner Adler aus Funken) für neue Spieler an?
+geist-standard: true
+
+# Freiflug von der großen Schanze im Basislager (ohne Zeit); wer im Tal landet, kommt zurück.
+freiflug: true

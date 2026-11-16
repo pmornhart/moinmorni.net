@@ -38,6 +38,17 @@ export function readable(key: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/**
+ * Best time of a course or event: "time_almrundflug_ms" → "almrundflug"; not "best_time_ms" or "time_ms".
+ * https://regex101.com/?flavor=javascript&regex=%5Etime_(%5Ba-z0-9%5D%5Ba-z0-9_%5D*)_ms%24&testString=time_almrundflug_ms
+ */
+const TIME_OF = /^time_([a-z0-9][a-z0-9_]*)_ms$/;
+/**
+ * Finishes of one course: "finishes_klammflug" → "klammflug"; not "finishes".
+ * https://regex101.com/?flavor=javascript&regex=%5Efinishes_(%5Ba-z0-9_%5D%2B)%24&testString=finishes_klammflug
+ */
+const FINISHES_OF = /^finishes_([a-z0-9_]+)$/;
+
 /** Name of a value ("Siege") and the value itself ("1.234", "1:07,729") in the reader's language. */
 export function useStatText(): {
   readonly label: (key: string) => string;
@@ -46,8 +57,18 @@ export function useStatText(): {
   const { t } = useTranslation(MM_NAMESPACE);
   const locale = NUMBER_LOCALE[useLanguage()];
   const number = new Intl.NumberFormat(locale);
+  const course = (id: string): string => t(`site.players.courses.${id}`, { defaultValue: readable(id) });
+  const label = (key: string): string => {
+    const own = t(`site.players.stats.${key}`, { defaultValue: '' });
+    if (own) return own;
+    const time = TIME_OF.exec(key);
+    if (time?.[1]) return t('site.players.stats.timeOf', { course: course(time[1]) });
+    const finishes = FINISHES_OF.exec(key);
+    if (finishes?.[1]) return t('site.players.stats.finishesOf', { course: course(finishes[1]) });
+    return readable(key);
+  };
   return {
-    label: (key) => t(`site.players.stats.${key}`, { defaultValue: readable(key) }),
+    label,
     value: (key, value) => (key.endsWith(TIME_SUFFIX) ? formatTime(value, locale) : number.format(value)),
   };
 }

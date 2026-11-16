@@ -68,7 +68,14 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
       'burgverlies',
       'bollwerk',
       'mirni',
+      'wolkenkampf',
+      'versteckerl',
+      'wintersport',
+      'adlerflug',
+      'angelkoenig',
     ]);
+    // Noch nichts gemeldet: keine Sommerpause o. Ä.
+    expect(status.modes.every((m) => m.phase === null)).toBe(true);
   });
 
   test('Anmelden läuft über den Motor; das erste Admin-Konto wird Owner', async () => {
@@ -102,6 +109,11 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
       'burgverlies',
       'bollwerk',
       'smp',
+      'wolkenkampf',
+      'versteckerl',
+      'wintersport',
+      'adlerflug',
+      'angelkoenig',
       'build',
       'updates',
     ]);

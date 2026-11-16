@@ -9,6 +9,7 @@ import {
   MessagesSquare,
   Moon,
   MousePointerClick,
+  Sun,
   Terminal,
   Users,
   type LucideIcon,
@@ -26,6 +27,7 @@ import { PlayerFace } from '~/components/player-face';
 import { modeJoinable, modeLook, useNetworkStatus } from '~/lib/status';
 import { usePick } from '~/lib/text';
 import { modeArt } from './art';
+import { MODE_GUIDES } from './mode-guides';
 import { MODE_PARAM, PLACE_COLOURS, useStatText } from './stat-format';
 import { JoinCard, ModeCard, ModeFigure, modeStyle } from './cards';
 import {
@@ -193,6 +195,12 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
           <CopyChip value={command} />
         </Step>
       </ol>
+      {look === 'pause' ? (
+        <p className="flex items-start gap-2.5 rounded-[6px] border-2 border-gold/35 bg-gold-soft px-4 py-3 text-[15px] text-gold-strong">
+          <Sun className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {t('site.mode.pauseText')}
+        </p>
+      ) : null}
       {look === 'asleep' ? (
         <p className="flex items-start gap-2.5 rounded-[6px] border-2 border-blue/25 bg-blue-soft px-4 py-3 text-[15px] text-blue">
           <Moon className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -332,6 +340,55 @@ function ModeTopThree({ mode }: { readonly mode: ModeStatus }): ReactElement | n
   );
 }
 
+/** How the mode is played: three numbered tips on its colours and the most important commands. */
+function ModeGuidePanel({ mode }: { readonly mode: ModeStatus }): ReactElement | null {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const guide = MODE_GUIDES[mode.id];
+  if (!guide) return null;
+  const tips = Array.from({ length: guide.tips }, (_, i) => t(`site.guide.${mode.id}.tip${i + 1}`));
+  return (
+    <Panel
+      className="grid gap-6 p-6 sm:p-7 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-8"
+      style={modeStyle(mode.id)}
+    >
+      <div className="grid content-start gap-5">
+        <h2 className="flex items-center gap-3 font-pixel text-[1.7rem] font-bold leading-tight">
+          <span
+            className="mm-mode-bg grid size-11 place-items-center rounded-[6px] border-2 border-black/20 text-white"
+            aria-hidden
+          >
+            <Gamepad2 className="size-5" />
+          </span>
+          {t('site.guide.title')}
+        </h2>
+        <ol className="grid gap-5">
+          {tips.map((tip, i) => (
+            <Step key={`tip-${i + 1}`} n={i + 1} title={tip} />
+          ))}
+        </ol>
+      </div>
+      <div className="grid content-start gap-3 rounded-[8px] border-2 border-border bg-background-alt p-4 sm:p-5">
+        <h3 className="flex items-center gap-2 font-pixel text-[13px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <Terminal className="size-4 text-gold" aria-hidden />
+          {t('site.guide.commands')}
+        </h3>
+        <dl className="grid gap-3">
+          {guide.commands.map((c) => (
+            <div key={c.key} className="grid gap-1">
+              <dt>
+                <Cmd>{c.syntax}</Cmd>
+              </dt>
+              <dd className="text-[15px] leading-snug text-muted-foreground">
+                {t(`site.guide.${mode.id}.cmd.${c.key}`)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </Panel>
+  );
+}
+
 function OtherModes({ modes }: { readonly modes: readonly ModeStatus[] }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
@@ -457,6 +514,9 @@ export function ModePage(): ReactElement {
       >
         <LivePanel mode={mode} />
         <HowToGetThere mode={mode} />
+        <div className="lg:col-span-2">
+          <ModeGuidePanel mode={mode} />
+        </div>
       </div>
       {others.length ? <OtherModes modes={others} /> : null}
     </>

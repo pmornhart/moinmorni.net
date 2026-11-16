@@ -1,0 +1,43 @@
+# Morni Versteckerl – Einstellungen. Nach Änderungen: /versteckerladmin neuladen (oder Server neu starten).
+
+# Eigene leere Welt für die Gendarmerie (Wartebereich) und die Karten (wird beim ersten Start angelegt und gebaut).
+welt: versteckerl
+
+gendarmerie:
+  # So lange läuft der Countdown, bevor eine Runde startet. Sagen alle „bereit“, geht es nach 5 Sekunden los.
+  countdown-sekunden: 30
+  # Ab so vielen Leuten beginnt der Countdown von selbst. Mit weniger (aber mindestens 2) nur, wenn alle bereit sind.
+  mindestens-spieler: 4
+
+runde:
+  # Höchstens so viele Leute in einer Runde (2–16).
+  hoechstens-spieler: 16
+  # Anteil der Dorfgendarmen (Sucher) am Anfang in Prozent – mindestens einer sucht, mindestens einer versteckt sich.
+  sucher-anteil-prozent: 25
+  # Versteckzeit: so lange warten die Gendarmen in der Stube.
+  versteck-sekunden: 40
+  # Suchzeit: ist danach noch jemand versteckt, gewinnen die Versteckten.
+  such-sekunden: 300
+  # Nach dem Ende: so lange bis zurück in die Gendarmerie.
+  nachspiel-sekunden: 10
+  # So lange muss man still stehen, bis man als echter Block einrastet.
+  einrasten-sekunden: 3
+  # So viele Treffer verträgt ein Versteckter, bis er gefunden ist.
+  treffer-bis-gefunden: 3
+  # So viel Leben kostet ein Schlag auf den falschen Block (in halben Herzen; 2 = ein Herz).
+  falscher-treffer-schaden: 2
+  # So lange muss ein Gendarm verschnaufen, wenn ihm die Puste ausgeht (Leben aufgebraucht).
+  verschnaufen-sekunden: 4
+
+hilfen:
+  # Pfiff: so lange bis zum nächsten Pfiff.
+  pfiff-abklingzeit-sekunden: 15
+  # Ab diesem Anteil der Suchzeit (in Prozent) ist Pfeifen Pflicht …
+  pflicht-pfiff-ab-prozent: 50
+  # … und zwar mindestens alle so viele Sekunden (sonst pfeift man von selbst – ohne Punkte).
+  pflicht-pfiff-sekunden: 30
+  # Sprungkraft: so lange hält sie, so lange bis zum nächsten Mal.
+  sprung-sekunden: 4
+  sprung-abklingzeit-sekunden: 25
+  # Spürnase der Gendarmen (einmal pro Runde): so lange zeigt die Spur.
+  spuernase-sekunden: 4

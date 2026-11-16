@@ -72,11 +72,41 @@ function updateOldSmp(db: Db): void {
   db.update(modes).set({ data: next }).where(eq(modes.id, 'mirni')).run();
 }
 
+/**
+ * Neue Spielmodi (z. B. Wolkenkampf, Versteckerl …) kommen auch bei bestehenden Installationen dazu – hinten in der
+ * Reihenfolge, damit eigene Sortierungen bleiben. Was schon da ist, bleibt unverändert.
+ */
+function addNewModes(db: Db): void {
+  const known = new Set(
+    db
+      .select({ id: modes.id })
+      .from(modes)
+      .all()
+      .map((m) => m.id),
+  );
+  const missing = DEFAULT_MODES.filter((m) => !known.has(m.id));
+  if (!missing.length) return;
+  const last = Math.max(
+    -1,
+    ...db
+      .select()
+      .from(modes)
+      .all()
+      .map((m) => m.data.position),
+  );
+  missing.forEach((m, i) =>
+    db
+      .insert(modes)
+      .values({ id: m.id, data: { ...m, position: Math.max(m.position, last + 1 + i) } })
+      .onConflictDoNothing()
+      .run(),
+  );
+}
+
 export function createStores(db: Db, events: EventBus): Stores {
   if (!db.select().from(roles).get())
     DEFAULT_ROLES.forEach((r) => db.insert(roles).values({ id: r.id, data: r }).run());
-  if (!db.select().from(modes).get())
-    DEFAULT_MODES.forEach((m) => db.insert(modes).values({ id: m.id, data: m }).run());
+  addNewModes(db);
   updateOldSmp(db);
 
   const allRoles = (): Role[] =>

@@ -2,7 +2,8 @@
 /**
  * Die Aufnahmen für die Webseite: Kamera, Licht (Tag = Abendsonne, Nacht = Laternen), Schattenbereich und Ausgaben.
  */
-import { MODE_CAST } from '../../../packages/builder/src/cast.js';
+import { castFor, MODE_CAST, PENDING_CAST } from '../../../packages/builder/src/cast.js';
+import { MODES as LOBBY_MODES } from '../../../packages/builder/src/lobby/common.js';
 import type { Figure, Shot } from './page/render.js';
 
 type V3 = [number, number, number];
@@ -110,9 +111,14 @@ function groupShot(name: string, mode: Shot['mode'], scene: boolean): Shot {
   };
 }
 
-function portrait(skin: string, i: number): Shot {
+/**
+ * Bild einer Modus-Figur (`figur-<modus>.webp`). Neue Figuren zeigen schon ihre eigene Tracht (unsere Zeichnung) –
+ * im Spiel tragen sie sie, sobald der Skin signiert ist (bis dahin die Vertretung, `STAND_IN`).
+ */
+function portrait(mode: string, i: number): Shot {
+  const skin = PENDING_CAST[mode] ? mode : castFor(mode).id;
   return {
-    name: `figur-${skin}`,
+    name: `figur-${mode}`,
     width: 800,
     height: 1000,
     mode: 'studio',
@@ -187,6 +193,22 @@ export const SHOTS: readonly Shot[] = [
     centre: [0, 95, -100],
     fog: NEAR_FOG,
   }),
+  // ein Stand am Schlossmarkt aus der Nähe (Wolkenkampf) mit seiner Figur, dahinter Mauer und Schlossberg
+  ...dayNight('schlossmarkt-stand', [-14.2, 66.9, -24.6], [-20.5, 66.6, -32], {
+    radius: 26,
+    centre: [-20, 66, -31],
+    fog: NEAR_FOG,
+    sun: { azimuth: 200, elevation: 30 },
+  }),
+  // Schlossmarkt von oben (zum Prüfen beim Bauen)
+  ...view('schlossmarkt-oben', [0, 300, -30.9], [0, 64, -31], {
+    radius: 80,
+    centre: [0, 66, -31],
+    camera: { pos: [0, 300, -30.9], target: [0, 64, -31], ortho: 30 },
+    sun: { azimuth: 225, elevation: 50 },
+    fog: [2000, 3000],
+    outputs: [[1600, 900, 'png']],
+  }),
   // Karte von oben
   ...view('karte', [0, 420, -14.9], [0, 64, -15], {
     radius: 220,
@@ -199,5 +221,11 @@ export const SHOTS: readonly Shot[] = [
   groupShot('gruppe', 'studio', false),
   groupShot('gruppe-dorfplatz-tag', 'day', true),
   groupShot('gruppe-dorfplatz-nacht', 'night', true),
-  ...MODES.map(portrait),
+  ...LOBBY_MODES.map((m) => m.id).map(portrait),
+  // Schlossmarkt: Marktbogen und die Stände links und rechts der Prachtstraße
+  ...dayNight('schlossmarkt', [0.5, 78, -4], [0, 66, -31], {
+    radius: 60,
+    centre: [0, 66, -31],
+    fog: NEAR_FOG,
+  }),
 ];

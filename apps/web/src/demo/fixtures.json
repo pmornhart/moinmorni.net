@@ -22,7 +22,8 @@
         "players": 12,
         "maxPlayers": 40,
         "awake": true,
-        "server": "mornicraft"
+        "server": "mornicraft",
+        "phase": "waiting"
       },
       {
         "id": "duels",
@@ -39,7 +40,8 @@
         "players": 34,
         "maxPlayers": 100,
         "awake": true,
-        "server": "duels"
+        "server": "duels",
+        "phase": "waiting"
       },
       {
         "id": "party",
@@ -56,7 +58,8 @@
         "players": 18,
         "maxPlayers": 64,
         "awake": true,
-        "server": "party"
+        "server": "party",
+        "phase": "waiting"
       },
       {
         "id": "gipfelsturm",
@@ -73,7 +76,8 @@
         "players": 0,
         "maxPlayers": 60,
         "awake": false,
-        "server": "gipfelsturm"
+        "server": "gipfelsturm",
+        "phase": null
       },
       {
         "id": "burgverlies",
@@ -90,7 +94,8 @@
         "players": 0,
         "maxPlayers": 40,
         "awake": false,
-        "server": "burgverlies"
+        "server": "burgverlies",
+        "phase": null
       },
       {
         "id": "bollwerk",
@@ -107,7 +112,8 @@
         "players": 0,
         "maxPlayers": 40,
         "awake": false,
-        "server": "bollwerk"
+        "server": "bollwerk",
+        "phase": null
       },
       {
         "id": "mirni",
@@ -124,7 +130,98 @@
         "players": 0,
         "maxPlayers": 60,
         "awake": false,
-        "server": null
+        "server": null,
+        "phase": null
+      },
+      {
+        "id": "wolkenkampf",
+        "name": {
+          "de": "Wolkenkampf",
+          "en": "Cloud Clash"
+        },
+        "description": {
+          "de": "Jeder startet auf seiner eigenen Insel in den Wolken: Truhen plündern, Brücken bauen, kämpfen – wer zuletzt steht, gewinnt. Für 2–12, allein oder zu zweit.",
+          "en": "Everyone starts on their own island in the clouds: loot chests, build bridges, fight – the last one standing wins. For 2–12, solo or in pairs."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 9,
+        "maxPlayers": 48,
+        "awake": true,
+        "server": "wolkenkampf",
+        "phase": "running"
+      },
+      {
+        "id": "versteckerl",
+        "name": {
+          "de": "Versteckerl",
+          "en": "Hide & Seek"
+        },
+        "description": {
+          "de": "Verstecken mit Verwandlung: Werde zum Heuballen, Fass oder Blumentopf – die Dorfgendarmen suchen dich. Für 4–16.",
+          "en": "Hide and seek with a twist: turn into a hay bale, barrel or flower pot – the village constables are looking for you. For 4–16."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 11,
+        "maxPlayers": 48,
+        "awake": true,
+        "server": "versteckerl",
+        "phase": "running"
+      },
+      {
+        "id": "wintersport",
+        "name": {
+          "de": "Wintersport",
+          "en": "Winter Games"
+        },
+        "description": {
+          "de": "Riesenslalom, Biathlon und Bobbahn im verschneiten Bergdorf – um Gold, Silber und Bronze. Für 2–12, jede Disziplin auch einzeln.",
+          "en": "Giant slalom, biathlon and bobsleigh in a snowy mountain village – for gold, silver and bronze. For 2–12, every event also on its own."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 0,
+        "maxPlayers": 36,
+        "awake": false,
+        "server": "wintersport",
+        "phase": "closed"
+      },
+      {
+        "id": "adlerflug",
+        "name": {
+          "de": "Adlerflug",
+          "en": "Eagle Flight"
+        },
+        "description": {
+          "de": "Mit Flügeln von der Schanze und auf Zeit durch Ringe in den Bergen fliegen – mit Medaillen, Bestzeiten und Strecke der Woche.",
+          "en": "Glide off the ski jump and race against the clock through rings in the mountains – with medals, best times and a course of the week."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 4,
+        "maxPlayers": 40,
+        "awake": true,
+        "server": "adlerflug",
+        "phase": "running"
+      },
+      {
+        "id": "angelkoenig",
+        "name": {
+          "de": "Angelkönig",
+          "en": "Angler King"
+        },
+        "description": {
+          "de": "Gemütlich angeln im Alpen-Tal: seltene Fische fangen, beim Fischhändler verkaufen und beim Turnier zum Angelkönig werden.",
+          "en": "Relaxed fishing in an alpine valley: catch rare fish, sell them at the fishmonger and become Angler King at the tournament."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 7,
+        "maxPlayers": 40,
+        "awake": true,
+        "server": "angelkoenig",
+        "phase": "running"
       }
     ]
   },
@@ -382,6 +479,51 @@
           "losses": 23,
           "kills": 53,
           "rating": 1207
+        },
+        "wolkenkampf": {
+          "wins": 4,
+          "games": 34,
+          "kills": 43,
+          "chests": 136,
+          "best_kills": 4
+        },
+        "versteckerl": {
+          "points": 799,
+          "games": 47,
+          "found": 15,
+          "survived": 7,
+          "whistles": 49,
+          "best_points": 38
+        },
+        "wintersport": {
+          "gold": 10,
+          "silver": 2,
+          "bronze": 11,
+          "events": 12,
+          "races": 36,
+          "points": 228,
+          "wins": 4,
+          "time_slalom_ms": 41726,
+          "time_bob_ms": 59220,
+          "time_biathlon_ms": 218227
+        },
+        "adlerflug": {
+          "finishes": 12,
+          "flights": 39,
+          "rings": 132,
+          "medals": 10,
+          "eagles": 0,
+          "time_gletscherspalte_ms": 89291,
+          "time_stollenflug_ms": 58302,
+          "time_burgruine_ms": 61709,
+          "time_almrundflug_ms": 54923
+        },
+        "angelkoenig": {
+          "catches": 54,
+          "legendary": 2,
+          "tournaments_won": 3,
+          "heaviest_g": 14664,
+          "species": 10
         }
       }
     },
@@ -406,6 +548,33 @@
           "games": 16,
           "wins": 1,
           "edelweiss": 119
+        },
+        "versteckerl": {
+          "points": 126,
+          "games": 7,
+          "found": 1,
+          "survived": 0,
+          "whistles": 23,
+          "best_points": 43
+        },
+        "wintersport": {
+          "gold": 2,
+          "silver": 2,
+          "bronze": 2,
+          "events": 6,
+          "races": 18,
+          "points": 102,
+          "wins": 1,
+          "time_slalom_ms": 43153,
+          "time_bob_ms": 57382,
+          "time_biathlon_ms": 248209
+        },
+        "angelkoenig": {
+          "catches": 261,
+          "legendary": 0,
+          "tournaments_won": 6,
+          "heaviest_g": 16367,
+          "species": 8
         }
       }
     },
@@ -428,6 +597,20 @@
           "games": 32,
           "wins": 3,
           "edelweiss": 222
+        },
+        "wolkenkampf": {
+          "wins": 1,
+          "games": 43,
+          "kills": 84,
+          "chests": 129,
+          "best_kills": 2
+        },
+        "angelkoenig": {
+          "catches": 32,
+          "legendary": 3,
+          "tournaments_won": 4,
+          "heaviest_g": 11265,
+          "species": 20
         }
       }
     },
@@ -452,6 +635,21 @@
         "gipfelsturm": {
           "finishes": 24,
           "best_ms": 77722
+        },
+        "wolkenkampf": {
+          "wins": 2,
+          "games": 56,
+          "kills": 57,
+          "chests": 280,
+          "best_kills": 1
+        },
+        "adlerflug": {
+          "finishes": 28,
+          "flights": 50,
+          "rings": 308,
+          "medals": 1,
+          "eagles": 0,
+          "time_gletscherspalte_ms": 48038
         }
       }
     },
@@ -468,6 +666,37 @@
           "losses": 35,
           "kills": 64,
           "rating": 1256
+        },
+        "versteckerl": {
+          "points": 378,
+          "games": 42,
+          "found": 15,
+          "survived": 8,
+          "whistles": 73,
+          "best_points": 27
+        },
+        "wintersport": {
+          "gold": 2,
+          "silver": 3,
+          "bronze": 3,
+          "events": 6,
+          "races": 18,
+          "points": 60,
+          "wins": 1,
+          "time_slalom_ms": 56219,
+          "time_bob_ms": 67283,
+          "time_biathlon_ms": 245391
+        },
+        "adlerflug": {
+          "finishes": 6,
+          "flights": 8,
+          "rings": 66,
+          "medals": 12,
+          "eagles": 1,
+          "time_gipfelkreuz_ms": 91225,
+          "time_burgruine_ms": 52150,
+          "time_gletscherspalte_ms": 45450,
+          "time_almrundflug_ms": 65259
         }
       }
     },
@@ -490,6 +719,33 @@
           "losses": 27,
           "kills": 33,
           "rating": 1136
+        },
+        "wolkenkampf": {
+          "wins": 6,
+          "games": 33,
+          "kills": 25,
+          "chests": 198,
+          "best_kills": 2
+        },
+        "versteckerl": {
+          "points": 273,
+          "games": 13,
+          "found": 6,
+          "survived": 4,
+          "whistles": 27,
+          "best_points": 45
+        },
+        "wintersport": {
+          "gold": 5,
+          "silver": 13,
+          "bronze": 6,
+          "events": 17,
+          "races": 51,
+          "points": 340,
+          "wins": 3,
+          "time_slalom_ms": 41719,
+          "time_bob_ms": 67997,
+          "time_biathlon_ms": 224932
         }
       }
     },
@@ -510,6 +766,13 @@
           "games": 25,
           "wins": 6,
           "edelweiss": 108
+        },
+        "angelkoenig": {
+          "catches": 339,
+          "legendary": 3,
+          "tournaments_won": 1,
+          "heaviest_g": 20116,
+          "species": 19
         }
       }
     },
@@ -530,6 +793,41 @@
           "games": 16,
           "wins": 4,
           "edelweiss": 55
+        },
+        "wolkenkampf": {
+          "wins": 8,
+          "games": 35,
+          "kills": 22,
+          "chests": 105,
+          "best_kills": 6
+        },
+        "wintersport": {
+          "gold": 3,
+          "silver": 0,
+          "bronze": 4,
+          "events": 4,
+          "races": 12,
+          "points": 60,
+          "wins": 1,
+          "time_slalom_ms": 44271,
+          "time_bob_ms": 63939,
+          "time_biathlon_ms": 237742
+        },
+        "adlerflug": {
+          "finishes": 7,
+          "flights": 16,
+          "rings": 77,
+          "medals": 4,
+          "eagles": 3,
+          "time_gipfelkreuz_ms": 79356,
+          "time_almrundflug_ms": 38013
+        },
+        "angelkoenig": {
+          "catches": 212,
+          "legendary": 4,
+          "tournaments_won": 4,
+          "heaviest_g": 7464,
+          "species": 6
         }
       }
     },
@@ -554,6 +852,20 @@
           "games": 9,
           "wins": 0,
           "edelweiss": 76
+        },
+        "wolkenkampf": {
+          "wins": 0,
+          "games": 44,
+          "kills": 71,
+          "chests": 132,
+          "best_kills": 2
+        },
+        "angelkoenig": {
+          "catches": 331,
+          "legendary": 4,
+          "tournaments_won": 5,
+          "heaviest_g": 21721,
+          "species": 13
         }
       }
     },
@@ -579,6 +891,41 @@
           "games": 13,
           "wins": 1,
           "edelweiss": 104
+        },
+        "wolkenkampf": {
+          "wins": 9,
+          "games": 43,
+          "kills": 86,
+          "chests": 172,
+          "best_kills": 4
+        },
+        "versteckerl": {
+          "points": 351,
+          "games": 27,
+          "found": 22,
+          "survived": 7,
+          "whistles": 49,
+          "best_points": 26
+        },
+        "wintersport": {
+          "gold": 2,
+          "silver": 2,
+          "bronze": 0,
+          "events": 4,
+          "races": 12,
+          "points": 48,
+          "wins": 0,
+          "time_slalom_ms": 47089,
+          "time_bob_ms": 55851,
+          "time_biathlon_ms": 215127
+        },
+        "adlerflug": {
+          "finishes": 39,
+          "flights": 54,
+          "rings": 429,
+          "medals": 2,
+          "eagles": 1,
+          "time_gletscherspalte_ms": 43164
         }
       }
     },
@@ -598,6 +945,41 @@
         "gipfelsturm": {
           "finishes": 14,
           "best_ms": 67729
+        },
+        "wolkenkampf": {
+          "wins": 1,
+          "games": 13,
+          "kills": 12,
+          "chests": 78,
+          "best_kills": 1
+        },
+        "wintersport": {
+          "gold": 6,
+          "silver": 4,
+          "bronze": 1,
+          "events": 14,
+          "races": 42,
+          "points": 266,
+          "wins": 3,
+          "time_slalom_ms": 47341,
+          "time_bob_ms": 63588,
+          "time_biathlon_ms": 242818
+        },
+        "adlerflug": {
+          "finishes": 4,
+          "flights": 17,
+          "rings": 44,
+          "medals": 4,
+          "eagles": 0,
+          "time_gletscherspalte_ms": 89345,
+          "time_gipfelkreuz_ms": 41587
+        },
+        "angelkoenig": {
+          "catches": 221,
+          "legendary": 4,
+          "tournaments_won": 2,
+          "heaviest_g": 2225,
+          "species": 17
         }
       }
     },
@@ -617,6 +999,38 @@
         "gipfelsturm": {
           "finishes": 8,
           "best_ms": 134883
+        },
+        "wolkenkampf": {
+          "wins": 4,
+          "games": 45,
+          "kills": 75,
+          "chests": 180,
+          "best_kills": 3
+        },
+        "versteckerl": {
+          "points": 168,
+          "games": 8,
+          "found": 0,
+          "survived": 1,
+          "whistles": 28,
+          "best_points": 48
+        },
+        "adlerflug": {
+          "finishes": 3,
+          "flights": 10,
+          "rings": 33,
+          "medals": 12,
+          "eagles": 1,
+          "time_stollenflug_ms": 93199,
+          "time_gipfelkreuz_ms": 39715,
+          "time_gletscherspalte_ms": 41367
+        },
+        "angelkoenig": {
+          "catches": 275,
+          "legendary": 4,
+          "tournaments_won": 0,
+          "heaviest_g": 4904,
+          "species": 15
         }
       }
     },
@@ -643,6 +1057,14 @@
           "games": 16,
           "wins": 5,
           "edelweiss": 57
+        },
+        "versteckerl": {
+          "points": 702,
+          "games": 39,
+          "found": 28,
+          "survived": 2,
+          "whistles": 115,
+          "best_points": 47
         }
       }
     },
@@ -667,6 +1089,48 @@
           "games": 2,
           "wins": 0,
           "edelweiss": 6
+        },
+        "wolkenkampf": {
+          "wins": 4,
+          "games": 48,
+          "kills": 29,
+          "chests": 240,
+          "best_kills": 3
+        },
+        "versteckerl": {
+          "points": 1127,
+          "games": 49,
+          "found": 46,
+          "survived": 10,
+          "whistles": 68,
+          "best_points": 60
+        },
+        "wintersport": {
+          "gold": 10,
+          "silver": 9,
+          "bronze": 7,
+          "events": 11,
+          "races": 33,
+          "points": 110,
+          "wins": 1,
+          "time_slalom_ms": 44766,
+          "time_bob_ms": 62964,
+          "time_biathlon_ms": 237669
+        },
+        "adlerflug": {
+          "finishes": 31,
+          "flights": 42,
+          "rings": 341,
+          "medals": 4,
+          "eagles": 2,
+          "time_gletscherspalte_ms": 83869
+        },
+        "angelkoenig": {
+          "catches": 111,
+          "legendary": 0,
+          "tournaments_won": 6,
+          "heaviest_g": 14522,
+          "species": 9
         }
       }
     },
@@ -691,6 +1155,16 @@
           "games": 12,
           "wins": 2,
           "edelweiss": 65
+        },
+        "adlerflug": {
+          "finishes": 9,
+          "flights": 34,
+          "rings": 99,
+          "medals": 5,
+          "eagles": 0,
+          "time_klammflug_ms": 76480,
+          "time_burgruine_ms": 57054,
+          "time_gletscherspalte_ms": 61885
         }
       }
     },
@@ -716,6 +1190,43 @@
           "games": 3,
           "wins": 1,
           "edelweiss": 23
+        },
+        "wolkenkampf": {
+          "wins": 5,
+          "games": 16,
+          "kills": 24,
+          "chests": 48,
+          "best_kills": 5
+        },
+        "versteckerl": {
+          "points": 45,
+          "games": 5,
+          "found": 4,
+          "survived": 0,
+          "whistles": 13,
+          "best_points": 32
+        },
+        "wintersport": {
+          "gold": 15,
+          "silver": 11,
+          "bronze": 0,
+          "events": 17,
+          "races": 51,
+          "points": 170,
+          "wins": 2,
+          "time_slalom_ms": 49319,
+          "time_bob_ms": 65750,
+          "time_biathlon_ms": 200472
+        },
+        "adlerflug": {
+          "finishes": 33,
+          "flights": 47,
+          "rings": 363,
+          "medals": 4,
+          "eagles": 1,
+          "time_klammflug_ms": 49347,
+          "time_gipfelkreuz_ms": 63372,
+          "time_stollenflug_ms": 86412
         }
       }
     },
@@ -734,6 +1245,21 @@
           "games": 8,
           "wins": 1,
           "edelweiss": 56
+        },
+        "versteckerl": {
+          "points": 690,
+          "games": 46,
+          "found": 9,
+          "survived": 13,
+          "whistles": 69,
+          "best_points": 36
+        },
+        "angelkoenig": {
+          "catches": 229,
+          "legendary": 2,
+          "tournaments_won": 5,
+          "heaviest_g": 11456,
+          "species": 17
         }
       }
     },
@@ -754,6 +1280,42 @@
         "gipfelsturm": {
           "finishes": 3,
           "best_ms": 117353
+        },
+        "wolkenkampf": {
+          "wins": 3,
+          "games": 19,
+          "kills": 9,
+          "chests": 57,
+          "best_kills": 3
+        },
+        "versteckerl": {
+          "points": 858,
+          "games": 39,
+          "found": 32,
+          "survived": 6,
+          "whistles": 156,
+          "best_points": 57
+        },
+        "wintersport": {
+          "gold": 5,
+          "silver": 1,
+          "bronze": 4,
+          "events": 6,
+          "races": 18,
+          "points": 78,
+          "wins": 0,
+          "time_slalom_ms": 46665,
+          "time_bob_ms": 53416,
+          "time_biathlon_ms": 207288
+        },
+        "adlerflug": {
+          "finishes": 26,
+          "flights": 43,
+          "rings": 286,
+          "medals": 1,
+          "eagles": 3,
+          "time_klammflug_ms": 68729,
+          "time_burgruine_ms": 65585
         }
       }
     },
@@ -773,6 +1335,37 @@
         "gipfelsturm": {
           "finishes": 1,
           "best_ms": 116535
+        },
+        "wolkenkampf": {
+          "wins": 3,
+          "games": 25,
+          "kills": 30,
+          "chests": 150,
+          "best_kills": 6
+        },
+        "versteckerl": {
+          "points": 279,
+          "games": 31,
+          "found": 13,
+          "survived": 10,
+          "whistles": 113,
+          "best_points": 47
+        },
+        "adlerflug": {
+          "finishes": 11,
+          "flights": 13,
+          "rings": 121,
+          "medals": 10,
+          "eagles": 0,
+          "time_stollenflug_ms": 64124,
+          "time_klammflug_ms": 55943
+        },
+        "angelkoenig": {
+          "catches": 39,
+          "legendary": 2,
+          "tournaments_won": 5,
+          "heaviest_g": 10941,
+          "species": 15
         }
       }
     },
@@ -797,6 +1390,36 @@
           "games": 4,
           "wins": 0,
           "edelweiss": 35
+        },
+        "wintersport": {
+          "gold": 9,
+          "silver": 4,
+          "bronze": 8,
+          "events": 18,
+          "races": 54,
+          "points": 270,
+          "wins": 5,
+          "time_slalom_ms": 44947,
+          "time_bob_ms": 60064,
+          "time_biathlon_ms": 195554
+        },
+        "adlerflug": {
+          "finishes": 22,
+          "flights": 44,
+          "rings": 242,
+          "medals": 4,
+          "eagles": 2,
+          "time_stollenflug_ms": 41915,
+          "time_klammflug_ms": 92024,
+          "time_burgruine_ms": 60790,
+          "time_gletscherspalte_ms": 63076
+        },
+        "angelkoenig": {
+          "catches": 190,
+          "legendary": 0,
+          "tournaments_won": 5,
+          "heaviest_g": 11335,
+          "species": 15
         }
       }
     },
@@ -822,6 +1445,20 @@
           "games": 3,
           "wins": 0,
           "edelweiss": 16
+        },
+        "wolkenkampf": {
+          "wins": 4,
+          "games": 36,
+          "kills": 33,
+          "chests": 108,
+          "best_kills": 2
+        },
+        "angelkoenig": {
+          "catches": 77,
+          "legendary": 3,
+          "tournaments_won": 4,
+          "heaviest_g": 6886,
+          "species": 9
         }
       }
     },

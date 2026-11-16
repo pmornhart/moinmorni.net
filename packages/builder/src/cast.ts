@@ -296,6 +296,89 @@ export const VILLAGE_CAST: Readonly<Record<string, Outfit>> = {
 
 export const CAST: Readonly<Record<string, Outfit>> = { ...MODE_CAST, ...VILLAGE_CAST };
 
+/**
+ * Neue Figuren (16.11.: die Modi vom Schlossmarkt und die Blumenfrau), deren Skins noch nicht von Mojang signiert
+ * sind. Bis dahin tragen sie die Tracht einer bestehenden Figur (`STAND_IN`); sobald
+ * `tsx tools/lobby-entwuerfe/src/sign-skins.ts` sie signiert hat, tragen sie von selbst ihre eigene.
+ */
+export const PENDING_CAST: Readonly<Record<string, Outfit>> = {
+  wolkenkampf: {
+    skin: SKIN.fair,
+    hair: HAIR.red,
+    hairStyle: 'long',
+    eyes: EYES.green,
+    hat: { kind: 'cap', colour: 0x7a4a24, accent: 0x3e2410 },
+    top: { colour: 0x3fc6cf, sleeves: 'long', accent: 0xf0ede4 },
+    vest: 0x6b4426,
+    belt: 0x3e2410,
+    bottom: { kind: 'trousers', colour: 0x4a3a30 },
+    shoes: BROWN_SHOES,
+  },
+  versteckerl: bua({
+    skin: SKIN.warm,
+    hair: HAIR.brown,
+    beard: 0x4a2f1c,
+    eyes: EYES.brown,
+    hat: { kind: 'tyrol', colour: 0x24412f, accent: 0xd9b45a },
+    top: { colour: 0x2f6b46, sleeves: 'long', accent: 0xd9b45a },
+    belt: 0x2a1f1a,
+    braces: undefined,
+    bottom: { kind: 'trousers', colour: 0x26282e },
+    socks: undefined,
+  }),
+  wintersport: {
+    skin: SKIN.light,
+    hair: HAIR.blond,
+    hairStyle: 'braids',
+    eyes: EYES.blue,
+    hat: { kind: 'beanie', colour: 0xf0ede4, accent: 0xc23b2e },
+    top: { colour: 0xc23b2e, sleeves: 'long', accent: 0xf0ede4 },
+    belt: 0xf0ede4,
+    bottom: { kind: 'trousers', colour: 0x2f4a78 },
+    shoes: 0x2b2622,
+  },
+  adlerflug: bua({
+    skin: SKIN.tan,
+    hair: HAIR.black,
+    eyes: EYES.brown,
+    hat: { kind: 'helmet', colour: 0x7a4a24, accent: 0xd9b45a },
+    top: { colour: 0xb83f9e, sleeves: 'long', accent: 0xf2c230 },
+    vest: 0x5a3a22,
+    braces: undefined,
+    bottom: { kind: 'trousers', colour: 0x4a3a30 },
+    socks: undefined,
+    shoes: BROWN_SHOES,
+  }),
+  angelkoenig: bua({
+    hair: HAIR.grey,
+    beard: 0xd8d4ce,
+    eyes: EYES.blue,
+    hat: { kind: 'tyrol', colour: 0x3d5a3a, accent: 0x5a8fd0 },
+    top: { colour: 0xf0ede4, sleeves: 'long' },
+    vest: 0x2f5d8a,
+  }),
+  blumenfrau: dirndl({
+    skin: SKIN.fair,
+    hair: HAIR.auburn,
+    hairStyle: 'bun',
+    eyes: EYES.green,
+    hat: { kind: 'straw', colour: 0xe2c76a, accent: 0xe0457b },
+    bodice: { colour: 0x7aa84a, lacing: 0xf2c230 },
+    bottom: { kind: 'skirt', colour: 0xc2387f },
+    apron: 0xf7f5ef,
+  }),
+};
+
+/** Wer bis zur Signatur für eine neue Figur einspringt (passende, schon signierte Tracht). */
+export const STAND_IN: Readonly<Record<string, string>> = {
+  wolkenkampf: 'fuehrerin',
+  versteckerl: 'gast1',
+  wintersport: 'gast3',
+  adlerflug: 'gast7',
+  angelkoenig: 'gast5',
+  blumenfrau: 'gast8',
+};
+
 /** Von Mojang signierte Skin-Daten einer Figur (über MineSkin, siehe `cast-textures.ts`). */
 export interface SignedSkin {
   /** SHA-256 des Skin-Bilds, aus dem signiert wurde. */
@@ -308,11 +391,54 @@ export interface SignedSkin {
 
 export { CAST_TEXTURES };
 
+/**
+ * Die ersten 27 Figuren in der Reihenfolge, in der sie signiert wurden: Ihr Stoffmuster hängt an dieser Stelle. Neue
+ * Figuren kommen hinten dazu (nie einsortieren) – sonst ändert sich jedes Bild und alle müssten neu signiert werden.
+ */
+const SEED_ORDER: readonly string[] = [
+  'apothekerin',
+  'baecker',
+  'bollwerk',
+  'bua',
+  'buergermeister',
+  'burgverlies',
+  'duels',
+  'fuehrerin',
+  'gast1',
+  'gast2',
+  'gast3',
+  'gast4',
+  'gast5',
+  'gast6',
+  'gast7',
+  'gast8',
+  'gipfelsturm',
+  'kellnerin',
+  'kellnerin2',
+  'kraemer',
+  'madl',
+  'mirni',
+  'mornicraft',
+  'party',
+  'schmied',
+  'schreiner',
+  'wirt',
+  // 16.11.: die neuen Modus-Figuren und die Blumenfrau am Schlossmarkt
+  'wolkenkampf',
+  'versteckerl',
+  'wintersport',
+  'adlerflug',
+  'angelkoenig',
+  'blumenfrau',
+];
+
 /** Skin-Bild einer Figur (immer dasselbe Bild für dieselbe Tracht). */
 export function castSkinPng(id: string): Buffer {
-  const outfit = CAST[id];
+  const outfit = CAST[id] ?? PENDING_CAST[id];
   if (!outfit) throw new Error(`Unbekannte Figur: ${id}`);
-  return skinPicture(outfit, Object.keys(CAST).sort().indexOf(id) + 1).png();
+  const seed = SEED_ORDER.indexOf(id);
+  if (seed < 0) throw new Error(`Figur ${id} fehlt in SEED_ORDER (hinten anhängen)`);
+  return skinPicture(outfit, seed + 1).png();
 }
 
 export function skinHash(png: Buffer): string {
@@ -322,8 +448,20 @@ export function skinHash(png: Buffer): string {
 /** Signierte Skin-Daten, wenn sie zur aktuellen Tracht passen – sonst null (dann neu signieren). */
 export function signedSkin(id: string): SignedSkin | null {
   const signed = CAST_TEXTURES[id];
-  if (!signed || !CAST[id]) return null;
+  if (!signed || !(CAST[id] ?? PENDING_CAST[id])) return null;
   return signed.hash === skinHash(castSkinPng(id)) ? signed : null;
+}
+
+/**
+ * Welche Figur wirklich dasteht: eine bestehende, eine neue mit eigener Signatur – oder, solange die fehlt, ihre
+ * Vertretung (Skin und 3D-Tracht passen dann zusammen).
+ */
+export function castFor(id: string): { readonly id: string; readonly outfit: Outfit | undefined } {
+  if (CAST[id]) return { id, outfit: CAST[id] };
+  const pending = PENDING_CAST[id];
+  if (pending && signedSkin(id)) return { id, outfit: pending };
+  const standIn = STAND_IN[id];
+  return standIn ? { id: standIn, outfit: CAST[standIn] } : { id, outfit: undefined };
 }
 
 /** Texturpaket-Bereich (Minecraft liest `pack_format` bzw. ab 1.21.9 `min_format`/`max_format`). */

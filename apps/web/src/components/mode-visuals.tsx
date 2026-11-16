@@ -1,9 +1,14 @@
 import {
+  Bird,
   Castle,
+  Cloud,
   Dices,
+  EyeOff,
+  Fish,
   MountainSnow,
   Pickaxe,
   Shield,
+  Snowflake,
   Sparkles,
   Sprout,
   Swords,
@@ -21,6 +26,11 @@ const MODE_ICONS: Readonly<Record<string, LucideIcon>> = {
   burgverlies: Castle,
   bollwerk: Shield,
   mirni: Sprout,
+  wolkenkampf: Cloud,
+  versteckerl: EyeOff,
+  wintersport: Snowflake,
+  adlerflug: Bird,
+  angelkoenig: Fish,
 };
 
 const TINTS = ['bg-accent text-primary', 'bg-gold-soft text-gold', 'bg-blue-soft text-blue'] as const;

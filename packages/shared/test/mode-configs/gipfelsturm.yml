@@ -1,0 +1,14 @@
+# Gipfelsturm – Einstellungen. Nach einer Änderung den Server neu starten.
+
+# Name der Welt, die Gipfelsturm anlegt und baut (Basislager + Strecken). Spieler bauen dort nichts;
+# kommt eine neue Version mit geänderten Strecken, wird sie gelöscht und frisch gebaut.
+welt: gipfelsturm
+
+# Zeiten, die schneller sind als überhaupt möglich (Teleport, Fliegen), nicht werten.
+plausibel-pruefen: true
+
+# So viele Sekunden haben Party-Mitglieder, um bei einem Rennen mitzumachen.
+rennen-wartezeit: 15
+
+# Geist der eigenen Bestzeit (blaue Funken) für neue Spieler an?
+geist-standard: true

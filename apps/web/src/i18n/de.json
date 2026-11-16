@@ -142,7 +142,8 @@
       "asleep": "Schläft",
       "closed": "Geschlossen",
       "maintenance": "Wartung",
-      "soon": "Bald"
+      "soon": "Bald",
+      "pause": "Sommerpause"
     },
     "modeHint": {
       "on": "Offen",
@@ -155,7 +156,8 @@
       "asleep": "Schläft gerade – wacht auf, sobald du kommst.",
       "closed": "Gerade geschlossen.",
       "maintenance": "Gerade in Wartung – bald wieder da.",
-      "soon": "Kommt bald – wir bauen noch daran."
+      "soon": "Kommt bald – wir bauen noch daran.",
+      "pause": "Gerade Sommerpause – Wettkämpfe gibt es vom 1. Dezember bis 31. März. Das Dorf kannst du trotzdem besuchen."
     },
     "mode": {
       "eyebrow": "Spielmodus",
@@ -183,7 +185,8 @@
       "apply": "Jetzt bewerben",
       "about": "Über {{name}}",
       "topTitle": "Bestenliste · {{value}}",
-      "topAll": "Alle ansehen"
+      "topAll": "Alle ansehen",
+      "pauseText": "Sommerpause: Bis zum Winter gibt es keine Wettkämpfe. Eisfläche, Sessellift und Rodelbahn im Dorf sind trotzdem offen – schau gern vorbei."
     },
     "stats": {
       "eyebrow": "Ranglisten",
@@ -257,7 +260,52 @@
         "sales": "Verkäufe",
         "purchases": "Käufe",
         "orders_filled": "Aufträge erfüllt",
-        "playtime_min": "Spielzeit (Min.)"
+        "playtime_min": "Spielzeit (Min.)",
+        "chests": "Truhen geöffnet",
+        "best_kills": "Meiste Kills in einer Runde",
+        "wins_hider": "Siege versteckt",
+        "wins_seeker": "Siege als Gendarm",
+        "found": "Gefunden",
+        "survived": "Bis zum Schluss versteckt",
+        "whistles": "Pfiffe",
+        "best_points": "Beste Punktzahl",
+        "events": "Wettkämpfe",
+        "races": "Rennen",
+        "gold": "Gold",
+        "silver": "Silber",
+        "bronze": "Bronze",
+        "biathlon_hits": "Treffer am Schießstand",
+        "biathlon_shots": "Schüsse am Schießstand",
+        "flights": "Flüge",
+        "rings": "Ringe",
+        "resets": "Zurück zum Ring",
+        "medals": "Medaillen",
+        "eagles": "Adler-Medaillen",
+        "catches": "Fänge",
+        "legendary": "Legendäre Fische",
+        "tournaments_won": "Turniersiege",
+        "heaviest_g": "Schwerster Fisch (g)",
+        "species": "Arten im Fischbuch",
+        "timeOf": "Bestzeit {{course}}",
+        "finishesOf": "Ziele {{course}}"
+      },
+      "courses": {
+        "almrundflug": "Almrundflug",
+        "klammflug": "Klammflug",
+        "burgruine": "Burgruine",
+        "gletscherspalte": "Gletscherspalte",
+        "stollenflug": "Stollenflug",
+        "gipfelkreuz": "Gipfelkreuz",
+        "slalom": "Riesenslalom",
+        "biathlon": "Biathlon",
+        "bob": "Bobbahn",
+        "almwiese": "Almwiesen-Lauf",
+        "gletscher": "Gletscherspalten",
+        "kletterwand": "Kletterwand",
+        "felsgrat": "Felsgrat",
+        "seilbahn": "Seilbahn-Masten",
+        "eishoehle": "Eishöhle",
+        "wetterturm": "Wetterturm"
       }
     },
     "team": {
@@ -357,6 +405,15 @@
         "step3": "Fertig – dein Rang erscheint im Discord und zieht von selbst nach, wenn er sich ändert.",
         "join": "Discord beitreten"
       },
+      "modes": {
+        "title": "Spielmodi",
+        "short": "Alle Modi auf einen Blick – und wie du hinkommst",
+        "intro": "Alle Spielmodi erreichst du aus der Lobby: Die Figuren am Dorfmarkt um den Maibaum und am Schlossmarkt vor der Schlosstreppe bringen dich mit einem Klick hin. Mit dem Kompass in deiner Leiste geht es noch schneller.",
+        "sleep": "Ist in einem Modus gerade niemand, schläft er. Sobald du kommst, wacht er auf – das dauert einen kleinen Moment.",
+        "pause": "Wintersport kann eine Sommerpause machen: Dann gibt es nur im Winter (1. Dezember bis 31. März) Wettkämpfe – das Dorf mit Eisfläche, Lift und Rodelbahn bleibt offen.",
+        "more": "Mehr",
+        "all": "Alle Spielmodi"
+      },
       "mornicraft": {
         "title": "Bei MorniCraft bewerben",
         "short": "Unser Freunde-Survival – nur auf Einladung",
@@ -449,6 +506,135 @@
           "short": "Alles auf einen Blick",
           "text": "Markt, Gassen, Biergarten, Oberdorf und Schloss – so sieht unser Dorf aus der Luft aus.",
           "alt": "Das ganze Dorf von oben gesehen"
+        }
+      }
+    },
+    "guide": {
+      "title": "So wird gespielt",
+      "commands": "Wichtige Befehle",
+      "mornicraft": {
+        "tip1": "Bewirb dich auf der Webseite oder im Discord – mit einem Platz auf der Whitelist bist du dabei.",
+        "tip2": "Du startest auf der Spawn-Insel hoch über dem Meer: Doppelt springen, schon gleitest du mit der Start-Elytra los.",
+        "tip3": "Gründe einen Clan mit Freunden, setzt eure Clan-Basis – und wagt euch gemeinsam an den mächtigen Enderdrachen.",
+        "cmd": {
+          "home": "Zu deinem Zuhause (mit /sethome speichern).",
+          "tpa": "Fragen, ob du zu jemandem darfst.",
+          "clan": "Clan-Menü: gründen, einladen, Basis, Farbe.",
+          "spawn": "Zurück zur Spawn-Insel."
+        }
+      },
+      "duels": {
+        "tip1": "Such dir eine Kampfart aus: Klassisch mit Pilzsuppe, Modern oder mit Fähigkeiten.",
+        "tip2": "Spiel locker oder gewertet – gewertete Kämpfe zählen für die Rangliste.",
+        "tip3": "Mit Freunden: Fordere sie direkt heraus oder geht als Party ins 2 gegen 2.",
+        "cmd": {
+          "duel": "Jemanden herausfordern.",
+          "kit": "Eigene Anordnung im Kit-Editor.",
+          "top": "Die besten Kämpfer."
+        }
+      },
+      "party": {
+        "tip1": "2 bis 8 Leute würfeln reihum über ein Spielbrett und sammeln Taler.",
+        "tip2": "Am wandernden Stand gibt es Edelweiß – wer am Ende die meisten hat, gewinnt.",
+        "tip3": "Nach jeder Runde kommt ein schnelles Minispiel – die Besten bekommen Taler.",
+        "cmd": {
+          "mitspielen": "Für die nächste Partie anmelden.",
+          "zuschauen": "Einer Partie zuschauen.",
+          "top": "Bestenliste."
+        }
+      },
+      "gipfelsturm": {
+        "tip1": "Acht Parkour-Strecken von leicht bis extrem – such dir eine im Basislager aus.",
+        "tip2": "Die Zeit läuft auf die Millisekunde, an Kontrollpunkten siehst du, ob du schneller bist als deine Bestzeit.",
+        "tip3": "Jede Woche gibt es eine Strecke der Woche mit eigener Bestenliste.",
+        "cmd": {
+          "gipfel": "Strecke wählen.",
+          "woche": "Strecke der Woche.",
+          "uebung": "Übungsmodus an/aus."
+        }
+      },
+      "burgverlies": {
+        "tip1": "Allein oder mit bis zu drei Freunden steigt ihr in drei Etagen unter die Burg hinab.",
+        "tip2": "Jeder Raum ist anders: Kampf, Fallen, Rätsel, Schätze – und bei der Krämerin rüstet ihr auf.",
+        "tip3": "Liegt jemand am Boden, holt ihn mit Ducken zurück – ganz unten wartet der Kerkermeister.",
+        "cmd": {
+          "bv": "Abstieg wählen.",
+          "suchen": "Mitspieler suchen.",
+          "verlassen": "Abstieg verlassen."
+        }
+      },
+      "bollwerk": {
+        "tip1": "1 bis 6 Leute verteidigen zusammen das Dorf – stimmt in der Wachstube über die Karte ab.",
+        "tip2": "Zwischen den Wellen kauft ihr im Krämerladen und baut Pfeiltürme, Palisaden und Heilbanner.",
+        "tip3": "Alle fünf Wellen kommt ein Riese – wie weit schafft ihr es?",
+        "cmd": {
+          "bereit": "Bereit melden – in der Runde die nächste Welle starten.",
+          "shop": "Krämerladen in der Aufbauphase.",
+          "top": "Die besten Truppen."
+        }
+      },
+      "mirni": {
+        "tip1": "Du startest in der schwebenden Marktstadt – durch die drei Reisetore geht es in Oberwelt, Nether und End.",
+        "tip2": "Handle mit allen: Auktionshaus, Aufträge, eigene Ladenkisten und Marktstände zum Mieten.",
+        "tip3": "Sichere dein Grundstück – Taler gibt es nur im Spiel, nichts für echtes Geld.",
+        "cmd": {
+          "rtp": "Zufälliger sicherer Ort zum Loslegen.",
+          "ah": "Auktionshaus.",
+          "gs": "Den Chunk unter dir sichern.",
+          "geld": "Dein Kontostand."
+        }
+      },
+      "wolkenkampf": {
+        "tip1": "Im Wolkenhafen stimmst du über Karte und Spielart ab und wählst deine kostenlose Start-Ausrüstung.",
+        "tip2": "Aus der Ballon-Gondel schwebst du auf deine eigene Insel: Truhen plündern, Brücken bauen, kämpfen.",
+        "tip3": "Nachschub, Gewitter und aufsteigender Nebel sorgen fürs Finale – wer zuletzt steht, gewinnt.",
+        "cmd": {
+          "karte": "Über die Karte abstimmen.",
+          "ausruestung": "Start-Ausrüstung wählen.",
+          "bereit": "Bereit melden.",
+          "zuschauen": "Einer Runde zuschauen."
+        }
+      },
+      "versteckerl": {
+        "tip1": "Etwa jeder Vierte wird Dorfgendarm – alle anderen verstecken sich als Heuballen, Fass oder Blumentopf.",
+        "tip2": "Bleib drei Sekunden still stehen: Dann rastest du als echter Block ein und bist kaum noch zu erkennen.",
+        "tip3": "Pfeifen bringt Punkte, verrät dich aber – und wer gefunden wird, sucht mit.",
+        "cmd": {
+          "karte": "Über die Karte abstimmen.",
+          "gestalt": "Gestalt wählen oder wechseln.",
+          "bereit": "Bereit melden.",
+          "top": "Steckbriefe der Besten."
+        }
+      },
+      "wintersport": {
+        "tip1": "Im Bergdorf stimmt ihr ab: der ganze Wettkampf oder nur eine Disziplin.",
+        "tip2": "Riesenslalom im Boot durch die Tore, Biathlon mit Schießstand und Strafrunden, Bobbahn – Partys fahren im Zweierbob.",
+        "tip3": "Gold, Silber und Bronze gibt es am Treppchen. Bis es losgeht: Eisfläche, Sessellift und Rodelbahn.",
+        "cmd": {
+          "abstimmen": "Wettkampf oder Disziplin wählen.",
+          "bereit": "Bereit melden.",
+          "top": "Medaillen und Bestzeiten."
+        }
+      },
+      "adlerflug": {
+        "tip1": "Im Adlerhorst wählst du eine Strecke, läufst die Schanze hinunter – die Flügel gehen von selbst auf.",
+        "tip2": "Mit der Maus lenken: nach unten wirst du schneller, nach oben steigst du. Fliege der Reihe nach durch alle Ringe.",
+        "tip3": "Aufwinde heben dich an, Schub-Ringe geben Schwung – Bronze, Silber, Gold oder sogar Adler?",
+        "cmd": {
+          "adlerflug": "Strecke wählen.",
+          "ring": "Zurück zum letzten Ring.",
+          "woche": "Strecke der Woche.",
+          "uebung": "Übungsmodus."
+        }
+      },
+      "angelkoenig": {
+        "tip1": "Komm einfach vorbei, wann du willst – es gibt keine Runden. Angel auswerfen, warten, einholen.",
+        "tip2": "Vier Fangplätze mit 20 Fischarten – Tageszeit und Wetter ändern, was beißt.",
+        "tip3": "Verkauf deine Fänge bei Fischhändler Xaver und gewinn beim Turnier zur vollen Viertelstunde die Königskrone.",
+        "cmd": {
+          "fischbuch": "Was du schon gefangen hast.",
+          "turnier": "Wann das nächste Turnier ist.",
+          "top": "Bestenlisten."
         }
       }
     }

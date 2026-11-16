@@ -1,4 +1,4 @@
-import type { ModeStatus, NetworkStatus, Text } from '@moinmorni/shared';
+import { MODE_HEADLINE_STATS, type ModeStatus, type NetworkStatus, type Text } from '@moinmorni/shared';
 import type {
   ModeBoard,
   ModeTopEntry,
@@ -203,7 +203,8 @@ function top(request: DemoRequest): DemoResponse {
 /** Values whose name ends like this are times: lower is better. */
 const TIME_SUFFIX = '_ms';
 const HEADLINE_KEYS = ['rating', 'wins', 'balance', 'finishes', 'points', 'best_wave', 'kills', 'games'];
-const rankOfKey = (key: string): number => {
+const rankOfKey = (mode: string, key: string): number => {
+  if (MODE_HEADLINE_STATS[mode] === key) return -1;
   const i = HEADLINE_KEYS.indexOf(key);
   return i < 0 ? HEADLINE_KEYS.length : i;
 };
@@ -213,7 +214,9 @@ function modeBoards(): DemoResponse {
   const pairs = DATA.players
     .filter((p) => !p.private)
     .flatMap((p) =>
-      Object.entries(p.modes ?? {}).flatMap(([mode, values]) => Object.keys(values).map((key) => `${mode} ${key}`)),
+      Object.entries(p.modes ?? {}).flatMap(([mode, values]) =>
+        Object.keys(values).map((key) => `${mode} ${key}`),
+      ),
     );
   const counts = pairs.reduce<Readonly<Record<string, number>>>(
     (acc, pair) => ({ ...acc, [pair]: (acc[pair] ?? 0) + 1 }),
@@ -228,7 +231,7 @@ function modeBoards(): DemoResponse {
           const key = pair.slice(m.id.length + 1);
           return { key, players, order: key.endsWith(TIME_SUFFIX) ? ('asc' as const) : ('desc' as const) };
         })
-        .toSorted((a, b) => rankOfKey(a.key) - rankOfKey(b.key) || a.key.localeCompare(b.key)),
+        .toSorted((a, b) => rankOfKey(m.id, a.key) - rankOfKey(m.id, b.key) || a.key.localeCompare(b.key)),
     }))
     .filter((b) => b.keys.length);
   return { status: HTTP_OK, body };

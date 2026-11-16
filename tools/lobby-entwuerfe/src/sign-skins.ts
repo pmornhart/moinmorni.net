@@ -7,7 +7,14 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { CAST, CAST_TEXTURES, castSkinPng, skinHash, type SignedSkin } from '@moinmorni/builder';
+import {
+  CAST,
+  CAST_TEXTURES,
+  PENDING_CAST,
+  castSkinPng,
+  skinHash,
+  type SignedSkin,
+} from '@moinmorni/builder';
 
 const API = 'https://api.mineskin.org/v2/generate';
 const USER_AGENT = 'MoinMorni-Lobby/0.1 (+https://github.com/pmornhart/moinmorni.net)';
@@ -49,7 +56,8 @@ async function upload(id: string, png: Buffer, attempt = 1): Promise<{ signed: S
 }
 
 async function main(): Promise<void> {
-  const ids = Object.keys(CAST).sort();
+  // Neue Figuren (PENDING_CAST) gleich mit: Sobald sie signiert sind, tragen sie ihre eigene Tracht.
+  const ids = Object.keys({ ...CAST, ...PENDING_CAST }).sort();
   const result: Record<string, SignedSkin> = { ...CAST_TEXTURES };
   await ids.reduce(async (prev, id) => {
     await prev;

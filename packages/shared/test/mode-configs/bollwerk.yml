@@ -1,0 +1,28 @@
+# Morni Bollwerk – Einstellungen. Nach Änderungen: /bollwerk neuladen (oder Server neu starten).
+
+# Eigene leere Welt für Wachstube und Karten (wird beim ersten Start angelegt und gebaut).
+welt: bollwerk
+
+wachstube:
+  # So lange läuft der Countdown in der Wachstube, bevor eine Runde startet.
+  # Sagen alle „bereit“, geht es nach 5 Sekunden los.
+  countdown-sekunden: 30
+  # Ab so vielen Leuten in der Wachstube beginnt der Countdown von selbst (sonst, sobald jemand „bereit“ ist).
+  mindestens-spieler: 2
+
+runde:
+  # Höchstens so viele Verteidiger in einer Runde (1–6).
+  hoechstens-spieler: 6
+  # Aufbauphase vor der ersten Welle und zwischen den Wellen (Sekunden).
+  erster-aufbau-sekunden: 30
+  aufbau-sekunden: 25
+  # Nach dem Ende: so lange bis zurück in die Wachstube.
+  nachspiel-sekunden: 10
+  # Gulden zum Start.
+  startgeld: 50
+  # Lebenspunkte des Herzens (Dorfbrunnen, Klosterglocke).
+  herz-leben: 400
+  # So lange liegt man am Boden, bevor man ausscheidet (Mitspieler können in der Zeit retten).
+  am-boden-sekunden: 25
+  # So lange muss man sich zum Retten neben jemanden ducken.
+  retten-sekunden: 3

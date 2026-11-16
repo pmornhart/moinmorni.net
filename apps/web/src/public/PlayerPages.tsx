@@ -424,7 +424,9 @@ function ModeBoards(): ReactElement | null {
               onClick={() => setChosenKey(k.key)}
               className={cn(
                 'rounded-[4px] px-2.5 py-1.5 font-pixel text-[13px] font-semibold uppercase tracking-[0.06em] transition-colors',
-                active ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground',
+                active
+                  ? 'bg-foreground text-background'
+                  : 'bg-muted text-muted-foreground hover:text-foreground',
               )}
             >
               {label(k.key)}
@@ -489,6 +491,7 @@ function Fact({
 function ModeStats({ stats }: { readonly stats: NonNullable<PublicProfile['modes']> }): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
+  const stat = useStatText();
   const language = useLanguage();
   const status = useNetworkStatus();
   const locale = NUMBER_LOCALE[language];
@@ -522,7 +525,7 @@ function ModeStats({ stats }: { readonly stats: NonNullable<PublicProfile['modes
                 {Object.entries(values).map(([key, value]) => (
                   <div key={key} className="grid gap-0.5">
                     <dt className="font-pixel text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                      {t(`site.players.stats.${key}`, { defaultValue: readable(key) })}
+                      {stat.label(key)}
                     </dt>
                     <dd className="tabular font-pixel text-[1.5rem] font-bold leading-none">
                       {key.endsWith(TIME_SUFFIX) ? formatTime(value, locale) : number.format(value)}

@@ -9,7 +9,7 @@
  */
 import type { Canvas } from './canvas.js';
 import { MOEBEL } from './furniture.js';
-import { CAST, signedSkin } from './cast.js';
+import { castFor, signedSkin } from './cast.js';
 import { trachtItems } from './trachten.js';
 import { Frame, type Local } from './frame.js';
 import { STEP, YAW, type Facing } from './shapes.js';
@@ -150,7 +150,7 @@ export function decoEntity(
 
 /** Figur aufstellen (Mannequin mit eigenem Skin, unverwundbar, nicht schiebbar). */
 export function npc(c: Canvas, n: NpcSpec): void {
-  const outfit = CAST[n.skin];
+  const { id: wears, outfit } = castFor(n.skin);
   const tracht = outfit ? trachtItems(outfit, n.sit === true) : { head: null, body: null };
   const tags = tagList(['mm_npc', `mm_skin_${n.skin}`, ...(n.tags ?? [])]);
   const parts = [
@@ -160,7 +160,7 @@ export function npc(c: Canvas, n: NpcSpec): void {
     'hide_description:true',
     'Invulnerable:1b',
     'Silent:1b',
-    profileOf(n.skin),
+    profileOf(wears),
     ...equipmentOf(n, tracht.head),
     ...(n.small ? [`attributes:[{id:'minecraft:scale',base:${SMALL}d}]`] : []),
     ...(tracht.body ? [`Passengers:[${bodyDisplay(n, tracht.body)}]`] : []),

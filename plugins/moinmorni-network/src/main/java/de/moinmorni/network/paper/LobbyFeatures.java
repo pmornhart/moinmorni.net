@@ -101,8 +101,10 @@ final class LobbyFeatures implements Listener {
     private static final String TOUR_ITEM = "tour";
     private static final int MENU_SLOT = 0;
     private static final int TOUR_SLOT = 8;
-    private static final int MENU_SIZE = 27;
-    private static final int MENU_FIRST = 10;
+    /** Kompass-Menü: Rand oben und unten, je Reihe bis zu sieben Modi in der Mitte (Spalten 1 … 7). */
+    private static final int MENU_COLUMNS = 9;
+    private static final int MENU_PER_ROW = 7;
+    private static final int MENU_MAX_ROWS = 6;
     private static final long TICKS_PER_SECOND = 20L;
     private static final long WELCOME_DELAY = 20L;
     private static final long TOUR_DELAY = 60L;
@@ -407,7 +409,8 @@ final class LobbyFeatures implements Listener {
     // ---------- Kompass-Menü ----------
 
     private static final class MenuHolder implements InventoryHolder {
-        final List<String> ids = new ArrayList<>();
+        /** Platz im Fenster → Modus. */
+        final java.util.Map<Integer, String> ids = new java.util.HashMap<>();
         Inventory inventory;
 
         @Override
@@ -418,15 +421,40 @@ final class LobbyFeatures implements Listener {
 
     private void openMenu(Player p) {
         MenuHolder holder = new MenuHolder();
-        Inventory inv = Bukkit.createInventory(holder, MENU_SIZE, text(p, "Spielmodi", "Game modes", NamedTextColor.DARK_GREEN));
-        holder.inventory = inv;
         List<LobbyNpcs.ModeInfo> modes = npcs.orderedModes();
-        for (int i = 0; i < modes.size() && MENU_FIRST + i < MENU_SIZE; i++) {
-            LobbyNpcs.ModeInfo m = modes.get(i);
-            holder.ids.add(m.id());
-            inv.setItem(MENU_FIRST + i, modeItem(p, m));
+        int rows = Math.max(1, Math.min(MENU_MAX_ROWS - 2, (modes.size() + MENU_PER_ROW - 1) / MENU_PER_ROW));
+        Inventory inv = Bukkit.createInventory(holder, (rows + 2) * MENU_COLUMNS,
+                text(p, "Spielmodi", "Game modes", NamedTextColor.DARK_GREEN));
+        holder.inventory = inv;
+        for (int i = 0; i < modes.size() && i < rows * MENU_PER_ROW; i++) {
+            int row = i / MENU_PER_ROW;
+            int inRow = Math.min(MENU_PER_ROW, modes.size() - row * MENU_PER_ROW);
+            // Jede Reihe mittig: eine kurze letzte Reihe rückt zur Mitte.
+            int column = 1 + (MENU_PER_ROW - inRow) / 2 + i % MENU_PER_ROW;
+            int slot = (row + 1) * MENU_COLUMNS + column;
+            holder.ids.put(slot, modes.get(i).id());
+            inv.setItem(slot, modeItem(p, modes.get(i)));
+        }
+        // Freie Plätze: grüne und graue Scheiben als Rahmen (ohne Namen, ohne Wirkung).
+        ItemStack frame = pane(Material.GREEN_STAINED_GLASS_PANE);
+        ItemStack inside = pane(Material.GRAY_STAINED_GLASS_PANE);
+        for (int slot = 0; slot < inv.getSize(); slot++) {
+            if (inv.getItem(slot) == null) {
+                boolean edge = slot < MENU_COLUMNS || slot >= inv.getSize() - MENU_COLUMNS
+                        || slot % MENU_COLUMNS == 0 || slot % MENU_COLUMNS == MENU_COLUMNS - 1;
+                inv.setItem(slot, edge ? frame : inside);
+            }
         }
         p.openInventory(inv);
+    }
+
+    private static ItemStack pane(Material material) {
+        ItemStack stack = new ItemStack(material);
+        ItemMeta meta = stack.getItemMeta();
+        meta.displayName(Component.empty());
+        meta.setHideTooltip(true);
+        stack.setItemMeta(meta);
+        return stack;
     }
 
     private ItemStack modeItem(Player p, LobbyNpcs.ModeInfo m) {
@@ -434,7 +462,10 @@ final class LobbyFeatures implements Listener {
         boolean soon = "soon".equals(m.state()) || !m.hasServer();
         boolean open = !"off".equals(m.state()) && !soon && !"maintenance".equals(m.state());
         Component state;
-        if ("off".equals(m.state())) {
+        if (m.paused()) {
+            state = Component.text(english ? "Summer break – the village is open to look around"
+                    : "Sommerpause – das Dorf ist zum Anschauen offen", NamedTextColor.YELLOW);
+        } else if ("off".equals(m.state())) {
             state = Component.text(english ? "Closed" : "Geschlossen", NamedTextColor.RED);
         } else if (soon) {
             state = Component.text(english ? "Coming soon" : "Bald", NamedTextColor.GRAY);
@@ -460,7 +491,8 @@ final class LobbyFeatures implements Listener {
         }
         if (open) {
             lore.add(Component.empty());
-            lore.add(Component.text(english ? "▶ Click to play" : "▶ Klick: Mitspielen", NamedTextColor.YELLOW)
+            lore.add(Component.text(m.paused() ? (english ? "▶ Click to look around" : "▶ Klick: Dorf anschauen")
+                            : english ? "▶ Click to play" : "▶ Klick: Mitspielen", NamedTextColor.YELLOW)
                     .decoration(TextDecoration.ITALIC, false));
         }
         meta.lore(lore);
@@ -478,10 +510,10 @@ final class LobbyFeatures implements Listener {
         }
         if (event.getInventory().getHolder() instanceof MenuHolder holder) {
             event.setCancelled(true);
-            int index = event.getRawSlot() - MENU_FIRST;
-            if (index >= 0 && index < holder.ids.size()) {
+            String id = holder.ids.get(event.getRawSlot());
+            if (id != null) {
                 p.closeInventory();
-                npcs.play(p, holder.ids.get(index));
+                npcs.play(p, id);
             }
             return;
         }

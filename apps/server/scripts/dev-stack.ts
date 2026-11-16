@@ -13,8 +13,10 @@ import { news } from '../src/db/schema.js';
 const VENDOR = path.resolve(import.meta.dirname, '../../../vendor/mornihosting/apps/server/src');
 const DIR = process.env['MM_DEV_DIR'] ?? path.join(os.homedir(), 'mm-dev');
 const PASSWORD = process.env['MM_DEV_PASSWORD'] ?? 'Test-Passwort-12345';
-const MOTOR_PORT = 8180;
-const MM_PORT = 8080;
+// Ports lassen sich umstellen, wenn mehrere Stände gleichzeitig laufen (MM_DEV_PORT, MM_DEV_MOTOR_PORT, MM_DEV_HUB_PORT).
+const MOTOR_PORT = Number(process.env['MM_DEV_MOTOR_PORT'] ?? 8180);
+const MM_PORT = Number(process.env['MM_DEV_PORT'] ?? 8080);
+const HUB_PORT = process.env['MM_DEV_HUB_PORT'] ?? '8090';
 
 const from = (file: string): Promise<Record<string, any>> => import(path.join(VENDOR, file));
 const secretFile = path.join(DIR, 'secret');
@@ -65,6 +67,7 @@ const mm = await buildApp({
       MM_MOTOR_URL: motorUrl,
       MM_MOTOR_TOKEN: fs.readFileSync(tokenFile, 'utf8').trim(),
       MM_PORT: String(MM_PORT),
+      MM_HUB_PORT: HUB_PORT,
       MM_HOST: '127.0.0.1',
     },
     path.resolve(import.meta.dirname, '../src'),

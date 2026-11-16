@@ -1,0 +1,35 @@
+# MoinMorni Duels – Einstellungen
+# Nach Änderungen den Server neu starten (oder /duels neuladen für Zeiten, Wertung und Suppe).
+
+# Eigene, leere Welt für Wartehalle und Arenen. Das Plugin legt sie an und baut alles selbst.
+welt: duels
+
+# Jede Arena (Almwiese, Burghof, Bergwerk, Wirtshausgarten) gibt es so oft.
+# 3 Kopien × 4 Arenen = bis zu 12 Kämpfe gleichzeitig. Ändern baut die Arenen beim nächsten Start neu.
+arena-kopien: 3
+
+kampf:
+  # Nach so vielen Sekunden endet ein Kampf unentschieden (600 = 10 Minuten).
+  zeitlimit-sekunden: 600
+  # Countdown vor dem Start (3-2-1).
+  countdown-sekunden: 3
+  # So lange bleiben alle nach dem Ende in der Arena, dann geht es zurück in die Wartehalle.
+  nachspiel-sekunden: 10
+
+herausforderung:
+  # So lange gilt eine Herausforderung mit /duel.
+  ablauf-sekunden: 60
+
+wertung:
+  # Elo am Anfang und K-Faktor (wie stark ein Kampf die Wertung verändert).
+  start: 1000
+  k-faktor: 32
+  # Gewertete Suche: erlaubter Elo-Abstand am Anfang. Er wächst alle paar Sekunden, damit niemand ewig wartet.
+  spanne-start: 100
+  spanne-plus: 50
+  spanne-alle-sekunden: 5
+  spanne-max: 1000
+
+suppe:
+  # So viele Lebenspunkte heilt eine Pilzsuppe im Kit „Klassisch“ (7 = 3,5 Herzen).
+  heilung: 7.0

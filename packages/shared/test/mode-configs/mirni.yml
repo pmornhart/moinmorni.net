@@ -1,0 +1,159 @@
+# MorniSMP – Einstellungen
+# Geldbeträge in Talern (Komma als Punkt schreiben: 2.5 = 2,50 Taler). Nach Änderungen: /smpadmin neuladen
+# (Weltgrenzen und Preise gelten sofort, die Datenbank bleibt).
+
+waehrung:
+  # Zeichen hinter jedem Betrag
+  zeichen: "₮"
+  # So viel bekommt jeder beim allerersten Betreten
+  startguthaben: 100
+  # Ab diesem Betrag fragt /zahlen noch einmal nach („Wirklich?“)
+  zahlen-bestaetigen-ab: 1000
+
+welt:
+  # Hauptwelt (Oberwelt); Nether und End sind die normalen Dimensionen dazu
+  name: world
+  # Weltgrenze als Radius um 0/0 (Blöcke)
+  grenze-radius: 10000
+  grenze-radius-nether: 1250
+  grenze-radius-end: 10000
+  # Wie lange man nach einem Treffer „im Kampf“ ist (0 = aus)
+  kampf-sekunden: 15
+  # Zeitzone für Tageszähler (Belohnung, Ankauf)
+  zeitzone: Europe/Berlin
+
+# Die Marktstadt steht in einer eigenen, leeren Welt (eine Art vierte Dimension): immer Tag, kein Wetter, keine
+# Monster, ganz geschützt. Neue Spieler, /spawn und wer ohne Bett stirbt, landen dort. Drei Reisetore führen per
+# Zufalls-Teleport in Oberwelt, Nether und End.
+spawnwelt:
+  name: smp_spawn
+  # Höhe der Stadt-Insel (Bodenschicht)
+  hoehe: 90
+
+reisetore:
+  # Welcher Ring beim Tor zur Oberwelt: nah, mittel oder weit
+  oberwelt: nah
+
+teleport:
+  # Wartezeit vor jedem Teleport (stillhalten!)
+  wartezeit-sekunden: 3
+  # Admins (OP / morni.smp.admin) ohne Wartezeit
+  admins-sofort: true
+  # Höchstzahl Zuhause pro Spieler
+  zuhause-max: 3
+
+zufallsteleport:
+  # Abklingzeit nach einem Zufalls-Teleport
+  abklingzeit-sekunden: 60
+  # Ringe (kleinster und größter Abstand zu 0/0)
+  nah: [500, 2000]
+  mittel: [2000, 5000]
+  weit: [5000, 9500]
+  # Nether: sicherer Platz zwischen y 32 und 110 (nie auf Lava, nie aufs Dach)
+  nether: [100, 1100]
+  # End: auf den äußeren Inseln, sonst auf der Hauptinsel – nie in die Leere
+  end: [1000, 5000]
+
+auktionshaus:
+  # Gebühr beim Verkauf (vom Erlös, geht an die Stadt)
+  gebuehr-prozent: 2.0
+  # Wie lange ein Angebot steht; danach liegt es im Abholfach
+  dauer-stunden: 48
+  # Höchstzahl gleichzeitiger Angebote pro Spieler
+  max-angebote: 10
+
+auftraege:
+  # Gebühr beim Beliefern (vom Lohn des Lieferanten)
+  gebuehr-prozent: 2.0
+  dauer-tage: 7
+  max-auftraege: 5
+
+laeden:
+  # Gebühr bei Ladenkisten (0 = keine)
+  gebuehr-prozent: 0.0
+
+marktstaende:
+  miete-pro-woche: 300
+  # Hinweis an den Mieter so lange vor dem Ablauf
+  warnen-stunden-vorher: 24
+  # So viele Wochen darf man im Voraus zahlen
+  max-wochen-im-voraus: 4
+
+# In Oberwelt, Nether und End (nicht in der Spawn-Welt)
+grundstuecke:
+  # So viele Chunks sind gratis
+  gratis: 4
+  # Preis für jeden weiteren Chunk
+  preis: 250
+  max: 64
+
+# Ankauf der Stadt: nur Ernte und Beute von Monstern/Tieren (keine Erze, keine Blöcke – die handeln Spieler
+# untereinander). „preis“ pro Stück, „tag“ = so viele Stück pro Tag zum vollen Preis; danach zahlt die Stadt
+# weniger (siehe „stufen“: ab dem Vielfachen der Tagesmenge so viel Prozent).
+ankauf:
+  preise:
+    wheat: {preis: 0.5, tag: 256}
+    carrot: {preis: 0.3, tag: 256}
+    potato: {preis: 0.3, tag: 256}
+    beetroot: {preis: 0.4, tag: 256}
+    melon_slice: {preis: 0.1, tag: 512}
+    pumpkin: {preis: 1.0, tag: 128}
+    sugar_cane: {preis: 0.4, tag: 256}
+    cactus: {preis: 0.3, tag: 256}
+    bamboo: {preis: 0.05, tag: 512}
+    cocoa_beans: {preis: 0.4, tag: 256}
+    nether_wart: {preis: 0.5, tag: 256}
+    sweet_berries: {preis: 0.2, tag: 256}
+    apple: {preis: 1.0, tag: 64}
+    egg: {preis: 0.3, tag: 128}
+    rotten_flesh: {preis: 0.1, tag: 512}
+    bone: {preis: 0.3, tag: 256}
+    string: {preis: 0.4, tag: 256}
+    spider_eye: {preis: 0.4, tag: 128}
+    gunpowder: {preis: 1.0, tag: 128}
+    arrow: {preis: 0.1, tag: 256}
+    ender_pearl: {preis: 3.0, tag: 32}
+    slime_ball: {preis: 1.0, tag: 64}
+    blaze_rod: {preis: 4.0, tag: 32}
+    leather: {preis: 1.0, tag: 64}
+    feather: {preis: 0.2, tag: 256}
+    white_wool: {preis: 0.5, tag: 128}
+    ink_sac: {preis: 0.5, tag: 64}
+    beef: {preis: 0.6, tag: 128}
+    porkchop: {preis: 0.6, tag: 128}
+    chicken: {preis: 0.5, tag: 128}
+    mutton: {preis: 0.5, tag: 128}
+    cod: {preis: 0.5, tag: 128}
+    salmon: {preis: 0.6, tag: 128}
+  stufen:
+    - {ab: 0, prozent: 100}
+    - {ab: 1, prozent: 50}
+    - {ab: 2, prozent: 20}
+    - {ab: 4, prozent: 5}
+
+belohnung:
+  # So lange muss man heute schon gespielt haben
+  mindest-minuten: 15
+  taler: 25
+  # Pro Tag in Folge mehr (bis max-serie)
+  plus-pro-serientag: 5
+  max-serie: 7
+  # Gegenstände dazu („name:anzahl“)
+  gegenstaende:
+    - "bread:8"
+    - "torch:16"
+  # ab dem 7. Tag in Folge stattdessen
+  gegenstaende-ab-serie-7:
+    - "bread:16"
+    - "torch:32"
+    - "experience_bottle:4"
+
+kopfgeld:
+  # Mindestbetrag für ein Kopfgeld
+  mindestens: 50
+
+anzeige:
+  # Leiste rechts für Neue an?
+  leiste-standard: true
+  # Adresse unten in der Leiste
+  adresse: moinmorni.net

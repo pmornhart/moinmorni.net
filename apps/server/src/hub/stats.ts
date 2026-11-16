@@ -2,6 +2,7 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Db } from '../db/index.js';
 import { modeStats, players } from '../db/schema.js';
+import { MODE_HEADLINE_STATS } from '@moinmorni/shared';
 import { normalUuid } from './players.js';
 
 /**
@@ -47,14 +48,20 @@ export interface TopEntry {
 /** Welche Werte ein Modus meldet und wie viele (öffentliche) Spieler einen haben – für Bestenlisten der Webseite. */
 export interface ModeBoard {
   readonly mode: string;
-  readonly keys: ReadonlyArray<{ readonly key: string; readonly players: number; readonly order: 'asc' | 'desc' }>;
+  readonly keys: ReadonlyArray<{
+    readonly key: string;
+    readonly players: number;
+    readonly order: 'asc' | 'desc';
+  }>;
 }
 
 /** Zeiten (…_ms) sind besser, je kleiner sie sind. */
 const TIME_SUFFIX = '_ms';
 /** Diese Werte stehen in einer Bestenliste vorne (wenn ein Modus sie meldet), der Rest nach dem Alphabet. */
 const HEADLINE_KEYS = ['rating', 'wins', 'balance', 'finishes', 'points', 'best_wave', 'kills', 'games'];
-const rankOfKey = (key: string): number => {
+/** Rang eines Werts in der Bestenliste: der eigene wichtigste Wert des Modus ganz vorne, dann die üblichen. */
+const rankOfKey = (mode: string, key: string): number => {
+  if (MODE_HEADLINE_STATS[mode] === key) return -1;
   const i = HEADLINE_KEYS.indexOf(key);
   return i < 0 ? HEADLINE_KEYS.length : i;
 };
@@ -146,7 +153,9 @@ export function createModeStats(db: Db): ModeStatsService {
       );
       return [...byMode].map(([mode, keys]) => ({
         mode,
-        keys: [...keys].sort((a, b) => rankOfKey(a.key) - rankOfKey(b.key) || a.key.localeCompare(b.key)),
+        keys: [...keys].sort(
+          (a, b) => rankOfKey(mode, a.key) - rankOfKey(mode, b.key) || a.key.localeCompare(b.key),
+        ),
       }));
     },
   };

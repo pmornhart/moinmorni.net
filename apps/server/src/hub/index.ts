@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
 import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
-import { areaById, type GameRight, type Role } from '@moinmorni/shared';
+import { areaById, MODE_PHASE_PAUSE, type GameRight, type Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
@@ -437,6 +437,8 @@ export function createHub(options: HubOptions): Hub {
     }
     if (admit(uuid, mode.server, p.lang) !== 'go') return;
     if (mode.access === 'whitelist') ctx.msg(uuid, text(p.lang, 'mode.invite_only', { mode: name }));
+    if (modeRuns.get(mode.id)?.state === MODE_PHASE_PAUSE)
+      ctx.msg(uuid, text(p.lang, 'mode.pause', { mode: name }));
     ctx.msg(uuid, text(p.lang, 'mode.joining', { mode: name }));
     ctx.connect(uuid, mode.server);
   };
@@ -455,6 +457,8 @@ export function createHub(options: HubOptions): Hub {
         players: md.server ? presence.on(md.server).length : 0,
         hasServer: md.server !== null,
         awake: md.server !== null && conns.backends.has(md.server),
+        // Was der Modus selbst meldet – „closed“ = Pause (Wintersport im Sommer), das Schild sagt es dann.
+        phase: modeRuns.get(md.id)?.state ?? null,
         icon: modeIcon(md.id),
       })),
   });

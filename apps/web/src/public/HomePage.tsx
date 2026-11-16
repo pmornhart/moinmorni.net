@@ -167,7 +167,7 @@ function LineupFigure({
   const nameStyle: CSSProperties = { color: art.a };
   const bob: CSSProperties = { animationDelay: `-${index * BOB_STEP_S}s` };
   return (
-    <li className="w-[30vw] max-w-[190px] shrink-0 sm:-mx-[0.8%] sm:w-[14.6%] sm:shrink">
+    <li className="w-[30vw] max-w-[190px] shrink-0 sm:-mx-[0.8%] sm:w-[calc(102%/var(--figures))] sm:shrink">
       <Link
         to={`/spielmodi/${id}`}
         className="group relative block rounded-[8px] outline-offset-4"
@@ -201,6 +201,9 @@ function LineupFigure({
   );
 }
 
+/** Fewest places in the line-up (so a few modes do not turn into giants). */
+const MIN_LINEUP = 7;
+
 /** The modes' figures from the village market, standing on the edge of the hero. Swipe on phones. */
 function Lineup(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
@@ -213,6 +216,8 @@ function Lineup(): ReactElement {
     <ul
       className="mm-scroll-x flex w-full items-end gap-1 px-[8vw] pt-14 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)] sm:justify-center sm:overflow-visible sm:px-0 sm:[mask-image:none]"
       aria-label={t('site.hero.lineup')}
+      // Auf breiten Schirmen stehen alle in einer Reihe – je mehr Modi, desto schmaler jede Figur.
+      style={{ '--figures': Math.max(entries.length, MIN_LINEUP) } as CSSProperties}
     >
       {entries.map((entry, index) => (
         <LineupFigure key={entry.id} id={entry.id} mode={entry.mode} index={index} />

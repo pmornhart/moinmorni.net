@@ -4,6 +4,7 @@ import {
   ClipboardList,
   Copy,
   ExternalLink,
+  Gamepad2,
   Gavel,
   Headphones,
   LifeBuoy,
@@ -11,7 +12,9 @@ import {
   LogIn,
   MessagesSquare,
   Monitor,
+  Moon,
   Smartphone,
+  Sun,
   Terminal,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,7 +25,9 @@ import { useCopy } from '~/components/controls';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useSite } from '~/lib/site';
+import { ModeGlyph } from '~/components/mode-visuals';
 import { useNetworkStatus } from '~/lib/status';
+import { usePick } from '~/lib/text';
 import { Cmd, GameButton, Panel } from './kit';
 import { PageHero } from './page-hero';
 import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, FALLBACK_BEDROCK_PORT, WRAP } from './parts';
@@ -30,7 +35,8 @@ import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, FALLBACK_BEDROCK_PORT, WRAP } f
 /** The voice chat mod's page (link only – no logo, no picture). */
 const VOICE_MOD_URL = 'https://modrinth.com/plugin/simple-voice-chat';
 
-type SectionId = 'reinkommen' | 'sprachchat' | 'discord' | 'mornicraft' | 'befehle' | 'regeln' | 'team-hilfe';
+type SectionId =
+  'reinkommen' | 'spielmodi' | 'sprachchat' | 'discord' | 'mornicraft' | 'befehle' | 'regeln' | 'team-hilfe';
 
 interface HelpSection {
   readonly id: SectionId;
@@ -40,6 +46,7 @@ interface HelpSection {
 
 const SECTIONS: readonly HelpSection[] = [
   { id: 'reinkommen', key: 'join', icon: LogIn },
+  { id: 'spielmodi', key: 'modes', icon: Gamepad2 },
   { id: 'sprachchat', key: 'voice', icon: Headphones },
   { id: 'discord', key: 'discord', icon: Link2 },
   { id: 'mornicraft', key: 'mornicraft', icon: ClipboardList },
@@ -295,6 +302,55 @@ function CommandsBody(): ReactElement {
   );
 }
 
+/** All game modes with one line each and a link to their page; how sleeping and the summer break work. */
+function ModesBody(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  const status = useNetworkStatus();
+  const modes = status.data?.modes ?? [];
+  return (
+    <div className="grid gap-5">
+      <p>{t('site.help.modes.intro')}</p>
+      {modes.length ? (
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {modes.map((m, i) => (
+            <li key={m.id}>
+              <Link
+                to={`/spielmodi/${m.id}`}
+                className="group grid h-full grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-[8px] border-2 border-border bg-background-alt p-3 transition-colors hover:border-gold/55"
+              >
+                <ModeGlyph id={m.id} position={i} />
+                <span className="grid min-w-0 gap-0.5">
+                  <span className="font-pixel text-[1.15rem] font-bold leading-tight group-hover:text-primary">
+                    {pick(m.name)}
+                  </span>
+                  <span className="line-clamp-2 text-[13.5px] leading-snug text-muted-foreground">
+                    {pick(m.description)}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="flex items-start gap-2.5 text-[15px] text-muted-foreground">
+        <Moon className="mt-1 size-4 shrink-0 text-blue" aria-hidden />
+        {t('site.help.modes.sleep')}
+      </p>
+      <p className="flex items-start gap-2.5 text-[15px] text-muted-foreground">
+        <Sun className="mt-1 size-4 shrink-0 text-gold" aria-hidden />
+        {t('site.help.modes.pause')}
+      </p>
+      <GameButton asChild tone="stone" className="justify-self-start">
+        <Link to="/spielmodi">
+          <Gamepad2 />
+          {t('site.help.modes.all')}
+        </Link>
+      </GameButton>
+    </div>
+  );
+}
+
 function RulesBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
@@ -338,6 +394,7 @@ function TeamBody(): ReactElement {
 
 const BODIES: Readonly<Record<SectionId, () => ReactElement>> = {
   reinkommen: JoinBody,
+  spielmodi: ModesBody,
   sprachchat: VoiceBody,
   discord: DiscordBody,
   mornicraft: MorniCraftBody,

@@ -180,6 +180,10 @@ importers:
       zod:
         specifier: ^4.1.12
         version: 4.6.7
+    devDependencies:
+      yaml:
+        specifier: 2.9.1
+        version: 2.9.1
 
   tools/lobby-entwuerfe:
     dependencies:

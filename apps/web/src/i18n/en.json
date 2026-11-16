@@ -142,7 +142,8 @@
       "asleep": "Asleep",
       "closed": "Closed",
       "maintenance": "Maintenance",
-      "soon": "Soon"
+      "soon": "Soon",
+      "pause": "Summer break"
     },
     "modeHint": {
       "on": "Open",
@@ -155,7 +156,8 @@
       "asleep": "Asleep – wakes up as soon as you arrive.",
       "closed": "Closed right now.",
       "maintenance": "Under maintenance – back soon.",
-      "soon": "Coming soon – still being built."
+      "soon": "Coming soon – still being built.",
+      "pause": "Summer break right now – competitions run from 1 December to 31 March. You can still visit the village."
     },
     "mode": {
       "eyebrow": "Game mode",
@@ -183,7 +185,8 @@
       "apply": "Apply now",
       "about": "About {{name}}",
       "topTitle": "Leaderboard · {{value}}",
-      "topAll": "See all"
+      "topAll": "See all",
+      "pauseText": "Summer break: no competitions until winter. The ice rink, chairlift and toboggan run in the village are still open – feel free to drop by."
     },
     "stats": {
       "eyebrow": "Leaderboards",
@@ -257,7 +260,52 @@
         "sales": "Sales",
         "purchases": "Purchases",
         "orders_filled": "Orders filled",
-        "playtime_min": "Play time (min)"
+        "playtime_min": "Play time (min)",
+        "chests": "Chests opened",
+        "best_kills": "Most kills in a round",
+        "wins_hider": "Wins as hider",
+        "wins_seeker": "Wins as constable",
+        "found": "Found",
+        "survived": "Hidden to the end",
+        "whistles": "Whistles",
+        "best_points": "Best score",
+        "events": "Competitions",
+        "races": "Races",
+        "gold": "Gold",
+        "silver": "Silver",
+        "bronze": "Bronze",
+        "biathlon_hits": "Hits at the range",
+        "biathlon_shots": "Shots at the range",
+        "flights": "Flights",
+        "rings": "Rings",
+        "resets": "Back to a ring",
+        "medals": "Medals",
+        "eagles": "Eagle medals",
+        "catches": "Catches",
+        "legendary": "Legendary fish",
+        "tournaments_won": "Tournament wins",
+        "heaviest_g": "Heaviest fish (g)",
+        "species": "Species in the fish book",
+        "timeOf": "Best time {{course}}",
+        "finishesOf": "Finishes {{course}}"
+      },
+      "courses": {
+        "almrundflug": "Alpine Loop",
+        "klammflug": "Gorge Flight",
+        "burgruine": "Castle Ruin",
+        "gletscherspalte": "Glacier Crevasse",
+        "stollenflug": "Tunnel Flight",
+        "gipfelkreuz": "Summit Cross",
+        "slalom": "Giant Slalom",
+        "biathlon": "Biathlon",
+        "bob": "Bobsleigh",
+        "almwiese": "Alpine Meadow Run",
+        "gletscher": "Glacier Crevasses",
+        "kletterwand": "Climbing Wall",
+        "felsgrat": "Rocky Ridge",
+        "seilbahn": "Cable Car Pylons",
+        "eishoehle": "Ice Cave",
+        "wetterturm": "Weather Tower"
       }
     },
     "team": {
@@ -357,6 +405,15 @@
         "step3": "Done – your rank appears on Discord and follows by itself when it changes.",
         "join": "Join the Discord"
       },
+      "modes": {
+        "title": "Game modes",
+        "short": "All modes at a glance – and how to get there",
+        "intro": "You reach every game mode from the lobby: the figures at the village market around the maypole and at the castle market in front of the castle stairs take you there with one click. The compass in your hotbar is even quicker.",
+        "sleep": "When nobody is in a mode, it sleeps. As soon as you arrive it wakes up – that takes a little moment.",
+        "pause": "Winter Games can take a summer break: then there are competitions only in winter (1 December to 31 March) – the village with ice rink, lift and toboggan run stays open.",
+        "more": "More",
+        "all": "All game modes"
+      },
       "mornicraft": {
         "title": "Apply for MorniCraft",
         "short": "Our friends’ survival – invitation only",
@@ -449,6 +506,135 @@
           "short": "Everything at a glance",
           "text": "Market, lanes, beer garden, upper village and castle – this is our village from the air.",
           "alt": "The whole village seen from above"
+        }
+      }
+    },
+    "guide": {
+      "title": "How to play",
+      "commands": "Useful commands",
+      "mornicraft": {
+        "tip1": "Apply on the website or on Discord – with a place on the whitelist you are in.",
+        "tip2": "You start on the spawn island high above the sea: double-jump and you glide off with the starter elytra.",
+        "tip3": "Found a clan with friends, set your clan base – and take on the mighty ender dragon together.",
+        "cmd": {
+          "home": "Go to your home (save it with /sethome).",
+          "tpa": "Ask whether you may teleport to someone.",
+          "clan": "Clan menu: found, invite, base, colour.",
+          "spawn": "Back to the spawn island."
+        }
+      },
+      "duels": {
+        "tip1": "Pick a fighting style: classic with mushroom soup, modern or with abilities.",
+        "tip2": "Play casual or ranked – ranked fights count for the leaderboard.",
+        "tip3": "With friends: challenge them directly or go 2v2 as a party.",
+        "cmd": {
+          "duel": "Challenge someone.",
+          "kit": "Your own layout in the kit editor.",
+          "top": "The best fighters."
+        }
+      },
+      "party": {
+        "tip1": "2 to 8 people take turns rolling the dice across a game board and collect coins.",
+        "tip2": "The wandering stall sells edelweiss – whoever has the most at the end wins.",
+        "tip3": "After every round comes a quick minigame – the best get coins.",
+        "cmd": {
+          "mitspielen": "Sign up for the next game.",
+          "zuschauen": "Watch a game.",
+          "top": "Leaderboard."
+        }
+      },
+      "gipfelsturm": {
+        "tip1": "Eight parkour courses from easy to extreme – pick one at the base camp.",
+        "tip2": "The clock runs to the millisecond; at checkpoints you see whether you beat your best time.",
+        "tip3": "Every week there is a course of the week with its own leaderboard.",
+        "cmd": {
+          "gipfel": "Choose a course.",
+          "woche": "Course of the week.",
+          "uebung": "Practice mode on/off."
+        }
+      },
+      "burgverlies": {
+        "tip1": "Alone or with up to three friends you descend three floors below the castle.",
+        "tip2": "Every room is different: fights, traps, puzzles, treasure – and you gear up at the merchant.",
+        "tip3": "If someone is down, crouch to revive them – the dungeon master waits at the very bottom.",
+        "cmd": {
+          "bv": "Choose a descent.",
+          "suchen": "Find teammates.",
+          "verlassen": "Leave the descent."
+        }
+      },
+      "bollwerk": {
+        "tip1": "1 to 6 people defend the village together – vote on the map in the guard room.",
+        "tip2": "Between the waves you shop at the general store and build arrow towers, palisades and healing banners.",
+        "tip3": "Every five waves a giant comes – how far can you get?",
+        "cmd": {
+          "bereit": "Say you are ready – in a round, start the next wave.",
+          "shop": "General store during the build phase.",
+          "top": "The best squads."
+        }
+      },
+      "mirni": {
+        "tip1": "You start in the floating market town – the three travel gates lead to the overworld, Nether and End.",
+        "tip2": "Trade with everyone: auction house, orders, your own shop chests and market stalls to rent.",
+        "tip3": "Claim your land – coins only exist in the game, nothing for real money.",
+        "cmd": {
+          "rtp": "A random safe spot to start.",
+          "ah": "Auction house.",
+          "gs": "Claim the chunk you stand in.",
+          "geld": "Your balance."
+        }
+      },
+      "wolkenkampf": {
+        "tip1": "In the cloud harbour you vote on map and mode and pick your free starter kit.",
+        "tip2": "From the balloon gondola you float down to your own island: loot chests, build bridges, fight.",
+        "tip3": "Supplies, a thunderstorm and rising fog make for the finale – the last one standing wins.",
+        "cmd": {
+          "karte": "Vote on the map.",
+          "ausruestung": "Choose your starter kit.",
+          "bereit": "Say you are ready.",
+          "zuschauen": "Watch a round."
+        }
+      },
+      "versteckerl": {
+        "tip1": "About one in four becomes a village constable – everyone else hides as a hay bale, barrel or flower pot.",
+        "tip2": "Stand still for three seconds: you lock in as a real block and become almost impossible to spot.",
+        "tip3": "Whistling earns points but gives you away – and whoever is found joins the search.",
+        "cmd": {
+          "karte": "Vote on the map.",
+          "gestalt": "Choose or change your disguise.",
+          "bereit": "Say you are ready.",
+          "top": "Wanted posters of the best."
+        }
+      },
+      "wintersport": {
+        "tip1": "In the mountain village you vote: the whole competition or a single event.",
+        "tip2": "Giant slalom by boat through the gates, biathlon with shooting range and penalty loops, bobsleigh – parties ride a two-man bob.",
+        "tip3": "Gold, silver and bronze are handed out at the podium. Until it starts: ice rink, chairlift and toboggan run.",
+        "cmd": {
+          "abstimmen": "Choose the competition or an event.",
+          "bereit": "Say you are ready.",
+          "top": "Medals and best times."
+        }
+      },
+      "adlerflug": {
+        "tip1": "At the eagle’s eyrie you choose a course and run down the ski jump – the wings open by themselves.",
+        "tip2": "Steer with the mouse: down makes you faster, up makes you climb. Fly through all rings in order.",
+        "tip3": "Updrafts lift you, boost rings give you speed – bronze, silver, gold or even eagle?",
+        "cmd": {
+          "adlerflug": "Choose a course.",
+          "ring": "Back to the last ring.",
+          "woche": "Course of the week.",
+          "uebung": "Practice mode."
+        }
+      },
+      "angelkoenig": {
+        "tip1": "Just drop by whenever you like – there are no rounds. Cast, wait, reel in.",
+        "tip2": "Four fishing spots with 20 kinds of fish – time of day and weather change what bites.",
+        "tip3": "Sell your catch to fishmonger Xaver and win the royal crown at the tournament on the quarter hour.",
+        "cmd": {
+          "fischbuch": "What you have caught so far.",
+          "turnier": "When the next tournament is.",
+          "top": "Leaderboards."
         }
       }
     }

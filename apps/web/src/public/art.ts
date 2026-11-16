@@ -31,6 +31,15 @@ const IMAGES = {
   figureBurgverlies: '/bilder/figur-burgverlies.webp',
   figureBollwerk: '/bilder/figur-bollwerk.webp',
   figureMirni: '/bilder/figur-mirni.webp',
+  figureWolkenkampf: '/bilder/figur-wolkenkampf.webp',
+  figureVersteckerl: '/bilder/figur-versteckerl.webp',
+  figureWintersport: '/bilder/figur-wintersport.webp',
+  figureAdlerflug: '/bilder/figur-adlerflug.webp',
+  figureAngelkoenig: '/bilder/figur-angelkoenig.webp',
+  schlossmarktDay: '/bilder/schlossmarkt-tag.webp',
+  schlossmarktNight: '/bilder/schlossmarkt-nacht.webp',
+  schlossmarktStandDay: '/bilder/schlossmarkt-stand-tag.webp',
+  schlossmarktStandNight: '/bilder/schlossmarkt-stand-nacht.webp',
 } as const;
 
 export const GROUP_IMAGE = IMAGES.group;
@@ -48,6 +57,8 @@ const SCENES = [
   'biergarten',
   'handwerkergasse',
   'schloss',
+  'schlossmarkt',
+  'schlossmarkt-stand',
   'karte',
 ] as const;
 export type Scene = (typeof SCENES)[number];
@@ -59,6 +70,8 @@ const SCENE_IMAGES: Readonly<Record<Scene, { readonly day: string; readonly nigh
   biergarten: { day: IMAGES.biergartenDay, night: IMAGES.biergartenNight },
   handwerkergasse: { day: IMAGES.gasseDay, night: IMAGES.gasseNight },
   schloss: { day: IMAGES.schlossDay, night: IMAGES.schlossNight },
+  schlossmarkt: { day: IMAGES.schlossmarktDay, night: IMAGES.schlossmarktNight },
+  'schlossmarkt-stand': { day: IMAGES.schlossmarktStandDay, night: IMAGES.schlossmarktStandNight },
   karte: { day: IMAGES.karte, night: IMAGES.karte },
 };
 
@@ -90,6 +103,12 @@ const MODE_ART: Readonly<Record<string, ModeArt>> = {
   burgverlies: { figure: IMAGES.figureBurgverlies, a: '#a660f2', b: '#2e1263', scene: 'handwerkergasse' },
   bollwerk: { figure: IMAGES.figureBollwerk, a: '#ff9a2e', b: '#7a2405', scene: 'dorfplatz' },
   mirni: { figure: IMAGES.figureMirni, a: '#9fb0ba', b: '#2f3b42', scene: 'biergarten' },
+  // Schlossmarkt: die Farben der Stände (Markisen) dort
+  wolkenkampf: { figure: IMAGES.figureWolkenkampf, a: '#53dbe3', b: '#0f4f63', scene: 'schlossmarkt-stand' },
+  versteckerl: { figure: IMAGES.figureVersteckerl, a: '#7fd35a', b: '#1f4a17', scene: 'schlossmarkt' },
+  wintersport: { figure: IMAGES.figureWintersport, a: '#cfe6ff', b: '#30507e', scene: 'schlossmarkt' },
+  adlerflug: { figure: IMAGES.figureAdlerflug, a: '#f070dc', b: '#4f1150', scene: 'schlossmarkt-stand' },
+  angelkoenig: { figure: IMAGES.figureAngelkoenig, a: '#5b93ff', b: '#112c6e', scene: 'schlossmarkt' },
 };
 
 /** Modes Philip adds later have no figure yet: emerald and the market. */
@@ -104,7 +123,7 @@ export const KNOWN_MODES = Object.keys(MODE_ART);
 
 /** Pictures for news posts: each kind of post has its own places; the post's address picks one. */
 const NEWS_SCENES: Readonly<Record<NewsCategory, readonly Scene[]>> = {
-  update: ['marktstaende', 'handwerkergasse', 'schloss', 'stand', 'karte'],
+  update: ['marktstaende', 'handwerkergasse', 'schloss', 'stand', 'schlossmarkt', 'karte'],
   event: ['biergarten', 'dorfplatz', 'stand', 'marktstaende', 'schloss'],
   info: ['dorfplatz', 'karte', 'schloss', 'handwerkergasse', 'biergarten'],
 };

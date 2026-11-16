@@ -1,8 +1,12 @@
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
+  Bird,
   Castle,
+  Cloud,
   Compass,
   Dices,
+  EyeOff,
+  Fish,
   Gamepad2,
   Gavel,
   Globe,
@@ -23,6 +27,7 @@ import {
   Settings2,
   Shield,
   ShieldHalf,
+  Snowflake,
   Store,
   Swords,
   UserCog,
@@ -65,6 +70,11 @@ const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
   KeyRound,
   Shield,
   Store,
+  Cloud,
+  EyeOff,
+  Snowflake,
+  Bird,
+  Fish,
 };
 
 export function areaIcon(name: string): LucideIcon {

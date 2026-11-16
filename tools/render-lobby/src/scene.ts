@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { buildLobby } from '../../../packages/builder/src/lobby/dorfplatz.js';
-import { castSkinPng, CAST } from '../../../packages/builder/src/cast.js';
+import { castFor, castSkinPng, CAST, PENDING_CAST } from '../../../packages/builder/src/cast.js';
 import { Picture } from '../../../packages/builder/src/png.js';
 import {
   classify,
@@ -219,7 +219,8 @@ function npcsOf(extra: readonly string[]): Omit<Npc, 'light'>[] {
     .map((cmd) => {
       const [, , xs, ys, zs] = cmd.split(' ');
       const skinStart = cmd.indexOf('mm_skin_') + 'mm_skin_'.length;
-      const skin = cmd.slice(skinStart, cmd.indexOf("'", skinStart));
+      // Neue Figuren ohne Signatur tragen im Spiel die Tracht ihrer Vertretung – das Bild zeigt dasselbe.
+      const skin = castFor(cmd.slice(skinStart, cmd.indexOf("'", skinStart))).id;
       const rotAt = cmd.indexOf('Rotation:[');
       const yaw = rotAt < 0 ? 0 : Number.parseFloat(cmd.slice(rotAt + 'Rotation:['.length));
       const scaleAt = cmd.indexOf("minecraft:scale',base:");
@@ -686,7 +687,8 @@ export function exportScene(outDir: string): SceneManifest {
   });
   fs.writeFileSync(path.join(outDir, 'scene.bin'), Buffer.concat(chunks));
 
-  const skins = Object.keys(CAST).sort();
+  // Auch die neuen, noch nicht signierten Trachten – für die Bilder der Modus-Figuren auf der Webseite.
+  const skins = Object.keys({ ...CAST, ...PENDING_CAST }).sort();
   skins.forEach((id) => fs.writeFileSync(path.join(outDir, 'skins', `${id}.png`), castSkinPng(id)));
 
   const manifest: SceneManifest = {

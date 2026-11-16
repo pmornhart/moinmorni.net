@@ -125,6 +125,26 @@ describe('Hub', () => {
       },
     ]);
     expect(hub.modeStates()['duels']).toMatchObject({ state: 'running', players: 2 });
+    // Die Lobby-Figuren erfahren, was der Modus meldet („closed“ = Pause, z. B. Wintersport im Sommer).
+    const sign = await lobby.next('lobby', (m) =>
+      (m['modes'] as Array<{ id: string; phase: string | null }>).some(
+        (x) => x.id === 'duels' && x.phase === 'running',
+      ),
+    );
+    expect((sign['modes'] as Array<{ id: string }>).map((x) => x.id)).toContain('wintersport');
+    // Eigener wichtigster Wert eines Modus steht vorne (Wintersport: Gold statt Siege).
+    hub.stats.record({
+      mode: 'wintersport',
+      uuid: LENA,
+      add: { wins: 1, gold: 2 },
+      min: { time_bob_ms: 61_000 },
+    });
+    expect(
+      hub.stats
+        .boards()
+        .find((b) => b.mode === 'wintersport')
+        ?.keys.map((k) => k.key),
+    ).toEqual(['gold', 'wins', 'time_bob_ms']);
 
     // Party: nur für eigene Spieler; ohne Party null
     const own = await duels.request({ t: 'party', uuid: LENA });
@@ -582,6 +602,17 @@ describe('Hub', () => {
     expect(woken).toEqual(['party']);
     lobby.send({ t: 'play', uuid: PHILIP, mode: 'mornicraft' });
     await said(PHILIP, 'geschlossen');
+    // Wintersport im Sommer: Figur sagt „Sommerpause“, ein Klick bringt trotzdem ins Dorf.
+    const winter = await plugin('wintersport', 'backend');
+    winter.send({ t: 'mode-state', mode: 'wintersport', state: 'closed', players: 0 });
+    const paused = await lobby.next(
+      'lobby',
+      (m) => (row(m, 'wintersport') as { phase?: string })?.phase === 'closed',
+    );
+    expect(row(paused, 'wintersport')).toMatchObject({ awake: true });
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'wintersport' });
+    await said(PHILIP, 'Sommerpause');
+    expect(await proxy.next('connect', (m) => m['uuid'] === PHILIP)).toMatchObject({ server: 'wintersport' });
 
     // Wechsel → neue Zahlen kommen an.
     proxy.send({ t: 'switch', uuid: PHILIP, server: 'duels' });
@@ -689,6 +720,23 @@ describe('Hub', () => {
       'edelweiss-jagd-runden.1': 15,
       'regeln.minispiel-taler.0': 10,
     });
+    // Neue Modi genauso: Angelkönig-Preise sind Stellen einer Liste, Wintersport hat eine Auswahl.
+    const angel = await plugin('angelkoenig', 'backend');
+    const angelFirst = (await angel.next('mode-settings')) as unknown as {
+      plugin: string;
+      values: Record<string, unknown>;
+    };
+    expect(angelFirst.plugin).toBe('MorniAngelkoenig');
+    expect(angelFirst.values).toMatchObject({ 'turnier.preise.0': 250, 'turnier.alle-minuten': 15 });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'angelconfig',
+      args: ['turnier', 'preis1', '300'],
+    });
+    expect(await angel.next('mode-settings')).toMatchObject({ values: { 'turnier.preise.0': 300 } });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'winterconfig', args: ['saison', 'winter'] });
+    expect(stores.settings('wintersport')['season']).toBe('winter');
     // Panel: nur Duels bekommt die neuen Werte.
     stores.patchSettings('duels', { timeLimit: 300, soupHeal: 6.5 }, 'test');
     expect(await duels.next('mode-settings')).toMatchObject({

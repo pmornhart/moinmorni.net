@@ -1,5 +1,5 @@
 import { Slot } from 'radix-ui';
-import { ArrowRight, Hourglass, Lock, Moon, Ticket, Wrench, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Hourglass, Lock, Moon, Sun, Ticket, Wrench, type LucideIcon } from 'lucide-react';
 import { useId, type ComponentProps, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -189,6 +189,7 @@ export function Chip({
 const LOOK_TONE: Readonly<Record<ModeLook, ChipTone>> = {
   open: 'success',
   asleep: 'blue',
+  pause: 'gold',
   closed: 'neutral',
   maintenance: 'warning',
   soon: 'gold',
@@ -198,6 +199,7 @@ const LOOK_TONE: Readonly<Record<ModeLook, ChipTone>> = {
 const LOOK_TONE_ON_ART: Readonly<Record<ModeLook, ChipTone>> = {
   open: 'brightGreen',
   asleep: 'glass',
+  pause: 'glass',
   closed: 'glass',
   maintenance: 'glass',
   soon: 'glass',
@@ -206,6 +208,7 @@ const LOOK_TONE_ON_ART: Readonly<Record<ModeLook, ChipTone>> = {
 const LOOK_ICON: Readonly<Record<ModeLook, LucideIcon | undefined>> = {
   open: undefined,
   asleep: Moon,
+  pause: Sun,
   closed: Lock,
   maintenance: Wrench,
   soon: Hourglass,

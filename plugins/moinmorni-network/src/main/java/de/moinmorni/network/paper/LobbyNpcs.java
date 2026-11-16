@@ -85,8 +85,15 @@ final class LobbyNpcs implements Listener {
     private static final int PAUSE_MIN = 60;
     private static final int PAUSE_SPREAD = 160;
 
+    /**
+     * Ein Modus, wie die Lobby ihn zeigt. {@code phase} = was der Modus selbst zuletzt gemeldet hat; „closed“ heißt
+     * Pause (Wintersport im Sommer): man darf trotzdem hin und sich umschauen.
+     */
     record ModeInfo(String id, String nameDe, String nameEn, String state, String access, int players,
-                    boolean hasServer, boolean awake, String icon) {
+                    boolean hasServer, boolean awake, String icon, String phase) {
+        boolean paused() {
+            return "on".equals(state) && hasServer && "closed".equals(phase);
+        }
     }
 
     private static final class Walk {
@@ -153,7 +160,8 @@ final class LobbyNpcs implements Listener {
             String id = HubClient.str(o, "id");
             fresh.put(id, new ModeInfo(id, HubClient.str(name, "de"), HubClient.str(name, "en"),
                     HubClient.str(o, "state"), HubClient.str(o, "access"), o.get("players").getAsInt(),
-                    o.get("hasServer").getAsBoolean(), o.get("awake").getAsBoolean(), HubClient.str(o, "icon")));
+                    o.get("hasServer").getAsBoolean(), o.get("awake").getAsBoolean(), HubClient.str(o, "icon"),
+                    HubClient.str(o, "phase")));
         }
         modes.clear();
         modes.putAll(fresh);
@@ -189,13 +197,18 @@ final class LobbyNpcs implements Listener {
             state = Component.text(en ? "○ Coming soon" : "○ Bald", NamedTextColor.GRAY);
         } else if ("maintenance".equals(m.state())) {
             state = Component.text(en ? "⚒ Maintenance" : "⚒ Wartung", NamedTextColor.GOLD);
+        } else if (m.paused()) {
+            state = Component.text(en ? "☀ Summer break" : "☀ Sommerpause", NamedTextColor.YELLOW);
         } else if (!m.awake()) {
             state = Component.text(en ? "☾ Asleep – click to wake" : "☾ Schläft – Klick weckt", NamedTextColor.AQUA);
         } else {
             String unit = en ? (m.players() == 1 ? " player" : " players") : " Spieler";
             state = Component.text("● " + m.players() + unit, NamedTextColor.GREEN);
         }
-        if (!"off".equals(m.state()) && !soon) {
+        if (m.paused()) {
+            hint = Component.text(en ? "Click to look around the village" : "Klick: Dorf anschauen", NamedTextColor.GRAY,
+                    TextDecoration.ITALIC);
+        } else if (!"off".equals(m.state()) && !soon) {
             hint = "whitelist".equals(m.access())
                     ? Component.text(en ? "Invitation only" : "Nur auf Einladung", NamedTextColor.LIGHT_PURPLE)
                     : Component.text(en ? "Click to play" : "Klick: Mitspielen", NamedTextColor.GRAY,

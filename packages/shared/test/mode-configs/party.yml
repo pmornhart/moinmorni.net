@@ -1,0 +1,89 @@
+# Morni Party – Einstellungen
+# Nach Änderungen den Server neu starten (oder /mparty neuladen für Zeiten und Regeln – gilt für neue Partien).
+
+# Eigene, leere Welt für Festplatz, Spielbretter und Minispiel-Plätze. Das Plugin legt sie an und baut alles selbst.
+welt: party
+
+# So viele Partien können gleichzeitig laufen (jeder Tisch hat alle drei Bretter und alle Minispiel-Plätze).
+# Ändern baut beim nächsten Start neu.
+tische: 2
+
+spieler:
+  # Ab so vielen geht es los (mindestens 2) …
+  mindestens: 2
+  # … und höchstens so viele pro Partie (höchstens 8).
+  hoechstens: 8
+
+warten:
+  # Countdown auf dem Festplatz, sobald genug da sind.
+  countdown-sekunden: 45
+  # Ist die Partie voll, geht es schneller.
+  voll-sekunden: 10
+  # Wer ankommt (oder eine Partie beendet), wartet gleich mit. Aus: nur über den Knopf „Mitspielen“.
+  automatisch-mitspielen: true
+
+# Edelweiß-Jagd: diese Rundenzahlen stehen zur Wahl.
+edelweiss-jagd-runden: [10, 15, 20]
+
+zug:
+  # So lange hat man zum Würfeln – dann würfelt das Spiel.
+  wuerfel-sekunden: 20
+  # So lange bleiben Laden, Edelweiß-Stand und Duell-Wahl offen.
+  menue-sekunden: 15
+  # Tempo der Figur: Ticks pro Feld (20 Ticks = 1 Sekunde).
+  schritt-ticks: 6
+
+minispiele:
+  # Welche Minispiele vorkommen (leer = alle): broeckelboden, talerregen, bergsprint, pfeilhagel, heisse-brezn,
+  # trachtenfarben, gipfelkoenig, kuhglocke, schaefchen, holzhacker, rempelei, scheibenschiessen, lawinenhang,
+  # maibaumkraxeln, eisstockschiessen, murmeltier, goldwaschen, schuhplattler, brueckenbau, schneeballschlacht,
+  # schlittenrennen, enzian-suche, musterweber, foehnsturm
+  auswahl: []
+  # zufall = gemischt, ohne Wiederholung bis alle dran waren; fest = der Reihe nach wie in „auswahl“.
+  reihenfolge: zufall
+  # Dauer der Minispiele × Faktor (0.5 = halb so lang).
+  dauer-faktor: 1.0
+
+# Minispiel-Marathon: ohne Spielbrett, nur Minispiele (gemischt, ohne Wiederholung, aus „minispiele.auswahl“).
+minispiel-marathon:
+  # So viele Minispiele stehen zur Wahl.
+  runden: [6, 10, 15]
+  # Höchstens so viele Leute (bis 16). Minispiele mit weniger Plätzen (Eisstockschießen, Brückenbau: 8) fallen dann aus.
+  hoechstens: 16
+  # Punkte für Platz 1, 2, 3 … nach jedem Minispiel (alle weiteren bekommen den letzten Wert).
+  punkte: [10, 7, 5, 4, 3, 2, 1]
+
+# Seilschaft: Edelweiß-Jagd zu zweit (gerade Zahl, mindestens vier) – Taler und Edelweiß gehören beiden, Partys aus
+# zwei Leuten sind eine Seilschaft. Zu viert sind alle Minispiele 2 gegen 2.
+seilschaft:
+  # So viele Runden stehen zur Wahl.
+  runden: [10, 15]
+
+regeln:
+  start-taler: 10
+  blaues-feld: 3
+  rotes-feld: 3
+  edelweiss-preis: 20
+  # Duellfeld: so viele Taler gehen an den Sieger des Duell-Minispiels.
+  duell-taler: 5
+  # Talerklau: so viele Taler nimmt man jemandem ab.
+  klau-taler: 7
+  # Glück/Pech: Taler bei Geschenk und Steinschlag, Felder bei Rückenwind und Nebel, Taler je Person beim Teilen.
+  glueck-taler: 5
+  glueck-felder: 3
+  teilen-taler: 2
+  # Edelweiß-Jagd: Taler, wenn man über das Ziel hinauskommt (dann geht es mit der Seilbahn zurück).
+  gipfel-bonus: 5
+  # So viele Gegenstände passen in den Rucksack.
+  rucksack: 3
+  # Gipfelrennen: spätestens nach so vielen Runden ist Schluss (dann gewinnt, wer am weitesten oben ist).
+  gipfelrennen-max-runden: 20
+  # Taler für Platz 1, 2, 3 … in den Minispielen.
+  minispiel-taler: [10, 6, 4, 3, 2, 1, 1, 1]
+  # Team-Minispiele (nur zu viert: 2 gegen 2 bei zwei blauen und zwei roten Feldern, 1 gegen 3 bei einem anders
+  # farbigen Feld). Taler je Person der siegreichen Seite, Taler für alle bei Gleichstand.
+  team-taler: 8
+  team-unentschieden-taler: 3
+  # Einer gegen drei: Taler für den Einzelnen, wenn er gewinnt, und so oft zählen seine Punkte (sein Vorteil).
+  einzel-taler: 18
+  einzel-faktor: 4

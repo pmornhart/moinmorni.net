@@ -1,0 +1,35 @@
+# Morni Burgverlies – Einstellungen
+# Nach Änderungen den Server neu starten (oder /bvadmin neuladen).
+
+# Eigene, leere Welt für Torhaus und Verliese. Das Plugin legt sie an und baut alles selbst.
+welt: burgverlies
+
+# So viele Abstiege können gleichzeitig laufen (jeder hat sein eigenes Verlies).
+max-abstiege: 6
+
+# Räume zwischen Ankunft und Krämerstube bzw. Thronsaal – pro Etage (3 bis 8).
+raeume-pro-etage: 5
+
+suche:
+  # So lange wird nach Mitspielern gesucht, dann geht es mit allen los, die da sind.
+  warten-sekunden: 30
+
+wiederbelebung:
+  # Wiederbelebungen pro Person und Abstieg.
+  anzahl: 2
+  # So lange muss ein Mitspieler neben jemandem Schleichen halten.
+  schleichen-sekunden: 3
+  # So lange kann man am Boden liegen, bevor man raus ist (0 = nach Schwierigkeit: 40 / 30 / 20 Sekunden).
+  ausbluten-sekunden: 0
+
+# So lange müssen alle auf der Treppe der Krämerstube stehen, dann geht es eine Etage tiefer.
+treppe-sekunden: 3
+
+# So lange bleibt man nach Sieg oder Niederlage im Verlies, dann geht es zurück ins Torhaus.
+ende-sekunden: 8
+
+# Pause zwischen zwei Wellen (in Spielticks, 20 = 1 Sekunde).
+wellen-pause-ticks: 30
+
+# Nur zum Testen: fester Startwert für die Etagen (0 = jedes Mal neu gewürfelt).
+startwert: 0

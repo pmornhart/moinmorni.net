@@ -142,6 +142,76 @@ export const DEFAULT_MODES: readonly Mode[] = [
     sleepWhenEmpty: true,
     server: 'smp',
   },
+  {
+    id: 'wolkenkampf',
+    name: t('Wolkenkampf', 'Cloud Clash'),
+    description: t(
+      'Jeder startet auf seiner eigenen Insel in den Wolken: Truhen plündern, Brücken bauen, kämpfen – wer zuletzt steht, gewinnt. Für 2–12, allein oder zu zweit.',
+      'Everyone starts on their own island in the clouds: loot chests, build bridges, fight – the last one standing wins. For 2–12, solo or in pairs.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 7,
+    maxPlayers: 48,
+    sleepWhenEmpty: true,
+    server: 'wolkenkampf',
+  },
+  {
+    id: 'versteckerl',
+    name: t('Versteckerl', 'Hide & Seek'),
+    description: t(
+      'Verstecken mit Verwandlung: Werde zum Heuballen, Fass oder Blumentopf – die Dorfgendarmen suchen dich. Für 4–16.',
+      'Hide and seek with a twist: turn into a hay bale, barrel or flower pot – the village constables are looking for you. For 4–16.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 8,
+    maxPlayers: 48,
+    sleepWhenEmpty: true,
+    server: 'versteckerl',
+  },
+  {
+    id: 'wintersport',
+    name: t('Wintersport', 'Winter Games'),
+    description: t(
+      'Riesenslalom, Biathlon und Bobbahn im verschneiten Bergdorf – um Gold, Silber und Bronze. Für 2–12, jede Disziplin auch einzeln.',
+      'Giant slalom, biathlon and bobsleigh in a snowy mountain village – for gold, silver and bronze. For 2–12, every event also on its own.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 9,
+    maxPlayers: 36,
+    sleepWhenEmpty: true,
+    server: 'wintersport',
+  },
+  {
+    id: 'adlerflug',
+    name: t('Adlerflug', 'Eagle Flight'),
+    description: t(
+      'Mit Flügeln von der Schanze und auf Zeit durch Ringe in den Bergen fliegen – mit Medaillen, Bestzeiten und Strecke der Woche.',
+      'Glide off the ski jump and race against the clock through rings in the mountains – with medals, best times and a course of the week.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 10,
+    maxPlayers: 40,
+    sleepWhenEmpty: true,
+    server: 'adlerflug',
+  },
+  {
+    id: 'angelkoenig',
+    name: t('Angelkönig', 'Angler King'),
+    description: t(
+      'Gemütlich angeln im Alpen-Tal: seltene Fische fangen, beim Fischhändler verkaufen und beim Turnier zum Angelkönig werden.',
+      'Relaxed fishing in an alpine valley: catch rare fish, sell them at the fishmonger and become Angler King at the tournament.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 11,
+    maxPlayers: 40,
+    sleepWhenEmpty: true,
+    server: 'angelkoenig',
+  },
 ];
 
 /**
@@ -157,6 +227,11 @@ export const MODE_REPOS: Readonly<Record<string, string>> = {
   burgverlies: 'pmornhart/Morni-Burgverlies',
   bollwerk: 'pmornhart/Morni-Bollwek',
   mirni: 'pmornhart/Morni-SMP',
+  wolkenkampf: 'pmornhart/morni-wolkenkampf',
+  versteckerl: 'pmornhart/Morni-Versteckerl',
+  wintersport: 'pmornhart/morni-wintersport',
+  adlerflug: 'pmornhart/morni-adlerflug',
+  angelkoenig: 'pmornhart/morni-angelkoenig',
 };
 
 /** Arbeitsspeicher der Modus-Server in MB, wo der Standard (3 GB) nicht reicht – MorniSMP und MorniCraft haben große Welten. */
@@ -175,7 +250,26 @@ export interface ModeStatus {
   readonly awake: boolean;
   /** Name im Netzwerk (für `/server <name>`); null = noch keiner. */
   readonly server: string | null;
+  /**
+   * Was der Modus selbst zuletzt gemeldet hat („waiting“, „running“, „open“ …); `closed` = er hat gerade Pause
+   * (Wintersport außerhalb der Saison – das Dorf ist trotzdem offen). null = noch nichts gemeldet.
+   */
+  readonly phase: string | null;
 }
+
+/** Zustand, den ein Modus meldet, wenn er gerade Pause hat (Wintersport im Sommer). */
+export const MODE_PHASE_PAUSE = 'closed';
+
+/**
+ * Wichtigster Wert eines Modus für die Bestenliste (Top 3 auf der Modus-Seite), wenn es nicht „Siege“ o. Ä. sein soll.
+ * Zeiten (…_ms) zählen kleiner = besser.
+ */
+export const MODE_HEADLINE_STATS: Readonly<Record<string, string>> = {
+  versteckerl: 'points',
+  wintersport: 'gold',
+  adlerflug: 'finishes',
+  angelkoenig: 'heaviest_g',
+};
 
 export interface NetworkStatus {
   readonly online: boolean;

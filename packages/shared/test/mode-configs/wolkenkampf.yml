@@ -1,0 +1,30 @@
+# Morni Wolkenkampf – Einstellungen. Nach Änderungen: /wolkenkampf neuladen (oder Server neu starten).
+
+# Eigene leere Welt für den Wolkenhafen und die Karten (wird beim ersten Start angelegt und gebaut).
+welt: wolkenkampf
+
+wolkenhafen:
+  # So lange läuft der Countdown im Wolkenhafen, bevor eine Runde startet.
+  # Sagen alle „bereit“, geht es nach 5 Sekunden los.
+  countdown-sekunden: 30
+  # Ab so vielen Leuten beginnt der Countdown von selbst (sonst, sobald jemand „bereit“ ist). Mindestens 2.
+  mindestens-spieler: 2
+
+runde:
+  # Höchstens so viele Leute in einer Runde (2–12; zu zweit höchstens 6 Teams).
+  hoechstens-spieler: 12
+  # So lange wartet man in der Ballon-Gondel, bevor sie sich öffnet.
+  gondel-sekunden: 10
+  # Nach dem Ende: so lange bis zurück in den Wolkenhafen.
+  nachspiel-sekunden: 8
+
+ereignisse:
+  # Sekunden nach dem Öffnen der Gondeln.
+  # Nachschub: alle Truhen füllen sich neu.
+  nachschub: 150
+  # Gewitter: Blitze schlagen an zufälligen Stellen ein (vorher angekündigt).
+  gewitter: 270
+  # Nebel: steigt von unten auf – wer darin steht, nimmt Schaden.
+  nebel: 390
+  # So lange braucht der Nebel, bis er über allen Inseln steht.
+  nebel-dauer: 180

@@ -2,7 +2,8 @@
 import type { SettingArea, SettingDef, Text } from './settings.js';
 
 /**
- * Einstellungen der Spielmodi (Duels, Morni Party, Gipfelsturm, Burgverlies, Bollwerk, MorniSMP): je Modus ein
+ * Einstellungen der Spielmodi (Duels, Morni Party, Gipfelsturm, Burgverlies, Bollwerk, MorniSMP, Wolkenkampf,
+ * Versteckerl, Wintersport, Adlerflug, Angelkönig): je Modus ein
  * Bereich im Panel, jede Einstellung mit ihrer Stelle in der config.yml des Modus-Plugins und einem Befehl im Spiel.
  * Die Standardwerte sind die der mitgelieferten config.yml – ohne Änderung im Panel bleibt dort alles, wie es ist.
  *
@@ -1808,6 +1809,1053 @@ export const SMP_AREA: SettingArea = {
   ],
 };
 
+// ---------------------------------------------------------------- Wolkenkampf
+
+const wolken = settingsFor('wolkenconfig');
+
+export const WOLKENKAMPF_AREA: SettingArea = {
+  id: 'wolkenkampf',
+  title: t('Wolkenkampf', 'Cloud Clash'),
+  text: t(
+    'Insel-Kampf in den Wolken: Countdown im Wolkenhafen, Größe der Runden und wann Nachschub, Gewitter und Nebel kommen.',
+    'Island battle in the clouds: countdown in the cloud harbour, size of the rounds and when supplies, thunderstorm and fog arrive.',
+  ),
+  icon: 'Cloud',
+  panel: 'modes',
+  mode: { id: 'wolkenkampf', plugin: 'MorniWolkenkampf' },
+  sections: [
+    {
+      id: 'harbour',
+      title: t('Wolkenhafen', 'Cloud harbour'),
+      text: t(
+        'Der Wartebereich: Hier stimmen alle über Karte und Spielart ab und sagen „bereit“.',
+        'The waiting area: everyone votes on the map and the mode here and says “ready”.',
+      ),
+      settings: [
+        wolken.number({
+          key: 'countdown',
+          at: 'wolkenhafen.countdown-sekunden',
+          value: 30,
+          min: 5,
+          max: 300,
+          ...SECONDS,
+          cmd: 'countdown',
+          label: t('Countdown vor der Runde', 'Countdown before the round'),
+          help: t(
+            'So lange läuft der Countdown, bevor eine Runde startet. Sagen alle „bereit“, geht es nach 5 Sekunden los.',
+            'The countdown runs this long before a round starts. If everyone says “ready”, it starts after 5 seconds.',
+          ),
+        }),
+        wolken.number({
+          key: 'minPlayers',
+          at: 'wolkenhafen.mindestens-spieler',
+          value: 2,
+          min: 2,
+          max: 12,
+          ...PLAYERS,
+          cmd: 'mindestens',
+          label: t('Countdown startet ab', 'Countdown starts from'),
+          help: t(
+            'Ab so vielen Leuten beginnt der Countdown von selbst – vorher, sobald jemand „bereit“ sagt.',
+            'From this many people the countdown starts by itself – before that, as soon as someone says “ready”.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'round',
+      title: t('Runde', 'Round'),
+      settings: [
+        wolken.number({
+          key: 'maxPlayers',
+          at: 'runde.hoechstens-spieler',
+          value: 12,
+          min: 2,
+          max: 12,
+          ...PLAYERS,
+          cmd: 'hoechstens',
+          label: t('Höchstens in einer Runde', 'At most in one round'),
+          help: t(
+            'Jede Karte hat zwölf Startinseln – zu zweit sind es höchstens sechs Teams.',
+            'Every map has twelve starting islands – in pairs there are at most six teams.',
+          ),
+        }),
+        wolken.number({
+          key: 'gondolaSeconds',
+          at: 'runde.gondel-sekunden',
+          value: 10,
+          min: 3,
+          max: 60,
+          ...SECONDS,
+          cmd: 'gondel',
+          label: t('Warten in der Ballon-Gondel', 'Waiting in the balloon gondola'),
+          help: t(
+            'So lange schwebt jedes Team in seiner Gondel über der Insel, bevor sich der Boden öffnet.',
+            'Each team floats in its gondola above the island this long before the floor opens.',
+          ),
+        }),
+        wolken.number({
+          key: 'afterRound',
+          at: 'runde.nachspiel-sekunden',
+          value: 8,
+          min: 2,
+          max: 60,
+          ...SECONDS,
+          cmd: 'nachspiel',
+          label: t('Nach der Runde', 'After the round'),
+          help: t(
+            'So lange bleiben alle nach dem Sieg auf der Karte, dann geht es zurück in den Wolkenhafen.',
+            'Everyone stays on the map this long after the win, then it is back to the cloud harbour.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'events',
+      title: t('Ereignisse', 'Events'),
+      text: t(
+        'Damit jede Runde ein Ende hat: Sekunden nach dem Öffnen der Gondeln. Jedes Ereignis wird 15 Sekunden vorher angekündigt.',
+        'So every round comes to an end: seconds after the gondolas open. Every event is announced 15 seconds before.',
+      ),
+      settings: [
+        wolken.number({
+          key: 'refill',
+          at: 'ereignisse.nachschub',
+          value: 150,
+          min: 30,
+          max: 1800,
+          ...SECONDS,
+          cmd: 'nachschub',
+          label: t('Nachschub', 'Supplies'),
+          help: t(
+            'Alle Truhen füllen sich neu (150 = nach 2:30 Minuten).',
+            'All chests are filled again (150 = after 2:30 minutes).',
+          ),
+        }),
+        wolken.number({
+          key: 'storm',
+          at: 'ereignisse.gewitter',
+          value: 270,
+          min: 30,
+          max: 1800,
+          ...SECONDS,
+          cmd: 'gewitter',
+          label: t('Gewitter', 'Thunderstorm'),
+          help: t(
+            'Es regnet, Blitze schlagen an zufälligen Stellen ein – vorher knistert es dort.',
+            'It rains and lightning strikes at random spots – it crackles there first.',
+          ),
+        }),
+        wolken.number({
+          key: 'fog',
+          at: 'ereignisse.nebel',
+          value: 390,
+          min: 60,
+          max: 3600,
+          ...SECONDS,
+          cmd: 'nebel',
+          label: t('Nebel', 'Fog'),
+          help: t(
+            'Nebel steigt von unten auf – wer darin steht, nimmt Schaden, der immer stärker wird.',
+            'Fog rises from below – whoever stands in it takes damage that keeps getting stronger.',
+          ),
+        }),
+        wolken.number({
+          key: 'fogDuration',
+          at: 'ereignisse.nebel-dauer',
+          value: 180,
+          min: 30,
+          max: 900,
+          ...SECONDS,
+          cmd: 'nebel-dauer',
+          label: t('So lange steigt der Nebel', 'Fog rises for'),
+          help: t(
+            'So lange braucht der Nebel, bis er über allen Inseln steht.',
+            'This is how long the fog takes to cover all islands.',
+          ),
+        }),
+      ],
+    },
+  ],
+};
+
+// ---------------------------------------------------------------- Versteckerl
+
+const versteck = settingsFor('versteckconfig');
+
+export const VERSTECKERL_AREA: SettingArea = {
+  id: 'versteckerl',
+  title: t('Versteckerl', 'Hide & Seek'),
+  text: t(
+    'Verstecken mit Verwandlung: Zeiten, wie viele Gendarmen suchen, wie viel ein Treffer zählt und die Hilfen (Pfiff, Sprungkraft, Spürnase).',
+    'Hide and seek with a twist: times, how many constables seek, what a hit counts and the helpers (whistle, jump boost, sniffer).',
+  ),
+  icon: 'EyeOff',
+  panel: 'modes',
+  mode: { id: 'versteckerl', plugin: 'MorniVersteckerl' },
+  sections: [
+    {
+      id: 'station',
+      title: t('Gendarmerie', 'Constabulary'),
+      text: t('Der Wartebereich vor jeder Runde.', 'The waiting area before every round.'),
+      settings: [
+        versteck.number({
+          key: 'countdown',
+          at: 'gendarmerie.countdown-sekunden',
+          value: 30,
+          min: 5,
+          max: 300,
+          ...SECONDS,
+          cmd: 'countdown',
+          label: t('Countdown vor der Runde', 'Countdown before the round'),
+          help: t(
+            'So lange läuft der Countdown. Sagen alle „bereit“, geht es nach 5 Sekunden los.',
+            'The countdown runs this long. If everyone says “ready”, it starts after 5 seconds.',
+          ),
+        }),
+        versteck.number({
+          key: 'minPlayers',
+          at: 'gendarmerie.mindestens-spieler',
+          value: 4,
+          min: 2,
+          max: 16,
+          ...PLAYERS,
+          cmd: 'mindestens',
+          label: t('Countdown startet von selbst ab', 'Countdown starts by itself from'),
+          help: t(
+            'Mit weniger Leuten (aber mindestens 2) geht es nur los, wenn alle „bereit“ sind.',
+            'With fewer people (but at least 2) it only starts when everyone is “ready”.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'round',
+      title: t('Runde', 'Round'),
+      settings: [
+        versteck.number({
+          key: 'maxPlayers',
+          at: 'runde.hoechstens-spieler',
+          value: 16,
+          min: 2,
+          max: 16,
+          ...PLAYERS,
+          cmd: 'hoechstens',
+          label: t('Höchstens in einer Runde', 'At most in one round'),
+          help: t('Partys bleiben zusammen.', 'Parties stay together.'),
+        }),
+        versteck.number({
+          key: 'seekerShare',
+          at: 'runde.sucher-anteil-prozent',
+          value: 25,
+          min: 5,
+          max: 75,
+          ...PERCENT,
+          cmd: 'sucher',
+          label: t('Anteil der Dorfgendarmen', 'Share of village constables'),
+          help: t(
+            'So viele suchen am Anfang – mindestens einer sucht, mindestens einer versteckt sich.',
+            'This many seek at the start – at least one seeks, at least one hides.',
+          ),
+        }),
+        versteck.number({
+          key: 'hideSeconds',
+          at: 'runde.versteck-sekunden',
+          value: 40,
+          min: 10,
+          max: 180,
+          ...SECONDS,
+          cmd: 'versteckzeit',
+          label: t('Versteckzeit', 'Hiding time'),
+          help: t(
+            'So lange warten die Gendarmen blind in ihrer Stube.',
+            'The constables wait blindly in their room this long.',
+          ),
+        }),
+        versteck.number({
+          key: 'seekSeconds',
+          at: 'runde.such-sekunden',
+          value: 300,
+          min: 60,
+          max: 1200,
+          ...SECONDS,
+          cmd: 'suchzeit',
+          label: t('Suchzeit', 'Seeking time'),
+          help: t(
+            'Ist danach noch jemand versteckt, gewinnen die Versteckten (300 = 5 Minuten).',
+            'If someone is still hidden afterwards, the hiders win (300 = 5 minutes).',
+          ),
+        }),
+        versteck.number({
+          key: 'afterRound',
+          at: 'runde.nachspiel-sekunden',
+          value: 10,
+          min: 2,
+          max: 60,
+          ...SECONDS,
+          cmd: 'nachspiel',
+          label: t('Nach der Runde', 'After the round'),
+          help: t(
+            'So lange bis zurück in die Gendarmerie – übrige Gestalten leuchten so lange auf.',
+            'This long until back to the constabulary – remaining disguises light up meanwhile.',
+          ),
+        }),
+        versteck.number({
+          key: 'lockSeconds',
+          at: 'runde.einrasten-sekunden',
+          value: 3,
+          min: 1,
+          max: 10,
+          ...SECONDS,
+          cmd: 'einrasten',
+          label: t('Einrasten nach', 'Lock in after'),
+          help: t(
+            'So lange muss man still stehen, bis man als echter, fester Block einrastet.',
+            'You have to stand still this long until you lock in as a real, solid block.',
+          ),
+        }),
+        versteck.number({
+          key: 'hitsToFind',
+          at: 'runde.treffer-bis-gefunden',
+          value: 3,
+          min: 1,
+          max: 10,
+          cmd: 'treffer',
+          label: t('Treffer bis gefunden', 'Hits until found'),
+          help: t(
+            'So viele Schläge mit dem Gendarmenstab verträgt ein Versteckter.',
+            'This many blows with the constable’s baton a hider can take.',
+          ),
+        }),
+        versteck.number({
+          key: 'wrongHitDamage',
+          at: 'runde.falscher-treffer-schaden',
+          value: 2,
+          min: 0,
+          max: 20,
+          unit: t('halbe Herzen', 'half hearts'),
+          arg: 'schaden',
+          cmd: 'fehlschlag',
+          label: t('Schlag auf ein echtes Ding kostet', 'Hitting a real object costs'),
+          help: t(
+            'Haut ein Gendarm auf ein echtes Fass oder einen echten Heuballen, verliert er so viel Leben (2 = ein Herz, 0 = nichts).',
+            'If a constable hits a real barrel or hay bale, he loses this much health (2 = one heart, 0 = nothing).',
+          ),
+        }),
+        versteck.number({
+          key: 'breatherSeconds',
+          at: 'runde.verschnaufen-sekunden',
+          value: 4,
+          min: 1,
+          max: 30,
+          ...SECONDS,
+          cmd: 'verschnaufen',
+          label: t('Verschnaufen', 'Catch your breath'),
+          help: t(
+            'So lange muss ein Gendarm verschnaufen, wenn er zu oft danebengehauen hat.',
+            'A constable has to catch his breath this long after missing too often.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'helpers',
+      title: t('Hilfen', 'Helpers'),
+      text: t(
+        'Pfiff und Sprungkraft für die Versteckten, Spürnase für die Gendarmen.',
+        'Whistle and jump boost for the hiders, sniffer for the constables.',
+      ),
+      settings: [
+        versteck.number({
+          key: 'whistleCooldown',
+          at: 'hilfen.pfiff-abklingzeit-sekunden',
+          value: 15,
+          min: 3,
+          max: 120,
+          ...SECONDS,
+          cmd: 'pfiff',
+          label: t('Pause zwischen zwei Pfiffen', 'Pause between two whistles'),
+          help: t(
+            'Ein freiwilliger Pfiff gibt Punkte – je später in der Runde, desto mehr.',
+            'A voluntary whistle gives points – the later in the round, the more.',
+          ),
+        }),
+        versteck.number({
+          key: 'mustWhistleFrom',
+          at: 'hilfen.pflicht-pfiff-ab-prozent',
+          value: 50,
+          min: 0,
+          max: 100,
+          ...PERCENT,
+          cmd: 'pflicht ab',
+          label: t('Pfeifen ist Pflicht ab', 'Whistling is a must from'),
+          help: t(
+            'Ab diesem Anteil der Suchzeit muss jeder Versteckte regelmäßig pfeifen (100 = nie Pflicht).',
+            'From this share of the seeking time every hider has to whistle regularly (100 = never a must).',
+          ),
+        }),
+        versteck.number({
+          key: 'mustWhistleEvery',
+          at: 'hilfen.pflicht-pfiff-sekunden',
+          value: 30,
+          min: 5,
+          max: 300,
+          ...SECONDS,
+          cmd: 'pflicht alle',
+          label: t('Pflicht-Pfiff mindestens alle', 'Compulsory whistle at least every'),
+          help: t(
+            'Wer so lange nicht gepfiffen hat, pfeift von selbst – dann ohne Punkte.',
+            'Whoever has not whistled for this long whistles by themselves – then without points.',
+          ),
+        }),
+        versteck.number({
+          key: 'jumpSeconds',
+          at: 'hilfen.sprung-sekunden',
+          value: 4,
+          min: 1,
+          max: 30,
+          ...SECONDS,
+          cmd: 'sprung',
+          label: t('Sprungkraft hält', 'Jump boost lasts'),
+          help: t('So lange springen Versteckte höher.', 'Hiders jump higher for this long.'),
+        }),
+        versteck.number({
+          key: 'jumpCooldown',
+          at: 'hilfen.sprung-abklingzeit-sekunden',
+          value: 25,
+          min: 5,
+          max: 300,
+          ...SECONDS,
+          cmd: 'sprung pause',
+          label: t('Pause bis zur nächsten Sprungkraft', 'Pause until the next jump boost'),
+          help: t(
+            'So lange dauert es, bis man die Sprungkraft wieder benutzen kann.',
+            'This long until the jump boost can be used again.',
+          ),
+        }),
+        versteck.number({
+          key: 'snifferSeconds',
+          at: 'hilfen.spuernase-sekunden',
+          value: 4,
+          min: 1,
+          max: 30,
+          ...SECONDS,
+          cmd: 'spuernase',
+          label: t('Spürnase zeigt die Spur', 'Sniffer shows the trail'),
+          help: t(
+            'Einmal pro Runde: So lange zeigt eine goldene Spur zum nächsten Versteckten (nur für den Gendarmen selbst).',
+            'Once per round: a golden trail shows the way to the nearest hider this long (only for the constable).',
+          ),
+        }),
+      ],
+    },
+  ],
+};
+
+// ---------------------------------------------------------------- Wintersport
+
+const winter = settingsFor('winterconfig');
+
+export const WINTERSPORT_AREA: SettingArea = {
+  id: 'wintersport',
+  title: t('Wintersport', 'Winter Games'),
+  text: t(
+    'Riesenslalom, Biathlon und Bobbahn: Saison, Licht und Schnee im Bergdorf, Zeiten und Regeln der Disziplinen.',
+    'Giant slalom, biathlon and bobsleigh: season, light and snow in the mountain village, times and rules of the events.',
+  ),
+  icon: 'Snowflake',
+  panel: 'modes',
+  mode: { id: 'wintersport', plugin: 'MorniWintersport' },
+  sections: [
+    {
+      id: 'village',
+      title: t('Bergdorf', 'Mountain village'),
+      settings: [
+        winter.choice({
+          key: 'season',
+          at: 'saison',
+          value: 'immer',
+          options: [
+            { value: 'immer', label: t('Das ganze Jahr', 'All year') },
+            {
+              value: 'winter',
+              label: t('Nur im Winter (1. Dezember – 31. März)', 'Winter only (1 December – 31 March)'),
+            },
+          ],
+          cmd: 'saison',
+          label: t('Saison', 'Season'),
+          help: t(
+            'Außerhalb der Saison bleibt das Dorf zum Anschauen offen (Eisfläche, Lift, Rodelbahn), Wettkämpfe gibt es keine. Lobby und Webseite zeigen dann „Sommerpause“.',
+            'Outside the season the village stays open to look around (ice rink, lift, toboggan run), but there are no competitions. Lobby and website then show “summer break”.',
+          ),
+        }),
+        winter.choice({
+          key: 'daytime',
+          at: 'tageszeit',
+          value: 'tag',
+          options: [
+            { value: 'tag', label: t('Tag (Mittag, hell)', 'Day (noon, bright)') },
+            { value: 'abend', label: t('Abend (Laternen leuchten)', 'Evening (lanterns glowing)') },
+          ],
+          cmd: 'tageszeit',
+          label: t('Licht', 'Light'),
+          help: t('Es bleibt immer bei dieser Tageszeit.', 'It always stays at this time of day.'),
+        }),
+        winter.flag({
+          key: 'snowfall',
+          at: 'schneefall',
+          value: true,
+          cmd: 'schneefall',
+          label: t('Leise rieselnder Schnee', 'Gently falling snow'),
+          help: t(
+            'Schneeflocken um jeden Spieler – nur zum Anschauen.',
+            'Snowflakes around every player – just for the looks.',
+          ),
+        }),
+        winter.number({
+          key: 'countdown',
+          at: 'dorf.countdown-sekunden',
+          value: 30,
+          min: 5,
+          max: 300,
+          ...SECONDS,
+          cmd: 'countdown',
+          label: t('Countdown vor dem Wettkampf', 'Countdown before the competition'),
+          help: t(
+            'Sagen alle „bereit“, geht es nach 5 Sekunden los.',
+            'If everyone says “ready”, it starts after 5 seconds.',
+          ),
+        }),
+        winter.number({
+          key: 'minPlayers',
+          at: 'dorf.mindestens-spieler',
+          value: 2,
+          min: 1,
+          max: 12,
+          ...PLAYERS,
+          cmd: 'mindestens',
+          label: t('Countdown startet von selbst ab', 'Countdown starts by itself from'),
+          help: t(
+            'Vorher beginnt er, sobald jemand „bereit“ sagt.',
+            'Before that it starts as soon as someone says “ready”.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'competition',
+      title: t('Wettkampf', 'Competition'),
+      settings: [
+        winter.number({
+          key: 'maxPlayers',
+          at: 'wettkampf.hoechstens-spieler',
+          value: 12,
+          min: 1,
+          max: 12,
+          ...PLAYERS,
+          cmd: 'hoechstens',
+          label: t('Höchstens in einem Wettkampf', 'At most in one competition'),
+          help: t('Partys bleiben zusammen.', 'Parties stay together.'),
+        }),
+        winter.number({
+          key: 'pauseSeconds',
+          at: 'wettkampf.pause-sekunden',
+          value: 8,
+          min: 2,
+          max: 60,
+          ...SECONDS,
+          cmd: 'pause',
+          label: t('Pause zwischen den Disziplinen', 'Break between the events'),
+          help: t(
+            'Zeit für den Zwischenstand im Medaillenspiegel.',
+            'Time for the interim standings in the medal table.',
+          ),
+        }),
+        winter.number({
+          key: 'ceremonySeconds',
+          at: 'wettkampf.siegerehrung-sekunden',
+          value: 12,
+          min: 3,
+          max: 60,
+          ...SECONDS,
+          cmd: 'siegerehrung',
+          label: t('Siegerehrung', 'Award ceremony'),
+          help: t(
+            'So lange dauert die Siegerehrung am Treppchen, danach geht es zurück ins Dorf.',
+            'The award ceremony at the podium lasts this long, then it is back to the village.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'slalom',
+      title: t('Riesenslalom', 'Giant slalom'),
+      settings: [
+        winter.number({
+          key: 'slalomPenalty',
+          at: 'slalom.strafe-sekunden',
+          value: 3,
+          min: 0,
+          max: 30,
+          ...SECONDS,
+          cmd: 'slalom strafe',
+          label: t('Strafe für ein verpasstes Tor', 'Penalty for a missed gate'),
+          help: t('Kommt für jedes verpasste Tor zur Zeit dazu.', 'Added to the time for every missed gate.'),
+        }),
+        winter.number({
+          key: 'slalomLimit',
+          at: 'slalom.zeitlimit-sekunden',
+          value: 90,
+          min: 20,
+          max: 600,
+          ...SECONDS,
+          cmd: 'slalom zeitlimit',
+          label: t('Zeitlimit', 'Time limit'),
+          help: t(
+            'Wer bis dahin nicht im Ziel ist, scheidet in diesem Lauf aus.',
+            'Whoever is not at the finish by then drops out of this run.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'bob',
+      title: t('Bobbahn', 'Bobsleigh'),
+      settings: [
+        winter.flag({
+          key: 'twoManBob',
+          at: 'bob.zweierbob',
+          value: true,
+          cmd: 'bob zweier',
+          label: t('Zweierbob für Partys', 'Two-man bob for parties'),
+          help: t(
+            'Partys fahren zu zweit in einem Bob (der Erste lenkt). Aus: jeder fährt allein.',
+            'Parties ride two to a bob (the first one steers). Off: everyone rides alone.',
+          ),
+        }),
+        winter.number({
+          key: 'bobLimit',
+          at: 'bob.zeitlimit-sekunden',
+          value: 90,
+          min: 20,
+          max: 600,
+          ...SECONDS,
+          cmd: 'bob zeitlimit',
+          label: t('Zeitlimit', 'Time limit'),
+          help: t(
+            'Wer bis dahin nicht im Ziel ist, scheidet aus.',
+            'Whoever is not at the finish by then drops out.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'biathlon',
+      title: t('Biathlon', 'Biathlon'),
+      settings: [
+        winter.number({
+          key: 'biathlonLaps',
+          at: 'biathlon.runden',
+          value: 3,
+          min: 1,
+          max: 10,
+          unit: t('Runden', 'laps'),
+          arg: 'runden',
+          cmd: 'biathlon runden',
+          label: t('Runden auf der Loipe', 'Laps on the trail'),
+          help: t('So viele Runden laufen alle.', 'Everyone runs this many laps.'),
+        }),
+        winter.number({
+          key: 'biathlonShooting',
+          at: 'biathlon.schiessen',
+          value: 2,
+          min: 0,
+          max: 9,
+          unit: t('Mal', 'times'),
+          arg: 'zahl',
+          cmd: 'biathlon schiessen',
+          label: t('So oft wird geschossen', 'Shooting stops'),
+          help: t(
+            'Nach Runde 1, 2 … geht es an den Schießstand – höchstens eine Runde weniger, als gelaufen wird.',
+            'After lap 1, 2 … it is off to the shooting range – at most one less than the number of laps.',
+          ),
+        }),
+        winter.number({
+          key: 'biathlonLimit',
+          at: 'biathlon.zeitlimit-sekunden',
+          value: 360,
+          min: 60,
+          max: 1800,
+          ...SECONDS,
+          cmd: 'biathlon zeitlimit',
+          label: t('Zeitlimit', 'Time limit'),
+          help: t(
+            'Wer bis dahin nicht im Ziel ist, scheidet aus (360 = 6 Minuten).',
+            'Whoever is not at the finish by then drops out (360 = 6 minutes).',
+          ),
+        }),
+        winter.number({
+          key: 'shootingSeconds',
+          at: 'biathlon.schiess-zeit-sekunden',
+          value: 40,
+          min: 10,
+          max: 180,
+          ...SECONDS,
+          cmd: 'biathlon schiesszeit',
+          label: t('Zeit am Schießstand', 'Time at the shooting range'),
+          help: t(
+            'So lange hat man für die fünf Schuss. Jeder Fehler = eine Strafrunde.',
+            'This is the time for the five shots. Every miss = one penalty loop.',
+          ),
+        }),
+        winter.number({
+          key: 'biathlonSpeed',
+          at: 'biathlon.tempo',
+          value: 2,
+          min: 0,
+          max: 5,
+          unit: t('Stufe', 'level'),
+          arg: 'stufe',
+          cmd: 'biathlon tempo',
+          label: t('Laufen mit Schnelligkeit', 'Running with speed'),
+          help: t('0 = normal, 2 = wie Schnelligkeit II.', '0 = normal, 2 = like Speed II.'),
+        }),
+      ],
+    },
+  ],
+};
+
+// ---------------------------------------------------------------- Adlerflug
+
+const adler = settingsFor('adlerconfig');
+
+export const ADLERFLUG_AREA: SettingArea = {
+  id: 'adlerflug',
+  title: t('Adlerflug', 'Eagle Flight'),
+  text: t(
+    'Mit Flügeln durch Ringe auf Zeit: Schwung an der Schanze, Hilfen für Anfänger, Geist und Party-Rennen.',
+    'Gliding through rings against the clock: boost at the ski jump, help for beginners, ghost and party races.',
+  ),
+  icon: 'Bird',
+  panel: 'modes',
+  mode: { id: 'adlerflug', plugin: 'MorniAdlerflug' },
+  sections: [
+    {
+      id: 'flight',
+      title: t('Flug', 'Flight'),
+      settings: [
+        adler.number({
+          key: 'launchBoost',
+          at: 'start-schwung',
+          value: 1.3,
+          min: 0,
+          max: 3,
+          step: 0.1,
+          unit: t('Blöcke pro Tick', 'blocks per tick'),
+          arg: 'schwung',
+          cmd: 'schwung',
+          label: t('Schwung beim Absprung', 'Boost at take-off'),
+          help: t(
+            '1,3 ≈ 94 km/h. Die Strecken sind dafür gebaut – weniger macht den ersten Ring schwerer, 0 = einfach von der Kante fallen.',
+            '1.3 ≈ 94 km/h. The courses are built for it – less makes the first ring harder, 0 = just drop off the edge.',
+          ),
+        }),
+        adler.flag({
+          key: 'autoWings',
+          at: 'fluegel-automatisch',
+          value: true,
+          cmd: 'fluegel',
+          label: t('Flügel gehen von selbst auf', 'Wings open by themselves'),
+          help: t(
+            'Beim Fallen in der Luft klappen die Flügel von selbst auf – hilft Anfängern und am Handy.',
+            'When falling in the air, the wings open by themselves – helps beginners and on mobile.',
+          ),
+        }),
+        adler.flag({
+          key: 'plausible',
+          at: 'plausibel-pruefen',
+          value: true,
+          cmd: 'pruefen',
+          label: t('Unmögliche Zeiten nicht werten', 'Do not count impossible times'),
+          help: t(
+            'Zeiten, die schneller sind als überhaupt möglich (Teleport, Abkürzung), kommen nicht in die Bestenliste.',
+            'Times faster than possible at all (teleport, shortcut) do not go on the leaderboard.',
+          ),
+        }),
+        adler.flag({
+          key: 'freeFlight',
+          at: 'freiflug',
+          value: true,
+          cmd: 'freiflug',
+          label: t('Freiflug im Adlerhorst', 'Free flight at the eagle’s eyrie'),
+          help: t(
+            'Von der großen Schanze im Basislager einfach so fliegen, ohne Zeit – wer im Tal landet, kommt zurück.',
+            'Just fly from the big ski jump at the base camp, without timing – whoever lands in the valley comes back.',
+          ),
+        }),
+        adler.flag({
+          key: 'ghostDefault',
+          at: 'geist-standard',
+          value: true,
+          cmd: 'geist',
+          label: t('Geist für neue Spieler', 'Ghost for new players'),
+          help: t(
+            'Ein kleiner Adler aus blauen Funken fliegt die eigene Bestzeit mit. Jeder kann ihn für sich ausschalten – das hier gilt für neue Spieler.',
+            'A small eagle made of blue sparks flies your own best time alongside. Everyone can switch it off – this applies to new players.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'race',
+      title: t('Party-Rennen', 'Party races'),
+      settings: [
+        adler.number({
+          key: 'raceWait',
+          at: 'rennen-wartezeit',
+          value: 15,
+          min: 5,
+          max: 120,
+          ...SECONDS,
+          cmd: 'rennen',
+          label: t('Zeit zum Mitmachen', 'Time to join'),
+          help: t(
+            'So lange haben Party-Mitglieder Zeit, bei einem Rennen mitzumachen.',
+            'Party members have this long to join a race.',
+          ),
+        }),
+      ],
+    },
+  ],
+};
+
+// ---------------------------------------------------------------- Angelkönig
+
+const angel = settingsFor('angelconfig');
+
+const PRIZES: ReadonlyArray<readonly [number, number, Text]> = [
+  [0, 250, t('Preis für Platz 1', 'Prize for 1st place')],
+  [1, 120, t('Preis für Platz 2', 'Prize for 2nd place')],
+  [2, 60, t('Preis für Platz 3', 'Prize for 3rd place')],
+];
+
+export const ANGELKOENIG_AREA: SettingArea = {
+  id: 'angelkoenig',
+  title: t('Angelkönig', 'Angler King'),
+  text: t(
+    'Gemütlich angeln: Tageszeit und Wetter im Tal, wie schnell es beißt, Startgeld und das Angel-Turnier.',
+    'Relaxed fishing: time of day and weather in the valley, how fast the fish bite, starting money and the fishing tournament.',
+  ),
+  icon: 'Fish',
+  panel: 'modes',
+  mode: { id: 'angelkoenig', plugin: 'MorniAngelkoenig' },
+  sections: [
+    {
+      id: 'valley',
+      title: t('Tal', 'Valley'),
+      text: t(
+        'Tageszeit und Wetter ändern, was beißt – Aale zum Beispiel nur nachts.',
+        'Time of day and weather change what bites – eels, for example, only at night.',
+      ),
+      settings: [
+        angel.flag({
+          key: 'daytime',
+          at: 'welt-ablauf.tageszeit-laeuft',
+          value: true,
+          cmd: 'tageszeit',
+          label: t('Tageszeit läuft', 'Time of day passes'),
+          help: t(
+            'Morgen, Tag, Abend und Nacht wechseln sich ab. Aus: Es bleibt Morgen.',
+            'Morning, day, evening and night take turns. Off: it stays morning.',
+          ),
+        }),
+        angel.flag({
+          key: 'weather',
+          at: 'welt-ablauf.wetter-wechselt',
+          value: true,
+          cmd: 'wetter',
+          label: t('Wetter wechselt', 'Weather changes'),
+          help: t(
+            'Klar, Regen und Gewitter wechseln sich ab. Aus: Es bleibt klar.',
+            'Clear, rain and thunderstorm take turns. Off: it stays clear.',
+          ),
+        }),
+        angel.number({
+          key: 'weatherMin',
+          at: 'welt-ablauf.wetter-min-sekunden',
+          value: 360,
+          min: 60,
+          max: 3600,
+          ...SECONDS,
+          cmd: 'wetter kuerzest',
+          label: t('Ein Wetter dauert mindestens', 'A weather lasts at least'),
+          help: t('Regen und Gewitter dauern halb so lang.', 'Rain and thunderstorms last half as long.'),
+        }),
+        angel.number({
+          key: 'weatherMax',
+          at: 'welt-ablauf.wetter-max-sekunden',
+          value: 900,
+          min: 60,
+          max: 7200,
+          ...SECONDS,
+          cmd: 'wetter laengst',
+          label: t('Ein Wetter dauert höchstens', 'A weather lasts at most'),
+          help: t(
+            'Muss mindestens so lang sein wie die kürzeste Dauer.',
+            'Must be at least as long as the shortest duration.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'fishing',
+      title: t('Angeln', 'Fishing'),
+      settings: [
+        angel.number({
+          key: 'biteMin',
+          at: 'angeln.biss-min-sekunden',
+          value: 5,
+          min: 1,
+          max: 60,
+          ...SECONDS,
+          cmd: 'biss kuerzest',
+          label: t('Biss frühestens nach', 'Bite at the earliest after'),
+          help: t(
+            'Wartezeit mit der einfachsten Angel (Haselrute) – bessere Angeln sind schneller.',
+            'Waiting time with the simplest rod (hazel rod) – better rods are faster.',
+          ),
+        }),
+        angel.number({
+          key: 'biteMax',
+          at: 'angeln.biss-max-sekunden',
+          value: 18,
+          min: 2,
+          max: 120,
+          ...SECONDS,
+          cmd: 'biss laengst',
+          label: t('Biss spätestens nach', 'Bite at the latest after'),
+          help: t(
+            'Muss mindestens so lang sein wie die kürzeste Wartezeit.',
+            'Must be at least as long as the shortest waiting time.',
+          ),
+        }),
+        angel.number({
+          key: 'startMoney',
+          at: 'angeln.startgeld',
+          value: 25,
+          min: 0,
+          max: 10_000,
+          ...TALER,
+          cmd: 'startgeld',
+          label: t('Startgeld', 'Starting money'),
+          help: t(
+            'So viele Taler bekommt jeder beim ersten Besuch. Taler gibt es nur im Spiel – nichts für echtes Geld.',
+            'Everyone gets this many coins on their first visit. Coins only exist in the game – nothing for real money.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'tournament',
+      title: t('Angel-Turnier', 'Fishing tournament'),
+      text: t(
+        'Der schwerste Fisch gewinnt – der Sieger wird Angelkönig und bekommt die Königskrone.',
+        'The heaviest fish wins – the winner becomes Angler King and gets the royal crown.',
+      ),
+      settings: [
+        angel.flag({
+          key: 'tournament',
+          at: 'turnier.an',
+          value: true,
+          cmd: 'turnier',
+          label: t('Angel-Turniere', 'Fishing tournaments'),
+          help: t(
+            'Regelmäßig ein Turnier für alle im Tal.',
+            'A tournament for everyone in the valley at regular intervals.',
+          ),
+        }),
+        angel.number({
+          key: 'everyMinutes',
+          at: 'turnier.alle-minuten',
+          value: 15,
+          min: 5,
+          max: 240,
+          ...MINUTES,
+          cmd: 'turnier alle',
+          label: t('Ein Turnier alle', 'A tournament every'),
+          help: t('Bei 15 beginnt es zur vollen Viertelstunde.', 'At 15 it starts on the quarter hour.'),
+        }),
+        angel.number({
+          key: 'durationMinutes',
+          at: 'turnier.dauer-minuten',
+          value: 5,
+          min: 1,
+          max: 60,
+          ...MINUTES,
+          cmd: 'turnier dauer',
+          label: t('So lange dauert es', 'It lasts'),
+          help: t(
+            'Muss kürzer sein als der Abstand zwischen zwei Turnieren.',
+            'Must be shorter than the gap between two tournaments.',
+          ),
+        }),
+        angel.number({
+          key: 'warning',
+          at: 'turnier.vorwarnung-sekunden',
+          value: 60,
+          min: 0,
+          max: 600,
+          ...SECONDS,
+          cmd: 'turnier vorwarnung',
+          label: t('Ankündigung vorher', 'Announced before'),
+          help: t(
+            'So viele Sekunden vorher erfahren alle im Tal davon.',
+            'Everyone in the valley hears about it this many seconds before.',
+          ),
+        }),
+        angel.number({
+          key: 'minPlayers',
+          at: 'turnier.mindestens-spieler',
+          value: 2,
+          min: 1,
+          max: 40,
+          ...PLAYERS,
+          cmd: 'turnier mindestens',
+          label: t('Turnier erst ab', 'Tournament only from'),
+          help: t('So viele Leute müssen im Tal sein.', 'This many people have to be in the valley.'),
+        }),
+        ...PRIZES.map(([i, value, label]) =>
+          angel.number({
+            key: `prize${i + 1}`,
+            at: `turnier.preise.${i}`,
+            value,
+            min: 0,
+            max: 100_000,
+            ...TALER,
+            cmd: `turnier preis${i + 1}`,
+            label,
+            help: t('Taler für diesen Platz.', 'Coins for this place.'),
+          }),
+        ),
+        angel.number({
+          key: 'participation',
+          at: 'turnier.teilnahme',
+          value: 15,
+          min: 0,
+          max: 10_000,
+          ...TALER,
+          cmd: 'turnier teilnahme',
+          label: t('Für alle anderen', 'For everyone else'),
+          help: t(
+            'Taler für alle, die beim Turnier etwas gefangen haben.',
+            'Coins for everyone who caught something in the tournament.',
+          ),
+        }),
+      ],
+    },
+  ],
+};
+
 /** Alle Spielmodi mit Einstellungen, in der Reihenfolge der Lobby. */
 export const MODE_SETTING_AREAS: readonly SettingArea[] = [
   DUELS_AREA,
@@ -1816,4 +2864,9 @@ export const MODE_SETTING_AREAS: readonly SettingArea[] = [
   BURGVERLIES_AREA,
   BOLLWERK_AREA,
   SMP_AREA,
+  WOLKENKAMPF_AREA,
+  VERSTECKERL_AREA,
+  WINTERSPORT_AREA,
+  ADLERFLUG_AREA,
+  ANGELKOENIG_AREA,
 ];

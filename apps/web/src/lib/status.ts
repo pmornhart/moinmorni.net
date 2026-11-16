@@ -1,5 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import type { ModeState, ModeStatus, NetworkStatus } from '@moinmorni/shared';
+import { MODE_PHASE_PAUSE, type ModeState, type ModeStatus, type NetworkStatus } from '@moinmorni/shared';
 import { mmApi } from './mm-api';
 
 const MS_PER_SECOND = 1000;
@@ -24,8 +24,11 @@ export const MODE_STATE_TONE: Readonly<Record<ModeState, 'success' | 'neutral' |
   soon: 'blue',
 };
 
-/** How the website names a mode's state: open modes that are not running are "asleep" (they wake on arrival). */
-export type ModeLook = 'open' | 'asleep' | 'closed' | 'maintenance' | 'soon';
+/**
+ * How the website names a mode's state: open modes that are not running are "asleep" (they wake on arrival); "pause"
+ * = the mode itself says it has a break (Winter Games in summer) – you can still go and look around.
+ */
+export type ModeLook = 'open' | 'asleep' | 'pause' | 'closed' | 'maintenance' | 'soon';
 
 const LOOK_OF_STATE: Readonly<Record<ModeState, ModeLook>> = {
   on: 'open',
@@ -38,12 +41,14 @@ export const MODE_LOOK_TONE: Readonly<Record<ModeLook, 'success' | 'neutral' | '
   {
     open: 'success',
     asleep: 'blue',
+    pause: 'gold',
     closed: 'neutral',
     maintenance: 'warning',
     soon: 'gold',
   };
 
 export function modeLook(mode: ModeStatus): ModeLook {
+  if (mode.state === 'on' && mode.server && mode.phase === MODE_PHASE_PAUSE) return 'pause';
   if (mode.state === 'on' && !mode.awake) return 'asleep';
   return LOOK_OF_STATE[mode.state];
 }

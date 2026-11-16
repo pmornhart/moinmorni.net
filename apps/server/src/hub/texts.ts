@@ -370,6 +370,10 @@ const TEXTS = {
     de: `${P}<gray><white>{mode}</white> kommt bald – wir bauen noch daran.`,
     en: `${P}<gray><white>{mode}</white> is coming soon – we're still building it.`,
   },
+  'mode.pause': {
+    de: `${P}<yellow>☀ <white>{mode}</white> hat gerade Sommerpause – Wettkämpfe gibt es erst wieder im Winter. Schau dich trotzdem im Dorf um!`,
+    en: `${P}<yellow>☀ <white>{mode}</white> is on its summer break – competitions start again in winter. Have a look around the village anyway!`,
+  },
   'mode.joining': {
     de: `${P}<gray>Ab nach <white>{mode}</white> …`,
     en: `${P}<gray>Off to <white>{mode}</white> …`,
