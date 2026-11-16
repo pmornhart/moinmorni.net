@@ -138,6 +138,8 @@ export function createProvisioner(
       eula: true,
       autoStart: true,
       startNow: false,
+      // Immer online, ohne Spieler aber kaum Arbeitsspeicher (kleiner Start, Java gibt zurück, die Welt pausiert).
+      releaseIdleMemory: true,
       addOns:
         software === 'velocity'
           ? (options.proxyAddOns ?? PROXY_ADD_ONS)

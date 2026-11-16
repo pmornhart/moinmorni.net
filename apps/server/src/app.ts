@@ -23,6 +23,7 @@ import { createModeSettingsSync, type ModeSettingsSync } from './network/mode-se
 import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { retuneMemory } from './network/memory.js';
+import { idleMemoryOnce, sleepOffOnce } from './network/always-on.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerUpdateRoutes } from './system/routes.js';
@@ -170,7 +171,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     // Neue Modus-Server starten gleich mit den Einstellungen aus dem Panel.
     prepare: (servers) => modeSettingsRef.prepare(servers),
   });
-  const sleep = createSleepService(motor, hub, stores, app.log);
+  const sleep = createSleepService(motor, hub, stores, app.log, config.dataDir);
   sleepRef.service = sleep;
   const bot = createMoinMorniBot({
     config,
@@ -225,6 +226,17 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
         return [];
       });
       restarts.add(retuned);
+      // Einmal: alle Server im Motor mit „Arbeitsspeicher im Leerlauf freigeben“ (gilt nach dem nächsten Neustart).
+      const idle = await idleMemoryOnce(motor, config.dataDir, result.servers, app.log).catch(
+        (err: unknown) => {
+          app.log.warn(
+            { err },
+            'Netzwerk: Leerlauf-Speicher ließ sich nicht einschalten – nächster Versuch beim Start',
+          );
+          return [];
+        },
+      );
+      restarts.add(idle);
       // Spielmodi, die gerade schlafen: Einstellungen aus dem Panel für den nächsten Start eintragen.
       void modeSettings.syncFiles();
       // Wer zwei Minuten nach dem Start noch ohne Hub läuft (z. B. alter Schlüssel im Speicher), startet neu, sobald
@@ -349,6 +361,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     sleep,
     bot,
     start: async () => {
+      // Einmal: Modi und Bau-Server bleiben jetzt immer online („Schlafen, wenn leer“ standardmäßig aus) – wer gerade
+      // schläft, startet wieder, sobald er in den Arbeitsspeicher passt.
+      sleep.remember(sleepOffOnce(stores, config.dataDir, app.log));
       sleep.start();
       bot.start();
       // Meldungen des Motors (Wächter, NetBird-Ausgang, Server) ins Discord-Team-Log.
