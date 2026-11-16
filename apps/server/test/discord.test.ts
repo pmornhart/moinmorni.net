@@ -369,7 +369,8 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
       minutes: 15,
       reason: 'Beleidigung',
     });
-    await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(jailRole)));
+    // Rolle dazu und andere weg gehen als einzelne Anfragen gleichzeitig raus – auf beides warten.
+    await until(() => dc.guild.members.get(LENA_DC)?.roles.join() === jailRole);
     expect(dc.guild.members.get(LENA_DC)?.roles).toEqual([jailRole]);
     await call('DELETE', `/api/panel/punishments/${LENA}/jail`);
     await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(jailRole));
