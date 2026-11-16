@@ -272,9 +272,12 @@ function Notes({ app }: { readonly app: ApplicationDetail }): ReactElement {
 function Decide({
   app,
   positions,
+  onAccount,
 }: {
   readonly app: ApplicationDetail;
   readonly positions: readonly PositionView[];
+  /** A panel account was created with the acceptance: show its start password (outside, it outlives this card). */
+  readonly onAccount: (access: AccessData) => void;
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const errorText = useErrorText();
@@ -290,7 +293,6 @@ function Decide({
   const [withAccount, setWithAccount] = useState(false);
   const [username, setUsername] = useState(app.suggestedUsername);
   const [email, setEmail] = useState('');
-  const [access, setAccess] = useState<AccessData | null>(null);
   const name = app.minecraftName;
   const role = positions.find((p) => p.id === app.position)?.role;
   const roleName = role ? pick(role.name) : (app.position ?? '');
@@ -313,7 +315,7 @@ function Decide({
           ? t('applications.acceptedToast', { name })
           : t('applications.rejectedToast', { name }),
       );
-      if (result.account) setAccess({ ...result.account, kind: 'created' });
+      if (result.account) onAccount({ ...result.account, kind: 'created' });
       await queryClient.invalidateQueries({ queryKey: APPLICATIONS_ROOT });
     },
     onError: async (err) => {
@@ -327,7 +329,6 @@ function Decide({
     return (
       <SideCard icon={UserCheck} title={t('applications.decision')}>
         <DecisionBox app={app} time={app.decidedAt ? time.relative(app.decidedAt) : ''} />
-        <AccessDialog data={access} onClose={() => setAccess(null)} />
       </SideCard>
     );
   if (!app.canDecide)
@@ -454,6 +455,7 @@ function Detail({ id }: { readonly id: number }): ReactElement {
   const detail = useApplication(id);
   const list = useApplicationList({ position: 'all', status: 'all' });
   const positions = list.data?.positions ?? [];
+  const [access, setAccess] = useState<AccessData | null>(null);
 
   if (detail.isPending) return <Skeleton className="h-96 rounded-[16px]" />;
   if (detail.isError) return <Card className="p-6 text-muted-foreground">{errorText(detail.error)}</Card>;
@@ -488,11 +490,12 @@ function Detail({ id }: { readonly id: number }): ReactElement {
       <div className="grid items-start gap-[22px] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Answers app={app} />
         <div className="grid min-w-0 gap-[22px]">
-          <Decide key={`${app.id}-${app.status}`} app={app} positions={positions} />
+          <Decide key={`${app.id}-${app.status}`} app={app} positions={positions} onAccount={setAccess} />
           <Votes app={app} />
           <Notes app={app} />
         </div>
       </div>
+      <AccessDialog data={access} onClose={() => setAccess(null)} />
     </>
   );
 }
