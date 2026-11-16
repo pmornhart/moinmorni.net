@@ -6,7 +6,7 @@ keine fremden Melodien.
 
   python3 music.py <stil> <ausgabe.wav> [--takte-json takte.json]
 
-Stile: spawn duels gipfelsturm bollwerk burgverlies party mirni mornicraft
+Stile: spawn duels gipfelsturm bollwerk burgverlies party mirni mornicraft wolkenkampf
 Schreibt neben der WAV-Datei eine JSON mit den Zeitpunkten der Takte (für den Schnitt im Takt).
 """
 import json, os, random, subprocess, sys, tempfile
@@ -64,6 +64,9 @@ STYLES = {
                         groove='pick', drums='soft', vel=88),
     'mornicraft':  dict(tempo=124, key=-5, minor=False, form='IAB AE', lead=60, lead2=48, bass=43, comp=46, pad=48,
                         groove='harp', drums='epic', vel=96),
+    # Wolkenkampf: luftig und weit (Flöte über Harfen-Wellen, Chor-Fläche), im B-Teil episch mit Horn und Pauken.
+    'wolkenkampf': dict(tempo=120, key=2, minor=False, form='IAB AE', lead=73, lead2=60, bass=32, comp=46, pad=91,
+                        groove='airy', drums='soar', vel=94),
 }
 
 
@@ -152,6 +155,14 @@ class Song:
                     for e in range(2):
                         q = tones[(beat * 2 + e) % len(tones)] + 12
                         self.note(2, t + e * TPB // 2, q + k, .9, v - 10)
+                elif groove == 'airy':  # weite Harfen-Wellen über zwei Oktaven, Bass lang
+                    if beat == 0:
+                        self.note(1, t, root + k, 4, v)
+                        for q in tones: self.note(3, t, q + k + 12, 4, v - 30)
+                    for e in range(2):
+                        step = beat * 2 + e
+                        q = tones[step % len(tones)] + 12 * (1 + step // len(tones) % 2)
+                        self.note(2, t + e * TPB // 2, q + k, .7, v - 16 + (6 if e == 0 else 0))
                 elif groove == 'harp':
                     if beat == 0:
                         self.note(1, t, root + k, 4, v)
@@ -188,6 +199,11 @@ class Song:
                 for b in (0, 2): hit(36, b)
                 for b in (1, 3): hit(39, b, v - 15)
                 for b in range(8): hit(54, b / 2, v - 40)
+            elif kind == 'soar':  # Pauken und Becken, weit und luftig
+                hit(36, 0, v); hit(36, 2.5, v - 15)
+                hit(47 if i % 2 else 45, 3, v - 20)
+                hit(51, 0, v - 45); hit(51, 2, v - 50)
+                if i % 4 == 0: hit(49, 0, v - 25)
             elif kind == 'soft':
                 hit(36, 0, v - 30); hit(37, 2, v - 40)
                 for b in range(4): hit(42, b + .5, v - 55)
