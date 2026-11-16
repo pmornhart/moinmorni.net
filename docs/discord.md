@@ -50,6 +50,9 @@ sind und die Nachricht bei Zusage stellst du im Panel unter **Einstellungen → 
 - **Konto verbinden**: Im Spiel `/discord` eingeben, dann in Discord `/verbinden <code>`. Danach hat man seinen Rang
   auch in Discord (ändert sich der Rang, zieht Discord nach).
 - **Strafen gelten überall**: Bann im Spiel = Bann in Discord, Stumm = Timeout (über 28 Tage oder für immer: Rolle
-  🔇 Stumm), alles landet im 📋・team-log.
+  🔇 Stumm), Gefängnis = Rolle ⛓ Gefängnis, **Sprachchat-Stumm** (`/voicemute` oder im Panel) = Server-Stummschaltung im
+  Discord-Sprachkanal, solange die Strafe läuft – sitzt die Person gerade in keinem, dann beim nächsten Betreten
+  (dafür braucht der Bot „Mitglieder stummschalten“, mit Administrator ist es dabei; ohne gilt die Strafe nur im
+  Spiel). Alles landet im 📋・team-log.
 - **Tickets**: Knopf in 🎫・hilfe öffnet einen privaten Thread nur für die Person und das Team.
 - **Begrüßung** neuer Mitglieder in 👋・willkommen.

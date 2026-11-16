@@ -195,6 +195,25 @@ export const DEFAULT_ROLES: readonly Role[] = [
   },
 ];
 
+/**
+ * Strafen und das Recht im Spiel, das jede braucht – im Panel gilt dasselbe wie beim Befehl (/ban → „ban“,
+ * /voicemute → „voice-mute“). voice = im Sprachchat stumm.
+ */
+export const PUNISHMENT_RIGHTS = {
+  warn: 'warn',
+  mute: 'mute',
+  voice: 'voice-mute',
+  jail: 'jail',
+  ban: 'ban',
+  kick: 'kick',
+} as const satisfies Record<string, GameRight>;
+export type PunishmentKind = keyof typeof PUNISHMENT_RIGHTS;
+
+/** Darf jemand mit dieser Rolle die Strafe verhängen und aufheben? Der Owner darf alles. */
+export function mayPunish(role: Pick<Role, 'id' | 'game'>, kind: PunishmentKind): boolean {
+  return role.id === 'owner' || role.game.includes(PUNISHMENT_RIGHTS[kind]);
+}
+
 /** Rollen, die nur Owner vergeben oder in der Vorlage ändern dürfen. */
 export const OWNER_ONLY_ROLES: readonly string[] = ['owner', 'admin'];
 /** Diese Ränge vergibt nur der Owner – VIP „vergibt nur Philip, nie ein Shop“. */

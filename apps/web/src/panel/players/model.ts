@@ -1,18 +1,19 @@
 import { keepPreviousData, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-import type { Text } from '@moinmorni/shared';
+import type { PunishmentKind, Text } from '@moinmorni/shared';
 import { mmApi } from '~/lib/mm-api';
 
 /** Shapes of MoinMorni's player and punishment API (apps/server/src/panel/player-routes.ts). */
 
-export type PunishKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick';
+/** voice = muted in voice chat (writing in chat still works). */
+export type PunishKind = PunishmentKind;
 /** What the panel can hand out. */
-export type ModKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick';
+export type ModKind = PunishmentKind;
 /** What lasts and can be lifted. */
-export type LiftKind = 'ban' | 'mute' | 'jail';
+export type LiftKind = 'ban' | 'mute' | 'jail' | 'voice';
 
-export const MOD_KINDS: readonly ModKind[] = ['warn', 'mute', 'jail', 'ban', 'kick'];
-export const PUNISH_KINDS: readonly PunishKind[] = ['ban', 'mute', 'warn', 'kick', 'jail'];
-const LASTING: readonly PunishKind[] = ['ban', 'mute', 'jail'];
+export const MOD_KINDS: readonly ModKind[] = ['warn', 'mute', 'voice', 'jail', 'ban', 'kick'];
+export const PUNISH_KINDS: readonly PunishKind[] = ['ban', 'mute', 'voice', 'warn', 'kick', 'jail'];
+const LASTING: readonly PunishKind[] = ['ban', 'mute', 'jail', 'voice'];
 
 export function isLasting(kind: PunishKind): kind is LiftKind {
   return LASTING.includes(kind);
@@ -46,6 +47,8 @@ export interface PlayerView {
   readonly banned: ActivePunishment | null;
   readonly muted: ActivePunishment | null;
   readonly jailed: ActivePunishment | null;
+  /** Muted in voice chat. */
+  readonly voiceMuted: ActivePunishment | null;
 }
 
 export interface Punishment {

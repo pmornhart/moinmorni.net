@@ -23,7 +23,8 @@ import { toast } from 'sonner';
 import type { Role } from '@moinmorni/shared';
 import { MinecraftHead } from '~/components/minecraft-head';
 import { RoleBadge } from '~/components/role-visuals';
-import { Button, Card, Kbd, NativeSelect, Pill, Skeleton, Switch } from '~/components/ui';
+import { Select } from '~/components/select';
+import { Button, Card, Kbd, Pill, Skeleton, Switch } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useErrorText } from '~/lib/errors';
@@ -168,9 +169,10 @@ function MemberActions({
       <label htmlFor={`role-${member.id}`} className="sr-only">
         {t('teamAdmin.roleLabel', { name })}
       </label>
-      <NativeSelect
+      <Select
         id={`role-${member.id}`}
-        className="min-w-0 flex-1 basis-40 sm:w-44 sm:flex-none [&_select]:h-8 [&_select]:rounded-[10px] [&_select]:text-sm"
+        size="sm"
+        className="min-w-0 flex-1 basis-40 sm:w-44 sm:flex-none"
         value={member.roleId}
         disabled={changeRole.isPending}
         onChange={(e) => changeRole.mutate(e.target.value)}
@@ -181,7 +183,7 @@ function MemberActions({
             {pick(r.name)}
           </option>
         ))}
-      </NativeSelect>
+      </Select>
       <div className="flex flex-wrap gap-1.5">
         <Button variant="secondary" size="sm" onClick={() => setConfirm('reset')}>
           <KeyRound />

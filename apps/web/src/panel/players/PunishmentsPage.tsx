@@ -2,6 +2,7 @@ import { Gavel, Plus, Search, Sparkles, Undo2 } from 'lucide-react';
 import { useId, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { mayPunish } from '@moinmorni/shared';
 import { Button, Card, Pill, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -9,7 +10,7 @@ import { useErrorText } from '~/lib/errors';
 import { useTimeText } from '~/lib/time';
 import { AreaGate } from '../AreaGate';
 import { PageHead } from '../PanelShell';
-import { useCan } from '../session';
+import { useCan, usePanel } from '../session';
 import { KindBadge } from './badges';
 import { useLiftPunishment } from './lift';
 import {
@@ -64,10 +65,12 @@ function PunishmentItem({ row }: { readonly row: PunishmentRow }): ReactElement 
   const { t } = useTranslation(MM_NAMESPACE);
   const time = useTimeText();
   const canSeePlayers = useCan('players');
+  const me = usePanel();
   const lift = useLiftPunishment();
   const state = punishmentState(row, row.active);
   const lasting = isLasting(row.kind);
-  const liftKind = isLasting(row.kind) ? row.kind : null;
+  // Lifting needs the same right as handing it out (like /unban, /voiceunmute in the game).
+  const liftKind = isLasting(row.kind) && mayPunish(me.role, row.kind) ? row.kind : null;
   const name = canSeePlayers ? (
     <Link to={`/spieler/${row.playerUuid}`} className="font-bold underline-offset-4 hover:underline">
       {row.playerName}
@@ -76,7 +79,7 @@ function PunishmentItem({ row }: { readonly row: PunishmentRow }): ReactElement 
     <span className="font-bold">{row.playerName}</span>
   );
   return (
-    <li className="grid gap-2.5 px-4 py-4 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-center sm:gap-5 sm:px-5">
+    <li className="grid gap-2.5 px-4 py-4 sm:grid-cols-[9.5rem_minmax(0,1fr)_auto] sm:items-center sm:gap-5 sm:px-5">
       <div className="flex items-center justify-between gap-2 sm:justify-start">
         <KindBadge kind={row.kind} />
         <span className="text-xs text-muted-foreground sm:hidden">{time.relative(row.createdAt)}</span>

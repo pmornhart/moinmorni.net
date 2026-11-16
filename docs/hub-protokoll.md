@@ -99,6 +99,9 @@ des Spielers.
 | `voice-join`          | Spielserver            | `uuid, group, force?` – Spieler in eine Gruppe setzen (Team ohne Passwort)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | _(binär)_ Audio       | Spielserver            | Sprache von anderen Servern zum Abspielen                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
+Sprachchat-Stumm (`/voicemute` oder Panel) läuft über dieselbe Moderation wie die anderen Strafen; `muted` in `voice`
+kommt bei jeder Änderung neu und spätestens eine Minute nach Ablauf einer Stummschaltung.
+
 Fällt der Hub aus, läuft das Netzwerk weiter: Chat bleibt auf dem eigenen Server, Banns aus der letzten `bans`-Liste
 gelten weiter, das Plugin verbindet sich alle paar Sekunden neu.
 

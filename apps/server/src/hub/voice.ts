@@ -2,8 +2,7 @@ import crypto from 'node:crypto';
 import type { Command, Actor } from './commands.js';
 import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
-import { parseDuration } from './punish.js';
-import { mm, text, type Lang } from './texts.js';
+import { mm, text } from './texts.js';
 import type { Body, Connection } from './transport.js';
 
 /**
@@ -90,7 +89,11 @@ export function createVoice(
     ((voice()['channels'] as string[] | undefined) ?? []).map((name) => ({ id: groupId(name), name }));
   const groups = new Map<string, string>();
   const own = new Map<string, OwnGroup>();
+  // Stumm im Sprachchat (/voicemute, Panel): verhängt und aufgehoben über die Moderation (hub/moderation.ts).
   const muted = (): Set<string> => new Set(ctx.punish.activeOf('voice'));
+  /** Was die Spielserver zuletzt als Stumm-Liste bekommen haben – läuft eine Strafe ab, ziehen sie nach. */
+  const sent = { muted: '' };
+  const mutedKey = (): string => [...muted()].sort().join(',');
   const ownAllowed = (): boolean => voice()['ownGroups'] === true;
   const distance = (): number => Number(voice()['distance'] ?? DISTANCE_DEFAULT) || DISTANCE_DEFAULT;
   /** Brücken-Gruppe: Kanal, Party oder eigene Gruppe – das hört man auf allen Servern. */
@@ -114,10 +117,14 @@ export function createVoice(
   });
   const broadcast = (): void => {
     const body = config();
+    sent.muted = mutedKey();
     backends().forEach((c) => c.send(body));
   };
 
-  /** Leere eigene Gruppen nach fünf Minuten weg; alle weg, wenn eigene Gruppen im Panel aus sind. */
+  /**
+   * Leere eigene Gruppen nach fünf Minuten weg; alle weg, wenn eigene Gruppen im Panel aus sind. Ist eine Stummschaltung
+   * abgelaufen, bekommen die Spielserver die neue Liste (sie halten Stumme selbst zurück).
+   */
   const sweep = (): void => {
     const t = now();
     const gone = [...own.values()].filter((g) => {
@@ -126,7 +133,7 @@ export function createVoice(
       return !ownAllowed() || (g.emptySince !== null && t - g.emptySince >= OWN_EMPTY_MS);
     });
     gone.forEach((g) => own.delete(g.id));
-    if (gone.length > 0) broadcast();
+    if (gone.length > 0 || mutedKey() !== sent.muted) broadcast();
   };
   const sweepTimer = setInterval(sweep, SWEEP_MS);
   sweepTimer.unref();
@@ -138,11 +145,6 @@ export function createVoice(
     conn?.send(body);
     return Boolean(conn);
   };
-  const until = (lang: Lang, iso: string | null): string =>
-    iso
-      ? text(lang, 'punish.until', { date: iso.slice(0, 16).replace('T', ' ') })
-      : text(lang, 'punish.forever');
-
   /** /voice gruppe <name> [passwort] | /voice gruppe weg [name] */
   const ownGroup = (actor: Actor, args: readonly string[]): void => {
     const first = args[0] ?? '';
@@ -293,78 +295,6 @@ export function createVoice(
           .all()
           .map((p) => p.name)
           .filter((n) => n.toLowerCase().startsWith((args[1] ?? '').toLowerCase()));
-      },
-    },
-    {
-      name: 'voicemute',
-      aliases: ['sprachstumm'],
-      right: 'voice-mute',
-      usage: { de: '/voicemute <spieler> [dauer] [grund]', en: '/voicemute <player> [duration] [reason]' },
-      run: (actor, args) => {
-        const t = ctx.presence.byName(args[0] ?? '') ?? ctx.players.byName(args[0] ?? '');
-        if (!t) {
-          say(actor, text(actor.lang, 'cmd.unknown_player', { name: mm(args[0] ?? '') }));
-          return;
-        }
-        if (ctx.players.roleOf(t.uuid).position <= actor.role.position) {
-          say(actor, text(actor.lang, 'cmd.higher', { name: mm(t.name) }));
-          return;
-        }
-        const minutes = parseDuration(args[1]);
-        const reason =
-          (minutes === undefined ? args.slice(1) : args.slice(2)).join(' ').trim() ||
-          text(actor.lang, 'punish.no_reason');
-        const p = ctx.punish.add({
-          uuid: t.uuid,
-          kind: 'voice',
-          reason,
-          by: actor.name,
-          minutes: minutes ?? null,
-        });
-        broadcast();
-        const target = ctx.presence.get(t.uuid);
-        if (target)
-          ctx.msg(
-            t.uuid,
-            text(target.lang, 'voice.muted_you', {
-              until: until(target.lang, p.expiresAt),
-              reason: mm(reason),
-            }),
-          );
-        ctx.team('voice-mute', (lang) =>
-          text(lang, 'team.voicemute', {
-            actor: mm(actor.name),
-            name: mm(t.name),
-            reason: mm(reason),
-            until: until(lang, p.expiresAt),
-          }),
-        );
-      },
-      complete: (_actor, args) =>
-        args.length <= 1
-          ? ctx.presence
-              .all()
-              .map((p) => p.name)
-              .filter((n) => n.toLowerCase().startsWith((args[0] ?? '').toLowerCase()))
-          : [],
-    },
-    {
-      name: 'voiceunmute',
-      aliases: ['sprachfrei'],
-      right: 'voice-mute',
-      usage: { de: '/voiceunmute <spieler>', en: '/voiceunmute <player>' },
-      run: (actor, args) => {
-        const t = ctx.presence.byName(args[0] ?? '') ?? ctx.players.byName(args[0] ?? '');
-        if (!t || !ctx.punish.revoke(t.uuid, 'voice', actor.name)) {
-          say(actor, text(actor.lang, 'voice.not_muted', { name: mm(args[0] ?? '') }));
-          return;
-        }
-        broadcast();
-        const target = ctx.presence.get(t.uuid);
-        if (target) ctx.msg(t.uuid, text(target.lang, 'voice.unmuted_you'));
-        ctx.team('voice-mute', (lang) =>
-          text(lang, 'team.voiceunmute', { actor: mm(actor.name), name: mm(t.name) }),
-        );
       },
     },
   ];

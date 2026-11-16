@@ -33,7 +33,8 @@ import type { ApplicationService } from '../mornicraft/applications.js';
 /**
  * Der MoinMorni-Bot: richtet den Discord-Server ein (Rollen aus der Vorlage, Kanäle mit Rechten, Regeln, Hilfe mit
  * Ticket-Knopf), hält eine Status-Nachricht aktuell, verbindet Minecraft- und Discord-Konten, überträgt Ränge und
- * Strafen (Bann, Timeout/Stumm) und schreibt ins Team-Log. Ein Discord-Server: der, auf den Philip den Bot holt.
+ * Strafen (Bann, Timeout/Stumm, Gefängnis-Rolle, Sprachchat-Stumm im Sprachkanal) und schreibt ins Team-Log. Ein
+ * Discord-Server: der, auf den Philip den Bot holt.
  */
 
 const ADMINISTRATOR = '8';
@@ -57,7 +58,15 @@ const BUTTON_PRIMARY = 1;
 const BUTTON_DANGER = 4;
 const PRIVATE_THREAD = 12;
 const OPTION_STRING = 3;
+const HTTP_BAD_REQUEST = 400;
+const HTTP_FORBIDDEN = 403;
 const HTTP_NOT_FOUND = 404;
+/** Discord: „Missing Permissions“ – hier fehlt dem Bot „Mitglieder stummschalten“. */
+const MISSING_PERMISSIONS = 50013;
+/** Darf der Bot nicht stummschalten, versucht er es erst nach dieser Pause wieder (nicht bei jedem Kanalwechsel). */
+const NO_RIGHT_PAUSE_MS = 10 * MINUTE_MS;
+/** Gemerkt: wen der Bot im Sprachkanal stummgeschaltet hat (Schlüssel + UUID → Discord-ID). */
+const VOICE_MUTE_KEY = 'voicemute:';
 const EMERALD = 0x1fa463;
 const GREY = 0x6b7280;
 const TICKET_OPEN = 'mm:ticket:open';
@@ -474,6 +483,9 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const jail = get('role:jail');
     if (jail && hub.punish.active(uuid, 'jail') && !m.roles.includes(jail))
       await setExtra(uuid, 'jail', true, 'MoinMorni: Gefängnis');
+    // Ebenso Sprachchat-Stumm, falls die Person gerade in einem Sprachkanal sitzt.
+    if (hub.punish.active(uuid, 'voice') && !get(`${VOICE_MUTE_KEY}${uuid}`))
+      await setVoiceMute(uuid, true, 'MoinMorni: Sprachchat stumm');
   };
 
   const setExtra = async (uuid: string, extra: ExtraRole, on: boolean, reason: string): Promise<void> => {
@@ -484,6 +496,50 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     await rest(on ? 'PUT' : 'DELETE', `/guilds/${g}/members/${discordId}/roles/${role}`, undefined, reason);
     if (on) put(`${extra}:${uuid}`, discordId);
     else drop(`${extra}:${uuid}`);
+  };
+
+  /**
+   * Sprachchat-Stumm in Discord: Server-Stummschaltung an oder aus. Geht nur, solange die Person in einem Sprachkanal
+   * sitzt (sonst antwortet Discord 400 – dann beim nächsten Betreten, siehe VOICE_STATE_UPDATE) und der Bot
+   * „Mitglieder stummschalten“ darf (sonst 403 – dann gilt die Strafe nur im Spiel, ohne Fehler). Gemerkt wird nur, wen
+   * der Bot selbst stummgeschaltet hat; nur das hebt er wieder auf.
+   */
+  const voiceMute = { pausedUntil: 0 };
+  const setVoiceMute = async (
+    uuid: string,
+    on: boolean,
+    reason: string,
+  ): Promise<'done' | 'not-in-voice' | 'no-right' | 'skipped'> => {
+    const g = guildId();
+    const discordId = hub.players.get(uuid)?.discordId;
+    if (!client || !g || !discordId || (on && Date.now() < voiceMute.pausedUntil)) return 'skipped';
+    try {
+      await rest('PATCH', `/guilds/${g}/members/${discordId}`, { mute: on }, reason);
+    } catch (err) {
+      if (!(err instanceof DiscordError)) throw err;
+      if (err.status === HTTP_FORBIDDEN || err.code === MISSING_PERMISSIONS) {
+        voiceMute.pausedUntil = Date.now() + NO_RIGHT_PAUSE_MS;
+        log.info('Discord: Der Bot darf niemanden stummschalten – Sprachchat-Stumm gilt nur im Spiel');
+        return 'no-right';
+      }
+      if (err.status === HTTP_BAD_REQUEST) return 'not-in-voice';
+      throw err;
+    }
+    if (on) put(`${VOICE_MUTE_KEY}${uuid}`, discordId);
+    else drop(`${VOICE_MUTE_KEY}${uuid}`);
+    return 'done';
+  };
+
+  /** Jemand betritt einen Sprachkanal oder ändert dort etwas: Sprachchat-Stumm nachziehen (an oder wieder aus). */
+  const voiceStateChanged = async (d: Record<string, unknown>): Promise<void> => {
+    if (d['channel_id'] === null || d['channel_id'] === undefined) return;
+    const player = hub.players.byDiscord(String(d['user_id'] ?? ''));
+    if (!player) return;
+    const punished = hub.punish.active(player.uuid, 'voice') !== undefined;
+    const muted = d['mute'] === true;
+    if (punished && !muted) await setVoiceMute(player.uuid, true, 'MoinMorni: Sprachchat stumm');
+    if (!punished && muted && get(`${VOICE_MUTE_KEY}${player.uuid}`))
+      await setVoiceMute(player.uuid, false, 'MoinMorni: Sprachchat-Stumm vorbei');
   };
 
   const log2team = async (line: string): Promise<void> => {
@@ -554,6 +610,21 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         await setExtra(c.uuid, 'jail', false, 'MoinMorni: Gefängnis vorbei');
         await log2team(bt('de', 'logLiftJail', vars));
       },
+      // Sprachchat-Stumm: im Discord-Sprachkanal stumm (Server-Stummschaltung), solange die Strafe läuft.
+      'voice:add': async () => {
+        const result = await setVoiceMute(c.uuid, true, `MoinMorni: ${c.reason}`).catch((err: unknown) => {
+          log.warn({ err }, 'Discord: Sprachchat-Stumm nicht übertragen');
+          return 'failed' as const;
+        });
+        const hint = result === 'no-right' ? bt('de', 'logVoiceNoRight') : '';
+        await log2team(`${bt('de', 'logVoiceMute', vars)}${hint}`);
+      },
+      'voice:lift': async () => {
+        await setVoiceMute(c.uuid, false, 'MoinMorni: Sprachchat-Stumm aufgehoben').catch((err: unknown) => {
+          log.warn({ err }, 'Discord: Sprachchat-Stumm nicht aufgehoben');
+        });
+        await log2team(bt('de', 'logLiftVoiceMute', vars));
+      },
       'warn:add': () => log2team(bt('de', 'logWarn', vars)),
       'kick:add': () => log2team(bt('de', 'logKick', vars)),
     };
@@ -580,18 +651,25 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     });
   };
 
-  /** Abgelaufene Stumm- und Gefängnis-Strafen: die Rolle in Discord wieder abnehmen. */
+  /**
+   * Abgelaufene Stumm- und Gefängnis-Strafen: die Rolle in Discord wieder abnehmen. Sprachchat-Stumm: die
+   * Stummschaltung aufheben (sitzt die Person gerade nicht im Sprachkanal, beim nächsten Betreten).
+   */
   const cleanup = async (): Promise<void> => {
-    const expired = (extra: 'muted' | 'jail', kind: 'mute' | 'jail'): Promise<void>[] =>
+    const over = (prefix: string, kind: 'mute' | 'jail' | 'voice'): string[] =>
       db
         .select()
         .from(discordObjects)
-        .where(like(discordObjects.key, `${extra}:%`))
+        .where(like(discordObjects.key, `${prefix}%`))
         .all()
-        .map((row) => row.key.slice(extra.length + 1))
-        .filter((uuid) => !hub.punish.active(uuid, kind))
-        .map((uuid) => setExtra(uuid, extra, false, 'MoinMorni: Strafe vorbei'));
-    await Promise.all([...expired('muted', 'mute'), ...expired('jail', 'jail')]);
+        .map((row) => row.key.slice(prefix.length))
+        .filter((uuid) => !hub.punish.active(uuid, kind));
+    const expired = (extra: 'muted' | 'jail', kind: 'mute' | 'jail'): Promise<void>[] =>
+      over(`${extra}:`, kind).map((uuid) => setExtra(uuid, extra, false, 'MoinMorni: Strafe vorbei'));
+    const voiceOver = over(VOICE_MUTE_KEY, 'voice').map(async (uuid) => {
+      await setVoiceMute(uuid, false, 'MoinMorni: Strafe vorbei');
+    });
+    await Promise.all([...expired('muted', 'mute'), ...expired('jail', 'jail'), ...voiceOver]);
   };
 
   // ---------- Verbinden ----------
@@ -732,6 +810,10 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         );
         await rest('DELETE', `/users/@me/guilds/${String(d['id'])}`);
       }
+      return;
+    }
+    if (e.t === 'VOICE_STATE_UPDATE' && String(d['guild_id']) === guildId()) {
+      await voiceStateChanged(d);
       return;
     }
     if (e.t === 'GUILD_MEMBER_ADD' && String(d['guild_id']) === guildId()) {

@@ -1,4 +1,13 @@
-import { Ban, DoorOpen, Lock, MicOff, Smartphone, TriangleAlert, type LucideIcon } from 'lucide-react';
+import {
+  Ban,
+  DoorOpen,
+  Lock,
+  MessageSquareOff,
+  MicOff,
+  Smartphone,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pill, type PillTone } from '~/components/ui';
@@ -9,14 +18,17 @@ import type { PlayerView, PunishKind } from './model';
 export const KIND_TONE: Readonly<Record<PunishKind, PillTone>> = {
   ban: 'danger',
   mute: 'warning',
+  voice: 'warning',
   warn: 'gold',
   kick: 'neutral',
   jail: 'blue',
 };
 
+/** Chat mute: a crossed-out speech bubble; voice chat mute: a crossed-out microphone. */
 export const KIND_ICON: Readonly<Record<PunishKind, LucideIcon>> = {
   ban: Ban,
-  mute: MicOff,
+  mute: MessageSquareOff,
+  voice: MicOff,
   warn: TriangleAlert,
   kick: DoorOpen,
   jail: Lock,
@@ -43,7 +55,7 @@ export function KindBadge({
 /** Bedrock, banned and muted as small badges next to a player's name. */
 export function PlayerFlags({ player }: { readonly player: PlayerView }): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
-  if (!player.bedrock && !player.banned && !player.muted && !player.jailed) return null;
+  if (!player.bedrock && !player.banned && !player.muted && !player.jailed && !player.voiceMuted) return null;
   return (
     <span className="flex flex-wrap items-center gap-1.5">
       {player.bedrock ? (
@@ -62,8 +74,14 @@ export function PlayerFlags({ player }: { readonly player: PlayerView }): ReactE
       ) : null}
       {player.muted ? (
         <Pill tone="warning" className="gap-1">
-          <MicOff className="size-3" aria-hidden />
+          <MessageSquareOff className="size-3" aria-hidden />
           {t('players.muted')}
+        </Pill>
+      ) : null}
+      {player.voiceMuted ? (
+        <Pill tone="warning" className="gap-1">
+          <MicOff className="size-3" aria-hidden />
+          {t('players.voiceMuted')}
         </Pill>
       ) : null}
       {player.jailed ? (

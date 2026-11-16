@@ -189,6 +189,79 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(log).toContain('Beleidigung');
   });
 
+  test('Sprachchat-Stumm: im Discord-Sprachkanal stumm, auch beim späteren Betreten; ohne Recht nur im Spiel', async () => {
+    const OK = 200;
+    const MINUTES = 30;
+    const SHORT = 10;
+    const SECOND_LIFT = 2;
+    const teamlog = channelByName('📋・team-log');
+    const log = (): string => JSON.stringify(dc.messages.get(teamlog?.id ?? ''));
+    const times = (part: string): number => log().split(part).length - 1;
+    const dorf = channelByName('Dorfplatz')?.id ?? '-';
+    // Nach dem Bann im Test davor ist Lena wieder auf dem Server – diesmal im Sprachkanal Dorfplatz.
+    dc.guild.members.set(LENA_DC, {
+      roles: [],
+      communication_disabled_until: null,
+      channel_id: dorf,
+      mute: false,
+    });
+    const lena = () => dc.guild.members.get(LENA_DC);
+    const sits = (channel: string | null) => {
+      Object.assign(lena() ?? {}, { channel_id: channel });
+    };
+    // Was Discord dem Bot schickt, wenn jemand einen Sprachkanal betritt.
+    const enters = () =>
+      h.mm.bot.handle({
+        t: 'VOICE_STATE_UPDATE',
+        d: { guild_id: dc.guild.id, user_id: LENA_DC, channel_id: dorf, mute: lena()?.mute === true },
+      });
+    const voice = (reason: string, minutes: number | null) =>
+      call('POST', '/api/panel/punishments', { player: 'Lena', kind: 'voice', minutes, reason });
+    const lift = () => call('DELETE', `/api/panel/punishments/${LENA}/voice`);
+
+    // Sitzt im Sprachkanal: dort gleich stumm, Team-Log; Aufheben gibt sie wieder frei.
+    expect((await voice('Schreien', MINUTES)).statusCode).toBe(OK);
+    await until(() => lena()?.mute === true);
+    await until(() => log().includes('Schreien'));
+    expect(log()).toContain('im Sprachchat stumm');
+    await lift();
+    await until(() => lena()?.mute === false);
+    await until(() => times('wieder sprechen') === 1);
+    // Ist die Zeit um (hier: ohne Nachricht beendet), hebt das regelmäßige Aufräumen die Stummschaltung auf.
+    await voice('Abgelaufen', MINUTES);
+    await until(() => lena()?.mute === true);
+    h.mm.hub.punish.revoke(LENA, 'voice', 'test');
+    await h.mm.bot.cleanup();
+    expect(lena()?.mute).toBe(false);
+
+    // Nicht im Sprachkanal: kein Fehler – stumm, sobald sie einen betritt.
+    sits(null);
+    await voice('Dauerlärm', null);
+    await until(() => log().includes('Dauerlärm'));
+    expect(lena()?.mute).toBe(false);
+    sits(dorf);
+    await enters();
+    expect(lena()?.mute).toBe(true);
+    // Aufgehoben, während sie weg ist: beim nächsten Betreten wieder frei.
+    sits(null);
+    await lift();
+    await until(() => times('wieder sprechen') === SECOND_LIFT);
+    expect(lena()?.mute).toBe(true);
+    sits(dorf);
+    await enters();
+    expect(lena()?.mute).toBe(false);
+
+    // Ohne das Recht „Mitglieder stummschalten“: gilt nur im Spiel, Hinweis im Team-Log, kein Fehler.
+    dc.permissions.muteMembers = false;
+    expect((await voice('Ohne Recht', SHORT)).statusCode).toBe(OK);
+    await until(() => log().includes('Ohne Recht'));
+    expect(log()).toContain('Mitglieder stummschalten');
+    expect(lena()?.mute).toBe(false);
+    expect(h.mm.hub.punish.active(LENA, 'voice')).toBeTruthy();
+    dc.permissions.muteMembers = true;
+    await lift();
+  });
+
   test('MorniCraft-Bewerbung: Formular in Discord, #bewerbungen, Annehmen per Knopf, Webseite mit Discord-Anmeldung, Whitelist', async () => {
     const PHILIP_UUID = '11111111-1111-1111-1111-111111111111';
     const PHILIP_DC = '6666';

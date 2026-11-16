@@ -1,6 +1,7 @@
 /**
  * Nachgebautes Discord für Tests: REST (Rollen, Kanäle, Nachrichten, Mitglieder, Banns, Befehle, Threads,
- * Antworten auf Klicks) und ein Gateway, das READY und GUILD_CREATE schickt. Nur was der MoinMorni-Bot braucht.
+ * Antworten auf Klicks, Stummschalten im Sprachkanal) und ein Gateway, das READY und GUILD_CREATE schickt. Nur was der
+ * MoinMorni-Bot braucht.
  */
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -25,6 +26,14 @@ interface FChannel {
   locked?: boolean;
   members?: string[];
 }
+interface FMember {
+  roles: string[];
+  communication_disabled_until: string | null;
+  /** Server-Stummschaltung im Sprachkanal. */
+  mute?: boolean;
+  /** Sprachkanal, in dem die Person gerade sitzt (null = in keinem). */
+  channel_id?: string | null;
+}
 interface FMessage {
   id: string;
   content?: string;
@@ -41,9 +50,11 @@ export interface FakeDiscord {
     verification_level: number;
     roles: Map<string, FRole>;
     channels: Map<string, FChannel>;
-    members: Map<string, { roles: string[]; communication_disabled_until: string | null }>;
+    members: Map<string, FMember>;
     bans: Set<string>;
   };
+  /** Was der Bot darf – wie im echten Discord: ohne „Mitglieder stummschalten“ antwortet es 403. */
+  readonly permissions: { muteMembers: boolean };
   readonly messages: Map<string, FMessage[]>;
   readonly commands: unknown[];
   readonly replies: Array<{ id: string; body: { type: number; data: Record<string, unknown> } }>;
@@ -64,9 +75,10 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
       ['900', { id: '900', name: '@everyone', color: 0, permissions: '0', hoist: false, mentionable: false }],
     ]),
     channels: new Map<string, FChannel>(),
-    members: new Map<string, { roles: string[]; communication_disabled_until: string | null }>(),
+    members: new Map<string, FMember>(),
     bans: new Set<string>(),
   };
+  const permissions = { muteMembers: true };
   const messages = new Map<string, FMessage[]>();
   const commands: unknown[] = [];
   const replies: Array<{ id: string; body: { type: number; data: Record<string, unknown> } }> = [];
@@ -188,6 +200,12 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
       (m, b, res) => {
         const mem = guild.members.get(m[2] ?? '');
         if (!mem) return notFound(res);
+        // Stummschalten geht nur mit dem Recht und nur, solange jemand in einem Sprachkanal sitzt (wie Discord).
+        if ('mute' in b && !permissions.muteMembers)
+          return json(res, 403, { code: 50013, message: 'Missing Permissions' });
+        if ('mute' in b && !mem.channel_id)
+          return json(res, 400, { code: 40032, message: 'Target user is not connected to voice.' });
+        if ('mute' in b) mem.mute = b['mute'] === true;
         if ('communication_disabled_until' in b)
           mem.communication_disabled_until = (b['communication_disabled_until'] as string | null) ?? null;
         return json(res, 200, mem);
@@ -313,6 +331,7 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
   return {
     api: `http://127.0.0.1:${port()}/api/v10`,
     guild,
+    permissions,
     messages,
     commands,
     replies,

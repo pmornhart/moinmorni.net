@@ -873,6 +873,48 @@ describe('Hub', () => {
     expect(duels.binaries.at(-1)?.at(-1)).toBe(7);
   });
 
+  test('Sprachchat-Stumm über die Moderation: Meldung an Spieler und Team, Verlauf, Ablauf, Aufheben, Recht', async () => {
+    const { proxy, duels } = await network();
+    const cmd = (uuid: string, command: string, ...args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+    const mutedList = (m: Msg) => m['muted'] as string[];
+    const MUTE_MINUTES = 10;
+    const MINUTE_MS = 60_000;
+    await duels.next('voice');
+
+    // Wie im Panel: Dauer und Grund, Lena (englisch) liest es, das Team bekommt einen Hinweis.
+    await cmd(PHILIP, 'voicemute', 'Lena', `${MUTE_MINUTES}m`, 'zu laut');
+    await said(LENA, 'You are muted in voice chat');
+    await said(PHILIP, 'im Sprachchat stummgeschaltet');
+    expect(mutedList(await duels.next('voice', (m) => mutedList(m).includes(LENA)))).toEqual([LENA]);
+    const entry = hub.punish.history(LENA)[0];
+    expect(entry).toMatchObject({ kind: 'voice', reason: 'zu laut', byName: 'Philip' });
+    expect(Date.parse(entry?.expiresAt ?? '') - clock.now).toBe(MUTE_MINUTES * MINUTE_MS);
+    // Chat schreiben geht weiter – nur der Sprachchat ist stumm.
+    expect(hub.punish.active(LENA, 'mute')).toBeUndefined();
+
+    // Nach zehn Minuten vorbei: die Spielserver bekommen die neue Liste (sie halten Stumme selbst zurück).
+    clock.now += (MUTE_MINUTES + 1) * MINUTE_MS;
+    duels.send({ t: 'voice-group', uuid: LENA, group: null });
+    expect(mutedList(await duels.next('voice', (m) => !mutedList(m).includes(LENA)))).toEqual([]);
+
+    // Ohne Dauer für immer, /voiceunmute hebt auf; ein zweites Mal gibt es nichts aufzuheben.
+    await cmd(PHILIP, 'voicemute', 'Lena', 'Dauerlärm');
+    expect(hub.punish.active(LENA, 'voice')).toMatchObject({ reason: 'Dauerlärm', expiresAt: null });
+    await cmd(PHILIP, 'voiceunmute', 'Lena');
+    await said(LENA, 'You can speak in voice chat again');
+    await said(PHILIP, 'im Sprachchat freigegeben');
+    await duels.next('voice', (m) => !mutedList(m).includes(LENA));
+    await cmd(PHILIP, 'voiceunmute', 'Lena');
+    await said(PHILIP, 'ist im Sprachchat nicht stumm');
+
+    // Ohne das Recht „voice-mute“ (Lena ist Spielerin) geht es nicht.
+    await cmd(LENA, 'voicemute', 'Philip');
+    expect(hub.punish.active(PHILIP, 'voice')).toBeUndefined();
+  });
+
   test('Eigene Sprachgruppen für alle Server: Passwort, besetzter Name, leer → weg, im Panel aus, Hörweite', async () => {
     const { proxy, lobby, duels } = await network();
     const cmd = (uuid: string, command: string, ...args: string[]) =>

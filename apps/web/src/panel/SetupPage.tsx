@@ -7,7 +7,8 @@ import type { LoginResponse } from '@mornihosting/shared';
 import { api } from '@/lib/api';
 import { meQuery } from '@/features/auth/session';
 import { FieldBlock } from '~/components/controls';
-import { Button, Input, Kbd, NativeSelect, Skeleton } from '~/components/ui';
+import { Select } from '~/components/select';
+import { Button, Input, Kbd, Skeleton } from '~/components/ui';
 import { chooseLanguage, MM_NAMESPACE, SUPPORTED_LANGUAGES, type Language } from '~/i18n';
 import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
@@ -161,7 +162,7 @@ export function SetupPage(): ReactElement {
           />
         </FieldBlock>
         <FieldBlock id="setup-language" label={t('setup.language')}>
-          <NativeSelect
+          <Select
             id="setup-language"
             value={locale}
             onChange={(e) => {
@@ -175,7 +176,7 @@ export function SetupPage(): ReactElement {
                 {t(`language.${l}`)}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         </FieldBlock>
         {tried && problem ? <FormError>{t(problem)}</FormError> : null}
         {create.error ? <FormError>{errorText(create.error)}</FormError> : null}

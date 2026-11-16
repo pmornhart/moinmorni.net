@@ -987,7 +987,8 @@
     "bedrock": "Bedrock",
     "bedrockHelp": "Spielt mit der Bedrock Edition (Handy, Konsole oder Windows).",
     "banned": "Gebannt",
-    "muted": "Stumm",
+    "muted": "Chat stumm",
+    "voiceMuted": "Sprachchat stumm",
     "open": "Profil von {{name}} öffnen",
     "back": "Alle Spieler",
     "unknown": "Diesen Spieler kennt MoinMorni nicht (mehr).",
@@ -1013,7 +1014,8 @@
       "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – diesen Rang kannst du nicht ändern.",
       "noRight": "Ränge vergeben darf nur, wer das Recht „Ränge vergeben“ hat (wie /rang im Spiel). VIP vergibt nur der Owner.",
       "noRoles": "Ränge vergeben kann, wer im Panel auch die Rollen sehen darf.",
-      "help": "Du kannst nur Ränge unter deinem eigenen vergeben. Owner und Admin vergibt nur der Owner. Gilt sofort im Spiel."
+      "help": "Du kannst nur Ränge unter deinem eigenen vergeben. Owner, Admin und VIP vergibt nur der Owner. Gilt sofort im Spiel.",
+      "locked": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher (Owner, Admin und VIP vergibt nur der Owner)."
     },
     "act": {
       "title": "Strafe verhängen",
@@ -1064,18 +1066,21 @@
   "punish": {
     "kinds": {
       "ban": "Bann",
-      "mute": "Stumm",
+      "mute": "Chat stumm",
+      "voice": "Sprachchat stumm",
       "warn": "Verwarnung",
       "kick": "Rauswurf",
       "jail": "Gefängnis"
     },
     "verbs": {
       "ban": "Bannen",
-      "mute": "Stummschalten",
+      "mute": "Chat stummschalten",
+      "voice": "Sprachchat stummschalten",
       "warn": "Verwarnen",
       "kick": "Rauswerfen",
       "jail": "Gefängnis"
     },
+    "noRight": "Dafür fehlt deiner Rolle das Recht – genau wie beim Befehl im Spiel.",
     "title": "Neue Strafe",
     "titleFor": "Strafe für {{name}}",
     "text": "Wirkt sofort im ganzen Netzwerk – die Person sieht den Grund, das Team bekommt einen Hinweis.",
@@ -1112,6 +1117,8 @@
       "banForever": "{{name}} fliegt sofort vom Netzwerk und kommt nicht mehr herein – bis jemand den Bann aufhebt.",
       "mute": "{{name}} kann {{duration}} lang nicht im Chat schreiben.",
       "muteForever": "{{name}} kann nicht mehr im Chat schreiben – bis jemand die Stummschaltung aufhebt.",
+      "voice": "{{name}} kann {{duration}} lang im Sprachchat nicht sprechen – auf allen Servern. Schreiben im Chat geht weiter. Discord: auch im Sprachkanal stumm, wenn das Konto verbunden ist.",
+      "voiceForever": "{{name}} kann im Sprachchat nicht mehr sprechen, bis jemand das aufhebt – auf allen Servern. Schreiben im Chat geht weiter. Discord: auch im Sprachkanal stumm, wenn das Konto verbunden ist.",
       "warn": "{{name}} bekommt die Verwarnung im Spiel angezeigt (wenn online). Sie bleibt im Verlauf stehen.",
       "kick": "{{name}} fliegt sofort vom Netzwerk, kann aber gleich wieder herein.",
       "jail": "{{name}} kommt {{duration}} lang in die Arrestzelle der Lobby: keine Spielmodi, schreiben nur ans Team. Discord: Gefängnis-Rolle.",
@@ -1121,19 +1128,22 @@
     "cancel": "Abbrechen",
     "done": {
       "ban": "{{name}} ist jetzt gebannt.",
-      "mute": "{{name}} ist jetzt stummgeschaltet.",
+      "mute": "{{name}} ist jetzt im Chat stummgeschaltet.",
+      "voice": "{{name}} ist jetzt im Sprachchat stumm.",
       "warn": "{{name}} wurde verwarnt.",
       "kick": "{{name}} wurde rausgeworfen.",
       "jail": "{{name}} sitzt jetzt im Gefängnis."
     },
     "lifted": {
       "ban": "Der Bann von {{name}} ist aufgehoben.",
-      "mute": "{{name}} darf wieder schreiben."
+      "mute": "{{name}} darf wieder schreiben.",
+      "voice": "{{name}} darf im Sprachchat wieder sprechen.",
+      "jail": "{{name}} ist wieder frei."
     }
   },
   "punishments": {
     "title": "Strafen",
-    "text": "Alle Strafen im Netzwerk – Banns, Stummschaltungen, Verwarnungen und Rauswürfe. Aktive kannst du hier aufheben.",
+    "text": "Alle Strafen im Netzwerk – Banns, Stummschaltungen im Chat und im Sprachchat, Gefängnis, Verwarnungen und Rauswürfe. Aktive kannst du hier aufheben.",
     "new": "Neue Strafe",
     "search": "Nach Spieler suchen …",
     "searchLabel": "Strafen nach Spielername durchsuchen",
@@ -1178,7 +1188,7 @@
     },
     "punishments": {
       "title": "Strafen",
-      "text": "Verwarnen, stummschalten, bannen oder rauswerfen – und alles wieder aufheben. Wirkt sofort im ganzen Netzwerk."
+      "text": "Verwarnen, im Chat oder im Sprachchat stummschalten, ins Gefängnis stecken, bannen oder rauswerfen – und alles wieder aufheben. Wirkt sofort im ganzen Netzwerk und im Discord."
     },
     "roles": {
       "title": "Rollen",
@@ -1813,6 +1823,7 @@
     "player_unknown": "Diesen Spieler kennt MoinMorni nicht. Er muss mindestens einmal auf dem Netzwerk gewesen sein – prüf auch die Schreibweise.",
     "player_higher": "Diese Person hat den gleichen oder einen höheren Rang als du – das darfst du nicht.",
     "player_offline": "Rauswerfen geht nur, solange die Person online ist.",
+    "punish_no_right": "Diese Strafe darf deine Rolle nicht verhängen oder aufheben – dafür fehlt ihr das Recht, genau wie beim Befehl im Spiel (z. B. „Im Sprachchat stummschalten“ für /voicemute).",
     "punishment_none": "Da gibt es gerade nichts aufzuheben – vielleicht ist die Strafe schon abgelaufen.",
     "role_unknown": "Diesen Rang gibt es nicht (mehr). Lade die Seite neu.",
     "role_too_high": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher (VIP vergibt nur der Owner).",
