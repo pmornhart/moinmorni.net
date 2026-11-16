@@ -439,6 +439,19 @@ describe('Hub', () => {
     expect(await proxy.next('network', (m) => m['maintenance'] === true)).toBeTruthy();
     await cmd(PHILIP, 'lobby', 'saison', 'ostern');
     expect(stores.settings('lobby')['season']).toBe('easter');
+    // Doppelsprung und Jump and Run: Schalter und Kommazahl (wie man sie schreibt) auch im Spiel.
+    await cmd(PHILIP, 'lobby', 'doppelsprung', 'staerke', '1,5');
+    await cmd(PHILIP, 'lobby', 'doppelsprung', 'aus');
+    await cmd(PHILIP, 'lobby', 'jumpandrun', 'schwerer', '20');
+    expect(stores.settings('lobby')).toMatchObject({
+      doubleJump: false,
+      doubleJumpStrength: 1.5,
+      jumpHarderFrom: 20,
+      jumpAndRun: true,
+    });
+    await cmd(PHILIP, 'lobby', 'doppelsprung', 'staerke', '3');
+    await said(PHILIP, 'passt nicht');
+    expect(stores.settings('lobby')['doubleJumpStrength']).toBe(1.5);
     await cmd(PHILIP, 'chatconfig', 'wort', 'hinzu', 'blöd');
     await cmd(PHILIP, 'chatconfig', 'wort', 'hinzu', 'mist');
     await cmd(PHILIP, 'chatconfig', 'wort', 'weg', 'blöd');

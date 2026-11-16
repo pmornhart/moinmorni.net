@@ -1,8 +1,12 @@
 /**
  * Test der Lobby-Funktionen mit einem echten Test-Spieler (mineflayer, Paper 26.1.2 – darauf darf er sich bewegen):
- * Ankunft am Platz, Begrüßung, Ankündigungs-Leiste, Kompass + Buch, Menü, Rundgang, Launchpad, Parkour mit
- * Kontrollpunkt/Sturz/Ziel/Bestenliste, kein Schaden.
+ * Ankunft am Platz, Begrüßung, Ankündigungs-Leiste, Kompass + Buch, Menü, Rundgang, Launchpad, Jump and Run (Start
+ * am Smaragd, Blöcke nur für den Läufer, Sprünge mit Positions-Teleport des Test-Spielers selbst, Stufe, Sturz, Rekord,
+ * Tafel, Bestenliste, /parkour leitet um), Doppelsprung (Fliegen erlaubt, Schwung, nicht im Jump and Run, Schalter im
+ * Panel), kein Schaden.
  *   NODE_PATH=~/mm-cache/node/node_modules node lobby-test.cjs <host> <port> <rcon-host:port> <rcon-passwort-datei>
+ * Optional: MM_LOBBY_DIR (Server-Ordner: Rekord-Datei), MM_HUB_DB (hub.db: Statistik „lobby“), MM_STEUER
+ * (Steuerung von scripts/hub-dev.ts, z. B. http://127.0.0.1:28891: Doppelsprung im Panel aus/an).
  */
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
@@ -148,53 +152,237 @@ async function main() {
   );
   await wait(4000);
 
-  // Parkour: Hilfsblöcke (Barriere) neben Start, Kontrollpunkt, oben und Ziel – draufstellen, hineinlaufen
-  const walkOnto = async (bx, by, bz, fromX) => {
-    rcon(`setblock ${fromX} ${by} ${bz} barrier`, `tp ${NAME} ${fromX + 0.5} ${by + 1} ${bz + 0.5} 90 0`);
-    await wait(1200);
-    bot.setControlState('forward', true);
-    await wait(450);
-    bot.setControlState('forward', false);
-    await wait(900);
-    rcon(`setblock ${fromX} ${by} ${bz} air`);
+  // ---------- Jump and Run ----------
+  const abilities = [];
+  bot._client.on('abilities', (p) => abilities.push(p.flags));
+  const particles = [];
+  bot._client.on('world_particles', (p) => particles.push(p));
+  const allowFlying = () => abilities.length > 0 && (abilities[abilities.length - 1] & 0x04) !== 0;
+  const waitFor = async (ok, ms) => {
+    const end = Date.now() + ms;
+    while (!ok() && Date.now() < end) await wait(100);
+    return ok();
   };
+  /** Was der Test-Spieler an einer Stelle sieht: Oberkante und Mitte der Fläche (aus den Formen des Blocks). */
+  const surface = (b) => {
+    const shapes = b.shapes.length ? b.shapes : [[0, 0, 0, 1, 1, 1]];
+    const x1 = Math.min(...shapes.map((s) => s[0]));
+    const x2 = Math.max(...shapes.map((s) => s[3]));
+    const z1 = Math.min(...shapes.map((s) => s[2]));
+    const z2 = Math.max(...shapes.map((s) => s[5]));
+    return {
+      x: b.position.x + (x1 + x2) / 2,
+      y: b.position.y + Math.max(...shapes.map((s) => s[4])),
+      z: b.position.z + (z1 + z2) / 2,
+    };
+  };
+  const SKIP = new Set(['air', 'cave_air', 'void_air', 'light']);
+  /** Blöcke um den Test-Spieler, die es nur bei ihm gibt (oben in der Bahn ist sonst nichts). */
+  const blocksAround = () => {
+    const p = bot.entity.position.floored();
+    const found = [];
+    for (let dx = -6; dx <= 6; dx++)
+      for (let dz = -6; dz <= 6; dz++)
+        for (let dy = -8; dy <= 4; dy++) {
+          const b = bot.blockAt(p.offset(dx, dy, dz));
+          if (b && !SKIP.has(b.name)) found.push(b);
+        }
+    return found;
+  };
+  const key = (b) => `${b.position.x},${b.position.y},${b.position.z}`;
+
   actionbars.length = 0;
   chats.length = 0;
-  await walkOnto(-56, 64, -36, -55);
+  titles.length = 0;
+  // Von Osten her auf den Smaragd (Startfeld −60/64/−41) laufen.
+  rcon(`tp ${NAME} -58.5 65 -40.5 90 0`);
+  await wait(1500);
   check(
-    'Parkour startet',
-    actionbars.some((a) => a.includes('Los geht') || a.includes('⏱')),
-    actionbars.slice(-2).join(' | '),
+    'Doppelsprung: in der Lobby ist Fliegen erlaubt (für das zweite Springen)',
+    allowFlying(),
+    String(abilities),
   );
-  await walkOnto(-66, 66, -36, -65);
+  bot.setControlState('forward', true);
+  await waitFor(() => bot.entity.position.y > 140, 3000);
+  bot.setControlState('forward', false);
+  await waitFor(() => bot.entity.position.y > 140, 4000);
+  const startPos = bot.entity.position.clone();
+  check('Jump and Run: Smaragd → hoch über dem Dorf', startPos.y > 140, JSON.stringify(startPos));
   check(
-    'Kontrollpunkt erreicht',
-    chats.some((c) => c.includes('Kontrollpunkt 1')),
-    chats.slice(-1)[0],
+    'Jump and Run: Titel beim Start',
+    titles.some((t) => t.includes('Jump and Run')),
+    titles.slice(-2).join(' | '),
   );
-  await walkOnto(-66, 74, -36, -65);
-  // Runterspringen: zurück auf den letzten Kontrollpunkt
-  rcon(`tp ${NAME} -70.5 76 -36.5`);
-  await wait(3500);
+  await wait(1200);
+  const under = bot.blockAt(startPos.offset(0, -0.5, 0).floored());
+  check('Startblock (Smaragd) nur beim Läufer', under?.name === 'emerald_block', under?.name);
+  const real = rcon(
+    `execute if block ${under.position.x} ${under.position.y} ${under.position.z} minecraft:air`,
+  );
   check(
-    'Sturz → zurück zum Kontrollpunkt',
-    near(bot.entity.position, -65.5, 75, -35.5, 1.2),
-    JSON.stringify(bot.entity.position),
+    '…auf dem Server ist dort Luft (niemand sonst steht darauf)',
+    /passed|bestanden/i.test(real),
+    real.trim(),
   );
-  await walkOnto(-66, 76, -46, -65);
   check(
-    'Ziel: Geschafft + Bestzeit',
-    titles.some((t) => t.includes('Geschafft')) && chats.some((c) => c.includes('Bestzeit')),
-    chats.slice(-2).join(' | '),
+    'Doppelsprung: im Jump and Run nicht (Fliegen nicht mehr erlaubt)',
+    await waitFor(() => !allowFlying(), 2000),
+    String(abilities.slice(-2)),
   );
+
+  let current = under;
+  const JUMPS = 13;
+  const kinds = new Set();
+  let made = 0;
+  for (let i = 0; i < JUMPS; i++) {
+    const next = blocksAround().filter((b) => key(b) !== key(current));
+    if (next.length !== 1) {
+      console.log(
+        `  Sprung ${i + 1}: ${next.length} Blöcke zu sehen`,
+        next.map((b) => `${b.name}@${key(b)}`).join(' '),
+      );
+      if (!next.length) break;
+    }
+    const target = next[next.length - 1];
+    kinds.add(target.name.replace(/^.*_(slab|fence|wall|trapdoor)$/, '$1'));
+    const s = surface(target);
+    // Positions-Teleport des Test-Spielers selbst (wie ein Sprung: der Server sieht nur die neue Stelle).
+    bot.entity.position.set(s.x, s.y, s.z);
+    bot.entity.velocity.set(0, 0, 0);
+    const before = actionbars.length;
+    const ok = await waitFor(() => actionbars.slice(before).some((a) => a.includes(`★ ${i + 1}`)), 2500);
+    if (!ok) {
+      console.log(
+        `  Sprung ${i + 1} nicht gezählt (${target.name} @ ${key(target)})`,
+        actionbars.slice(-2).join(' | '),
+      );
+      break;
+    }
+    made++;
+    current = target;
+    await wait(450);
+  }
+  check(`Jump and Run: ${JUMPS} Sprünge gezählt`, made === JUMPS, `${made} – ${[...kinds].join(', ')}`);
+  check(
+    'Jump and Run: Stufe 2 nach „schwerer ab“ (10) Punkten',
+    titles.some((t) => t.includes('Stufe 2')),
+    titles.slice(-3).join(' | '),
+  );
+  const oldBlock = blocksAround().find((b) => key(b) === key(under));
+  check('Geschaffte Blöcke verschwinden wieder', !oldBlock, oldBlock?.name);
+
+  // Daneben treten: Fallen beendet den Lauf, zurück am Startplatz.
+  titles.length = 0;
   chats.length = 0;
-  bot.chat('/parkour');
+  const here = bot.entity.position.clone();
+  bot.entity.position.set(here.x + 2.5, here.y, here.z + 2.5);
+  const back = await waitFor(() => bot.entity.position.y < 80, 8000);
   await wait(1200);
   check(
-    'Bestenliste mit dem Test-Spieler',
+    'Fallen beendet den Lauf → zurück am Startplatz',
+    back && near(bot.entity.position, -59.5, 65, -37.5, 1.5),
+    JSON.stringify(bot.entity.position),
+  );
+  check(
+    'Titel „Gefallen!“ und neuer Rekord',
+    titles.some((t) => t.includes('Gefallen')) &&
+      chats.some((c) => c.includes(`${made} Punkte`) && c.includes('Rekord')),
+    `${titles.slice(-2).join(' | ')} / ${chats.slice(-1)[0]}`,
+  );
+  if (process.env.MM_LOBBY_DIR) {
+    const file = path.join(process.env.MM_LOBBY_DIR, 'plugins/moinmorni/jumpandrun.yml');
+    const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    check(
+      'Rekord je Spieler gespeichert',
+      text.includes(NAME) && text.includes(`score: ${made}`),
+      text.slice(0, 160),
+    );
+  }
+  const board = rcon(
+    'data get entity @e[type=text_display,x=-59.5,y=65,z=-46.4,distance=..1.5,limit=1] text',
+  );
+  check(
+    'Tafel am Start: Top 10 mit dem Test-Spieler',
+    board.includes(NAME) && board.includes(String(made)),
+    board.slice(0, 200),
+  );
+  if (process.env.MM_HUB_DB) {
+    await wait(500);
+    const row = execFileSync(
+      'python3',
+      [
+        '-c',
+        'import sqlite3,sys;c=sqlite3.connect("file:"+sys.argv[1]+"?mode=ro",uri=True);print(dict(c.execute("select key,value from mode_stats where mode=\'lobby\'").fetchall()))',
+        process.env.MM_HUB_DB,
+      ],
+      { encoding: 'utf8' },
+    );
+    check(
+      'Statistik „lobby“ im Netzwerk (Profil/Webseite)',
+      row.includes(`'jump_best': ${made}`),
+      row.trim(),
+    );
+  }
+  chats.length = 0;
+  bot.chat('/jnr top');
+  await wait(1200);
+  check(
+    '/jnr top: Bestenliste mit dem Test-Spieler',
     chats.some((c) => c.includes(NAME)),
     chats.slice(0, 3).join(' | '),
   );
+  chats.length = 0;
+  bot.chat('/parkour');
+  await waitFor(() => bot.entity.position.y > 140, 4000);
+  check(
+    '/parkour leitet zum Jump and Run um',
+    chats.some((c) => c.includes('Jump and Run geworden')) && bot.entity.position.y > 140,
+    chats.slice(0, 2).join(' | '),
+  );
+  bot.chat('/jnr stop');
+  await waitFor(() => bot.entity.position.y < 80, 4000);
+  await wait(800);
+
+  // ---------- Doppelsprung ----------
+  check(
+    'Nach dem Lauf: Doppelsprung wieder möglich',
+    await waitFor(allowFlying, 2000),
+    String(abilities.slice(-2)),
+  );
+  const y0 = bot.entity.position.y;
+  particles.length = 0;
+  bot.setControlState('jump', true);
+  await wait(150);
+  bot.setControlState('jump', false);
+  await wait(150);
+  // Zweimal Springen will das Fliegen einschalten – das Plugin macht daraus den Schwung.
+  bot._client.write('abilities', { flags: 0x02 });
+  let peak = y0;
+  const until = Date.now() + 1500;
+  while (Date.now() < until) {
+    peak = Math.max(peak, bot.entity.position.y);
+    await wait(50);
+  }
+  check(
+    'Doppelsprung: zweiter Schwung nach oben',
+    peak - y0 > 2.2,
+    `höchstens ${(peak - y0).toFixed(2)} über dem Boden`,
+  );
+  check('Doppelsprung: Funken', particles.length > 0, `${particles.length} Partikel-Pakete`);
+  check(
+    'Doppelsprung: in der Luft kein zweiter (Fliegen erst nach der Landung wieder erlaubt)',
+    abilities.some((f) => (f & 0x04) === 0),
+  );
+  await waitFor(() => bot.entity.onGround, 3000);
+  check('Nach der Landung wieder erlaubt', await waitFor(allowFlying, 2000));
+  if (process.env.MM_STEUER) {
+    const set = (values) =>
+      fetch(process.env.MM_STEUER, { method: 'POST', body: JSON.stringify({ area: 'lobby', values }) });
+    await set({ doubleJump: false });
+    check('Panel: Doppelsprung aus → kein Fliegen mehr erlaubt', await waitFor(() => !allowFlying(), 4000));
+    await set({ doubleJump: true });
+    check('Panel: Doppelsprung an → wieder erlaubt', await waitFor(allowFlying, 4000));
+  }
 
   // Kein Schaden in der Lobby
   rcon(`damage ${NAME} 6`);

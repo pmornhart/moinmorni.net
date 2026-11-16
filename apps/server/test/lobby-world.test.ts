@@ -210,8 +210,7 @@ describe('Lobby baut sich selbst', () => {
       ...h.mm.motor,
       request: async <T>(method: string, url: string, body?: unknown): Promise<T> => {
         const command = url.endsWith('/command') ? (body as { command: string }).command : '';
-        if (command.endsWith('part/001'))
-          return { answer: 'Unknown function moinmorni_lobby:part/001' } as T;
+        if (command.endsWith('part/001')) return { answer: 'Unknown function moinmorni_lobby:part/001' } as T;
         return h.mm.motor.request<T>(method, url, body);
       },
     };
