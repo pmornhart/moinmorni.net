@@ -39,13 +39,13 @@ Stühle mit Herz-Lehne, Eckbänke, Wirtstische, Hocker, Bierbänke, Biertische u
 (`packages/builder/src/furniture.ts`). Sie hängen an Blöcken, die es in der Lobby **nur als Möbel** gibt – das Paket
 gibt ihnen ein neues Aussehen, Kollision und Sitzhöhe bleiben echt:
 
-| Block | Möbel |
-| --- | --- |
+| Block                                | Möbel                  |
+| ------------------------------------ | ---------------------- |
 | Mangroven-Treppe unten, gerade/innen | Eckbank (mit Rückwand) |
-| Mangroven-Treppe sonst | Stuhl |
-| Mangroven-Stufe oben / unten | Wirtstisch / Hocker |
-| Birken-Stufe oben / unten | Biertisch / Bierbank |
-| braune Kerze (1–4, aus) | 1–4 Steinkrüge |
+| Mangroven-Treppe sonst               | Stuhl                  |
+| Mangroven-Stufe oben / unten         | Wirtstisch / Hocker    |
+| Birken-Stufe oben / unten            | Biertisch / Bierbank   |
+| braune Kerze (1–4, aus)              | 1–4 Steinkrüge         |
 
 **Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen und keine braunen Kerzen für anderes verbauen.**
 Die Modelle nutzen nur Minecrafts eigene Texturen (es liegen keine Mojang-Dateien im Paket). Weil Minecraft die Fläche
@@ -169,3 +169,41 @@ npx tsx tools/lobby-entwuerfe/src/plan.ts a plan.png 130
 Bilder mit dem echten Client: `tools/mc-client` (Texturpaket in `resourcepacks/` und
 `--option 'resourcePacks:["vanilla","file/MoinMorni-Lobby.zip"]'`). Aussichtspunkte: `VIEWS_A` in
 `tools/lobby-entwuerfe/src/draft-a.ts`.
+
+## Wartungs-Lobby (Server „wartung“)
+
+Die **zweite Wahl nach der Lobby**: Wer gerade nicht in die Lobby kann (Neustart, Update, Absturz, sie startet
+noch) oder während der Wartung des Netzwerks nicht hinein darf, wartet hier – nie geht es weiter auf Bau-Server oder
+Spielmodi. Gibt es auch sie nicht, trennt der Proxy freundlich („Die Lobby startet gerade neu – gleich wieder da“).
+
+- **Server:** das Netzwerk legt ihn selbst an (`network/provision.ts`, auch bei bestehenden Installationen beim
+  Start), 768 MB (`WARTUNG_MEMORY_MB` in `packages/shared/src/wartung.ts`), flache Welt (`WARTUNG_GENERATOR`),
+  Sichtweite 6, bis 500 Spieler, immer an, schläft nie (kein Modus).
+- **Bau:** wie die Lobby per Datenpaket mit Bau-Version (`packages/builder/src/wartung/`, Namensraum
+  `moinmorni_wartung`, Selbstbau über `lobby/wartung.ts` → `lobby/world.ts`): kleine Alm im Talkessel mit Bergen
+  ringsum; vorne der **Aushang** „⚒ Wartungsarbeiten – Gleich geht’s weiter! / Maintenance – back in a moment!“ mit
+  dem Text aus dem Panel darunter (Tag `mm_wartung_text`), dahinter die offene **Bergwerkstatt** (Werkbänke, Amboss,
+  Holzstapel, Schmied und Schreiner), rechts eine **Baustelle** mit Gerüst, Kran mit Last und gelb-schwarzer
+  Absperrung, daneben **Brotzeit** am Lagerfeuer, links der **Sprung-Parcours** über Heuballen, Fässer und Stämme
+  hinauf zur Glocke (Startplatte leicht, Zielplatte schwer – Zeit in der Aktionsleiste, Bestzeit je Spieler in
+  `plugins/moinmorni/wartung-parkour.yml`). Aussichtspunkte für Bilder: `WARTUNG_VIEWS`.
+- **Plugin** (`paper/WartungLobby.java`, nur auf dem Server „wartung“): Ankunft am Aushang, Schutz (nichts abbauen,
+  kein Schaden, kein Hunger, Truhen und Werkbänke sind Deko – nur die Glocke läutet), Kompass „Zurück in die Lobby“,
+  Leiste oben mit dem Stand: „Die Lobby startet gerade neu …“, „Wartung bis ca. 22:30 – Grund“, „Die Lobby ist
+  wieder da – zurück in 7 s“, ohne Hub „Das Netzwerk startet gerade neu“. Chat geht wie überall.
+- **Hub** (`hub/wartung.ts`): sagt dem Proxy beim Ankommen und nach jedem Rauswurf, wohin (Lobby oder
+  Wartungs-Lobby), schickt der Wartungs-Lobby ihren Stand (`wartung`) und holt alle Wartenden nach 10 s Countdown
+  zurück, sobald die Lobby wieder am Hub hängt bzw. die Wartung aus ist. Wer freiwillig dort ist, bleibt.
+- **Wartung des Netzwerks:** Spieler ohne „Kommt immer rein“ kommen beim Einschalten (und beim Anmelden) in die
+  Wartungs-Lobby und können von dort nirgends hin (`/lobby`, Kompass und `/server` sagen warum); das Team kommt
+  überall hin. Ist die Wartungs-Lobby aus, werden sie wie früher beim Anmelden abgewiesen.
+- **Panel → Einstellungen → Netzwerk → Wartung** (auch im Spiel): `/wartung an|aus`, `/wartung text <text>` (Text und
+  Grund), `/wartung bis <uhrzeit>` (z. B. 22:30, `weg` löscht sie – steht dann in Leiste, Aushang und Serverliste),
+  `/wartung lobby an|aus` (Wartungs-Lobby), `/wartung zurueck an|aus` (automatisch zurück).
+- **Proxy** (`velocity/VelocityPlugin.java`, `velocity/Fallback.java`): wählt den ersten Server und das Ziel nach
+  einem Rauswurf selbst (`PlayerChooseInitialServerEvent`, `KickedFromServerEvent`) – die `try`-Liste in der
+  velocity.toml (vom Motor: alle Mitglieder) spielt keine Rolle mehr. Ohne Hub: Lobby, dann Wartungs-Lobby (bei
+  Wartung nur sie); antwortet die Lobby wieder, holt der Proxy die Wartenden selbst zurück.
+
+Echt geprüft: `tools/netz-test/wartung-test.cjs` (Velocity 4.3.1, Lobby, Wartungs-Lobby, Bau-Server, Test-Hub mit
+Steuerung).
