@@ -113,6 +113,8 @@
 
 - 16.11. abends: **Alle Server zugleich + schnellere Updates** (Philip: „es muss ausreichen, dass alle gleichzeitig starten können“, „das dauert zu lange“): Arbeitsspeicher so verteilt, dass alle 15 Server in 32 GB passen – Proxy 1, Lobby 3, Bau 1,5, MorniSMP 3, MorniCraft 3, Party 2, neun Modi je 1,5 GB (`MODE_MEMORY_MB`, `provision.ts`); bestehende Installationen bekommen die neuen Werte einmal, nur wo noch der alte Standard steht (`network/memory.ts`, Marker `memory-plan-2`, laufende übernehmen sie beim Neustart, sobald leer). Reicht der Speicher trotzdem nicht, schickt das Netzwerk vor dem Start erst leere Modi schlafen – beim Wecken über die Lobby und beim Start im Panel (`sleep.makeRoom`, Haken `beforeStart` in `motor/proxy.ts`); Lobby, Proxy und Modi mit Spielern bleiben. `update.sh` löscht den Bau-Zwischenstand nicht mehr nach jedem Update (nur, was eine Woche ungenutzt war), das Netzwerk-Plugin lädt seine Bibliotheken in einer eigenen Schicht – das nächste Update baut nur, was sich geändert hat. Tests: 111 Server, 18 Katalog, update-test 65/65.
 
+- 16.11. abends: **Bild in der Serverliste** (Philip: „Bild ändern“): Der Proxy bekommt das MoinMorni-Wappen (grüner Schild mit goldener Burg wie `favicon.svg`, 64 × 64, `network/server-icon.ts`), solange er kein eigenes Bild hat; ein eigenes Bild (Panel → Server → MoinMorni Proxy → Einstellungen → Server-Bild) bleibt. Velocity liest es beim Neustart – der Proxy startet dafür neu, sobald niemand online ist. 112 Server-Tests.
+
 ## Offen
 
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.

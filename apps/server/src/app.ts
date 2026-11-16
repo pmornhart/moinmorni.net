@@ -17,12 +17,18 @@ import { startAlertRelay, type AlertRelay } from './motor/alerts.js';
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
 import { githubReleases } from './network/mode-releases.js';
-import { createProvisioner, LOBBY_MEMBER, type NetworkProvisioner } from './network/provision.js';
+import {
+  createProvisioner,
+  LOBBY_MEMBER,
+  PROXY_MEMBER,
+  type NetworkProvisioner,
+} from './network/provision.js';
 import { createMemberIds } from './network/members.js';
 import { createModeSettingsSync, type ModeSettingsSync } from './network/mode-settings.js';
 import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { retuneMemory } from './network/memory.js';
+import { ensureServerIcon } from './network/server-icon.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerUpdateRoutes } from './system/routes.js';
@@ -225,6 +231,15 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
         return [];
       });
       restarts.add(retuned);
+      // Bild in der Serverliste: das Wappen, solange der Proxy keins hat (Velocity liest es beim Neustart).
+      const proxy = result.servers.find((s) => s.member === PROXY_MEMBER);
+      if (proxy) {
+        const iconNew = await ensureServerIcon(motor, proxy.serverId, app.log).catch((err: unknown) => {
+          app.log.warn({ err }, 'Netzwerk: Bild für die Serverliste ließ sich nicht aufspielen');
+          return false;
+        });
+        if (iconNew) restarts.add([proxy]);
+      }
       // Spielmodi, die gerade schlafen: Einstellungen aus dem Panel für den nächsten Start eintragen.
       void modeSettings.syncFiles();
       // Wer zwei Minuten nach dem Start noch ohne Hub läuft (z. B. alter Schlüssel im Speicher), startet neu, sobald
