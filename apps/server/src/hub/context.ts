@@ -19,8 +19,11 @@ export interface HubContext {
   readonly kick: (uuid: string, text: string) => void;
   /** false = Server nicht im Netzwerk. */
   readonly connect: (uuid: string, server: string) => boolean;
-  /** Wie über eine Figur: erst prüfen (Rechte, Wartung, Whitelist) und schlafende Server wecken, dann verbinden. */
-  readonly goTo: (uuid: string, server: string) => void;
+  /**
+   * Wie über eine Figur: erst prüfen (Rechte, Wartung, Whitelist) und schlafende Server wecken, dann verbinden.
+   * true = gleich verbunden (sonst Hinweis an den Spieler, oder er kommt nach dem Aufwachen von selbst hinein).
+   */
+  readonly goTo: (uuid: string, server: string) => boolean;
   /** Chat-Zeile an Spielserver: `servers` = alle oder einer. Text pro Sprache. */
   readonly chat: (servers: 'all' | string, line: Record<Lang, string>) => void;
   /** Hinweis an alle im Team, die dieses Recht haben. */

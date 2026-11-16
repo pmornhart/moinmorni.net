@@ -72,6 +72,15 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     /** Einstellungen des Spielmodus auf diesem Server (aus dem Panel) – trägt sie in seine config.yml ein. */
     private ModeSettings modes;
 
+    /** Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni). */
+    private ModeApi modeApi;
+    /** „Wirklich zur Lobby?“ mitten im Spiel. */
+    private LeaveAsk leaveAsk;
+    /** „Zurück ins Spiel“ – nur in der Lobby aktiv (nur sie bekommt Angebote vom Hub). */
+    private ReturnOffer returnOffer;
+    /** Wer gerade spielt, alle 30 s noch einmal an den Hub (nach einem Neustart des Hubs kennt er es sonst nicht). */
+    private static final long PLAYING_RESEND_TICKS = 600;
+
     /**
      * Vor allen anderen Plugins: Datenordner vom Zwischen-Namen zurückholen, dann gemerkte Einstellungen des Modus
      * eintragen, bevor er seine config.yml liest.
@@ -101,10 +110,15 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, this::morniCraftPlayers, SUMMARY_TICKS, SUMMARY_TICKS);
         // Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni) – auch ohne Hub, dann läuft der Modus allein.
-        getServer().getServicesManager().register(de.moinmorni.api.MoinMorni.class,
-                new ModeApi(hub, serverName, this::langOfUuid, this::rankOf,
-                        uuid -> Optional.ofNullable(profiles.get(uuid)).map(Profile::rights).orElse(null)),
+        leaveAsk = new LeaveAsk(this, this::langOf, this::answerLobby);
+        leaveAsk.start();
+        modeApi = new ModeApi(hub, serverName, this::langOfUuid, this::rankOf,
+                uuid -> Optional.ofNullable(profiles.get(uuid)).map(Profile::rights).orElse(null),
+                p -> leaveAsk.open(p, null));
+        getServer().getServicesManager().register(de.moinmorni.api.MoinMorni.class, modeApi,
                 this, org.bukkit.plugin.ServicePriority.Normal);
+        getServer().getScheduler().runTaskTimerAsynchronously(this, modeApi::resendPlaying,
+                PLAYING_RESEND_TICKS, PLAYING_RESEND_TICKS);
         lobby = new LobbyNpcs(this, hub, this::langOf);
         lobby.start();
         features = new LobbyFeatures(this, lobby, this::langOf);
@@ -117,6 +131,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         getServer().getScheduler().runTask(this, this::logModeAdmins);
         jail.start();
         features.start();
+        returnOffer = new ReturnOffer(this, hub, this::langOf);
+        returnOffer.setJail(jail::isJailed);
+        returnOffer.start();
         // Erst verbinden, wenn alles steht – die ersten Nachrichten des Hubs gehen sonst ins Leere.
         if (hub != null) {
             try {
@@ -236,6 +253,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 clock.onSettings(m);
             }
             case "jail" -> jail.onState(m);
+            case "lobby-ask" -> leaveAsk.onAsk(m);
+            case "lobby-ask-close" -> leaveAsk.onClose(m);
+            case "rejoin-offer" -> returnOffer.onOffer(m);
+            case "rejoin-off" -> returnOffer.onOff(m);
             case "mornicraft-settings" -> morniCraftSettings(m);
             case "mode-settings" -> modeSettings(m);
             case "voice" -> {
@@ -256,6 +277,17 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             });
             default -> {
             }
+        }
+    }
+
+    /** Antwort aus dem Fenster „Wirklich zur Lobby?“ – an den Hub; ohne Hub geht „Ja“ wie toLobby. */
+    private void answerLobby(Player p, boolean yes) {
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "lobby-answer");
+        body.addProperty("uuid", p.getUniqueId().toString());
+        body.addProperty("yes", yes);
+        if ((hub == null || !hub.send(body)) && yes) {
+            modeApi.toLobby(p);
         }
     }
 
@@ -525,6 +557,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player p = event.getPlayer();
         profiles.remove(p.getUniqueId());
+        modeApi.forget(p.getUniqueId());
         org.bukkit.permissions.PermissionAttachment attachment = attachments.remove(p.getUniqueId());
         if (attachment != null) {
             p.removeAttachment(attachment);

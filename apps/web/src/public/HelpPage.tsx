@@ -78,6 +78,7 @@ const COMMANDS: readonly { readonly key: string; readonly syntax: string }[] = [
   { key: 'profil', syntax: '/profil [privat|öffentlich]' },
   { key: 'voice', syntax: '/voice [kanal|raus]' },
   { key: 'lobby', syntax: '/lobby' },
+  { key: 'rueckkehr', syntax: '/rueckkehr' },
   { key: 'discord', syntax: '/discord' },
 ];
 
