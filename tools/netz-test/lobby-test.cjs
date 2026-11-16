@@ -14,6 +14,8 @@ const [HOST = '127.0.0.1', PORT = '25640', RCON = '127.0.0.1:25740', PASS_FILE =
 const PASS = fs.readFileSync(PASS_FILE, 'utf8').trim();
 const RCON_PY = path.join(__dirname, '../mc-client/rcon.py');
 const NAME = `Lobbytest${Date.now() % 1000}`;
+/** Ankunft in der Lobby (LOBBY_SPAWN_VIEW in packages/builder/src/lobby/features.ts). */
+const SPAWN = { x: 0.5, y: 65, z: 27.5 };
 
 const rcon = (...cmds) => execFileSync('python3', [RCON_PY, RCON, PASS, ...cmds], { encoding: 'utf8' });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -50,6 +52,8 @@ async function main() {
     version: '26.1',
     auth: 'offline',
   });
+  // Deutscher Client: über den Proxy kommt die Sprache aus den Client-Einstellungen (sonst wäre alles Englisch).
+  bot.once('login', () => bot.setSettings({ locale: 'de_DE' }));
   const titles = [];
   const chats = [];
   const bars = [];
@@ -78,7 +82,7 @@ async function main() {
 
   check(
     'Ankunft am Dorfplatz',
-    near(bot.entity.position, 9.5, 65, 12.5),
+    near(bot.entity.position, SPAWN.x, SPAWN.y, SPAWN.z),
     JSON.stringify(bot.entity.position),
   );
   const hotbar0 = bot.inventory.slots[36];
@@ -109,7 +113,7 @@ async function main() {
   await wait(1500);
   check(
     'Rundgang beenden → Abenteuer am Platz',
-    bot.game.gameMode === 'adventure' && near(bot.entity.position, 9.5, 65, 12.5),
+    bot.game.gameMode === 'adventure' && near(bot.entity.position, SPAWN.x, SPAWN.y, SPAWN.z),
   );
 
   // Kompass-Menü

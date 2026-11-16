@@ -10,7 +10,14 @@ import { Rcon } from '@morninet/builder';
 import { createLobbyWorld, seasonOf } from '../src/lobby/world.js';
 import { MotorError, type MotorClient } from '../src/motor/client.js';
 
-const [dir = '.', addr = '127.0.0.1:25575', passFile = '.rcon-pass'] = process.argv.slice(2);
+/** node + Skript stehen vor den eigenen Angaben. */
+const ARGS_FROM = 2;
+/** So viel jeder Antwort ins Protokoll. */
+const ANSWER_CHARS = 160;
+/** Nach dem Neuladen der Datenpakete warten, bis der Server wieder antwortet. */
+const SETTLE_MS = 8000;
+const SECOND_MS = 1000;
+const [dir = '.', addr = '127.0.0.1:25575', passFile = '.rcon-pass'] = process.argv.slice(ARGS_FROM);
 const [host = '127.0.0.1', port = '25575'] = addr.split(':');
 const NOT_FOUND = 404;
 
@@ -33,10 +40,22 @@ async function main(): Promise<void> {
         fs.writeFileSync(file, b.content);
         return {};
       }
+      // Wie der Motor: Gelöschtes kommt in einen Papierkorb (hier im Server-Ordner), was fehlt, wird übersprungen.
+      if (method === 'POST' && url.endsWith('/files/delete')) {
+        const trash = path.join(dir, '.papierkorb');
+        const moved = (body as { paths: string[] }).paths.filter((p) => fs.existsSync(path.join(dir, p)));
+        fs.mkdirSync(trash, { recursive: true });
+        moved.forEach((p) =>
+          fs.renameSync(path.join(dir, p), path.join(trash, `${Date.now()}-${path.basename(p)}`)),
+        );
+        console.log(`gelöscht: ${moved.join(', ') || 'nichts'}`);
+        return { moved: moved.length };
+      }
       if (method === 'POST' && url.endsWith('/command')) {
         const command = (body as { command: string }).command;
         const answer = await rcon.command(command);
-        if (!command.includes('execute if loaded')) console.log(`> ${command}\n  ${answer.slice(0, 160)}`);
+        if (!command.includes('execute if loaded'))
+          console.log(`> ${command}\n  ${answer.slice(0, ANSWER_CHARS)}`);
         return { answer };
       }
       if (method === 'GET') return { live: { state: 'running' } };
@@ -47,12 +66,12 @@ async function main(): Promise<void> {
   const log = { info: say, warn: say, error: say } as unknown as FastifyBaseLogger;
   const t0 = Date.now();
   const world = createLobbyWorld(motor, log, {
-    settleMs: 8000,
+    settleMs: SETTLE_MS,
     season: () => seasonOf(process.env['MM_SEASON']),
   });
   console.log('Eigenschaften geändert:', await world.configure('lobby'));
   const result = await world.build('lobby');
-  console.log('Ergebnis:', result, `nach ${Math.round((Date.now() - t0) / 1000)} s`);
+  console.log('Ergebnis:', result, `nach ${Math.round((Date.now() - t0) / SECOND_MS)} s`);
   // Schon gebaut: nur die Saison-Deko neu setzen (MM_SEASON).
   if (result === 'current' && process.env['MM_SEASON'])
     console.log('Saison:', await world.applySeason('lobby'));

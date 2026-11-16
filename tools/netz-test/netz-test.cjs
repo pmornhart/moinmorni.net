@@ -3,6 +3,8 @@
  * prüfen Chat über Server hinweg, /msg, /mute, /ban, Rechte, Tab-Vorschläge, Rang in der Tab-Liste und MOTD.
  *   NODE_PATH=<ordner mit mineflayer> node tools/netz-test/netz-test.cjs [host] [port]
  * Erwartet: Proxy mit Servern „lobby“ und „duels“, Hub mit Philip = owner (scripts/hub-dev.ts --rang=Philip=owner).
+ * Mit NETZ_EIN_SERVER=1 reicht die Lobby allein (ein Spielserver gleichzeitig) – dann ohne die Prüfungen über zwei
+ * Server hinweg.
  */
 const mineflayer = require('mineflayer');
 const mc = require('minecraft-protocol');
@@ -10,6 +12,7 @@ const mc = require('minecraft-protocol');
 const HOST = process.argv[2] ?? '127.0.0.1';
 const PORT = Number(process.argv[3] ?? 25620);
 const VERSION = process.env.MC_VERSION ?? '1.21.11';
+const ONE_SERVER = process.env.NETZ_EIN_SERVER === '1';
 const results = [];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -84,12 +87,18 @@ async function main() {
   check('Rang-Symbol in der Tab-Liste', self && JSON.stringify(self.displayName?.json ?? self.displayName).includes('♛'), JSON.stringify(self?.displayName?.json ?? '').slice(0, 80));
   check('Spieler ohne Rang ohne Symbol', entry && !JSON.stringify(entry.displayName?.json ?? '').includes('♛'));
 
-  lena.chat('/server duels');
-  await sleep(2500);
-  lena.chat('Servus aus Duels');
-  const line = await sees(philip, /Servus aus Duels/);
-  check('Chat kommt über Server hinweg an (Duels → Lobby)', Boolean(line), line ?? '');
-  check('Chat zeigt den Server', Boolean(line && /\[Duels\]/.test(line)));
+  if (ONE_SERVER) {
+    lena.chat('Servus aus der Lobby');
+    const line = await sees(philip, /Servus aus der Lobby/);
+    check('Chat kommt über den Hub an', Boolean(line), line ?? '');
+  } else {
+    lena.chat('/server duels');
+    await sleep(2500);
+    lena.chat('Servus aus Duels');
+    const line = await sees(philip, /Servus aus Duels/);
+    check('Chat kommt über Server hinweg an (Duels → Lobby)', Boolean(line), line ?? '');
+    check('Chat zeigt den Server', Boolean(line && /\[Duels\]/.test(line)));
+  }
 
   philip.chat('Hallo <red>Lena');
   const own = await sees(lena, /Hallo/);
@@ -97,7 +106,7 @@ async function main() {
 
   philip.chat('/msg Lena Kommst du in die Lobby?');
   const whisper = await sees(lena, /Philip → (you|dich)/);
-  check('/msg über Server hinweg', Boolean(whisper), whisper ?? '');
+  check(ONE_SERVER ? '/msg' : '/msg über Server hinweg', Boolean(whisper), whisper ?? '');
   lena.chat('/r Gleich!');
   check('/r antwortet', Boolean(await sees(philip, /Lena → (dich|you).*Gleich/)));
 

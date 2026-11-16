@@ -136,6 +136,7 @@ def main():
     ap.add_argument('--height', type=int, default=900)
     ap.add_argument('--prepare-only', action='store_true')
     ap.add_argument('--lang', default='de_de')
+    ap.add_argument('--memory', default='3G', help='Arbeitsspeicher für Java, z. B. 2G (wenn der Rechner knapp ist)')
     ap.add_argument('--option', action='append', default=[], help='key:value für options.txt')
     ap.add_argument('--server-packs', choices=['an', 'aus', 'fragen'], default='fragen',
                     help='Ressourcenpakete des Servers annehmen (an), ablehnen (aus) oder fragen')
@@ -149,7 +150,7 @@ def main():
     os.makedirs(game_dir, exist_ok=True)
     apply_options(game_dir, a.lang, dict(o.split(':', 1) for o in a.option))
     player_uuid = str(uuid.UUID(bytes=hashlib.md5(f'OfflinePlayer:{a.name}'.encode()).digest(), version=3))
-    args = [a.java, '-Xmx3G', f'-Djava.library.path={game_dir}/natives', '-Dorg.lwjgl.util.Debug=false',
+    args = [a.java, f'-Xmx{a.memory}', f'-Djava.library.path={game_dir}/natives', '-Dorg.lwjgl.util.Debug=false',
             '-cp', ':'.join(cp), meta['mainClass'],
             '--username', a.name, '--version', a.version, '--gameDir', game_dir,
             '--assetsDir', f'{cache}/assets', '--assetIndex', meta['assetIndex']['id'],
