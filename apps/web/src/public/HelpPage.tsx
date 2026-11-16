@@ -21,13 +21,14 @@ import {
 import { useEffect, useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
+import { NETWORK_COMMANDS } from '@moinmorni/shared';
 import { useCopy } from '~/components/controls';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useSite } from '~/lib/site';
 import { ModeGlyph } from '~/components/mode-visuals';
 import { useNetworkStatus } from '~/lib/status';
-import { usePick } from '~/lib/text';
+import { useLanguage, usePick } from '~/lib/text';
 import { Cmd, GameButton, Panel } from './kit';
 import { PageHero } from './page-hero';
 import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, FALLBACK_BEDROCK_PORT, WRAP } from './parts';
@@ -55,19 +56,13 @@ const SECTIONS: readonly HelpSection[] = [
   { id: 'team-hilfe', key: 'team', icon: LifeBuoy },
 ];
 
-/** In-game commands for everyone, with what they do (texts under site.help.commands.list.*). */
-const COMMANDS: readonly { readonly key: string; readonly syntax: string }[] = [
-  { key: 'freunde', syntax: '/freunde <name>' },
-  { key: 'party', syntax: '/party <name>' },
-  { key: 'pc', syntax: '/pc <…>' },
-  { key: 'msg', syntax: '/msg <name> <…>' },
-  { key: 'r', syntax: '/r <…>' },
-  { key: 'sprache', syntax: '/sprache <de|en>' },
-  { key: 'profil', syntax: '/profil [privat|öffentlich]' },
-  { key: 'voice', syntax: '/voice [kanal|raus]' },
-  { key: 'lobby', syntax: '/lobby' },
-  { key: 'discord', syntax: '/discord' },
-];
+/**
+ * The most important commands for everyone: the first line of each network command a player has (from the hub's
+ * list, texts under site.commands.lines.*); all of them – modes and team too – are on /befehle.
+ */
+const COMMANDS = NETWORK_COMMANDS.filter(
+  (c) => !c.right && c.topic !== 'lobby' && c.topic !== 'team' && c.where === 'hub',
+).flatMap((c) => c.lines.slice(0, 1));
 
 /** In case the website does not know the channels yet (older server version). */
 const VOICE_FALLBACK = ['Dorfplatz', 'Biergarten', 'Turnier'] as const;
@@ -281,6 +276,7 @@ function MorniCraftBody(): ReactElement {
 
 function CommandsBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const language = useLanguage();
   return (
     <div className="grid gap-5">
       <p>{t('site.help.commands.intro')}</p>
@@ -291,13 +287,19 @@ function CommandsBody(): ReactElement {
             className="grid gap-1.5 border-b-2 border-border px-4 py-3 last:border-b-0 even:bg-background-alt/60 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-center sm:gap-4"
           >
             <dt>
-              <Cmd>{c.syntax}</Cmd>
+              <Cmd>{c.syntax[language]}</Cmd>
             </dt>
-            <dd className="text-[15px] text-muted-foreground">{t(`site.help.commands.list.${c.key}`)}</dd>
+            <dd className="text-[15px] text-muted-foreground">{t(`site.commands.lines.${c.key}`)}</dd>
           </div>
         ))}
       </dl>
       <p className="text-[14px] text-muted-foreground">{t('site.help.commands.tab')}</p>
+      <GameButton asChild tone="stone" className="justify-self-start">
+        <Link to="/befehle">
+          <Terminal />
+          {t('site.help.commands.all')}
+        </Link>
+      </GameButton>
     </div>
   );
 }

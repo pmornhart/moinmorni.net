@@ -192,6 +192,33 @@ export function registerSiteRoutes(
     return byRole.filter((r) => r.members.length > 0);
   });
 
+  /**
+   * Befehle-Seite (`/befehle`): welche Ränge es gibt und was sie dürfen (Rechte im Spiel, Bereiche des Panels – für die
+   * Einstellungs-Befehle), dazu mit `?spieler=<name>` dessen Rang wie im Spiel. Den Rang sieht im Spiel ohnehin jeder
+   * vor dem Namen, darum auch bei privatem Profil; Statistiken gibt es hier keine.
+   */
+  app.get(
+    '/api/commands',
+    { schema: { querystring: z.object({ spieler: z.string().trim().min(1).max(NAME_MAX).optional() }) } },
+    async (request) => {
+      const name = request.query.spieler;
+      const row = name ? hub.players.byName(name) : undefined;
+      return {
+        roles: stores.roles().map((r) => ({
+          id: r.id,
+          name: r.name,
+          symbol: r.symbol,
+          colour: r.colour,
+          position: r.position,
+          fallback: r.fallback,
+          game: r.game,
+          panel: r.panel,
+        })),
+        player: row ? { name: row.name, uuid: row.uuid, role: hub.players.roleOf(row.uuid).id } : null,
+      };
+    },
+  );
+
   /** Regeln, Discord-Einladung, Kanäle. */
   app.get('/api/site', async () => {
     const s = stores.settings('website');

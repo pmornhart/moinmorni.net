@@ -6,6 +6,8 @@ import { createHub, type Hub } from '../src/hub/index.js';
 import { createEventBus } from '../src/lib/events.js';
 import { createStores, type Stores } from '../src/panel/stores.js';
 import { audioFrame, groupId } from '../src/hub/voice.js';
+import { SETTING_ROOTS } from '../src/hub/setting-commands.js';
+import { NETWORK_COMMANDS } from '@moinmorni/shared';
 import { connectPlugin, type FakePlugin, type Msg } from './fake-plugin.js';
 
 const SECRET = 'test-geheimnis-test-geheimnis-test-geheimnis-1234';
@@ -186,6 +188,21 @@ describe('Hub', () => {
     // Echte Nachricht aus der Lobby kommt an.
     lobby.send({ t: 'chat', uuid: PHILIP, text: 'echt' });
     await duels.next('chat', (m) => JSON.stringify(m).includes('echt'));
+  });
+
+  test('Befehle des Hubs = Liste der Befehle-Seite (Name, Aliase, Recht) – nichts doppelt gepflegt', async () => {
+    const proxy = await plugin('proxy', 'proxy');
+    const welcome = proxy.received[0] as unknown as { commands: Array<{ name: string; aliases: string[] }> };
+    const listed = NETWORK_COMMANDS.filter((c) => c.where === 'hub');
+    // /discord bringt der Discord-Bot mit (hier ohne Bot), die Einstellungen kommen aus dem Katalog.
+    const expected = [
+      ...listed.filter((c) => c.name !== 'discord').map((c) => c.name),
+      ...SETTING_ROOTS.filter((r) => !listed.some((c) => c.name === r)),
+    ].sort();
+    expect(welcome.commands.map((c) => c.name).sort()).toEqual(expected);
+    welcome.commands
+      .filter((c) => listed.some((l) => l.name === c.name))
+      .forEach((c) => expect(c.aliases).toEqual(listed.find((l) => l.name === c.name)?.aliases));
   });
 
   test('veränderter oder wiederholter Rahmen → Verbindung zu', async () => {
