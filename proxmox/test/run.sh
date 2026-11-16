@@ -396,8 +396,9 @@ if [[ "\$1" == clone ]]; then
     esac
   done
   dir="\${pos[1]}"
-  mkdir -p "\${dir}/.git" "\${dir}/vendor/mornihosting"
+  mkdir -p "\${dir}/.git" "\${dir}/vendor/mornihosting/proxmox"
   cp '${REPO}/install.sh' '${REPO}/.env.example' '${REPO}/docker-compose.yml' "\${dir}/"
+  cp @W@/ctlib/dauerbetrieb.sh "\${dir}/vendor/mornihosting/proxmox/dauerbetrieb.sh"
   printf 'url=%s\nbranch=%s\nrecurse=%s\ndir=%s\n' "\${pos[0]}" "\${branch}" "\${recurse}" "\${dir}" >@W@/state/clone
   exit 0
 fi
@@ -439,6 +440,13 @@ case "$1" in
     ;;
 esac
 exit 0
+EOF
+
+  # Host-Wächter aus MorniHosting (läuft auf dem Host): schreibt nur auf, wie der Einzeiler ihn aufruft.
+  fake "${W}/ctlib/dauerbetrieb.sh" <<'EOF'
+#!/bin/bash
+printf '%s | %s %s %s %s %s %s\n' "$*" "${MH_GUARD_NAME:-}" "${MH_BRAND:-}" "${MH_INSTALL_DIR:-}" "${MH_CT_GUARD:-}" \
+  "${MH_DATA_VOLUME:-}" "${CTID:-}" >>@W@/log/host-guard.log
 EOF
 
   fake "${W}/ctlib/netbird-install.sh" <<'EOF'
@@ -646,6 +654,16 @@ check "keine Warnung, wenn alles passt" lacks "${W}/out.txt" "Achtung –"
 check "Zusammenfassung nennt Container, Name und IP" has "${W}/out.txt" 'Container 120 „morninet“ · IP 192.0.2.50'
 check "Zusammenfassung zeigt, wie man den Code nochmal sieht" has "${W}/out.txt" "pct exec 120 -- docker exec morninet cat /data/setup-code"
 check "Zusammenfassung verlinkt die Anleitung" has "${W}/out.txt" "docs/schnellstart.md"
+check "install.sh ohne eigene Zusammenfassung – nur die des Einzeilers" lacks "${W}/out.txt" "🎉 Fertig!"
+check "install.sh bekommt MM_NO_SUMMARY=1" grep -F "MM_NO_SUMMARY=1" "${SCRIPT}"
+check "Host-Wächter für Container 120 mit den Namen von morni.net" grep -Fx \
+  "hostguard | morninet morni.net /opt/morninet /usr/local/sbin/morninet-guard morninet-motor-data 120" "${W}/log/host-guard.log"
+check "Host-Wächter in der Zusammenfassung" has "${W}/out.txt" "morninet-host-guard status"
+# install.sh von Hand im Container (ohne den Einzeiler): zeigt seine eigene Zusammenfassung wie bisher.
+PATH="${W}/bin:${SYS_PATH}" pct exec 120 -- /bin/bash -c 'export HOME=/root; cd /opt/morninet && bash install.sh' \
+  </dev/null >"${W}/install-again.txt" 2>&1 || true
+check "install.sh von Hand: eigene Zusammenfassung mit Code" has "${W}/install-again.txt" "Einrichtungs-Code: "
+check "install.sh von Hand: Fertig-Block" has "${W}/install-again.txt" "🎉 Fertig!"
 check "bei DHCP wird kein Gateway gesucht" lacks "${W}/log/argv.log" "ip -4 route"
 check_secrets_safe
 show_output_on_failure
@@ -653,6 +671,9 @@ show_output_on_failure
 # ---------------------------------------------------------------------------------------------------------------
 begin "2. Leeres Token, nächste freie ID, Standard-Domain, nur Debian 12 vorhanden (schon geladen)"
 new_world env-leer
+# Ein Motor mit einem älteren Host-Wächter (kennt nur MorniHosting): darf nicht laufen – er würde den Host-Wächter von
+# MorniHosting auf diesen Container umbiegen.
+printf '#!/bin/bash\necho alt >>%s/log/host-guard.log\n' "${W}" >"${W}/ctlib/dauerbetrieb.sh"
 printf 'system          debian-12-standard_12.12-1_amd64.tar.zst\n' >"${W}/state/templates.available"
 echo debian-12-standard_12.12-1_amd64.tar.zst >"${W}/state/templates.local"
 run_case plain MM_DISCORD_TOKEN=
@@ -668,6 +689,9 @@ check ".env: Token leer" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_
 check "Branch main" grep -Fx "branch=main" "${W}/state/clone"
 check "Hinweis: Discord-Bot später im Panel" has "${W}/out.txt" 'Discord-Bot: Schritt für Schritt im Panel unter „Discord“'
 check "Hinweis: Erreichbar machen (ohne NetBird)" has "${W}/out.txt" "Einstellungen → Erreichbarkeit"
+check "älterer Host-Wächter läuft nicht" test ! -s "${W}/log/host-guard.log"
+check "sagt, dass der Host-Wächter fehlt – morni.net läuft trotzdem" has "${W}/out.txt" "Host-Wächter ließ sich nicht einrichten"
+check "läuft trotzdem durch (Exit 0)" test "${RC}" -eq 0
 check_secrets_safe
 show_output_on_failure
 

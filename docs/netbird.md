@@ -83,8 +83,17 @@ sudo morninet-guard status    # was er sieht und zuletzt getan hat
 sudo morninet-guard exit      # nur den Ausgang prüfen
 ```
 
-Protokoll: `/var/log/morninet-guard.log`. Während eines Updates hält er still. Den Wächter auf dem Proxmox-Host
-(`proxmox/dauerbetrieb.sh` aus MorniHosting) gibt es für morni.net noch nicht.
+Protokoll: `/var/log/morninet-guard.log`. Während eines Updates hält er still.
+
+Auf dem Proxmox-Host richtet der Einzeiler dazu den **Host-Wächter** ein (`morninet-host-guard`, aus MorniHosting
+`proxmox/dauerbetrieb.sh`, mit eigenem Namen neben einem MorniHosting auf demselben Host): Ist der Container aus, ohne
+dass du ihn gestoppt hast, startet er ihn wieder, hängt er, startet er ihn neu – und meldet es über den Wächter im
+Container. Status auf dem Host: `morninet-host-guard status`. Für ältere Container siehe
+[Proxmox-Anleitung](proxmox-quickstart.md#nützliche-befehle).
+
+**Selbst betriebenes NetBird:** Der Proxy braucht neben TCP auch UDP auf dem Java-Port (Sprachchat am Proxy). Das
+Port-Skript aus MorniHosting (`scripts/netbird-proxy-ports.sh`, einmal auf dem NetBird-Server) gibt das seit dem
+16.11. mit frei – wer es vorher ausgeführt hat, startet es einfach noch einmal.
 
 ## Meldungen im Discord-Team-Log
 
@@ -107,5 +116,5 @@ doppelt. Dieselbe Meldung kommt höchstens alle 30 Minuten.
 ## Was nur nachgebaut geprüft ist
 
 NetBird selbst ist in den Tests nachgebaut (Regeln aus dem Quelltext von NetBird). Gegen ein echtes NetBird, mit
-echten Spielern über NetBird, mit Bedrock und mit dem Wächter unter systemd auf dem echten Rechner ist es noch nicht
-geprüft.
+echten Spielern über NetBird, mit Bedrock, mit dem Wächter unter systemd auf dem echten Rechner und mit dem
+Host-Wächter auf echtem Proxmox ist es noch nicht geprüft.

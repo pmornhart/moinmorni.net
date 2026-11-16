@@ -40,6 +40,9 @@ APP="morni.net"
 REPO_URL="${MM_REPO_URL:-https://github.com/pmornhart/morni.net.git}"
 BRANCH="${MM_BRANCH:-main}"
 INSTALL_DIR="/opt/morninet"
+# Name des Wächters (im Container morninet-guard, auf dem Host morninet-host-guard) und wo sein Host-Teil liegt.
+GUARD_NAME="morninet"
+HOST_GUARD_SCRIPT="vendor/mornihosting/proxmox/dauerbetrieb.sh"
 GUIDE_URL="https://github.com/pmornhart/morni.net/blob/main/docs/schnellstart.md"
 NETBIRD_INSTALL_URL="https://pkgs.netbird.io/install.sh"
 # Hier liegen Bot-Token und NetBird-Key kurz im Container (nur für root lesbar), bis sie gebraucht und gelöscht werden.
@@ -803,7 +806,8 @@ ct_install() {
     token="$(<"${secret}")"
     rm -f "${secret}"
   fi
-  MM_DOMAIN="${domain}" MM_BRANCH="${branch}" MM_INSTALL_DIR="${dir}" MM_DISCORD_TOKEN="${token}" \
+  # MM_NO_SUMMARY: install.sh zeigt keine eigene Zusammenfassung – die kommt am Ende vom Einzeiler.
+  MM_DOMAIN="${domain}" MM_BRANCH="${branch}" MM_INSTALL_DIR="${dir}" MM_DISCORD_TOKEN="${token}" MM_NO_SUMMARY=1 \
     bash "${dir}/install.sh" </dev/null
 }
 
@@ -844,6 +848,26 @@ ct_netbird_env() {
   if [[ -n "$(MH_ENV_FILE="${dir}/.env" bash "${script}")" ]]; then
     docker compose up -d motor >/dev/null
   fi
+}
+
+# Host-Wächter aus dem Motor (MorniHosting, proxmox/dauerbetrieb.sh) mit eigenem Namen, eigener Konfiguration und
+# eigenen Einheiten – auch neben einem MorniHosting auf demselben Host: startet den Container wieder, wenn er ungewollt
+# aus ist oder hängt, und meldet es über den Wächter im Container ins Discord-Team-Log. Das Skript kommt aus dem
+# Container (passt so immer zum Motor) und legt sich selbst als /usr/local/sbin/morninet-host-guard ab.
+setup_host_guard() {
+  local script ok=""
+  script="$(mktemp)"
+  # Nur eine Fassung, die mehrere Produkte kennt (MH_GUARD_NAME) – eine ältere würde den Host-Wächter von MorniHosting
+  # auf diesen Container umbiegen.
+  if pct exec "${CTID}" -- cat "${INSTALL_DIR}/${HOST_GUARD_SCRIPT}" </dev/null >"${script}" 2>/dev/null &&
+    grep -q 'MH_GUARD_NAME' "${script}" &&
+    MH_GUARD_NAME="${GUARD_NAME}" MH_BRAND="${APP}" MH_INSTALL_DIR="${INSTALL_DIR}" \
+      MH_CT_GUARD="/usr/local/sbin/${GUARD_NAME}-guard" MH_DATA_VOLUME="${GUARD_NAME}-motor-data" CTID="${CTID}" \
+      bash "${script}" hostguard </dev/null >/dev/null 2>&1; then
+    ok="yes"
+  fi
+  rm -f "${script}"
+  [[ -n "${ok}" ]]
 }
 
 # Führt eine ct_…-Funktion im Container aus.
@@ -905,6 +929,15 @@ elif [[ -n "${NB_KEY}" ]]; then
   PUSHED=()
 fi
 
+HOST_GUARD_OK=""
+msg_info "Host-Wächter wird eingerichtet"
+if setup_host_guard; then
+  HOST_GUARD_OK="yes"
+  msg_ok "Host-Wächter läuft: startet den Container wieder, wenn er ungewollt aus ist oder hängt"
+else
+  msg_error "Host-Wächter ließ sich nicht einrichten – morni.net läuft trotzdem (Anleitung: Dauerbetrieb)."
+fi
+
 CODE="$(pct exec "${CTID}" -- docker exec morninet cat /data/setup-code </dev/null 2>/dev/null | tr -d '\r\n')" || CODE=""
 
 printf '\n %s🎉 %s ist bereit!%s\n\n' "${GN}" "${APP}" "${CL}"
@@ -932,6 +965,9 @@ fi
 printf '\n    Code nochmal anzeigen: %spct exec %s -- docker exec morninet cat /data/setup-code%s\n' \
   "${YW}" "${CTID}" "${CL}"
 printf '    In den Container:      %spct enter %s%s\n' "${YW}" "${CTID}" "${CL}"
+if [[ -n "${HOST_GUARD_OK}" ]]; then
+  printf '    Host-Wächter:          %s%s-host-guard status%s\n' "${YW}" "${GUARD_NAME}" "${CL}"
+fi
 printf '    Anleitung:             %s\n' "${GUIDE_URL}"
 printf '\n    Im Container ist nur Port 8080 offen (Webseite + Panel). Die Minecraft-Ports öffnet morni.net selbst,\n'
 printf '    sobald es den Proxy für die Spieler anlegt. Motor, Docker-Zugang und Hub bleiben intern.\n\n'

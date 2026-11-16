@@ -75,7 +75,10 @@ Vertippt? Das Skript sagt, was nicht passt, und fragt nochmal. Mit **Esc** brich
    Minuten.
 6. Mit Setup-Key wird **NetBird** im Container installiert und verbunden (bei eigenem NetBird-Server mit dessen
    Adresse). In NetBird heißt der Rechner `morninet`.
-7. Am Ende stehen **IP**, **Panel-Adresse** und dein **Einrichtungs-Code** da, dazu die nächsten Schritte.
+7. Auf dem Host passt ab jetzt der **Host-Wächter** auf den Container auf (`morninet-host-guard`, aus MorniHosting):
+   Ist er aus, ohne dass du ihn gestoppt hast, startet er ihn wieder; hängt er drei Minuten, startet er ihn neu. Läuft
+   auf demselben Proxmox auch MorniHosting, hat jeder seinen eigenen.
+8. Am Ende stehen **IP**, **Panel-Adresse** und dein **Einrichtungs-Code** da, dazu die nächsten Schritte.
 
 **Dein Bot-Token** (und der NetBird-Key) wird nie angezeigt und steht nie in einer Befehlszeile, in der
 Prozessliste oder in einem Protokoll. Er geht als Datei, die nur root lesen darf, in den Container, `install.sh`
@@ -200,6 +203,20 @@ cd /opt/morninet && docker compose logs -f morninet
 
 ```bash
 docker exec morninet-motor node /app/server/dist/cli.js list-users
+```
+
+Auf dem Proxmox-Host – was der Host-Wächter sieht und zuletzt getan hat:
+
+```bash
+morninet-host-guard status
+```
+
+Container von vor dem 16.11. bekommen den Host-Wächter einmal von Hand (Shell des Hosts, `<ID>` = dein Container):
+
+```bash
+pct exec <ID> -- cat /opt/morninet/vendor/mornihosting/proxmox/dauerbetrieb.sh >/root/dauerbetrieb.sh
+MH_GUARD_NAME=morninet MH_BRAND=morni.net MH_INSTALL_DIR=/opt/morninet MH_CT_GUARD=/usr/local/sbin/morninet-guard \
+  MH_DATA_VOLUME=morninet-motor-data CTID=<ID> bash /root/dauerbetrieb.sh hostguard
 ```
 
 ## Umbenennung in morni.net (16.11.2026)

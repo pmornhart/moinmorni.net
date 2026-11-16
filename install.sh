@@ -259,14 +259,22 @@ fi
 
 DOMAIN="$(get_env MM_DOMAIN)"
 PORT="$(get_env MM_PORT)"
-printf '\n %s🎉 Fertig!%s\n\n' "${GN}" "${CL}"
 SETUP_REQUIRED="$(docker compose exec -T morninet node -e \
   "fetch('http://127.0.0.1:8080/api/setup').then(r=>r.json()).then(j=>console.log(j.required===true))" \
   | tr -d '\r\n')"
 # Der Code entsteht beim ersten Start, sobald morni.net den Motor erreicht.
+CODE=""
 if [[ "${SETUP_REQUIRED}" == true ]] &&
   wait_for "Der Einrichtungs-Code" docker compose exec -T morninet test -f /data/setup-code; then
   CODE="$(docker compose exec -T morninet cat /data/setup-code | tr -d '\r\n')"
+fi
+# Vom Proxmox-Einzeiler aus (MM_NO_SUMMARY=1): keine eigene Zusammenfassung – die zeigt der Einzeiler am Ende.
+if [[ "${MM_NO_SUMMARY:-}" == 1 ]]; then
+  exit 0
+fi
+
+printf '\n %s🎉 Fertig!%s\n\n' "${GN}" "${CL}"
+if [[ -n "${CODE}" ]]; then
   printf '    Leg jetzt dein Owner-Konto an:\n'
   printf '      %shttps://%s/panel/einrichtung%s\n' "${BL}" "${DOMAIN}" "${CL}"
   printf '      (zu Hause auch: http://%s:%s/panel/einrichtung)\n\n' "${LAN_IP:-<IP>}" "${PORT:-8080}"

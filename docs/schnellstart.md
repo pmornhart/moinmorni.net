@@ -589,6 +589,8 @@ im Monat.
 
 - Der Container **startet mit Proxmox**. Nach einem Stromausfall kommt alles von selbst wieder.
 - morni.net und der Motor starten neu, wenn sie abstürzen. Spielserver, die abstürzen, startet der Motor wieder.
+- Auf dem Proxmox-Host passt der **Host-Wächter** auf den Container auf: Ist er aus, ohne dass du ihn gestoppt hast,
+  startet er ihn wieder; hängt er, startet er ihn neu (Status auf dem Host: `morninet-host-guard status`).
 - Im Container prüft ein **Wächter** jede Minute NetBird, DNS, Docker und die Container von morni.net und repariert
   selbst. Was er tut, steht im Discord-Team-Log (Details in der [NetBird-Anleitung](netbird.md#wächter)). Status:
 
