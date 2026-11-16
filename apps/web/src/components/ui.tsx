@@ -115,22 +115,11 @@ export function Textarea({ className, ...props }: ComponentProps<'textarea'>): R
   );
 }
 
-export function NativeSelect({ className, children, ...props }: ComponentProps<'select'>): ReactElement {
-  return (
-    <div className={cn('relative', className)}>
-      <select className={cn(FIELD_BASE, 'h-11 cursor-pointer appearance-none pr-10')} {...props}>
-        {children}
-      </select>
-      <svg
-        viewBox="0 0 16 16"
-        aria-hidden
-        className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-      >
-        <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    </div>
-  );
-}
+/**
+ * Formerly a native <select> (its open list was the browser's white window). Now the choice list in the page's look
+ * with the same props – new code uses `Select` from './select' directly.
+ */
+export { Select as NativeSelect } from './select';
 
 export function Switch({ className, ...props }: ComponentProps<typeof SwitchPrimitive.Root>): ReactElement {
   return (

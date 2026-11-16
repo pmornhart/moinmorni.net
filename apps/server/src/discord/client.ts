@@ -17,6 +17,8 @@ const OP_HELLO = 10;
 const OP_HEARTBEAT_ACK = 11;
 export const INTENT_GUILDS = 1;
 export const INTENT_GUILD_MEMBERS = 2;
+/** Wer in welchem Sprachkanal sitzt (kein besonderes Recht nötig) – für Sprachchat-Stumm. */
+export const INTENT_GUILD_VOICE_STATES = 128;
 /** Discord: „Disallowed intents“ – der Mitglieder-Intent ist im Entwicklerportal nicht eingeschaltet. */
 const CLOSE_DISALLOWED_INTENTS = 4014;
 const CLOSE_AUTH_FAILED = 4004;
@@ -119,7 +121,7 @@ export function createDiscordClient(
     acked: true,
     retryMs: RECONNECT_MIN_MS,
     stopped: false,
-    intents: INTENT_GUILDS | INTENT_GUILD_MEMBERS,
+    intents: INTENT_GUILDS | INTENT_GUILD_MEMBERS | INTENT_GUILD_VOICE_STATES,
     connected: false,
     error: null,
   };
@@ -206,7 +208,7 @@ export function createDiscordClient(
         stopHeartbeat();
         gw.connected = false;
         if (code === CLOSE_DISALLOWED_INTENTS) {
-          gw.intents = INTENT_GUILDS;
+          gw.intents = INTENT_GUILDS | INTENT_GUILD_VOICE_STATES;
           gw.sessionId = null;
           gw.resumeUrl = null;
           gw.error = 'members_intent_missing';

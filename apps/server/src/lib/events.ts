@@ -10,7 +10,8 @@ export interface Events {
   /** Strafe verhängt oder aufgehoben (Panel lädt neu, Discord zieht nach). */
   'punishments.changed': {
     uuid: string;
-    kind: 'ban' | 'mute' | 'warn' | 'kick' | 'jail';
+    /** voice = im Sprachchat stumm. */
+    kind: 'ban' | 'mute' | 'warn' | 'kick' | 'jail' | 'voice';
     action: 'add' | 'lift';
     until: string | null;
     reason: string;

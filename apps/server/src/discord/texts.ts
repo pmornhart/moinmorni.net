@@ -99,6 +99,18 @@ export const T = {
     de: '🔓 **{name}** aus dem Gefängnis ({by})',
     en: '🔓 **{name}** released from jail ({by})',
   },
+  logVoiceMute: {
+    de: '🎙️ **{name}** im Sprachchat stumm{until} von {by} – {reason}',
+    en: '🎙️ **{name}** muted in voice chat{until} by {by} – {reason}',
+  },
+  logLiftVoiceMute: {
+    de: '🔊 **{name}** darf im Sprachchat wieder sprechen ({by})',
+    en: '🔊 **{name}** may speak in voice chat again ({by})',
+  },
+  logVoiceNoRight: {
+    de: ' · Discord: Der Bot darf niemanden stummschalten (Recht „Mitglieder stummschalten“ fehlt) – gilt nur im Spiel.',
+    en: ' · Discord: the bot may not mute members (“Mute Members” permission missing) – applies in game only.',
+  },
   applyButton: { de: 'Für MorniCraft bewerben', en: 'Apply for MorniCraft' },
   applyClosed: {
     de: 'Gerade nehmen wir keine Bewerbungen für MorniCraft an – schau bald wieder vorbei!',

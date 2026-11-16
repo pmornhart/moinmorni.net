@@ -1,15 +1,25 @@
+import { PUNISHMENT_RIGHTS } from '@moinmorni/shared';
 import type { HubContext } from './context.js';
 import type { Punishment } from './punish.js';
 import { normalUuid } from './players.js';
-import { dateText, mm, text, type Lang } from './texts.js';
+import { dateText, mm, text, type Lang, type TextKey } from './texts.js';
 
 /**
- * Strafen mit allem, was dazugehört – gleich, ob sie im Spiel (/ban) oder im Panel verhängt werden: Rauswurf mit
- * Grund, Bann-Liste an den Proxy, Nachricht an den Spieler, Hinweis ans Team.
+ * Strafen mit allem, was dazugehört – gleich, ob sie im Spiel (/ban, /voicemute) oder im Panel verhängt werden:
+ * Rauswurf mit Grund, Bann-Liste an den Proxy, Nachricht an den Spieler, Hinweis ans Team, Discord (über
+ * `punishments.changed`).
  */
 
-export type ModKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick';
-export type LiftKind = 'ban' | 'mute' | 'jail';
+/** voice = im Sprachchat stumm (Chat schreiben geht weiter). */
+export type ModKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick' | 'voice';
+export type LiftKind = 'ban' | 'mute' | 'jail' | 'voice';
+
+/** Was dauert und sich aufheben lässt (Verwarnen und Rauswerfen sind einmalig). */
+export const LIFT_KINDS: readonly LiftKind[] = ['ban', 'mute', 'jail', 'voice'];
+export const isLasting = (kind: string): kind is LiftKind => LIFT_KINDS.some((k) => k === kind);
+
+/** Das Recht im Spiel zu jeder Strafe – im Panel gilt dasselbe (`mayPunish` aus @moinmorni/shared). */
+const KIND_RIGHT = PUNISHMENT_RIGHTS satisfies Record<ModKind, string>;
 
 export interface Target {
   readonly uuid: string;
@@ -39,8 +49,26 @@ const TEAM_KEY = {
   jail: 'team.jail',
   warn: 'team.warn',
   kick: 'team.kick',
-} as const;
-const LIFT_KEY = { ban: 'team.unban', mute: 'team.unmute', jail: 'team.unjail' } as const;
+  voice: 'team.voicemute',
+} as const satisfies Record<ModKind, TextKey>;
+const LIFT_KEY = {
+  ban: 'team.unban',
+  mute: 'team.unmute',
+  jail: 'team.unjail',
+  voice: 'team.voiceunmute',
+} as const satisfies Record<LiftKind, TextKey>;
+/** Nachricht an den Spieler selbst (wenn online); Bann und Rauswurf zeigen ihren Grund beim Rauswurf. */
+const YOU_KEY: Readonly<Partial<Record<ModKind, TextKey>>> = {
+  mute: 'mute.you',
+  warn: 'warn.you',
+  jail: 'jail.you',
+  voice: 'voice.muted_you',
+};
+const FREE_KEY: Readonly<Partial<Record<LiftKind, TextKey>>> = {
+  mute: 'unmute.you',
+  jail: 'unjail.you',
+  voice: 'voice.unmuted_you',
+};
 /** Gefängnis ohne Dauer: zehn Minuten (für immer nur ausdrücklich, z. B. „perm“). */
 export const JAIL_DEFAULT_MINUTES = 10;
 const LOBBY = 'lobby';
@@ -77,8 +105,13 @@ export function createModeration(ctx: HubContext, onChange: (change: ModChange) 
     },
     punish: (t, kind, minutes, reason, by) => {
       const why = reason?.trim() || text(t.lang, 'punish.no_reason');
-      const lasting = kind === 'ban' || kind === 'mute' || kind === 'jail';
-      const p = ctx.punish.add({ uuid: t.uuid, kind, reason: why, by, minutes: lasting ? minutes : null });
+      const p = ctx.punish.add({
+        uuid: t.uuid,
+        kind,
+        reason: why,
+        by,
+        minutes: isLasting(kind) ? minutes : null,
+      });
       const vars = (lang: Lang) => ({
         actor: mm(by),
         name: mm(t.name),
@@ -90,23 +123,21 @@ export function createModeration(ctx: HubContext, onChange: (change: ModChange) 
         ctx.syncBans();
       }
       if (kind === 'kick' && t.online) ctx.kick(t.uuid, text(t.lang, 'kick.screen', vars(t.lang)));
-      if (kind === 'mute' && t.online) ctx.msg(t.uuid, text(t.lang, 'mute.you', vars(t.lang)));
-      if (kind === 'warn' && t.online) ctx.msg(t.uuid, text(t.lang, 'warn.you', vars(t.lang)));
+      const you = YOU_KEY[kind];
+      if (you && t.online) ctx.msg(t.uuid, text(t.lang, you, vars(t.lang)));
       // Gefängnis: die Zelle steht in der Lobby – wer woanders spielt, kommt dorthin.
-      if (kind === 'jail' && t.online) {
-        ctx.msg(t.uuid, text(t.lang, 'jail.you', vars(t.lang)));
-        if (ctx.presence.get(t.uuid)?.server !== LOBBY) ctx.connect(t.uuid, LOBBY);
-      }
-      ctx.team(kind, (lang) => text(lang, TEAM_KEY[kind], vars(lang)));
+      if (kind === 'jail' && t.online && ctx.presence.get(t.uuid)?.server !== LOBBY)
+        ctx.connect(t.uuid, LOBBY);
+      ctx.team(KIND_RIGHT[kind], (lang) => text(lang, TEAM_KEY[kind], vars(lang)));
       onChange({ uuid: t.uuid, kind, action: 'add', until: p.expiresAt, reason: why, by });
       return p;
     },
     lift: (t, kind, by) => {
       if (!ctx.punish.revoke(t.uuid, kind, by)) return false;
       if (kind === 'ban') ctx.syncBans();
-      if (kind === 'mute' && t.online) ctx.msg(t.uuid, text(t.lang, 'unmute.you'));
-      if (kind === 'jail' && t.online) ctx.msg(t.uuid, text(t.lang, 'unjail.you'));
-      ctx.team(kind, (lang) => text(lang, LIFT_KEY[kind], { actor: mm(by), name: mm(t.name) }));
+      const free = FREE_KEY[kind];
+      if (free && t.online) ctx.msg(t.uuid, text(t.lang, free));
+      ctx.team(KIND_RIGHT[kind], (lang) => text(lang, LIFT_KEY[kind], { actor: mm(by), name: mm(t.name) }));
       onChange({ uuid: t.uuid, kind, action: 'lift', until: null, reason: '', by });
       return true;
     },

@@ -988,7 +988,8 @@
     "bedrock": "Bedrock",
     "bedrockHelp": "Plays the Bedrock Edition (phone, console or Windows).",
     "banned": "Banned",
-    "muted": "Muted",
+    "muted": "Chat muted",
+    "voiceMuted": "Voice muted",
     "open": "Open {{name}}'s profile",
     "back": "All players",
     "unknown": "MoinMorni does not know this player (any more).",
@@ -1014,7 +1015,8 @@
       "higher": "{{name}} has the same or a higher rank than you – you cannot change this rank.",
       "noRight": "Only people with the right “Give ranks” may give ranks (like /rank in the game). VIP is given by the owner only.",
       "noRoles": "Ranks can be given by people who may also see the roles in the panel.",
-      "help": "You can only give ranks below your own. Only the owner gives Owner and Admin. Applies in the game right away."
+      "help": "You can only give ranks below your own. Only the owner gives Owner, Admin and VIP. Applies in the game right away.",
+      "locked": "You may not give this rank – it is as high as yours or higher (only the owner gives Owner, Admin and VIP)."
     },
     "act": {
       "title": "Punish",
@@ -1065,18 +1067,21 @@
   "punish": {
     "kinds": {
       "ban": "Ban",
-      "mute": "Mute",
+      "mute": "Chat mute",
+      "voice": "Voice mute",
       "warn": "Warning",
       "kick": "Kick",
       "jail": "Jail"
     },
     "verbs": {
       "ban": "Ban",
-      "mute": "Mute",
+      "mute": "Mute in chat",
+      "voice": "Mute in voice chat",
       "warn": "Warn",
       "kick": "Kick",
       "jail": "Jail"
     },
+    "noRight": "Your role lacks the right for this – just like the command in the game.",
     "title": "New punishment",
     "titleFor": "Punish {{name}}",
     "text": "Applies across the whole network right away – the person sees the reason, the team gets a note.",
@@ -1113,6 +1118,8 @@
       "banForever": "{{name}} is removed from the network right away and cannot join any more – until someone lifts the ban.",
       "mute": "{{name}} cannot write in chat for {{duration}}.",
       "muteForever": "{{name}} cannot write in chat any more – until someone lifts the mute.",
+      "voice": "{{name}} cannot speak in voice chat for {{duration}} – on every server. Writing in chat still works. Discord: muted in voice channels too if the account is linked.",
+      "voiceForever": "{{name}} cannot speak in voice chat until someone lifts it – on every server. Writing in chat still works. Discord: muted in voice channels too if the account is linked.",
       "warn": "{{name}} sees the warning in the game (if online). It stays in the history.",
       "kick": "{{name}} is removed from the network right away, but can join again straight away.",
       "jail": "{{name}} goes to the lobby jail cell for {{duration}}: no game modes, can only write to the team. Discord: jail role.",
@@ -1122,19 +1129,22 @@
     "cancel": "Cancel",
     "done": {
       "ban": "{{name}} is banned now.",
-      "mute": "{{name}} is muted now.",
+      "mute": "{{name}} is muted in chat now.",
+      "voice": "{{name}} is muted in voice chat now.",
       "warn": "{{name}} has been warned.",
       "kick": "{{name}} has been kicked.",
       "jail": "{{name}} is in jail now."
     },
     "lifted": {
       "ban": "{{name}}'s ban is lifted.",
-      "mute": "{{name}} may write again."
+      "mute": "{{name}} may write again.",
+      "voice": "{{name}} may speak in voice chat again.",
+      "jail": "{{name}} is free again."
     }
   },
   "punishments": {
     "title": "Punishments",
-    "text": "All punishments in the network – bans, mutes, warnings and kicks. You can lift active ones here.",
+    "text": "All punishments in the network – bans, chat and voice chat mutes, jail, warnings and kicks. You can lift active ones here.",
     "new": "New punishment",
     "search": "Search by player …",
     "searchLabel": "Search punishments by player name",
@@ -1179,7 +1189,7 @@
     },
     "punishments": {
       "title": "Punishments",
-      "text": "Warn, mute, ban or kick – and lift it all again. Applies across the whole network right away."
+      "text": "Warn, mute in chat or voice chat, jail, ban or kick – and lift it all again. Applies across the whole network and on Discord right away."
     },
     "roles": {
       "title": "Roles",
@@ -1814,6 +1824,7 @@
     "player_unknown": "MoinMorni does not know this player. They must have been on the network at least once – check the spelling too.",
     "player_higher": "This person has the same or a higher rank than you – you may not do that.",
     "player_offline": "Kicking only works while the person is online.",
+    "punish_no_right": "Your role may not hand out or lift this punishment – it lacks the right, just like the command in the game (e.g. “Mute in voice chat” for /voicemute).",
     "punishment_none": "There is nothing to lift right now – maybe the punishment has already run out.",
     "role_unknown": "This rank does not exist (any more). Reload the page.",
     "role_too_high": "You may not give this rank – it is as high as yours or higher (VIP is given by the owner only).",

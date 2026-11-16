@@ -104,6 +104,9 @@ als ganze Liste (`"edelweiss-jagd-runden": [10, 15, 20]`), Felder von Listen-Ein
 (`ankauf.stufen.1.prozent`). So entsteht eine Liste auch in einer älteren config.yml, die sie noch nicht hat – eine
 einzelne Stelle ließe sich dort nicht eintragen.
 
+Sprachchat-Stumm (`/voicemute` oder Panel) läuft über dieselbe Moderation wie die anderen Strafen; `muted` in `voice`
+kommt bei jeder Änderung neu und spätestens eine Minute nach Ablauf einer Stummschaltung.
+
 Fällt der Hub aus, läuft das Netzwerk weiter: Chat bleibt auf dem eigenen Server, Banns aus der letzten `bans`-Liste
 gelten weiter, das Plugin verbindet sich alle paar Sekunden neu.
 

@@ -294,11 +294,13 @@ export function createHub(options: HubOptions): Hub {
       .activeAll('jail')
       .map((p) => ({ uuid: p.playerUuid, until: p.expiresAt, reason: p.reason })),
   });
+  const voiceRef: { broadcast: () => void } = { broadcast: () => undefined };
   const moderation = createModeration(ctx, (change) => {
     if (change.kind === 'jail') toBackend(LOBBY_SERVER, jailState());
+    // Sprachchat-Stumm: jeder Spielserver hält Stumme selbst zurück und braucht die neue Liste.
+    if (change.kind === 'voice') voiceRef.broadcast();
     events.emit('punishments.changed', change);
   });
-  const voiceRef: { broadcast: () => void } = { broadcast: () => undefined };
   const social = createSocial(ctx, db, now, () => voiceRef.broadcast());
   const stats = createModeStats(db);
   const modeRuns = new Map<string, ModeRun>();
