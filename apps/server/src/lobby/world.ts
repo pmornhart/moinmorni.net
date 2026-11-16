@@ -223,6 +223,9 @@ export function lobbyProperties(offer?: PackOffer): Record<string, string> {
     'force-gamemode': 'true',
     difficulty: 'peaceful',
     pvp: 'false',
+    // Doppelsprung und Jump and Run: Die Blöcke des Jump and Run kennt nur der Client des Läufers – ohne das würde
+    // Minecraft ihn nach ein paar Sekunden Stillstehen darauf wegen „Schwebens“ hinauswerfen.
+    'allow-flight': 'true',
     'spawn-protection': '0',
     'allow-nether': 'false',
     'generate-structures': 'false',

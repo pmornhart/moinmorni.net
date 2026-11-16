@@ -31,7 +31,9 @@ describe('Jump and Run statt Parkour-Spirale', () => {
     );
     expect(canvas.extra.some((c) => c.includes("text:'Parkour'") || c.includes('"Parkour"'))).toBe(false);
     const near = canvas.find((b) => b.includes('banner') || b === 'lantern');
-    expect(near.filter(([x, , z]) => Math.hypot(x - start.x, z - start.z) < 8).length).toBeGreaterThanOrEqual(4);
+    expect(near.filter(([x, , z]) => Math.hypot(x - start.x, z - start.z) < 8).length).toBeGreaterThanOrEqual(
+      4,
+    );
     // Die alte Spirale (x −66 … −56, z −46 … −36, bis 12 Blöcke hoch) steht nicht mehr.
     const spiral = canvas
       .find((b) => b.endsWith('_concrete') || b === 'diamond_block' || b === 'gold_block')
@@ -47,34 +49,41 @@ describe('Jump and Run statt Parkour-Spirale', () => {
     hints.forEach(([, y]) => expect(y).toBeGreaterThanOrEqual(GROUND + 10));
   });
 
-  it('Bahnen: eigene Würfel hoch über dem Dorf, ohne Überschneidung, leer, in der Weltgrenze', { timeout: 30_000 }, () => {
-    expect(lanes.length).toBe(9);
-    const apart = (a: JumpLane, b: JumpLane): boolean =>
-      a.x2 + JUMP_LANE_GAP < b.x1 ||
-      b.x2 + JUMP_LANE_GAP < a.x1 ||
-      a.z2 + JUMP_LANE_GAP < b.z1 ||
-      b.z2 + JUMP_LANE_GAP < a.z1;
-    lanes.forEach((a, i) =>
-      lanes.slice(i + 1).forEach((b) => expect(apart(a, b), `${JSON.stringify(a)} ${JSON.stringify(b)}`).toBe(true)),
-    );
-    lanes.forEach((l) => {
-      expect(l.y1).toBeGreaterThanOrEqual(GROUND + 80);
-      expect(Math.max(Math.abs(l.x1), Math.abs(l.x2), Math.abs(l.z1), Math.abs(l.z2))).toBeLessThan(
-        BORDER_HALF - 8,
+  it(
+    'Bahnen: eigene Würfel hoch über dem Dorf, ohne Überschneidung, leer, in der Weltgrenze',
+    { timeout: 30_000 },
+    () => {
+      expect(lanes.length).toBe(9);
+      const apart = (a: JumpLane, b: JumpLane): boolean =>
+        a.x2 + JUMP_LANE_GAP < b.x1 ||
+        b.x2 + JUMP_LANE_GAP < a.x1 ||
+        a.z2 + JUMP_LANE_GAP < b.z1 ||
+        b.z2 + JUMP_LANE_GAP < a.z1;
+      lanes.forEach((a, i) =>
+        lanes
+          .slice(i + 1)
+          .forEach((b) => expect(apart(a, b), `${JSON.stringify(a)} ${JSON.stringify(b)}`).toBe(true)),
       );
-      const taken = range(l.x1, l.x2).flatMap((x) =>
-        range(l.z1, l.z2).flatMap((z) =>
-          range(l.y1 - 2, l.y2 + 1)
-            .filter((y) => !empty(canvas.get(x, y, z)))
-            .map((y) => `${x} ${y} ${z}`),
-        ),
-      );
-      expect(taken).toEqual([]);
-    });
-    // Die nächste Bahn zum Startplatz zuerst.
-    const dist = (l: JumpLane): number => Math.hypot((l.x1 + l.x2) / 2 - start.x, (l.z1 + l.z2) / 2 - start.z);
-    lanes.slice(1).forEach((l, i) => expect(dist(l)).toBeGreaterThanOrEqual(dist(lanes[i]!)));
-  });
+      lanes.forEach((l) => {
+        expect(l.y1).toBeGreaterThanOrEqual(GROUND + 80);
+        expect(Math.max(Math.abs(l.x1), Math.abs(l.x2), Math.abs(l.z1), Math.abs(l.z2))).toBeLessThan(
+          BORDER_HALF - 8,
+        );
+        const taken = range(l.x1, l.x2).flatMap((x) =>
+          range(l.z1, l.z2).flatMap((z) =>
+            range(l.y1 - 2, l.y2 + 1)
+              .filter((y) => !empty(canvas.get(x, y, z)))
+              .map((y) => `${x} ${y} ${z}`),
+          ),
+        );
+        expect(taken).toEqual([]);
+      });
+      // Die nächste Bahn zum Startplatz zuerst.
+      const dist = (l: JumpLane): number =>
+        Math.hypot((l.x1 + l.x2) / 2 - start.x, (l.z1 + l.z2) / 2 - start.z);
+      lanes.slice(1).forEach((l, i) => expect(dist(l)).toBeGreaterThanOrEqual(dist(lanes[i]!)));
+    },
+  );
 
   it('der Rundgang zeigt das Jump and Run statt der Spirale', () => {
     expect(TOUR.some((s) => s.title.de === 'Jump and Run')).toBe(true);

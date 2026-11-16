@@ -651,8 +651,20 @@ describe('Hub', () => {
 
   test('Jump and Run: nur die Lobby meldet Werte unter „lobby“, sie stehen im Profil und in der Bestenliste', async () => {
     const { lobby, duels } = await network();
-    lobby.send({ t: 'stats', mode: 'lobby', uuid: PHILIP, add: { jump_runs: 1, jumps: 12 }, max: { jump_best: 12 } });
-    lobby.send({ t: 'stats', mode: 'lobby', uuid: PHILIP, add: { jump_runs: 1, jumps: 7 }, max: { jump_best: 7 } });
+    lobby.send({
+      t: 'stats',
+      mode: 'lobby',
+      uuid: PHILIP,
+      add: { jump_runs: 1, jumps: 12 },
+      max: { jump_best: 12 },
+    });
+    lobby.send({
+      t: 'stats',
+      mode: 'lobby',
+      uuid: PHILIP,
+      add: { jump_runs: 1, jumps: 7 },
+      max: { jump_best: 7 },
+    });
     // Ein Spielserver darf nicht für die Lobby sprechen.
     duels.send({ t: 'stats', mode: 'lobby', uuid: LENA, max: { jump_best: 999 } });
     await new Promise((r) => setTimeout(r, 150));

@@ -59,7 +59,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private Object voice;
     /** Figuren der Lobby (anklicken, Live-Zahlen, Dorfleute) – tut nur etwas, wo es Figuren gibt. */
     private LobbyNpcs lobby;
-    /** Lobby-Funktionen (Begrüßung, Menü, Parkour …) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
+    /** Lobby-Funktionen (Begrüßung, Menü, Jump and Run, Doppelsprung …) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyFeatures features;
     /** Gefängnis-Zelle der Lobby – nur aktiv, wenn der Hub die Zelle schickt. */
     private LobbyJail jail;
@@ -123,6 +123,12 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         clock = new LobbyClock(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
+        // Jump and Run meldet Rekord und Läufe ans Netzwerk (Statistik „lobby“).
+        features.setHub(body -> {
+            if (hub != null) {
+                hub.send(body);
+            }
+        });
         // In der Lobby bauen (im Kreativmodus): wer das Recht „Lobby bearbeiten“ hat – oder OP ist.
         features.setEditors(p -> Rights.mayEditLobby(rankRights(p)));
         getServer().getScheduler().runTask(this, this::logModeAdmins);
