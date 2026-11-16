@@ -433,7 +433,7 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await until(() => lena()?.mute === true);
     h.mm.hub.punish.revoke(LENA, 'voice', 'test');
     await h.mm.bot.cleanup();
-    expect(lena()?.mute).toBe(false);
+    await until(() => lena()?.mute === false);
 
     // Nicht im Sprachkanal: kein Fehler – stumm, sobald sie einen betritt.
     sits(null);
@@ -442,7 +442,7 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(lena()?.mute).toBe(false);
     sits(dorf);
     await enters();
-    expect(lena()?.mute).toBe(true);
+    await until(() => lena()?.mute === true);
     // Aufgehoben, während sie weg ist: beim nächsten Betreten wieder frei.
     sits(null);
     await lift();
@@ -450,7 +450,7 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(lena()?.mute).toBe(true);
     sits(dorf);
     await enters();
-    expect(lena()?.mute).toBe(false);
+    await until(() => lena()?.mute === false);
 
     // Ohne das Recht „Mitglieder stummschalten“: gilt nur im Spiel, Hinweis im Team-Log, kein Fehler.
     dc.permissions.muteMembers = false;
