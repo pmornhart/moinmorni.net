@@ -585,6 +585,19 @@ export function createHub(options: HubOptions): Hub {
       const first = presence.get(m.uuid)?.server === null;
       presence.move(m.uuid, m.server);
       sendProfile(m.uuid);
+      // Eingesperrt, aber auf einem anderen Server angekommen (mitten im Wechsel eingesperrt): zurück in die Zelle.
+      const jail = m.server === LOBBY_SERVER ? undefined : punish.active(normalUuid(m.uuid), 'jail');
+      if (jail && ctx.connect(normalUuid(m.uuid), LOBBY_SERVER)) {
+        const lang = presence.get(m.uuid)?.lang ?? defaultLang();
+        ctx.msg(
+          normalUuid(m.uuid),
+          text(lang, 'jail.blocked', {
+            until: jail.expiresAt
+              ? text(lang, 'punish.until', { date: dateText(lang, jail.expiresAt, ctx.timeZone) })
+              : text(lang, 'punish.forever'),
+          }),
+        );
+      }
       // Erst jetzt ist der Spieler wirklich da: Freunde erfahren es, offene Anfragen kommen an.
       if (first) social.joined(normalUuid(m.uuid));
       social.switched(normalUuid(m.uuid), m.server);

@@ -666,7 +666,7 @@
       "textFor": "Nur, was {{name}} als {{rank}} wirklich darf. Ein Klick auf einen Befehl kopiert ihn.",
       "mine": {
         "label": "Nur meine Befehle zeigen",
-        "placeholder": "Dein Minecraft-Name – nur deine Befehle",
+        "placeholder": "Dein Minecraft-Name",
         "go": "Meine Befehle",
         "clear": "Alle Befehle"
       },

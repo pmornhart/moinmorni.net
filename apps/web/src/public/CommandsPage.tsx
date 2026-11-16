@@ -186,7 +186,8 @@ function SectionTitle({
       <div className="grid min-w-0 gap-2">
         <h2
           id={id}
-          className="flex items-center gap-3 font-pixel text-[clamp(1.8rem,4vw,2.5rem)] font-bold leading-none"
+          // Below the sticky header and jump bar when jumped to.
+          className="flex scroll-mt-40 items-center gap-3 font-pixel text-[clamp(1.8rem,4vw,2.5rem)] font-bold leading-none"
         >
           <span
             className={cn(
@@ -362,11 +363,7 @@ function ModeSection({
   const everyone = [...guide.commands, ...(guide.more ?? [])].map(row);
   const team = (guide.team ?? []).map(row).filter((r) => !me || mayUse(me, r.need));
   return (
-    <section
-      className="grid scroll-mt-40 gap-5"
-      aria-labelledby={modeSection(mode.id)}
-      style={modeStyle(mode.id)}
-    >
+    <section className="grid gap-5" aria-labelledby={modeSection(mode.id)} style={modeStyle(mode.id)}>
       <SectionTitle
         id={modeSection(mode.id)}
         icon={Gamepad2}
@@ -427,22 +424,26 @@ function Commands(): ReactElement {
   const teamLines = [...PLAYER_TOPICS, 'team' as const]
     .flatMap(lineRows)
     .filter((r) => r.need.kind !== 'none' && (!me || mayUse(me, r.need)));
-  const settingRows: Row[] = SETTING_AREAS.flatMap((area) => {
-    const first = area.sections.flatMap((s) => s.settings).find((d) => d.command);
-    const count = area.sections.flatMap((s) => s.settings).filter((d) => d.command).length;
-    if (!first?.command) return [];
-    const root = first.command.split(' ')[0] ?? first.command;
-    return [
-      {
-        id: `set-${area.id}`,
-        syntax: root,
-        text: t('site.commands.settingLine', { area: pick(area.title), count }),
-        need: { kind: 'area', area: area.panel } as const,
-      },
-    ];
-  })
-    // One line per command (/netzwerk covers two areas).
-    .filter((r, i, all) => all.findIndex((x) => x.syntax === r.syntax) === i)
+  // One line per settings command – /netzwerk covers two areas (network, friends & party): their settings count together.
+  const withCommand = SETTING_AREAS.flatMap((area) =>
+    area.sections
+      .flatMap((s) => s.settings)
+      .flatMap((d) => (d.command ? [{ area, root: d.command.split(' ')[0] ?? d.command }] : [])),
+  );
+  const settingRows: Row[] = [...new Set(withCommand.map((c) => c.root))]
+    .flatMap((root): Row[] => {
+      const mine = withCommand.filter((c) => c.root === root);
+      const area = mine[0]?.area;
+      if (!area) return [];
+      return [
+        {
+          id: `set-${root}`,
+          syntax: root,
+          text: t('site.commands.settingLine', { area: pick(area.title), count: mine.length }),
+          need: { kind: 'area', area: area.panel },
+        },
+      ];
+    })
     .filter((r) => !me || mayUse(me, r.need));
 
   const modes = (status.data?.modes ?? []).filter((m) => MODE_GUIDES[m.id]);
@@ -460,7 +461,7 @@ function Commands(): ReactElement {
   ];
 
   const everyoneSection = (
-    <section key="alle" className="grid scroll-mt-40 gap-6" aria-labelledby={EVERYONE_ID}>
+    <section key="alle" className="grid gap-6" aria-labelledby={EVERYONE_ID}>
       <SectionTitle
         id={EVERYONE_ID}
         icon={Terminal}
@@ -508,7 +509,7 @@ function Commands(): ReactElement {
         {status.isPending ? <Skeleton className="h-72 rounded-[10px]" /> : null}
         {first ? modeSections.slice(1) : modeSections}
         {showTeam && info.isSuccess ? (
-          <section className="grid scroll-mt-40 gap-6" aria-labelledby={TEAM_ID}>
+          <section className="grid gap-6" aria-labelledby={TEAM_ID}>
             <SectionTitle
               id={TEAM_ID}
               icon={ShieldHalf}

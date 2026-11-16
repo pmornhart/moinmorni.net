@@ -338,6 +338,16 @@ describe('Hub', () => {
     await lobby.next('jail', jailedNow(0));
     expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: true } });
 
+    // Mitten im Wechsel eingesperrt und doch auf einem Modus angekommen: zurück in die Lobby.
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'jail', args: ['Lena', '5m', 'Wechsel'] });
+    await lobby.next('jail', jailedNow(1));
+    proxy.send({ t: 'switch', uuid: LENA, server: 'duels' });
+    expect(await proxy.next('connect', (m) => m['uuid'] === LENA)).toMatchObject({ server: 'lobby' });
+    await said(LENA, 'in jail');
+    proxy.send({ t: 'switch', uuid: LENA, server: 'lobby' });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'frei', args: ['Lena'] });
+    await lobby.next('jail', jailedNow(0));
+
     // Dauer läuft ab.
     await proxy.request({ t: 'command', uuid: PHILIP, command: 'jail', args: ['Lena', '5m', 'Spam'] });
     await lobby.next('jail', jailedNow(1));

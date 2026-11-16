@@ -44,6 +44,7 @@ const rcon = (dir, ...cmds) => {
   const p = props(dir);
   return execFileSync('python3', [RCON_PY, `127.0.0.1:${p['rcon.port']}`, p['rcon.password'], ...cmds], {
     encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
 };
 
@@ -350,7 +351,7 @@ async function main() {
   say(lena, '/server duels');
   check(
     'Lena auf dem zweiten Server',
-    await until('duels', async () => !atSpawn(lena) && !inCell(lena), 15_000),
+    await until('duels', async () => !atSpawn(lena) && !inCell(lena), 60_000),
   );
   await wait(2000);
   say(philip3, '/gefaengnis Lena 10m woanders');

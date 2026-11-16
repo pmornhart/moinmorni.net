@@ -666,7 +666,7 @@
       "textFor": "Only what {{name}} really may as {{rank}}. Click a command to copy it.",
       "mine": {
         "label": "Show only my commands",
-        "placeholder": "Your Minecraft name – only your commands",
+        "placeholder": "Your Minecraft name",
         "go": "My commands",
         "clear": "All commands"
       },
