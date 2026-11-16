@@ -1030,7 +1030,10 @@
     "act": {
       "title": "Strafe verhängen",
       "help": "Wirkt sofort im ganzen Netzwerk. Das Team bekommt einen Hinweis.",
-      "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – bestrafen kann hier nur jemand mit höherem Rang."
+      "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – bestrafen kann hier nur jemand mit höherem Rang.",
+      "protectedOne": "{{name}} ist {{rank}} – das darf nur der {{who}}. Strafen gehen nur an niedrigere Ränge.",
+      "protectedMany": "{{name}} ist {{rank}} – das dürfen nur {{who}}. Strafen gehen nur an niedrigere Ränge.",
+      "protectedNobody": "{{name}} ist {{rank}} – diesen Rang darf niemand bestrafen."
     },
     "active": {
       "title": "Gerade aktiv",
@@ -1167,7 +1170,8 @@
     "noMatch": "Keine Strafe passt zu deiner Auswahl.",
     "reset": "Filter zurücksetzen",
     "count": "{{count}} von {{total}} Strafen",
-    "latest": "Die letzten {{count}} Strafen, neueste zuerst."
+    "latest": "Die letzten {{count}} Strafen, neueste zuerst.",
+    "liftHigher": "Aufheben kann das nur jemand mit höherem Rang als {{name}}."
   },
   "tour": {
     "step": "Schritt {{n}} von {{total}}",
@@ -2211,7 +2215,8 @@
     "team_apply_link_required": "Verbinde zuerst dein Minecraft-Konto mit Discord (/discord im Spiel).",
     "team_apply_minecraft_name": "Das ist kein gültiger Minecraft-Name.",
     "team_apply_pending": "Deine Bewerbung liegt schon beim Team – du hörst bald von uns.",
-    "team_position_unknown": "Diese Stelle gibt es nicht (mehr). Lade die Seite neu."
+    "team_position_unknown": "Diese Stelle gibt es nicht (mehr). Lade die Seite neu.",
+    "player_protected": "Strafen gehen nur an niedrigere Ränge: Diese Person hat den gleichen oder einen höheren Rang als du (den Owner bestraft niemand)."
   },
   "modeSettings": {
     "title": "Gilt nach dem nächsten Neustart des Modus",

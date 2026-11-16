@@ -54,6 +54,23 @@ const TEXTS = {
     de: `${P}<red>Das geht nicht bei dir selbst.`,
     en: `${P}<red>You can't do that to yourself.`,
   },
+  // Strafen nur nach unten: {rank} = Rang der Person (in Rangfarbe), {who} = wer es darf.
+  'punish.protected_one': {
+    de: `${P}<red><white>{name}</white> ist {rank} – das darf nur der {who}.`,
+    en: `${P}<red><white>{name}</white> is {rank} – only the {who} may do that.`,
+  },
+  'punish.protected_many': {
+    de: `${P}<red><white>{name}</white> ist {rank} – das dürfen nur {who}.`,
+    en: `${P}<red><white>{name}</white> is {rank} – only {who} may do that.`,
+  },
+  'punish.protected_nobody': {
+    de: `${P}<red><white>{name}</white> ist {rank} – diesen Rang darf niemand bestrafen.`,
+    en: `${P}<red><white>{name}</white> is {rank} – nobody may punish this rank.`,
+  },
+  'punish.and': {
+    de: ' und ',
+    en: ' and ',
+  },
   'cmd.duration': {
     de: `${P}<red>Dauer verstehe ich nicht: <white>{value}</white>. Beispiele: <yellow>30m</yellow>, <yellow>2h</yellow>, <yellow>7d</yellow>, <yellow>perm</yellow>`,
     en: `${P}<red>I don't understand the duration <white>{value}</white>. Examples: <yellow>30m</yellow>, <yellow>2h</yellow>, <yellow>7d</yellow>, <yellow>perm</yellow>`,

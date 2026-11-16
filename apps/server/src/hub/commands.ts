@@ -5,6 +5,7 @@ import {
   isLasting,
   JAIL_DEFAULT_MINUTES,
   type LiftKind,
+  type ModKind,
   type Moderation,
   type Target,
 } from './moderation.js';
@@ -55,29 +56,43 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       .sort();
   const until = mod.untilText;
 
-  /** Ziel suchen und prüfen: bekannt, nicht man selbst, niedrigerer Rang. */
-  const victim = (actor: Actor, name: string | undefined): Target | null => {
+  /** Ziel suchen: bekannt, nicht man selbst (nur der Owner darf eine alte Strafe von sich selbst aufheben). */
+  const known = (actor: Actor, name: string | undefined, self = false): Target | null => {
     const t = target(name);
     if (!t) {
       say(actor, text(actor.lang, 'cmd.unknown_player', { name: mm(name ?? '') }));
       return null;
     }
-    if (t.uuid === actor.uuid) {
+    if (t.uuid === actor.uuid && !self) {
       say(actor, text(actor.lang, 'cmd.self'));
       return null;
     }
-    if (ctx.players.roleOf(t.uuid).position <= actor.role.position) {
+    return t;
+  };
+
+  /** Ziel für /rang: bekannt, nicht man selbst, niedrigerer Rang. */
+  const victim = (actor: Actor, name: string | undefined): Target | null => {
+    const t = known(actor, name);
+    if (t && ctx.players.roleOf(t.uuid).position <= actor.role.position) {
       say(actor, text(actor.lang, 'cmd.higher', { name: mm(t.name) }));
       return null;
     }
     return t;
   };
 
+  /** Ziel einer Strafe (verhängen oder aufheben): nur jemand mit niedrigerem Rang – den Owner niemand. */
+  const culprit = (actor: Actor, name: string | undefined, kind: ModKind, lifting = false): Target | null => {
+    const t = known(actor, name, lifting && actor.role.id === 'owner');
+    const refused = t ? mod.refusal(actor.role, t, kind, actor.lang, lifting) : null;
+    if (refused) say(actor, refused);
+    return refused ? null : t;
+  };
+
   /** Bann, Stumm, Gefängnis, Sprachchat-Stumm: `<spieler> [dauer] [grund…]` – wie im Panel über die Moderation. */
   const punishing =
     (kind: LiftKind) =>
     (actor: Actor, args: readonly string[]): void => {
-      const t = victim(actor, args[0]);
+      const t = culprit(actor, args[0], kind);
       if (!t) return;
       const minutes = parseDuration(args[1]);
       const reasonParts = minutes === undefined ? args.slice(1) : args.slice(2);
@@ -90,11 +105,9 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
   const lifting =
     (kind: LiftKind) =>
     (actor: Actor, args: readonly string[]): void => {
-      const t = target(args[0]);
-      if (!t) {
-        say(actor, text(actor.lang, 'cmd.unknown_player', { name: mm(args[0] ?? '') }));
-        return;
-      }
+      // Aufheben wie verhängen: nur bei niedrigerem Rang (alte Strafen bleiben, bis jemand Höheres sie aufhebt).
+      const t = culprit(actor, args[0], kind, true);
+      if (!t) return;
       if (!mod.lift(t, kind, actor.name))
         say(actor, text(actor.lang, NOT_PUNISHED[kind], { name: mm(t.name) }));
     };
@@ -289,7 +302,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       right: 'kick',
       usage: { de: '/kick <spieler> [grund]', en: '/kick <player> [reason]' },
       run: (actor, args) => {
-        const t = victim(actor, args[0]);
+        const t = culprit(actor, args[0], 'kick');
         if (!t) return;
         if (!t.online) {
           say(actor, text(actor.lang, 'cmd.offline', { name: mm(t.name) }));
@@ -310,7 +323,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
           say(actor, text(actor.lang, 'cmd.usage', { usage: '/warn <spieler> <grund>' }));
           return;
         }
-        const t = victim(actor, args[0]);
+        const t = culprit(actor, args[0], 'warn');
         if (!t) return;
         mod.punish(t, 'warn', null, reason, actor.name);
       },

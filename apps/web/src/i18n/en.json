@@ -1030,7 +1030,10 @@
     "act": {
       "title": "Punish",
       "help": "Applies across the whole network right away. The team gets a note.",
-      "higher": "{{name}} has the same or a higher rank than you – only someone with a higher rank can punish here."
+      "higher": "{{name}} has the same or a higher rank than you – only someone with a higher rank can punish here.",
+      "protectedOne": "{{name}} is {{rank}} – only the {{who}} may do that. Punishments only go to lower ranks.",
+      "protectedMany": "{{name}} is {{rank}} – only {{who}} may do that. Punishments only go to lower ranks.",
+      "protectedNobody": "{{name}} is {{rank}} – nobody may punish this rank."
     },
     "active": {
       "title": "Active right now",
@@ -1167,7 +1170,8 @@
     "noMatch": "No punishment matches your selection.",
     "reset": "Reset filters",
     "count": "{{count}} of {{total}} punishments",
-    "latest": "The latest {{count}} punishments, newest first."
+    "latest": "The latest {{count}} punishments, newest first.",
+    "liftHigher": "Only someone with a higher rank than {{name}} can lift this."
   },
   "tour": {
     "step": "Step {{n}} of {{total}}",
@@ -2211,7 +2215,8 @@
     "team_apply_link_required": "Link your Minecraft account to Discord first (/discord in the game).",
     "team_apply_minecraft_name": "That's not a valid Minecraft name.",
     "team_apply_pending": "Your application is already with the team – you'll hear from us soon.",
-    "team_position_unknown": "This position doesn't exist (any more). Reload the page."
+    "team_position_unknown": "This position doesn't exist (any more). Reload the page.",
+    "player_protected": "Punishments only go to lower ranks: this person has the same or a higher rank than you (nobody punishes the Owner)."
   },
   "modeSettings": {
     "title": "Applies after the mode’s next restart",
