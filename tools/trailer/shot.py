@@ -14,6 +14,8 @@ Einstellung (JSON):
   actors    {"Anna": [{"p":[x,y,z], "t": s, "look":[x,y,z] oder "yaw": Grad, "pitch": Grad, "hold": s}]}
   events    [{"at": s, "cmd": "..."} oder {"at": s, "actor": "Anna", "act": "swing"}]
   after     Befehle danach
+  dim       Dimension der Welt, z. B. "minecraft:duels" (optional; sonst die Hauptwelt). RCON läuft in der Hauptwelt –
+            ohne "dim" landen Kamera und Darsteller dort.
 Zeiten sind Spielzeit (so wie es im fertigen Video aussieht).
 """
 import json, math, os, socket, subprocess, sys, time
@@ -94,6 +96,11 @@ def main():
     fifo = os.environ.get('MM_ACTORS_FIFO')
     act_out = open(fifo, 'a', buffering=1) if fifo else None
 
+    dim = spec.get('dim')
+
+    def at(c):  # Befehl mit Ortsangabe in der richtigen Welt
+        return f'execute in {dim} run {c}' if dim else c
+
     for c in spec.get('setup', []):
         rc(c)
     cam = Path(spec['camera'], True)
@@ -102,7 +109,7 @@ def main():
     for n, path in actors.items():
         q = path.pts[0]
         rc(f'gamemode adventure {n}')
-        rc(f'tp {n} {q["p"][0]} {q["p"][1]} {q["p"][2]} {q.get("yaw", 0)} {q.get("pitch", 0)}')
+        rc(at(f'tp {n} {q["p"][0]} {q["p"][1]} {q["p"][2]} {q.get("yaw", 0)} {q.get("pitch", 0)}'))
     events = sorted(spec.get('events', []), key=lambda e: e['at'])
     duration = max([cam.end] + [p.end for p in actors.values()] + [e['at'] for e in events]) + spec.get('tail', 0.5)
 
@@ -114,11 +121,12 @@ def main():
     yaw0, pitch0 = angles(p0, spec['camera'][0]['look'])
     rc('kill @e[tag=mmcam]')
     rc(f'gamemode spectator {cam_player}')
-    rc(f'tp {cam_player} {p0[0]} {p0[1]} {p0[2]} {yaw0:.2f} {pitch0:.2f}')
+    rc(at(f'tp {cam_player} {p0[0]} {p0[1]} {p0[2]} {yaw0:.2f} {pitch0:.2f}'))
     time.sleep(1.5)
-    rc(f'summon item_display {p0[0]} {p0[1]} {p0[2]} {{Tags:["mmcam"],teleport_duration:1,Rotation:[{yaw0:.2f}f,{pitch0:.2f}f]}}')
+    rc(at(f'summon item_display {p0[0]} {p0[1]} {p0[2]} {{Tags:["mmcam"],teleport_duration:1,Rotation:[{yaw0:.2f}f,{pitch0:.2f}f]}}'))
     time.sleep(0.5)
-    rc(f'spectate @e[tag=mmcam,limit=1] {cam_player}')
+    # Mit Namensraum: Spielmodi (Duels, Party) haben ein eigenes /spectate, das sonst den Befehl abfängt.
+    rc(f'minecraft:spectate @e[tag=mmcam,limit=1] {cam_player}')
     time.sleep(float(spec.get('wait', 4)))
     rc(f'tick rate {20 / slow:g}')
     time.sleep(1.0)
@@ -148,7 +156,7 @@ def main():
         else:
             look = cam.pos(t, 'look')
         yaw, pitch = angles(pos, look)
-        rc(f'tp @e[tag=mmcam] {pos[0]:.3f} {pos[1]:.3f} {pos[2]:.3f} {yaw:.2f} {pitch:.2f}')
+        rc(at(f'tp @e[tag=mmcam] {pos[0]:.3f} {pos[1]:.3f} {pos[2]:.3f} {yaw:.2f} {pitch:.2f}'))
         for n, path in actors.items():
             p = path.pos(t)
             seg, _ = path.at(t)
@@ -164,7 +172,7 @@ def main():
                 else:
                     ay, ap = last_yaw.get(n, (0, 0))
             last_yaw[n] = (ay, ap)
-            rc(f'tp {n} {p[0]:.3f} {p[1]:.3f} {p[2]:.3f} {ay:.1f} {ap:.1f}')
+            rc(at(f'tp {n} {p[0]:.3f} {p[1]:.3f} {p[2]:.3f} {ay:.1f} {ap:.1f}'))
         while ei < len(events) and events[ei]['at'] <= t:
             e = events[ei]; ei += 1
             if 'cmd' in e:
@@ -177,7 +185,7 @@ def main():
             time.sleep(wait)
     ff.stdin.write(b'q'); ff.stdin.flush(); ff.wait()
     rc('tick rate 20')
-    rc('spectate')
+    rc('minecraft:spectate')
     rc('kill @e[tag=mmcam]')
     for c in spec.get('after', []):
         rc(c)

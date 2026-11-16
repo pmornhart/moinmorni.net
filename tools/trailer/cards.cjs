@@ -6,7 +6,13 @@
 //               {"file":"ende.png","kind":"end","title":"moinmorni.net","text":"…","note":"…"}]
 const fs = require('fs');
 const path = require('path');
-const { chromium } = require('playwright');
+// Playwright liegt global; NODE_PATH (z. B. für mineflayer gesetzt) verdeckt es sonst.
+const { chromium } = (() => {
+  try { return require('playwright'); } catch {
+    const root = require('child_process').execSync('npm root -g').toString().trim();
+    return require(path.join(root, 'playwright'));
+  }
+})();
 const FONTS = process.env.MM_FONTS || path.join(process.env.HOME, 'mm-cache/trailer/fonts');
 const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M16 1.5 28.5 5.6V15c0 7.6-5.3 12.9-12.5 15.5C8.8 27.9 3.5 22.6 3.5 15V5.6Z" fill="#0f2a20"/><path d="M16 3.4 26.6 6.9V15c0 6.5-4.4 11.1-10.6 13.4C9.8 26.1 5.4 21.5 5.4 15V6.9Z" fill="#059669"/><path d="M8 23V11h1.5v1.5h1V11H12v4h1V8h1.5v1.5h.75V8h1.5v1.5h.75V8H19v7h1v-4h1.5v1.5h1V11H24v12Z" fill="#e7bb4d"/><path d="M14.2 23v-3.4a1.8 1.8 0 0 1 3.6 0V23Z" fill="#0f2a20"/></svg>`;
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');

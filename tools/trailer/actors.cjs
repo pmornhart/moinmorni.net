@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Darsteller für Trailer: Test-Spieler (mineflayer) ohne eigene Physik. Bewegt werden sie vom Server (shot.py
-// teleportiert sie in jedem Tick), damit sie zur Zeitlupe passen. Über stdin kommen Handlungen: "Anna swing".
+// teleportiert sie in jedem Tick), damit sie zur Zeitlupe passen. Über stdin kommen Handlungen: "Anna swing",
+// "Anna use [off]" (Zweithand, z. B. Schild), "Anna attack Toni" (echter Schlag), "Anna click <Platz>" (Menü), "Anna close".
 //   node actors.cjs <host> <port> <version> Anna Bert …
 const mineflayer = require('mineflayer');
 const [host, port, version, ...names] = process.argv.slice(2);
@@ -17,6 +18,7 @@ const join = (name, delay) => setTimeout(() => {
     write(packet, params);
   };
   bot.once('spawn', () => console.log(`ONLINE ${name}`));
+  if (process.env.MM_ACTORS_CHAT) bot.on('messagestr', (m) => console.log(`CHAT ${name}: ${m}`));
   bot.on('kicked', (r) => console.log(`KICK ${name} ${JSON.stringify(r).slice(0, 200)}`));
   bot.on('error', (e) => console.log(`FEHLER ${name} ${e.message}`));
   bot.on('end', () => { console.log(`WEG ${name}`); delete bots[name]; join(name, 5000); });
@@ -30,7 +32,12 @@ require('readline').createInterface({ input: process.stdin }).on('line', (line) 
     if (act === 'swing') bot.swingArm(rest[0] === 'links' ? 'left' : 'right');
     else if (act === 'chat') bot.chat(rest.join(' '));
     else if (act === 'slot') bot.setQuickBarSlot(Number(rest[0]));
-    else if (act === 'use') bot.activateItem();
+    else if (act === 'use') bot.activateItem(rest[0] === 'off');
     else if (act === 'unuse') bot.deactivateItem();
+    else if (act === 'attack') {
+      const t = bot.players[rest[0]]?.entity;
+      if (t) bot.attack(t); else { console.log(`FEHLER ${name} attack: ${rest[0]} nicht da`); bot.swingArm('right'); }
+    } else if (act === 'click') bot.clickWindow(Number(rest[0]), 0, 0).catch((e) => console.log(`FEHLER ${name} click ${e.message}`));
+    else if (act === 'close') { if (bot.currentWindow) bot.closeWindow(bot.currentWindow); }
   } catch (e) { console.log(`FEHLER ${name} ${act} ${e.message}`); }
 });
