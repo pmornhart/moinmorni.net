@@ -1,4 +1,5 @@
 import {
+  Award,
   Check,
   ChevronDown,
   ClipboardList,
@@ -19,15 +20,17 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
+import { DEFAULT_ROLES, roleBadgeLook } from '@moinmorni/shared';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { useCopy } from '~/components/controls';
+import { PixelBadge } from '~/components/pixel-badge';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useSite } from '~/lib/site';
 import { ModeGlyph } from '~/components/mode-visuals';
 import { useNetworkStatus } from '~/lib/status';
-import { usePick } from '~/lib/text';
+import { useLanguage, usePick } from '~/lib/text';
 import { Cmd, GameButton, Panel } from './kit';
 import { PageHero } from './page-hero';
 import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, FALLBACK_BEDROCK_PORT, WRAP } from './parts';
@@ -36,7 +39,15 @@ import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, FALLBACK_BEDROCK_PORT, WRAP } f
 const VOICE_MOD_URL = 'https://modrinth.com/plugin/simple-voice-chat';
 
 type SectionId =
-  'reinkommen' | 'spielmodi' | 'sprachchat' | 'discord' | 'mornicraft' | 'befehle' | 'regeln' | 'team-hilfe';
+  | 'reinkommen'
+  | 'spielmodi'
+  | 'sprachchat'
+  | 'abzeichen'
+  | 'discord'
+  | 'mornicraft'
+  | 'befehle'
+  | 'regeln'
+  | 'team-hilfe';
 
 interface HelpSection {
   readonly id: SectionId;
@@ -48,6 +59,7 @@ const SECTIONS: readonly HelpSection[] = [
   { id: 'reinkommen', key: 'join', icon: LogIn },
   { id: 'spielmodi', key: 'modes', icon: Gamepad2 },
   { id: 'sprachchat', key: 'voice', icon: Headphones },
+  { id: 'abzeichen', key: 'badges', icon: Award },
   { id: 'discord', key: 'discord', icon: Link2 },
   { id: 'mornicraft', key: 'mornicraft', icon: ClipboardList },
   { id: 'befehle', key: 'commands', icon: Terminal },
@@ -219,6 +231,42 @@ function VoiceBody(): ReactElement {
         </p>
       </div>
       <p className="text-[14px] text-muted-foreground">{t('site.help.voice.bedrock')}</p>
+    </div>
+  );
+}
+
+/**
+ * Rank badges: what they are (the ranks as the pack draws them), the question about the pack when joining,
+ * /abzeichen, and who sees symbol and colour instead.
+ */
+function BadgesBody(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const language = useLanguage();
+  const site = useSite();
+  const info = site.data?.badges;
+  // Older servers do not send the ranks yet – then the ranks of the template.
+  const ranks = info?.ranks ?? DEFAULT_ROLES;
+  return (
+    <div className="grid gap-5">
+      <p>{t('site.help.badges.intro')}</p>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5 rounded-[8px] border-2 border-black/40 bg-[#0b1511] p-4 shadow-[0_4px_0_rgba(0,0,0,0.25)]">
+        {ranks.map((r) => (
+          <PixelBadge key={r.id} look={roleBadgeLook(r, language)} />
+        ))}
+      </div>
+      <Steps
+        items={[
+          t('site.help.badges.step1'),
+          <>
+            {t('site.help.badges.step2')} <Cmd>/abzeichen</Cmd> {t('site.help.badges.step2b')}
+          </>,
+          t('site.help.badges.step3'),
+        ]}
+      />
+      <p className="text-[14px] text-muted-foreground">{t('site.help.badges.without')}</p>
+      {info && !info.enabled ? (
+        <p className="text-[14px] font-semibold text-muted-foreground">{t('site.help.badges.off')}</p>
+      ) : null}
     </div>
   );
 }
@@ -396,6 +444,7 @@ const BODIES: Readonly<Record<SectionId, () => ReactElement>> = {
   reinkommen: JoinBody,
   spielmodi: ModesBody,
   sprachchat: VoiceBody,
+  abzeichen: BadgesBody,
   discord: DiscordBody,
   mornicraft: MorniCraftBody,
   befehle: CommandsBody,

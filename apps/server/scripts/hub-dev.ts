@@ -1,3 +1,4 @@
+/* eslint-disable ts-patterns/no-magic-numbers, ts-patterns/no-loop-statements, ts-patterns/no-param-reassign -- Test-Werkzeug, nicht im Produkt: RCON-Paketaufbau, HTTP-Statuscodes, Datenströme lesen */
 /**
  * Hub allein zum Testen mit echten Servern: lauscht auf 127.0.0.1:8090 und schreibt jedem Server seine hub.json.
  *   tsx scripts/hub-dev.ts <ordner>:<server>:<proxy|backend> … [--rang=Name=rolle …] [--wecken=server:ordner:jar …]
@@ -7,7 +8,9 @@
  * Neustart (RCON „stop“, dann neu starten), Dateien im Ordner – so laufen „Neustart, sobald leer“ und die
  * Einstellungen schlafender Spielmodi wie im echten Netzwerk.
  * --steuer=<port>: POST / {area, values} ändert Einstellungen wie das Panel, GET /status zeigt verbundene Server,
- * offene Neustarts und wie oft jeder Server gestartet wurde; POST /stop {server} hält einen Server an (Schlaf).
+ * offene Neustarts und wie oft jeder Server gestartet wurde; POST /stop {server} hält einen Server an (Schlaf);
+ * GET /rollen liefert die Rollen-Vorlage, POST /rollen {roles} speichert sie wie das Panel. Dort liegen auch die
+ * Pakete wie auf der Webseite (/api/public/packs/abzeichen.zip und lobby.zip) – mit --steuer gibt es Rang-Abzeichen.
  * Daten unter MM_HUB_DEV_DIR (Standard ~/mm-hub-dev).
  */
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -24,6 +27,9 @@ import { createEventBus } from '../src/lib/events.js';
 import { MotorError } from '../src/motor/client.js';
 import { createStores } from '../src/panel/stores.js';
 import { createModeSettingsSync } from '../src/network/mode-settings.js';
+import { BADGE_PACK_PATH, badgePackOf } from '../src/badges/pack.js';
+import { LOBBY_PACK_PATH, lobbyPackInfo } from '../src/lobby/packs.js';
+import { DEFAULT_ROLES, type Role } from '@moinmorni/shared';
 import { createRestartQueue } from '../src/network/restart.js';
 
 const PORT = Number(process.env['MM_HUB_DEV_PORT'] ?? 8090);
@@ -157,13 +163,32 @@ const motor = {
     }
     const running = hub.connectedServers().includes(server);
     const list = running ? await rcon(spec.dir, 'list').catch(() => '') : '';
-    // „There are 1 of a max of 20 players online: …“
+    // Spielerzahl aus "list": passt auf "There are 1 of a max of 20 players online: …", nicht auf "Unknown command".
     // https://regex101.com/?flavor=javascript&regex=There%20are%20(%5Cd%2B)&testString=There%20are%201%20of%20a%20max
     const players = Number(/There are (\d+)/.exec(list)?.[1] ?? 0);
     return { live: { state: running ? 'running' : 'stopped', playersOnline: players } } as T;
   },
 };
-const hub = createHub({ secret, db: handle.db, stores, events, log, timeZone: 'Europe/Berlin', wake });
+const control = process.argv.find((a) => a.startsWith('--steuer='));
+const controlPort = control ? Number(control.slice('--steuer='.length)) : null;
+const hub = createHub({
+  secret,
+  db: handle.db,
+  stores,
+  events,
+  log,
+  timeZone: 'Europe/Berlin',
+  wake,
+  // Rang-Abzeichen: das Paket liegt auf der Steuerung (wie sonst auf der Webseite).
+  ...(controlPort
+    ? {
+        badgePack: () => {
+          const pack = badgePackOf(stores.roles());
+          return { url: `http://127.0.0.1:${controlPort}${BADGE_PACK_PATH}?v=${pack.sha1}`, sha1: pack.sha1 };
+        },
+      }
+    : {}),
+});
 
 const args = process.argv.slice(2);
 const ranks = args.filter((a) => a.startsWith('--rang=')).map((a) => a.slice('--rang='.length));
@@ -209,7 +234,6 @@ if (args.includes('--starten')) {
   await modeSync.prepare([...wakeable.keys()].map((server) => ({ serverId: server, member: server })));
   await Promise.all([...wakeable.keys()].map(wake));
 }
-const control = args.find((a) => a.startsWith('--steuer='));
 if (control) {
   const read = async (req: http.IncomingMessage): Promise<Record<string, unknown>> => {
     const chunks: Buffer[] = [];
@@ -221,7 +245,17 @@ if (control) {
       void (async () => {
         try {
           const body = req.method === 'POST' ? await read(req) : {};
-          if (req.url === '/status') {
+          if (req.url?.startsWith(BADGE_PACK_PATH) || req.url === LOBBY_PACK_PATH) {
+            const bytes =
+              req.url === LOBBY_PACK_PATH ? lobbyPackInfo().bytes : badgePackOf(stores.roles()).bytes;
+            res.setHeader('content-type', 'application/zip');
+            res.end(bytes);
+          } else if (req.url === '/rollen' && req.method === 'GET') {
+            res.end(JSON.stringify(stores.roles()));
+          } else if (req.url === '/rollen') {
+            const owner = DEFAULT_ROLES.find((r) => r.id === 'owner') as Role;
+            res.end(JSON.stringify(stores.saveRoles(body['roles'] as Role[], 'steuerung', owner)));
+          } else if (req.url === '/status') {
             res.end(
               JSON.stringify({
                 connected: hub.connectedServers(),

@@ -12,6 +12,7 @@ import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
+import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.PlayerSettingsChangedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
@@ -24,6 +25,7 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import de.moinmorni.network.common.DataFolder;
@@ -34,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -54,7 +57,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 @Plugin(
         id = "moinmorni",
         name = "MoinMorni",
-        version = "0.2.1",
+        version = "0.2.2",
         description = "Verbindet den Proxy mit dem MoinMorni-Netzwerk",
         url = "https://moinmorni.net",
         authors = {"MoinMorni"})
@@ -80,6 +83,9 @@ public final class VelocityPlugin {
     private final Map<UUID, Instant> bans = new ConcurrentHashMap<>();
     private volatile JsonObject network;
     private HubClient hub;
+    /** Rang-Abzeichen: was der Hub sagt, und wem der Proxy das Paket geschickt hat (BadgePack). */
+    private volatile BadgePack.Config badges = BadgePack.Config.OFF;
+    private final Map<UUID, BadgePack.Sent> badgeSent = new ConcurrentHashMap<>();
 
     @Inject
     public VelocityPlugin(ProxyServer proxy, @DataDirectory Path dataDir) {
@@ -166,6 +172,12 @@ public final class VelocityPlugin {
             case "kick" -> player(m).ifPresent(p -> p.disconnect(MM.deserialize(HubClient.str(m, "text"))));
             case "connect" -> player(m).ifPresent(p -> proxy.getServer(HubClient.str(m, "server"))
                     .ifPresent(s -> p.createConnectionRequest(s).fireAndForget()));
+            case "badges" -> {
+                badges = BadgePack.Config.of(m);
+                // An, aus oder neue Fassung (Rang geändert): gleich für alle, die schon da sind.
+                proxy.getAllPlayers().forEach(p -> offerBadges(p, false));
+            }
+            case "badges-send" -> player(m).ifPresent(p -> offerBadges(p, true));
             default -> log.fine("Unbekannte Nachricht vom Hub: " + type);
         }
     }
@@ -308,6 +320,10 @@ public final class VelocityPlugin {
     @Subscribe
     public void onSwitched(ServerPostConnectEvent event) {
         Player p = event.getPlayer();
+        // Rang-Abzeichen: einmal beim Betreten des Netzwerks (das Paket bleibt danach auf allen Servern).
+        if (event.getPreviousServer() == null) {
+            offerBadges(p, false);
+        }
         boolean inLobby = p.getCurrentServer().map(s -> LOBBY.equals(s.getServerInfo().getName())).orElse(true);
         boolean hasPack = p.getAppliedResourcePacks().stream().anyMatch(i -> LOBBY_PACK.equals(i.getId()));
         if (!inLobby && hasPack) {
@@ -329,6 +345,7 @@ public final class VelocityPlugin {
 
     @Subscribe
     public void onDisconnect(DisconnectEvent event) {
+        badgeSent.remove(event.getPlayer().getUniqueId());
         if (hub == null || event.getLoginStatus() != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) {
             return;
         }
@@ -352,6 +369,94 @@ public final class VelocityPlugin {
                 .description(motd)
                 .maximumPlayers(net.get("maxPlayers").getAsInt());
         event.setPing(builder.build());
+    }
+
+    // ---------- Rang-Abzeichen ----------
+
+    /** Abzeichen-Paket schicken, abnehmen oder lassen (Regeln in BadgePack.plan). */
+    private void offerBadges(Player p, boolean manual) {
+        BadgePack.Config config = badges;
+        boolean capable = BadgePack.capable(p.getProtocolVersion().getProtocol(), p.getUniqueId());
+        switch (BadgePack.plan(config, badgeSent.get(p.getUniqueId()), capable, manual)) {
+            case SEND -> sendBadges(p, config, 0, manual);
+            case REMOVE -> {
+                badgeSent.remove(p.getUniqueId());
+                p.removeResourcePacks(BadgePack.ID);
+            }
+            case UNSUPPORTED -> reportBadges(p, "unsupported");
+            case NOTHING -> {
+            }
+        }
+    }
+
+    /**
+     * Nie als „verpflichtend“ an Minecraft: Lehnt man ein verpflichtendes Paket ab, wirft Velocity (ab 1.17 ohne
+     * Einspruch) mit einer knappen Meldung hinaus. Ist das Paket im Panel Pflicht, sagt das der Text im Fenster, und
+     * wer ablehnt, bekommt vom Hub eine Erklärung, wie man es einschaltet.
+     */
+    private void sendBadges(Player p, BadgePack.Config config, int tries, boolean manual) {
+        ResourcePackInfo info = proxy.createResourcePackBuilder(config.url())
+                .setId(BadgePack.ID)
+                .setHash(config.hash())
+                .setShouldForce(false)
+                .setPrompt(MM.deserialize(config.prompt(p.getEffectiveLocale())))
+                .build();
+        badgeSent.put(p.getUniqueId(), new BadgePack.Sent(config.sha1(), false, tries));
+        p.sendResourcePackOffer(info);
+        if (manual) {
+            reportBadges(p, "sent");
+        }
+    }
+
+    /** Dem Hub sagen, wie es ausging – er antwortet dem Spieler in seiner Sprache (oder wirft ihn bei Pflicht hinaus). */
+    private void reportBadges(Player p, String status) {
+        if (hub == null || !hub.ready()) {
+            return;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "badge-status");
+        body.addProperty("uuid", p.getUniqueId().toString());
+        body.addProperty("status", status);
+        hub.send(body);
+    }
+
+    @Subscribe
+    public void onPackStatus(PlayerResourcePackStatusEvent event) {
+        if (!BadgePack.ID.equals(event.getPackId())) {
+            return;
+        }
+        Player p = event.getPlayer();
+        BadgePack.Config config = badges;
+        BadgePack.Sent sent = badgeSent.get(p.getUniqueId());
+        ResourcePackInfo info = event.getPackInfo();
+        // Antwort auf eine ältere Fassung (inzwischen neu geschickt oder ausgeschaltet): zählt nicht.
+        if (sent == null || info == null || !config.enabled() || !Arrays.equals(info.getHash(), config.hash())) {
+            return;
+        }
+        switch (event.getStatus()) {
+            case SUCCESSFUL -> reportBadges(p, "loaded");
+            case DECLINED -> {
+                badgeSent.put(p.getUniqueId(), new BadgePack.Sent(sent.sha1(), true, sent.tries()));
+                // Pflicht: Der Hub wirft freundlich hinaus, mit Erklärung, wie man das Paket einschaltet.
+                reportBadges(p, "declined");
+            }
+            case FAILED_DOWNLOAD, INVALID_URL, FAILED_RELOAD -> {
+                int next = sent.tries() + 1;
+                long delay = BadgePack.retryDelaySeconds(next);
+                if (delay == 0) {
+                    reportBadges(p, "failed");
+                    return;
+                }
+                proxy.getScheduler().buildTask(this, () -> {
+                    BadgePack.Config now = badges;
+                    if (p.isActive() && now.enabled() && now.sha1().equals(config.sha1())) {
+                        sendBadges(p, now, next, false);
+                    }
+                }).delay(delay, TimeUnit.SECONDS).schedule();
+            }
+            default -> {
+            }
+        }
     }
 
     // ---------- Befehle ----------

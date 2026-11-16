@@ -98,6 +98,7 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
     expect(areas.map((a) => a.area.id)).toEqual([
       'network',
       'chat',
+      'badges',
       'voice',
       'social',
       'lobby',

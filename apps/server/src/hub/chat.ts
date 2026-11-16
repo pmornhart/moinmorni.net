@@ -2,6 +2,7 @@ import type { Lang } from './texts.js';
 import { dateText, mm, text } from './texts.js';
 import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
+import type { BadgeTags } from './badges.js';
 
 /**
  * Chat im ganzen Netzwerk: Der Spielserver schickt, was jemand schreibt; der Hub prüft (stumm, Langsam-Modus,
@@ -61,7 +62,7 @@ export interface Chat {
   readonly handle: (uuid: string, message: string, now?: number, tag?: ChatTag) => void;
 }
 
-export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat {
+export function createChat(ctx: HubContext, settings: () => ChatSettings, badges: BadgeTags): Chat {
   const serverName = (server: string, lang: Lang): string => {
     if (server === LOBBY) return 'Lobby';
     const mode = ctx.stores.modes().find((m) => m.server === server);
@@ -86,7 +87,11 @@ export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat 
       // Im Gefängnis: nur das Team (wer einsperren darf) und die anderen Eingesperrten lesen mit.
       if (ctx.punish.active(sender.uuid, 'jail') && !team) {
         const jailLine = (lang: Lang): string =>
-          text(lang, 'jail.chat', { name: mm(sender.name), text: mm(censor(raw.trim(), s.badWords)) });
+          text(lang, 'jail.chat', {
+            tag: badges.jailTag(lang),
+            name: mm(sender.name),
+            text: mm(censor(raw.trim(), s.badWords)),
+          });
         const jailed = new Set(ctx.punish.activeAll('jail').map((p) => p.playerUuid));
         ctx.presence
           .all()
@@ -109,7 +114,8 @@ export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat 
       if (!body) return;
       const calm = !team && tooLoud(body, s.capsLimit) ? body.toLowerCase() : body;
       const clean = mm(censor(calm, s.badWords));
-      const symbol = role.symbol ? `<${role.colour}>${mm(role.symbol)}</${role.colour}> ` : '';
+      // Rang vor dem Namen: Symbol und Farbe – oder (mit Paket) das Abzeichen, Leerzeichen schon dabei.
+      const symbol = badges.rankTag(role);
       // Nach dem Rang, vor dem Namen: "♛ [MC] Philip".
       const own = tag ? `<${tag.colour}>[${mm(tag.text)}]</${tag.colour}> ` : '';
       const line = (lang: Lang): string => {

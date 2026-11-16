@@ -105,4 +105,25 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
     await call('PUT', '/api/panel/settings/website', { discordInvite: 'https://discord.gg/moinmorni' });
     expect((await anon('/api/site')).json()).toMatchObject({ discordInvite: 'https://discord.gg/moinmorni' });
   });
+
+  test('Hilfe-Seite: Rang-Abzeichen an/aus und alle Ränge der Reihe nach – ohne Rechte', async () => {
+    type Site = { badges: { enabled: boolean; ranks: Array<Record<string, unknown>> } };
+    const site = (await anon('/api/site')).json<Site>();
+    expect(site.badges.enabled).toBe(true);
+    const roles = h.mm.stores.roles();
+    expect(site.badges.ranks.map((r) => r['id'])).toEqual(roles.map((r) => r.id));
+    expect(site.badges.ranks[0]).toEqual({
+      id: 'owner',
+      name: roles[0]?.name,
+      symbol: '♛',
+      colour: roles[0]?.colour,
+    });
+    // Nur, was man im Spiel sowieso sieht – keine Rechte.
+    site.badges.ranks.forEach((r) =>
+      expect(Object.keys(r).sort()).toEqual(['colour', 'id', 'name', 'symbol']),
+    );
+    await call('PUT', '/api/panel/settings/badges', { enabled: false });
+    expect((await anon('/api/site')).json<Site>().badges.enabled).toBe(false);
+    await call('PUT', '/api/panel/settings/badges', { enabled: true });
+  });
 });

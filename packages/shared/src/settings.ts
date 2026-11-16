@@ -339,6 +339,51 @@ export const CHAT_AREA: SettingArea = {
   ],
 };
 
+/**
+ * Rang-Abzeichen (packages/shared/src/badges.ts): kleine Pixel-Schilder statt Symbol – über ein Ressourcenpaket, das
+ * der Proxy jedem Java-Spieler anbietet. Wer die Rollen bearbeiten darf, schaltet sie hier.
+ */
+export const BADGES_AREA: SettingArea = {
+  id: 'badges',
+  title: t('Rang-Abzeichen', 'Rank badges'),
+  text: t(
+    'Ränge als kleine Pixel-Schilder mit Symbol und Namen – im Chat, in der Tab-Liste und über dem Kopf, auf allen Servern. Name, Symbol und Farbe kommen aus den Rollen.',
+    'Ranks as little pixel badges with symbol and name – in chat, in the tab list and above heads, on every server. Name, symbol and colour come from the roles.',
+  ),
+  icon: 'Award',
+  panel: 'roles',
+  sections: [
+    {
+      id: 'badges',
+      title: t('Abzeichen', 'Badges'),
+      settings: [
+        {
+          key: 'enabled',
+          type: 'boolean',
+          default: true,
+          label: t('Rang-Abzeichen zeigen', 'Show rank badges'),
+          help: t(
+            'Java-Spieler bekommen beim Betreten ein kleines Ressourcenpaket angeboten, das auf allen Servern bleibt. Wer es lädt, sieht die Ränge als Schilder wie „OWNER“ mit Krone. Wer ablehnt, auf Bedrock spielt oder Minecraft vor 1.20.3 hat, sieht wie bisher Symbol und Farbe. Änderst du bei den Rollen Name, Symbol oder Farbe, bekommen alle gleich das neue Paket. Braucht die eigene Domain – von dort lädt Minecraft das Paket.',
+            'Java players are offered a small resource pack when they join; it stays on every server. Whoever loads it sees ranks as badges like “OWNER” with a crown. Whoever declines, plays Bedrock or has Minecraft before 1.20.3 sees symbol and colour as before. Change a role’s name, symbol or colour and everyone gets the new pack right away. Needs your own domain – Minecraft downloads the pack from there.',
+          ),
+          command: '/abzeichen an|aus',
+        },
+        {
+          key: 'required',
+          type: 'boolean',
+          default: false,
+          label: t('Abzeichen-Paket verpflichtend', 'Badge pack required'),
+          help: t(
+            'An: Wer das Paket ablehnt, kommt nicht ins Netzwerk – mit einer freundlichen Erklärung, wie man es einschaltet. Bedrock-Spieler und Minecraft vor 1.20.3 kommen trotzdem hinein (sie bekommen kein Paket). Aus: Das Paket wird nur angeboten.',
+            'On: whoever declines the pack can’t join the network – with a friendly explanation of how to switch it on. Bedrock players and Minecraft before 1.20.3 still get in (they get no pack). Off: the pack is only offered.',
+          ),
+          command: '/abzeichen pflicht an|aus',
+        },
+      ],
+    },
+  ],
+};
+
 export const VOICE_AREA: SettingArea = {
   id: 'voice',
   title: t('Sprachchat', 'Voice chat'),
@@ -1465,6 +1510,7 @@ export const UPDATES_AREA: SettingArea = {
 export const SETTING_AREAS: readonly SettingArea[] = [
   NETWORK_AREA,
   CHAT_AREA,
+  BADGES_AREA,
   VOICE_AREA,
   SOCIAL_AREA,
   LOBBY_AREA,

@@ -159,9 +159,51 @@ const TEXTS = {
     de: `${P}<red>Aus dem Gefängnis kannst du nur dem Team schreiben.`,
     en: `${P}<red>From jail you can only write to the team.`,
   },
+  // {tag}: „[⛓ Gefängnis] “ – oder das Gefängnis-Abzeichen (hub/badges.ts), Leerzeichen schon dabei.
   'jail.chat': {
-    de: '<dark_gray>[</dark_gray><gray>⛓ Gefängnis</gray><dark_gray>]</dark_gray> <gray>{name}</gray> <dark_gray>»</dark_gray> <white>{text}',
-    en: '<dark_gray>[</dark_gray><gray>⛓ Jail</gray><dark_gray>]</dark_gray> <gray>{name}</gray> <dark_gray>»</dark_gray> <white>{text}',
+    de: '{tag}<gray>{name}</gray> <dark_gray>»</dark_gray> <white>{text}',
+    en: '{tag}<gray>{name}</gray> <dark_gray>»</dark_gray> <white>{text}',
+  },
+  'badges.sending': {
+    de: `${P}<gray>Dein Abzeichen-Paket kommt gleich – einmal kurz laden, dann siehst du die Ränge als kleine Schilder.`,
+    en: `${P}<gray>Your badge pack is on its way – one short load, then you see ranks as little badges.`,
+  },
+  'badges.loaded': {
+    de: `${P}<green>Abzeichen sind da!</green> <gray>Ränge siehst du jetzt als kleine Schilder – im Chat, in der Tab-Liste und über dem Kopf.`,
+    en: `${P}<green>Badges are here!</green> <gray>You now see ranks as little badges – in chat, in the tab list and above heads.`,
+  },
+  'badges.declined': {
+    de: `${P}<gray>Ohne Abzeichen-Paket siehst du die Ränge als Symbole. Doch lieber Abzeichen? <yellow>/abzeichen</yellow> (Serverliste → Bearbeiten → Server-Ressourcenpakete: Aktiviert).`,
+    en: `${P}<gray>Without the badge pack you see ranks as symbols. Want badges after all? <yellow>/badges</yellow> (server list → Edit → Server Resource Packs: Enabled).`,
+  },
+  'badges.failed': {
+    de: `${P}<red>Das Abzeichen-Paket ließ sich gerade nicht laden.</red> <gray>Probier es später mit <yellow>/abzeichen</yellow> nochmal – bis dahin siehst du Symbole.`,
+    en: `${P}<red>The badge pack couldn't be loaded right now.</red> <gray>Try again later with <yellow>/badges</yellow> – until then you see symbols.`,
+  },
+  'badges.old_client': {
+    de: `${P}<gray>Abzeichen gibt es ab Minecraft 1.20.3 – mit deiner Version siehst du die Ränge als Symbole.`,
+    en: `${P}<gray>Badges need Minecraft 1.20.3 or newer – with your version you see ranks as symbols.`,
+  },
+  'badges.bedrock': {
+    de: `${P}<gray>Auf Bedrock (Handy, Konsole) siehst du die Ränge als Symbole – Abzeichen gibt es nur in der Java Edition.`,
+    en: `${P}<gray>On Bedrock (phone, console) you see ranks as symbols – badges are Java Edition only.`,
+  },
+  'badges.off': {
+    de: `${P}<gray>Rang-Abzeichen sind gerade ausgeschaltet.`,
+    en: `${P}<gray>Rank badges are switched off right now.`,
+  },
+  // Steht im Fenster, mit dem Minecraft nach dem Paket fragt.
+  'badges.prompt': {
+    de: '<gold>Rang-Abzeichen</gold><gray>: Owner, Moderator, VIP … als kleine Pixel-Schilder – im Chat, in der Tab-Liste und über dem Kopf.',
+    en: '<gold>Rank badges</gold><gray>: Owner, Moderator, VIP … as little pixel badges – in chat, in the tab list and above heads.',
+  },
+  'badges.prompt_required': {
+    de: '<gold>Rang-Abzeichen</gold><gray>: Auf MoinMorni brauchst du dieses kleine Paket – es zeigt Owner, Moderator, VIP … als Pixel-Schilder. Ohne Paket geht es hier leider nicht.',
+    en: '<gold>Rank badges</gold><gray>: On MoinMorni you need this small pack – it shows Owner, Moderator, VIP … as pixel badges. Without it you can’t play here, sorry.',
+  },
+  'badges.required': {
+    de: '<gold><bold>Rang-Abzeichen</bold></gold>\n\n<gray>Auf MoinMorni zeigen kleine Schilder die Ränge – dafür brauchst du unser kleines Paket.\n<gray>So geht’s: Serverliste → MoinMorni → <white>Bearbeiten</white> → <white>Server-Ressourcenpakete: Aktiviert</white>, dann neu verbinden.',
+    en: '<gold><bold>Rank badges</bold></gold>\n\n<gray>On MoinMorni little badges show the ranks – you need our small pack for them.\n<gray>How to: server list → MoinMorni → <white>Edit</white> → <white>Server Resource Packs: Enabled</white>, then join again.',
   },
   'punish.not_jailed': {
     de: `${P}<gray><white>{name}</white> sitzt nicht im Gefängnis.`,

@@ -394,6 +394,17 @@
         "channelsText": "Reachable from every game mode. Show, join and leave channels:",
         "bedrock": "Sadly there's no voice chat with the Bedrock Edition (phone, console) – Bedrock can't do it."
       },
+      "badges": {
+        "title": "Rank badges",
+        "short": "The little signs in front of names – and the small pack for them",
+        "intro": "Every name shows its rank as a small sign with a symbol – in the chat, in the tab list and above the head. So that Minecraft can show the signs, MoinMorni brings a small server resource pack: just these pictures, nothing else in your game changes.",
+        "step1": "When you join, Minecraft asks whether to load the server’s resource pack – click “Yes”. It is only a few kilobytes and stays on every MoinMorni server.",
+        "step2": "Pressed “No” by accident or it did not work? Type in the game",
+        "step2b": "– Minecraft asks again.",
+        "step3": "Minecraft does not ask any more? In the server list select MoinMorni → “Edit” → set “Server Resource Packs” to “Enabled” or “Prompt”.",
+        "without": "With the Bedrock Edition (phone, console), with Minecraft Java before 1.20.3 and without the pack you see the rank’s symbol and colour instead of the signs – like before. You can still play; only if the team made the pack required, the window says so.",
+        "off": "The badges are switched off right now – in the game, symbol and colour stand in front of names."
+      },
       "discord": {
         "title": "Link Discord",
         "short": "Link your Minecraft account with Discord",
@@ -936,7 +947,8 @@
       "media-area": "Sees the channels for streamers and videos.",
       "vip-area": "Sees the VIP channels.",
       "links": "May post links."
-    }
+    },
+    "previewBadge": "With the badge pack (Java 1.20.3 and newer):"
   },
   "servers": {
     "title": "Servers",
@@ -1182,7 +1194,7 @@
     },
     "roles": {
       "title": "Roles",
-      "text": "Symbol, colour and rights of every role – in the game, the panel and Discord. A change applies everywhere at once."
+      "text": "Symbol, colour and rights of every role – in the game, the panel and Discord. A change applies everywhere at once. With the badge pack, players see the rank as a little pixel badge – switch it on and off under Settings → Rank badges."
     },
     "discord": {
       "title": "Discord",
@@ -1851,5 +1863,17 @@
   },
   "reach": {
     "ownerOnly": "Only the owner sets up NetBird, the website on the domain and “hide the home connection” – they are admin in the engine."
+  },
+  "badgesCard": {
+    "title": "What the badges look like in the game",
+    "text": "Drawn from every role’s name, symbol and colour – pixel by pixel as in the pack. On the right: what players without the pack see.",
+    "on": "On",
+    "off": "Off",
+    "with": "With badge pack",
+    "without": "Without pack",
+    "whereTitle": "Where they show",
+    "where": "In chat before the name, in the tab list and above heads – on every server of the network. The proxy offers the pack to every Java player when they join (Minecraft 1.20.3 and newer); it stays when they switch servers. Whoever declines, plays Bedrock or has an older version sees symbol and colour. /badges loads it any time. The jail badge stands before messages from the cell (only the team reads them).",
+    "fromRoles": "Change a role’s name, symbol or colour and everyone gets the new pack right away.",
+    "editRoles": "Edit roles"
   }
 }

@@ -394,6 +394,17 @@
         "channelsText": "Von jedem Spielmodus aus erreichbar. Kanäle anzeigen, beitreten und verlassen:",
         "bedrock": "Mit der Bedrock Edition (Handy, Konsole) gibt es leider keinen Sprachchat – das kann Bedrock nicht."
       },
+      "badges": {
+        "title": "Rang-Abzeichen",
+        "short": "Die Schilder vor den Namen – und das kleine Paket dafür",
+        "intro": "Vor jedem Namen steht der Rang als kleines Schild mit Symbol – im Chat, in der Tab-Liste und über dem Kopf. Damit Minecraft die Schilder zeigen kann, bringt MoinMorni ein kleines Server-Ressourcenpaket mit: nur diese Bilder, sonst ändert sich nichts an deinem Spiel.",
+        "step1": "Beim Betreten fragt Minecraft, ob du das Ressourcenpaket des Servers laden möchtest – klick auf „Ja“. Es ist nur ein paar Kilobyte groß und bleibt auf allen Servern von MoinMorni.",
+        "step2": "Aus Versehen „Nein“ gedrückt oder hat es nicht geklappt? Tippe im Spiel",
+        "step2b": "– dann fragt Minecraft noch einmal.",
+        "step3": "Fragt Minecraft gar nicht mehr? In der Serverliste MoinMorni auswählen → „Bearbeiten“ → „Server-Ressourcenpakete“ auf „Aktiviert“ oder „Abfrage“ stellen.",
+        "without": "Mit der Bedrock Edition (Handy, Konsole), mit Minecraft Java vor 1.20.3 und ohne das Paket siehst du statt der Schilder Symbol und Farbe des Rangs – wie früher. Mitspielen kannst du trotzdem; nur wenn das Team das Paket zur Pflicht gemacht hat, steht das im Fenster.",
+        "off": "Gerade sind die Abzeichen ausgeschaltet – im Spiel stehen Symbol und Farbe vor den Namen."
+      },
       "discord": {
         "title": "Discord verbinden",
         "short": "Dein Minecraft-Konto mit Discord verknüpfen",
@@ -936,7 +947,8 @@
       "media-area": "Sieht die Kanäle für Streamer und Videos.",
       "vip-area": "Sieht die VIP-Kanäle.",
       "links": "Darf Links posten."
-    }
+    },
+    "previewBadge": "Mit Abzeichen-Paket (Java ab 1.20.3):"
   },
   "servers": {
     "title": "Server",
@@ -1182,7 +1194,7 @@
     },
     "roles": {
       "title": "Rollen",
-      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel, im Panel und im Discord. Eine Änderung gilt überall gleichzeitig."
+      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel, im Panel und im Discord. Eine Änderung gilt überall gleichzeitig. Mit dem Abzeichen-Paket sehen Spieler den Rang als kleines Pixel-Schild – ein- und ausschalten unter Einstellungen → Rang-Abzeichen."
     },
     "discord": {
       "title": "Discord",
@@ -1851,5 +1863,17 @@
   },
   "reach": {
     "ownerOnly": "NetBird, die Webseite auf der Domain und „Hausanschluss verstecken“ richtet nur der Owner ein – er ist im Motor Admin."
+  },
+  "badgesCard": {
+    "title": "So sehen die Abzeichen im Spiel aus",
+    "text": "Gezeichnet aus Name, Symbol und Farbe jeder Rolle – Pixel für Pixel wie im Paket. Rechts steht, was Spieler ohne Paket sehen.",
+    "on": "An",
+    "off": "Aus",
+    "with": "Mit Abzeichen-Paket",
+    "without": "Ohne Paket",
+    "whereTitle": "Wo man sie sieht",
+    "where": "Im Chat vor dem Namen, in der Tab-Liste und über dem Kopf – auf allen Servern des Netzwerks. Das Paket bietet der Proxy jedem Java-Spieler beim Betreten an (ab Minecraft 1.20.3); es bleibt beim Serverwechsel. Wer es ablehnt, auf Bedrock spielt oder eine ältere Version hat, sieht Symbol und Farbe. Mit /abzeichen lädt man es jederzeit nach. Das Gefängnis-Abzeichen steht vor Nachrichten aus der Zelle (die liest nur das Team).",
+    "fromRoles": "Änderst du bei einer Rolle Name, Symbol oder Farbe, bekommen alle gleich das neue Paket.",
+    "editRoles": "Rollen bearbeiten"
   }
 }

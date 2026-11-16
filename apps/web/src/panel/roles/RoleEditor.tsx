@@ -17,7 +17,8 @@ import { FieldBlock } from '~/components/controls';
 import { Button, Card, Input, Pill, Switch } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
-import { usePick } from '~/lib/text';
+import { useLanguage, usePick } from '~/lib/text';
+import { PixelBadge } from '~/components/pixel-badge';
 import { RoleSymbol } from '~/components/role-visuals';
 import { inOrder, NAME_MAX, problemsOf, SYMBOL_IDEAS, SYMBOL_MAX, validColour } from './role-draft';
 
@@ -75,6 +76,33 @@ export function ChatPreview({
       <span className="text-[#aaaaaa]">[{t('roles.previewServer')}]</span>
       <span style={{ color: colour }} className="font-medium">
         {role.symbol ? `${role.symbol} ` : ''}
+        {name}
+      </span>
+      <span className="text-[#8a8a8a]">»</span>
+      <span>{t('roles.chatSample')}</span>
+    </span>
+  );
+}
+
+/** Badge pixels at twice their size – about as big as in the game's chat. */
+const BADGE_PREVIEW_SCALE = 2;
+
+/**
+ * "[Lobby] [OWNER] Philip » Servus!" – how the role looks for players with the badge pack: its rank badge (name,
+ * symbol and colour from this role), drawn with the same pixels as in the game.
+ */
+function BadgeChatPreview({ role, name }: { readonly role: Role; readonly name: string }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const language = useLanguage();
+  const colour = validColour(role.colour) ? role.colour : PICKER_FALLBACK;
+  return (
+    <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 justify-self-start rounded-[10px] bg-[#16201b] px-3 py-1.5 font-mono text-sm text-[#f4f4f4] dark:bg-black/50 dark:ring-1 dark:ring-white/10">
+      <span className="text-[#aaaaaa]">[{t('roles.previewServer')}]</span>
+      <PixelBadge
+        look={{ text: role.name[language], symbol: role.symbol, colour }}
+        scale={BADGE_PREVIEW_SCALE}
+      />
+      <span style={{ color: colour }} className="font-medium">
         {name}
       </span>
       <span className="text-[#8a8a8a]">»</span>
@@ -306,6 +334,8 @@ export function RoleEditor({
           <div className="grid gap-2">
             <p className="text-sm font-semibold">{t('roles.preview')}</p>
             <ChatPreview role={role} name={previewName} className="justify-self-start text-sm" />
+            <p className="text-xs font-medium text-muted-foreground">{t('roles.previewBadge')}</p>
+            <BadgeChatPreview role={role} name={previewName} />
           </div>
           <fieldset disabled={locked} className="grid gap-4 md:grid-cols-2">
             <FieldBlock id={id('name-de')} label={t('roles.nameDe')}>

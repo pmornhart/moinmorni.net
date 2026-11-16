@@ -38,9 +38,12 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private static final String TEAM_PREFIX = "mm";
     private static final int TEAM_NAME_MAX = 16;
 
-    /** Was der Hub über einen Spieler sagt (Rang, Sprache). */
+    /**
+     * Was der Hub über einen Spieler sagt (Rang, Sprache). {@code badge}: Schlüssel des Rang-Abzeichens, null = aus
+     * (siehe RankPrefix).
+     */
     private record Profile(String name, String lang, String roleId, String symbol, String colour, int position,
-                           java.util.Set<String> rights) {
+                           java.util.Set<String> rights, String badge) {
     }
 
     /** Name dieses Servers im Netzwerk (aus hub.json), z. B. „lobby“ oder „bau“. */
@@ -203,7 +206,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                         HubClient.str(role, "symbol"),
                         HubClient.str(role, "colour"),
                         role.get("position").getAsInt(),
-                        rightsOf(m)));
+                        rightsOf(m),
+                        HubClient.str(role, "badge")));
                 Bukkit.getScheduler().runTask(this, () -> {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p != null) {
@@ -471,10 +475,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             return;
         }
         TextColor colour = TextColor.fromHexString(profile.colour());
-        Component prefix = profile.symbol() == null || profile.symbol().isEmpty()
-                ? Component.empty()
-                : Component.text(profile.symbol() + " ", colour);
-        p.playerListName(prefix.append(Component.text(p.getName(), colour)));
+        // Symbol – oder mit Abzeichen eine Übersetzung, die jeder Client selbst auflöst (Schild oder Symbol).
+        Component prefix = RankPrefix.of(profile.badge(), profile.symbol(), colour);
+        p.playerListName(RankPrefix.listName(prefix, p.getName(), colour));
 
         Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
         // Teams sortieren die Tab-Liste nach Namen: mm00owner vor mm06player.

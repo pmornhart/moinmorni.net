@@ -37,6 +37,7 @@ import { registerTeamRoutes } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
+import { badgePackOf, badgePackUrl, registerBadgeRoutes } from './badges/pack.js';
 import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
@@ -147,6 +148,12 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     log: app.log,
     timeZone: config.timeZone,
     domain: config.domain,
+    // Rang-Abzeichen: Paket zu den Rollen von gerade, von der eigenen Domain (Minecraft lädt es von dort).
+    badgePack: () => {
+      const pack = badgePackOf(stores.roles());
+      const url = badgePackUrl(config.domain, pack.sha1);
+      return url ? { url, sha1: pack.sha1 } : null;
+    },
   });
   const status = createStatusService(config, motor, stores, hub);
   const lobbyWorld = createLobbyWorld(motor, app.log, {
@@ -274,6 +281,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
   registerPackRoutes(app);
+  registerBadgeRoutes(app, () => stores.roles());
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   teamRef.syncAll = registerTeamRoutes(app, auth, stores, handle.db, motor).syncAll;
