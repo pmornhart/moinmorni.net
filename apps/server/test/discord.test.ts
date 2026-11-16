@@ -369,8 +369,8 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
       minutes: 15,
       reason: 'Beleidigung',
     });
-    await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(jailRole)));
-    expect(dc.guild.members.get(LENA_DC)?.roles).toEqual([jailRole]);
+    // Rolle dazu und Rang-Rollen weg sind zwei Schritte – unter Last kann dazwischen eine Weile vergehen.
+    await until(() => JSON.stringify(dc.guild.members.get(LENA_DC)?.roles) === JSON.stringify([jailRole]));
     await call('DELETE', `/api/panel/punishments/${LENA}/jail`);
     await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(jailRole));
     await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(mediaRole)));
@@ -385,9 +385,7 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await call('DELETE', `/api/panel/punishments/${LENA}/ban`);
     await until(() => !dc.guild.bans.has(LENA_DC));
     await until(() => punishLog().includes('entbannt'));
-    expect(punishLog()).toContain('Hacks');
-    expect(punishLog()).toContain('Gefängnis');
-    expect(punishLog()).toContain('Beleidigung');
+    await until(() => ['Hacks', 'Gefängnis', 'Beleidigung'].every((part) => punishLog().includes(part)));
     dc.guild.members.set(LENA_DC, { roles: [], communication_disabled_until: null });
   });
 
