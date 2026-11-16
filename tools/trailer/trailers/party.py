@@ -13,11 +13,11 @@ gehen auch mit `make.py party shot …`, sofern die Befehle in der Welt „party
 import math
 
 STYLE = 'party'
-FILE = 'MoinMorni-Trailer-Party.mp4'
+FILE = 'MorniNet-Trailer-Party.mp4'
 SLOW = 12
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'MoinMorni · Spielmodus', 'title': 'Morni Party',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'morni.net · Spielmodus', 'title': 'Morni Party',
      'text': 'Würfeln, ziehen, Minispiele – der Spieleabend für 2 bis 8'},
     {'file': 'lt-festplatz.png', 'kind': 'lower', 'title': 'Der Festplatz', 'text': 'Mitspielen, Brett wählen – ab zwei geht es los'},
     {'file': 'lt-alm.png', 'kind': 'lower', 'title': 'Almsommer am Morni-Kogel', 'text': 'Den Berg hinauf bis zum Gipfelkreuz'},
@@ -34,7 +34,7 @@ CARDS = [
     {'file': 'lt-gipfel.png', 'kind': 'lower', 'title': 'Gipfelkönig', 'text': 'Oben bleiben – und die anderen runterschubsen'},
     {'file': 'lt-taler.png', 'kind': 'lower', 'title': 'Zwölf Minispiele', 'text': 'Talerregen, Holzhacker, Rempelei und mehr'},
     {'file': 'lt-sieg.png', 'kind': 'lower', 'title': 'Gipfelrennen oder Edelweiß-Jagd', 'text': 'Wer zuerst oben ist – oder am Ende die meisten Edelweiß hat'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'In der Lobby die Figur „Morni Party“ anklicken'},
 ]
 

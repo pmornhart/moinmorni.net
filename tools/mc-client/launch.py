@@ -136,7 +136,7 @@ def main():
     ap.add_argument('--height', type=int, default=900)
     ap.add_argument('--prepare-only', action='store_true')
     ap.add_argument('--lang', default='de_de')
-    ap.add_argument('--memory', default='3G', help='Arbeitsspeicher für Java, z. B. 2G (wenn der Rechner knapp ist)')
+    ap.add_argument('--memory', default=os.environ.get('MM_CLIENT_XMX', '3G'), help='Arbeitsspeicher für Java, z. B. 2G (wenn der Rechner knapp ist)')
     ap.add_argument('--option', action='append', default=[], help='key:value für options.txt')
     ap.add_argument('--server-packs', choices=['an', 'aus', 'fragen'], default='fragen',
                     help='Ressourcenpakete des Servers annehmen (an), ablehnen (aus) oder fragen')

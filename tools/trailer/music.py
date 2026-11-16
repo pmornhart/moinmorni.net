@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Eigene Trailer-Musik: das MoinMorni-Thema in verschiedenen Arrangements je Modus.
+"""Eigene Trailer-Musik: das morni.net-Thema in verschiedenen Arrangements je Modus.
 
 Komponiert als MIDI (mido) und gerendert mit FluidSynth + FluidR3_GM (MIT-Lizenz). Alles selbst geschrieben –
 keine fremden Melodien.
@@ -16,7 +16,7 @@ SF2 = os.environ.get('MM_SF2', '/usr/share/sounds/sf2/FluidR3_GM.sf2')
 TPB = 480  # Ticks pro Viertel
 DRUMS = 9
 
-# Das MoinMorni-Thema (C-Dur, 4/4). Jede Note: (Tonhöhe, Dauer in Vierteln), None = Pause.
+# Das morni.net-Thema (C-Dur, 4/4). Jede Note: (Tonhöhe, Dauer in Vierteln), None = Pause.
 N = {'B3': 59, 'C4': 60, 'D4': 62, 'E4': 64, 'F4': 65, 'G4': 67, 'A4': 69, 'B4': 71,
      'C5': 72, 'D5': 74, 'E5': 76, 'F5': 77, 'G5': 79}
 A_PART = [

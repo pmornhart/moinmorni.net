@@ -1,0 +1,149 @@
+{
+ "hinweis": "Erfundene Spielernamen für Trailer-Darsteller. Jeder trägt im Aufnahme-Client (Ressourcenpaket tools/trailer/skins) einen eigenen Skin; Name und Skin gehören fest zusammen (Offline-UUID).",
+ "darsteller": [
+  {
+   "name": "ResiBlume19",
+   "skin": "slim/zuri",
+   "modell": "slim",
+   "figur": "resi",
+   "uuid": "a5884ee6-3fb0-3d26-a9b2-15c437f34776",
+   "beschreibung": "Dirndl: grünes Mieder, hellblaue Schürze, roter Rock, blonder Zopfkranz und zwei Zöpfe"
+  },
+  {
+   "name": "Seppl19",
+   "skin": "wide/steve",
+   "modell": "wide",
+   "figur": "sepp",
+   "uuid": "2c5bbca7-ac90-36fc-8ee2-448ed70077c4",
+   "beschreibung": "Lederhose, rot-weiß kariertes Hemd, Hosenträger mit Stickerei, Trachtenhut mit Gamsbart"
+  },
+  {
+   "name": "jay_beatz2",
+   "skin": "wide/ari",
+   "modell": "wide",
+   "figur": "jayden",
+   "uuid": "ba940343-18d6-3bcc-a874-6c0670f2627d",
+   "beschreibung": "Schwarzer Hoodie mit grünen Kordeln und Berg-Aufdruck, Kopfhörer, Locken"
+  },
+  {
+   "name": "Lena_Herbst05",
+   "skin": "slim/alex",
+   "modell": "slim",
+   "figur": "lena",
+   "uuid": "caa89479-8365-3c14-90e1-a0c0db930597",
+   "beschreibung": "Rote lange Haare, Sommersprossen, cremefarbener Pulli, olivgrüner Parka mit Fellkapuze"
+  },
+  {
+   "name": "mia_lofi06",
+   "skin": "slim/ari",
+   "modell": "slim",
+   "figur": "mia",
+   "uuid": "803ff514-ade3-3c7b-9154-dd315b6f8ca7",
+   "beschreibung": "Rosa Hoodie, weiße Kopfhörer, schwarzer Bob mit Pony, graue Jogginghose"
+  },
+  {
+   "name": "AmaraSun08",
+   "skin": "slim/efe",
+   "modell": "slim",
+   "figur": "amara",
+   "uuid": "c811e960-daf1-3c97-8f7f-6979a8ac5882",
+   "beschreibung": "Gelber Regenmantel, Afro-Puffs, schwarze Leggings, blaue Gummistiefel"
+  },
+  {
+   "name": "Neonkatze2",
+   "skin": "slim/kai",
+   "modell": "slim",
+   "figur": "kiki",
+   "uuid": "474213d6-758f-316e-aced-24111d5b3ac2",
+   "beschreibung": "Schwarze Lederjacke mit Nieten, Undercut in Türkis und Pink, zerrissene Jeans, Stiefel"
+  },
+  {
+   "name": "Yasi_Lila7",
+   "skin": "slim/makena",
+   "modell": "slim",
+   "figur": "yasmin",
+   "uuid": "2419319d-ec73-39db-b1e5-230e2d118df0",
+   "beschreibung": "Fliederfarbenes Kopftuch, cremefarbene lange Strickjacke, langer dunkelblauer Rock"
+  },
+  {
+   "name": "lotte_rennt12",
+   "skin": "slim/noor",
+   "modell": "slim",
+   "figur": "lotte",
+   "uuid": "4f5b142f-9634-391e-98bb-5f5839c7c2e0",
+   "beschreibung": "Lila Trainingsanzug mit mintgrüner Paspel, hoher Pferdeschwanz, Stirnband"
+  },
+  {
+   "name": "Pistenjule",
+   "skin": "slim/steve",
+   "modell": "slim",
+   "figur": "jule",
+   "uuid": "e29b2a20-f57f-3b36-b7ae-82041351af32",
+   "beschreibung": "Hellblaue Skijacke, rote Strickmütze mit Muster, Skibrille, dunkle Skihose"
+  },
+  {
+   "name": "EllaSommer7",
+   "skin": "slim/sunny",
+   "modell": "slim",
+   "figur": "ella",
+   "uuid": "270f8b2b-df38-3d1b-8c82-6749131b5d18",
+   "beschreibung": "Hellblaues Sommerkleid mit Blumen, Sonnenbrille, blonde Wellen, Sandalen"
+  },
+  {
+   "name": "HanniHof",
+   "skin": "wide/alex",
+   "modell": "wide",
+   "figur": "hanni",
+   "uuid": "72e6fb3b-dcd7-338a-8124-19e900857f3f",
+   "beschreibung": "Latzhose aus Jeans, gelbes Shirt, rotes Kopftuch, kupferroter Dutt, Gummistiefel"
+  },
+  {
+   "name": "Yuki_Tor10",
+   "skin": "wide/efe",
+   "modell": "wide",
+   "figur": "yuki",
+   "uuid": "103baf8a-baf4-3035-bd4e-6689cd50aed5",
+   "beschreibung": "Grün-weißes Fußballtrikot mit der 10, weiße Hose, Stutzen, schwarze Fußballschuhe"
+  },
+  {
+   "name": "Toni_Wandert11",
+   "skin": "wide/kai",
+   "modell": "wide",
+   "figur": "toni",
+   "uuid": "e63a939d-8131-3c8c-82dc-34c26aff6ec9",
+   "beschreibung": "Orange Softshelljacke, grüner Rucksack, Vollbart, Wanderhose, Wanderschuhe"
+  },
+  {
+   "name": "RitterKuno11",
+   "skin": "wide/makena",
+   "modell": "wide",
+   "figur": "kuno",
+   "uuid": "6b9123b5-6773-3db4-a629-8b090a621f0b",
+   "beschreibung": "Ritterrüstung: Nasalhelm, Kettenhemd, blauer Wappenrock mit eigenem Berg-Wappen"
+  },
+  {
+   "name": "NebelLuchs7",
+   "skin": "wide/noor",
+   "modell": "wide",
+   "figur": "luchs",
+   "uuid": "b502b276-e74d-322e-833c-ca641841b83e",
+   "beschreibung": "Grüner Kapuzenumhang mit Goldsaum, Halbmaske, Lederweste mit Gurt und Taschen"
+  },
+  {
+   "name": "Matzeee24",
+   "skin": "wide/sunny",
+   "modell": "wide",
+   "figur": "matze",
+   "uuid": "bc4a68ca-ed84-3970-8fd2-13e552dfbb27",
+   "beschreibung": "Schirmmütze verkehrt herum, offenes Flanellhemd über weißem Shirt, Jeans, rote Sneaker"
+  },
+  {
+   "name": "Ewald77",
+   "skin": "wide/zuri",
+   "modell": "wide",
+   "figur": "ewald",
+   "uuid": "a9ada533-0845-3858-92d0-b9980da7eb28",
+   "beschreibung": "Strickpullover mit Alpenmuster, Brille, graue Haare, Schnurrbart, Cordhose"
+  }
+ ]
+}

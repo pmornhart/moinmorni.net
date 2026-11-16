@@ -3,7 +3,8 @@
 //   node cards.cjs <karten.json> <ordner>
 // karten.json: [{"file":"intro.png","kind":"intro","title":"Duels","kicker":"Spielmodus","text":"…"},
 //               {"file":"lt1.png","kind":"lower","title":"Klassisch","text":"…"},
-//               {"file":"ende.png","kind":"end","title":"moinmorni.net","text":"…","note":"…"}]
+//               {"file":"ende.png","kind":"end","title":"morni.net","text":"…","note":"…"}]
+// Kopfzeile der Titelkarte: „morni.net · Spielmodus“ (wird in Großbuchstaben gesetzt: MORNI.NET · SPIELMODUS).
 const fs = require('fs');
 const path = require('path');
 // Playwright liegt global; NODE_PATH (z. B. für mineflayer gesetzt) verdeckt es sonst.
@@ -27,7 +28,7 @@ function html(c) {
   if (c.kind === 'intro') return `<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,rgba(3,22,13,.72) 0%,rgba(3,22,13,.55) 45%,rgba(3,22,13,0) 80%)"></div>
   <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#fff;text-align:center">
     <div style="width:150px;height:150px;filter:drop-shadow(0 10px 30px rgba(0,0,0,.6))">${LOGO}</div>
-    <div class="x" style="font-size:30px;letter-spacing:10px;color:#f6c544;text-transform:uppercase">${esc(c.kicker || 'MoinMorni')}</div>
+    <div class="x" style="font-size:30px;letter-spacing:10px;color:#f6c544;text-transform:uppercase">${esc(c.kicker || 'morni.net · Spielmodus')}</div>
     <div class="px shadow" style="font-size:${c.size || 230}px">${esc(c.title)}</div>
     <div class="t shadow" style="font-size:42px;max-width:1650px;color:#eaf7ef">${esc(c.text)}</div>
   </div>`;
@@ -41,7 +42,7 @@ function html(c) {
   return `<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,22,13,.55),rgba(3,22,13,.86))"></div>
   <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;color:#fff;text-align:center">
     <div style="width:170px;height:170px;filter:drop-shadow(0 10px 30px rgba(0,0,0,.6))">${LOGO}</div>
-    <div class="px shadow" style="font-size:170px">${esc(c.title || 'moinmorni.net')}</div>
+    <div class="px shadow" style="font-size:170px">${esc(c.title || 'morni.net')}</div>
     <div class="x" style="font-size:40px;color:#f6c544;letter-spacing:3px">${esc(c.text || 'Java & Bedrock · kostenlos')}</div>
     ${c.note ? `<div class="t" style="margin-top:26px;font-size:36px;padding:18px 40px;border-radius:999px;background:#0d8a4e;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.4)">${esc(c.note)}</div>` : ''}
   </div>`;

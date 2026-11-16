@@ -2,7 +2,7 @@
 
 Gedreht auf dem Test-Server aus dem Repo pmornhart/Morni-Burgverlies:
   SERVER_DIR=~/mm-cache/servers/burgverlies-trailer SEED=5 KEEP=1 SKIP_TEST=1 test/run.sh   (Port 25780, RCON 25880)
-danach in plugins/MorniBurgverlies/config.yml `ende-sekunden: 10` und in plugins/MoinMorni/fake.properties
+danach in plugins/MorniBurgverlies/config.yml `ende-sekunden: 10` und in plugins/MorniNet/fake.properties
 `party.Anna=Anna,Bert,Clara,Dora` (eine Party mit vier Leuten, alle deutsch).
 
 Mit `startwert: 5` und 4 Räumen pro Etage würfelt das Plugin immer dieselben Etagen (Verlies-Platz 0, x ≥ 1000):
@@ -25,14 +25,14 @@ Umgebung wie shot.py (MM_RCON, MM_RCON_PASS, MM_CAMERA, MM_DISPLAY, MM_ACTORS_FI
 import math, os, subprocess, sys, time
 
 STYLE = 'burgverlies'
-FILE = 'MoinMorni-Trailer-Burgverlies.mp4'
+FILE = 'MorniNet-Trailer-Burgverlies.mp4'
 SLOW = 12
 DIM = 'minecraft:burgverlies'
 CAM = os.environ.get('MM_CAMERA', 'BvKamera')
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'MoinMorni · Spielmodus', 'title': 'Burgverlies',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'morni.net · Spielmodus', 'title': 'Burgverlies',
      'text': 'Zu viert hinab – bis zum Kerkermeister'},
     {'file': 'lt-torhaus.png', 'kind': 'lower', 'title': 'Das Torhaus', 'text': 'Allein oder mit bis zu drei Freunden'},
     {'file': 'lt-welle.png', 'kind': 'lower', 'title': 'Welle um Welle', 'text': 'Das Fallgitter fällt – erst kämpfen, dann weiter'},
@@ -45,7 +45,7 @@ CARDS = [
     {'file': 'lt-boss.png', 'kind': 'lower', 'title': 'Der Kerkermeister', 'text': 'Ganz unten wartet er auf euch'},
     {'file': 'lt-schock.png', 'kind': 'lower', 'title': 'Schockwelle!', 'text': 'Wird der Kreis voll – springen'},
     {'file': 'lt-sieg.png', 'kind': 'lower', 'title': 'Sieg!', 'text': 'Punkte, Bestzeit und Bestenliste'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'In der Lobby die Figur „Burgverlies“ anklicken'},
 ]
 

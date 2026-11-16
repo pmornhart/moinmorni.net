@@ -1,0 +1,128 @@
+[
+ {
+  "id": "resi",
+  "model": "slim",
+  "texture": "zuri",
+  "seed": 101,
+  "beschreibung": "Dirndl: grünes Mieder, hellblaue Schürze, roter Rock, blonder Zopfkranz und zwei Zöpfe"
+ },
+ {
+  "id": "sepp",
+  "model": "wide",
+  "texture": "steve",
+  "seed": 102,
+  "beschreibung": "Lederhose, rot-weiß kariertes Hemd, Hosenträger mit Stickerei, Trachtenhut mit Gamsbart"
+ },
+ {
+  "id": "jayden",
+  "model": "wide",
+  "texture": "ari",
+  "seed": 103,
+  "beschreibung": "Schwarzer Hoodie mit grünen Kordeln und Berg-Aufdruck, Kopfhörer, Locken"
+ },
+ {
+  "id": "lena",
+  "model": "slim",
+  "texture": "alex",
+  "seed": 104,
+  "beschreibung": "Rote lange Haare, Sommersprossen, cremefarbener Pulli, olivgrüner Parka mit Fellkapuze"
+ },
+ {
+  "id": "mia",
+  "model": "slim",
+  "texture": "ari",
+  "seed": 105,
+  "beschreibung": "Rosa Hoodie, weiße Kopfhörer, schwarzer Bob mit Pony, graue Jogginghose"
+ },
+ {
+  "id": "amara",
+  "model": "slim",
+  "texture": "efe",
+  "seed": 106,
+  "beschreibung": "Gelber Regenmantel, Afro-Puffs, schwarze Leggings, blaue Gummistiefel"
+ },
+ {
+  "id": "kiki",
+  "model": "slim",
+  "texture": "kai",
+  "seed": 107,
+  "beschreibung": "Schwarze Lederjacke mit Nieten, Undercut in Türkis und Pink, zerrissene Jeans, Stiefel"
+ },
+ {
+  "id": "yasmin",
+  "model": "slim",
+  "texture": "makena",
+  "seed": 108,
+  "beschreibung": "Fliederfarbenes Kopftuch, cremefarbene lange Strickjacke, langer dunkelblauer Rock"
+ },
+ {
+  "id": "lotte",
+  "model": "slim",
+  "texture": "noor",
+  "seed": 109,
+  "beschreibung": "Lila Trainingsanzug mit mintgrüner Paspel, hoher Pferdeschwanz, Stirnband"
+ },
+ {
+  "id": "jule",
+  "model": "slim",
+  "texture": "steve",
+  "seed": 110,
+  "beschreibung": "Hellblaue Skijacke, rote Strickmütze mit Muster, Skibrille, dunkle Skihose"
+ },
+ {
+  "id": "ella",
+  "model": "slim",
+  "texture": "sunny",
+  "seed": 111,
+  "beschreibung": "Hellblaues Sommerkleid mit Blumen, Sonnenbrille, blonde Wellen, Sandalen"
+ },
+ {
+  "id": "hanni",
+  "model": "wide",
+  "texture": "alex",
+  "seed": 112,
+  "beschreibung": "Latzhose aus Jeans, gelbes Shirt, rotes Kopftuch, kupferroter Dutt, Gummistiefel"
+ },
+ {
+  "id": "yuki",
+  "model": "wide",
+  "texture": "efe",
+  "seed": 113,
+  "beschreibung": "Grün-weißes Fußballtrikot mit der 10, weiße Hose, Stutzen, schwarze Fußballschuhe"
+ },
+ {
+  "id": "toni",
+  "model": "wide",
+  "texture": "kai",
+  "seed": 114,
+  "beschreibung": "Orange Softshelljacke, grüner Rucksack, Vollbart, Wanderhose, Wanderschuhe"
+ },
+ {
+  "id": "kuno",
+  "model": "wide",
+  "texture": "makena",
+  "seed": 115,
+  "beschreibung": "Ritterrüstung: Nasalhelm, Kettenhemd, blauer Wappenrock mit eigenem Berg-Wappen"
+ },
+ {
+  "id": "luchs",
+  "model": "wide",
+  "texture": "noor",
+  "seed": 116,
+  "beschreibung": "Grüner Kapuzenumhang mit Goldsaum, Halbmaske, Lederweste mit Gurt und Taschen"
+ },
+ {
+  "id": "matze",
+  "model": "wide",
+  "texture": "sunny",
+  "seed": 117,
+  "beschreibung": "Schirmmütze verkehrt herum, offenes Flanellhemd über weißem Shirt, Jeans, rote Sneaker"
+ },
+ {
+  "id": "ewald",
+  "model": "wide",
+  "texture": "zuri",
+  "seed": 118,
+  "beschreibung": "Strickpullover mit Alpenmuster, Brille, graue Haare, Schnurrbart, Cordhose"
+ }
+]
