@@ -192,6 +192,15 @@ if [[ -z "${MM_UPDATE_PULLED:-}" ]]; then
   MM_UPDATE_PULLED=1 exec bash "${INSTALL_DIR}/update.sh" "$@"
 fi
 
+# „Motor immer auf den neuesten Stand“ darf nie zurückdrehen: Hat MorniHosting main noch nicht alles, was zu dieser
+# Fassung von MoinMorni gehört (z. B. ein noch nicht übernommener PR), bleibt der Motor auf der passenden Fassung.
+motor_pinned="$(git ls-tree HEAD vendor/mornihosting 2>/dev/null | awk '{print $3}')"
+if [[ -n "${motor_pinned}" ]] &&
+  ! git -C vendor/mornihosting merge-base --is-ancestor "${motor_pinned}" HEAD 2>/dev/null; then
+  msg_info "MorniHosting main hat noch nicht alles, was MoinMorni braucht – der Motor bleibt auf der passenden Fassung"
+  git submodule update --init --quiet vendor/mornihosting
+fi
+
 export MM_UPDATE_TO MM_BUILD_VERSION MH_BUILD_VERSION
 MM_UPDATE_TO="$(mm_version .)"
 MM_BUILD_VERSION="${MM_UPDATE_TO}"

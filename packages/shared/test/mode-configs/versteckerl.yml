@@ -41,3 +41,211 @@ hilfen:
   sprung-abklingzeit-sekunden: 25
   # Spürnase der Gendarmen (einmal pro Runde): so lange zeigt die Spur.
   spuernase-sekunden: 4
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Punkte: so viele gibt es in der Runde. Was am Ende übrig ist, kommt aufs Guthaben (zum Einkaufen im Kramerladen).
+# „Punkte insgesamt“ (Steckbriefe, Bestenliste) zählen alles Verdiente und sinken nie. Nur Punkte aus dem Spiel –
+# nichts davon gibt es für echtes Geld.
+punkte:
+  # Gendarmen: Treffer auf einen Versteckten, Fund, Extra für den ersten Fund der Runde, Sieg (jeder Gendarm am Ende).
+  treffer: 2
+  fund: 10
+  erster-fund: 5
+  gendarmen-sieg: 5
+  # Versteckte: je volle halbe Minute in der Suchzeit unentdeckt.
+  je-halbe-minute: 1
+  # Freiwilliger Pfiff: 1 Punkt, je halbe Minute Suche einer mehr – höchstens so viele.
+  pfiff-hoechstens: 10
+  # Extra für laute bzw. sehr laute Pfiff-Klänge (die hört man auch weiter).
+  pfiff-laut: 2
+  pfiff-sehr-laut: 4
+  # Mut: Steht ein Gendarm beim Pfiff höchstens so viele Blöcke weg, gibt es Extrapunkte (ganz nah mehr).
+  mutig-nah-bloecke: 6
+  mutig-nah: 4
+  mutig-bloecke: 12
+  mutig: 2
+  # Wer als Letzter noch versteckt ist (bei mindestens zwei Versteckten am Anfang), bekommt einmal so viel.
+  letzter-versteckter: 10
+  # Bis zum Schluss nicht gefunden.
+  bis-zum-schluss: 20
+  # Nach der Runde aufs Guthaben: Serie (je weiterem Sieg in Folge, höchstens für so viele) und Tagesbonus (erster
+  # Sieg des Tages).
+  serie-je-sieg: 3
+  serie-hoechstens: 5
+  tagesbonus: 25
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Rundenladen: kleine Hilfen während der Suche, bezahlt mit Punkten aus der laufenden Runde (in der Schnellleiste:
+# „Kramerkiste“). Jede Hilfe: an/aus, Preis, Abklingzeit, wie oft pro Runde.
+rundenladen:
+  an: true
+  # Versteckte: der eigene Pfiff erklingt ein Stück weiter weg (keine Punkte, zählt nicht als Pflicht-Pfiff).
+  lockpfiff:
+    an: true
+    preis: 6
+    abklingzeit-sekunden: 30
+    je-runde: 2
+    # so weit weg (Blöcke) erklingt der Lockpfiff
+    reichweite: 12
+  # Versteckte: kurz Nebel um einen; Gendarmen darin sehen kurz nichts und werden langsam.
+  nebelwolke:
+    an: true
+    preis: 8
+    abklingzeit-sekunden: 45
+    je-runde: 1
+    sekunden: 4
+    reichweite: 4
+  # Versteckte: noch einmal die Gestalt wechseln (wenn der eine Wechsel der Runde schon weg ist).
+  gestaltwechsel:
+    an: true
+    preis: 10
+    je-runde: 1
+  # Gendarmen: zeigt ein paar Sekunden, wer sich in der Nähe bewegt (Eingerastete nicht).
+  laterne:
+    an: true
+    preis: 8
+    abklingzeit-sekunden: 40
+    je-runde: 2
+    sekunden: 5
+    reichweite: 16
+  # Gendarmen: noch einmal schnuppern (wenn die Spürnase der Runde schon benutzt ist).
+  spuernase:
+    an: true
+    preis: 12
+    je-runde: 1
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Kramerladen in der Gendarmerie (Krämer Wastl am Stand, /laden): dauerhaft freischalten mit Guthaben. Preise in
+# Punkten; „an: false“ nimmt ein Stück aus dem Laden und aus dem Spiel (wer es schon hat, behält es für später).
+laden:
+  an: true
+  # Gestalten: nur auf Karten, auf denen genug echte Attrappen stehen.
+  gestalten:
+    werkbank:
+      an: true
+      preis: 150
+    schleifstein:
+      an: true
+      preis: 150
+    webstuhl:
+      an: true
+      preis: 150
+    busch:
+      an: true
+      preis: 300
+    lesepult:
+      an: true
+      preis: 300
+    kuchen:
+      an: true
+      preis: 300
+    kuerbislaterne:
+      an: true
+      preis: 600
+    festtagskuchen:
+      an: true
+      preis: 600
+  # Pfiff-Klänge: kuckuck und henne sind leise, murmeltier und kuhglocke laut, jodler, trompete und alphorn sehr laut.
+  pfiffe:
+    kuckuck:
+      an: true
+      preis: 80
+    henne:
+      an: true
+      preis: 80
+    murmeltier:
+      an: true
+      preis: 160
+    kuhglocke:
+      an: true
+      preis: 160
+    jodler:
+      an: true
+      preis: 280
+    trompete:
+      an: true
+      preis: 280
+    alphorn:
+      an: true
+      preis: 280
+  # Fund-Effekte: was erscheint, wenn man als Gendarm jemanden findet.
+  fund-effekte:
+    herzerl:
+      an: true
+      preis: 100
+    rauchwolke:
+      an: true
+      preis: 100
+    konfetti:
+      an: true
+      preis: 200
+    blueten:
+      an: true
+      preis: 200
+    weissblau:
+      an: true
+      preis: 350
+    goldregen:
+      an: true
+      preis: 350
+  # Spuren beim Laufen – nur in der Gendarmerie, nie in der Runde.
+  spuren:
+    noten:
+      an: true
+      preis: 100
+    herzerl:
+      an: true
+      preis: 100
+    schneeflocken:
+      an: true
+      preis: 200
+    blueten:
+      an: true
+      preis: 200
+    funken:
+      an: true
+      preis: 350
+    gluehwuermchen:
+      an: true
+      preis: 350
+  # Sieg-Effekte: am Ende einer gewonnenen Runde.
+  sieg-effekte:
+    glocken:
+      an: true
+      preis: 120
+    konfetti:
+      an: true
+      preis: 220
+    goldregen:
+      an: true
+      preis: 220
+    feuerwerk:
+      an: true
+      preis: 400
+    weissblau:
+      an: true
+      preis: 400
+  # Titel: im Steckbrief, in der Leiste der Runde und in der Rangliste. Manche erst ab einer Zahl Pfiffe, Funde,
+  # unentdeckter Runden oder Runden.
+  titel:
+    dorfkind:
+      an: true
+      preis: 60
+    heustadl-held:
+      an: true
+      preis: 120
+    pfeifkoenig:
+      an: true
+      preis: 200
+    spuernase:
+      an: true
+      preis: 250
+    meister-der-tarnung:
+      an: true
+      preis: 300
+    oberwachtmeister:
+      an: true
+      preis: 500
+    dorflegende:
+      an: true
+      preis: 800

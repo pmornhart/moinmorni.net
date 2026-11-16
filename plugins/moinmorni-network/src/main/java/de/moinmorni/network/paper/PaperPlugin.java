@@ -48,10 +48,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     /** Rechte aus dem Rang, pro Spieler (wird bei jedem neuen Profil ersetzt). */
     private final Map<UUID, org.bukkit.permissions.PermissionAttachment> attachments = new ConcurrentHashMap<>();
     private static final String BUILD_SERVER = "bau";
-    /** Rang-Recht → Minecraft-Befehle (auf allen Spielservern). */
-    private static final Map<String, List<String>> RIGHT_PERMISSIONS = Map.of(
-            "teleport", List.of("minecraft.command.teleport", "minecraft.command.tp"),
-            "spectate", List.of("minecraft.command.spectate", "minecraft.command.gamemode"));
+    private static final String NO_CREATIVE_DE = "<red>Den Kreativmodus darf dein Rang nicht.</red> "
+            + "<gray>Dafür braucht der Rang im Panel das Recht „Kreativmodus“.</gray>";
+    private static final String NO_CREATIVE_EN = "<red>Your rank can't use creative mode.</red> "
+            + "<gray>The rank needs the right “Creative mode” in the panel.</gray>";
 
     private final Map<UUID, Profile> profiles = new ConcurrentHashMap<>();
     private HubClient hub;
@@ -68,6 +68,15 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
 
     /** Einstellungen des Spielmodus auf diesem Server (aus dem Panel) – trägt sie in seine config.yml ein. */
     private ModeSettings modes;
+
+    /** Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni). */
+    private ModeApi modeApi;
+    /** „Wirklich zur Lobby?“ mitten im Spiel. */
+    private LeaveAsk leaveAsk;
+    /** „Zurück ins Spiel“ – nur in der Lobby aktiv (nur sie bekommt Angebote vom Hub). */
+    private ReturnOffer returnOffer;
+    /** Wer gerade spielt, alle 30 s noch einmal an den Hub (nach einem Neustart des Hubs kennt er es sonst nicht). */
+    private static final long PLAYING_RESEND_TICKS = 600;
 
     /**
      * Vor allen anderen Plugins: Datenordner vom Zwischen-Namen zurückholen, dann gemerkte Einstellungen des Modus
@@ -98,10 +107,15 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, this::morniCraftPlayers, SUMMARY_TICKS, SUMMARY_TICKS);
         // Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni) – auch ohne Hub, dann läuft der Modus allein.
-        getServer().getServicesManager().register(de.moinmorni.api.MoinMorni.class,
-                new ModeApi(hub, serverName, this::langOfUuid, this::rankOf,
-                        uuid -> Optional.ofNullable(profiles.get(uuid)).map(Profile::rights).orElse(null)),
+        leaveAsk = new LeaveAsk(this, this::langOf, this::answerLobby);
+        leaveAsk.start();
+        modeApi = new ModeApi(hub, serverName, this::langOfUuid, this::rankOf,
+                uuid -> Optional.ofNullable(profiles.get(uuid)).map(Profile::rights).orElse(null),
+                p -> leaveAsk.open(p, null));
+        getServer().getServicesManager().register(de.moinmorni.api.MoinMorni.class, modeApi,
                 this, org.bukkit.plugin.ServicePriority.Normal);
+        getServer().getScheduler().runTaskTimerAsynchronously(this, modeApi::resendPlaying,
+                PLAYING_RESEND_TICKS, PLAYING_RESEND_TICKS);
         lobby = new LobbyNpcs(this, hub, this::langOf);
         lobby.start();
         features = new LobbyFeatures(this, lobby, this::langOf);
@@ -109,8 +123,14 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         clock = new LobbyClock(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
+        // In der Lobby bauen (im Kreativmodus): wer das Recht „Lobby bearbeiten“ hat – oder OP ist.
+        features.setEditors(p -> Rights.mayEditLobby(rankRights(p)));
+        getServer().getScheduler().runTask(this, this::logModeAdmins);
         jail.start();
         features.start();
+        returnOffer = new ReturnOffer(this, hub, this::langOf);
+        returnOffer.setJail(jail::isJailed);
+        returnOffer.start();
         // Erst verbinden, wenn alles steht – die ersten Nachrichten des Hubs gehen sonst ins Leere.
         if (hub != null) {
             try {
@@ -229,6 +249,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 clock.onSettings(m);
             }
             case "jail" -> jail.onState(m);
+            case "lobby-ask" -> leaveAsk.onAsk(m);
+            case "lobby-ask-close" -> leaveAsk.onClose(m);
+            case "rejoin-offer" -> returnOffer.onOffer(m);
+            case "rejoin-off" -> returnOffer.onOff(m);
             case "mornicraft-settings" -> morniCraftSettings(m);
             case "mode-settings" -> modeSettings(m);
             case "voice" -> {
@@ -249,6 +273,17 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             });
             default -> {
             }
+        }
+    }
+
+    /** Antwort aus dem Fenster „Wirklich zur Lobby?“ – an den Hub; ohne Hub geht „Ja“ wie toLobby. */
+    private void answerLobby(Player p, boolean yes) {
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "lobby-answer");
+        body.addProperty("uuid", p.getUniqueId().toString());
+        body.addProperty("yes", yes);
+        if ((hub == null || !hub.send(body)) && yes) {
+            modeApi.toLobby(p);
         }
     }
 
@@ -420,10 +455,64 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         return rights;
     }
 
+    /** Rang-Rechte eines Spielers (leer, solange der Hub noch kein Profil geschickt hat). */
+    private java.util.Set<String> rankRights(Player p) {
+        Profile profile = profiles.get(p.getUniqueId());
+        return profile == null ? java.util.Set.of() : profile.rights();
+    }
+
     /**
-     * Rechte aus dem Rang: Teleport/Zuschauen überall fürs Team. Auf dem Bau-Server: wer bauen darf, ist im
-     * Kreativmodus; wer WorldEdit darf, ist dort OP (WorldEdit fragt viele einzelne Rechte ab). Alle anderen sind
-     * dort Gast im Abenteuermodus ohne OP.
+     * Was dieser Server an Rechten kennt (für „Spielmodi verwalten“ und „Alles“): alle angemeldeten Rechte, die Rechte
+     * der Befehle (auch Minecrafts eigene) und welche davon Spielmodi gehören. Jedes Mal neu – Plugins melden manche
+     * Rechte und Befehle erst unterwegs an.
+     */
+    private java.util.List<Rights.Known> knownRights() {
+        org.bukkit.plugin.PluginManager pm = getServer().getPluginManager();
+        java.util.Set<org.bukkit.plugin.Plugin> modePlugins = new java.util.HashSet<>();
+        java.util.Set<String> modeNodes = new java.util.HashSet<>();
+        for (org.bukkit.plugin.Plugin plugin : pm.getPlugins()) {
+            io.papermc.paper.plugin.configuration.PluginMeta meta = plugin.getPluginMeta();
+            if (Rights.isMode(meta.getName(), meta.getPluginDependencies(), meta.getPluginSoftDependencies())) {
+                modePlugins.add(plugin);
+                meta.getPermissions().forEach(perm -> modeNodes.add(perm.getName().toLowerCase(java.util.Locale.ROOT)));
+            }
+        }
+        java.util.List<Rights.Known> known = new java.util.ArrayList<>();
+        for (org.bukkit.permissions.Permission perm : pm.getPermissions()) {
+            org.bukkit.permissions.PermissionDefault def = perm.getDefault();
+            String node = perm.getName().toLowerCase(java.util.Locale.ROOT);
+            known.add(new Rights.Known(node,
+                    def == org.bukkit.permissions.PermissionDefault.OP || def == org.bukkit.permissions.PermissionDefault.TRUE,
+                    modeNodes.contains(node)));
+        }
+        try {
+            for (org.bukkit.command.Command command
+                    : new java.util.HashSet<>(getServer().getCommandMap().getKnownCommands().values())) {
+                boolean mode = command instanceof org.bukkit.command.PluginCommand pc && modePlugins.contains(pc.getPlugin());
+                Rights.split(command.getPermission()).forEach(node ->
+                        known.add(new Rights.Known(node.toLowerCase(java.util.Locale.ROOT), true, mode)));
+            }
+        } catch (RuntimeException e) {
+            getLogger().warning("Befehle des Servers nicht gelesen (" + e.getMessage() + ") – Rechte nur aus den Plugins.");
+        }
+        // Im Modus nur als Recht seines Befehls angegeben, nirgends angemeldet: zählt trotzdem.
+        modeNodes.forEach(node -> known.add(new Rights.Known(node, true, true)));
+        return known;
+    }
+
+    /** Einmal nach dem Start: was „Spielmodi verwalten“ hier bedeutet (fürs Protokoll). */
+    private void logModeAdmins() {
+        java.util.Set<String> admins = Rights.modeAdmins(knownRights());
+        if (!admins.isEmpty()) {
+            getLogger().info("„Spielmodi verwalten“ gibt hier: " + String.join(", ", admins));
+        }
+    }
+
+    /**
+     * Rechte aus dem Rang (siehe {@link Rights}): Teleport, Zuschauen, Spielmodus, Verwaltung der Spielmodi und „Alles“
+     * – jedes Mal komplett neu, ein entzogenes Recht ist sofort weg. Auf dem Bau-Server: wer bauen darf, ist im
+     * Kreativmodus; wer WorldEdit darf, ist dort OP (WorldEdit fragt viele einzelne Rechte ab, die nirgends angemeldet
+     * sind). Alle anderen sind dort Gast im Abenteuermodus ohne OP.
      */
     private void applyRights(Player p, Profile profile) {
         org.bukkit.permissions.PermissionAttachment old = attachments.remove(p.getUniqueId());
@@ -431,9 +520,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             p.removeAttachment(old);
         }
         org.bukkit.permissions.PermissionAttachment attachment = p.addAttachment(this);
-        profile.rights().forEach(r -> RIGHT_PERMISSIONS.getOrDefault(r, List.of())
-                .forEach(node -> attachment.setPermission(node, true)));
+        Rights.nodes(profile.rights(), knownRights()).forEach(node -> attachment.setPermission(node, true));
         attachments.put(p.getUniqueId(), attachment);
+        // Befehlsliste des Spiels neu schicken: was jetzt erlaubt ist, schlägt die Tab-Taste vor (und steht nicht rot da).
+        p.updateCommands();
         if (!BUILD_SERVER.equals(serverName)) {
             return;
         }
@@ -445,10 +535,25 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    /**
+     * Minecraft kennt für /gamemode nur ein Recht: Wer zuschauen oder den Spielmodus wechseln darf, käme damit auch in
+     * den Kreativmodus. Den gibt es nur mit dem Recht „Kreativmodus“ (oder „Alles“, oder als OP).
+     */
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onCommand(org.bukkit.event.player.PlayerCommandPreprocessEvent event) {
+        Player p = event.getPlayer();
+        if (p.isOp() || !Rights.asksCreative(event.getMessage()) || Rights.mayCreative(rankRights(p))) {
+            return;
+        }
+        event.setCancelled(true);
+        p.sendMessage(MM.deserialize("en".equals(langOf(p)) ? NO_CREATIVE_EN : NO_CREATIVE_DE));
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Player p = event.getPlayer();
         profiles.remove(p.getUniqueId());
+        modeApi.forget(p.getUniqueId());
         org.bukkit.permissions.PermissionAttachment attachment = attachments.remove(p.getUniqueId());
         if (attachment != null) {
             p.removeAttachment(attachment);

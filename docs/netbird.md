@@ -35,7 +35,10 @@ Nur der **Owner** richtet das ein (er ist im Motor Admin). Alle anderen sehen ei
    **Speichern**.
 2. **Webseite auf der Domain:** Name leer lassen (= `moinmorni.net` selbst), Port `8080` → **Einrichten**. NetBird legt
    einen HTTPS-Dienst mit „Pass Host Header“ an, der zur Webseite von MoinMorni führt (nicht zum Motor). Passkeys
-   gehen dann über `moinmorni.net`.
+   gehen dann über `moinmorni.net`. Auch `www.moinmorni.net` führt hin (den Dienst dafür legt der Motor an):
+   MoinMorni leitet den Namen dauerhaft (301) auf `https://moinmorni.net` um, mit gleichem Pfad. Bei INWX darf es
+   dafür keinen eigenen `www`-Eintrag geben – er überdeckt den Platzhalter `*.moinmorni.net` (ein alter zeigt meist
+   noch auf die Parkseite).
 3. **Spiel auf der Domain:** Der Proxy des Netzwerks ist schon vorgeschlagen → **Übernehmen**. Dann gilt:
 
    | Was                         | Spieler tippen                    | In NetBird                     |

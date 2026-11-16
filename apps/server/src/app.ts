@@ -8,6 +8,11 @@ import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fas
 import type { Config } from './config.js';
 import { openDatabase, type Db } from './db/index.js';
 import { createMoinMorniBot, type MoinMorniBot } from './discord/bot.js';
+import { createDiscordCredentials } from './discord/credentials.js';
+import { createApplyLogin } from './applications/login.js';
+import { registerApplicationRoutes } from './applications/routes.js';
+import { createTeamApplications } from './applications/team.js';
+import { createSecretBox } from './lib/secret-box.js';
 import { adoptInterimDatabase } from './lib/rename.js';
 import { createHub, type Hub } from './hub/index.js';
 import { AppError } from './lib/errors.js';
@@ -17,13 +22,19 @@ import { startAlertRelay, type AlertRelay } from './motor/alerts.js';
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
 import { githubReleases } from './network/mode-releases.js';
-import { createProvisioner, LOBBY_MEMBER, type NetworkProvisioner } from './network/provision.js';
+import {
+  createProvisioner,
+  LOBBY_MEMBER,
+  PROXY_MEMBER,
+  type NetworkProvisioner,
+} from './network/provision.js';
 import { createMemberIds } from './network/members.js';
 import { createModeSettingsSync, type ModeSettingsSync } from './network/mode-settings.js';
 import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { retuneMemory } from './network/memory.js';
 import { idleMemoryOnce, sleepOffOnce } from './network/always-on.js';
+import { ensureServerIcon } from './network/server-icon.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerUpdateRoutes } from './system/routes.js';
@@ -31,10 +42,11 @@ import { createBuildService } from './build/service.js';
 import { registerBuildRoutes } from './build/routes.js';
 import { createApplicationService } from './mornicraft/applications.js';
 import { registerApplyRoutes } from './mornicraft/routes.js';
+import { registerWhitelistTeamRoute } from './mornicraft/team.js';
 import { createUpdateService } from './system/update.js';
 import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
-import { registerTeamRoutes } from './panel/team-routes.js';
+import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
@@ -42,6 +54,7 @@ import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
 import { createStatusService } from './public/status.js';
+import { registerWwwRedirect } from './public/www.js';
 import { registerSetupRoutes } from './setup/routes.js';
 import { createSetupService, type SetupService } from './setup/service.js';
 
@@ -122,6 +135,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   await app.register(helmet, { contentSecurityPolicy: false, referrerPolicy: { policy: 'same-origin' } });
   // Nur Routen mit eigener Grenze (Einrichtung, später Anmeldung im Hub) – der Rest bleibt frei.
   await app.register(rateLimit, { global: false });
+  // www.<Domain> → https://<Domain> (vor allem anderen, auch vor der Webseite und der Weiterleitung zum Motor).
+  registerWwwRedirect(app, config.domain);
 
   app.setErrorHandler((err, request, reply) => {
     if (err instanceof AppError) return reply.code(err.status).send({ error: err.code });
@@ -137,6 +152,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const sleepRef: { service: SleepService | null } = { service: null };
   const botRef: { bot: MoinMorniBot | null } = { bot: null };
   const applications = createApplicationService(handle.db, stores, events);
+  // Bot-Token und Client-Secret: aus der .env oder dem Panel (versiegelt mit einem Schlüssel aus MM_SECRET).
+  const credentials = createDiscordCredentials(handle.db, config, createSecretBox(config.secret), app.log);
   const hub = createHub({
     wake: (server) => sleepRef.service?.wake(server) ?? Promise.resolve(false),
     allowedIn: applications.allowed,
@@ -150,6 +167,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     domain: config.domain,
   });
   const status = createStatusService(config, motor, stores, hub);
+  const team = createTeamApplications({ db: handle.db, stores, hub, events });
   const lobbyWorld = createLobbyWorld(motor, app.log, {
     season: () => seasonOf(stores.settings('lobby')['season']),
     packOffer: () => ({
@@ -175,12 +193,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   sleepRef.service = sleep;
   const bot = createMoinMorniBot({
     config,
+    credentials,
     db: handle.db,
     stores,
     hub,
     events,
     status,
     applications,
+    team,
     log: app.log,
     ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
   });
@@ -237,6 +257,15 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
         },
       );
       restarts.add(idle);
+      // Bild in der Serverliste: das Wappen, solange der Proxy keins hat (Velocity liest es beim Neustart).
+      const proxy = result.servers.find((s) => s.member === PROXY_MEMBER);
+      if (proxy) {
+        const iconNew = await ensureServerIcon(motor, proxy.serverId, app.log).catch((err: unknown) => {
+          app.log.warn({ err }, 'Netzwerk: Bild für die Serverliste ließ sich nicht aufspielen');
+          return false;
+        });
+        if (iconNew) restarts.add([proxy]);
+      }
       // Spielmodi, die gerade schlafen: Einstellungen aus dem Panel für den nächsten Start eintragen.
       void modeSettings.syncFiles();
       // Wer zwei Minuten nach dem Start noch ohne Hub läuft (z. B. alter Schlüssel im Speicher), startet neu, sobald
@@ -288,19 +317,34 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerPackRoutes(app);
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
-  teamRef.syncAll = registerTeamRoutes(app, auth, stores, handle.db, motor).syncAll;
-  registerDiscordRoutes(app, auth, bot);
+  const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor);
+  teamRef.syncAll = teamAccess.syncAll;
+  registerDiscordRoutes(app, auth, bot, credentials);
   registerNewsRoutes(app, auth, handle.db, events);
   const updates = createUpdateService(config, motor, stores, options.githubFetch);
   registerUpdateRoutes(app, auth, updates);
+  // Whitelist im Panel: das Team (kommt über den Rang immer hinein) steht von selbst mit drauf.
+  registerWhitelistTeamRoute(app, auth, handle.db, hub.players, applications);
   registerBuildRoutes(app, auth, build);
+  const applyLogin = createApplyLogin(config.secret);
   registerApplyRoutes(app, {
     config,
     auth,
     applications,
     discordAppId: bot.applicationId,
-    clientSecret: config.discordClientSecret,
+    clientSecret: credentials.clientSecret,
+    login: applyLogin,
     ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
+  });
+  registerApplicationRoutes(app, {
+    db: handle.db,
+    auth,
+    mornicraft: applications,
+    team,
+    teamAccess: () => teamAccess,
+    login: applyLogin,
+    hub,
+    discordLogin: async () => Boolean(credentials.clientSecret() && (await bot.applicationId())),
   });
   const announceUpdate = async (): Promise<void> => {
     const r = updates.takeResult();
@@ -319,7 +363,12 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       bot.teamLog(bt('de', 'logUpdateStarted', { by })).catch(() => undefined);
     },
   );
-  registerSiteRoutes(app, handle.db, stores, hub, bot.inviteUrl);
+  registerSiteRoutes(app, handle.db, stores, hub, bot.inviteUrl, () =>
+    team
+      .positions()
+      .filter((p) => p.open)
+      .map((p) => ({ id: p.id, name: p.role.name, symbol: p.role.symbol, colour: p.role.colour })),
+  );
   await registerMotorProxy(app, config.motorUrl, { beforeStart: (id) => sleep.makeRoom(id) });
 
   const hasWeb = fs.existsSync(path.join(config.webDir, 'index.html'));
@@ -366,6 +415,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       sleep.remember(sleepOffOnce(stores, config.dataDir, app.log));
       sleep.start();
       bot.start();
+      // Neue Rolle oder neues Recht aus der Vorlage (z. B. Supporter nach einem Update): überall nachziehen wie nach
+      // einer Änderung im Panel (Discord-Rollen, Motor-Zugriff, Rechte auf den Spielservern).
+      if (stores.templateUpgrades.length) events.emit('roles.changed', { by: 'MoinMorni' });
       // Meldungen des Motors (Wächter, NetBird-Ausgang, Server) ins Discord-Team-Log.
       if (config.motorToken)
         relay.current = startAlertRelay({

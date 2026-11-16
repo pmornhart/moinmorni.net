@@ -80,7 +80,7 @@ export interface SleepService {
 
 export function createSleepService(
   motor: MotorClient,
-  hub: Pick<Hub, 'presence' | 'connectedServers'>,
+  hub: Pick<Hub, 'presence' | 'connectedServers'> & Partial<Pick<Hub, 'heldServers'>>,
   stores: Stores,
   log: FastifyBaseLogger,
   dataDir?: string,
@@ -119,6 +119,8 @@ export function createSleepService(
     const minutes = Number(stores.settings('network')['sleepMinutes']);
     const counts = hub.presence.counts();
     const awake = new Set(hub.connectedServers());
+    // Wartet ein Modus auf jemanden, dessen Verbindung mitten im Spiel weg war, bleibt er wach.
+    const held = new Set(hub.heldServers?.() ?? []);
     const sleepy = [
       ...stores
         .modes()
@@ -130,7 +132,7 @@ export function createSleepService(
         : []),
     ];
     const due = sleepy.filter((server) => {
-      if ((counts[server] ?? 0) > 0) {
+      if ((counts[server] ?? 0) > 0 || held.has(server)) {
         emptySince.delete(server);
         return false;
       }
@@ -197,13 +199,14 @@ export function createSleepService(
     const allowed = roomNames();
     const sleepy = sleepyNames();
     const counts = hub.presence.counts();
+    const held = new Set(hub.heldServers?.() ?? []);
     const now = Date.now();
     const rank = (name: string): number => (sleepy.has(name) ? 0 : 1);
     // Erst die mit „schlafen, wenn leer“, dann der am längsten leere; bei Gleichstand der größere (mehr Platz).
     const candidates = active
       .filter((x) => x.live?.state === 'running')
       .map((x) => ({ ...x, name: nameOf.get(x.id) ?? '' }))
-      .filter((x) => allowed.has(x.name))
+      .filter((x) => allowed.has(x.name) && !held.has(x.name))
       .filter((x) => (x.live?.playersOnline ?? 0) === 0 && (counts[x.name] ?? 0) === 0)
       .sort(
         (a, b) =>

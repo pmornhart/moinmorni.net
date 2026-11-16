@@ -88,9 +88,23 @@ async function ask<T>(motor: MotorClient, method: string, path: string, body?: u
   }
 }
 
+export interface NewAccount {
+  readonly username: string;
+  readonly email?: string | undefined;
+  readonly roleId: string;
+  readonly locale: 'de' | 'en';
+}
+
 export interface TeamAccess {
   /** Server-Zugriff im Motor für alle Team-Konten nach ihrer Rolle (nach neuen Servern oder Rollen-Änderungen). */
   readonly syncAll: () => Promise<void>;
+  /** Darf `me` ein Konto mit dieser Rolle anlegen? (Bereich „Rollen“, Rolle unter der eigenen, mit Panel-Bereichen) */
+  readonly mayCreate: (me: PanelUser, roleId: string) => boolean;
+  /** Team-Konto anlegen (Startpasswort, Pflicht-Wechsel beim ersten Anmelden) – wie unter Team im Panel. */
+  readonly create: (
+    me: PanelUser,
+    account: NewAccount,
+  ) => Promise<{ readonly username: string; readonly password: string }>;
 }
 
 export function registerTeamRoutes(
@@ -181,25 +195,32 @@ export function registerTeamRoutes(
 
   app.get('/api/panel/team', async (request) => list(await auth.require(request, 'roles')));
 
-  app.post('/api/panel/team', { schema: { body: createBody } }, async (request) => {
-    const me = await auth.require(request, 'roles');
-    const role = roleOf(request.body.roleId);
+  /** Konto im Motor anlegen; die Rolle merkt sich MoinMorni. */
+  const createAccount = async (me: PanelUser, account: NewAccount) => {
+    if (!me.areas.has('roles')) throw forbidden('panel_area_forbidden');
+    const role = roleOf(account.roleId);
     if (role.fallback) throw badRequest('team_role_fallback');
     // Eine Rolle ohne Panel-Bereiche sähe nach dem Anmelden nichts – dafür braucht es kein Konto.
     if (role.panel.length === 0) throw badRequest('team_role_no_panel');
     if (!mayHandle(me, role)) throw forbidden('team_higher');
     const password = startPassword();
     const created = await ask<MotorUser>(motor, 'POST', '/api/users', {
-      username: request.body.username,
+      username: account.username,
       password,
-      locale: request.body.locale,
+      locale: account.locale,
       isAdmin: false,
-      ...(request.body.email ? { email: request.body.email } : {}),
+      ...(account.email ? { email: account.email } : {}),
     });
     db.insert(teamMembers)
       .values({ motorUserId: created.id, username: created.username, roleId: role.id, minecraftUuid: null })
       .run();
     await syncAccess(created.id, role);
+    return { created, password };
+  };
+
+  app.post('/api/panel/team', { schema: { body: createBody } }, async (request) => {
+    const me = await auth.require(request, 'roles');
+    const { created, password } = await createAccount(me, request.body);
     const row = member(created.id);
     return { member: row ? view(row, created, me) : null, password };
   });
@@ -252,6 +273,16 @@ export function registerTeamRoutes(
   });
 
   return {
+    mayCreate: (me, roleId) => {
+      const role = stores.role(roleId);
+      return Boolean(
+        me.areas.has('roles') && role && !role.fallback && role.panel.length > 0 && mayHandle(me, role),
+      );
+    },
+    create: async (me, account) => {
+      const { created, password } = await createAccount(me, account);
+      return { username: created.username, password };
+    },
     syncAll: async () => {
       const users = await ask<MotorUser[]>(motor, 'GET', '/api/users');
       await Promise.all(

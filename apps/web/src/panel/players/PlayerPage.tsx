@@ -18,8 +18,9 @@ import { useState, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { mayAssign, type Role } from '@moinmorni/shared';
-import { Button, Card, Kbd, NativeSelect, Pill, Skeleton } from '~/components/ui';
+import { mayAssign, mayPunish, type Role } from '@moinmorni/shared';
+import { Select } from '~/components/select';
+import { Button, Card, Kbd, Pill, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { errorCode, useErrorText } from '~/lib/errors';
@@ -37,6 +38,7 @@ import {
   punishmentState,
   usePlayerQuery,
   useRefreshPlayers,
+  type ActivePunishment,
   type LiftKind,
   type ModKind,
   type PlayerDetail,
@@ -165,6 +167,11 @@ function RankCard({
   // Wie /rang im Spiel: Ränge vergibt nur, wer das Recht „Ränge vergeben“ hat (Moderatoren nicht).
   const mayRank = me.role.id === 'owner' || me.role.game.includes('ranks');
   const blocked = higher === false || !mayRank;
+  const rankNote = ((): string => {
+    if (!mayRank) return t('players.rank.noRight');
+    if (blocked) return t('players.rank.higher', { name: player.name });
+    return t('players.rank.help');
+  })();
 
   const save = useMutation({
     mutationFn: () =>
@@ -203,7 +210,7 @@ function RankCard({
             {t('players.rank.own')}
           </label>
           <div className="flex flex-wrap gap-2">
-            <NativeSelect
+            <Select
               id="player-rank"
               className="min-w-0 flex-1 basis-56"
               value={draft}
@@ -213,25 +220,27 @@ function RankCard({
               <option value={NO_ROLE}>
                 {t('players.rank.none', { fallback: fallback ? pick(fallback.name) : '' })}
               </option>
-              {options.map((r) => (
-                <option key={r.id} value={r.id} disabled={!mayAssign(roles, me.role.id, r.id)}>
-                  {r.symbol ? `${r.symbol} ` : ''}
-                  {pick(r.name)}
-                </option>
-              ))}
-            </NativeSelect>
+              {options.map((r) => {
+                const allowed = mayAssign(roles, me.role.id, r.id);
+                return (
+                  <option
+                    key={r.id}
+                    value={r.id}
+                    disabled={!allowed}
+                    title={allowed ? undefined : t('players.rank.locked')}
+                  >
+                    {r.symbol ? `${r.symbol} ` : ''}
+                    {pick(r.name)}
+                  </option>
+                );
+              })}
+            </Select>
             <Button onClick={() => save.mutate()} disabled={!dirty || blocked || save.isPending}>
               <Save />
               {save.isPending ? t('settings.saving') : t('players.rank.save')}
             </Button>
           </div>
-          <p className="text-[13px] leading-snug text-muted-foreground">
-            {!mayRank
-              ? t('players.rank.noRight')
-              : blocked
-                ? t('players.rank.higher', { name: player.name })
-                : t('players.rank.help')}
-          </p>
+          <p className="text-[13px] leading-snug text-muted-foreground">{rankNote}</p>
         </div>
       ) : (
         <p className="text-[13px] text-muted-foreground">{t('players.rank.noRoles')}</p>
@@ -250,6 +259,7 @@ function ActionsCard({
   readonly onPunish: (kind: ModKind) => void;
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const me = usePanel();
   const note = ((): string => {
     if (blocked) return t('players.act.higher', { name: player.name });
     return player.online ? t('players.act.help') : t('punish.kickOffline', { name: player.name });
@@ -257,17 +267,23 @@ function ActionsCard({
   return (
     <Card className="grid gap-4 p-5 sm:p-6">
       <SectionHead icon={ShieldAlert} title={t('players.act.title')} />
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {MOD_KINDS.map((kind) => {
           const Icon = KIND_ICON[kind];
           const offline = kind === 'kick' && !player.online;
+          // Like the command in the game: each punishment needs its right (voice chat mute: "voice-mute").
+          const allowed = mayPunish(me.role, kind);
+          const why = ((): string | undefined => {
+            if (!allowed) return t('punish.noRight');
+            return offline ? t('punish.kickOffline', { name: player.name }) : undefined;
+          })();
           return (
             <Button
               key={kind}
               variant={kind === 'ban' ? 'danger' : 'secondary'}
-              className="h-auto flex-col gap-1.5 py-3 [&_svg]:size-5"
-              disabled={blocked || offline}
-              title={offline ? t('punish.kickOffline', { name: player.name }) : undefined}
+              className="h-auto min-h-[4.75rem] flex-col gap-1.5 whitespace-normal px-2 py-3 text-center leading-tight [&_svg]:size-5"
+              disabled={blocked || offline || !allowed}
+              title={why}
               onClick={() => onPunish(kind)}
             >
               <Icon />
@@ -364,17 +380,26 @@ function HistoryRow({
   );
 }
 
-/** Ids of the ban, mute and jail that count right now: the newest one of each that is neither lifted nor over. */
+/** What can be running right now, in the order of the "Gerade aktiv" card. */
+const ACTIVE_KINDS: ReadonlyArray<readonly [LiftKind, (p: PlayerView) => ActivePunishment | null]> = [
+  ['ban', (p) => p.banned],
+  ['mute', (p) => p.muted],
+  ['voice', (p) => p.voiceMuted],
+  ['jail', (p) => p.jailed],
+];
+
+/** Ids of what counts right now (ban, mutes, jail): the newest one of each that is neither lifted nor over. */
 function activeIds(player: PlayerDetail): ReadonlySet<number> {
   const now = Date.now();
   const current = (kind: LiftKind): Punishment | undefined =>
     player.history.find(
       (p) => p.kind === kind && !p.revokedAt && (!p.expiresAt || new Date(p.expiresAt).getTime() > now),
     );
-  const ban = player.banned ? current('ban') : undefined;
-  const mute = player.muted ? current('mute') : undefined;
-  const jail = player.jailed ? current('jail') : undefined;
-  return new Set([ban?.id, mute?.id, jail?.id].filter((n): n is number => n !== undefined));
+  return new Set(
+    ACTIVE_KINDS.map(([kind, of]) => (of(player) ? current(kind)?.id : undefined)).filter(
+      (n): n is number => n !== undefined,
+    ),
+  );
 }
 
 function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElement {
@@ -394,6 +419,10 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
     return player.role.id === me.role.id ? false : null;
   })();
   const ids = activeIds(player);
+  const running = ACTIVE_KINDS.flatMap(([kind, of]) => {
+    const active = of(player);
+    return active ? [{ kind, ...active }] : [];
+  });
 
   return (
     <>
@@ -446,37 +475,20 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
         </div>
         <div className="grid gap-[22px]">
           {canPunish ? <ActionsCard player={player} blocked={higher === false} onPunish={setDialog} /> : null}
-          {player.banned || player.muted || player.jailed ? (
+          {running.length ? (
             <Card className="grid gap-4 p-5 sm:p-6">
               <SectionHead icon={ShieldAlert} title={t('players.active.title')} />
               <ul className="grid gap-2">
-                {player.banned ? (
+                {running.map((active) => (
                   <ActiveRow
+                    key={active.kind}
                     player={player}
-                    kind="ban"
-                    until={player.banned.until}
-                    reason={player.banned.reason}
-                    canLift={canPunish}
+                    kind={active.kind}
+                    until={active.until}
+                    reason={active.reason}
+                    canLift={canPunish && mayPunish(me.role, active.kind)}
                   />
-                ) : null}
-                {player.muted ? (
-                  <ActiveRow
-                    player={player}
-                    kind="mute"
-                    until={player.muted.until}
-                    reason={player.muted.reason}
-                    canLift={canPunish}
-                  />
-                ) : null}
-                {player.jailed ? (
-                  <ActiveRow
-                    player={player}
-                    kind="jail"
-                    until={player.jailed.until}
-                    reason={player.jailed.reason}
-                    canLift={canPunish}
-                  />
-                ) : null}
+                ))}
               </ul>
             </Card>
           ) : null}

@@ -1,6 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the game needs them */
 import { z } from 'zod';
 import { MODE_SETTING_AREAS } from './mode-settings.js';
+import { TEAM_APPLY_AREA } from './team-apply.js';
 import type { PanelArea } from './roles.js';
 
 /**
@@ -39,6 +40,8 @@ interface Base {
   readonly command?: string;
   /** Nur in Bereichen eines Spielmodus: Stelle in der config.yml des Modus. */
   readonly config?: ConfigSpot;
+  /** Nur der Owner darf das ändern (im Panel und im Spiel), z. B. die Admin-Stelle öffnen. */
+  readonly ownerOnly?: boolean;
 }
 
 export type SettingDef =
@@ -75,6 +78,8 @@ export interface SettingSection {
   readonly title: Text;
   readonly text?: Text;
   readonly settings: readonly SettingDef[];
+  /** Nur zeigen, wenn es diese Rolle in der Rollen-Vorlage gibt (Stellen der Team-Bewerbungen). */
+  readonly role?: string;
 }
 
 export interface SettingArea {
@@ -220,6 +225,38 @@ export const NETWORK_AREA: SettingArea = {
             'Otherwise it follows the Minecraft client; everyone can change it with /sprache.',
           ),
           command: '/netzwerk sprache <de|en>',
+        },
+      ],
+    },
+    {
+      id: 'in-game',
+      title: t('Mitten im Spiel', 'In the middle of a game'),
+      text: t(
+        'Damit niemand aus Versehen seine Runde verlässt – und wer rausfliegt, schnell wieder hineinkommt.',
+        'So nobody leaves a round by accident – and whoever drops out gets back in quickly.',
+      ),
+      settings: [
+        {
+          key: 'lobbyConfirm',
+          type: 'boolean',
+          default: true,
+          label: t('Vor /lobby nachfragen', 'Ask before /lobby'),
+          help: t(
+            'Wer gerade eine Runde spielt und /lobby eingibt (oder im Spielmodus auf „Zur Lobby“ klickt), wird erst gefragt: ein kleines Fenster mit „Ja, zur Lobby“ und „Weiterspielen“ (Java und Bedrock), auf Java zusätzlich Knöpfe im Chat. Ein zweites /lobby innerhalb von 10 Sekunden gilt als Ja. Wer gerade nicht spielt (wartet, zuschaut, ausgeschieden), geht sofort.',
+            'Whoever is playing a round and types /lobby (or clicks “To the lobby” in a game mode) is asked first: a small window with “Yes, to the lobby” and “Keep playing” (Java and Bedrock), on Java also buttons in chat. A second /lobby within 10 seconds counts as yes. Whoever is not playing right now (waiting, watching, knocked out) goes straight away.',
+          ),
+          command: '/netzwerk nachfragen an|aus',
+        },
+        {
+          key: 'rejoinOffer',
+          type: 'boolean',
+          default: true,
+          label: t('„Zurück ins Spiel“ anbieten', 'Offer “Back to the game”'),
+          help: t(
+            'Fliegt jemand mitten in einer Runde raus (Verbindung weg, Spiel abgestürzt), hält der Spielmodus seinen Platz eine Weile frei. Kommt er in der Zeit wieder, bietet ihm die Lobby „Zurück ins Spiel“ an – im Chat, über der Schnellleiste und als Gegenstand in der Mitte der Leiste (auch auf Bedrock); ein Klick bringt ihn auf genau diesen Server zurück. Wie lange der Platz frei bleibt, steht bei den Einstellungen des jeweiligen Spielmodus.',
+            'If someone drops out in the middle of a round (connection lost, game crashed), the game mode keeps their spot for a while. If they come back in time, the lobby offers “Back to the game” – in chat, above the hotbar and as an item in the middle of the hotbar (Bedrock too); one click takes them back to exactly that server. How long the spot is kept is in the settings of each game mode.',
+          ),
+          command: '/netzwerk rueckkehr an|aus',
         },
       ],
     },
@@ -1469,6 +1506,7 @@ export const SETTING_AREAS: readonly SettingArea[] = [
   SOCIAL_AREA,
   LOBBY_AREA,
   WEBSITE_AREA,
+  TEAM_APPLY_AREA,
   MORNICRAFT_AREA,
   ...MODE_SETTING_AREAS,
   BUILD_AREA,

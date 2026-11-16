@@ -205,6 +205,47 @@ const TEXTS = {
     en: `${P}<red>You may not give this rank.`,
   },
   'lobby.going': { de: `${P}<gray>Ab in die Lobby!`, en: `${P}<gray>Off to the lobby!` },
+  // Mitten im Spiel (rejoin.ts): erst nachfragen, „Zurück ins Spiel“ anbieten. Bedrock kann im Chat nicht klicken.
+  'lobby.ask': {
+    de: `${P}<gold>Du bist mitten in <white>{mode}</white>.</gold> <gray>Wirklich zur Lobby?</gray> <click:run_command:'/lobby ja'><hover:show_text:'<gold>Runde verlassen und zur Lobby'><gold><bold>[Ja, zur Lobby]</bold></gold></hover></click> <click:run_command:'/lobby nein'><hover:show_text:'<green>Hierbleiben und weiterspielen'><green><bold>[Weiterspielen]</bold></green></hover></click> <dark_gray>·</dark_gray> <gray>Nochmal <yellow>/lobby</yellow> geht auch.`,
+    en: `${P}<gold>You're in the middle of <white>{mode}</white>.</gold> <gray>Really go to the lobby?</gray> <click:run_command:'/lobby yes'><hover:show_text:'<gold>Leave the round and go to the lobby'><gold><bold>[Yes, to the lobby]</bold></gold></hover></click> <click:run_command:'/lobby no'><hover:show_text:'<green>Stay and keep playing'><green><bold>[Keep playing]</bold></green></hover></click> <dark_gray>·</dark_gray> <gray>Typing <yellow>/lobby</yellow> again works too.`,
+  },
+  'lobby.ask_bedrock': {
+    de: `${P}<gold>Du bist mitten in <white>{mode}</white>.</gold> <gray>Wirklich zur Lobby? Wähl im Fenster – oder gib gleich nochmal <yellow>/lobby</yellow> ein.`,
+    en: `${P}<gold>You're in the middle of <white>{mode}</white>.</gold> <gray>Really go to the lobby? Choose in the window – or type <yellow>/lobby</yellow> again right away.`,
+  },
+  'lobby.stay': {
+    de: `${P}<green>Alles klar – viel Spaß beim Weiterspielen!`,
+    en: `${P}<green>Alright – have fun playing on!`,
+  },
+  'rejoin.offer': {
+    de: `${P}<gold>Du warst mitten in <white>{mode}</white> – dein Platz ist noch frei.</gold> <click:run_command:'/rueckkehr'><hover:show_text:'<green>Zurück in deine Runde'><green><bold>[Zurück ins Spiel]</bold></green></hover></click>`,
+    en: `${P}<gold>You were in the middle of <white>{mode}</white> – your spot is still free.</gold> <click:run_command:'/rejoin'><hover:show_text:'<green>Back to your round'><green><bold>[Back to the game]</bold></green></hover></click>`,
+  },
+  'rejoin.offer_bedrock': {
+    de: `${P}<gold>Du warst mitten in <white>{mode}</white> – dein Platz ist noch frei.</gold> <gray>Zurück ins Spiel: Gegenstand in der Mitte deiner Leiste benutzen oder <yellow>/rueckkehr</yellow> eingeben.`,
+    en: `${P}<gold>You were in the middle of <white>{mode}</white> – your spot is still free.</gold> <gray>Back to the game: use the item in the middle of your hotbar or type <yellow>/rejoin</yellow>.`,
+  },
+  'rejoin.going': {
+    de: `${P}<gray>Zurück nach <white>{mode}</white> …`,
+    en: `${P}<gray>Back to <white>{mode}</white> …`,
+  },
+  'rejoin.none': {
+    de: `${P}<gray>Gerade wartet keine Runde auf dich.`,
+    en: `${P}<gray>No round is waiting for you right now.`,
+  },
+  'rejoin.expired': {
+    de: `${P}<gray>Die Zeit ist um – in <white>{mode}</white> ist dein Platz nicht mehr frei.`,
+    en: `${P}<gray>Time's up – your spot in <white>{mode}</white> isn't held any more.`,
+  },
+  'rejoin.ended': {
+    de: `${P}<gray>Deine Runde in <white>{mode}</white> ist inzwischen vorbei.`,
+    en: `${P}<gray>Your round in <white>{mode}</white> is over by now.`,
+  },
+  'rejoin.gone': {
+    de: `${P}<gray><white>{mode}</white> ist gerade nicht erreichbar – deine Runde gibt es leider nicht mehr.`,
+    en: `${P}<gray><white>{mode}</white> can't be reached right now – your round is gone, sorry.`,
+  },
   'set.saved': {
     de: `${P}<green>Gespeichert:</green> <gray>{label} <dark_gray>→</dark_gray> <white>{value}`,
     en: `${P}<green>Saved:</green> <gray>{label} <dark_gray>→</dark_gray> <white>{value}`,
@@ -365,6 +406,10 @@ const TEXTS = {
   'mode.closed': {
     de: `${P}<gray><white>{mode}</white> ist gerade geschlossen.`,
     en: `${P}<gray><white>{mode}</white> is closed right now.`,
+  },
+  'mode.closed_team': {
+    de: `${P}<gold><white>{mode}</white> ist für Spieler geschlossen – du kommst als Team trotzdem rein. Öffnen: Panel → Modi.`,
+    en: `${P}<gold><white>{mode}</white> is closed to players – as team you get in anyway. To open it: panel → modes.`,
   },
   'mode.soon': {
     de: `${P}<gray><white>{mode}</white> kommt bald – wir bauen noch daran.`,

@@ -322,7 +322,10 @@
       "soon": "The team will introduce itself soon.",
       "helpText": "Need help or want to report something? The quickest way is a ticket on Discord.",
       "helpLink": "How to get help",
-      "homeTitle": "The team"
+      "homeTitle": "The team",
+      "search": "We're looking for help",
+      "searchText": "Fancy helping to shape MoinMorni? Apply – with Discord sign-in, in a few minutes.",
+      "apply": "Apply now"
     },
     "rules": {
       "eyebrow": "Play fair",
@@ -354,7 +357,8 @@
       "help": "Help",
       "legal": "Legal",
       "panel": "Team panel",
-      "follow": "MoinMorni online"
+      "follow": "MoinMorni online",
+      "teamApply": "Apply for the team"
     },
     "help": {
       "eyebrow": "Questions & answers",
@@ -438,7 +442,8 @@
           "sprache": "Change the language: German or English.",
           "profil": "Make your profile on the website private or public.",
           "voice": "Show voice channels, join one or leave it.",
-          "lobby": "Back to the lobby.",
+          "lobby": "Back to the lobby. In the middle of a round we ask once more – a second /lobby counts as yes.",
+          "rueckkehr": "Lost your connection mid-game? While your spot is still free, this takes you back to your round (the item in the lobby does the same). In English also /rejoin.",
           "discord": "Get a code to link your account with Discord."
         }
       },
@@ -452,7 +457,7 @@
       "team": {
         "title": "Help from the team",
         "short": "Ticket on Discord – or ask in the game",
-        "intro": "Stuck, found a bug or want to report someone? We're happy to help.",
+        "intro": "Stuck, found a bug or want to report someone? We are happy to help. In the game you can tell the team by the symbol in front of the name, e.g. ✚ Supporter or ⚔ Moderator.",
         "step1": "On our Discord, go to the “hilfe” (help) channel.",
         "step2": "Click the button to open a ticket – only you and the team can see it.",
         "step3": "Briefly describe what's going on. Someone from the team will get back to you.",
@@ -708,7 +713,8 @@
     "team": "Team",
     "myAccount": "My account",
     "accountShort": "Account",
-    "modeSettings": "Game modes"
+    "modeSettings": "Game modes",
+    "applications": "Applications"
   },
   "overview": {
     "greeting": "Hello, {{name}}!",
@@ -750,7 +756,10 @@
     "off": "Off",
     "missing": "This area does not exist – or you may not see it.",
     "default": "Default: {{value}}",
-    "savedMode": "Saved – applies after the mode’s next restart (as soon as nobody is playing)."
+    "savedMode": "Saved – applies after the mode’s next restart (as soon as nobody is playing).",
+    "sections": "Sections",
+    "ownerOnly": "Only the owner can change this.",
+    "ownerOnlyLocked": "Only the owner can change this – you see how it's set."
   },
   "modes": {
     "title": "Modes",
@@ -823,8 +832,9 @@
       "bigger-party": "Bigger party",
       "lobby-extras": "Lobby extras",
       "chat-colour": "Colour in chat",
-      "maintenance-join": "Join during maintenance",
+      "maintenance-join": "Always gets in",
       "ranks": "Give ranks",
+      "modes-admin": "Manage game modes",
       "admin": "Everything (admin)"
     },
     "discordRights": {
@@ -913,17 +923,18 @@
       "voice-mute": "Mute others in voice chat.",
       "build": "Place and break blocks where it is protected otherwise.",
       "worldedit": "Big building tools (whole areas at once).",
-      "lobby-edit": "Rebuild the lobby.",
-      "gamemode": "Change the game mode (survival, spectator …).",
+      "lobby-edit": "Build in the lobby (in creative mode).",
+      "gamemode": "Change the game mode (survival, adventure, spectator) – creative only with “Creative mode”.",
       "creative": "Switch to creative mode.",
       "streamer": "Streamer mode: hides addresses and coordinates.",
       "reserved-slot": "May join even when the network is full.",
       "bigger-party": "A bigger party with more friends.",
       "lobby-extras": "Extras in the lobby, e.g. particles or hats.",
       "chat-colour": "Colours in their own chat text.",
-      "maintenance-join": "May join during maintenance too.",
+      "maintenance-join": "Gets in during maintenance too, and into invite-only modes (MorniCraft) without the whitelist – shows up on that list by itself.",
       "ranks": "Give others ranks in the game (only below their own).",
-      "admin": "Everything in the game – only for very few."
+      "modes-admin": "The admin commands of the game modes on every server, e.g. start a round, reload, rebuild (/mparty, /duels, /smpadmin …).",
+      "admin": "Everything in the game on every server, like an operator – only for very few."
     },
     "discordHelp": {
       "administrator": "May really do everything in Discord.",
@@ -987,7 +998,8 @@
     "bedrock": "Bedrock",
     "bedrockHelp": "Plays the Bedrock Edition (phone, console or Windows).",
     "banned": "Banned",
-    "muted": "Muted",
+    "muted": "Chat muted",
+    "voiceMuted": "Voice muted",
     "open": "Open {{name}}'s profile",
     "back": "All players",
     "unknown": "MoinMorni does not know this player (any more).",
@@ -1013,7 +1025,8 @@
       "higher": "{{name}} has the same or a higher rank than you – you cannot change this rank.",
       "noRight": "Only people with the right “Give ranks” may give ranks (like /rank in the game). VIP is given by the owner only.",
       "noRoles": "Ranks can be given by people who may also see the roles in the panel.",
-      "help": "You can only give ranks below your own. Only the owner gives Owner and Admin. Applies in the game right away."
+      "help": "You can only give ranks below your own. Only the owner gives Owner, Admin and VIP. Applies in the game right away.",
+      "locked": "You may not give this rank – it is as high as yours or higher (only the owner gives Owner, Admin and VIP)."
     },
     "act": {
       "title": "Punish",
@@ -1064,18 +1077,21 @@
   "punish": {
     "kinds": {
       "ban": "Ban",
-      "mute": "Mute",
+      "mute": "Chat mute",
+      "voice": "Voice mute",
       "warn": "Warning",
       "kick": "Kick",
       "jail": "Jail"
     },
     "verbs": {
       "ban": "Ban",
-      "mute": "Mute",
+      "mute": "Mute in chat",
+      "voice": "Mute in voice chat",
       "warn": "Warn",
       "kick": "Kick",
       "jail": "Jail"
     },
+    "noRight": "Your role lacks the right for this – just like the command in the game.",
     "title": "New punishment",
     "titleFor": "Punish {{name}}",
     "text": "Applies across the whole network right away – the person sees the reason, the team gets a note.",
@@ -1112,6 +1128,8 @@
       "banForever": "{{name}} is removed from the network right away and cannot join any more – until someone lifts the ban.",
       "mute": "{{name}} cannot write in chat for {{duration}}.",
       "muteForever": "{{name}} cannot write in chat any more – until someone lifts the mute.",
+      "voice": "{{name}} cannot speak in voice chat for {{duration}} – on every server. Writing in chat still works. Discord: muted in voice channels too if the account is linked.",
+      "voiceForever": "{{name}} cannot speak in voice chat until someone lifts it – on every server. Writing in chat still works. Discord: muted in voice channels too if the account is linked.",
       "warn": "{{name}} sees the warning in the game (if online). It stays in the history.",
       "kick": "{{name}} is removed from the network right away, but can join again straight away.",
       "jail": "{{name}} goes to the lobby jail cell for {{duration}}: no game modes, can only write to the team. Discord: jail role.",
@@ -1121,19 +1139,22 @@
     "cancel": "Cancel",
     "done": {
       "ban": "{{name}} is banned now.",
-      "mute": "{{name}} is muted now.",
+      "mute": "{{name}} is muted in chat now.",
+      "voice": "{{name}} is muted in voice chat now.",
       "warn": "{{name}} has been warned.",
       "kick": "{{name}} has been kicked.",
       "jail": "{{name}} is in jail now."
     },
     "lifted": {
       "ban": "{{name}}'s ban is lifted.",
-      "mute": "{{name}} may write again."
+      "mute": "{{name}} may write again.",
+      "voice": "{{name}} may speak in voice chat again.",
+      "jail": "{{name}} is free again."
     }
   },
   "punishments": {
     "title": "Punishments",
-    "text": "All punishments in the network – bans, mutes, warnings and kicks. You can lift active ones here.",
+    "text": "All punishments in the network – bans, chat and voice chat mutes, jail, warnings and kicks. You can lift active ones here.",
     "new": "New punishment",
     "search": "Search by player …",
     "searchLabel": "Search punishments by player name",
@@ -1178,15 +1199,15 @@
     },
     "punishments": {
       "title": "Punishments",
-      "text": "Warn, mute, ban or kick – and lift it all again. Applies across the whole network right away."
+      "text": "Warn, mute in chat or voice chat, jail, ban or kick – and lift it all again. Applies across the whole network and on Discord right away."
     },
     "roles": {
       "title": "Roles",
-      "text": "Symbol, colour and rights of every role – in the game, the panel and Discord. A change applies everywhere at once."
+      "text": "Symbol, colour and rights of every role – in the game on every server (up to the admin commands of the game modes), in the panel and on Discord. A change applies everywhere at once."
     },
     "discord": {
       "title": "Discord",
-      "text": "Connect our own Discord bot and let it set up the Discord server step by step."
+      "text": "Connect your own Discord bot (enter its token right here), let it set up your Discord server step by step and change the server picture, banner and the bot's profile under “Look”."
     },
     "servers": {
       "title": "Servers",
@@ -1195,6 +1216,10 @@
     "team": {
       "title": "Team",
       "text": "Create panel accounts here, give everyone a role and help out when someone forgot their password. Your own account is at the bottom left, next to your name."
+    },
+    "applications": {
+      "title": "Applications",
+      "text": "Applications for the team (moderator, supporter, builder …) and for MorniCraft – from the website and from Discord. Read the answers, give a thumbs up or down, write notes for the team and accept or reject. Which positions are open, you set under Settings → Team applications."
     }
   },
   "newsAdmin": {
@@ -1257,16 +1282,19 @@
   },
   "discordAdmin": {
     "title": "Discord",
-    "text": "MoinMorni has its own Discord bot. Here you connect it and let it set up your Discord server – step by step.",
+    "text": "MoinMorni has its own Discord bot. Connect it here, let it set up your Discord server and choose how everything looks.",
     "refresh": "Check again",
+    "jump": "Jump to",
+    "jumpSetup": "Setup",
+    "optional": "Optional",
     "overall": {
       "missing": {
         "pill": "No bot connected",
-        "text": "No bot token has been added yet. Start with step 1."
+        "text": "There is no bot token yet. Start with step 1."
       },
       "tokenInvalid": {
         "pill": "Token is wrong",
-        "text": "Discord doesn't know the token. Create a new one in the developer portal and add it (step 1)."
+        "text": "Discord doesn't know the saved token. Create a new one in the developer portal and enter it in step 1."
       },
       "connecting": {
         "pill": "Connecting …",
@@ -1276,108 +1304,279 @@
         "pill": "Online, no server",
         "text": "The bot is online but not on a Discord server yet. Create one and invite the bot (steps 3 and 4)."
       },
+      "running": {
+        "pill": "Setting up …",
+        "text": "The bot is setting up “{{guild}}” right now. Step 5 below shows how far it got."
+      },
       "intent": {
         "pill": "A switch is missing",
-        "text": "The bot is on “{{guild}}”, but the “Server Members Intent” switch is off. Without it, it can't welcome new members (step 2)."
+        "text": "The bot is on “{{guild}}”, but “Server Members Intent” is off. Without it, it can't welcome new members (step 2)."
       },
       "ready": {
         "pill": "Ready to set up",
-        "text": "The bot is on “{{guild}}” and ready. One click in step 5 creates roles and channels."
+        "text": "The bot is on “{{guild}}” and ready. One click in step 5 creates roles, channels and messages."
       },
       "done": {
         "pill": "All set up",
-        "text": "The bot runs on “{{guild}}”: status, ranks, punishments and tickets are connected."
+        "text": "The bot runs on “{{guild}}”: status, ranks, punishments, tickets and applications are connected."
       }
     },
     "check": {
-      "token": "Bot token added",
+      "token": "Bot token saved",
       "tokenInvalid": "The token is wrong – please create a new one in the developer portal.",
+      "botName": "Bot: {{name}}",
       "online": "Connected to Discord",
       "intent": "“Server Members Intent” on",
       "guild": "On a Discord server",
       "noGuild": "Not on a server yet",
-      "setup": "Server set up"
+      "setup": "Server set up",
+      "login": "“Sign in with Discord” on the website",
+      "loginOptional": "Optional – for applications on the website (step 6)"
     },
     "stepN": "Step {{n}}:",
     "stepDone": "Done",
     "steps": {
-      "title": "How to set up the Discord",
-      "text": "Go through it once – then the bot does the rest on its own. This page checks every 10 seconds what already worked.",
+      "title": "How to set up Discord",
+      "text": "Go through it once – after that, the bot does the rest by itself. This page checks every 10 seconds what already worked.",
       "s1": {
-        "title": "Create the bot in the Discord developer portal",
+        "title": "Create the bot and enter its token",
         "a": "Open the",
         "portal": "Discord developer portal",
-        "b": "Click “New Application” and name it “MoinMorni”.",
-        "c": "On the left, click “Bot”, then “Reset Token”, and copy the token.",
-        "d": "Enter it during installation (the script asks for it) – or add it to the .env on the server and restart MoinMorni:",
-        "secret": "The token is like a password: never post it in a chat or share it."
+        "b": "Click “New Application” and call it “MoinMorni”.",
+        "c": "On the left, “Bot”, then “Reset Token” and copy the token.",
+        "d": "Paste it here. MoinMorni asks Discord right away whether it's right and stores it encrypted."
       },
       "s2": {
-        "title": "Turn on “Server Members Intent”",
-        "text": "On the same page (“Bot”), under “Privileged Gateway Intents”, turn on “Server Members Intent” and save. This lets the bot welcome new members and give out ranks."
+        "title": "Two switches in the developer portal",
+        "intent": "Under “Bot” → “Privileged Gateway Intents”, turn on “Server Members Intent”.",
+        "public": "Also under “Bot”, turn off “Public Bot” – then only you can invite the bot.",
+        "why": "With the first switch the bot welcomes new members and gives out ranks. Then click “Save Changes” at the bottom."
       },
       "s3": {
         "title": "Create an empty Discord server",
-        "text": "In Discord, click “+” on the left → “Create My Own”. Discord no longer lets bots create servers themselves – so you do this once by hand. Leave it empty, the bot does the rest."
+        "text": "In Discord, click “+” on the left → “Create My Own”. Discord no longer lets bots create servers – so you do this once by hand. Leave it empty, the bot does the rest."
       },
       "s4": {
         "title": "Invite the bot",
-        "text": "Click the button, choose your new server and confirm. The bot gets administrator rights so it can create roles and channels.",
+        "text": "Click the button, pick your new server and confirm.",
         "done": "The bot is on “{{guild}}”.",
-        "button": "Invite the bot",
-        "noLink": "The button appears as soon as the bot token is right (step 1)."
+        "rights": "The bot only asks for these rights:",
+        "noAdmin": "No administrator right – only what it needs for roles, channels, the server picture, punishments and tickets.",
+        "button": "Bring the bot to your Discord server",
+        "noLink": "The button shows up as soon as the bot token is right (step 1)."
       },
       "s5": {
         "title": "Set up the server",
-        "text": "One click – the bot creates roles, channels and commands. This takes about half a minute.",
-        "again": "Already set up. “Sync again” only adds what's missing (e.g. new roles or voice channels) – everything else stays.",
+        "text": "One click – the bot creates roles, channels, messages and commands and sets the server picture. You see every step here.",
+        "again": "Already set up. “Sync again” brings everything up to date. Whatever you renamed or moved in Discord stays that way – nothing is created twice or deleted.",
         "button": "Set up the server",
         "buttonAgain": "Sync again",
-        "busy": "Setting up …"
+        "busy": "Setting up …",
+        "started": "The bot is getting started …",
+        "roleTip": "Tip: the bot's role (it's named like the bot) must sit above every rank it should give out – in Discord under Server Settings → Roles."
+      },
+      "s6": {
+        "title": "Sign in with Discord (website)",
+        "text": "People who apply on the website sign in with Discord. For that, MoinMorni needs your application's “Client Secret”.",
+        "a": "Open your application in the",
+        "b": "On the left, “OAuth2”; under “Redirects”, “Add Redirect”, paste this address and “Save Changes”:",
+        "c": "On the same page, next to “Client Secret”, click “Reset Secret”, copy it and paste it here:"
       }
     },
     "result": {
-      "title": "Discord server set up!",
-      "counts": "{{roles}} roles and {{channels}} channels and categories are there.",
-      "communityOk": "Community mode is on (rules and updates channel).",
-      "communityFailed": "The bot couldn't turn on community mode – you can do it in Discord under Server Settings → Community. Everything else works."
+      "communityFailed": "The bot couldn't turn on community mode – you can do that in Discord under Server Settings → Community. Everything else works."
     },
-    "errors": {
-      "discord_no_guild": "The bot isn't on a Discord server yet. Invite it first (step 4).",
-      "discord_not_configured": "No bot token has been added yet. Start with step 1."
+    "perm": {
+      "createInvite": "Create invites",
+      "banMembers": "Ban members",
+      "administrator": "Administrator",
+      "manageChannels": "Manage channels",
+      "manageGuild": "Manage server (server picture)",
+      "addReactions": "Add reactions",
+      "viewChannel": "View channels",
+      "sendMessages": "Send messages",
+      "manageMessages": "Manage messages",
+      "embedLinks": "Embed links",
+      "attachFiles": "Attach files",
+      "readHistory": "Read message history",
+      "connect": "Join voice channels",
+      "speak": "Speak",
+      "manageRoles": "Manage roles",
+      "manageThreads": "Manage threads",
+      "createPrivateThreads": "Create private threads",
+      "sendInThreads": "Send messages in threads",
+      "moderateMembers": "Time out members"
     },
     "creates": {
       "title": "What the bot creates",
-      "text": "Roles and channels with the same name are taken over – nothing is created twice.",
+      "text": "Everything with a symbol and in your colours. It takes over what already exists – nothing is created twice, and it leaves alone whatever it didn't create itself.",
       "roles": {
         "title": "Roles",
-        "text": "All ranks from your role template with symbol, colour and rights – plus “Verbunden” (linked), “Stumm” (muted) and “Gefängnis” (jail)."
+        "text": "All ranks from your role template in order and colour, with the symbol in the name (♛ Owner, ⚔ Moderator …) – plus “🤖 Bot”, “✔ Verbunden”, “🔇 Stumm” and “⛓ Gefängnis”."
       },
       "info": {
-        "title": "Info",
-        "text": "Welcome, rules, announcements (your news ends up here) and a status channel showing who's playing."
+        "title": "📢 Info",
+        "text": "Welcome with picture and address, rules from the panel, announcements, news from the website, a status channel with one live message per mode and the game modes with a link."
       },
       "community": {
-        "title": "Community",
-        "text": "General chat, pictures, looking-for-group and suggestions."
+        "title": "💬 Community",
+        "text": "Chat, pictures & clips and suggestions."
       },
       "help": {
-        "title": "Help",
-        "text": "A channel with a ticket button: a ticket is only seen by the person and the team."
+        "title": "🎫 Help",
+        "text": "Help with /hilfe and buttons, tickets (a button opens a private conversation just for you and the team) and applications for the team and for MorniCraft."
       },
       "voice": {
-        "title": "Voice channels",
-        "text": "The same channels as in the game – reachable from every mode."
+        "title": "🔊 Voice",
+        "text": "The same voice channels as in the game – reachable from every mode."
       },
       "team": {
-        "title": "Team, builders and VIP",
-        "text": "Own areas only the matching ranks can see – with a team log and applications."
+        "title": "🛡 Team",
+        "text": "Team chat, team log, application inbox (with accept/reject) and punishment log – team only. Plus areas for the build team and VIPs."
       },
       "extras": {
-        "title": "Commands and community mode",
-        "text": "/verbinden, /hilfe and /status, community mode with a rules channel and a jail channel for punishments."
+        "title": "⛓ Jail and commands",
+        "text": "Whoever is in jail only sees the jail channel. Plus /verbinden, /hilfe, /status and /bewerben."
       },
-      "safe": "Tip: you can press “Set up the server” again at any time, e.g. after adding new roles."
+      "look": {
+        "title": "🎨 Look",
+        "text": "The MoinMorni logo as server picture and as the bot's avatar – you swap both under “Look”."
+      },
+      "safe": "Tip: you can press “Set up the server” again at any time, e.g. after new roles or voice channels."
+    }
+  },
+  "discordAccess": {
+    "savedBot": "Saved – connected as “{{name}}”.",
+    "fromEnv": "from the .env",
+    "set": "set",
+    "notSet": "not set yet",
+    "connectedAs": "Connected as “{{name}}”",
+    "envHint": "This value is in the .env on the server and applies. You can only change or remove it there (then restart MoinMorni).",
+    "ownerOnly": "Only the owner can change this.",
+    "hide": "Hide",
+    "show": "Show",
+    "checking": "Checking with Discord …",
+    "save": "Check and save",
+    "cancel": "Cancel",
+    "privacy": "Stored encrypted and never shown again – not even to you.",
+    "replace": "Replace",
+    "remove": "Remove",
+    "token": {
+      "label": "Bot token",
+      "help": "Paste the token from the developer portal (Bot → Reset Token) here:",
+      "placeholder": "Paste the bot token",
+      "saved": "Bot token saved.",
+      "removed": "Bot token removed – the bot is offline now.",
+      "removeTitle": "Remove the bot token?",
+      "removeText": "The bot goes offline until you enter a new token. Roles and channels in Discord stay as they are."
+    },
+    "clientSecret": {
+      "label": "Client secret",
+      "help": "Paste the client secret (OAuth2 → Reset Secret) here:",
+      "placeholder": "Paste the client secret",
+      "saved": "Client secret saved – “Sign in with Discord” is on.",
+      "removed": "Client secret removed – “Sign in with Discord” is off.",
+      "removeTitle": "Remove the client secret?",
+      "removeText": "Then nobody can sign in with Discord on the website any more – applications only work through the Discord bot."
+    }
+  },
+  "discordSetup": {
+    "step": {
+      "check": "Check rights",
+      "roles": "Roles",
+      "channels": "Categories and channels",
+      "messages": "Messages (welcome, rules, buttons)",
+      "commands": "Commands (/hilfe, /bewerben …)",
+      "community": "Community mode",
+      "icon": "Server picture"
+    },
+    "count": "{{done}} / {{total}}",
+    "state": {
+      "waiting": "waiting",
+      "running": "running",
+      "done": "done",
+      "skipped": "skipped",
+      "failed": "failed"
+    },
+    "waitTitle": "Discord slows down for a moment",
+    "waitText": "Discord only allows a certain number of changes per minute. It goes on by itself in {{seconds}} s.",
+    "failedTitle": "The setup didn't work",
+    "error": {
+      "discord_missing_permissions": "The bot is missing rights. Invite it again with the button in step 4 (Discord then asks for the missing ones) and start the setup again.",
+      "discord_no_guild": "The bot isn't on a Discord server any more. Invite it first (step 4).",
+      "discord_not_configured": "There's no bot token any more (step 1).",
+      "discord_unreachable": "Discord can't be reached right now. Try again in a moment – what's already there stays.",
+      "discord_failed": "Discord turned down a change. Try again – what's already there stays.",
+      "other": "Something went wrong. Try again – what's already there stays."
+    },
+    "missing": "Missing: {{rights}}",
+    "doneTitle": "Done – your Discord is set up!",
+    "doneText": "{{roles}} roles, {{channels}} channels and categories and {{messages}} messages are there – {{created}} of them new.",
+    "kept": "Left as they are because you changed them in Discord: {{names}}",
+    "iconKept": "Your own server picture stays. You can set the MoinMorni logo under “Look” if you like.",
+    "iconFailed": "The server picture couldn't be set – you can also do that under “Look”.",
+    "ownerAdminTitle": "Owner role: one manual step",
+    "ownerAdminText": "A bot may not give out the “Administrator” right. Give it to the owner role yourself once: Server Settings → Roles → Owner → Permissions → Administrator.",
+    "someMissingTitle": "A few rights are missing",
+    "someMissing": "The important parts are there, but the bot is missing: {{rights}}. Invite it again via step 4 and the next sync gets everything."
+  },
+  "discordLook": {
+    "title": "Look",
+    "text": "How your Discord looks: server picture, banner and the bot's profile. At first, the MoinMorni logo is everywhere.",
+    "notReady": "As soon as the bot is connected (step 1), you change the server picture, banner and the bot's profile here.",
+    "upload": "Upload picture",
+    "useLogo": "MoinMorni logo",
+    "noGuild": "The bot isn't on a Discord server yet (step 4).",
+    "noBot": "The bot isn't connected right now.",
+    "saved": {
+      "icon": "Server picture changed.",
+      "banner": "Banner changed.",
+      "bot": "Bot profile changed."
+    },
+    "icon": {
+      "title": "Server picture",
+      "text": "The round picture in the server list. PNG, JPG or GIF up to 10 MB – you crop it right here.",
+      "preview": "Server picture of {{name}}",
+      "isLogo": "MoinMorni logo",
+      "animatedOk": "Moving GIFs work on your server (boost level 1).",
+      "animatedNo": "Moving GIFs only work from boost level 1 – otherwise a GIF becomes a still picture."
+    },
+    "banner": {
+      "title": "Server banner",
+      "text": "The wide picture at the top of the channel list (16:9).",
+      "preview": "Server banner",
+      "empty": "No banner yet",
+      "locked": "Banners need boost level {{need}} – your server has level {{tier}}.",
+      "remove": "Remove banner"
+    },
+    "bot": {
+      "title": "Bot profile",
+      "text": "The avatar and name the bot writes with on Discord.",
+      "preview": "Avatar of {{name}}",
+      "name": "Bot name",
+      "saveName": "Save name",
+      "limit": "Discord only allows a few changes to the bot per hour (the name only twice). If it says “too often”, just try again later."
+    },
+    "crop": {
+      "title": {
+        "square": "Crop picture",
+        "banner": "Crop banner"
+      },
+      "text": "Move it with the mouse, your finger or the arrow keys; bigger and smaller with the slider.",
+      "wrongType": "That only works with PNG, JPG or GIF pictures.",
+      "tooBig": "The picture is too big – up to 10 MB works.",
+      "unreadable": "The picture couldn't be opened. Try another one.",
+      "movingTitle": "Moving GIF",
+      "movingOk": "Your server may show moving pictures. Take it unchanged and it keeps moving – cropping turns it into a still picture.",
+      "movingNo": {
+        "square": "Moving server pictures need boost level 1 – the GIF is saved as a still picture.",
+        "banner": "Moving banners need boost level 3 – the GIF is saved as a still picture."
+      },
+      "area": "Picture area",
+      "zoom": "Size",
+      "hint": "Drag to move",
+      "keepMoving": "Take unchanged (moving)",
+      "use": "Use"
     }
   },
   "teamAdmin": {
@@ -1652,9 +1851,86 @@
     "noteShown": "Note: {{note}}",
     "noAccess": "Applications and the whitelist are for roles with the panel area “Players”. Ask the owner if you need them."
   },
+  "applications": {
+    "title": "Applications",
+    "text": "Who wants to join the team or play on MorniCraft. The answers, the team's thumbs and notes – and your decision.",
+    "status": {
+      "pending": "Open",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "all": "All"
+    },
+    "via": {
+      "website": "via the website",
+      "discord": "via Discord"
+    },
+    "lang": {
+      "de": "German",
+      "en": "English"
+    },
+    "filterPosition": "Filter by position",
+    "filterStatus": "Filter by state",
+    "allPositions": "All positions",
+    "unknownPosition": "Position",
+    "empty": {
+      "pending": "No open applications – all done.",
+      "accepted": "No accepted applications yet.",
+      "rejected": "No rejected applications.",
+      "all": "No applications yet."
+    },
+    "stillOpen": "applications are still open.",
+    "openPositions": "We're looking for: {{list}}",
+    "noOpenPositions": "No team position is open right now.",
+    "openPositionsHint": "Open positions show on the website under Team and in Discord with “/bewerben”.",
+    "positionsSettings": "Set up positions",
+    "publicPage": "Page “Team → Apply”",
+    "mornicraftPage": "MorniCraft application",
+    "notesCount_one": "{{count}} note",
+    "notesCount_other": "{{count}} notes",
+    "votesLabel": "{{up}} for, {{down}} against",
+    "back": "All applications",
+    "discord": "Discord: {{name}}",
+    "noDiscord": "without Discord",
+    "answers": "Answers",
+    "noAnswers": "No answers.",
+    "votes": "The team's thumbs",
+    "votesText": "What does the team think? Only the team sees the thumbs – the applicant doesn't.",
+    "voteUp": "For",
+    "voteDown": "Against",
+    "notes": "Notes for the team",
+    "notesText": "Team only – the applicant never sees them.",
+    "notePlaceholder": "Write a note …",
+    "noteSave": "Save note",
+    "decision": "Decision",
+    "messageLabel": "Message to {{name}}",
+    "messagePlaceholder": "e.g. “Welcome to the team! Drop by #team-chat.”",
+    "messageHelp": "Optional. Arrives as a Discord message, in the game and on the website.",
+    "account": "Create a team account for the panel",
+    "accountText": "With a start password and the role {{role}} – on first sign-in the person sets their own password.",
+    "username": "Username",
+    "email": "Email (optional)",
+    "accept": "Accept",
+    "reject": "Reject",
+    "acceptTitle": "Accept {{name}}?",
+    "rejectTitle": "Reject {{name}}?",
+    "acceptText": "{{name}} gets the rank {{role}} – in the game, on Discord and everywhere in the network – plus your message on Discord and in the game.",
+    "acceptTextMornicraft": "{{name}} goes on the MorniCraft whitelist and gets your message on Discord and in the game.",
+    "rejectText": "{{name}} gets your message on Discord. A new application only works after the waiting time.",
+    "accountConfirm": "The panel account “{{username}}” is created as well. You see the start password right after.",
+    "acceptedToast": "{{name}} is accepted.",
+    "rejectedToast": "{{name}} is rejected.",
+    "acceptedBy": "Accepted by {{name}} {{time}}",
+    "rejectedBy": "Rejected by {{name}} {{time}}",
+    "message": "Message: “{{note}}”",
+    "noRight": "Only someone who may give out the rank {{role}} decides on this position. You can give thumbs and write notes.",
+    "noRightMornicraft": "You don't decide on this one. You can give thumbs and write notes.",
+    "settingsTitle": "Where applications arrive",
+    "settingsText": "Applications come in through the website (Team → Apply) and Discord (/bewerben, button in the “Bewerbungen” channel). You read and decide them in the panel under “Applications” and on Discord in the application inbox. VIP and owner are never given through an application.",
+    "toList": "To the applications"
+  },
   "whitelistCard": {
     "title": "Whitelist",
-    "text": "Who may join MorniCraft. Accepted applications land here by themselves; you can also add names directly. The team always gets in.",
+    "text": "Who may join MorniCraft. The team always gets in and shows up here by itself: everyone whose rank has “Always gets in”. Accepted applications land here by themselves too; you can also add names directly.",
     "count_one": "{{count}} player",
     "count_other": "{{count}} players",
     "addLabel": "Add a name",
@@ -1674,7 +1950,14 @@
     "remove": "Remove",
     "empty": "Nobody on the whitelist yet. Accept an application or add a name.",
     "search": "Search the whitelist",
-    "noMatch": "No name matches the search."
+    "noMatch": "No name matches the search.",
+    "teamTitle": "Team – always gets in",
+    "ownTitle": "Added",
+    "team": "Belongs to the team",
+    "teamHelp": "Gets in through the rank, no entry needed. Who belongs is set under “Roles” (right “Always gets in”).",
+    "alsoListed": "also added by hand",
+    "notSeen": "not in the network yet – name of the panel account",
+    "alreadyTeam": "{{name}} belongs to the team and gets in anyway."
   },
   "buildCard": {
     "title": "Saved builds",
@@ -1785,6 +2068,63 @@
     },
     "fair": "Every application is read by real people from the team. Applying is free – a spot cannot be bought."
   },
+  "teamApply": {
+    "eyebrow": "Join in",
+    "title": "Apply for the team",
+    "text": "Want to help shape MoinMorni – as a moderator, supporter, builder or media? Sign in with Discord, pick a position and tell us about yourself.",
+    "search": "We're looking for",
+    "signIn": {
+      "title": "Sign in with Discord",
+      "text": "That way we know whom to answer: our reply comes as a Discord message. Then you see the open positions and the form."
+    },
+    "noLogin": "Applications currently go through our Discord bot: type there",
+    "closed": {
+      "title": "We're not looking right now",
+      "text": "No team position is open at the moment. Come back later – open positions also show on the team page and on Discord."
+    },
+    "pending": {
+      "title": "Your application is with the team",
+      "text": "Thanks! The team is looking at it. You get the answer as a Discord message – and here on this page."
+    },
+    "cooldown": {
+      "title": "Just a little wait",
+      "text": "After a rejection you can apply again from {{date}}. Until then: have fun on the network!"
+    },
+    "link": {
+      "title": "Link your Minecraft account first",
+      "text": "To apply for the team we need your Minecraft account – linked to your Discord. Here's how:",
+      "step1": "Type in the game:",
+      "step2": "Enter the code on Discord:",
+      "step3": "Reload this page – and off you go."
+    },
+    "form": {
+      "title": "Your application",
+      "position": "Which position?",
+      "linked": "Your Minecraft account: {{name}} (linked to Discord).",
+      "nameHelp": "The name you play with on our network. Best link your account in the game with /discord.",
+      "answerProblem": "Please answer this question.",
+      "notReady": "Something is still missing – check the fields marked in red.",
+      "who": "Sent as {{name}} (Discord). The team sees your Discord name, your Minecraft name and your answers."
+    },
+    "mine": {
+      "title": "Your applications",
+      "pending": "{{position}}: waiting for the team",
+      "accepted": "{{position}}: accepted – welcome to the team!",
+      "rejected": "{{position}}: not this time",
+      "sent": "Sent on {{date}} as {{name}}",
+      "note": "Message from the team: “{{note}}”"
+    },
+    "how": {
+      "step1": "Sign in and pick a position",
+      "step1Text": "Sign in with Discord, pick a position, answer honestly – there are no wrong answers.",
+      "step2": "The team reads along",
+      "step2Text": "The team looks at your application. That usually takes a few days.",
+      "step3": "Answer on Discord",
+      "step3Text": "If it's a yes, you get your rank in the game and on Discord right away. After a rejection you can apply again after {{days}} days."
+    },
+    "meetTeam": "Meet the team",
+    "fair": "VIP and owner are never given through an application – and none of it can be bought. We decide by what you write and how you play on the network."
+  },
   "errors": {
     "generic": "Something went wrong. Please try again in a moment.",
     "network": "No connection to the server. Check your internet and try again.",
@@ -1813,6 +2153,7 @@
     "player_unknown": "MoinMorni does not know this player. They must have been on the network at least once – check the spelling too.",
     "player_higher": "This person has the same or a higher rank than you – you may not do that.",
     "player_offline": "Kicking only works while the person is online.",
+    "punish_no_right": "Your role may not hand out or lift this punishment – it lacks the right, just like the command in the game (e.g. “Mute in voice chat” for /voicemute).",
     "punishment_none": "There is nothing to lift right now – maybe the punishment has already run out.",
     "role_unknown": "This rank does not exist (any more). Reload the page.",
     "role_too_high": "You may not give this rank – it is as high as yours or higher (VIP is given by the owner only).",
@@ -1823,7 +2164,7 @@
     "role_owner_missing": "The owner role has to stay.",
     "news_unknown": "This post doesn't exist (anymore). Reload the page.",
     "discord_no_guild": "The bot isn't on a Discord server yet. Invite it first (step 4).",
-    "discord_not_configured": "No bot token has been added yet. Start with step 1.",
+    "discord_not_configured": "There's no bot token yet. Start with step 1.",
     "username_taken": "This username is already taken. Please pick another one.",
     "email_taken": "This email address already belongs to another account.",
     "team_higher": "That's not possible: the role is as high as yours or higher. Only the owner may do that.",
@@ -1841,7 +2182,37 @@
     "applications_closed": "We are not taking applications right now. Come back later.",
     "application_already_listed": "This name is already on the whitelist – you can start playing right away!",
     "application_pending": "There is already an application from you or for this Minecraft name. We will get back to you!",
-    "apply_login_required": "Your sign-in has expired. Please sign in with Discord again – the page remembers your answers."
+    "apply_login_required": "Your sign-in has expired. Please sign in with Discord again – the page remembers your answers.",
+    "application_no_right": "You may not give out this position – only someone who may give out the rank (and never above their own).",
+    "application_player_unknown": "The network doesn't know this Minecraft name yet. The person has to visit MoinMorni once, then it works.",
+    "application_rank_not_higher": "The person already has this or a higher rank – accepting would demote them.",
+    "discord_animated_needs_boost": "Moving pictures need a boost – take a still picture (PNG or JPG).",
+    "discord_banner_needs_boost": "Banners need boost level 2.",
+    "discord_credential_from_env": "This value is in the .env on the server – you can only change it there.",
+    "discord_failed": "Discord turned that down. Try again in a moment.",
+    "discord_image_invalid": "Discord didn't accept the picture. Use a PNG, JPG or GIF.",
+    "discord_image_too_big": "The picture is too big for Discord – up to 10 MB works.",
+    "discord_missing_permissions": "The bot is missing a right for that (e.g. “Manage server”). Invite it again under Discord → step 4.",
+    "discord_name_invalid": "That name doesn't work: 2 to 32 characters, without @ # : and `.",
+    "discord_owner_only": "Only the owner changes the bot token and client secret.",
+    "discord_rate_limited": "Discord saw that too often in a short time. Wait a few minutes, then try again.",
+    "discord_secret_format": "That doesn't look like a client secret. Copy it again in the developer portal (OAuth2 → Reset Secret).",
+    "discord_secret_invalid": "This client secret doesn't belong to this bot. Copy it from the same application in the developer portal.",
+    "discord_token_first": "Enter the bot token first (step 1).",
+    "discord_token_format": "That doesn't look like a bot token. Copy it again in the developer portal (Bot → Reset Token).",
+    "discord_token_invalid": "Discord doesn't know this token. Create a new one in the developer portal (Bot → Reset Token).",
+    "discord_token_not_bot": "That's not a bot token. You find the right one in the developer portal under “Bot”.",
+    "discord_unreachable": "Discord can't be reached right now. Try again in a moment.",
+    "note_invalid": "The note is empty or too long.",
+    "setting_owner_only": "Only the owner can change this.",
+    "team_account_no_right": "You may not create a panel account with this role. Accept the application without an account.",
+    "team_apply_answers": "Please answer every question (each up to 1000 characters).",
+    "team_apply_closed": "This position isn't open right now. Reload the page.",
+    "team_apply_cooldown": "After a rejection, a new application only works after the waiting time.",
+    "team_apply_link_required": "Link your Minecraft account to Discord first (/discord in the game).",
+    "team_apply_minecraft_name": "That's not a valid Minecraft name.",
+    "team_apply_pending": "Your application is already with the team – you'll hear from us soon.",
+    "team_position_unknown": "This position doesn't exist (any more). Reload the page."
   },
   "modeSettings": {
     "title": "Applies after the mode’s next restart",

@@ -2,7 +2,8 @@ import { Plus, X } from 'lucide-react';
 import { useState, type KeyboardEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { onStep, type SettingDef } from '@moinmorni/shared';
-import { Button, Input, NativeSelect, Switch, Textarea } from '~/components/ui';
+import { Select } from '~/components/select';
+import { Button, Input, Switch, Textarea } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { usePick } from '~/lib/text';
@@ -126,13 +127,13 @@ function TextField({ def, value, onChange }: FieldProps<'text'>): ReactElement {
 function SelectField({ def, value, onChange }: FieldProps<'select'>): ReactElement {
   const pick = usePick();
   return (
-    <NativeSelect id={fieldId(def.key)} value={String(value)} onChange={(e) => onChange(e.target.value)}>
+    <Select id={fieldId(def.key)} value={String(value)} onChange={(e) => onChange(e.target.value)}>
       {def.options.map((o) => (
         <option key={o.value} value={o.value}>
           {pick(o.label)}
         </option>
       ))}
-    </NativeSelect>
+    </Select>
   );
 }
 

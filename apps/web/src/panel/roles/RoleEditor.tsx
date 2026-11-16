@@ -24,8 +24,8 @@ import { inOrder, NAME_MAX, problemsOf, SYMBOL_IDEAS, SYMBOL_MAX, validColour } 
 const CONFIRM_MS = 4000;
 const PICKER_FALLBACK = '#000000';
 const HEX_LENGTH = 7;
-/** Rights that hand over everything: marked with a small warning. */
-const MIGHTY: readonly string[] = ['admin', 'administrator', 'roles', 'settings'];
+/** Rights that hand over a lot (everything, or the admin commands of every game mode): marked with a small warning. */
+const MIGHTY: readonly string[] = ['admin', 'modes-admin', 'administrator', 'roles', 'settings'];
 
 type RightsKey = 'panel' | 'game' | 'discord';
 

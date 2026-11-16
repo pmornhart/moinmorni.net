@@ -26,7 +26,7 @@ const UMLAUTS: readonly (readonly [string, string])[] = [
 ];
 /** Colours for new roles, one after the other. */
 const NEW_COLOURS = ['#55ffff', '#ffaa00', '#aa55ff', '#5555ff', '#ff55ff', '#00aa00'] as const;
-export const SYMBOL_IDEAS = ['♛', '✦', '⚔', '⚒', '▶', '★', '✿', '☘', '⚡', '❤'] as const;
+export const SYMBOL_IDEAS = ['♛', '✦', '⚔', '✚', '⚒', '▶', '★', '✿', '☘', '⚡', '❤'] as const;
 
 export function validColour(colour: string): boolean {
   return HEX_COLOUR.test(colour);

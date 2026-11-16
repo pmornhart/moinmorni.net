@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Gamepad2, RotateCcw, Save } from 'lucide-react';
+import { Gamepad2, Lock, RotateCcw, Save } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router';
@@ -12,7 +12,7 @@ import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
 import { usePick } from '~/lib/text';
 import { areaIcon, PageHead } from '../PanelShell';
-import { SETTINGS_KEY, useSettingsQuery, type SettingsEntry } from '../session';
+import { SETTINGS_KEY, usePanel, useSettingsQuery, type SettingsEntry } from '../session';
 import { AreaExtras } from './extras/AreaExtras';
 import { fieldId, SettingInput, valueValid } from './fields';
 import { SettingsSearch } from './SettingsSearch';
@@ -21,6 +21,11 @@ const FLASH_MS = 3200;
 /** After saving a game mode's settings: ask again once its server has answered. */
 const MODE_STATE_REFRESH_MS = 2500;
 const SETTING_ANCHOR = '#setting-';
+/** Prefix of a section card's id (jump target of the section index). */
+const SECTION_ANCHOR = 'section-';
+/** From this many sections an area gets a row of jump links on top (game modes with long lists). */
+const SECTION_INDEX_FROM = 6;
+const OWNER = 'owner';
 
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
@@ -46,8 +51,15 @@ function SettingRow({
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
+  const me = usePanel();
   const layout = layoutOf(def);
-  const input = <SettingInput def={def} value={value} onChange={onChange} />;
+  // Some settings only the owner changes (e.g. opening the admin position) – the server checks it as well.
+  const locked = Boolean(def.ownerOnly) && me.role.id !== OWNER;
+  const input = (
+    <fieldset disabled={locked} className="m-0 min-w-0 border-0 p-0">
+      <SettingInput def={def} value={value} onChange={onChange} />
+    </fieldset>
+  );
   return (
     <div
       id={`setting-${def.key}`}
@@ -79,6 +91,12 @@ function SettingRow({
             <Kbd>{def.command}</Kbd>
           </p>
         ) : null}
+        {def.ownerOnly ? (
+          <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <Lock className="size-3.5" aria-hidden />
+            {t(locked ? 'settings.ownerOnlyLocked' : 'settings.ownerOnly')}
+          </p>
+        ) : null}
       </div>
       {layout === 'inline' ? null : <div className="min-w-0">{input}</div>}
     </div>
@@ -98,7 +116,10 @@ function SectionCard({
 }): ReactElement {
   const pick = usePick();
   return (
-    <Card className="grid gap-1 px-5 pt-5 pb-1 sm:px-7 sm:pt-6">
+    <Card
+      id={`${SECTION_ANCHOR}${section.id}`}
+      className="grid scroll-mt-28 gap-1 px-5 pt-5 pb-1 sm:px-7 sm:pt-6"
+    >
       <div className="grid gap-1 border-b border-border pb-4">
         <h2 className="font-display text-xl font-semibold">{pick(section.title)}</h2>
         {section.text ? <p className="text-sm text-muted-foreground">{pick(section.text)}</p> : null}
@@ -202,6 +223,37 @@ function AreaForm({ entry }: { readonly entry: SettingsEntry }): ReactElement {
   );
 }
 
+/**
+ * Long areas (Morni Party, MorniSMP, Versteckerl …): one chip per section that scrolls to its card. On the phone the
+ * row scrolls sideways instead of wrapping into many lines.
+ */
+function SectionIndex({ sections }: { readonly sections: readonly SettingSection[] }): ReactElement | null {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  if (sections.length < SECTION_INDEX_FROM) return null;
+  return (
+    <nav
+      aria-label={t('settings.sections')}
+      className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+    >
+      {sections.map((section) => (
+        <Button
+          key={section.id}
+          variant="secondary"
+          size="sm"
+          onClick={() =>
+            document
+              .getElementById(`${SECTION_ANCHOR}${section.id}`)
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        >
+          {pick(section.title)}
+        </Button>
+      ))}
+    </nav>
+  );
+}
+
 /** Jumps to a setting named in the address ("#setting-slowMode") and lets it glow for a moment. */
 function useJumpToSetting(ready: boolean): void {
   const { hash } = useLocation();
@@ -241,6 +293,7 @@ export function SettingsPage(): ReactElement {
             text={pick(entry.area.text)}
           />
           <AreaExtras key={`extras-${entry.area.id}`} entry={entry} />
+          <SectionIndex sections={entry.area.sections} />
           <AreaForm key={entry.area.id} entry={entry} />
         </>
       ) : null}

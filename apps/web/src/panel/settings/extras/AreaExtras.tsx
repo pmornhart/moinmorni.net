@@ -1,7 +1,8 @@
-import { Info, Lock, RotateCw } from 'lucide-react';
+import { ClipboardList, ExternalLink, Info, Lock, RotateCw } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '~/components/ui';
+import { Link } from 'react-router';
+import { Button, Card } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { useCan, type SettingsEntry } from '../../session';
 import { ApplicationsCard } from './ApplicationsCard';
@@ -31,8 +32,36 @@ function MorniCraftExtras({ entry }: { readonly entry: SettingsEntry }): ReactEl
   );
 }
 
+/** Team applications: where they arrive (panel page) and where people apply (website). */
+function TeamApplyExtras(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const canSeePlayers = useCan('players');
+  return (
+    <Notice tone="blue" icon={ClipboardList} title={t('applications.settingsTitle')}>
+      <p>{t('applications.settingsText')}</p>
+      <div className="flex flex-wrap gap-2">
+        {canSeePlayers ? (
+          <Button asChild size="sm" variant="secondary">
+            <Link to="/bewerbungen">
+              <ClipboardList />
+              {t('applications.toList')}
+            </Link>
+          </Button>
+        ) : null}
+        <Button asChild size="sm" variant="secondary">
+          <a href="/team/bewerben" target="_blank" rel="noopener noreferrer">
+            <ExternalLink />
+            {t('applications.publicPage')}
+          </a>
+        </Button>
+      </div>
+    </Notice>
+  );
+}
+
 const EXTRAS: Readonly<Record<string, (props: { readonly entry: SettingsEntry }) => ReactElement>> = {
   updates: () => <UpdatesCard />,
+  'team-apply': () => <TeamApplyExtras />,
   reach: () => <ReachCard />,
   mornicraft: MorniCraftExtras,
   build: () => <BuildCard />,
