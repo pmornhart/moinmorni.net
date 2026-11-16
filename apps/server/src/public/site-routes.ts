@@ -7,6 +7,7 @@ import type { Hub } from '../hub/index.js';
 import { normalUuid } from '../hub/players.js';
 import { notFound } from '../lib/errors.js';
 import type { Stores } from '../panel/stores.js';
+import { publicAuthor } from './author.js';
 
 /**
  * Öffentlich, ohne Anmeldung: News, Ranglisten, Spielerprofile (außer privat), Team, Regeln und Links – alles, was
@@ -57,6 +58,8 @@ export function registerSiteRoutes(
   openPositions: () => readonly OpenPosition[] = () => [],
 ): void {
   const published = () => and(isNotNull(news.publishedAt), lte(news.publishedAt, new Date().toISOString()));
+  /** Für Besucher: statt des Anmeldenamens fürs Panel der Minecraft-Name (oder „MoinMorni-Team“). */
+  const publicNews = (n: NewsRow) => ({ ...newsView(n), author: publicAuthor(db, n.author) });
 
   app.get('/api/news', { schema: { querystring: newsQuery } }, async (request) =>
     db
@@ -66,7 +69,7 @@ export function registerSiteRoutes(
       .orderBy(desc(news.pinned), desc(news.publishedAt))
       .limit(request.query.limit)
       .all()
-      .map(newsView),
+      .map(publicNews),
   );
 
   app.get(
@@ -79,7 +82,7 @@ export function registerSiteRoutes(
         .where(and(eq(news.slug, request.params.slug), published()))
         .get();
       if (!row) throw notFound('news_unknown');
-      return newsView(row);
+      return publicNews(row);
     },
   );
 
@@ -177,11 +180,13 @@ export function registerSiteRoutes(
         .where(eq(players.roleId, role.id))
         .all()
         .map((p) => ({ uuid: p.uuid, name: p.name }));
+      // Nur wer schon im Netzwerk war (sonst kennen wir keinen Minecraft-Namen) – nie der Anmeldename fürs Panel.
       const team = linked
         .filter((m) => m.roleId === role.id && m.minecraftUuid)
-        .map((m) => {
+        .flatMap((m) => {
           const uuid = normalUuid(m.minecraftUuid ?? '');
-          return { uuid, name: hub.players.get(uuid)?.name ?? m.username };
+          const name = hub.players.get(uuid)?.name;
+          return name ? [{ uuid, name }] : [];
         });
       const members = [...new Map([...own, ...team].map((m) => [m.uuid, m])).values()];
       return {

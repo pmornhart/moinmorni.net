@@ -549,6 +549,21 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         p.sendMessage(MM.deserialize("en".equals(langOf(p)) ? NO_CREATIVE_EN : NO_CREATIVE_DE));
     }
 
+    /**
+     * Der Spielmodus-Umschalter (F3+F4) läuft an {@link #onCommand} vorbei: Paper erlaubt ihn mit dem Recht für
+     * /gamemode. Kreativ darüber nur mit „Kreativmodus“ oder „Alles“ (oder als OP) – wie beim Befehl.
+     */
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onGameModeSwitcher(org.bukkit.event.player.PlayerGameModeChangeEvent event) {
+        Player p = event.getPlayer();
+        boolean toCreative = event.getNewGameMode() == org.bukkit.GameMode.CREATIVE;
+        if (p.isOp() || !Rights.blocksSwitcher(event.getCause().name(), toCreative, rankRights(p))) {
+            return;
+        }
+        event.setCancelled(true);
+        p.sendMessage(MM.deserialize("en".equals(langOf(p)) ? NO_CREATIVE_EN : NO_CREATIVE_DE));
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Player p = event.getPlayer();

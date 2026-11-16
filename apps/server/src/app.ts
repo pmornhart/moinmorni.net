@@ -12,6 +12,7 @@ import { createDiscordCredentials } from './discord/credentials.js';
 import { createApplyLogin } from './applications/login.js';
 import { registerApplicationRoutes } from './applications/routes.js';
 import { createTeamApplications } from './applications/team.js';
+import { contentSecurityPolicy, inlineScriptHashes } from './lib/csp.js';
 import { createSecretBox } from './lib/secret-box.js';
 import { adoptInterimDatabase } from './lib/rename.js';
 import { createHub, type Hub } from './hub/index.js';
@@ -111,6 +112,14 @@ const ANNOUNCE_DELAY_MS = 15_000;
 const HTTP_BAD_GATEWAY = 502;
 const HTTP_BAD_REQUEST = 400;
 const HTTP_SERVER_ERROR = 500;
+/** Antworten auf Fehler der Anfrage (Fastify und seine Plugins setzen `statusCode`), alles andere: invalid_request. */
+const CLIENT_ERRORS: Readonly<Record<number, string>> = {
+  404: 'not_found',
+  405: 'method_not_allowed',
+  413: 'too_large',
+  415: 'unsupported_media_type',
+  429: 'rate_limited',
+};
 const ASSETS = '/assets/';
 const API = '/api/';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
@@ -145,7 +154,17 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     app.log.info('Datenbank unter dem Zwischen-Namen übernommen – das Netzwerk heißt wieder MoinMorni');
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
-  await app.register(helmet, { contentSecurityPolicy: false, referrerPolicy: { policy: 'same-origin' } });
+  const indexFile = path.join(config.webDir, 'index.html');
+  const hasWeb = fs.existsSync(indexFile);
+  // Skripte nur von der eigenen Seite (dazu das kleine Hell/Dunkel-Skript der index.html über seine Prüfsumme).
+  const scriptHashes = hasWeb ? inlineScriptHashes(fs.readFileSync(indexFile, 'utf8')) : [];
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: contentSecurityPolicy(config.domain, scriptHashes),
+    },
+    referrerPolicy: { policy: 'same-origin' },
+  });
   // Nur Routen mit eigener Grenze (Einrichtung, später Anmeldung im Hub) – der Rest bleibt frei.
   await app.register(rateLimit, { global: false });
   // www.<Domain> → https://<Domain> (vor allem anderen, auch vor der Webseite und der Weiterleitung zum Motor).
@@ -156,6 +175,11 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     if (err instanceof MotorError) return reply.code(HTTP_BAD_GATEWAY).send({ error: 'motor_unreachable' });
     if ((err as { validation?: unknown }).validation)
       return reply.code(HTTP_BAD_REQUEST).send({ error: 'invalid_request' });
+    // Fehler der Anfrage selbst (kaputtes JSON, falsche Art, zu groß, zu oft): so sagen, wie Fastify sie meint –
+    // nicht als Fehler 500 und ohne Eintrag im Fehlerprotokoll (sonst füllt jeder Unsinn von außen das Protokoll).
+    const status = (err as { statusCode?: unknown }).statusCode;
+    if (typeof status === 'number' && status >= HTTP_BAD_REQUEST && status < HTTP_SERVER_ERROR)
+      return reply.code(status).send({ error: CLIENT_ERRORS[status] ?? 'invalid_request' });
     request.log.error({ err }, 'request failed');
     return reply.code(HTTP_SERVER_ERROR).send({ error: 'internal' });
   });
@@ -459,7 +483,6 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   );
   await registerMotorProxy(app, config.motorUrl, { beforeStart: (id) => sleep.makeRoom(id) });
 
-  const hasWeb = fs.existsSync(path.join(config.webDir, 'index.html'));
   if (hasWeb) {
     await app.register(fastifyStatic, {
       root: config.webDir,
