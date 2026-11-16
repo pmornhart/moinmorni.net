@@ -6,7 +6,10 @@
 # meldet dann, dass das Plugin fehlt, statt das ganze Update abzubrechen.
 FROM maven:3.9.16-eclipse-temurin-25 AS plugin
 WORKDIR /src
+# Erst nur die pom.xml: Die Bibliotheken landen in einer eigenen Schicht und werden beim nächsten Update nicht neu
+# geladen, solange sich die pom.xml nicht ändert.
 COPY plugins/moinmorni-network/pom.xml ./
+RUN mvn -B -q dependency:go-offline || true
 COPY plugins/moinmorni-network/src ./src
 RUN mkdir -p target && (mvn -B -q package || echo "Netzwerk-Plugin konnte nicht gebaut werden" > target/BUILD_FAILED.txt)
 

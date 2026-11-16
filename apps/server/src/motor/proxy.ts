@@ -50,7 +50,24 @@ export function motorPathAllowed(path: string): boolean {
   return ALLOW.some((p) => (p.endsWith('/') ? path.startsWith(p) : path === p || path.startsWith(`${p}/`)));
 }
 
-export async function registerMotorProxy(app: FastifyInstance, motorUrl: string): Promise<void> {
+/**
+ * Startet jemand im Panel einen Server, der nicht mehr in den Arbeitsspeicher passt, schickt das Netzwerk vorher leere
+ * Modi schlafen (statt dass der Motor „nicht genug Arbeitsspeicher“ meldet). Passt: "/api/servers/ab12/actions/start",
+ * "/api/servers/ab12/actions/restart"; passt nicht: "/api/servers/ab12/actions/stop", "/api/servers".
+ * https://regex101.com/?flavor=javascript&regex=%5E%5C%2Fapi%5C%2Fservers%5C%2F(%5B%5E%2F%5D%2B)%5C%2Factions%5C%2F(start%7Crestart)%24&testString=%2Fapi%2Fservers%2Fab12%2Factions%2Fstart
+ */
+const START_ACTION = /^\/api\/servers\/([^/]+)\/actions\/(start|restart)$/;
+
+export interface MotorProxyHooks {
+  /** Vor dem Start eines Servers (Motor-ID): Platz im Arbeitsspeicher schaffen. Fehler halten den Start nicht auf. */
+  readonly beforeStart?: (serverId: string) => Promise<unknown>;
+}
+
+export async function registerMotorProxy(
+  app: FastifyInstance,
+  motorUrl: string,
+  hooks: MotorProxyHooks = {},
+): Promise<void> {
   await app.register(httpProxy, {
     upstream: motorUrl,
     prefix: MOTOR_PREFIX,
@@ -71,6 +88,16 @@ export async function registerMotorProxy(app: FastifyInstance, motorUrl: string)
     preHandler: async (request) => {
       const path = (request.url.slice(MOTOR_PREFIX.length).split('?')[0] ?? '').toLowerCase();
       if (!motorPathAllowed(path)) throw notFound();
+      const start = request.method === 'POST' ? START_ACTION.exec(path) : null;
+      const serverId = start?.[1];
+      if (serverId && hooks.beforeStart) {
+        // Ob die Person den Server starten darf, prüft danach der Motor wie immer – hier schlafen nur leere Modi.
+        await hooks
+          .beforeStart(serverId)
+          .catch((err: unknown) =>
+            request.log.warn({ err, serverId }, 'Platz für den Start ließ sich nicht schaffen'),
+          );
+      }
     },
   });
 }

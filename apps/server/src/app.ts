@@ -22,6 +22,7 @@ import { createMemberIds } from './network/members.js';
 import { createModeSettingsSync, type ModeSettingsSync } from './network/mode-settings.js';
 import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
+import { retuneMemory } from './network/memory.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
 import { registerUpdateRoutes } from './system/routes.js';
@@ -209,6 +210,21 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       const result = await network.ensure();
       app.log.info(result, 'Netzwerk geprüft');
       restarts.add(result.restart);
+      // Einmal: Modi mit dem alten Speicher-Standard bekommen den neuen (laufende übernehmen ihn beim Neustart).
+      const retuned = await retuneMemory(
+        motor,
+        config.dataDir,
+        result.servers,
+        stores.modes(),
+        app.log,
+      ).catch((err: unknown) => {
+        app.log.warn(
+          { err },
+          'Netzwerk: Arbeitsspeicher ließ sich nicht anpassen – nächster Versuch beim Start',
+        );
+        return [];
+      });
+      restarts.add(retuned);
       // Spielmodi, die gerade schlafen: Einstellungen aus dem Panel für den nächsten Start eintragen.
       void modeSettings.syncFiles();
       // Wer zwei Minuten nach dem Start noch ohne Hub läuft (z. B. alter Schlüssel im Speicher), startet neu, sobald
@@ -292,7 +308,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     },
   );
   registerSiteRoutes(app, handle.db, stores, hub, bot.inviteUrl);
-  await registerMotorProxy(app, config.motorUrl);
+  await registerMotorProxy(app, config.motorUrl, { beforeStart: (id) => sleep.makeRoom(id) });
 
   const hasWeb = fs.existsSync(path.join(config.webDir, 'index.html'));
   if (hasWeb) {

@@ -592,7 +592,9 @@ if [[ -f "${VENDOR_SCRIPTS}/guard.sh" ]] && command -v systemctl >/dev/null 2>&1
   fi
 fi
 docker image prune -f >/dev/null 2>&1 || true
-docker builder prune -af >/dev/null 2>&1 || true
+# Den Bau-Zwischenstand behalten (heruntergeladene Pakete, fertige Schritte) – so baut das nächste Update nur, was sich
+# geändert hat, statt alles neu zu laden. Nur was über eine Woche nicht mehr gebraucht wurde, kommt weg.
+docker builder prune -f --filter until=168h >/dev/null 2>&1 || true
 STEP="null"
 write_status "done"
 msg_ok "Update fertig: ${MM_UPDATE_FROM} → ${MM_UPDATE_TO}"

@@ -25,16 +25,16 @@ const PLUGIN_DIR = 'plugins';
 const HUB_FILE = 'plugins/moinmorni/hub.json';
 const STAMP_FILE = 'plugins/moinmorni/plugin.sha256';
 const PROXY_MEMORY_MB = 1024;
-const LOBBY_MEMORY_MB = 4096;
+export const LOBBY_MEMORY_MB = 3072;
 const PROXY_PORT = 25565;
 const LOBBY_PORT = 25566;
-const BUILD_MEMORY_MB = 3072;
+export const BUILD_MEMORY_MB = 1536;
 const BUILD_PORT = 25567;
 /** WorldEdit von Modrinth (der Motor lädt es mit Prüfsumme). */
 const WORLDEDIT = { source: 'modrinth', projectId: 'worldedit' } as const;
 /** Spielmodi: Speicher pro Server, Ports ab hier (dahinter keine Ports nach außen, nur für den Motor). */
 /** Standard-Arbeitsspeicher eines Modus-Servers (einzelne Modi brauchen mehr, siehe `MODE_MEMORY_MB`). */
-const MODE_DEFAULT_MEMORY_MB = 3072;
+export const MODE_DEFAULT_MEMORY_MB = 1536;
 const MODE_PORT_BASE = 25570;
 const MODE_STAMP_FILE = 'plugins/moinmorni/mode-release.txt';
 /** Falls der Motor gerade keine Versionsliste bekommt (PaperMC nicht erreichbar). */
