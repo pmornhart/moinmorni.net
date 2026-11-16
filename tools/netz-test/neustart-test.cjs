@@ -95,6 +95,11 @@ function join(name) {
   });
 }
 const chatHas = (bot, re) => bot.chats.some((c) => re.test(c));
+/** Nur die Leisten des Neustarts (die Lobby hat ihre eigene Ankündigungs-Leiste). */
+const RESTART_BAR = /startet in|restarts in/;
+const restartBars = (bot) => [...bot.bars.values()].filter((b) => b.titles.some((t) => RESTART_BAR.test(t)));
+/** Wo der Hub den Spieler gerade sieht. */
+const whereIs = async (name) => (await status()).online?.find((p) => p.name === name)?.server ?? null;
 
 (async () => {
   await call('/', { area: 'updates', values: { restartCountdown: COUNTDOWN } });
@@ -106,20 +111,25 @@ const chatHas = (bot, re) => bot.chats.some((c) => re.test(c));
   check('Lobby und Duels hängen am Hub', ready, JSON.stringify(s0));
 
   const anna = await join('Anna');
+  await until(async () => (await whereIs('Anna')) === 'lobby', 15000);
+  // Auf dem ausgelasteten Rechner bricht der Wechsel manchmal ab – dann noch einmal.
+  const inDuels = await [1, 2, 3].reduce(async (prev) => {
+    if (await prev) return true;
+    anna.chat('/server duels');
+    return until(async () => (await whereIs('Anna')) === 'duels', 20000);
+  }, Promise.resolve(false));
   await sleep(3000);
-  anna.chat('/server duels');
-  const inDuels = await until(async () => {
-    const s = await status();
-    return s.connected.includes('duels') && anna.chats.length >= 0 && anna.game?.dimension !== undefined;
-  }, 5000);
-  await sleep(6000);
-  check('Anna ist in Duels', inDuels, anna.chats.slice(-3).join(' | '));
+  check('Anna ist in Duels', inDuels, `${await whereIs('Anna')} · ${anna.chats.slice(-2).join(' | ')}`);
 
   // Neustart wie nach einem Update.
   const t0 = Date.now();
   await call('/neustart', { servers: ['duels', 'lobby'], why: 'update' });
   const told = await until(
-    () => chatHas(anna, /Update eingespielt.*Duels.*startet in 12 Sekunden neu/),
+    () =>
+      chatHas(
+        anna,
+        /(Update eingespielt.*Duels.*startet in 12 Sekunden neu|Update installed.*Duels.*restarts in 12 seconds)/,
+      ),
     8000,
   );
   check(
@@ -128,25 +138,32 @@ const chatHas = (bot, re) => bot.chats.some((c) => re.test(c));
     anna.chats.slice(-2).join(' | '),
   );
   const bar = await until(
-    () => [...anna.bars.values()].some((b) => /Duels.*startet in.*\d+ s/.test(b.title)),
+    () => restartBars(anna).some((b) => /Duels.*(startet|restarts) in.*\d+ s/.test(b.title)),
     8000,
   );
-  const firstBar = [...anna.bars.values()][0];
+  const firstBar = restartBars(anna)[0];
   check('Leiste oben vom Proxy mit Countdown', bar, firstBar?.title);
   await sleep(3500);
-  const counting = [...anna.bars.values()][0];
+  const counting = restartBars(anna)[0];
   check(
     'Leiste zählt herunter und leert sich',
     counting && counting.titles.length >= 3 && counting.health < 1,
     `${counting?.titles.slice(-3).join(' → ')} · ${counting?.health}`,
   );
-  const reminder = await until(() => chatHas(anna, /Noch 10 Sekunden bis zum Neustart/), 8000);
+  const reminder = await until(
+    () => chatHas(anna, /(Noch 10 Sekunden bis zum Neustart|10 seconds until the restart)/),
+    8000,
+  );
   check('Hinweis 10 Sekunden vorher', reminder);
-  const moved = await until(() => chatHas(anna, /Du bist in der Lobby, solange Duels neu startet/), 20000);
+  const moved = await until(
+    () =>
+      chatHas(anna, /(Du bist in der Lobby, solange Duels neu startet|in the lobby while Duels restarts)/),
+    20000,
+  );
   const movedAfter = (Date.now() - t0) / 1000;
   check('nach dem Countdown in die Lobby geholt', moved, `${movedAfter.toFixed(1)} s nach dem Auftrag`);
   check('nicht vor Ablauf des Countdowns', movedAfter >= COUNTDOWN - 1, `${movedAfter.toFixed(1)} s`);
-  check('Leiste weg, wenn der Countdown vorbei ist', await until(() => anna.bars.size === 0, 5000));
+  check('Leiste weg, wenn der Countdown vorbei ist', await until(() => restartBars(anna).length === 0, 5000));
   const restarted = await until(async () => (await status()).starts.duels >= 2, 60000);
   check('Duels startet neu (Ersatz-Motor)', restarted, JSON.stringify((await status()).starts));
   const back = await until(async () => (await status()).connected.includes('duels'), 180000, 1000);
@@ -154,14 +171,17 @@ const chatHas = (bot, re) => bot.chats.some((c) => re.test(c));
   const lobbyStartsBefore = (await status()).starts.lobby;
 
   // Danach die Lobby: Countdown, freundlicher Rauswurf, Neustart.
-  const lobbyTold = await until(() => chatHas(anna, /die Lobby startet in 12 Sekunden neu/), 30000);
+  const lobbyTold = await until(
+    () => chatHas(anna, /(die Lobby startet in 12 Sekunden neu|the lobby restarts in 12 seconds)/),
+    30000,
+  );
   check('erst danach: Countdown für die Lobby', lobbyTold, anna.chats.slice(-2).join(' | '));
-  const lobbyBar = await until(() => [...anna.bars.values()].some((b) => /Lobby|lobby/.test(b.title)), 5000);
-  check('Leiste für die Lobby', lobbyBar, [...anna.bars.values()][0]?.title);
+  const lobbyBar = await until(() => restartBars(anna).some((b) => /Lobby|lobby/.test(b.title)), 5000);
+  check('Leiste für die Lobby', lobbyBar, restartBars(anna)[0]?.title);
   const kicked = await until(() => anna.kickReason !== null, 30000);
   check(
     'freundlicher Rauswurf „Die Lobby startet neu … wieder rein“',
-    kicked && /Lobby startet neu/.test(anna.kickReason),
+    kicked && /(Lobby startet neu|lobby is restarting)/.test(anna.kickReason),
     anna.kickReason,
   );
   const lobbyRestarted = await until(async () => (await status()).starts.lobby > lobbyStartsBefore, 60000);
@@ -172,7 +192,7 @@ const chatHas = (bot, re) => bot.chats.some((c) => re.test(c));
 
   const again = await join('Anna');
   await sleep(3000);
-  check('Anna kommt wieder hinein, keine Leiste mehr', again.bars.size === 0);
+  check('Anna kommt wieder hinein, keine Leiste mehr', restartBars(again).length === 0);
   again.quit();
   const s9 = await status();
   check(

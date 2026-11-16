@@ -248,6 +248,7 @@ if (control) {
                 modeRestarts: hub.modeRestarts(),
                 starts: Object.fromEntries(starts),
                 restartNowBusy: restartNow.busy(),
+                online: hub.presence.all().map((p) => ({ name: p.name, server: p.server })),
               }),
             );
           } else if (req.url === '/stop') {
