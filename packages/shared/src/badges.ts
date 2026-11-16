@@ -233,6 +233,67 @@ export function drawBadge(look: BadgeLook): BadgePicture | null {
   return { width, height: BADGE_HEIGHT, rgba };
 }
 
+/**
+ * Kachel: nur das Symbol auf einem Quadrat – so wie MorniCraft seine Abzeichen ohne Namen zeigt (Philip, 13.11.:
+ * „nur noch die Krone, farbige Umrandung, goldener Rahmen“; MorniHosting `craftattack/badges.ts`, `iconPicture`).
+ * Goldener Rahmen (oben links hell, unten rechts dunkler), darin ein Ring in der Farbe des Rangs, innen ein dunkler
+ * Ton davon, das Symbol doppelt so groß. Discord zeigt Rollen-Symbole quadratisch und klein neben dem Namen – dort
+ * wäre das breite Schild mit Namen unlesbar, der Rang-Name steht in Discord ohnehin daneben. Ohne Symbol: null.
+ */
+export const BADGE_TILE = 27;
+const TILE_SCALE = 2;
+const TILE_ICON_AT = Math.floor((BADGE_TILE - ICON * TILE_SCALE) / 2);
+const TILE_RING = 2;
+/** Leicht abgerundete Ecken (Halbmesser in Pixeln). */
+const TILE_CORNER = 5;
+const HALF = 0.5;
+/** So dunkel ist das Innere der Kachel im Vergleich zur Farbe des Rangs. */
+const TILE_SHADE = 0.32;
+const GOLD_LIGHT: Rgb = [255, 218, 92];
+const GOLD_DARK: Rgb = [196, 142, 28];
+
+export function drawBadgeTile(look: Pick<BadgeLook, 'symbol' | 'colour'>): BadgePicture | null {
+  const iconName = badgeIconOf(look.symbol);
+  const icon = iconName ? ICONS[iconName] : undefined;
+  if (!icon) return null;
+  const size = BADGE_TILE;
+  const last = size - 1;
+  const rgba = new Uint8Array(size * size * 4);
+  const put = (x: number, y: number, [r, g, b]: Rgb): void => rgba.set([r, g, b, 255], (y * size + x) * 4);
+  /** Wie weit ein Pixel innen liegt (0 = Rahmen), den runden Ecken folgend; unter 0 = außerhalb. */
+  const edgeOf = (x: number, y: number): number => {
+    const dx = Math.max(0, TILE_CORNER - (x + HALF), x + HALF - (size - TILE_CORNER));
+    const dy = Math.max(0, TILE_CORNER - (y + HALF), y + HALF - (size - TILE_CORNER));
+    const straight = Math.min(x, y, last - x, last - y);
+    return dx > 0 && dy > 0 ? Math.floor(TILE_CORNER - Math.hypot(dx, dy)) : straight;
+  };
+  const ring = rgbOf(look.colour);
+  const [r, g, b] = ring;
+  const fill: Rgb = [Math.round(r * TILE_SHADE), Math.round(g * TILE_SHADE), Math.round(b * TILE_SHADE)];
+  Array.from({ length: size * size }, (_, n) => n).forEach((n) => {
+    const x = n % size;
+    const y = Math.floor(n / size);
+    const edge = edgeOf(x, y);
+    if (edge < 0) return;
+    const frame = x + y < last ? GOLD_LIGHT : GOLD_DARK;
+    put(x, y, edge === 0 ? frame : edge <= TILE_RING ? ring : fill);
+  });
+  icon.forEach((row, y) =>
+    [...row].forEach((cell, x) => {
+      const ink = INK[cell];
+      if (!ink) return;
+      Array.from({ length: TILE_SCALE * TILE_SCALE }, (_, k) => k).forEach((k) =>
+        put(
+          TILE_ICON_AT + TILE_SCALE * x + (k % TILE_SCALE),
+          TILE_ICON_AT + TILE_SCALE * y + Math.floor(k / TILE_SCALE),
+          ink,
+        ),
+      );
+    }),
+  );
+  return { width: size, height: size, rgba };
+}
+
 /** Wie ein Rang auf seinem Abzeichen aussieht – Name je Sprache (Minecraft-Sprache des Spielers entscheidet). */
 export function roleBadgeLook(role: Pick<Role, 'name' | 'symbol' | 'colour'>, lang: keyof Text): BadgeLook {
   return { text: role.name[lang], symbol: role.symbol, colour: role.colour };

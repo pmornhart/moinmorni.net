@@ -1218,7 +1218,7 @@
     },
     "discord": {
       "title": "Discord",
-      "text": "Connect your own Discord bot (enter its token right here), let it set up your Discord server step by step and change the server picture, banner and the bot's profile under “Look”."
+      "text": "Connect your own Discord bot (enter its token right here), let it set up your Discord server step by step and change the server picture, banner and the bot's profile under “Look” Under “Ranks” you see how the ranks look in Discord – from boost level 2 with the badge as role icon."
     },
     "servers": {
       "title": "Servers",
@@ -1589,6 +1589,24 @@
       "keepMoving": "Take unchanged (moving)",
       "use": "Use"
     }
+  },
+  "discordRanks": {
+    "title": "Ranks in Discord",
+    "text": "Every role from the panel is a role in Discord – in its colour and with its badge. This is what it looks like there.",
+    "preview": "How Discord shows the ranks",
+    "notYet": "comes with the setup",
+    "modeIcons": "Badge as role icon",
+    "modeNames": "Symbol in the name",
+    "iconsTitle": "Badge next to the name",
+    "iconsText": "Your server may use role icons (boost level 2): every rank has its badge as a small picture next to its name – the same crown, the same sword as in the game, with a gold frame in the rank’s colour. Discord writes the name next to it.",
+    "boostTitle": "Role icons only from boost level {{need}}",
+    "boostText": "Discord only shows pictures next to role names from boost level {{need}} – your server is at level {{tier}}. Until then the symbol is part of the name, e.g. “⚔ Moderator”. As soon as the server reaches level {{need}}, MoinMorni swaps it for the badges on its own.",
+    "offTitle": "Rank badges are off",
+    "offText": "In the game and in Discord the symbol stands before or in the name right now. Switch the badges back on and Discord gets them back too (with boost level 2).",
+    "offLink": "To Settings → Rank badges",
+    "syncTitle": "Follows on its own",
+    "syncText": "Change a role’s name, symbol, colour or order, or add a new one, and a few seconds later Discord shows it the same way – no new setup needed. A new team role sees its team channels right away.",
+    "handText": "Whatever someone changed in Discord by hand (the name, an own picture or emoji as role icon) stays."
   },
   "teamAdmin": {
     "title": "Team",
@@ -2242,7 +2260,7 @@
     "with": "With badge pack",
     "without": "Without pack",
     "whereTitle": "Where they show",
-    "where": "In chat before the name, in the tab list and above heads – on every server of the network. The proxy offers the pack to every Java player when they join (Minecraft 1.20.3 and newer); it stays when they switch servers. Whoever declines, plays Bedrock or has an older version sees symbol and colour. /badges loads it any time. The jail badge stands before messages from the cell (only the team reads them).",
+    "where": "In chat before the name, in the tab list and above heads – on every server of the network. The proxy offers the pack to every Java player when they join (Minecraft 1.20.3 and newer); it stays when they switch servers. Whoever declines, plays Bedrock or has an older version sees symbol and colour. /badges loads it any time. The jail badge stands before messages from the cell (only the team reads them). In Discord the ranks have the same colour – from boost level 2 with the badge as role icon next to the name (Panel → Discord → Ranks).",
     "fromRoles": "Change a role’s name, symbol or colour and everyone gets the new pack right away.",
     "editRoles": "Edit roles"
   }

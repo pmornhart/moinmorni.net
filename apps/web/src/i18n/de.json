@@ -1218,7 +1218,7 @@
     },
     "discord": {
       "title": "Discord",
-      "text": "Den eigenen Discord-Bot verbinden (Token direkt hier eintragen), den Discord-Server Schritt für Schritt einrichten lassen und unter „Aussehen“ Server-Bild, Banner und das Profil des Bots ändern."
+      "text": "Den eigenen Discord-Bot verbinden (Token direkt hier eintragen), den Discord-Server Schritt für Schritt einrichten lassen und unter „Aussehen“ Server-Bild, Banner und das Profil des Bots ändern. Unter „Ränge“ siehst du, wie die Ränge in Discord aussehen – ab Boost-Stufe 2 mit dem Abzeichen als Rollen-Symbol."
     },
     "servers": {
       "title": "Server",
@@ -1589,6 +1589,24 @@
       "keepMoving": "Unverändert nehmen (bewegt)",
       "use": "Übernehmen"
     }
+  },
+  "discordRanks": {
+    "title": "Ränge in Discord",
+    "text": "Jede Rolle aus dem Panel ist in Discord eine Rolle – in ihrer Farbe und mit ihrem Abzeichen. So sieht es dort aus.",
+    "preview": "So zeigt Discord die Ränge",
+    "notYet": "kommt beim Einrichten",
+    "modeIcons": "Abzeichen als Rollen-Symbol",
+    "modeNames": "Symbol im Namen",
+    "iconsTitle": "Abzeichen neben dem Namen",
+    "iconsText": "Euer Server darf Rollen-Symbole (Boost-Stufe 2): Jeder Rang hat sein Abzeichen als kleines Bild neben dem Namen – dieselbe Krone, dasselbe Schwert wie im Spiel, mit goldenem Rahmen in der Farbe des Rangs. Den Namen schreibt Discord daneben.",
+    "boostTitle": "Rollen-Symbole erst ab Boost-Stufe {{need}}",
+    "boostText": "Bilder neben Rollennamen gibt es in Discord erst ab Boost-Stufe {{need}} – euer Server hat Stufe {{tier}}. Bis dahin steht das Symbol im Namen, z. B. „⚔ Moderator“. Sobald der Server Stufe {{need}} erreicht, tauscht MoinMorni das von selbst gegen die Abzeichen.",
+    "offTitle": "Rang-Abzeichen sind aus",
+    "offText": "Im Spiel und in Discord steht gerade das Symbol vor bzw. im Namen. Schaltest du die Abzeichen wieder ein, bekommt Discord sie auch zurück (mit Boost-Stufe 2).",
+    "offLink": "Zu Einstellungen → Rang-Abzeichen",
+    "syncTitle": "Zieht von selbst nach",
+    "syncText": "Änderst du bei den Rollen Name, Symbol, Farbe oder Reihenfolge oder legst eine neue an, ist das ein paar Sekunden später auch in Discord so – ohne neu einzurichten. Eine neue Team-Rolle sieht gleich ihre Team-Kanäle.",
+    "handText": "Was jemand in Discord selbst geändert hat (Name, ein eigenes Bild oder Emoji als Rollen-Symbol), bleibt."
   },
   "teamAdmin": {
     "title": "Team",
@@ -2242,7 +2260,7 @@
     "with": "Mit Abzeichen-Paket",
     "without": "Ohne Paket",
     "whereTitle": "Wo man sie sieht",
-    "where": "Im Chat vor dem Namen, in der Tab-Liste und über dem Kopf – auf allen Servern des Netzwerks. Das Paket bietet der Proxy jedem Java-Spieler beim Betreten an (ab Minecraft 1.20.3); es bleibt beim Serverwechsel. Wer es ablehnt, auf Bedrock spielt oder eine ältere Version hat, sieht Symbol und Farbe. Mit /abzeichen lädt man es jederzeit nach. Das Gefängnis-Abzeichen steht vor Nachrichten aus der Zelle (die liest nur das Team).",
+    "where": "Im Chat vor dem Namen, in der Tab-Liste und über dem Kopf – auf allen Servern des Netzwerks. Das Paket bietet der Proxy jedem Java-Spieler beim Betreten an (ab Minecraft 1.20.3); es bleibt beim Serverwechsel. Wer es ablehnt, auf Bedrock spielt oder eine ältere Version hat, sieht Symbol und Farbe. Mit /abzeichen lädt man es jederzeit nach. Das Gefängnis-Abzeichen steht vor Nachrichten aus der Zelle (die liest nur das Team). Im Discord haben die Ränge dieselbe Farbe – ab Boost-Stufe 2 mit dem Abzeichen als Rollen-Symbol neben dem Namen (Panel → Discord → Ränge).",
     "fromRoles": "Änderst du bei einer Rolle Name, Symbol oder Farbe, bekommen alle gleich das neue Paket.",
     "editRoles": "Rollen bearbeiten"
   }

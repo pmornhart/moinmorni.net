@@ -7,7 +7,9 @@ import {
   badgeIconOf,
   badgeKeys,
   badgeLetters,
+  BADGE_TILE,
   drawBadge,
+  drawBadgeTile,
   type Role,
 } from '../src/index.js';
 
@@ -122,5 +124,33 @@ describe('Rang-Abzeichen', () => {
       // Minecraft erlaubt Schrift-Bilder bis 256 Pixel Breite.
       expect(p!.width).toBeLessThanOrEqual(256);
     });
+  });
+
+  test('Kachel für Discord: quadratisch, runde Ecken, goldener Rahmen, Ring in der Rangfarbe, Symbol doppelt so groß', () => {
+    const tile = drawBadgeTile({ symbol: '✚', colour: '#22c55e' });
+    expect(tile).not.toBeNull();
+    expect([tile!.width, tile!.height]).toEqual([BADGE_TILE, BADGE_TILE]);
+    // Ecken außen leer (durchsichtig), Rahmen oben links hell-golden, unten rechts dunkler.
+    expect(pixel(tile!, 0, 0)[3]).toBe(0);
+    expect(pixel(tile!, BADGE_TILE - 1, BADGE_TILE - 1)[3]).toBe(0);
+    expect(pixel(tile!, 13, 0)).toEqual([255, 218, 92, 255]);
+    expect(pixel(tile!, 13, BADGE_TILE - 1)).toEqual([196, 142, 28, 255]);
+    // Ring in der Farbe des Rangs, innen 32 % davon.
+    expect(pixel(tile!, 13, 1)).toEqual([0x22, 0xc5, 0x5e, 255]);
+    expect(pixel(tile!, 4, 4)).toEqual([
+      Math.round(0x22 * 0.32),
+      Math.round(0xc5 * 0.32),
+      Math.round(0x5e * 0.32),
+      255,
+    ]);
+    // Das Plus: die weiße Mitte des Symbols, 2 × 2 Pixel groß.
+    const at = Math.floor((BADGE_TILE - 14) / 2);
+    expect(pixel(tile!, at + 3 * 2, at + 3 * 2)).toEqual([255, 255, 255, 255]);
+    expect(pixel(tile!, at + 3 * 2 + 1, at + 3 * 2 + 1)).toEqual([255, 255, 255, 255]);
+    // Ohne Symbol keine Kachel; jede Rolle der Vorlage mit Symbol hat eine.
+    expect(drawBadgeTile({ symbol: '', colour: '#aaaaaa' })).toBeNull();
+    DEFAULT_ROLES.filter((r) => r.symbol.trim()).forEach((r) =>
+      expect(drawBadgeTile(r), r.id).not.toBeNull(),
+    );
   });
 });

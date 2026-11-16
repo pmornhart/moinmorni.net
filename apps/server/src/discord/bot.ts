@@ -20,6 +20,7 @@ import { createDiscordClient, DiscordError, type DiscordClient, type GatewayEven
 import type { DiscordCredentials, CredentialsView } from './credentials.js';
 import { EXTRA_ROLES, invitePermissions, permNames, type ExtraRole, type PermName } from './layout.js';
 import { CUSTOM_IDS, EMERALD, statusMessage, type BoardContext } from './messages.js';
+import { badgesOn, ROLE_ICONS_FEATURE, ROLE_ICONS_KEY } from './rank-icons.js';
 import { createDiscordSetup, type SetupProgress, type SetupReport } from './setup.js';
 import { createDiscordStore } from './store.js';
 import { createTeamBot } from './team-apply.js';
@@ -35,6 +36,8 @@ import { botLang, bt, type BotLang } from './texts.js';
 
 const STATUS_MS = 60_000;
 const CLEANUP_MS = 300_000;
+/** So lange wartet der Bot nach einer Änderung an den Rollen, bevor er sie nach Discord überträgt. */
+const RANKS_DELAY_MS = 1500;
 const CODE_MINUTES = 10;
 const MINUTE_MS = 60_000;
 const SECOND_MS = 1000;
@@ -152,7 +155,21 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     self: { id: string; name: string; at: number } | null;
     waits: Set<(ms: number) => void>;
     unhook: (() => void) | null;
-  } = { client: null, token: null, started: false, appId: null, self: null, waits: new Set(), unhook: null };
+    /** Ränge gleich nachziehen (mehrere Änderungen kurz hintereinander werden einmal übertragen). */
+    ranksTimer: NodeJS.Timeout | null;
+    /** Zuletzt gesehen: darf der Server Rollen-Symbole haben (Boost-Stufe 2)? */
+    roleIcons: boolean | null;
+  } = {
+    client: null,
+    token: null,
+    started: false,
+    appId: null,
+    self: null,
+    waits: new Set(),
+    unhook: null,
+    ranksTimer: null,
+    roleIcons: null,
+  };
 
   // ---------- Verbindung (Token aus .env oder Panel) ----------
   const clientFor = (token: string): DiscordClient =>
@@ -223,6 +240,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     store,
     guildId,
     cdn: config.discordCdn,
+    badges: () => badgesOn(stores),
+    ranks: () => templateRoles(),
     log,
   });
 
@@ -735,6 +754,22 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         );
         await rest('DELETE', `/users/@me/guilds/${String(d['id'])}`);
       }
+      // Boost-Stufe geändert, während der Bot weg war: Ränge einmal nachziehen.
+      if (String(d['id']) === guildId() && Array.isArray(d['features'])) {
+        live.roleIcons = (d['features'] as unknown[]).includes(ROLE_ICONS_FEATURE);
+        const applied = get(ROLE_ICONS_KEY);
+        if (applied !== null && applied !== (live.roleIcons ? 'on' : 'off')) syncRanksSoon();
+      }
+      return;
+    }
+    if (e.t === 'GUILD_UPDATE' && String(d['id']) === guildId()) {
+      // Boost-Stufe 2 erreicht oder verloren: Ränge mit Bild oder mit Symbol im Namen.
+      const features = Array.isArray(d['features']) ? (d['features'] as unknown[]) : null;
+      const roleIcons = features ? features.includes(ROLE_ICONS_FEATURE) : null;
+      if (roleIcons !== null && roleIcons !== live.roleIcons) {
+        live.roleIcons = roleIcons;
+        syncRanksSoon();
+      }
       return;
     }
     if (e.t === 'VOICE_STATE_UPDATE' && String(d['guild_id']) === guildId()) {
@@ -813,6 +848,20 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     background(() => setupRunner.refreshMessages(which), 'Discord: Nachricht nicht aktualisiert');
   };
 
+  /**
+   * Ränge in Discord nachziehen, sobald sich im Panel etwas ändert (Rollen, Abzeichen an/aus) oder der Server Boost-
+   * Stufe 2 bekommt bzw. verliert – kurz gewartet, damit mehrere Änderungen auf einmal übertragen werden.
+   */
+  const syncRanksSoon = (): void => {
+    if (!client() || !guildId() || !get('setup')) return;
+    if (live.ranksTimer) clearTimeout(live.ranksTimer);
+    live.ranksTimer = setTimeout(() => {
+      live.ranksTimer = null;
+      background(() => setupRunner.syncRanks(), 'Discord: Ränge nicht nachgezogen');
+    }, RANKS_DELAY_MS);
+    live.ranksTimer.unref();
+  };
+
   const inviteUrl = (id: string): string =>
     `https://discord.com/oauth2/authorize?client_id=${id}&scope=bot%20applications.commands&permissions=${invitePermissions(templateRoles()).toString()}&integration_type=0`;
 
@@ -855,9 +904,14 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         };
         const w = which[area];
         if (w) refresh(w);
+        // Abzeichen an/aus: in Discord Bild neben dem Namen oder Symbol im Namen.
+        if (area === 'badges') syncRanksSoon();
       });
       events.on('modes.changed', () => refresh('modes'));
-      events.on('roles.changed', () => refresh('apply'));
+      events.on('roles.changed', () => {
+        refresh('apply');
+        syncRanksSoon();
+      });
       const statusTimer = setInterval(
         () => background(refreshStatus, 'Discord: Status nicht aktualisiert'),
         STATUS_MS,
@@ -872,6 +926,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     },
     stop: () => {
       timers.forEach((t) => clearInterval(t));
+      if (live.ranksTimer) clearTimeout(live.ranksTimer);
+      live.ranksTimer = null;
       live.started = false;
       live.client?.close();
     },

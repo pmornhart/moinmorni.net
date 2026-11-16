@@ -5,7 +5,7 @@
  * „Symbol + Leerzeichen“, der Serverwechsel (Paket bleibt, Möbel-Paket geht) sowie An/Aus und Rollen aus dem Panel.
  *   NODE_PATH=<ordner mit mineflayer> MM_STEUER=http://127.0.0.1:<port> node tools/netz-test/abzeichen-test.cjs [host] [port]
  * Erwartet: Proxy mit „lobby“ (Möbel-Paket in der server.properties) und „duels“, Hub aus scripts/hub-dev.ts mit
- * --steuer=<port> (liefert die Pakete) und --rang=Lena=moderator.
+ * --steuer=<port> (liefert die Pakete), --rang=Lena=moderator und --rang=Susi=supporter.
  */
 const crypto = require('node:crypto');
 const mineflayer = require('mineflayer');
@@ -119,6 +119,8 @@ async function main() {
   const sha1 = crypto.createHash('sha1').update(zip).digest('hex');
   check('Paket von der Adresse passt zur SHA-1', sha1 === offer.hash, `${zip.length} Bytes`);
   check('nicht verpflichtend (Panel: aus)', offer.forced === false);
+  // Das Paket ist ungepackt (gespeichert) – die Sprachdatei steht lesbar darin, mit einem Zeichen je Rang.
+  check('Paket kennt den Supporter („✚ “)', zip.toString('utf8').includes('"✚ ":'));
 
   // Ablehnen → freundlicher Hinweis; /abzeichen → nochmal, annehmen → „da!“
   answer(lena, DECLINED);
@@ -151,6 +153,29 @@ async function main() {
   check('Tab-Liste: Übersetzung vor dem Namen', Boolean(tab), tab?.slice(0, 120));
   const team = await until(() => [...lena.mmTeams.values()].find((p) => p.includes('⚔ ')));
   check('Über dem Kopf (Team-Präfix): Übersetzung', Boolean(team && team.includes('translate')), team ?? '');
+
+  // ---------- Supporter (✚, grün): eigenes Abzeichen, so wie Lena ihn sieht ----------
+  const susi = await join('Susi');
+  susi.chat('Servus vom Support');
+  const supportLine = await until(() => lena.raw.find((r) => r.includes('Servus vom Support')));
+  check(
+    'Supporter im Chat: Übersetzung „✚ “ in Grün',
+    Boolean(supportLine && supportLine.includes('"translate":"✚ "') && /22c55e/i.test(supportLine)),
+    supportLine?.slice(0, 160),
+  );
+  const supportTab = await until(() => {
+    const name = lena.players['Susi']?.displayName;
+    const json = name ? JSON.stringify(name.json ?? name) : '';
+    return json.includes('✚ ') && json.includes('translate') ? json : null;
+  });
+  check('Supporter in der Tab-Liste: Übersetzung', Boolean(supportTab), supportTab?.slice(0, 120));
+  const supportTeam = await until(() => [...lena.mmTeams.values()].find((p) => p.includes('✚ ')));
+  check(
+    'Supporter über dem Kopf: Übersetzung',
+    Boolean(supportTeam && supportTeam.includes('translate')),
+    supportTeam ?? '',
+  );
+  susi.quit();
 
   // ---------- Serverwechsel: Abzeichen bleibt, Möbel-Paket geht ----------
   lena.removed.length = 0;

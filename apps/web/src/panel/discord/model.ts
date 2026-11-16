@@ -73,12 +73,37 @@ export interface AppearanceView {
     readonly animatedIcon: boolean;
     readonly banners: boolean;
     readonly animatedBanner: boolean;
+    /** Role icons (a picture next to the role's name) – from boost level 2. */
+    readonly roleIcons: boolean;
+  } | null;
+  /**
+   * How Discord shows the ranks: the badge as role icon ("icons") or the symbol in the name ("names") – and why
+   * ("boost": server below level 2, "badges_off": badges switched off in the panel). No server: null.
+   */
+  readonly ranks: {
+    readonly look: 'icons' | 'names';
+    readonly reason: 'boost' | 'badges_off' | null;
+    /** The ranks the way Discord shows them, best first. */
+    readonly roles: readonly RankView[];
   } | null;
   readonly bot: {
     readonly name: string;
     readonly avatar: string | null;
     readonly avatarIsLogo: boolean;
   } | null;
+}
+
+export interface RankView {
+  readonly id: string;
+  readonly name: string;
+  readonly symbol: string;
+  readonly colour: string;
+  /** The role's name in Discord ("Moderator" with the picture next to it, or "⚔ Moderator"). */
+  readonly discordName: string;
+  /** Gets the badge as role icon. */
+  readonly icon: boolean;
+  /** Already exists in Discord (after the setup). */
+  readonly inDiscord: boolean;
 }
 
 export const DISCORD_KEY = ['panel', 'discord'] as const;
