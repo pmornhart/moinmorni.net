@@ -10,9 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,10 +32,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -67,9 +62,10 @@ import org.bukkit.util.Vector;
 
 /**
  * Die Lobby selbst (nur auf dem Server, dem der Hub {@code lobby-settings} schickt): Ankunft am Dorfplatz mit
- * Begrüßung, Ankündigungs-Leiste, Kompass-Menü mit allen Modi, Launchpads, Parkour mit Zeitmessung und Bestenliste,
- * Rundgang für neue Spieler, Schutz (nichts abbauen, kein Schaden, kein Hunger, aus der Leere zurück zum Platz).
- * Alles kommt aus dem Panel (Lobby-Einstellungen) bzw. aus dem Bauplan der Lobby (feste Punkte).
+ * Begrüßung, Ankündigungs-Leiste, Kompass-Menü mit allen Modi, Launchpads, Jump and Run ({@link LobbyJump}),
+ * Doppelsprung ({@link LobbyDoubleJump}), Rundgang für neue Spieler, Schutz (nichts abbauen, kein Schaden, kein Hunger,
+ * aus der Leere zurück zum Platz). Alles kommt aus dem Panel (Lobby-Einstellungen) bzw. aus dem Bauplan der Lobby
+ * (feste Punkte).
  */
 final class LobbyFeatures implements Listener {
 
@@ -86,14 +82,7 @@ final class LobbyFeatures implements Listener {
     }
 
     record Settings(String title, String subtitle, boolean tour, List<String> announcements, int announcementSeconds,
-                    String season, boolean launchpads, boolean parkour, int walkers, View spawn, List<Pad> pads,
-                    List<Point> course, Set<Integer> checkpoints, List<Stop> stops) {
-    }
-
-    /** Laufender Parkour-Versuch. */
-    private static final class Run {
-        final long startNanos = System.nanoTime();
-        int checkpoint;
+                    String season, boolean launchpads, int walkers, View spawn, List<Pad> pads, List<Stop> stops) {
     }
 
     private static final String ITEM_KEY = "lobby_item";
@@ -115,15 +104,6 @@ final class LobbyFeatures implements Listener {
     private static final long PAD_COOLDOWN_MS = 1500;
     private static final double PAD_REACH = 1.6;
     private static final int VOID_Y = 20;
-    private static final int FALL_BELOW_CHECKPOINT = 4;
-    private static final double COURSE_LEAVE = 30;
-    private static final double HOLO_UP = 3.4;
-    private static final int TOP_HOLO = 5;
-    private static final long HOLO_CHECK = 200L;
-    private static final int TOP_LIST = 10;
-    private static final long NANOS_PER_MILLI = 1_000_000L;
-    private static final long MILLIS_PER_SECOND = 1000L;
-    private static final long SECONDS_PER_MINUTE = 60L;
     private static final int MAX_FOOD = 20;
     private static final float FULL = 1f;
 
@@ -140,15 +120,14 @@ final class LobbyFeatures implements Listener {
     private int barIndex;
     private int barSecond;
 
-    private final Map<UUID, Run> runs = new HashMap<>();
     private final Map<UUID, Long> padUsed = new HashMap<>();
     private final Map<UUID, BukkitTask> tours = new HashMap<>();
     private final Set<UUID> seen = ConcurrentHashMap.newKeySet();
-    private final Map<Long, Integer> courseIndex = new HashMap<>();
-    private YamlConfiguration parkourData;
-    private TextDisplay holo;
+    /** Jump and Run hoch über dem Dorf und Doppelsprung überall. */
+    private final LobbyJump jump;
+    private final LobbyDoubleJump doubleJump;
 
-    /** Sitzt jemand im Gefängnis? Dann gibt es kein Menü, keinen Rundgang, keinen Parkour (setzt {@link LobbyJail}). */
+    /** Sitzt jemand im Gefängnis? Dann kein Menü, kein Rundgang, kein Jump and Run (setzt {@link LobbyJail}). */
     private java.util.function.Predicate<UUID> jailed = id -> false;
     /** Wer in der Lobby bauen darf (Rang-Recht „Lobby bearbeiten“) – OPs immer. */
     private java.util.function.Predicate<Player> editors = p -> false;
@@ -159,6 +138,15 @@ final class LobbyFeatures implements Listener {
         this.langOf = langOf;
         this.itemKey = new NamespacedKey(plugin, ITEM_KEY);
         this.dataDir = plugin.getDataFolder().toPath().getParent().resolve("moinmorni");
+        this.jump = new LobbyJump(plugin, langOf, id -> jailed.test(id) || tours.containsKey(id), dataDir);
+        this.doubleJump = new LobbyDoubleJump(plugin,
+                p -> jailed.test(p.getUniqueId()) || tours.containsKey(p.getUniqueId()),
+                p -> jump.running(p.getUniqueId()));
+    }
+
+    /** Werte des Jump and Run an den Hub (Statistik „lobby“). */
+    void setHub(java.util.function.Consumer<JsonObject> toHub) {
+        jump.setHub(toHub);
     }
 
     void setEditors(java.util.function.Predicate<Player> editors) {
@@ -169,13 +157,13 @@ final class LobbyFeatures implements Listener {
         this.jailed = jailed;
     }
 
-    /** Fürs Einsperren: Rundgang und Parkour-Lauf beenden. */
+    /** Fürs Einsperren: Rundgang und Jump and Run beenden. */
     void stopActivities(Player p) {
         BukkitTask task = tours.remove(p.getUniqueId());
         if (task != null) {
             task.cancel();
         }
-        runs.remove(p.getUniqueId());
+        jump.stop(p);
         p.hideBossBar(bar);
     }
 
@@ -198,14 +186,8 @@ final class LobbyFeatures implements Listener {
     void start() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
         loadSeen();
-        parkourData = YamlConfiguration.loadConfiguration(dataDir.resolve("parkour.yml").toFile());
-        Bukkit.getScheduler().runTaskTimer(plugin, this::tickRuns, 2L, 2L);
-        // Die Bestenliste kommt, sobald der Start geladen ist (nicht persistent – nach Neustart/Entladen neu).
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (active() && settings.parkour() && (holo == null || !holo.isValid())) {
-                refreshHolo();
-            }
-        }, HOLO_CHECK, HOLO_CHECK);
+        jump.start();
+        doubleJump.start();
     }
 
     private boolean active() {
@@ -234,16 +216,6 @@ final class LobbyFeatures implements Listener {
             pads.add(new Pad(o.get("x").getAsInt(), o.get("y").getAsInt(), o.get("z").getAsInt(),
                     new Vector(push.get(0).getAsDouble(), push.get(1).getAsDouble(), push.get(2).getAsDouble())));
         }
-        JsonObject parkour = features.getAsJsonObject("parkour");
-        List<Point> course = new ArrayList<>();
-        for (JsonElement el : parkour.getAsJsonArray("blocks")) {
-            JsonObject o = el.getAsJsonObject();
-            course.add(new Point(o.get("x").getAsInt(), o.get("y").getAsInt(), o.get("z").getAsInt()));
-        }
-        Set<Integer> checkpoints = new HashSet<>();
-        for (JsonElement el : parkour.getAsJsonArray("checkpoints")) {
-            checkpoints.add(el.getAsInt());
-        }
         List<Stop> stops = new ArrayList<>();
         for (JsonElement el : features.getAsJsonArray("tour")) {
             JsonObject o = el.getAsJsonObject();
@@ -257,9 +229,11 @@ final class LobbyFeatures implements Listener {
         }
         Settings next = new Settings(HubClient.str(welcome, "title"), HubClient.str(welcome, "subtitle"),
                 m.get("tour").getAsBoolean(), announcements, Math.max(1, m.get("announcementSeconds").getAsInt()),
-                HubClient.str(m, "season"), m.get("launchpads").getAsBoolean(), m.get("parkour").getAsBoolean(),
-                m.get("walkers").getAsInt(), view(spawn), pads, course, checkpoints, stops);
+                HubClient.str(m, "season"), m.get("launchpads").getAsBoolean(), m.get("walkers").getAsInt(),
+                view(spawn), pads, stops);
         Bukkit.getScheduler().runTask(plugin, () -> apply(next));
+        jump.onSettings(m);
+        doubleJump.onSettings(m);
     }
 
     private static View view(JsonObject o) {
@@ -270,22 +244,12 @@ final class LobbyFeatures implements Listener {
     private void apply(Settings next) {
         boolean first = settings == null;
         settings = next;
-        courseIndex.clear();
-        for (int i = 0; i < next.course().size(); i++) {
-            Point b = next.course().get(i);
-            courseIndex.put(key(b.x(), b.y(), b.z()), i);
-        }
         npcs.configure(next.season(), next.walkers());
         restartBar();
-        refreshHolo();
         if (first) {
             registerCommands();
             Bukkit.getOnlinePlayers().forEach(this::equip);
         }
-    }
-
-    private static long key(int x, int y, int z) {
-        return ((long) x & 0x3FFFFFFL) << 38 | ((long) z & 0x3FFFFFFL) << 12 | ((long) y & 0xFFFL);
     }
 
     // ---------- Ankündigungen ----------
@@ -357,7 +321,6 @@ final class LobbyFeatures implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
-        runs.remove(id);
         padUsed.remove(id);
         BukkitTask tour = tours.remove(id);
         if (tour != null) {
@@ -651,181 +614,17 @@ final class LobbyFeatures implements Listener {
         }
     }
 
-    // ---------- Parkour ----------
+    // ---------- Aus der Welt gefallen ----------
 
     @EventHandler(ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
         if (!active()) {
             return;
         }
-        Location to = event.getTo();
         Player p = event.getPlayer();
-        if (jailed.test(p.getUniqueId())) {
-            return;
-        }
-        if (to.getY() < VOID_Y) {
+        if (!jailed.test(p.getUniqueId()) && event.getTo().getY() < VOID_Y) {
             toSpawn(p);
-            return;
         }
-        if (!settings.parkour() || tours.containsKey(p.getUniqueId())) {
-            return;
-        }
-        Location from = event.getFrom();
-        boolean sameBlock = from.getBlockX() == to.getBlockX() && from.getBlockY() == to.getBlockY()
-                && from.getBlockZ() == to.getBlockZ();
-        Run run = runs.get(p.getUniqueId());
-        if (run != null && fellOff(p, to, run)) {
-            return;
-        }
-        if (sameBlock || !p.isOnGround()) {
-            return;
-        }
-        Block under = to.clone().subtract(0, 0.2, 0).getBlock();
-        Integer index = courseIndex.get(key(under.getX(), under.getY(), under.getZ()));
-        if (index == null) {
-            return;
-        }
-        int goal = settings.course().size() - 1;
-        if (index == 0) {
-            if (run == null) {
-                p.sendActionBar(text(p, "Los geht's!", "Go!", NamedTextColor.GREEN));
-                p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1.5f);
-            }
-            runs.put(p.getUniqueId(), new Run());
-            return;
-        }
-        if (run == null) {
-            return;
-        }
-        if (index == goal) {
-            finish(p, run);
-            return;
-        }
-        if (settings.checkpoints().contains(index) && index > run.checkpoint) {
-            run.checkpoint = index;
-            int number = new ArrayList<>(settings.checkpoints()).stream().sorted().toList().indexOf(index) + 1;
-            p.sendMessage(text(p, "Kontrollpunkt " + number + " – " + clock(elapsed(run)),
-                    "Checkpoint " + number + " – " + clock(elapsed(run)), NamedTextColor.GOLD));
-            p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 1.2f);
-        }
-    }
-
-    /** Runtergefallen: zurück auf den letzten Kontrollpunkt; zu weit weg: Versuch vorbei. */
-    private boolean fellOff(Player p, Location to, Run run) {
-        Point back = settings.course().get(run.checkpoint);
-        if (to.getY() < back.y() - FALL_BELOW_CHECKPOINT) {
-            Location spot = new Location(to.getWorld(), back.x() + 0.5, back.y() + 1, back.z() + 0.5, to.getYaw(), to.getPitch());
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                p.teleport(spot);
-                p.setFallDistance(0);
-            });
-            p.sendActionBar(text(p, "Zurück zum Kontrollpunkt", "Back to the checkpoint", NamedTextColor.YELLOW));
-            return true;
-        }
-        Point start = settings.course().get(0);
-        if (to.toVector().distance(new Vector(start.x(), start.y(), start.z())) > COURSE_LEAVE) {
-            runs.remove(p.getUniqueId());
-            p.sendActionBar(text(p, "Parkour abgebrochen", "Parkour cancelled", NamedTextColor.GRAY));
-            return true;
-        }
-        return false;
-    }
-
-    private static long elapsed(Run run) {
-        return (System.nanoTime() - run.startNanos) / NANOS_PER_MILLI;
-    }
-
-    private static String clock(long ms) {
-        long seconds = ms / MILLIS_PER_SECOND;
-        return String.format("%d:%02d,%02d", seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE,
-                (ms % MILLIS_PER_SECOND) / 10);
-    }
-
-    private void tickRuns() {
-        runs.forEach((id, run) -> {
-            Player p = Bukkit.getPlayer(id);
-            if (p != null) {
-                p.sendActionBar(Component.text("⏱ " + clock(elapsed(run)), NamedTextColor.AQUA));
-            }
-        });
-    }
-
-    private void finish(Player p, Run run) {
-        long ms = elapsed(run);
-        runs.remove(p.getUniqueId());
-        String path = "best." + p.getUniqueId();
-        long before = parkourData.getLong(path + ".ms", Long.MAX_VALUE);
-        boolean best = ms < before;
-        long record = bestOverall();
-        if (best) {
-            parkourData.set(path + ".ms", ms);
-            parkourData.set(path + ".name", p.getName());
-            try {
-                Files.createDirectories(dataDir);
-                parkourData.save(dataDir.resolve("parkour.yml").toFile());
-            } catch (IOException ex) {
-                plugin.getLogger().warning("Parkour-Bestenliste ließ sich nicht speichern: " + ex.getMessage());
-            }
-            refreshHolo();
-        }
-        p.showTitle(Title.title(text(p, "Geschafft!", "Done!", NamedTextColor.GOLD),
-                Component.text(clock(ms), NamedTextColor.AQUA), Title.Times.times(FADE_IN, STAY, FADE_OUT)));
-        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-        if (best) {
-            p.sendMessage(text(p, "Neue persönliche Bestzeit: " + clock(ms), "New personal best: " + clock(ms), NamedTextColor.GREEN));
-        }
-        if (ms < record) {
-            Bukkit.getOnlinePlayers().forEach(o -> o.sendMessage(text(o,
-                    "★ " + p.getName() + " hat den Parkour-Rekord geknackt: " + clock(ms),
-                    "★ " + p.getName() + " set a new parkour record: " + clock(ms), NamedTextColor.GOLD)));
-        }
-    }
-
-    private long bestOverall() {
-        return top().stream().mapToLong(Map.Entry::getValue).min().orElse(Long.MAX_VALUE);
-    }
-
-    /** Bestenliste: Name → Bestzeit (ms), schnellste zuerst. */
-    private List<Map.Entry<String, Long>> top() {
-        var section = parkourData.getConfigurationSection("best");
-        if (section == null) {
-            return List.of();
-        }
-        return section.getKeys(false).stream()
-                .map(k -> Map.entry(section.getString(k + ".name", "?"), section.getLong(k + ".ms")))
-                .sorted(Comparator.comparingLong(Map.Entry::getValue))
-                .toList();
-    }
-
-    /** Bestenliste schwebt über dem Start. */
-    private void refreshHolo() {
-        Settings s = settings;
-        if (holo != null && holo.isValid()) {
-            holo.remove();
-        }
-        holo = null;
-        if (s == null || !s.parkour() || s.course().isEmpty()) {
-            return;
-        }
-        Point start = s.course().get(0);
-        World w = Bukkit.getWorlds().get(0);
-        Location at = new Location(w, start.x() + 0.5, start.y() + HOLO_UP, start.z() + 0.5);
-        if (!at.isChunkLoaded()) {
-            return;
-        }
-        Component text = Component.text("Parkour · Top " + TOP_HOLO + "\n", NamedTextColor.GOLD, TextDecoration.BOLD);
-        List<Map.Entry<String, Long>> list = top();
-        for (int i = 0; i < Math.min(TOP_HOLO, list.size()); i++) {
-            text = text.append(Component.text((i + 1) + ". " + list.get(i).getKey() + "  " + clock(list.get(i).getValue()) + "\n",
-                    NamedTextColor.WHITE).decoration(TextDecoration.BOLD, false));
-        }
-        Component content = text;
-        holo = w.spawn(at, TextDisplay.class, d -> {
-            d.setPersistent(false);
-            d.setBillboard(Display.Billboard.CENTER);
-            d.setShadowed(true);
-            d.text(content);
-        });
     }
 
     // ---------- Rundgang ----------
@@ -835,7 +634,7 @@ final class LobbyFeatures implements Listener {
         if (s == null || s.stops().isEmpty() || tours.containsKey(p.getUniqueId()) || jailed.test(p.getUniqueId())) {
             return;
         }
-        runs.remove(p.getUniqueId());
+        jump.stop(p);
         p.setGameMode(GameMode.SPECTATOR);
         int[] step = {0};
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
@@ -899,36 +698,6 @@ final class LobbyFeatures implements Listener {
             @Override
             public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
                 return args.length == 1 ? List.of("stop") : List.of();
-            }
-        });
-        Bukkit.getCommandMap().register("moinmorni", new Command("parkour", "Parkour-Bestenliste", "/parkour [start]", List.of()) {
-            @Override
-            public boolean execute(CommandSender sender, String label, String[] args) {
-                if (!(sender instanceof Player p) || !active()) {
-                    return true;
-                }
-                if (args.length > 0 && ("start".equalsIgnoreCase(args[0]) || "neu".equalsIgnoreCase(args[0]))) {
-                    Point start = settings.course().get(0);
-                    runs.remove(p.getUniqueId());
-                    p.teleport(new Location(p.getWorld(), start.x() + 0.5, start.y() + 1, start.z() + 0.5));
-                    return true;
-                }
-                List<Map.Entry<String, Long>> list = top();
-                p.sendMessage(text(p, "Parkour – Bestenliste", "Parkour – leaderboard", NamedTextColor.GOLD));
-                for (int i = 0; i < Math.min(TOP_LIST, list.size()); i++) {
-                    p.sendMessage(Component.text((i + 1) + ". " + list.get(i).getKey() + " – " + clock(list.get(i).getValue()),
-                            NamedTextColor.WHITE));
-                }
-                long mine = parkourData.getLong("best." + p.getUniqueId() + ".ms", -1);
-                p.sendMessage(mine < 0
-                        ? text(p, "Du hast noch keine Zeit – /parkour start", "No time yet – /parkour start", NamedTextColor.GRAY)
-                        : text(p, "Deine Bestzeit: " + clock(mine), "Your best: " + clock(mine), NamedTextColor.AQUA));
-                return true;
-            }
-
-            @Override
-            public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
-                return args.length == 1 ? List.of("start") : List.of();
             }
         });
         Bukkit.getOnlinePlayers().forEach(Player::updateCommands);

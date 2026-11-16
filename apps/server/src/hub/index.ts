@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
-import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
+import { JAIL, JUMP_AND_RUN, LAUNCHPADS, LOBBY_SPAWN_VIEW, TOUR, modeIcon } from '@moinmorni/builder';
 import { alwaysIn, areaById, MODE_PHASE_PAUSE, type GameRight, type Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
@@ -123,6 +123,8 @@ const modeStateSchema = z.object({
 const LOBBY_DEBOUNCE_MS = 1_000;
 /** Name der Lobby im Netzwerk – nur sie bekommt die Lobby-Einstellungen. */
 const LOBBY_SERVER = 'lobby';
+/** Unter diesem Namen stehen die Werte der Lobby (Jump and Run) in der Statistik. */
+const LOBBY_STATS = 'lobby';
 /** Ort für Sonnenauf- und -untergang in der Lobby: München (Breite, Länge in Grad). */
 const CLOCK_LATITUDE = 48.137;
 const CLOCK_LONGITUDE = 11.575;
@@ -315,6 +317,9 @@ export function createHub(options: HubOptions): Hub {
   /** Gehört dieser Server zu diesem Modus? Nur dann darf er für ihn sprechen. */
   const servesMode = (conn: Connection, modeId: string): boolean =>
     conn.kind === 'backend' && stores.modes().some((md) => md.id === modeId && md.server === conn.server);
+  /** Die Lobby meldet Werte unter „lobby“ (Jump and Run) – nur sie selbst. */
+  const lobbyStats = (conn: Connection, modeId: string): boolean =>
+    conn.kind === 'backend' && conn.server === LOBBY_SERVER && modeId === LOBBY_STATS;
   const voice = createVoice(
     ctx,
     () => [...conns.backends.values()],
@@ -469,7 +474,7 @@ export function createHub(options: HubOptions): Hub {
         icon: modeIcon(md.id),
       })),
   });
-  /** Lobby-Einstellungen aus dem Panel + die festen Punkte der Lobby (Ankunft, Launchpads, Parkour, Rundgang). */
+  /** Lobby-Einstellungen aus dem Panel + die festen Punkte der Lobby (Ankunft, Launchpads, Jump and Run, Rundgang). */
   const lobbySettings = (): Body => {
     const l = stores.settings('lobby');
     return {
@@ -480,12 +485,13 @@ export function createHub(options: HubOptions): Hub {
       announcementSeconds: Number(l['announcementSeconds']),
       season: String(l['season'] ?? 'none'),
       launchpads: l['launchpads'] === true,
-      parkour: l['parkour'] === true,
+      jumpAndRun: { on: l['jumpAndRun'] === true, harderFrom: Number(l['jumpHarderFrom']) },
+      doubleJump: { on: l['doubleJump'] === true, strength: Number(l['doubleJumpStrength']) },
       walkers: Number(l['walkers']),
       // Tageszeit: „real“ = Sonne und Mond wie heute in Bayern (Zeitzone des Netzwerks, Ort München)
       daytime: String(l['daytime'] ?? 'real'),
       clock: { timeZone: options.timeZone, latitude: CLOCK_LATITUDE, longitude: CLOCK_LONGITUDE },
-      features: { spawn: LOBBY_SPAWN_VIEW, launchpads: LAUNCHPADS, parkour: PARKOUR, tour: TOUR },
+      features: { spawn: LOBBY_SPAWN_VIEW, launchpads: LAUNCHPADS, jump: JUMP_AND_RUN, tour: TOUR },
     };
   };
   /** Einstellungen für den MorniCraft-Server (Panel → Einstellungen → MorniCraft, Regeln der Webseite). */
@@ -620,7 +626,7 @@ export function createHub(options: HubOptions): Hub {
     // ---------- Spielmodi ----------
     stats: (conn, body) => {
       const m = statsSchema.parse(body);
-      if (servesMode(conn, m.mode)) stats.record(m);
+      if (servesMode(conn, m.mode) || lobbyStats(conn, m.mode)) stats.record(m);
     },
     // Zusammenfassung eines Spielers für das Panel (MorniCraft: Zuhause, Clan, Gräber) – nur vom Server des Modus.
     'mode-player': (conn, body) => {

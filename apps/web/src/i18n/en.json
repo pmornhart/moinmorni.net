@@ -286,6 +286,9 @@
         "tournaments_won": "Tournament wins",
         "heaviest_g": "Heaviest fish (g)",
         "species": "Species in the fish book",
+        "jump_best": "Jump and run – record",
+        "jump_runs": "Jump and run attempts",
+        "jumps": "Jumps",
         "timeOf": "Best time {{course}}",
         "finishesOf": "Finishes {{course}}"
       },
@@ -428,6 +431,21 @@
         "step4": "Rather apply directly in Discord? That works too – type there",
         "link": "To the application"
       },
+      "lobbyFun": {
+        "title": "Jump and run & double jump",
+        "short": "Fun in the lobby while you wait",
+        "intro": "The village is not just for waiting: high above the roofs our jump and run awaits, and anywhere in the lobby you can double jump.",
+        "jumpTitle": "Jump and run",
+        "jump1": "Go to the start in the north-west of the village (next to the castle market) and step on the emerald – or type",
+        "jump2": "High above the village, one block after another appears in front of you. Only you can see your blocks.",
+        "jump3": "Every jump you make scores a point. Over time it gets harder: longer jumps, slabs, fences, ice that melts quickly and slime to bounce on.",
+        "jump4": "If you fall, you are out and land back at the start. Your record is on the board at the start (top 10), on your profile and in the statistics.",
+        "top": "Leaderboard in the chat:",
+        "doubleTitle": "Double jump",
+        "double1": "Jump – and press the jump key once more in mid-air. With sparks, you get a little further forwards and upwards.",
+        "double2": "On phones and consoles (Bedrock) it works the same: jump twice in quick succession.",
+        "doubleNot": "There is no double jump in the jump and run, in jail or during the tour."
+      },
       "commands": {
         "title": "Commands",
         "short": "The most important chat commands",
@@ -443,6 +461,7 @@
           "profil": "Make your profile on the website private or public.",
           "voice": "Show voice channels, join one or leave it.",
           "lobby": "Back to the lobby.",
+          "jnr": "Start the jump and run in the lobby – add “top” for the leaderboard.",
           "discord": "Get a code to link your account with Discord."
         }
       },
@@ -502,7 +521,7 @@
         "schloss": {
           "title": "The castle",
           "short": "At the top of the mountain",
-          "text": "Launch pads fly you up the stairs. The parkour spiral with its leaderboard waits at the castle.",
+          "text": "Launch pads fly you up the stairs. High above the village, the jump and run with its leaderboard is waiting.",
           "alt": "The white castle with green tower roofs on the mountain"
         },
         "karte": {

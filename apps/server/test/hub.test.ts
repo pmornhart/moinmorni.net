@@ -627,19 +627,44 @@ describe('Hub', () => {
     expect(first).toMatchObject({
       welcome: { title: 'Servus in MoinMorni!' },
       season: 'none',
-      parkour: true,
+      jumpAndRun: { on: true, harderFrom: 10 },
+      doubleJump: { on: true, strength: 1 },
     });
     const features = first['features'] as {
-      parkour: { blocks: unknown[] };
+      jump: { start: { x: number }; lanes: unknown[] };
       tour: unknown[];
       launchpads: unknown[];
     };
-    expect(features.parkour.blocks.length).toBe(25);
+    expect(features.jump.lanes.length).toBe(9);
+    expect(features.jump.start.x).toBe(-60);
     expect(features.tour.length).toBeGreaterThan(3);
     expect(features.launchpads.length).toBe(2);
     stores.patchSettings('lobby', { season: 'wiesn', walkers: 3 }, 'test');
     expect(await lobby.next('lobby-settings')).toMatchObject({ season: 'wiesn', walkers: 3 });
+    stores.patchSettings('lobby', { doubleJump: false, doubleJumpStrength: 1.5, jumpHarderFrom: 25 }, 'test');
+    expect(await lobby.next('lobby-settings')).toMatchObject({
+      doubleJump: { on: false, strength: 1.5 },
+      jumpAndRun: { on: true, harderFrom: 25 },
+    });
     expect(duels.received.some((m) => m.t === 'lobby-settings')).toBe(false);
+  });
+
+  test('Jump and Run: nur die Lobby meldet Werte unter „lobby“, sie stehen im Profil und in der Bestenliste', async () => {
+    const { lobby, duels } = await network();
+    lobby.send({ t: 'stats', mode: 'lobby', uuid: PHILIP, add: { jump_runs: 1, jumps: 12 }, max: { jump_best: 12 } });
+    lobby.send({ t: 'stats', mode: 'lobby', uuid: PHILIP, add: { jump_runs: 1, jumps: 7 }, max: { jump_best: 7 } });
+    // Ein Spielserver darf nicht für die Lobby sprechen.
+    duels.send({ t: 'stats', mode: 'lobby', uuid: LENA, max: { jump_best: 999 } });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(hub.stats.ofPlayer(PHILIP)['lobby']).toEqual({ jump_runs: 2, jumps: 19, jump_best: 12 });
+    expect(hub.stats.ofPlayer(LENA)['lobby']).toBeUndefined();
+    expect(hub.stats.top('lobby', 'jump_best', 10).map((e) => [e.name, e.value])).toEqual([['Philip', 12]]);
+    // Der Rekord steht in der Bestenliste der Lobby ganz vorne.
+    expect(hub.stats.boards().find((b) => b.mode === 'lobby')?.keys[0]).toEqual({
+      key: 'jump_best',
+      players: 1,
+      order: 'desc',
+    });
   });
 
   test('MorniCraft-Einstellungen: nur der MorniCraft-Server bekommt sie, Änderungen im Panel und per Befehl sofort', async () => {

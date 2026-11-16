@@ -286,6 +286,9 @@
         "tournaments_won": "Turniersiege",
         "heaviest_g": "Schwerster Fisch (g)",
         "species": "Arten im Fischbuch",
+        "jump_best": "Jump and Run – Rekord",
+        "jump_runs": "Jump-and-Run-Läufe",
+        "jumps": "Sprünge",
         "timeOf": "Bestzeit {{course}}",
         "finishesOf": "Ziele {{course}}"
       },
@@ -428,6 +431,21 @@
         "step4": "Lieber direkt im Discord? Das geht auch – tippe dort",
         "link": "Zur Bewerbung"
       },
+      "lobbyFun": {
+        "title": "Jump and Run & Doppelsprung",
+        "short": "Spaß in der Lobby, während du wartest",
+        "intro": "Im Dorf wird nicht nur gewartet: Hoch über den Dächern wartet unser Jump and Run, und überall in der Lobby kannst du doppelt springen.",
+        "jumpTitle": "Jump and Run",
+        "jump1": "Geh zum Startplatz im Nordwesten des Dorfs (neben dem Schlossmarkt) und tritt auf den Smaragd – oder tippe",
+        "jump2": "Hoch über dem Dorf erscheint vor dir ein Block nach dem anderen. Nur du siehst deine Blöcke.",
+        "jump3": "Jeder geschaffte Sprung gibt einen Punkt. Mit der Zeit wird es schwerer: weitere Sprünge, halbe Stufen, Zäune, Eis, das schnell schmilzt, und Schleim zum Hochfedern.",
+        "jump4": "Wer fällt, ist raus und landet wieder am Startplatz. Dein Rekord steht auf der Tafel am Start (Top 10), in deinem Profil und in den Statistiken.",
+        "top": "Bestenliste im Chat:",
+        "doubleTitle": "Doppelsprung",
+        "double1": "Spring – und drück in der Luft noch einmal die Sprungtaste. Mit Funken geht es ein Stück weiter nach vorn und oben.",
+        "double2": "Auf dem Handy und der Konsole (Bedrock) genauso: zweimal kurz hintereinander springen.",
+        "doubleNot": "Im Jump and Run, im Gefängnis und beim Rundgang gibt es keinen Doppelsprung."
+      },
       "commands": {
         "title": "Befehle",
         "short": "Die wichtigsten Befehle im Chat",
@@ -443,6 +461,7 @@
           "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
           "voice": "Sprachkanäle anzeigen, einem beitreten oder ihn verlassen.",
           "lobby": "Zurück in die Lobby.",
+          "jnr": "Jump and Run in der Lobby starten – mit „top“ die Bestenliste.",
           "discord": "Einen Code holen, um dein Konto mit Discord zu verbinden."
         }
       },
@@ -502,7 +521,7 @@
         "schloss": {
           "title": "Das Schloss",
           "short": "Ganz oben am Berg",
-          "text": "Mit den Launchpads fliegst du die Treppe hinauf. Am Schloss wartet die Parkour-Spirale mit Bestenliste.",
+          "text": "Mit den Launchpads fliegst du die Treppe hinauf. Hoch über dem Dorf wartet das Jump and Run mit Bestenliste.",
           "alt": "Das weiße Schloss mit grünen Turmdächern auf dem Berg"
         },
         "karte": {

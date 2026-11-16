@@ -13,7 +13,9 @@ import {
   MessagesSquare,
   Monitor,
   Moon,
+  Rocket,
   Smartphone,
+  Sparkles,
   Sun,
   Terminal,
   type LucideIcon,
@@ -36,7 +38,15 @@ import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, FALLBACK_BEDROCK_PORT, WRAP } f
 const VOICE_MOD_URL = 'https://modrinth.com/plugin/simple-voice-chat';
 
 type SectionId =
-  'reinkommen' | 'spielmodi' | 'sprachchat' | 'discord' | 'mornicraft' | 'befehle' | 'regeln' | 'team-hilfe';
+  | 'reinkommen'
+  | 'spielmodi'
+  | 'sprachchat'
+  | 'discord'
+  | 'mornicraft'
+  | 'lobby-spass'
+  | 'befehle'
+  | 'regeln'
+  | 'team-hilfe';
 
 interface HelpSection {
   readonly id: SectionId;
@@ -50,6 +60,7 @@ const SECTIONS: readonly HelpSection[] = [
   { id: 'sprachchat', key: 'voice', icon: Headphones },
   { id: 'discord', key: 'discord', icon: Link2 },
   { id: 'mornicraft', key: 'mornicraft', icon: ClipboardList },
+  { id: 'lobby-spass', key: 'lobbyFun', icon: Rocket },
   { id: 'befehle', key: 'commands', icon: Terminal },
   { id: 'regeln', key: 'rules', icon: Gavel },
   { id: 'team-hilfe', key: 'team', icon: LifeBuoy },
@@ -66,6 +77,7 @@ const COMMANDS: readonly { readonly key: string; readonly syntax: string }[] = [
   { key: 'profil', syntax: '/profil [privat|öffentlich]' },
   { key: 'voice', syntax: '/voice [kanal|raus]' },
   { key: 'lobby', syntax: '/lobby' },
+  { key: 'jnr', syntax: '/jnr [top]' },
   { key: 'discord', syntax: '/discord' },
 ];
 
@@ -279,6 +291,37 @@ function MorniCraftBody(): ReactElement {
   );
 }
 
+/** Jump and run high above the village and the double jump everywhere in the lobby. */
+function LobbyFunBody(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  return (
+    <div className="grid gap-5">
+      <p>{t('site.help.lobbyFun.intro')}</p>
+      <div className="grid gap-4 md:grid-cols-2">
+        <SubCard icon={Rocket} title={t('site.help.lobbyFun.jumpTitle')}>
+          <Steps
+            items={[
+              <>
+                {t('site.help.lobbyFun.jump1')} <Cmd>/jnr</Cmd>
+              </>,
+              t('site.help.lobbyFun.jump2'),
+              t('site.help.lobbyFun.jump3'),
+              t('site.help.lobbyFun.jump4'),
+            ]}
+          />
+          <p className="flex flex-wrap items-center gap-1.5 text-[14px] text-muted-foreground">
+            {t('site.help.lobbyFun.top')} <Cmd>/jnr top</Cmd>
+          </p>
+        </SubCard>
+        <SubCard icon={Sparkles} title={t('site.help.lobbyFun.doubleTitle')}>
+          <Steps items={[t('site.help.lobbyFun.double1'), t('site.help.lobbyFun.double2')]} />
+          <p className="text-[14px] text-muted-foreground">{t('site.help.lobbyFun.doubleNot')}</p>
+        </SubCard>
+      </div>
+    </div>
+  );
+}
+
 function CommandsBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
@@ -398,6 +441,7 @@ const BODIES: Readonly<Record<SectionId, () => ReactElement>> = {
   sprachchat: VoiceBody,
   discord: DiscordBody,
   mornicraft: MorniCraftBody,
+  'lobby-spass': LobbyFunBody,
   befehle: CommandsBody,
   regeln: RulesBody,
   'team-hilfe': TeamBody,
