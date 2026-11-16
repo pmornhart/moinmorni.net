@@ -20,6 +20,7 @@ import {
   MessagesSquare,
   Mic,
   Mountain,
+  Network,
   Newspaper,
   Pickaxe,
   RefreshCw,
@@ -75,6 +76,7 @@ const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
   Snowflake,
   Bird,
   Fish,
+  Network,
 };
 
 export function areaIcon(name: string): LucideIcon {

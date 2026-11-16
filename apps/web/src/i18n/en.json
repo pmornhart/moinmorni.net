@@ -1166,7 +1166,7 @@
     },
     "settings": {
       "title": "Settings",
-      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – morni.net does that by itself as soon as nobody is playing."
+      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – morni.net does that by itself as soon as nobody is playing. Under “Reachability” you connect NetBird: website and game right on the domain, and your home address stays hidden."
     },
     "news": {
       "title": "News",
@@ -1848,5 +1848,8 @@
     "text": "These settings live in the game mode’s own file. morni.net writes them there and restarts the mode by itself as soon as nobody is playing – nobody gets thrown out mid-game. If the mode is asleep, they apply when it wakes up.",
     "pendingTitle": "Restart still to come",
     "pendingText": "The new values are written. Someone is still playing – as soon as the mode is empty it restarts, then they apply."
+  },
+  "reach": {
+    "ownerOnly": "Only the owner sets up NetBird, the website on the domain and “hide the home connection” – they are admin in the engine."
   }
 }

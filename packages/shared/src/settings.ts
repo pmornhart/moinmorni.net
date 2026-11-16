@@ -1355,6 +1355,40 @@ export const BUILD_AREA: SettingArea = {
   ],
 };
 
+/**
+ * Erreichbarkeit: NetBird (Domain, Webseite, Proxy direkt auf der Domain, „Hausanschluss verstecken“) richtet der
+ * Motor ein – die Karten dafür kommen aus MorniHosting und stehen über den Einstellungen. Hier nur, ob seine Meldungen
+ * im Discord-Team-Log landen.
+ */
+export const REACH_AREA: SettingArea = {
+  id: 'reach',
+  title: t('Erreichbarkeit', 'Reachability'),
+  text: t(
+    'Wie Spieler und Besucher morni.net erreichen: über NetBird, mit HTTPS, ohne Portfreigabe zu Hause – und ohne dass irgendwo die IP deines Hausanschlusses auftaucht.',
+    'How players and visitors reach morni.net: through NetBird, with HTTPS, without opening ports at home – and without your home IP showing up anywhere.',
+  ),
+  icon: 'Network',
+  panel: 'settings',
+  sections: [
+    {
+      id: 'alerts',
+      title: t('Meldungen', 'Alerts'),
+      settings: [
+        {
+          key: 'teamLogAlerts',
+          type: 'boolean',
+          default: true,
+          label: t('Probleme im Discord-Team-Log melden', 'Report problems in the Discord team log'),
+          help: t(
+            'Wenn der Motor oder sein Wächter etwas bemerkt (NetBird getrennt, Hausanschluss nicht mehr versteckt, DNS, Docker, ein Server startet nicht …), steht es im Team-Log – mit „behebt sich selbst“ oder was zu tun ist. Ist es behoben, kommt eine kurze Entwarnung.',
+            'When the engine or its watchdog notices something (NetBird disconnected, home connection no longer hidden, DNS, Docker, a server does not start …), it goes to the team log – saying whether it fixes itself or what to do. Once fixed, a short all-clear follows.',
+          ),
+        },
+      ],
+    },
+  ],
+};
+
 export const UPDATES_AREA: SettingArea = {
   id: 'updates',
   title: t('Updates', 'Updates'),
@@ -1438,6 +1472,7 @@ export const SETTING_AREAS: readonly SettingArea[] = [
   MORNICRAFT_AREA,
   ...MODE_SETTING_AREAS,
   BUILD_AREA,
+  REACH_AREA,
   UPDATES_AREA,
 ];
 

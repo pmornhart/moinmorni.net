@@ -13,6 +13,7 @@ import { createHub, type Hub } from './hub/index.js';
 import { AppError } from './lib/errors.js';
 import { createEventBus, type EventBus } from './lib/events.js';
 import { createMotorClient, MotorError, type FetchLike, type MotorClient } from './motor/client.js';
+import { startAlertRelay, type AlertRelay } from './motor/alerts.js';
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
 import { githubReleases } from './network/mode-releases.js';
@@ -112,7 +113,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     // einer Adresse, die ein Besucher selbst in X-Forwarded-For schreibt.
     trustProxy: TRUSTED_HOPS,
   }).withTypeProvider<ZodTypeProvider>();
-  if (adopted) app.log.info('Datenbank unter dem früheren Namen übernommen – das Netzwerk heißt jetzt morni.net');
+  if (adopted)
+    app.log.info('Datenbank unter dem früheren Namen übernommen – das Netzwerk heißt jetzt morni.net');
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   await app.register(helmet, { contentSecurityPolicy: false, referrerPolicy: { policy: 'same-origin' } });
@@ -317,6 +319,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     return reply.code(HTTP_NOT_FOUND).send({ error: 'not_found' });
   });
 
+  const relay: { current: AlertRelay | null } = { current: null };
   return {
     app,
     config,
@@ -332,6 +335,16 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     start: async () => {
       sleep.start();
       bot.start();
+      // Meldungen des Motors (Wächter, NetBird-Ausgang, Server) ins Discord-Team-Log.
+      if (config.motorToken)
+        relay.current = startAlertRelay({
+          motorUrl: config.motorUrl,
+          token: config.motorToken,
+          dataDir: config.dataDir,
+          enabled: () => stores.settings('reach')['teamLogAlerts'] !== false,
+          post: (text) => bot.teamLog(text),
+          log: app.log,
+        });
       // Nach einem Update einmal im Team-Log melden, wie es ausging (der Bot braucht kurz für die Verbindung).
       setTimeout(() => {
         announceUpdate().catch((err: unknown) => app.log.warn({ err }, 'Update-Meldung nicht gesendet'));
@@ -344,6 +357,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       modeCheck.unref();
     },
     close: async () => {
+      relay.current?.stop();
       stopAuto();
       sleep.stop();
       bot.stop();

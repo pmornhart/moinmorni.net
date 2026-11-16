@@ -115,6 +115,7 @@ describe('morni.net mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
       'adlerflug',
       'angelkoenig',
       'build',
+      'reach',
       'updates',
     ]);
     // Spielmodi zeigen, ob noch ein Neustart aussteht; andere Bereiche haben das Feld nicht.

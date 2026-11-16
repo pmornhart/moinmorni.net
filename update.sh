@@ -48,6 +48,12 @@ KEEP_BACKUPS=5
 HEALTH_TRIES="${MM_HEALTH_TRIES:-90}"
 HEALTH_SECONDS="${MM_HEALTH_SECONDS:-2}"
 BUILD_TRIES=3
+# Solange das Update läuft, lässt der Wächter morni.net in Ruhe (sonst starten beide es gleichzeitig neu).
+UPDATE_LOCK="${MM_UPDATE_LOCK:-/run/${APP}-update.lock}"
+# Der Wächter kommt aus dem Motor (MorniHosting) und bekommt die Namen von morni.net mit.
+VENDOR_SCRIPTS="vendor/mornihosting/scripts"
+# Nur für den Test (tools/update-test/run.sh) änderbar: wohin der Wächter sein Startskript legt.
+SBIN_DIR="${MM_SBIN_DIR:-/usr/local/sbin}"
 
 GN=$'\e[32m'
 YW=$'\e[33m'
@@ -62,6 +68,9 @@ if [[ "${EUID}" -ne 0 ]]; then
   msg_error "Bitte als root starten (z. B. mit sudo)."
   exit 1
 fi
+
+touch "${UPDATE_LOCK}" 2>/dev/null || true
+trap 'rm -f "${UPDATE_LOCK}"' EXIT
 
 volume_dir() { docker volume inspect -f '{{ .Mountpoint }}' "$1" 2>/dev/null || true; }
 # Ordner, in dem etwas liegt?
@@ -464,6 +473,13 @@ printf 'morninet=%s\nmotor=%s\nversion=%s\n' "${MM_OLD_HEAD}" "${MM_OLD_MOTOR}" 
   >"${BACKUP_DIR}/stand.txt"
 msg_ok "Sicherung: ${BACKUP_DIR}"
 
+# NetBird-Server dieses Rechners in die .env, bevor der Motor neu startet (Vorgabe für „Erreichbarkeit“ im Panel).
+if [[ -f "${VENDOR_SCRIPTS}/netbird-env.sh" ]] &&
+  NB_API="$(MH_ENV_FILE="${INSTALL_DIR}/.env" bash "${VENDOR_SCRIPTS}/netbird-env.sh" 2>/dev/null)" &&
+  [[ -n "${NB_API}" ]]; then
+  msg_ok "NetBird-Server dieses Rechners: ${NB_API}"
+fi
+
 # ---------- 4. Neu starten und prüfen ----------
 step "restart"
 if ((MIGRATE)); then migrate_volumes; fi
@@ -483,6 +499,17 @@ if ((MIGRATED)); then
   finish_migration || msg_error "Umzug: Aufräumen ging nicht ganz – morni.net läuft, bitte die Meldungen oben ansehen."
 fi
 find "${BACKUP_ROOT}" -mindepth 1 -maxdepth 1 -type d | sort | head -n "-${KEEP_BACKUPS}" | xargs -r rm -rf
+# Wächter (neu) einrichten: prüft jede Minute NetBird, DNS, Docker und die Container von morni.net; Meldungen gehen
+# über den Motor ins Discord-Team-Log.
+if [[ -f "${VENDOR_SCRIPTS}/guard.sh" ]] && command -v systemctl >/dev/null 2>&1; then
+  if MH_BRAND=morni.net MH_GUARD_NAME="${APP}" MH_INSTALL_DIR="${INSTALL_DIR}" MH_DATA_VOLUME="${MOTOR_VOLUME_NAME}" \
+    MH_GUARD_CONTAINERS="${NEW_CONTAINERS[*]}" MH_UNIT_DIR="${SYSTEMD_DIR}" MH_WRAPPER_DIR="${SBIN_DIR}" \
+    bash "${VENDOR_SCRIPTS}/guard.sh" install >/dev/null; then
+    msg_ok "Wächter läuft (Status: ${APP}-guard status)"
+  else
+    msg_error "Der Wächter ließ sich nicht einrichten (Details: bash ${INSTALL_DIR}/${VENDOR_SCRIPTS}/guard.sh install)"
+  fi
+fi
 docker image prune -f >/dev/null 2>&1 || true
 docker builder prune -af >/dev/null 2>&1 || true
 STEP="null"

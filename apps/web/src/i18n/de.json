@@ -1166,7 +1166,7 @@
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht morni.net von selbst, sobald gerade niemand spielt."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht morni.net von selbst, sobald gerade niemand spielt. Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
     },
     "news": {
       "title": "News",
@@ -1848,5 +1848,8 @@
     "text": "Diese Einstellungen stehen in der Datei des Spielmodus. morni.net trägt sie dort ein und startet den Modus von selbst neu, sobald gerade niemand spielt – niemand fliegt mitten im Spiel raus. Schläft der Modus, gelten sie beim Aufwachen.",
     "pendingTitle": "Neustart steht noch aus",
     "pendingText": "Die neuen Werte sind eingetragen. Gerade spielt noch jemand – sobald der Modus leer ist, startet er neu, dann gelten sie."
+  },
+  "reach": {
+    "ownerOnly": "NetBird, die Webseite auf der Domain und „Hausanschluss verstecken“ richtet nur der Owner ein – er ist im Motor Admin."
   }
 }

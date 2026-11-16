@@ -169,6 +169,12 @@ else
 fi
 unset TOKEN_FROM_ENV
 
+# NetBird-Server dieses Rechners (falls NetBird schon verbunden ist) als Vorgabe für „Erreichbarkeit“ im Panel.
+NETBIRD_ENV="${INSTALL_DIR}/vendor/mornihosting/scripts/netbird-env.sh"
+if [[ -f "${NETBIRD_ENV}" ]] && NB_API="$(MH_ENV_FILE="${INSTALL_DIR}/.env" bash "${NETBIRD_ENV}")" && [[ -n "${NB_API}" ]]; then
+  msg_ok "NetBird-Server dieses Rechners: ${NB_API}"
+fi
+
 msg_info "morni.net wird gebaut (das erste Mal dauert es ein paar Minuten)"
 export MM_BUILD_VERSION MH_BUILD_VERSION
 MM_BUILD_VERSION="$(mm_version .)"
@@ -239,6 +245,18 @@ else
   msg_info "Ohne systemd: Updates von Hand mit morninet-update"
 fi
 
+# Wächter aus dem Motor (MorniHosting), mit den Namen von morni.net: prüft jede Minute NetBird, DNS, Docker und die
+# Container von morni.net und repariert selbst. Was er tut, meldet er über den Motor ins Discord-Team-Log.
+GUARD="${INSTALL_DIR}/vendor/mornihosting/scripts/guard.sh"
+if [[ -f "${GUARD}" && -d /run/systemd/system ]] && command -v systemctl >/dev/null 2>&1; then
+  if MH_BRAND=morni.net MH_GUARD_NAME=morninet MH_INSTALL_DIR="${INSTALL_DIR}" MH_DATA_VOLUME=morninet-motor-data \
+    MH_GUARD_CONTAINERS="morninet morninet-motor morninet-socket-proxy" bash "${GUARD}" install >/dev/null; then
+    msg_ok "Wächter läuft (prüft jede Minute) – Status: morninet-guard status"
+  else
+    msg_error "Der Wächter ließ sich nicht einrichten (Details: bash ${GUARD} install)"
+  fi
+fi
+
 DOMAIN="$(get_env MM_DOMAIN)"
 PORT="$(get_env MM_PORT)"
 printf '\n %s🎉 Fertig!%s\n\n' "${GN}" "${CL}"
@@ -257,6 +275,7 @@ if [[ "${SETUP_REQUIRED}" == true ]] &&
 else
   printf '    Öffne %shttps://%s/panel%s und melde dich an.\n\n' "${BL}" "${DOMAIN}" "${CL}"
 fi
-printf '    HTTPS kommt über NetBird: Dienst für %s auf http://%s:%s (mit „Pass Host Header“).\n' \
-  "${DOMAIN}" "${LAN_IP:-<IP>}" "${PORT:-8080}"
+printf '    HTTPS kommt über NetBird: im Panel unter Einstellungen → Erreichbarkeit (oder von Hand: Dienst für %s auf\n' \
+  "${DOMAIN}"
+printf '    http://%s:%s mit „Pass Host Header“).\n' "${LAN_IP:-<IP>}" "${PORT:-8080}"
 printf '    Anleitung: %s/docs/proxmox-quickstart.md\n\n' "${INSTALL_DIR}"

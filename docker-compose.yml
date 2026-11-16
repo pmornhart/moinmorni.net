@@ -60,6 +60,11 @@ services:
       MH_MC_NETWORK: morninet-mc
       MH_ROUTER_JAVA_PORT: '0'
       MH_ROUTER_BEDROCK_PORT: '0'
+      # Alles, was der Motor in NetBird anlegt, heißt „morni.net …“ (Netzwerk, Gruppe, Resources, „morni.net Ausgang“) –
+      # so teilt sich morni.net ein NetBird-Konto mit MorniHosting, ohne dessen Dinge anzufassen.
+      MH_BRAND: morni.net
+      # NetBird-Server dieses Rechners (install.sh/update.sh lesen ihn aus „netbird status“): Vorgabe im Panel.
+      MH_NETBIRD_API: ${MH_NETBIRD_API:-}
     volumes:
       - motor-data:/data
     networks:

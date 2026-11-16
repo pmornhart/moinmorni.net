@@ -151,6 +151,11 @@ export const T = {
     de: '⚠️ Das Update von morni.net ist fehlgeschlagen. Protokoll im Panel unter Updates.',
     en: '⚠️ The morni.net update failed. Log in the panel under Updates.',
   },
+  // Meldungen des Motors (Wächter, NetBird-Ausgang, Server) im Team-Log.
+  alertSelf: { de: '**Behebt sich selbst?** {answer}', en: '**Fixes itself?** {answer}' },
+  alertFixed: { de: '✅ Ja – ist schon behoben.', en: '✅ Yes – already fixed.' },
+  alertFixing: { de: '🔄 Ja – wird gerade repariert.', en: '🔄 Yes – being repaired right now.' },
+  alertAction: { de: '❌ Nein – bitte selbst etwas tun:', en: '❌ No – please do something:' },
   logLiftBan: { de: '✅ **{name}** entbannt von {by}', en: '✅ **{name}** unbanned by {by}' },
   logLiftMute: {
     de: '🔊 **{name}** darf wieder schreiben ({by})',

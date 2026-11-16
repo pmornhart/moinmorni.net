@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { NETWORK_TITLE } from '@morninet/shared';
 import de from './de.json';
 import en from './en.json';
 
@@ -16,6 +17,8 @@ export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 export const MM_NAMESPACE = 'mm';
 const MOTOR_NAMESPACE = 'translation';
 const STORAGE_KEY = 'mm-lang';
+/** Name of morni.net's machine in NetBird (the container's host name, see proxmox/morninet.sh). */
+const NETBIRD_MACHINE = 'morninet';
 const FALLBACK: Language = 'de';
 
 function isLanguage(value: unknown): value is Language {
@@ -46,7 +49,8 @@ void i18n.use(initReactI18next).init({
   fallbackLng: FALLBACK,
   ns: [MM_NAMESPACE, MOTOR_NAMESPACE],
   defaultNS: MOTOR_NAMESPACE,
-  interpolation: { escapeValue: false },
+  // MorniHosting's texts name the product and its machine in NetBird ("{{brand}} Ausgang") – here morni.net.
+  interpolation: { escapeValue: false, defaultVariables: { brand: NETWORK_TITLE, machine: NETBIRD_MACHINE } },
   returnNull: false,
   // MorniHosting's option values such as "minecraft:flat" contain colons; namespaces are chosen explicitly.
   nsSeparator: false,

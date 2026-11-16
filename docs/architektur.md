@@ -53,7 +53,11 @@ Stand: 14.11.2026 (nach Philips Entscheidung „eigenständig, MorniHosting-Kern
    ohne eigene Ports nach außen, Netzwerk an der Hauptdomain (NetBird).
 3. **Schlüssel mit begrenzten Rechten** (Bereiche + Server), für Hub und Updates.
 4. **Server-Seiten als Baustein:** API-Pfad einstellbar, Seiten/Reiter als Komponenten exportiert → morni.net bettet sie ein.
-5. **Ereignisse nach außen, signiert** (Absturz, Backup, Update …) → morni.net-Bot meldet in Discord.
+5. **Meldungen nach außen** (Wächter, NetBird-Ausgang, Absturz, Backup …) über die Live-Verbindung `/api/ws`
+   (Kanal „alerts“, nur mit Schlüssel) → morni.net meldet sie im Discord-Team-Log.
+6. **NetBird für ein zweites Produkt** (`MH_BRAND=morni.net`): eigene Namen in NetBird, Spiel direkt auf der Domain,
+   derselbe Ausgang wie MorniHosting („Hausanschluss verstecken“), Karten zum Einbetten, Wächter mit eigenen Namen
+   (siehe [NetBird-Anleitung](netbird.md)).
 
 ## Updates
 

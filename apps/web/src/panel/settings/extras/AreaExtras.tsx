@@ -7,6 +7,7 @@ import { useCan, type SettingsEntry } from '../../session';
 import { ApplicationsCard } from './ApplicationsCard';
 import { BuildCard } from './BuildCard';
 import { Notice } from './parts';
+import { ReachCard } from './ReachCard';
 import { UpdatesCard } from './UpdatesCard';
 import { WhitelistCard } from './WhitelistCard';
 
@@ -32,6 +33,7 @@ function MorniCraftExtras({ entry }: { readonly entry: SettingsEntry }): ReactEl
 
 const EXTRAS: Readonly<Record<string, (props: { readonly entry: SettingsEntry }) => ReactElement>> = {
   updates: () => <UpdatesCard />,
+  reach: () => <ReachCard />,
   mornicraft: MorniCraftExtras,
   build: () => <BuildCard />,
 };
@@ -53,7 +55,10 @@ function ModeRestartNotice({ pending }: { readonly pending: boolean }): ReactEle
   );
 }
 
-/** Cards some settings areas show above their settings (updates, applications, saved builds, mode restarts). */
+/**
+ * Cards some settings areas show above their settings (updates, applications, saved builds, mode restarts, NetBird for
+ * the reachability).
+ */
 export function AreaExtras({ entry }: { readonly entry: SettingsEntry }): ReactElement | null {
   const Extra = EXTRAS[entry.area.id];
   if (!entry.area.mode) return Extra ? <Extra entry={entry} /> : null;

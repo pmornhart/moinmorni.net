@@ -94,7 +94,8 @@ SYSTEMCTL
 chmod +x "${WORK}/bin/docker" "${WORK}/bin/systemctl"
 export PATH="${WORK}/bin:${PATH}" FAKE_LOG="${WORK}/docker.log" FAKE_VOL="${WORK}/vol"
 export MM_BACKUP_DIR="${WORK}/backups" MM_HEALTH_TRIES=2 MM_HEALTH_SECONDS=0
-export MM_SYSTEMD_DIR="${WORK}/systemd" MM_BIN_DIR="${WORK}/usr-local-bin"
+export MM_SYSTEMD_DIR="${WORK}/systemd" MM_BIN_DIR="${WORK}/usr-local-bin" MM_SBIN_DIR="${WORK}/usr-local-sbin"
+export MM_UPDATE_LOCK="${WORK}/update.lock"
 mkdir -p "${MM_SYSTEMD_DIR}" "${MM_BIN_DIR}"
 DATA="${WORK}/vol/volumes/${APP}-data"
 MOTOR="${WORK}/vol/volumes/${APP}-motor-data"
@@ -103,6 +104,17 @@ mkdir -p "${DATA}" "${MOTOR}"
 # ---------- Echtes Git: Motor-Ursprung, Ursprung mit Untermodul, Klon als /opt/morninet ----------
 git_q init -q -b main "${WORK}/motor-origin"
 echo v1 >"${WORK}/motor-origin/motor.txt"
+# Wächter und NetBird-Adresse des Motors: hier nur Stellvertreter, die mitschreiben, womit sie aufgerufen werden.
+mkdir -p "${WORK}/motor-origin/scripts"
+cat >"${WORK}/motor-origin/scripts/guard.sh" <<'GUARD'
+#!/usr/bin/env bash
+echo "guard $* brand=${MH_BRAND:-} name=${MH_GUARD_NAME:-} volume=${MH_DATA_VOLUME:-} containers=${MH_GUARD_CONTAINERS:-} units=${MH_UNIT_DIR:-} lock=$([[ -e "${MM_UPDATE_LOCK}" ]] && echo da || echo weg)" >>"${FAKE_LOG}"
+GUARD
+cat >"${WORK}/motor-origin/scripts/netbird-env.sh" <<'NETBIRD'
+#!/usr/bin/env bash
+echo "netbird-env env=${MH_ENV_FILE:-}" >>"${FAKE_LOG}"
+echo "https://netbird.example.de"
+NETBIRD
 git_q -C "${WORK}/motor-origin" add . && git_q -C "${WORK}/motor-origin" commit -qm "Motor 1"
 git_q init -q -b main "${WORK}/mm-origin"
 cp "${SCRIPT}" "${WORK}/mm-origin/update.sh"
@@ -140,6 +152,9 @@ check "Sicherung mit beiden Datenbanken, ohne Welten" "ls '${WORK}'/backups/*/${
 check "Protokoll fürs Panel" "grep -q 'Update fertig' '${DATA}/update/log.txt'"
 check "gebaut wurden morni.net und Motor" "grep -q 'compose build --quiet ${APP} motor' '${FAKE_LOG}'"
 check "ohne Umzug: nichts verschoben, keine Volumes unter dem früheren Namen" "[[ ! -e '${WORK}/vol/volumes/${OLD_APP}-data' ]] && ! grep -q 'Umzug' '${WORK}/out.txt'"
+check "NetBird-Adresse kommt in die .env von morni.net" "grep -q 'netbird-env env=${INSTALL}/.env' '${FAKE_LOG}' && grep -q 'netbird.example.de' '${WORK}/out.txt'"
+check "Wächter mit den Namen von morni.net, Meldungen an den Motor" "grep -q 'guard install brand=morni.net name=${APP} volume=${APP}-motor-data containers=${APP} ${APP}-motor ${APP}-socket-proxy units=${MM_SYSTEMD_DIR}' '${FAKE_LOG}'"
+check "der Wächter sah die Update-Sperre, danach ist sie weg" "grep -q 'guard install.* lock=da' '${FAKE_LOG}' && [[ ! -e '${MM_UPDATE_LOCK}' ]]"
 
 echo " 2) Bauen scheitert → alter Stand läuft weiter"
 OLD="$(git -C "${INSTALL}" rev-parse HEAD)"
