@@ -851,6 +851,11 @@ describe('Hub', () => {
       graves: [{ items: 12 }],
     });
     expect(lena).not.toHaveProperty('extra');
+    // Ohne Clan fehlt das Feld ganz (MorniCraft lässt leere Werte weg): trotzdem gespeichert, Clan = keiner.
+    const { clan: _none, ...noClan } = data;
+    mc.send({ t: 'mode-player', mode: 'mornicraft', uuid: PHILIP, data: noClan });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(morniCraftPlayer(db, PHILIP)).toMatchObject({ clan: null, homes: [{ name: 'basis' }] });
   });
 
   test('Chat: Clan-Kürzel des Modus-Servers steht nach dem Rang; falsches Kürzel wird abgelehnt', async () => {

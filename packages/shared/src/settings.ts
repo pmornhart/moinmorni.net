@@ -1,6 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the game needs them */
 import { z } from 'zod';
 import { MODE_SETTING_AREAS } from './mode-settings.js';
+import { STREAMER_SECTION } from './streamer.js';
 import { TEAM_APPLY_AREA } from './team-apply.js';
 import type { PanelArea } from './roles.js';
 
@@ -115,8 +116,8 @@ export const NETWORK_AREA: SettingArea = {
   id: 'network',
   title: t('Netzwerk', 'Network'),
   text: t(
-    'Was für das ganze Netzwerk gilt: Name, Begrüßung, Wartung.',
-    'What applies to the whole network: name, welcome, maintenance.',
+    'Was für das ganze Netzwerk gilt: Name, Begrüßung, Wartung, Streamer-Modus.',
+    'What applies to the whole network: name, welcome, maintenance, streamer mode.',
   ),
   icon: 'Globe',
   panel: 'settings',
@@ -260,6 +261,7 @@ export const NETWORK_AREA: SettingArea = {
         },
       ],
     },
+    STREAMER_SECTION,
   ],
 };
 

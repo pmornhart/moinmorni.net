@@ -440,12 +440,29 @@
           "msg": "Send someone a private message.",
           "r": "Reply to the last private message.",
           "sprache": "Change the language: German or English.",
+          "streamer": "Streamer mode on or off – hides addresses, coordinates and private messages on every server.",
           "profil": "Make your profile on the website private or public.",
           "voice": "Show voice channels, join one or leave it.",
           "lobby": "Back to the lobby. In the middle of a round we ask once more – a second /lobby counts as yes.",
           "rueckkehr": "Lost your connection mid-game? While your spot is still free, this takes you back to your round (the item in the lobby does the same). In English also /rejoin.",
           "discord": "Get a code to link your account with Discord."
         }
+      },
+      "streamer": {
+        "title": "Streamer mode",
+        "short": "Stream without showing too much",
+        "intro": "Streaming or recording a video? With streamer mode only you see less: IP addresses and our addresses turn into •••, you read private messages and coordinates only with the mouse, and everyone else sees ● LIVE at your name. It works on every server – in the lobby, in all game modes and in MorniCraft.",
+        "step1": "Type in the chat",
+        "step2": "In the menu that comes up you switch each part on or off – just click it.",
+        "step3": "Done streaming? Type",
+        "parts": {
+          "ip": "IP addresses and the network’s addresses turn into ••• in chat and messages.",
+          "coords": "Where a game mode shows coordinates (e.g. MorniCraft with /getpos and your homes), you only see them with the mouse.",
+          "msg": "You read private messages (/msg, /r, and mail in MorniCraft) only with the mouse.",
+          "live": "The others see ● LIVE at your name – in chat, in the tab list and above your head."
+        },
+        "f3": "Tip: hide the coordinates on the F3 screen yourself in Minecraft – Options → Chat → “Reduced Debug Info”.",
+        "who": "Whether everyone may use streamer mode or only the media team is up to the team."
       },
       "rules": {
         "title": "Rules & punishments",

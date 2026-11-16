@@ -30,6 +30,7 @@ import { createRejoin } from './rejoin.js';
 import { createSettingCommands, mergeCommands } from './setting-commands.js';
 import { createSocial } from './social.js';
 import { createModeStats, statsSchema, type ModeStatsService } from './stats.js';
+import { createStreamerCommand, createStreamers } from './streamer.js';
 import { createVoice } from './voice.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
@@ -191,6 +192,7 @@ export function createHub(options: HubOptions): Hub {
   const presence = createPresence(now);
   const players = createPlayerService(db, stores);
   const punish = createPunishService(db, () => new Date(now()));
+  const streamers = createStreamers(db, stores, players, options.domain ?? 'moinmorni.net');
 
   const conns = { proxy: null as Connection | null, backends: new Map<string, Connection>() };
   const toProxy = (body: Body): boolean => {
@@ -238,6 +240,8 @@ export function createHub(options: HubOptions): Hub {
       },
       /** Rechte im Spiel (das Plugin gibt z. B. auf dem Bau-Server Kreativ und WorldEdit). */
       rights: role.game,
+      /** Streamer-Modus: an/aus und was verdeckt wird (das Plugin verdeckt beim Empfänger, zeigt ● LIVE). */
+      streamer: streamers.active(p.uuid),
     };
   };
   const sendProfile = (uuid: string): void => {
@@ -260,9 +264,13 @@ export function createHub(options: HubOptions): Hub {
     timeZone: options.timeZone,
     domain: options.domain ?? 'moinmorni.net',
     msg: (uuid, line) => {
-      if (toProxy({ t: 'msg', uuid, text: line })) return;
+      // Streamer: IP-Adressen und eigene Adressen verdeckt das Plugin beim Ausliefern („•••“).
+      const body: Body = streamers.parts(uuid).includes('ip')
+        ? { t: 'msg', uuid, text: line, mask: true }
+        : { t: 'msg', uuid, text: line };
+      if (toProxy(body)) return;
       const server = presence.get(uuid)?.server;
-      if (server) toBackend(server, { t: 'msg', uuid, text: line });
+      if (server) toBackend(server, body);
     },
     kick: (uuid, line) => {
       toProxy({ t: 'kick', uuid, text: line });
@@ -288,6 +296,7 @@ export function createHub(options: HubOptions): Hub {
     syncBans: () => {
       toProxy(bans());
     },
+    streamer: (uuid) => streamers.parts(uuid),
   };
   /** Wer im Gefängnis sitzt (mit Ende und Grund) und wo die Zelle ist – für das Lobby-Plugin. */
   const jailState = (): Body => ({
@@ -339,6 +348,7 @@ export function createHub(options: HubOptions): Hub {
         ...social.commands,
         ...voice.commands,
         ...rejoin.commands,
+        createStreamerCommand(ctx, streamers, { now, changed: sendProfile }),
         ...(options.extraCommands?.(ctx) ?? []),
       ],
       createSettingCommands(ctx),
@@ -713,12 +723,14 @@ export function createHub(options: HubOptions): Hub {
         });
         conn.send(network());
         conn.send(bans());
+        conn.send(streamers.config());
         return;
       }
       conns.backends.set(conn.server, conn);
       events.emit('server.connected', { server: conn.server });
       conn.send({ t: 'welcome', server: conn.server, kind: conn.kind });
       conn.send(voice.config());
+      conn.send(streamers.config());
       conn.send(lobbyState());
       if (conn.server === LOBBY_SERVER) {
         conn.send(lobbySettings());
@@ -774,6 +786,11 @@ export function createHub(options: HubOptions): Hub {
     if (area === 'network') {
       toProxy(network());
       rejoin.refresh();
+      // Streamer-Modus: Adressen zum Verdecken an alle, und was jetzt für jeden gilt (erlaubt, Teile).
+      const config = streamers.config();
+      toProxy(config);
+      conns.backends.forEach((c) => c.send(config));
+      presence.all().forEach((p) => sendProfile(p.uuid));
     }
     if (area === 'lobby') toBackend(LOBBY_SERVER, lobbySettings());
     if (area === 'voice') voice.broadcast();

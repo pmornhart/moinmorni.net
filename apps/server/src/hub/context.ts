@@ -1,4 +1,4 @@
-import type { GameRight, Role } from '@moinmorni/shared';
+import type { GameRight, Role, StreamerPart } from '@moinmorni/shared';
 import type { Stores } from '../panel/stores.js';
 import type { PlayerService } from './players.js';
 import type { Presence } from './presence.js';
@@ -32,6 +32,8 @@ export interface HubContext {
   readonly refreshProfile: (uuid: string) => void;
   /** Bann-Liste an den Proxy. */
   readonly syncBans: () => void;
+  /** Streamer-Modus: was für diesen Spieler gerade verdeckt wird (leer = aus). */
+  readonly streamer: (uuid: string) => readonly StreamerPart[];
 }
 
 export const hasRight = (role: Role, right: GameRight): boolean => role.game.includes(right);

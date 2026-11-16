@@ -9,6 +9,7 @@ import {
   type Target,
 } from './moderation.js';
 import { parseDuration } from './punish.js';
+import { coveredText } from './streamer.js';
 import { dateText, LANGS, mm, text, type Lang, type TextKey } from './texts.js';
 
 /**
@@ -132,7 +133,9 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       return;
     }
     say(actor, text(actor.lang, 'msg.to', { name: mm(t.name), text: mm(message) }));
-    ctx.msg(t.uuid, text(t.lang, 'msg.from', { name: mm(actor.name), text: mm(message) }));
+    // Streamer-Modus: beim Empfänger nur mit der Maus lesbar.
+    const shown = ctx.streamer(t.uuid).includes('msg') ? coveredText(t.lang, message) : mm(message);
+    ctx.msg(t.uuid, text(t.lang, 'msg.from', { name: mm(actor.name), text: shown }));
     const self = ctx.presence.get(actor.uuid);
     if (self) self.replyTo = t.uuid;
     t.replyTo = actor.uuid;

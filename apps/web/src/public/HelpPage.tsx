@@ -16,6 +16,7 @@ import {
   Smartphone,
   Sun,
   Terminal,
+  Video,
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
@@ -36,7 +37,15 @@ import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, FALLBACK_BEDROCK_PORT, WRAP } f
 const VOICE_MOD_URL = 'https://modrinth.com/plugin/simple-voice-chat';
 
 type SectionId =
-  'reinkommen' | 'spielmodi' | 'sprachchat' | 'discord' | 'mornicraft' | 'befehle' | 'regeln' | 'team-hilfe';
+  | 'reinkommen'
+  | 'spielmodi'
+  | 'sprachchat'
+  | 'discord'
+  | 'mornicraft'
+  | 'befehle'
+  | 'streamer'
+  | 'regeln'
+  | 'team-hilfe';
 
 interface HelpSection {
   readonly id: SectionId;
@@ -51,6 +60,7 @@ const SECTIONS: readonly HelpSection[] = [
   { id: 'discord', key: 'discord', icon: Link2 },
   { id: 'mornicraft', key: 'mornicraft', icon: ClipboardList },
   { id: 'befehle', key: 'commands', icon: Terminal },
+  { id: 'streamer', key: 'streamer', icon: Video },
   { id: 'regeln', key: 'rules', icon: Gavel },
   { id: 'team-hilfe', key: 'team', icon: LifeBuoy },
 ];
@@ -63,11 +73,20 @@ const COMMANDS: readonly { readonly key: string; readonly syntax: string }[] = [
   { key: 'msg', syntax: '/msg <name> <…>' },
   { key: 'r', syntax: '/r <…>' },
   { key: 'sprache', syntax: '/sprache <de|en>' },
+  { key: 'streamer', syntax: '/streamer [an|aus]' },
   { key: 'profil', syntax: '/profil [privat|öffentlich]' },
   { key: 'voice', syntax: '/voice [kanal|raus]' },
   { key: 'lobby', syntax: '/lobby' },
   { key: 'rueckkehr', syntax: '/rueckkehr' },
   { key: 'discord', syntax: '/discord' },
+];
+
+/** The parts of streamer mode with the word after /streamer that switches each (texts site.help.streamer.parts.*). */
+const STREAMER_PARTS: readonly { readonly key: string; readonly word: string }[] = [
+  { key: 'ip', word: 'ip' },
+  { key: 'coords', word: 'koordinaten' },
+  { key: 'msg', word: 'nachrichten' },
+  { key: 'live', word: 'live' },
 ];
 
 /** In case the website does not know the channels yet (older server version). */
@@ -303,6 +322,42 @@ function CommandsBody(): ReactElement {
   );
 }
 
+/** Streamer mode: what it hides, how to switch it and each part, the F3 tip – on every server of the network. */
+function StreamerBody(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  return (
+    <div className="grid gap-5">
+      <p>{t('site.help.streamer.intro')}</p>
+      <Steps
+        items={[
+          <>
+            {t('site.help.streamer.step1')} <Cmd>/streamer an</Cmd>
+          </>,
+          t('site.help.streamer.step2'),
+          <>
+            {t('site.help.streamer.step3')} <Cmd>/streamer aus</Cmd>
+          </>,
+        ]}
+      />
+      <dl className="grid overflow-hidden rounded-[8px] border-2 border-border">
+        {STREAMER_PARTS.map((part) => (
+          <div
+            key={part.key}
+            className="grid gap-1.5 border-b-2 border-border px-4 py-3 last:border-b-0 even:bg-background-alt/60 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-center sm:gap-4"
+          >
+            <dt>
+              <Cmd>{`/streamer ${part.word}`}</Cmd>
+            </dt>
+            <dd className="text-[15px] text-muted-foreground">{t(`site.help.streamer.parts.${part.key}`)}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-[14px] text-muted-foreground">{t('site.help.streamer.f3')}</p>
+      <p className="text-[14px] text-muted-foreground">{t('site.help.streamer.who')}</p>
+    </div>
+  );
+}
+
 /** All game modes with one line each and a link to their page; how sleeping and the summer break work. */
 function ModesBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
@@ -400,6 +455,7 @@ const BODIES: Readonly<Record<SectionId, () => ReactElement>> = {
   discord: DiscordBody,
   mornicraft: MorniCraftBody,
   befehle: CommandsBody,
+  streamer: StreamerBody,
   regeln: RulesBody,
   'team-hilfe': TeamBody,
 };

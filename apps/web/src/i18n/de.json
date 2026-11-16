@@ -440,12 +440,29 @@
           "msg": "Jemandem eine private Nachricht schreiben.",
           "r": "Auf die letzte private Nachricht antworten.",
           "sprache": "Sprache wechseln: Deutsch oder Englisch.",
+          "streamer": "Streamer-Modus an oder aus – verdeckt Adressen, Koordinaten und private Nachrichten auf jedem Server.",
           "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
           "voice": "Sprachkanäle anzeigen, einem beitreten oder ihn verlassen.",
           "lobby": "Zurück in die Lobby. Mitten in einer Runde fragen wir lieber noch einmal nach – ein zweites /lobby gilt als Ja.",
           "rueckkehr": "Verbindung mitten im Spiel weg? Solange dein Platz frei ist, bringt dich das zurück in deine Runde (geht auch mit dem Gegenstand in der Lobby).",
           "discord": "Einen Code holen, um dein Konto mit Discord zu verbinden."
         }
+      },
+      "streamer": {
+        "title": "Streamer-Modus",
+        "short": "Streamen, ohne zu viel zu zeigen",
+        "intro": "Du streamst oder nimmst ein Video auf? Mit dem Streamer-Modus siehst nur du weniger: IP-Adressen und unsere Adressen werden zu •••, private Nachrichten und Koordinaten liest du nur mit der Maus, und alle anderen sehen ● LIVE an deinem Namen. Er gilt auf jedem Server – in der Lobby, in allen Spielmodi und in MorniCraft.",
+        "step1": "Tippe im Chat",
+        "step2": "Im Menü, das dann kommt, schaltest du jeden Teil einzeln an oder aus – einfach anklicken.",
+        "step3": "Fertig mit dem Stream? Tippe",
+        "parts": {
+          "ip": "IP-Adressen und die Adressen des Netzwerks werden im Chat und in Nachrichten zu •••.",
+          "coords": "Wo ein Spielmodus Koordinaten zeigt (z. B. MorniCraft bei /getpos und deinen Zuhause), siehst du sie nur mit der Maus.",
+          "msg": "Private Nachrichten (/msg, /r, in MorniCraft auch die Post) liest du nur mit der Maus.",
+          "live": "Die anderen sehen ● LIVE an deinem Namen – im Chat, in der Tab-Liste und über deinem Kopf."
+        },
+        "f3": "Tipp: Die Koordinaten im F3-Bildschirm blendest du in Minecraft selbst aus – Optionen → Chat → „Reduzierte Debug-Infos“.",
+        "who": "Ob alle den Streamer-Modus benutzen dürfen oder nur das Media-Team, stellt das Team ein."
       },
       "rules": {
         "title": "Regeln & Strafen",
