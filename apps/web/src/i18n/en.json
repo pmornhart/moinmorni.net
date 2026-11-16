@@ -1193,7 +1193,7 @@
     },
     "discord": {
       "title": "Discord",
-      "text": "Connect our own Discord bot and let it set up the Discord server step by step."
+      "text": "Connect your own Discord bot (enter its token right here), let it set up your Discord server step by step and change the server picture, banner and the bot's profile under “Look”."
     },
     "servers": {
       "title": "Servers",
@@ -1348,7 +1348,7 @@
         "done": "The bot is on “{{guild}}”.",
         "rights": "The bot only asks for these rights:",
         "noAdmin": "No administrator right – only what it needs for roles, channels, the server picture, punishments and tickets.",
-        "button": "Invite the bot",
+        "button": "Bring the bot to your Discord server",
         "noLink": "The button shows up as soon as the bot token is right (step 1)."
       },
       "s5": {
@@ -1410,7 +1410,7 @@
       },
       "help": {
         "title": "🎫 Help",
-        "text": "Help with /hilfe and buttons, tickets (a button opens a private channel just for you and the team) and applications for the team and for MorniCraft."
+        "text": "Help with /hilfe and buttons, tickets (a button opens a private conversation just for you and the team) and applications for the team and for MorniCraft."
       },
       "voice": {
         "title": "🔊 Voice",

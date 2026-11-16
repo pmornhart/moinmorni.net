@@ -1193,7 +1193,7 @@
     },
     "discord": {
       "title": "Discord",
-      "text": "Den eigenen Discord-Bot verbinden und den Discord-Server Schritt für Schritt einrichten lassen."
+      "text": "Den eigenen Discord-Bot verbinden (Token direkt hier eintragen), den Discord-Server Schritt für Schritt einrichten lassen und unter „Aussehen“ Server-Bild, Banner und das Profil des Bots ändern."
     },
     "servers": {
       "title": "Server",
@@ -1348,7 +1348,7 @@
         "done": "Der Bot ist auf „{{guild}}“.",
         "rights": "Der Bot fragt nur nach diesen Rechten:",
         "noAdmin": "Kein Administrator-Recht – nur, was er für Rollen, Kanäle, Server-Bild, Strafen und Tickets braucht.",
-        "button": "Bot einladen",
+        "button": "Bot auf deinen Discord-Server holen",
         "noLink": "Der Knopf erscheint, sobald der Bot-Token stimmt (Schritt 1)."
       },
       "s5": {
@@ -1410,7 +1410,7 @@
       },
       "help": {
         "title": "🎫 Hilfe",
-        "text": "Hilfe mit /hilfe und Knöpfen, Tickets (ein Knopf öffnet einen privaten Kanal nur für dich und das Team) und Bewerbungen fürs Team und für MorniCraft."
+        "text": "Hilfe mit /hilfe und Knöpfen, Tickets (ein Knopf öffnet ein privates Gespräch nur für dich und das Team) und Bewerbungen fürs Team und für MorniCraft."
       },
       "voice": {
         "title": "🔊 Sprache",
