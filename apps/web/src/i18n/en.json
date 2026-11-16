@@ -763,7 +763,7 @@
   },
   "modes": {
     "title": "Modes",
-    "text": "Which game modes exist, their order in the lobby and on the website, and who may join.",
+    "text": "Which game modes exist, their order in the lobby and on the website, who may join and what a mode does when nobody is inside.",
     "state": "State",
     "stateHelp": "“Soon” already shows the mode, but nobody can join yet.",
     "access": "Who may join?",
@@ -774,8 +774,20 @@
     "descDe": "Description in German",
     "descEn": "Description in English",
     "maxPlayers": "Players at most",
-    "sleep": "Sleep when empty",
-    "sleepHelp": "Off (recommended): the mode is always online and players get in right away – without players it needs hardly any memory. On: when nobody is inside, the server shuts down completely (no memory at all) and wakes up as soon as someone clicks the villager – that takes about half a minute.",
+    "idle": "When nobody is inside",
+    "idleChoice": {
+      "rest": "Rest – online, saves memory",
+      "sleep": "Sleep – shut down",
+      "awake": "Stay awake – world keeps running"
+    },
+    "idleHelp": {
+      "rest": "Recommended. The mode stays online and players get in right away. Without players Minecraft pauses the world after a minute and Java hands memory back – an empty mode then needs about half as much.",
+      "sleep": "When nobody is inside for a while, the server shuts down and needs no memory at all. It wakes up as soon as someone clicks the villager – that takes about half a minute.",
+      "awake": "The mode stays online and keeps all its memory, even when nobody is inside; the world keeps running without players. Only needed when a mode has to carry on without players."
+    },
+    "idleRestart": "Applies after the mode’s next restart – it restarts by itself as soon as nobody is inside.",
+    "idleRestartPending": "Restart still to come – the mode restarts as soon as nobody is inside.",
+    "idleNoServer": "Only possible once the mode has a server.",
     "up": "Move forward",
     "down": "Move back",
     "position": "Place {{n}}",
@@ -895,7 +907,7 @@
     "fixFirst": "Please check first: {{names}} (name, symbol or colour does not fit yet).",
     "areaHelp": {
       "overview": "Start page of the panel with the network status.",
-      "modes": "Switch game modes on and off, order, who may join.",
+      "modes": "Switch game modes on and off, order, who may join, rest mode.",
       "lobby": "Settings of the lobby (village, figures, decoration).",
       "players": "Search players, view profiles, give ranks.",
       "punishments": "Hand out and lift punishments.",
@@ -1183,7 +1195,7 @@
     },
     "modes": {
       "title": "Modes",
-      "text": "Switch game modes on and off here, put them into maintenance and choose their order in the lobby."
+      "text": "Switch game modes on and off here, put them into maintenance and choose their order in the lobby. Under “When nobody is inside” you pick per mode: rest (online, little memory), sleep (shut down) or stay awake."
     },
     "settings": {
       "title": "Settings",
@@ -2135,6 +2147,8 @@
     "email_unconfirmed": "Please confirm your email address first.",
     "account_pending_approval": "Your account is still waiting for approval.",
     "not_in_team": "Your account has no role in MoinMorni yet.",
+    "mode_no_server": "This mode has no server yet.",
+    "motor_without_idle_memory": "The motor doesn’t know the rest mode yet – please update MoinMorni first.",
     "panel_area_forbidden": "Your role may not change this area.",
     "csrf": "Your session has expired. Reload the page and try again.",
     "bad_origin": "The request came from another site and was refused.",

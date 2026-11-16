@@ -57,7 +57,7 @@ Festplatte**. **Alle Server sind immer online**, Spieler kommen sofort hinein: P
 1,5 GB, MorniSMP und MorniCraft je 3 GB, Morni Party 2 GB, die übrigen Spielmodi je 1,5 GB – zusammen 27 GB, das passt
 in 32 GB. Das sind Höchstwerte: Ist in einem Modus niemand, hält Minecraft dort die Welt an und Java gibt den
 Arbeitsspeicher zurück – ein leerer 1,5-GB-Modus braucht dann etwa 0,7 GB statt 1,4 GB. Im Panel unter Modi lässt sich
-je Modus auch „Schlafen, wenn leer“ einschalten: dann geht er ganz aus und wacht in etwa einer halben Minute auf.
+je Modus unter „Wenn niemand drin ist“ auch „Schlafen“ wählen: dann geht er ganz aus und wacht in etwa einer halben Minute auf – oder „Wach bleiben“, dann behält er seinen ganzen Arbeitsspeicher.
 
 | RAM für MoinMorni | Was gleichzeitig läuft                                                          |
 | ----------------- | ------------------------------------------------------------------------------- |
@@ -542,7 +542,7 @@ nach**, welche davon eine fertige Version (ein „Release“) haben, legt für j
 neueste Version auf. Neue Versionen kommen genauso von selbst.
 
 - **Alle Modi sind immer online** – ohne Spieler hält Minecraft die Welt an und gibt Arbeitsspeicher zurück. Wer einen
-  Modus lieber ganz schlafen lässt: Panel → Modi → „Schlafen, wenn leer“ (wacht in etwa einer halben Minute auf).
+  Modus lieber ganz schlafen lässt: Panel → Modi → „Wenn niemand drin ist“ → „Schlafen“ (wacht in etwa einer halben Minute auf).
 - **Panel → Modi:** an- und ausschalten, Wartung, Reihenfolge in der Lobby und auf der Webseite, wie viele Spieler
   hinein dürfen.
 - **Einstellungen der Modi** stehen im Panel in der Gruppe **Spielmodi** – mit Suche und Erklärung. Sie gelten nach dem

@@ -169,8 +169,8 @@ export const NETWORK_AREA: SettingArea = {
           unit: t('Minuten', 'minutes'),
           label: t('Leere Modi schlafen nach', 'Empty modes sleep after'),
           help: t(
-            'Nur für Modi mit „Schlafen, wenn leer“ (im Panel unter Modi): Ist so lange niemand drin, geht ihr Server ganz aus. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute). Alle anderen Modi bleiben immer online und brauchen ohne Spieler kaum Arbeitsspeicher.',
-            'Only for modes with “Sleep when empty” (in the panel under Modes): when nobody is in them for this long, their server shuts down. Whoever wants in wakes it up (takes about half a minute). All other modes stay online and need hardly any memory without players.',
+            'Nur für Modi, die schlafen dürfen (Panel → Modi → „Wenn niemand drin ist“ → Schlafen): Ist so lange niemand drin, geht ihr Server ganz aus. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute). Alle anderen Modi bleiben immer online und brauchen ohne Spieler kaum Arbeitsspeicher.',
+            'Only for modes that may sleep (panel → Modes → “When nobody is inside” → Sleep): when nobody is in them for this long, their server shuts down. Whoever wants in wakes it up (takes about half a minute). All other modes stay online and need hardly any memory without players.',
           ),
           command: '/netzwerk schlaf <minuten>',
         },

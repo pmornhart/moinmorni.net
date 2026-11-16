@@ -44,6 +44,26 @@ export type Mode = z.infer<typeof modeSchema>;
 export const modePatchSchema = modeSchema.omit({ id: true }).partial();
 export type ModePatch = z.infer<typeof modePatchSchema>;
 
+/**
+ * Ruhezustand eines Modus (Panel → Modi): Gibt sein Server im Leerlauf Arbeitsspeicher frei („Arbeitsspeicher im
+ * Leerlauf freigeben“ im Motor)? null = noch kein Server (oder ein Motor ohne diesen Schalter).
+ */
+export interface ModeRest {
+  readonly on: boolean | null;
+  /** Geändert, gilt aber erst nach dem Neustart – der kommt, sobald niemand drin ist. */
+  readonly restartPending: boolean;
+}
+
+/** Was mit einem leeren Modus passiert: Ruhezustand (Standard), ganz schlafen oder voll wach bleiben. */
+export const MODE_IDLE = ['rest', 'sleep', 'awake'] as const;
+export type ModeIdle = (typeof MODE_IDLE)[number];
+
+/** Aus „schlafen, wenn leer“ (`sleepWhenEmpty`) und dem Ruhezustand des Servers: was die Modi-Seite anzeigt. */
+export function modeIdleOf(sleepWhenEmpty: boolean, restOn: boolean | null): ModeIdle {
+  if (sleepWhenEmpty) return 'sleep';
+  return restOn === false ? 'awake' : 'rest';
+}
+
 const t = (de: string, en: string): Text => ({ de, en });
 
 /** Die Modi, mit denen MoinMorni startet (Philip, 14.11.). */

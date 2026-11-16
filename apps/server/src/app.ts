@@ -48,6 +48,7 @@ import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
+import { registerModeRestRoutes } from './panel/mode-rest-routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
 import { createLobbyWorld, seasonOf } from './lobby/world.js';
@@ -316,6 +317,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerPublicRoutes(app, status);
   registerPackRoutes(app);
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
+  registerModeRestRoutes(app, auth, stores, motor, createMemberIds(motor), restarts);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor);
   teamRef.syncAll = teamAccess.syncAll;
