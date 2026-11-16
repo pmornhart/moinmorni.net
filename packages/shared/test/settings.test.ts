@@ -8,7 +8,9 @@ import {
   areaById,
   defaultsFor,
   mayAssign,
+  mayPunish,
   modeSchema,
+  PUNISHMENT_RIGHTS,
   patchSchemaFor,
   modeAreaOf,
   onStep,
@@ -140,5 +142,23 @@ describe('Rollen und Modi', () => {
     expect(mayAssign(DEFAULT_ROLES, 'moderator', 'media')).toBe(true);
     expect(mayAssign(DEFAULT_ROLES, 'moderator', 'moderator')).toBe(false);
     expect(mayAssign(DEFAULT_ROLES, 'vip', 'player')).toBe(true);
+    // Der Owner vergibt jeden Rang – in seiner Rang-Auswahl ist nichts gesperrt.
+    DEFAULT_ROLES.forEach((r) => expect(mayAssign(DEFAULT_ROLES, 'owner', r.id)).toBe(true));
+  });
+
+  test('Strafen brauchen dasselbe Recht wie der Befehl im Spiel; Sprachchat-Stumm „voice-mute“', () => {
+    const role = (id: string) => DEFAULT_ROLES.find((r) => r.id === id) ?? { id, game: [] };
+    const kinds = Object.keys(PUNISHMENT_RIGHTS) as Array<keyof typeof PUNISHMENT_RIGHTS>;
+    expect(PUNISHMENT_RIGHTS.voice).toBe('voice-mute');
+    kinds.forEach((k) => {
+      expect(mayPunish(role('owner'), k)).toBe(true);
+      expect(mayPunish(role('admin'), k)).toBe(true);
+      expect(mayPunish(role('moderator'), k)).toBe(true);
+      expect(mayPunish(role('vip'), k)).toBe(false);
+    });
+    expect(mayPunish({ id: 'helfer', game: ['mute'] }, 'mute')).toBe(true);
+    expect(mayPunish({ id: 'helfer', game: ['mute'] }, 'voice')).toBe(false);
+    // Owner darf alles, auch wenn die Vorlage ihm ein Recht weggenommen hat.
+    expect(mayPunish({ id: 'owner', game: [] }, 'voice')).toBe(true);
   });
 });

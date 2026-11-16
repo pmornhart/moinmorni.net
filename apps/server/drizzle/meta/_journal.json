@@ -64,6 +64,13 @@
       "when": 1794772625551,
       "tag": "0008_mode_players",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794856207237,
+      "tag": "0009_team_applications",
+      "breakpoints": true
     }
   ]
 }

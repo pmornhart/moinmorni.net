@@ -7,6 +7,8 @@ import { setApiBase } from '@/lib/api';
 import { queryClient } from '@/lib/query';
 import { TooltipProvider } from '@/components/ui/misc';
 import { Skeleton } from '~/components/ui';
+import { ApplicationDetailPage } from './applications/ApplicationDetailPage';
+import { ApplicationsPage } from './applications/ApplicationsPage';
 import { DiscordPage } from './discord/DiscordPage';
 import { ModesPage } from './ModesPage';
 import { NewsEditorPage, NewsPage } from './news/NewsPage';
@@ -50,6 +52,8 @@ const router = createBrowserRouter(
         { path: 'spieler', element: <PlayersPage /> },
         { path: 'spieler/:uuid', element: <PlayerPage /> },
         { path: 'strafen', element: <PunishmentsPage /> },
+        { path: 'bewerbungen', element: <ApplicationsPage /> },
+        { path: 'bewerbungen/:id', element: <ApplicationDetailPage /> },
         { path: 'rollen', element: <RolesPage /> },
         { path: 'team', element: <TeamPage /> },
         {

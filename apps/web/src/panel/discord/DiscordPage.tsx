@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Bot,
   CircleCheck,
@@ -6,11 +6,13 @@ import {
   ExternalLink,
   Hash,
   KeyRound,
+  LogIn,
   MessagesSquare,
-  PartyPopper,
+  Palette,
   RefreshCw,
   ShieldCheck,
   Sparkles,
+  ToggleRight,
   TriangleAlert,
   UserPlus,
   Users,
@@ -20,42 +22,31 @@ import {
 import { useState, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Button, Card, Kbd, Pill, Skeleton, type PillTone } from '~/components/ui';
+import { CopyButton } from '~/components/controls';
+import { Button, Card, Pill, Skeleton, type PillTone } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
-import { errorCode, useErrorText } from '~/lib/errors';
+import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
 import { AreaGate } from '../AreaGate';
 import { PageHead } from '../PanelShell';
+import { Notice } from '../settings/extras/parts';
+import { AccessField } from './AccessField';
+import { AppearanceCard } from './AppearanceCard';
+import { SetupProgressView } from './SetupProgress';
+import { DISCORD_KEY, useDiscordStatus, type BotStatus, type SetupProgress } from './model';
 
-/** State of MoinMorni's Discord bot (apps/server/src/discord/bot.ts → BotStatus). */
-interface BotStatus {
-  readonly configured: boolean;
-  readonly connected: boolean;
-  readonly error: 'members_intent_missing' | 'token_invalid' | null;
-  readonly membersIntent: boolean;
-  readonly inviteUrl: string | null;
-  readonly guild: { readonly id: string; readonly name: string } | null;
-  readonly setupDone: boolean;
-}
-
-interface SetupReport {
-  readonly roles: number;
-  readonly channels: number;
-  readonly community: 'ok' | 'failed';
-}
-
-const STATUS_KEY = ['panel', 'discord'] as const;
-const REFRESH_MS = 10_000;
 const PORTAL_URL = 'https://discord.com/developers/applications';
 
-type Overall = 'missing' | 'tokenInvalid' | 'connecting' | 'noGuild' | 'intent' | 'ready' | 'done';
+type Overall =
+  'missing' | 'tokenInvalid' | 'connecting' | 'noGuild' | 'running' | 'intent' | 'ready' | 'done';
 
 const OVERALL_TONE: Readonly<Record<Overall, PillTone>> = {
   missing: 'neutral',
   tokenInvalid: 'danger',
   connecting: 'warning',
   noGuild: 'blue',
+  running: 'blue',
   intent: 'warning',
   ready: 'gold',
   done: 'success',
@@ -68,6 +59,7 @@ function overallOf(s: BotStatus): Overall {
     [s.error === 'token_invalid', 'tokenInvalid'],
     [!s.connected, 'connecting'],
     [!s.guild, 'noGuild'],
+    [s.setup.running, 'running'],
     [s.error === 'members_intent_missing' || !s.membersIntent, 'intent'],
     [!s.setupDone, 'ready'],
   ];
@@ -90,9 +82,11 @@ function Check({
       ) : (
         <CircleDashed className="mt-0.5 size-[18px] shrink-0 text-muted-foreground" aria-hidden />
       )}
-      <span className="grid gap-0.5">
+      <span className="grid min-w-0 gap-0.5">
         <span className="font-semibold">{label}</span>
-        {detail ? <span className="text-[13px] text-muted-foreground">{detail}</span> : null}
+        {detail ? (
+          <span className="text-[13px] text-muted-foreground [overflow-wrap:anywhere]">{detail}</span>
+        ) : null}
       </span>
     </li>
   );
@@ -109,10 +103,13 @@ function StatusCard({
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const overall = overallOf(status);
+  const tokenOk = status.configured && status.error !== 'token_invalid';
+  const botLine = status.bot ? t('discordAdmin.check.botName', { name: status.bot.name }) : undefined;
+  const tokenDetail = status.error === 'token_invalid' ? t('discordAdmin.check.tokenInvalid') : botLine;
   return (
     <Card className="grid gap-5 p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3.5">
+        <div className="flex min-w-0 items-start gap-3.5">
           <span
             className={cn(
               'grid size-12 shrink-0 place-items-center rounded-[14px]',
@@ -122,7 +119,7 @@ function StatusCard({
           >
             <Bot className="size-6" />
           </span>
-          <div className="grid gap-1.5">
+          <div className="grid min-w-0 gap-1.5">
             <Pill tone={OVERALL_TONE[overall]} dot className="justify-self-start">
               {t(`discordAdmin.overall.${overall}.pill`)}
             </Pill>
@@ -136,12 +133,8 @@ function StatusCard({
           {t('discordAdmin.refresh')}
         </Button>
       </div>
-      <ul className="grid gap-3 border-t border-border pt-5 sm:grid-cols-2">
-        <Check
-          ok={status.configured && status.error !== 'token_invalid'}
-          label={t('discordAdmin.check.token')}
-          detail={status.error === 'token_invalid' ? t('discordAdmin.check.tokenInvalid') : undefined}
-        />
+      <ul className="grid gap-3 border-t border-border pt-5 sm:grid-cols-2 xl:grid-cols-3">
+        <Check ok={tokenOk} label={t('discordAdmin.check.token')} detail={tokenDetail} />
         <Check ok={status.connected} label={t('discordAdmin.check.online')} />
         <Check
           ok={status.membersIntent && status.error !== 'members_intent_missing'}
@@ -153,6 +146,11 @@ function StatusCard({
           detail={status.guild ? status.guild.name : t('discordAdmin.check.noGuild')}
         />
         <Check ok={status.setupDone} label={t('discordAdmin.check.setup')} />
+        <Check
+          ok={status.credentials.clientSecret.set}
+          label={t('discordAdmin.check.login')}
+          detail={status.credentials.clientSecret.set ? undefined : t('discordAdmin.check.loginOptional')}
+        />
       </ul>
     </Card>
   );
@@ -163,12 +161,14 @@ function StepCard({
   done,
   icon: Icon,
   title,
+  optional = false,
   children,
 }: {
   readonly n: number;
   readonly done: boolean;
   readonly icon: LucideIcon;
   readonly title: string;
+  readonly optional?: boolean;
   readonly children: ReactNode;
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
@@ -187,28 +187,43 @@ function StepCard({
         <Icon className="size-4 text-muted-foreground" aria-hidden />
         <span className="sr-only">{t('discordAdmin.stepN', { n })}</span>
         {title}
+        {optional && !done ? <Pill tone="neutral">{t('discordAdmin.optional')}</Pill> : null}
         {done ? <Pill tone="success">{t('discordAdmin.stepDone')}</Pill> : null}
       </h3>
-      <div className="grid gap-3 text-[15px] leading-relaxed text-muted-foreground">{children}</div>
+      <div className="grid min-w-0 gap-3 text-[15px] leading-relaxed text-muted-foreground">{children}</div>
     </li>
   );
 }
 
-function SetupResult({ report }: { readonly report: SetupReport }): ReactElement {
+function PortalLink(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
-    <div className="grid gap-2 rounded-[14px] border border-success/30 bg-success-soft px-4 py-3.5 text-foreground">
-      <p className="flex items-center gap-2 font-semibold text-success">
-        <PartyPopper className="size-4" aria-hidden />
-        {t('discordAdmin.result.title')}
-      </p>
-      <p>{t('discordAdmin.result.counts', { roles: report.roles, channels: report.channels })}</p>
-      <p className={cn('text-[13px]', report.community === 'ok' ? 'text-muted-foreground' : 'text-warning')}>
-        {report.community === 'ok'
-          ? t('discordAdmin.result.communityOk')
-          : t('discordAdmin.result.communityFailed')}
-      </p>
-    </div>
+    <a
+      href={PORTAL_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+    >
+      {t('discordAdmin.steps.s1.portal')}
+      <ExternalLink className="size-3.5" aria-hidden />
+    </a>
+  );
+}
+
+/** The rights the invite asks for, in plain words. */
+function RightsList({ names }: { readonly names: readonly string[] }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  return (
+    <ul className="flex flex-wrap gap-1.5" aria-label={t('discordAdmin.steps.s4.rights')}>
+      {names.map((name) => (
+        <li
+          key={name}
+          className="rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-[12.5px] font-semibold text-foreground"
+        >
+          {t(`discordAdmin.perm.${name}`, { defaultValue: name })}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -220,6 +235,7 @@ const CREATES: readonly { readonly key: string; readonly icon: LucideIcon }[] = 
   { key: 'voice', icon: Users },
   { key: 'team', icon: KeyRound },
   { key: 'extras', icon: Wand2 },
+  { key: 'look', icon: Palette },
 ];
 
 function WhatItCreates(): ReactElement {
@@ -239,7 +255,7 @@ function WhatItCreates(): ReactElement {
             >
               <Icon className="size-4" />
             </span>
-            <span className="grid gap-0.5">
+            <span className="grid min-w-0 gap-0.5">
               <span className="font-semibold">{t(`discordAdmin.creates.${key}.title`)}</span>
               <span className="text-[13.5px] leading-snug text-muted-foreground">
                 {t(`discordAdmin.creates.${key}.text`)}
@@ -255,31 +271,26 @@ function WhatItCreates(): ReactElement {
   );
 }
 
+function setupLabelOf(s: BotStatus, pending: boolean): string {
+  if (pending || s.setup.running) return 'busy';
+  return s.setupDone ? 'buttonAgain' : 'button';
+}
+
 function DiscordSetup(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const errorText = useErrorText();
   const queryClient = useQueryClient();
-  const [report, setReport] = useState<SetupReport | null>(null);
   const [setupError, setSetupError] = useState<string | null>(null);
-  const status = useQuery({
-    queryKey: STATUS_KEY,
-    queryFn: () => mmApi<BotStatus>('/api/panel/discord'),
-    refetchInterval: REFRESH_MS,
-  });
+  const status = useDiscordStatus();
   const setup = useMutation({
-    mutationFn: () => mmApi<SetupReport>('/api/panel/discord/setup', { method: 'POST' }),
+    mutationFn: () => mmApi<SetupProgress>('/api/panel/discord/setup', { method: 'POST' }),
     onMutate: () => setSetupError(null),
-    onSuccess: async (r) => {
-      setReport(r);
-      toast.success(t('discordAdmin.result.title'));
-      await queryClient.invalidateQueries({ queryKey: STATUS_KEY });
+    onSuccess: (progress) => {
+      // Show the first steps at once; the page then asks every 1.5 s until the bot is through.
+      queryClient.setQueryData<BotStatus>(DISCORD_KEY, (old) => (old ? { ...old, setup: progress } : old));
+      toast.success(t('discordAdmin.steps.s5.started'));
     },
-    onError: (err) => {
-      // Without a token the server also says "no guild"; the missing token is the real first step.
-      const code = status.data?.configured === false ? 'discord_not_configured' : errorCode(err);
-      const known = code === 'discord_no_guild' || code === 'discord_not_configured';
-      setSetupError(known ? t(`discordAdmin.errors.${code}`) : errorText(err));
-    },
+    onError: (err) => setSetupError(errorText(err)),
   });
 
   if (status.isPending) return <Skeleton className="h-96 rounded-[16px]" />;
@@ -288,15 +299,16 @@ function DiscordSetup(): ReactElement {
   const tokenOk = s.configured && s.error !== 'token_invalid';
   const intentOk = s.membersIntent && s.error !== 'members_intent_missing';
   const guildOk = Boolean(s.guild);
-  const setupLabel = ((): string => {
-    if (setup.isPending) return 'busy';
-    return s.setupDone ? 'buttonAgain' : 'button';
-  })();
+  const running = setup.isPending || s.setup.running;
+  const secretSet = s.credentials.clientSecret.set;
 
   return (
     <>
       <StatusCard status={s} onRefresh={() => void status.refetch()} busy={status.isFetching} />
-      <div className="grid items-start gap-[22px] xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div
+        className="grid items-start gap-[22px] xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]"
+        id="einrichten"
+      >
         <Card className="overflow-hidden">
           <div className="grid gap-1 border-b border-border px-5 py-5 sm:px-6">
             <h2 className="font-display text-xl font-semibold">{t('discordAdmin.steps.title')}</h2>
@@ -306,33 +318,28 @@ function DiscordSetup(): ReactElement {
             <StepCard n={1} done={tokenOk} icon={Bot} title={t('discordAdmin.steps.s1.title')}>
               <ol className="grid list-decimal gap-1 pl-5">
                 <li>
-                  {t('discordAdmin.steps.s1.a')}{' '}
-                  <a
-                    href={PORTAL_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
-                  >
-                    {t('discordAdmin.steps.s1.portal')}
-                    <ExternalLink className="size-3.5" aria-hidden />
-                  </a>
+                  {t('discordAdmin.steps.s1.a')} <PortalLink />
                 </li>
                 <li>{t('discordAdmin.steps.s1.b')}</li>
                 <li>{t('discordAdmin.steps.s1.c')}</li>
-                <li>
-                  {t('discordAdmin.steps.s1.d')} <Kbd>MM_DISCORD_TOKEN</Kbd>
-                </li>
+                <li>{t('discordAdmin.steps.s1.d')}</li>
               </ol>
-              <p className="flex items-start gap-2 rounded-[12px] bg-warning-soft px-3.5 py-2.5 text-[13.5px] text-foreground">
-                <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
-                {t('discordAdmin.steps.s1.secret')}
-              </p>
+              <AccessField
+                kind="token"
+                state={s.credentials.token}
+                canEdit={s.canEditAccess}
+                botName={s.bot?.name ?? null}
+              />
               {s.error === 'token_invalid' ? (
                 <p className="font-semibold text-destructive">{t('discordAdmin.check.tokenInvalid')}</p>
               ) : null}
             </StepCard>
-            <StepCard n={2} done={intentOk} icon={Users} title={t('discordAdmin.steps.s2.title')}>
-              <p>{t('discordAdmin.steps.s2.text')}</p>
+            <StepCard n={2} done={intentOk} icon={ToggleRight} title={t('discordAdmin.steps.s2.title')}>
+              <ul className="grid list-disc gap-1 pl-5">
+                <li>{t('discordAdmin.steps.s2.intent')}</li>
+                <li>{t('discordAdmin.steps.s2.public')}</li>
+              </ul>
+              <p className="text-[13.5px]">{t('discordAdmin.steps.s2.why')}</p>
             </StepCard>
             <StepCard n={3} done={guildOk} icon={MessagesSquare} title={t('discordAdmin.steps.s3.title')}>
               <p>{t('discordAdmin.steps.s3.text')}</p>
@@ -343,6 +350,15 @@ function DiscordSetup(): ReactElement {
                   ? t('discordAdmin.steps.s4.done', { guild: s.guild?.name ?? '' })
                   : t('discordAdmin.steps.s4.text')}
               </p>
+              {s.permissions.length ? (
+                <div className="grid gap-2">
+                  <p className="text-[13.5px] font-semibold text-foreground">
+                    {t('discordAdmin.steps.s4.rights')}
+                  </p>
+                  <RightsList names={s.permissions} />
+                  <p className="text-[13px]">{t('discordAdmin.steps.s4.noAdmin')}</p>
+                </div>
+              ) : null}
               {s.inviteUrl ? (
                 <Button asChild variant={guildOk ? 'secondary' : 'primary'} className="justify-self-start">
                   <a href={s.inviteUrl} target="_blank" rel="noopener noreferrer">
@@ -361,10 +377,10 @@ function DiscordSetup(): ReactElement {
                 variant={s.setupDone ? 'secondary' : 'primary'}
                 className="justify-self-start"
                 onClick={() => setup.mutate()}
-                disabled={setup.isPending}
+                disabled={running}
               >
-                <Wand2 />
-                {t(`discordAdmin.steps.s5.${setupLabel}`)}
+                <Wand2 className={cn(running && 'animate-pulse')} />
+                {t(`discordAdmin.steps.s5.${setupLabelOf(s, setup.isPending)}`)}
               </Button>
               {setupError ? (
                 <p
@@ -375,12 +391,39 @@ function DiscordSetup(): ReactElement {
                   {setupError}
                 </p>
               ) : null}
-              {report ? <SetupResult report={report} /> : null}
+              <SetupProgressView progress={s.setup} />
+              <p className="text-[13px]">{t('discordAdmin.steps.s5.roleTip')}</p>
+            </StepCard>
+            <StepCard n={6} done={secretSet} optional icon={LogIn} title={t('discordAdmin.steps.s6.title')}>
+              <p>{t('discordAdmin.steps.s6.text')}</p>
+              <ol className="grid list-decimal gap-1 pl-5">
+                <li>
+                  {t('discordAdmin.steps.s6.a')} <PortalLink />
+                </li>
+                <li>{t('discordAdmin.steps.s6.b')}</li>
+              </ol>
+              <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-[12px] border border-border bg-muted/50 px-3.5 py-2.5">
+                <code className="min-w-0 flex-1 basis-56 font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">
+                  {s.redirectUrl}
+                </code>
+                <CopyButton value={s.redirectUrl} variant="secondary" />
+              </div>
+              <ol className="grid list-decimal gap-1 pl-5" start={3}>
+                <li>{t('discordAdmin.steps.s6.c')}</li>
+              </ol>
+              <AccessField kind="clientSecret" state={s.credentials.clientSecret} canEdit={s.canEditAccess} />
             </StepCard>
           </ol>
         </Card>
         <WhatItCreates />
       </div>
+      {guildOk || tokenOk ? (
+        <AppearanceCard ready={tokenOk && s.connected} />
+      ) : (
+        <Notice tone="neutral" icon={Palette} title={t('discordLook.title')}>
+          {t('discordLook.notReady')}
+        </Notice>
+      )}
     </>
   );
 }
@@ -390,7 +433,22 @@ export function DiscordPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
     <AreaGate area="discord">
-      <PageHead icon={MessagesSquare} title={t('discordAdmin.title')} text={t('discordAdmin.text')} />
+      <PageHead icon={MessagesSquare} title={t('discordAdmin.title')} text={t('discordAdmin.text')}>
+        <nav className="flex flex-wrap gap-2" aria-label={t('discordAdmin.jump')}>
+          <Button asChild variant="secondary" size="sm">
+            <a href="#einrichten">
+              <Wand2 />
+              {t('discordAdmin.jumpSetup')}
+            </a>
+          </Button>
+          <Button asChild variant="secondary" size="sm">
+            <a href="#aussehen">
+              <Palette />
+              {t('discordLook.title')}
+            </a>
+          </Button>
+        </nav>
+      </PageHead>
       <DiscordSetup />
     </AreaGate>
   );

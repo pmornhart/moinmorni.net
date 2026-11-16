@@ -1,4 +1,4 @@
-import { LifeBuoy, Users } from 'lucide-react';
+import { ClipboardList, LifeBuoy, Users } from 'lucide-react';
 import type { CSSProperties, ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -6,13 +6,40 @@ import { PlayerFace } from '~/components/player-face';
 import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
-import { useTeam, type TeamGroup } from '~/lib/site';
+import { useSite, useTeam, type SiteInfo, type TeamGroup } from '~/lib/site';
 import { usePick } from '~/lib/text';
-import { EmptyState, GameButton, LoadError, Panel, RankBlock } from './kit';
+import { EmptyState, GameButton, LoadError, Panel, RankBlock, RankTag } from './kit';
 import { PageHero } from './page-hero';
 import { WRAP } from './parts';
 
 const SKELETONS = ['a', 'b'];
+const APPLY_PAGE = '/team/bewerben';
+
+/** "Wir suchen …": open team positions with a button to the application page. */
+function WeSearch({ positions }: { readonly positions: NonNullable<SiteInfo['teamSearch']> }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  return (
+    <Panel className="flex flex-wrap items-center justify-between gap-4 border-gold/40 bg-gold-soft/40 p-5 sm:p-6">
+      <div className="grid min-w-0 gap-2.5">
+        <p className="flex items-center gap-2 font-pixel text-[1.4rem] font-bold leading-tight">
+          <ClipboardList className="size-5 shrink-0 text-gold" aria-hidden />
+          {t('site.team.search')}
+        </p>
+        <ul className="flex flex-wrap gap-2">
+          {positions.map((p) => (
+            <li key={p.id}>
+              <RankTag role={p} size="md" />
+            </li>
+          ))}
+        </ul>
+        <p className="max-w-[60ch] text-[14.5px] text-muted-foreground">{t('site.team.searchText')}</p>
+      </div>
+      <GameButton asChild tone="emerald">
+        <Link to={APPLY_PAGE}>{t('site.team.apply')}</Link>
+      </GameButton>
+    </Panel>
+  );
+}
 
 function RankGroup({ group }: { readonly group: TeamGroup }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
@@ -79,7 +106,9 @@ function RankGroup({ group }: { readonly group: TeamGroup }): ReactElement {
 export function TeamPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const team = useTeam();
+  const site = useSite();
   const groups = team.data ?? [];
+  const search = site.data?.teamSearch ?? [];
   return (
     <>
       <PageHero
@@ -89,6 +118,7 @@ export function TeamPage(): ReactElement {
         scene="biergarten"
       />
       <div className={cn(WRAP, 'grid gap-12 py-14 sm:py-16')}>
+        {search.length ? <WeSearch positions={search} /> : null}
         {team.isPending ? (
           <div className="grid gap-4">
             {SKELETONS.map((k) => (

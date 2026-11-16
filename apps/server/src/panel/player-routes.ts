@@ -1,10 +1,11 @@
 import { desc, like, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { mayAssign } from '@moinmorni/shared';
+import { mayAssign, mayPunish } from '@moinmorni/shared';
 import type { Api } from '../app.js';
 import type { Db } from '../db/index.js';
 import { players, punishments } from '../db/schema.js';
 import type { Hub } from '../hub/index.js';
+import { isLasting, LIFT_KINDS, type ModKind } from '../hub/moderation.js';
 import { morniCraftPlayer } from '../hub/mornicraft.js';
 import { normalUuid } from '../hub/players.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
@@ -13,7 +14,8 @@ import type { Stores } from './stores.js';
 
 /**
  * Panel: Spieler (Suche, Profil, Rang) und Strafen (verhängen, aufheben, Verlauf). Strafen laufen über dieselbe
- * Moderation wie /ban im Spiel – Rauswurf, Bann-Liste und Hinweis ans Team inklusive.
+ * Moderation wie /ban im Spiel – Rauswurf, Bann-Liste, Hinweis ans Team und Discord inklusive – und brauchen dasselbe
+ * Recht wie der Befehl (Sprachchat-Stumm z. B. „voice-mute“ wie /voicemute).
  */
 
 const LIST_MAX = 100;
@@ -32,15 +34,15 @@ const listQuery = z.object({
 });
 const uuidParams = z.object({ uuid: z.string().min(1).max(40) });
 const roleBody = z.object({ roleId: z.string().min(1).max(24).nullable() });
+const MOD_KINDS = ['ban', 'mute', 'jail', 'warn', 'kick', 'voice'] as const satisfies readonly ModKind[];
 const punishBody = z.object({
   player: z.string().trim().min(1).max(40),
-  kind: z.enum(['ban', 'mute', 'jail', 'warn', 'kick']),
-  /** null = für immer (nur Bann, Stumm und Gefängnis). */
+  kind: z.enum(MOD_KINDS),
+  /** null = für immer (nur Bann, Stumm, Gefängnis und Sprachchat-Stumm). */
   minutes: z.number().int().min(1).max(MINUTES_MAX).nullable(),
   reason: z.string().trim().max(REASON_MAX).default(''),
 });
-const liftParams = z.object({ uuid: z.string().min(1).max(40), kind: z.enum(['ban', 'mute', 'jail']) });
-const LASTING: ReadonlySet<string> = new Set(['ban', 'mute', 'jail', 'voice']);
+const liftParams = z.object({ uuid: z.string().min(1).max(40), kind: z.enum(LIFT_KINDS) });
 
 export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, hub: Hub, db: Db): void {
   const view = (row: typeof players.$inferSelect) => {
@@ -49,6 +51,7 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
     const ban = hub.punish.active(row.uuid, 'ban');
     const mute = hub.punish.active(row.uuid, 'mute');
     const jail = hub.punish.active(row.uuid, 'jail');
+    const voice = hub.punish.active(row.uuid, 'voice');
     return {
       uuid: row.uuid,
       name: row.name,
@@ -69,6 +72,7 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
       banned: ban ? { until: ban.expiresAt, reason: ban.reason } : null,
       muted: mute ? { until: mute.expiresAt, reason: mute.reason } : null,
       jailed: jail ? { until: jail.expiresAt, reason: jail.reason } : null,
+      voiceMuted: voice ? { until: voice.expiresAt, reason: voice.reason } : null,
     };
   };
 
@@ -106,7 +110,7 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
       mornicraft: morniCraftPlayer(db, row.uuid),
       history: hub.punish.history(row.uuid).map((p) => ({
         ...p,
-        active: LASTING.has(p.kind) && hub.punish.active(row.uuid, p.kind)?.id === p.id,
+        active: isLasting(p.kind) && hub.punish.active(row.uuid, p.kind)?.id === p.id,
       })),
     };
   });
@@ -139,12 +143,14 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
       ...p,
       playerName: hub.players.get(p.playerUuid)?.name ?? p.playerUuid,
       // Nur was dauert, kann „aktiv“ sein – Verwarnung und Rauswurf sind einmalig.
-      active: LASTING.has(p.kind) && hub.punish.active(p.playerUuid, p.kind)?.id === p.id,
+      active: isLasting(p.kind) && hub.punish.active(p.playerUuid, p.kind)?.id === p.id,
     }));
   });
 
   app.post('/api/panel/punishments', { schema: { body: punishBody } }, async (request) => {
     const user = await auth.require(request, 'punishments');
+    // Wie der Befehl im Spiel: /ban braucht das Recht „ban“, /voicemute „voice-mute“ … (Owner darf alles).
+    if (!mayPunish(user.role, request.body.kind)) throw forbidden('punish_no_right');
     const t = hub.moderation.target(request.body.player);
     if (!t) throw notFound('player_unknown');
     if (!higher(user, t.uuid)) throw forbidden('player_higher');
@@ -160,6 +166,7 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
 
   app.delete('/api/panel/punishments/:uuid/:kind', { schema: { params: liftParams } }, async (request) => {
     const user = await auth.require(request, 'punishments');
+    if (!mayPunish(user.role, request.params.kind)) throw forbidden('punish_no_right');
     const t = hub.moderation.target(request.params.uuid);
     if (!t) throw notFound('player_unknown');
     if (!higher(user, t.uuid)) throw forbidden('player_higher');

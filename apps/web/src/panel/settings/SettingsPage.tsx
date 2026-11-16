@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Gamepad2, RotateCcw, Save } from 'lucide-react';
+import { Gamepad2, Lock, RotateCcw, Save } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router';
@@ -12,7 +12,7 @@ import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
 import { usePick } from '~/lib/text';
 import { areaIcon, PageHead } from '../PanelShell';
-import { SETTINGS_KEY, useSettingsQuery, type SettingsEntry } from '../session';
+import { SETTINGS_KEY, usePanel, useSettingsQuery, type SettingsEntry } from '../session';
 import { AreaExtras } from './extras/AreaExtras';
 import { fieldId, SettingInput, valueValid } from './fields';
 import { SettingsSearch } from './SettingsSearch';
@@ -25,6 +25,7 @@ const SETTING_ANCHOR = '#setting-';
 const SECTION_ANCHOR = 'section-';
 /** From this many sections an area gets a row of jump links on top (game modes with long lists). */
 const SECTION_INDEX_FROM = 6;
+const OWNER = 'owner';
 
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
@@ -50,8 +51,15 @@ function SettingRow({
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
+  const me = usePanel();
   const layout = layoutOf(def);
-  const input = <SettingInput def={def} value={value} onChange={onChange} />;
+  // Some settings only the owner changes (e.g. opening the admin position) – the server checks it as well.
+  const locked = Boolean(def.ownerOnly) && me.role.id !== OWNER;
+  const input = (
+    <fieldset disabled={locked} className="m-0 min-w-0 border-0 p-0">
+      <SettingInput def={def} value={value} onChange={onChange} />
+    </fieldset>
+  );
   return (
     <div
       id={`setting-${def.key}`}
@@ -81,6 +89,12 @@ function SettingRow({
             <Gamepad2 className="size-3.5" aria-hidden />
             {t('settings.inGame')}
             <Kbd>{def.command}</Kbd>
+          </p>
+        ) : null}
+        {def.ownerOnly ? (
+          <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <Lock className="size-3.5" aria-hidden />
+            {t(locked ? 'settings.ownerOnlyLocked' : 'settings.ownerOnly')}
           </p>
         ) : null}
       </div>

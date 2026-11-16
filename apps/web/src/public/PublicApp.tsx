@@ -12,6 +12,7 @@ import { PlayerProfilePage, StatsPage } from './PlayerPages';
 import { PublicLayout } from './PublicLayout';
 import { RulesPage } from './RulesPage';
 import { IS_DEMO } from './site-mode';
+import { TeamApplyPage } from './TeamApplyPage';
 import { TeamPage } from './TeamPage';
 
 const MAX_RETRIES = 2;
@@ -34,6 +35,7 @@ const routes: RouteObject[] = [
       { path: 'statistiken', element: <StatsPage /> },
       { path: 'spieler/:name', element: <PlayerProfilePage /> },
       { path: 'team', element: <TeamPage /> },
+      { path: 'team/bewerben', element: <TeamApplyPage /> },
       { path: 'regeln', element: <RulesPage /> },
       { path: 'hilfe', element: <HelpPage /> },
       { path: 'impressum', element: <InfoPage page="imprint" /> },

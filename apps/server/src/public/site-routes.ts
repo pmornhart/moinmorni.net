@@ -40,12 +40,21 @@ export const newsView = (n: NewsRow) => ({
   author: n.author,
 });
 
+/** Eine offene Stelle im Team („Wir suchen …“ auf der Team-Seite). */
+export interface OpenPosition {
+  readonly id: string;
+  readonly name: { readonly de: string; readonly en: string };
+  readonly symbol: string;
+  readonly colour: string;
+}
+
 export function registerSiteRoutes(
   app: Api,
   db: Db,
   stores: Stores,
   hub: Hub,
   discordInvite: () => string | null,
+  openPositions: () => readonly OpenPosition[] = () => [],
 ): void {
   const published = () => and(isNotNull(news.publishedAt), lte(news.publishedAt, new Date().toISOString()));
 
@@ -200,6 +209,8 @@ export function registerSiteRoutes(
         (c) => typeof c === 'string' && c.trim() !== '',
       ),
       discordInvite: link(s['discordInvite']) ?? discordInvite(),
+      // Offene Stellen im Team (Bewerben unter /team/bewerben).
+      teamSearch: openPositions(),
       socials: {
         youtube: link(s['youtube']),
         tiktok: link(s['tiktok']),

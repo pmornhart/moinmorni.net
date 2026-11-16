@@ -79,4 +79,86 @@ describe('Panel: Spieler und Strafen', () => {
         .statusCode,
     ).toBe(400);
   });
+
+  test('Sprachchat stummschalten: wie /voicemute – Dauer, Verlauf, Strafen-Seite, Aufheben, nur mit dem Recht', async () => {
+    const MINUTES = 30;
+    const SHORT = 5;
+    const MINUTE_MS = 60_000;
+    const OK = 200;
+    const FORBIDDEN = 403;
+    const NOT_FOUND = 404;
+    const before = Date.now();
+    const mute = await call('POST', '/api/panel/punishments', {
+      player: 'Lena',
+      kind: 'voice',
+      minutes: MINUTES,
+      reason: 'Schreien im Sprachchat',
+    });
+    expect(mute.statusCode).toBe(OK);
+    const made = mute.json<{ kind: string; byName: string; expiresAt: string }>();
+    expect(made).toMatchObject({ kind: 'voice', byName: 'philip', reason: 'Schreien im Sprachchat' });
+    expect(Date.parse(made.expiresAt) - before).toBeGreaterThanOrEqual(MINUTES * MINUTE_MS);
+    expect(h.mm.hub.punish.activeOf('voice')).toEqual([LENA]);
+    const profile = (await call('GET', `/api/panel/players/${LENA}`)).json<{ history: unknown[] }>();
+    expect(profile).toMatchObject({
+      voiceMuted: { reason: 'Schreien im Sprachchat', until: made.expiresAt },
+      // Schreiben im Chat geht weiter.
+      muted: null,
+    });
+    expect(profile.history[0]).toMatchObject({
+      kind: 'voice',
+      reason: 'Schreien im Sprachchat',
+      active: true,
+    });
+    const list = (await call('GET', '/api/panel/punishments')).json<
+      Array<{ kind: string; active: boolean }>
+    >();
+    expect(list[0]).toMatchObject({ kind: 'voice', active: true });
+
+    expect((await call('DELETE', `/api/panel/punishments/${LENA}/voice`)).statusCode).toBe(OK);
+    expect((await call('DELETE', `/api/panel/punishments/${LENA}/voice`)).statusCode).toBe(NOT_FOUND);
+    expect((await call('GET', `/api/panel/players/${LENA}`)).json()).toMatchObject({ voiceMuted: null });
+    // Für immer: ohne Ende.
+    const forever = await call('POST', '/api/panel/punishments', {
+      player: 'Lena',
+      kind: 'voice',
+      minutes: null,
+    });
+    expect(forever.json()).toMatchObject({ kind: 'voice', expiresAt: null });
+    await call('DELETE', `/api/panel/punishments/${LENA}/voice`);
+
+    // Ein Moderator, dessen Rolle das Recht „voice-mute“ nicht hat: Sprachchat nein, Chat-Stumm weiter ja.
+    type R = { id: string; game: string[] };
+    const roles = (await call('GET', '/api/panel/roles')).json<R[]>();
+    const withoutVoice = roles.map((r) =>
+      r.id === 'moderator' ? { ...r, game: r.game.filter((g) => g !== 'voice-mute') } : r,
+    );
+    expect((await call('PUT', '/api/panel/roles', withoutVoice)).statusCode).toBe(OK);
+    const made2 = await call('POST', '/api/panel/team', { username: 'mona', roleId: 'moderator' });
+    const mona = await h.login('mona', made2.json<{ password: string }>().password);
+    const asMona = (method: 'POST' | 'DELETE', url: string, payload?: object) =>
+      h.mm.app.inject({
+        method,
+        url,
+        payload,
+        headers: { cookie: mona.cookie, 'x-csrf-token': mona.csrf },
+      });
+    const denied = await asMona('POST', '/api/panel/punishments', {
+      player: 'Lena',
+      kind: 'voice',
+      minutes: SHORT,
+    });
+    expect(denied.statusCode).toBe(FORBIDDEN);
+    expect(denied.json()).toEqual({ error: 'punish_no_right' });
+    expect(h.mm.hub.punish.activeOf('voice')).toEqual([]);
+    expect(
+      (await asMona('POST', '/api/panel/punishments', { player: 'Lena', kind: 'mute', minutes: SHORT }))
+        .statusCode,
+    ).toBe(OK);
+    expect((await asMona('DELETE', `/api/panel/punishments/${LENA}/mute`)).statusCode).toBe(OK);
+    await call('POST', '/api/panel/punishments', { player: 'Lena', kind: 'voice', minutes: SHORT });
+    expect((await asMona('DELETE', `/api/panel/punishments/${LENA}/voice`)).statusCode).toBe(FORBIDDEN);
+    expect((await call('DELETE', `/api/panel/punishments/${LENA}/voice`)).statusCode).toBe(OK);
+    expect((await call('PUT', '/api/panel/roles', roles)).statusCode).toBe(OK);
+  });
 });
