@@ -106,8 +106,30 @@ export interface WhitelistEntry {
   readonly createdAt: string;
 }
 
+/**
+ * Someone who always gets in through their rank (apps/server/src/mornicraft/team.ts) – shown on the whitelist by
+ * itself, without a delete button.
+ */
+export interface WhitelistTeamEntry {
+  readonly uuid: string;
+  /** Minecraft name; the panel account's name while they have never been in the network. */
+  readonly name: string;
+  readonly seen: boolean;
+  readonly role: {
+    readonly id: string;
+    readonly name: { readonly de: string; readonly en: string };
+    readonly symbol: string;
+    readonly colour: string;
+    readonly position: number;
+  };
+  /** Id of a hand-made entry for the same person (it stays, should they leave the team), else null. */
+  readonly listed: number | null;
+}
+
 export const APPLICATIONS_KEY = ['panel', 'applications'] as const;
 export const WHITELIST_KEY = ['panel', 'whitelist'] as const;
+/** Under WHITELIST_KEY: refreshing the whitelist refreshes the team part too. */
+export const WHITELIST_TEAM_KEY = [...WHITELIST_KEY, 'team'] as const;
 
 export function useApplicationsQuery(status: ApplicationStatus): UseQueryResult<Application[]> {
   return useQuery({
@@ -120,6 +142,13 @@ export function useWhitelistQuery(): UseQueryResult<WhitelistEntry[]> {
   return useQuery({
     queryKey: WHITELIST_KEY,
     queryFn: () => mmApi<WhitelistEntry[]>('/api/panel/whitelist'),
+  });
+}
+
+export function useWhitelistTeamQuery(): UseQueryResult<WhitelistTeamEntry[]> {
+  return useQuery({
+    queryKey: WHITELIST_TEAM_KEY,
+    queryFn: () => mmApi<WhitelistTeamEntry[]>('/api/panel/whitelist/team'),
   });
 }
 

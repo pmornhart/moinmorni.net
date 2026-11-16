@@ -78,15 +78,20 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
   test('„Server einrichten“: Rollen, Kanäle mit Rechten, Regeln, Hilfe, Status, Befehle, Community', async () => {
     const first = await call('POST', '/api/panel/discord/setup');
     expect(first.statusCode).toBe(200);
-    expect(first.json()).toMatchObject({ roles: 9, community: 'ok' });
+    expect(first.json()).toMatchObject({ roles: 10, community: 'ok' });
     expect(roleByName('♛ Owner')).toMatchObject({ color: 0xff5555, permissions: '8', hoist: true });
     expect(roleByName('⚔ Moderator')).toBeTruthy();
+    // Supporter wie jede Rolle der Vorlage: Farbe, oben in der Liste, erwähnbar, sieht die Team-Kanäle.
+    const supporter = roleByName('✚ Supporter');
+    expect(supporter).toMatchObject({ color: 0x22c55e, hoist: true, mentionable: true });
     expect(roleByName('✔ Verbunden')).toBeTruthy();
     expect(roleByName('Spieler')).toBeUndefined();
 
     const team = channelByName('🛡・team-chat');
     const everyoneTeam = team?.permission_overwrites?.find((o) => o.id === dc.guild.id);
     expect(BigInt(everyoneTeam?.deny ?? '0') & VIEW).toBe(VIEW);
+    const supporterTeam = team?.permission_overwrites?.find((o) => o.id === supporter?.id);
+    expect(BigInt(supporterTeam?.allow ?? '0') & VIEW).toBe(VIEW);
     expect(channelByName('Dorfplatz')).toMatchObject({ type: 2 });
     const rules = channelByName('📜・regeln');
     expect(dc.messages.get(rules?.id ?? '')?.[0]?.content).toContain('Regeln');

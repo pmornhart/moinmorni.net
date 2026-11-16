@@ -452,7 +452,7 @@
       "team": {
         "title": "Hilfe vom Team",
         "short": "Ticket im Discord – oder im Spiel fragen",
-        "intro": "Du steckst fest, hast einen Fehler gefunden oder willst jemanden melden? Wir helfen dir gern.",
+        "intro": "Du steckst fest, hast einen Fehler gefunden oder willst jemanden melden? Wir helfen dir gern. Das Team erkennst du im Spiel am Symbol vor dem Namen, z. B. ✚ Supporter oder ⚔ Moderator.",
         "step1": "Geh in unserem Discord in den Kanal „hilfe“.",
         "step2": "Klick auf den Knopf, um ein Ticket zu öffnen – das sehen nur du und das Team.",
         "step3": "Beschreib kurz, was los ist. Jemand aus dem Team meldet sich bei dir.",
@@ -824,8 +824,9 @@
       "bigger-party": "Größere Party",
       "lobby-extras": "Extras in der Lobby",
       "chat-colour": "Farbe im Chat",
-      "maintenance-join": "Rein trotz Wartung",
+      "maintenance-join": "Kommt immer rein",
       "ranks": "Ränge vergeben",
+      "modes-admin": "Spielmodi verwalten",
       "admin": "Alles (Verwaltung)"
     },
     "discordRights": {
@@ -914,17 +915,18 @@
       "voice-mute": "Andere im Sprachchat stummschalten.",
       "build": "Blöcke setzen und abbauen, wo sonst geschützt ist.",
       "worldedit": "Große Bau-Werkzeuge (ganze Bereiche auf einmal).",
-      "lobby-edit": "Die Lobby umbauen.",
-      "gamemode": "Den Spielmodus wechseln (Überleben, Zuschauer …).",
+      "lobby-edit": "In der Lobby bauen (im Kreativmodus).",
+      "gamemode": "Den Spielmodus wechseln (Überleben, Abenteuer, Zuschauer) – Kreativ nur mit „Kreativmodus“.",
       "creative": "In den Kreativmodus wechseln.",
       "streamer": "Streamer-Modus: versteckt Adressen und Koordinaten.",
       "reserved-slot": "Darf auch bei vollem Netzwerk rein.",
       "bigger-party": "Größere Party mit mehr Freunden.",
       "lobby-extras": "Extras in der Lobby, z. B. Partikel oder Hüte.",
       "chat-colour": "Farben im eigenen Chat-Text.",
-      "maintenance-join": "Darf auch während der Wartung rein.",
+      "maintenance-join": "Kommt auch während der Wartung rein und in Modi nur auf Einladung (MorniCraft) ohne Whitelist – steht dort von selbst auf der Liste.",
       "ranks": "Anderen im Spiel Ränge geben (nur unter dem eigenen).",
-      "admin": "Alles im Spiel – nur für ganz wenige."
+      "modes-admin": "Die Verwaltungs-Befehle der Spielmodi auf jedem Server, z. B. Runde starten, neu laden, neu bauen (/mparty, /duels, /smpadmin …).",
+      "admin": "Alles im Spiel auf jedem Server, wie ein Operator – nur für ganz wenige."
     },
     "discordHelp": {
       "administrator": "Darf im Discord wirklich alles.",
@@ -1183,7 +1185,7 @@
     },
     "roles": {
       "title": "Rollen",
-      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel, im Panel und im Discord. Eine Änderung gilt überall gleichzeitig."
+      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel auf jedem Server (bis zu den Verwaltungs-Befehlen der Spielmodi), im Panel und im Discord. Eine Änderung gilt überall gleichzeitig."
     },
     "discord": {
       "title": "Discord",
@@ -1655,7 +1657,7 @@
   },
   "whitelistCard": {
     "title": "Whitelist",
-    "text": "Wer auf MorniCraft darf. Angenommene Bewerbungen landen hier von selbst; du kannst Namen auch direkt eintragen. Das Team kommt immer hinein.",
+    "text": "Wer auf MorniCraft darf. Das Team kommt immer hinein und steht hier von selbst: alle, deren Rang „Kommt immer rein“ hat. Angenommene Bewerbungen landen hier auch von selbst; du kannst Namen auch direkt eintragen.",
     "count_one": "{{count}} Spieler",
     "count_other": "{{count}} Spieler",
     "addLabel": "Name hinzufügen",
@@ -1675,7 +1677,14 @@
     "remove": "Entfernen",
     "empty": "Noch niemand auf der Whitelist. Nimm eine Bewerbung an oder trag einen Namen ein.",
     "search": "Whitelist durchsuchen",
-    "noMatch": "Kein Name passt zur Suche."
+    "noMatch": "Kein Name passt zur Suche.",
+    "teamTitle": "Team – kommt immer hinein",
+    "ownTitle": "Eingetragen",
+    "team": "Gehört zum Team",
+    "teamHelp": "Kommt über den Rang hinein, auch ohne Eintrag. Wer dazugehört, legst du unter „Rollen“ fest (Recht „Kommt immer rein“).",
+    "alsoListed": "steht auch von Hand auf der Liste",
+    "notSeen": "war noch nicht im Netzwerk – Name des Panel-Kontos",
+    "alreadyTeam": "{{name}} gehört zum Team und kommt sowieso hinein."
   },
   "buildCard": {
     "title": "Gespeicherte Bauten",

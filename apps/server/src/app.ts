@@ -36,6 +36,7 @@ import { createBuildService } from './build/service.js';
 import { registerBuildRoutes } from './build/routes.js';
 import { createApplicationService } from './mornicraft/applications.js';
 import { registerApplyRoutes } from './mornicraft/routes.js';
+import { registerWhitelistTeamRoute } from './mornicraft/team.js';
 import { createUpdateService } from './system/update.js';
 import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
@@ -299,6 +300,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerNewsRoutes(app, auth, handle.db, events);
   const updates = createUpdateService(config, motor, stores, options.githubFetch);
   registerUpdateRoutes(app, auth, updates);
+  // Whitelist im Panel: das Team (kommt über den Rang immer hinein) steht von selbst mit drauf.
+  registerWhitelistTeamRoute(app, auth, handle.db, hub.players, applications);
   registerBuildRoutes(app, auth, build);
   registerApplyRoutes(app, {
     config,
@@ -369,6 +372,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     start: async () => {
       sleep.start();
       bot.start();
+      // Neue Rolle oder neues Recht aus der Vorlage (z. B. Supporter nach einem Update): überall nachziehen wie nach
+      // einer Änderung im Panel (Discord-Rollen, Motor-Zugriff, Rechte auf den Spielservern).
+      if (stores.templateUpgrades.length) events.emit('roles.changed', { by: 'MoinMorni' });
       // Meldungen des Motors (Wächter, NetBird-Ausgang, Server) ins Discord-Team-Log.
       if (config.motorToken)
         relay.current = startAlertRelay({

@@ -17,6 +17,7 @@ import type { Db } from '../db/index.js';
 import { modes, roles, settingValues } from '../db/schema.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import type { EventBus } from '../lib/events.js';
+import { upgradeRoleTemplate } from './role-template.js';
 
 /**
  * Speicher für Rollen-Vorlage, Einstellungen (nach Katalog) und Modi. Beim ersten Start kommen die Vorlagen
@@ -33,6 +34,8 @@ export interface Stores {
   readonly patchSettings: (area: string, patch: unknown, by: string) => Record<string, unknown>;
   readonly modes: () => Mode[];
   readonly patchMode: (id: string, patch: ModePatch, by: string) => Mode;
+  /** Neuerungen der Rollen-Vorlage, die beim Start dazukamen (z. B. Supporter) – leer, wenn nichts neu war. */
+  readonly templateUpgrades: readonly string[];
 }
 
 /**
@@ -106,6 +109,7 @@ function addNewModes(db: Db): void {
 export function createStores(db: Db, events: EventBus): Stores {
   if (!db.select().from(roles).get())
     DEFAULT_ROLES.forEach((r) => db.insert(roles).values({ id: r.id, data: r }).run());
+  const templateUpgrades = upgradeRoleTemplate(db);
   addNewModes(db);
   updateOldSmp(db);
 
@@ -126,6 +130,7 @@ export function createStores(db: Db, events: EventBus): Stores {
       .sort((a, b) => a.position - b.position);
 
   return {
+    templateUpgrades,
     roles: allRoles,
     role: (id) => allRoles().find((r) => r.id === id),
     saveRoles: (list, by, editor) => {

@@ -452,7 +452,7 @@
       "team": {
         "title": "Help from the team",
         "short": "Ticket on Discord – or ask in the game",
-        "intro": "Stuck, found a bug or want to report someone? We're happy to help.",
+        "intro": "Stuck, found a bug or want to report someone? We are happy to help. In the game you can tell the team by the symbol in front of the name, e.g. ✚ Supporter or ⚔ Moderator.",
         "step1": "On our Discord, go to the “hilfe” (help) channel.",
         "step2": "Click the button to open a ticket – only you and the team can see it.",
         "step3": "Briefly describe what's going on. Someone from the team will get back to you.",
@@ -824,8 +824,9 @@
       "bigger-party": "Bigger party",
       "lobby-extras": "Lobby extras",
       "chat-colour": "Colour in chat",
-      "maintenance-join": "Join during maintenance",
+      "maintenance-join": "Always gets in",
       "ranks": "Give ranks",
+      "modes-admin": "Manage game modes",
       "admin": "Everything (admin)"
     },
     "discordRights": {
@@ -914,17 +915,18 @@
       "voice-mute": "Mute others in voice chat.",
       "build": "Place and break blocks where it is protected otherwise.",
       "worldedit": "Big building tools (whole areas at once).",
-      "lobby-edit": "Rebuild the lobby.",
-      "gamemode": "Change the game mode (survival, spectator …).",
+      "lobby-edit": "Build in the lobby (in creative mode).",
+      "gamemode": "Change the game mode (survival, adventure, spectator) – creative only with “Creative mode”.",
       "creative": "Switch to creative mode.",
       "streamer": "Streamer mode: hides addresses and coordinates.",
       "reserved-slot": "May join even when the network is full.",
       "bigger-party": "A bigger party with more friends.",
       "lobby-extras": "Extras in the lobby, e.g. particles or hats.",
       "chat-colour": "Colours in their own chat text.",
-      "maintenance-join": "May join during maintenance too.",
+      "maintenance-join": "Gets in during maintenance too, and into invite-only modes (MorniCraft) without the whitelist – shows up on that list by itself.",
       "ranks": "Give others ranks in the game (only below their own).",
-      "admin": "Everything in the game – only for very few."
+      "modes-admin": "The admin commands of the game modes on every server, e.g. start a round, reload, rebuild (/mparty, /duels, /smpadmin …).",
+      "admin": "Everything in the game on every server, like an operator – only for very few."
     },
     "discordHelp": {
       "administrator": "May really do everything in Discord.",
@@ -1183,7 +1185,7 @@
     },
     "roles": {
       "title": "Roles",
-      "text": "Symbol, colour and rights of every role – in the game, the panel and Discord. A change applies everywhere at once."
+      "text": "Symbol, colour and rights of every role – in the game on every server (up to the admin commands of the game modes), in the panel and on Discord. A change applies everywhere at once."
     },
     "discord": {
       "title": "Discord",
@@ -1655,7 +1657,7 @@
   },
   "whitelistCard": {
     "title": "Whitelist",
-    "text": "Who may join MorniCraft. Accepted applications land here by themselves; you can also add names directly. The team always gets in.",
+    "text": "Who may join MorniCraft. The team always gets in and shows up here by itself: everyone whose rank has “Always gets in”. Accepted applications land here by themselves too; you can also add names directly.",
     "count_one": "{{count}} player",
     "count_other": "{{count}} players",
     "addLabel": "Add a name",
@@ -1675,7 +1677,14 @@
     "remove": "Remove",
     "empty": "Nobody on the whitelist yet. Accept an application or add a name.",
     "search": "Search the whitelist",
-    "noMatch": "No name matches the search."
+    "noMatch": "No name matches the search.",
+    "teamTitle": "Team – always gets in",
+    "ownTitle": "Added",
+    "team": "Belongs to the team",
+    "teamHelp": "Gets in through the rank, no entry needed. Who belongs is set under “Roles” (right “Always gets in”).",
+    "alsoListed": "also added by hand",
+    "notSeen": "not in the network yet – name of the panel account",
+    "alreadyTeam": "{{name}} belongs to the team and gets in anyway."
   },
   "buildCard": {
     "title": "Saved builds",
