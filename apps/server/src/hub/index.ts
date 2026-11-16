@@ -1,7 +1,14 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
 import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
-import { alwaysIn, areaById, MODE_PHASE_PAUSE, type GameRight, type Role } from '@moinmorni/shared';
+import {
+  alwaysIn,
+  areaById,
+  MODE_PHASE_PAUSE,
+  WARTUNG_SERVER,
+  type GameRight,
+  type Role,
+} from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
@@ -30,6 +37,7 @@ import { createSettingCommands, mergeCommands } from './setting-commands.js';
 import { createSocial } from './social.js';
 import { createModeStats, statsSchema, type ModeStatsService } from './stats.js';
 import { createVoice } from './voice.js';
+import { createWartung, type Wartung } from './wartung.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
 
@@ -48,6 +56,7 @@ const PROXY_ONLY: ReadonlySet<string> = new Set([
   'locale',
   'command',
   'complete',
+  'fallback',
 ]);
 const MINUTE_MS = 60_000;
 const NAME_MAX = 16;
@@ -105,6 +114,15 @@ const connectingSchema = z.object({
   id: z.number().int(),
   uuid: uuidField,
   server: z.string().min(1).max(32),
+  /** Der Proxy schickt den Spieler nach einem Rauswurf oder beim Ankommen dorthin (nicht der Spieler selbst). */
+  fallback: z.boolean().optional(),
+});
+/** Rauswurf oder Verbinden gescheitert: wohin jetzt? (`tried` = schon gescheitert) */
+const fallbackSchema = z.object({
+  id: z.number().int(),
+  uuid: uuidField,
+  from: z.string().min(1).max(32),
+  tried: z.array(z.string().max(32)).max(16),
 });
 const modePlayerSchema = z.object({
   mode: z.string().min(1).max(32),
@@ -203,10 +221,12 @@ export function createHub(options: HubOptions): Hub {
       t: 'network',
       motd1: String(s['motd1'] ?? ''),
       motd2: maintenance
-        ? `§6Wartung §8– §7${String(s['maintenanceMessage'] ?? '')}`
+        ? `§6Wartung${wartungRef.service?.untilMotd() ?? ''} §8– §7${String(s['maintenanceMessage'] ?? '')}`
         : String(s['motd2'] ?? ''),
       maxPlayers: Number(s['maxPlayers']),
       maintenance,
+      // Gibt es die Wartungs-Lobby? (Der Proxy schickt ohne Hub dorthin, wenn die Lobby nicht geht.)
+      wartung: s['maintenanceLobby'] !== false,
     };
   };
   const defaultLang = (): Lang =>
@@ -249,7 +269,10 @@ export function createHub(options: HubOptions): Hub {
     events.emit('player.changed', { uuid: normalUuid(uuid) });
   };
 
+  /** Gibt es erst nach dem Kontext (braucht `ctx`); bis dahin hält niemand an. */
+  const wartungRef: { service: Wartung | null } = { service: null };
   const ctx: HubContext = {
+    held: (uuid, lang) => wartungRef.service?.held(uuid, lang) ?? null,
     presence,
     players,
     punish,
@@ -294,6 +317,14 @@ export function createHub(options: HubOptions): Hub {
       .activeAll('jail')
       .map((p) => ({ uuid: p.playerUuid, until: p.expiresAt, reason: p.reason })),
   });
+  const wartung = createWartung({
+    ctx,
+    now,
+    connected: (server) => conns.backends.has(server),
+    toWartung: (body) => toBackend(WARTUNG_SERVER, body),
+  });
+  wartungRef.service = wartung;
+  wartung.start();
   const voiceRef: { broadcast: () => void } = { broadcast: () => undefined };
   const moderation = createModeration(ctx, (change) => {
     if (change.kind === 'jail') toBackend(LOBBY_SERVER, jailState());
@@ -378,10 +409,15 @@ export function createHub(options: HubOptions): Hub {
       return 'stop';
     };
     const name = mm(modeName(server, lang));
+    // Wartung des Netzwerks: wer nicht immer hinein darf, wartet in der Wartungs-Lobby – nirgends sonst.
+    const held = server === WARTUNG_SERVER ? null : wartung.held(uuid, lang);
+    if (held) return stop(held);
     // Bau-Server: nur fürs Bauteam.
     if (server === BUILD_SERVER && !hasRight(players.roleOf(uuid), 'build'))
       return stop(text(lang, 'build.no_right'));
-    const jail = server === LOBBY_SERVER ? undefined : punish.active(uuid, 'jail');
+    // Eingesperrte dürfen in die Lobby (Zelle) – und in die Wartungs-Lobby, solange die Lobby nicht da ist.
+    const jail =
+      server === LOBBY_SERVER || server === WARTUNG_SERVER ? undefined : punish.active(uuid, 'jail');
     if (jail)
       return stop(
         text(lang, 'jail.blocked', {
@@ -423,7 +459,20 @@ export function createHub(options: HubOptions): Hub {
     const m = connectingSchema.parse(body);
     const uuid = normalUuid(m.uuid);
     const lang: Lang = presence.get(uuid)?.lang ?? defaultLang();
-    reply(conn, m.id, { allow: admit(uuid, m.server, lang) === 'go' });
+    const allow = admit(uuid, m.server, lang) === 'go';
+    // Vom Proxy dorthin geschickt (Lobby weg, Wartung): wartet und kommt automatisch zurück.
+    if (allow && m.server === WARTUNG_SERVER && m.fallback) wartung.waiting(uuid);
+    // Wer in der Wartung gerade ankommt und woandershin will, landet in der Wartungs-Lobby.
+    const redirect = !allow && wartung.parked(uuid) && wartung.open() ? WARTUNG_SERVER : undefined;
+    if (redirect) wartung.waiting(uuid);
+    reply(conn, m.id, { allow, ...(redirect ? { redirect } : {}) });
+  };
+  /** Rauswurf oder Verbinden gescheitert: erst die Lobby, dann die Wartungs-Lobby – nie Bau-Server oder Modi. */
+  const fallback = (conn: Connection, body: unknown): void => {
+    const m = fallbackSchema.parse(body);
+    const uuid = normalUuid(m.uuid);
+    const lang: Lang = presence.get(uuid)?.lang ?? defaultLang();
+    reply(conn, m.id, wartung.fallback(uuid, lang));
   };
   /** Figur in der Lobby angeklickt: in den Modus (oder wecken, oder sagen, warum nicht). */
   const play = (conn: Connection, body: unknown): void => {
@@ -531,8 +580,9 @@ export function createHub(options: HubOptions): Hub {
       return;
     }
     const net = stores.settings('network');
-    if (net['maintenance'] === true && !alwaysIn(role)) {
-      deny(text(lang, 'maintenance.screen', { message: mm(String(net['maintenanceMessage'] ?? '')) }));
+    // Wartung: ohne Wartungs-Lobby wie früher abweisen, sonst dort warten lassen.
+    if (net['maintenance'] === true && !alwaysIn(role) && !wartung.open()) {
+      deny(wartung.screen(lang));
       return;
     }
     const full = presence.all().filter((p) => p.uuid !== uuid).length >= Number(net['maxPlayers']);
@@ -541,7 +591,10 @@ export function createHub(options: HubOptions): Hub {
       return;
     }
     presence.join({ uuid, name: m.name, bedrock: m.bedrock, lang });
-    reply(conn, m.id, { allow: true, lang });
+    // Erster Server: die Lobby – ist sie nicht da (oder Wartung), die Wartungs-Lobby.
+    const server = wartung.firstServer(uuid);
+    if (server === WARTUNG_SERVER) wartung.waiting(uuid);
+    reply(conn, m.id, { allow: true, lang, server });
   };
 
   const actorOf = (uuid: string): Actor | null => {
@@ -568,23 +621,28 @@ export function createHub(options: HubOptions): Hub {
         if (p.server) presence.move(uuid, p.server);
         sendProfile(uuid);
       });
+      wartung.onOnline();
       lobbySoon();
     },
     login,
     connecting,
+    fallback,
     play,
     switch: (_conn, body) => {
       const m = switchSchema.parse(body);
       lobbySoon();
       const first = presence.get(m.uuid)?.server === null;
       presence.move(m.uuid, m.server);
+      wartung.onSwitch(normalUuid(m.uuid), m.server);
       sendProfile(m.uuid);
       // Erst jetzt ist der Spieler wirklich da: Freunde erfahren es, offene Anfragen kommen an.
       if (first) social.joined(normalUuid(m.uuid));
       social.switched(normalUuid(m.uuid), m.server);
     },
     leave: (_conn, body) => {
-      leave(leaveSchema.parse(body).uuid);
+      const uuid = leaveSchema.parse(body).uuid;
+      leave(uuid);
+      wartung.onLeave(normalUuid(uuid));
       lobbySoon();
     },
     // Die Sprache des Clients kommt erst nach der Anmeldung; wer sie selbst gewählt hat (/sprache), behält sie.
@@ -671,7 +729,13 @@ export function createHub(options: HubOptions): Hub {
     },
     'to-lobby': (conn, body) => {
       const m = toLobbySchema.parse(body);
-      if (isHere(conn, m.uuid) && conn.server !== LOBBY_SERVER) ctx.connect(normalUuid(m.uuid), LOBBY_SERVER);
+      if (!isHere(conn, m.uuid) || conn.server === LOBBY_SERVER) return;
+      // Wie /lobby: in der Wartung bleibt man in der Wartungs-Lobby; ist die Lobby nicht da, sagt es der Hub.
+      const uuid = normalUuid(m.uuid);
+      const lang: Lang = presence.get(uuid)?.lang ?? defaultLang();
+      const held = wartung.held(uuid, lang);
+      if (held) ctx.msg(uuid, held);
+      else if (!ctx.connect(uuid, LOBBY_SERVER)) ctx.msg(uuid, text(lang, 'lobby.missing'));
     },
     'voice-group': (conn, body) => {
       const m = voiceGroupSchema.parse(body);
@@ -709,10 +773,12 @@ export function createHub(options: HubOptions): Hub {
         conn.send(jailState());
       }
       if (conn.server === morniCraftServer(stores)) conn.send(morniCraft());
+      if (conn.server === WARTUNG_SERVER) conn.send(wartung.state());
       const modeArea = modeAreaOfServer(stores, conn.server);
       const modeSettings = modeArea ? modeSettingsBody(stores, modeArea) : null;
       if (modeSettings) conn.send(modeSettings);
       lobbySoon();
+      wartung.onServer(conn.server);
       presence.on(conn.server).forEach((p) => sendProfile(p.uuid));
       // Aufgewacht: wer gewartet hat, kommt jetzt hinein.
       const list = waiting.get(conn.server);
@@ -742,6 +808,7 @@ export function createHub(options: HubOptions): Hub {
       if (conns.backends.get(conn.server) === conn) {
         conns.backends.delete(conn.server);
         lobbySoon();
+        wartung.onServer(conn.server);
         // Gestoppt oder neu gestartet: Beim nächsten Start trägt das Plugin die Werte vorher ein.
         [...restartPending]
           .filter(([, server]) => server === conn.server)
@@ -753,7 +820,10 @@ export function createHub(options: HubOptions): Hub {
   events.on('settings.changed', ({ area }) => {
     const mc = morniCraftServer(stores);
     if (mc && MORNICRAFT_AREAS.has(area)) toBackend(mc, morniCraft());
-    if (area === 'network') toProxy(network());
+    if (area === 'network') {
+      toProxy(network());
+      wartung.onSettings();
+    }
     if (area === 'lobby') toBackend(LOBBY_SERVER, lobbySettings());
     if (area === 'voice') voice.broadcast();
     // Einstellungen eines Spielmodus → an seinen Server (schläft er, trägt MoinMorni sie vor dem Aufwachen ein).
@@ -769,6 +839,7 @@ export function createHub(options: HubOptions): Hub {
     listen: transport.listen,
     close: async () => {
       voice.stop();
+      wartung.stop();
       // Sonst feuert die verzögerte Lobby-Meldung noch nach dem Schließen (Datenbank schon zu).
       closed = true;
       if (lobbyTimer) clearTimeout(lobbyTimer);

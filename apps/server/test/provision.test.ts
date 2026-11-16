@@ -50,7 +50,7 @@ describe('Netzwerk richtet sich selbst ein', () => {
       },
     });
     const first = await provisioner.ensure();
-    expect(first.created).toEqual(['proxy', 'lobby', 'bau', 'duels']);
+    expect(first.created).toEqual(['proxy', 'lobby', 'wartung', 'bau', 'duels']);
     expect(first.modesInstalled).toEqual(['duels']);
 
     const nets = await h.mm.motor.request<Net[]>('GET', '/api/networks');
@@ -143,6 +143,7 @@ describe('Netzwerk richtet sich selbst ein', () => {
       'MoinMorni Duels',
       'MoinMorni Lobby',
       'MoinMorni Proxy',
+      'MoinMorni Wartung',
     ]);
     const jars = async (id: string): Promise<string[]> =>
       (await motor.request<Array<{ name: string }>>('GET', `/api/servers/${id}/files?path=plugins`))
@@ -153,7 +154,7 @@ describe('Netzwerk richtet sich selbst ein', () => {
     expect(await jars(after!.proxy.serverId)).toEqual(['MoinMorni-Network.jar']);
     expect(await jars(duelsId)).toEqual(['MoinMorni-Duels.jar', 'MoinMorni-Network.jar']);
     // Alles neu auf laufenden Servern → Neustart, sobald niemand drauf ist (den Ordner holt das Plugin dabei zurück).
-    expect(result.restart.map((r) => r.member).sort()).toEqual(['bau', 'duels', 'lobby', 'proxy']);
+    expect(result.restart.map((r) => r.member).sort()).toEqual(['bau', 'duels', 'lobby', 'proxy', 'wartung']);
   });
 
   test('Proxy und Lobby anlegen, Plugin und Schlüssel aufspielen – beim zweiten Mal nichts doppelt', async () => {
@@ -169,13 +170,15 @@ describe('Netzwerk richtet sich selbst ein', () => {
     });
 
     const first = await provisioner.ensure();
-    expect(first.created).toEqual(['proxy', 'lobby', 'bau']);
-    expect(first.pluginUpdated).toEqual(['proxy', 'lobby', 'bau']);
+    // Die Wartungs-Lobby gehört von Anfang an dazu (zweite Wahl nach der Lobby).
+    expect(first.created).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
+    expect(first.pluginUpdated).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
+    expect(first.wartungServerId).not.toBe('');
     expect(first.restart).toEqual([]); // neu angelegt: startet ohnehin frisch
 
     const nets = await h.mm.motor.request<Net[]>('GET', '/api/networks');
     const net = nets.find((n) => n.name === 'MoinMorni');
-    expect(net?.members.map((m) => m.name)).toEqual(['lobby', 'bau']);
+    expect(net?.members.map((m) => m.name)).toEqual(['lobby', 'wartung', 'bau']);
     expect(net?.defaultMember).toBe('lobby');
 
     const lobbyId = net?.members[0]?.serverId ?? '';
@@ -209,9 +212,9 @@ describe('Netzwerk richtet sich selbst ein', () => {
 
     fs.writeFileSync(jar, 'plugin-v2');
     const third = await provisioner.ensure();
-    expect(third.pluginUpdated).toEqual(['proxy', 'lobby', 'bau']);
+    expect(third.pluginUpdated).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
     // Neues Plugin auf laufenden Servern → Neustart, sobald niemand drauf ist.
-    expect(third.restart.map((r) => r.member)).toEqual(['proxy', 'lobby', 'bau']);
+    expect(third.restart.map((r) => r.member)).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
     expect((await h.mm.motor.request<Net[]>('GET', '/api/networks')).length).toBe(1);
   });
   test('Bau-Server: Kreativ und flach, Bauten (Schematics) per Knopf in die Lobby kopieren', async () => {

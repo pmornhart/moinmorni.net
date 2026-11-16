@@ -206,6 +206,12 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       aliases: ['hub', 'l'],
       usage: { de: '/lobby', en: '/lobby' },
       run: (actor) => {
+        // Wartung: wer nicht immer hinein darf, bleibt in der Wartungs-Lobby.
+        const held = ctx.held(actor.uuid, actor.lang);
+        if (held) {
+          say(actor, held);
+          return;
+        }
         say(actor, text(actor.lang, ctx.connect(actor.uuid, LOBBY) ? 'lobby.going' : 'lobby.missing'));
       },
     },

@@ -1,4 +1,11 @@
-import { SETTING_AREAS, onStep, type GameRight, type SettingArea, type SettingDef } from '@moinmorni/shared';
+import {
+  SETTING_AREAS,
+  onStep,
+  textValid,
+  type GameRight,
+  type SettingArea,
+  type SettingDef,
+} from '@moinmorni/shared';
 import type { Command, Actor } from './commands.js';
 import type { HubContext } from './context.js';
 import { mm, text, type Lang } from './texts.js';
@@ -84,7 +91,9 @@ function parseValue(p: Pattern, args: readonly string[], current: unknown): unkn
   }
   if (def.type === 'text') {
     const value = args.join(' ').trim();
-    return value.length <= def.maxLength ? value : undefined;
+    // Texte mit fester Form (Uhrzeit) dürfen leer sein: „/wartung bis weg“ löscht die Zeit.
+    if (def.format && REMOVE.has(value.toLowerCase())) return '';
+    return textValid(def, value) ? value : undefined;
   }
   if (def.type === 'select') {
     const index = p.choices.findIndex((c) => c.toLowerCase() === first);

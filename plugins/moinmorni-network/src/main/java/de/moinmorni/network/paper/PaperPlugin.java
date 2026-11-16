@@ -65,6 +65,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private LobbyJail jail;
     /** Tageszeit der Lobby (wie in echt) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyClock clock;
+    /** Wartungs-Lobby (Leiste, Aushang, Sprung-Parcours, Schutz) – nur auf dem Server „wartung“. */
+    private WartungLobby wartung;
+    private static final String WARTUNG_SERVER = "wartung";
 
     /** Einstellungen des Spielmodus auf diesem Server (aus dem Panel) – trägt sie in seine config.yml ein. */
     private ModeSettings modes;
@@ -114,6 +117,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         getServer().getScheduler().runTask(this, this::logModeAdmins);
         jail.start();
         features.start();
+        wartung = new WartungLobby(this, WARTUNG_SERVER.equals(serverName), this::langOf, this::rankRights,
+                () -> hub != null && hub.ready());
+        wartung.onLobbyRequest(this::toLobby);
+        wartung.start();
         // Erst verbinden, wenn alles steht – die ersten Nachrichten des Hubs gehen sonst ins Leere.
         if (hub != null) {
             try {
@@ -232,6 +239,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 clock.onSettings(m);
             }
             case "jail" -> jail.onState(m);
+            case "wartung" -> wartung.onState(m);
             case "mornicraft-settings" -> morniCraftSettings(m);
             case "mode-settings" -> modeSettings(m);
             case "voice" -> {
@@ -371,6 +379,16 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             });
         } catch (java.io.IOException e) {
             getLogger().warning("MorniCraft-Spieler-Daten nicht gelesen: " + e.getMessage());
+        }
+    }
+
+    /** Zurück in die Lobby (der Hub prüft, ob das gerade geht – in der Wartung nicht). */
+    private void toLobby(Player p) {
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "to-lobby");
+        body.addProperty("uuid", p.getUniqueId().toString());
+        if (hub != null) {
+            hub.send(body);
         }
     }
 

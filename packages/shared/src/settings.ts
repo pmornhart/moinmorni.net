@@ -15,6 +15,29 @@ export interface Text {
   readonly en: string;
 }
 
+/** Feste Form eines Textes (siehe `format` bei Text-Einstellungen). */
+export type TextFormat = 'time';
+
+// Uhrzeit wie man sie schreibt: "22:30", "7:05", "22.30" – nicht "25:00", "22:3" oder "22 Uhr".
+// https://regex101.com/?flavor=javascript&regex=%5E(%5B01%5D%3F%5Cd%7C2%5B0-3%5D)%5B%3A.%5D(%5B0-5%5D%5Cd)%24&testString=22%3A30
+const TIME_TEXT = /^([01]?\d|2[0-3])[:.]([0-5]\d)$/;
+const TIME_DIGITS = 2;
+
+/** Uhrzeit als „HH:MM“ („7.05“ → „07:05“); null = keine Uhrzeit. */
+export function timeOf(text: string): string | null {
+  const m = TIME_TEXT.exec(text.trim());
+  return m ? `${(m[1] ?? '').padStart(TIME_DIGITS, '0')}:${m[2] ?? ''}` : null;
+}
+
+/** Passt ein Text zu seiner Einstellung (Länge und ggf. feste Form)? */
+export function textValid(
+  def: { readonly maxLength: number; readonly format?: TextFormat },
+  value: string,
+): boolean {
+  if (value.length > def.maxLength) return false;
+  return !def.format || value.trim() === '' || timeOf(value) !== null;
+}
+
 /**
  * Wo eine Einstellung eines Spielmodus in der config.yml seines Plugins steht. Der Hub schickt dem Modus-Server
  * „Pfad → Wert“, das Netzwerk-Plugin trägt es dort ein.
@@ -60,6 +83,11 @@ export type SettingDef =
       readonly default: string;
       readonly maxLength: number;
       readonly multiline?: boolean;
+      /**
+       * Feste Form: „time“ = Uhrzeit wie „22:30“. Leer geht dann immer (= keine Angabe), im Spiel löscht „weg“ den
+       * Wert. Geprüft mit `textValid` – im Panel, im Server und beim Befehl im Spiel gleich.
+       */
+      readonly format?: TextFormat;
     })
   | (Base & {
       readonly type: 'select';
@@ -179,7 +207,10 @@ export const NETWORK_AREA: SettingArea = {
     {
       id: 'maintenance',
       title: t('Wartung', 'Maintenance'),
-      text: t('Während der Wartung kommt nur das Team herein.', 'During maintenance only the team can join.'),
+      text: t(
+        'Während der Wartung kommt nur das Team ins Netzwerk – alle anderen warten in der Wartungs-Lobby, einer kleinen Bergwerkstatt mit Leiste, Aushang und Sprung-Parcours. Dort landet auch, wer gerade nicht in die Lobby kann (Neustart, Update, Absturz).',
+        'During maintenance only the team gets into the network – everyone else waits in the maintenance lobby, a small mountain workshop with a status bar, a notice board and a little jump course. Whoever can’t get into the lobby right now (restart, update, crash) lands there too.',
+      ),
       settings: [
         {
           key: 'maintenance',
@@ -187,8 +218,8 @@ export const NETWORK_AREA: SettingArea = {
           default: false,
           label: t('Wartung für das ganze Netzwerk', 'Maintenance for the whole network'),
           help: t(
-            'Einzelne Modi setzt du unter „Modi“ in Wartung.',
-            'Single modes are set to maintenance under “Modes”.',
+            'Spieler ohne „Kommt immer rein“ kommen in die Wartungs-Lobby (wer gerade online ist, auch); das Team kommt wie immer überall hin. Einzelne Modi setzt du unter „Modi“ in Wartung.',
+            'Players without “Always gets in” go to the maintenance lobby (those online right now too); the team still goes everywhere. Single modes are set to maintenance under “Modes”.',
           ),
           command: '/wartung an|aus',
         },
@@ -198,9 +229,47 @@ export const NETWORK_AREA: SettingArea = {
           default: 'Wir bauen gerade um – gleich geht’s weiter!',
           maxLength: 120,
           multiline: true,
-          label: t('Nachricht für Spieler', 'Message for players'),
-          help: t('Sehen Spieler, die nicht hereinkommen.', 'Shown to players who cannot join.'),
+          label: t('Text und Grund', 'Text and reason'),
+          help: t(
+            'Steht in der Wartungs-Lobby auf dem Aushang und im Chat – und beim Anmelden, wenn die Wartungs-Lobby aus ist. Z. B. „Wir spielen ein großes Update ein.“',
+            'Shown in the maintenance lobby on the notice board and in chat – and when joining if the maintenance lobby is off. E.g. “We’re installing a big update.”',
+          ),
           command: '/wartung text <text>',
+        },
+        {
+          key: 'maintenanceUntil',
+          type: 'text',
+          format: 'time',
+          default: '',
+          maxLength: 5,
+          label: t('Wartung bis (Uhrzeit)', 'Maintenance until (time)'),
+          help: t(
+            'Freiwillig, z. B. 22:30 – dann steht „Wartung bis ca. 22:30“ in der Leiste, auf dem Aushang und in der Serverliste. Leer lassen, wenn du es nicht weißt; im Spiel löscht „/wartung bis weg“ die Zeit.',
+            'Optional, e.g. 22:30 – the status bar, the notice board and the server list then say “maintenance until approx. 22:30”. Leave it empty if you don’t know; in game “/wartung bis weg” clears it.',
+          ),
+          command: '/wartung bis <uhrzeit>',
+        },
+        {
+          key: 'maintenanceLobby',
+          type: 'boolean',
+          default: true,
+          label: t('Wartungs-Lobby', 'Maintenance lobby'),
+          help: t(
+            'An: Wer gerade nicht hinein darf (Wartung) oder nicht in die Lobby kann (sie startet neu, stürzt ab), wartet in der Wartungs-Lobby statt abgewiesen oder getrennt zu werden. Aus: wie früher – bei Wartung abweisen, ohne Lobby trennen.',
+            'On: whoever may not get in right now (maintenance) or can’t reach the lobby (restarting, crashed) waits in the maintenance lobby instead of being turned away or disconnected. Off: as before – turned away during maintenance, disconnected without a lobby.',
+          ),
+          command: '/wartung lobby an|aus',
+        },
+        {
+          key: 'maintenanceReturn',
+          type: 'boolean',
+          default: true,
+          label: t('Automatisch zurück in die Lobby', 'Back to the lobby automatically'),
+          help: t(
+            'Ist die Lobby wieder da oder die Wartung vorbei, holt das Netzwerk alle aus der Wartungs-Lobby zurück – nach einem kurzen Countdown. Aus: Jeder geht selbst mit /lobby.',
+            'Once the lobby is back or maintenance is over, the network brings everyone back from the maintenance lobby – after a short countdown. Off: everyone goes themselves with /lobby.',
+          ),
+          command: '/wartung zurueck an|aus',
         },
       ],
     },
@@ -1500,7 +1569,11 @@ function validator(def: SettingDef): z.ZodType {
         .min(d.min)
         .max(d.max)
         .refine((v) => onStep(v, d.step)),
-    text: (d) => z.string().max(d.maxLength),
+    text: (d) =>
+      z
+        .string()
+        .max(d.maxLength)
+        .refine((v) => textValid(d, v)),
     select: (d) => z.enum(d.options.map((o) => o.value) as [string, ...string[]]),
     list: (d) => z.array(z.string().trim().min(1).max(d.maxLength)).max(d.maxItems),
   };

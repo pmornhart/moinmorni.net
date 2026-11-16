@@ -95,8 +95,40 @@ const TEXTS = {
     en: '<red><bold>Kicked by the team</bold></red>\n\n<gray>Reason: <white>{reason}',
   },
   'maintenance.screen': {
-    de: '<gold><bold>Wartung</bold></gold>\n\n<gray>{message}',
-    en: '<gold><bold>Maintenance</bold></gold>\n\n<gray>{message}',
+    de: '<gold><bold>Wartung</bold></gold>\n\n<gray>{message}{until}',
+    en: '<gold><bold>Maintenance</bold></gold>\n\n<gray>{message}{until}',
+  },
+  'wartung.until': {
+    de: ' <gray>(bis ca. <white>{time}</white> Uhr)</gray>',
+    en: ' <gray>(until approx. <white>{time}</white>)</gray>',
+  },
+  'wartung.bye': {
+    de: '<gold><bold>Die Lobby startet gerade neu</bold></gold>\n\n<gray>Gleich ist sie wieder da – versuch es in ein paar Sekunden nochmal.',
+    en: '<gold><bold>The lobby is restarting</bold></gold>\n\n<gray>It’ll be back in a moment – try again in a few seconds.',
+  },
+  'wartung.arrive_lobby': {
+    de: `${P}<gold>Die Lobby startet gerade neu</gold> <gray>– du wartest so lange in der Wartungs-Lobby. Sobald sie wieder da ist, geht’s zurück.`,
+    en: `${P}<gold>The lobby is restarting</gold> <gray>– you’ll wait in the maintenance lobby. As soon as it’s back, you’ll return.`,
+  },
+  'wartung.arrive_maintenance': {
+    de: `${P}<gold>Wartungsarbeiten</gold> <gray>– {message}{until}`,
+    en: `${P}<gold>Maintenance</gold> <gray>– {message}{until}`,
+  },
+  'wartung.moving': {
+    de: `${P}<gold>Die Wartung beginnt</gold> <gray>– du wartest in der Wartungs-Lobby, bis wir fertig sind{until}.`,
+    en: `${P}<gold>Maintenance is starting</gold> <gray>– you’ll wait in the maintenance lobby until we’re done{until}.`,
+  },
+  'wartung.held': {
+    de: `${P}<gold>Wartung läuft</gold> <gray>– bis wir fertig sind, wartest du in der Wartungs-Lobby{until}. Danach geht’s automatisch weiter.`,
+    en: `${P}<gold>Maintenance in progress</gold> <gray>– until we’re done you’ll wait in the maintenance lobby{until}. Afterwards you’ll go on automatically.`,
+  },
+  'wartung.back': {
+    de: `${P}<green>Die Lobby ist wieder da!</green> <gray>Ab zurück …`,
+    en: `${P}<green>The lobby is back!</green> <gray>Off you go …`,
+  },
+  'wartung.back_manual': {
+    de: `${P}<green>Die Lobby ist wieder da!</green> <gray>Mit <yellow>/lobby</yellow> kommst du zurück.`,
+    en: `${P}<green>The lobby is back!</green> <gray>Use <yellow>/lobby</yellow> to go back.`,
   },
   'full.screen': {
     de: '<gold><bold>Das Netzwerk ist voll</bold></gold>\n\n<gray>Probier es gleich nochmal.',
@@ -509,8 +541,8 @@ const TEXTS = {
     en: `${P}<gray>Your profile: <aqua><click:open_url:'{url}'>{url}</click></aqua> <dark_gray>·</dark_gray> <yellow>/profile private</yellow> or <yellow>/profile public</yellow>`,
   },
   'lobby.missing': {
-    de: `${P}<red>Die Lobby ist gerade nicht da.`,
-    en: `${P}<red>The lobby isn't available right now.`,
+    de: `${P}<gold>Die Lobby startet gerade neu</gold> <gray>– gleich ist sie wieder da.`,
+    en: `${P}<gold>The lobby is restarting</gold> <gray>– it’ll be back in a moment.`,
   },
 } as const satisfies Record<string, Record<Lang, string>>;
 

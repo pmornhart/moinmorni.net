@@ -26,6 +26,7 @@ import {
   createProvisioner,
   LOBBY_MEMBER,
   PROXY_MEMBER,
+  WARTUNG_MEMBER,
   type NetworkProvisioner,
 } from './network/provision.js';
 import { createMemberIds } from './network/members.js';
@@ -50,6 +51,7 @@ import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
 import { createLobbyWorld, seasonOf } from './lobby/world.js';
+import { createWartungWorld } from './lobby/wartung.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
 import { createStatusService } from './public/status.js';
@@ -176,12 +178,16 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     }),
   });
   const lobbyRef = { id: '', season: seasonOf(stores.settings('lobby')['season']) };
+  // Wartungs-Lobby: baut sich wie die Lobby selbst (eigener kleiner Bauplan).
+  const wartungWorld = createWartungWorld(motor, app.log);
+  const wartungRef = { id: '' };
   const build = createBuildService(motor, stores);
   /** Gibt es erst nach Hub und Neustart-Warteschlange (weiter unten). */
   const modeSettingsRef: { prepare: ModeSettingsSync['prepare'] } = { prepare: () => Promise.resolve() };
   const network = createProvisioner(config, motor, hub, app.log, {
     configureLobby: lobbyWorld.configure,
     configureBuild: build.configure,
+    configureWartung: wartungWorld.configure,
     modes: () => stores.modes(),
     // Jars zum Ausprobieren ohne Release: <Datenordner>/mode-jars/<Repo-Name>.jar
     releases: githubReleases(app.log, path.join(config.dataDir, 'mode-jars')),
@@ -270,6 +276,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       // Startet die Lobby gleich neu (Update), baut sie erst danach – sonst bricht der Bau mittendrin ab.
       const lobbyRestarts = result.restart.some((s) => s.serverId === result.lobbyServerId);
       if (result.lobbyServerId && !lobbyRestarts) void lobbyWorld.build(result.lobbyServerId);
+      wartungRef.id = result.wartungServerId;
+      const wartungRestarts = result.restart.some((s) => s.serverId === result.wartungServerId);
+      if (result.wartungServerId && !wartungRestarts) void wartungWorld.build(result.wartungServerId);
     } catch (err) {
       app.log.error(
         { err },
@@ -281,6 +290,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   // Lobby (neu) gestartet und beim Hub angemeldet → Welt prüfen; ist sie aktuell, passiert nichts.
   events.on('server.connected', ({ server }) => {
     if (server === LOBBY_MEMBER && lobbyRef.id) void lobbyWorld.build(lobbyRef.id);
+    if (server === WARTUNG_MEMBER && wartungRef.id) void wartungWorld.build(wartungRef.id);
   });
   // Saison-Deko umgeschaltet (Panel oder /lobby saison …) → gleich in der Lobby tauschen.
   events.on('settings.changed', ({ area }) => {
