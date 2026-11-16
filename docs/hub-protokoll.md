@@ -101,3 +101,16 @@ des Spielers.
 
 Fällt der Hub aus, läuft das Netzwerk weiter: Chat bleibt auf dem eigenen Server, Banns aus der letzten `bans`-Liste
 gelten weiter, das Plugin verbindet sich alle paar Sekunden neu.
+
+## Auf dem Spielserver: Spielmodi und MorniCraft
+
+Das Netzwerk-Plugin heißt auf Paper `MorniNet` (auf Velocity ID `morninet`) und legt seine Dateien in
+`plugins/morninet/`. Für die Plugins der Spielmodi und für MorniCraft gilt:
+
+- **Schnittstelle:** Bukkit-Dienst `net.morni.api.MorniNet` (Datei in jedem Modus-Repo byte-gleich, nur zum
+  Übersetzen, nicht in der Jar). Ein Modus holt ihn mit `MorniNet.get()` und hat `softdepend: [MorniNet]` in seiner
+  plugin.yml; MorniCraft sucht die Klasse per Reflexion (läuft auch ohne Netzwerk).
+- **Clan-Kürzel im Chat:** MorniCraft setzt am Spieler die Metadaten `morninet:tag` (Text) und `morninet:tag-colour`
+  (`#rrggbb`); das Netzwerk-Plugin hängt das Kürzel im Chat hinter den Rang.
+- **Dateien:** `plugins/MorniCraft/network.json` (Einstellungen aus dem Panel, siehe `mornicraft-settings`) und
+  `plugins/MorniCraft/summary/<uuid>.json` (Zusammenfassung fürs Panel, geht als `mode-player` an den Hub).
