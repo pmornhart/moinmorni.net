@@ -12,7 +12,15 @@ Echte Spielmechanik: In den Einstellungen mit Anzeige (hud) ist die Kamera selbs
 Aktionsleiste, die Zwischenzeit am Checkpoint, der Titel „Geschafft!“ mit Medaille und der Countdown des Rennens kommen
 vom Plugin. Dafür braucht der Server ein kleines Hilfs-Plugin (nur lokal im Test-Server): `regie als <spieler> <befehl>`
 und „Spieler mit Tag mm_bleib bleiben Zuschauer“ (das Plugin setzt Läufer sonst auf Abenteuer – dann wäre die Kamera
-weg). Die Bestenlisten füllen echte Läufe der Darsteller (`prep`).
+weg); Quelle und Jar liegen lokal unter ~/mm-cache/trailer/gipfelsturm/regie-plugin/. Die Bestenlisten füllen echte
+Läufe der Darsteller (`prep`). Kamera = echter Client „GipfelKamera“ (MM_CAMERA), mit `--option chatScale:0.0`
+gestartet (Chat unsichtbar, Titel und Aktionsleiste bleiben). Darsteller: Anna Bert Clara Toni (actors.cjs, 26.1).
+
+Gefunden beim Dreh: Die Tafel „Strecke der Woche“ (Chunk 0/0 bleibt geladen) fehlte der Kamera, nachdem sie auf einer
+weit entfernten Strecke war – erst ein Sprachwechsel (`relang`) zeigt sie wieder.
+
+Vorsicht: Die Kamera während eines Drehs nicht anderweitig teleportieren – ein langer Teleport-Weg quer durch eine
+Ziel-Zone zählt für das Plugin als Zieleinlauf.
 
   python3 trailers/gipfelsturm.py prep                 # Bestenlisten füllen (echte Läufe der Darsteller)
   python3 trailers/gipfelsturm.py [einstellung …]      # vorbereiten + drehen (ohne Angabe: alle)
@@ -192,6 +200,13 @@ def course_way(course, i0, i1, t0=0.0, sprint=5.6, side=0.0, mark=None, ice=8.0,
         else:
             take = p.at(d, max(0.0, p.half(d) - 0.12))
             land = q.at(d, -(q.half(d) - 0.35) if q.half(d) > 0.6 else (-0.12 if not q.post else 0))
+            if side:  # nebeneinander bleiben, soweit der Pad breit genug ist
+                pp = [-d[1], d[0]]
+                for pt, pad in ((take, p), (land, q)):
+                    room = max(0.0, pad.half(pp) - 0.3)
+                    o = max(-room, min(room, side))
+                    pt[0] += pp[0] * o
+                    pt[2] += pp[1] * o
             w.run(take, ice if p.b in ('blue_ice', 'packed_ice') else sprint)
             w.jump(land)
             i += 1
@@ -314,7 +329,7 @@ GLET = course_way('gletscher', 0, 6, 0.3)
 KLET = course_way('kletterwand', 3, 7, 0.2)
 # 06 Felsgrat: die Kamera läuft selbst (Ich-Sicht) vom Start bis zum Checkpoint 1 (Pad 8)
 GRAT = course_way('felsgrat', 0, 8, 0.6, mark=[8])
-GRAT.go(pads('felsgrat')[8].at([1, 0], 0.4), 0.25).hold(1.6)
+GRAT.hold(1.8)
 # 07 Seilbahn: Toni über Zaunpfosten, runter auf den Schleim, hoch auf den nächsten Pad
 SEIL = course_way('seilbahn', 15, 21, 0.2)
 # 08 Eishöhle: Anna über das Blaueis
@@ -325,12 +340,22 @@ SPRINT = course_way('gipfelkreuz', 0, 4, 0.3, sprint=5.8)
 TURM = course_way('wetterturm', 31, 37, 0.2)
 # 11 Ziel: die Kamera (Ich-Sicht) über die letzten Pads des Gipfelkreuz-Sprints ins Ziel
 ZIEL = course_way('gipfelkreuz', 36, 41, 0.2, sprint=5.8, mark=[41])
-ZIEL.go([3638.6, 100, 20.5], 0.6).hold(1.9)
+ZIEL.go([3638.3, 100, 20.9], 0.5).hold(1.9)
 # 13 Rennen: Anna, Bert und die Kamera auf dem Start des Almwiesen-Laufs, Countdown vom Plugin, dann los
 RACE_GO = 3.05  # „Los!“ kommt 61 Ticks nach dem Beitritt (bei t = 0)
-RACE_A = course_way('almwiese', 0, 4, RACE_GO + 0.05, side=-0.7, shift=0.3)
-RACE_B = course_way('almwiese', 0, 4, RACE_GO + 0.12, side=0.7, shift=0.3)
-RACE_C = course_way('almwiese', 0, 3, RACE_GO + 0.4, shift=-1.15)
+RACE_A = course_way('almwiese', 0, 4, RACE_GO + 0.05, side=-0.6, shift=1.0)
+RACE_B = course_way('almwiese', 0, 4, RACE_GO + 0.12, side=0.6, shift=1.0)
+RACE_C = course_way('almwiese', 0, 3, RACE_GO + 0.95, shift=-1.65)
+
+_g = pos_at(GRAT.pts, GRAT.marks[8])
+GRAT_CAM = pov(GRAT, [GRAT.marks[8]], t_end=GRAT.marks[8] + 0.3)
+GRAT_CAM += [{'p': [_g[0] - 0.1, _g[1] + 1.35, _g[2]], 'look': [2029.5, 100.6, 5.5], 't': 0.6, 'ease': 1},
+             {'p': [_g[0] - 0.15, _g[1] + 1.5, _g[2] + 0.05], 'look': [2028.5, 100.4, 7.5], 't': 0.6}]
+CROSS = [3637.5, 104.6, 15.5]  # Gipfelkreuz am Ziel (nördlich der Diamant-Plattform)
+ZIEL_CAM = pov(ZIEL, [ZIEL.marks[41]], t_end=ZIEL.marks[41] + 0.75)
+ZIEL_CAM += [{'p': [3639.0, 101.55, 21.6], 'look': [3638.6, 103.6, 17.0], 't': 0.75, 'ease': 1},
+             {'p': [3639.8, 101.65, 22.2], 'look': CROSS, 't': 1.0, 'ease': 1},
+             {'p': [3640.1, 101.75, 22.4], 'look': CROSS, 't': 0.8}]
 
 N2 = need(2)
 SHOTS = [
@@ -346,15 +371,15 @@ SHOTS = [
         'camera': [{'p': [-9.5, 102.4, 1.5], 'look': [-9, 103.2, -12], 't': 0},
                    {'p': [-1.5, 102.6, 0.5], 'look': [-1, 103.4, -13], 't': 2.4},
                    {'p': [6.5, 102.4, 1.5], 'look': [6, 103.2, -12], 't': 2.4, 'ease': 1}],
-        'actors': {'Anna': walk([[-5, 100, -2], station_at(2, 10.6)], 2.2, hold=1.5,
+        'actors': {'Anna': walk([[-2.5, 100, -3.5], station_at(2, 10.6)], 1.8, hold=1.5,
                                 look=[station_at(2, 13)[0], 101.4, station_at(2, 13)[2]]),
                    'Clara': stand(station_at(4, 10.6), 5, [station_at(4, 13)[0], 102.6, station_at(4, 13)[2]]),
                    'Toni': stand(station_at(5, 10.9), 5, [station_at(5, 13)[0], 102.4, station_at(5, 13)[2]]),
-                   'Bert': walk([[8, 100, 3], [1, 100, -3]], 1.7)},
+                   'Bert': walk([[10, 100, -3], [3, 100, -8.5]], 1.7)},
         'events': [act(2.9, 'Anna', 'swing'), act(3.3, 'Anna', 'swing')]}},
     {'id': '03-alm', 'bars': 2, 'card': 'lt-alm.png', 'far': True, 'spec': {
         'fit': False, 'track': 'Anna',
-        'camera': follow(ALM_A, (-7.5, 2.0, 2.5), [0, N2 / 2, N2]),
+        'camera': follow(ALM_A, (-5.8, 1.7, 2.2), [0, N2 / 2, N2]),
         'actors': {'Anna': trim(ALM_A.pts, N2), 'Bert': trim(ALM_B.pts, N2)}}},
     {'id': '04-gletscher', 'bars': 2, 'card': 'lt-gletscher.png', 'far': True, 'spec': {
         'fit': False, 'track': 'Bert',
@@ -366,43 +391,44 @@ SHOTS = [
         'actors': {'Clara': trim(KLET.pts, N2)}}},
     {'id': '06-grat', 'bars': 2, 'card': 'lt-grat.png', 'cardEnd': 2.2, 'far': True, 'hud': True,
      'runner': 'felsgrat', 'start': GRAT.marks[8] + 0.75 - 2 * SPB, 'spec': {
-        'fit': False, 'camera': pov(GRAT, [GRAT.marks[8]], t_end=GRAT.marks[8] + 1.4)}},
+        'fit': False, 'camera': GRAT_CAM}},
     {'id': '07-seilbahn', 'bars': 2, 'card': 'lt-seilbahn.png', 'far': True, 'spec': {
         'fit': False, 'track': 'Toni',
-        'camera': follow(SEIL, (7.5, 1.4, -1.0), [0, N2 / 2, N2]),
+        'camera': follow(SEIL, (6.0, 1.3, -1.0), [0, N2 / 2, N2]),
         'actors': {'Toni': trim(SEIL.pts, N2)}}},
     {'id': '08-eis', 'bars': 2, 'card': 'lt-eis.png', 'far': True, 'spec': {
         'fit': False, 'track': 'Anna',
-        'camera': follow(EIS, (5.2, 1.6, -2.6), [0, N2 / 2, N2]),
+        'camera': follow(EIS, (3.8, 1.5, -2.2), [0, N2 / 2, N2]),
         'actors': {'Anna': trim(EIS.pts, N2)}}},
     {'id': '09-sprint', 'bars': 2, 'card': 'lt-sprint.png', 'far': True, 'spec': {
         'fit': False, 'track': 'Bert',
-        'camera': follow(SPRINT, (-2.0, 2.4, 9.0), [0, N2 / 2, N2]),
+        'camera': follow(SPRINT, (-1.2, 1.5, 6.2), [0, N2 / 2, N2]),
         'actors': {'Bert': trim(SPRINT.pts, N2)}}},
     {'id': '10-turm', 'bars': 2, 'card': 'lt-turm.png', 'far': True, 'spec': {
         'fit': False, 'track': 'Clara',
-        'camera': follow(TURM, (2.0, 1.6, 8.5), [0, N2 / 2, N2]),
+        'camera': [{'p': [3984.5, 123.8, 8.2], 't': 0}, {'p': [3979.5, 122.6, 8.0], 't': N2 / 2},
+                   {'p': [3974.0, 121.4, 7.2], 't': N2 / 2}],
         'actors': {'Clara': trim(TURM.pts, N2)}}},
     {'id': '11-ziel', 'bars': 2, 'card': 'lt-ziel.png', 'cardAt': 1.4, 'far': True, 'hud': True,
      'runner': 'gipfelkreuz', 'target': 35.8, 'start': max(0.0, ZIEL.marks[41] - 1.2), 'spec': {
-        'fit': False, 'camera': pov(ZIEL, [ZIEL.marks[41]])}},
-    {'id': '12-woche', 'bars': 2, 'card': 'lt-woche.png', 'far': True, 'spec': {
-        'camera': [{'p': [-5.5, 103.2, 6.5], 'look': [0.5, 104.4, 0.5], 't': 0},
-                   {'p': [0.5, 103.0, 8.0], 'look': [0.5, 104.6, 0.5], 't': 2.4},
-                   {'p': [6.0, 103.2, 6.0], 'look': [0.5, 104.4, 0.5], 't': 2.4, 'ease': 1}],
-        'actors': {'Anna': stand([-2.2, 100, 3.6], 5, [0.5, 104.4, 0.5]),
-                   'Bert': stand([2.6, 100, 3.2], 5, [0.5, 104.4, 0.5]),
-                   'Toni': walk([[-7, 100, -2], [-3.5, 100, -1.5]], 1.2, hold=3, look=[0.5, 104.4, 0.5])}}},
+        'fit': False, 'camera': ZIEL_CAM}},
+    {'id': '12-woche', 'bars': 2, 'card': 'lt-woche.png', 'far': True, 'relang': True, 'spec': {
+        'camera': [{'p': [-1.4, 102.6, 9.8], 'look': [0.5, 105.9, 0.5], 't': 0},
+                   {'p': [-0.4, 103.3, 7.2], 'look': [0.5, 106.0, 0.5], 't': 2.4},
+                   {'p': [1.2, 103.9, 5.3], 'look': [0.5, 106.0, 0.5], 't': 2.4, 'ease': 1}],
+        'actors': {'Anna': stand([-1.6, 100, 3.2], 5, [0.5, 105, 0.5]),
+                   'Bert': stand([2.7, 100, 2.6], 5, [0.5, 105, 0.5]),
+                   'Toni': walk([[-6, 100, -1.5], [-2.8, 100, -0.8]], 1.2, hold=2.4, look=[0.5, 105, 0.5])}}},
     {'id': '13-rennen', 'bars': 2, 'card': 'lt-rennen.png', 'cardAt': 0.6, 'far': True, 'hud': True, 'race': True,
      'start': RACE_GO - 1.35, 'spec': {
         'fit': False,
-        'camera': pov(RACE_C, t_end=5.6),
+        'camera': pov(RACE_C, h=1.8, t_end=5.6),
         'actors': {'Anna': trim(RACE_A.pts, 5.6), 'Bert': trim(RACE_B.pts, 5.6)},
         'events': [{'at': 0.0, 'cmd': 'regie als Bert gipfel mitmachen'}]}},
     {'id': '14-ende', 'bars': 'rest', 'card': 'ende.png', 'cardAt': 0.5, 'time': 12350, 'far': True, 'spec': {
-        'camera': [{'p': [3644.5, 101.4, 21.5], 'look': [3637.5, 102.2, 20.5], 't': 0},
-                   {'p': [3648, 103.5, 23], 'look': [3637.5, 103, 20.5], 't': 3.2},
-                   {'p': [3656, 108, 26], 'look': [3637.5, 104, 20.5], 't': 4.0, 'ease': 1}],
+        'camera': [{'p': [3644.0, 101.6, 17.5], 'look': [3637.0, 102.4, 19.5], 't': 0},
+                   {'p': [3648.5, 103.8, 15.0], 'look': [3637.0, 103.0, 19.5], 't': 3.2},
+                   {'p': [3657.0, 108.0, 11.0], 'look': [3636.5, 104.0, 19.0], 't': 4.0, 'ease': 1}],
         'actors': {'Anna': stand([3636.2, 100, 19.4], 8, [3641.5, 104, 20.5]),
                    'Bert': stand([3636.6, 100, 21.8], 8, [3641.5, 104, 20.5]),
                    'Clara': stand([3634.8, 100, 20.6], 8, [3641.5, 104, 20.5]),
@@ -455,6 +481,11 @@ def prepare(rc, s):
     goto(c0['p'])
     time.sleep(float(s.get('settle', 14 if s.get('far') else 4)))
     launch_at = None
+    if s.get('relang'):  # Tafeln je Sprache neu zeigen (nach weiten Wegen fehlte der Kamera die Wochen-Tafel)
+        rc(f'fakenet lang {CAM} en')
+        time.sleep(2.5)
+        rc(f'fakenet lang {CAM} de')
+        time.sleep(2.5)
     if s.get('runner'):
         course = s['runner']
         print(rc(f'regie als {CAM} gipfel start {course}'))
