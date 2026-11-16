@@ -246,12 +246,7 @@
         "Listen to the team. Questions or trouble? Open a ticket on Discord."
       ]
     },
-    "voiceChannels": [
-      "Dorfplatz",
-      "Biergarten",
-      "Turnier",
-      "Gipfelfunk"
-    ],
+    "voiceChannels": ["Dorfplatz", "Biergarten", "Turnier", "Gipfelfunk"],
     "discordInvite": "https://moinmorni.net/discord",
     "socials": {
       "youtube": "https://moinmorni.net/youtube",
@@ -410,6 +405,15 @@
       "symbol": "⚔",
       "colour": "#55aaff"
     },
+    "supporter": {
+      "id": "supporter",
+      "name": {
+        "de": "Supporter",
+        "en": "Supporter"
+      },
+      "symbol": "✚",
+      "colour": "#4ade80"
+    },
     "builder": {
       "id": "builder",
       "name": {
@@ -447,14 +451,7 @@
       "colour": "#aaaaaa"
     }
   },
-  "teamOrder": [
-    "owner",
-    "admin",
-    "moderator",
-    "builder",
-    "media",
-    "vip"
-  ],
+  "teamOrder": ["owner", "admin", "moderator", "builder", "media", "vip"],
   "players": [
     {
       "name": "Vroni_Baut",
@@ -1475,5 +1472,10 @@
     "open": true,
     "discordLogin": true,
     "demoDiscordName": "lena.baut"
+  },
+  "teamApply": {
+    "positions": ["moderator", "supporter", "builder", "media"],
+    "minecraftName": "LenaBaut",
+    "cooldownDays": 14
   }
 }

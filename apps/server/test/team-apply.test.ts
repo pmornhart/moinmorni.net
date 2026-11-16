@@ -446,6 +446,13 @@ describe('Team-Bewerbungen', () => {
   test('Stellen kommen aus den Rollen des Panels: neue Rolle „Supporter“ → Stelle und Discord-Rolle von selbst', async () => {
     const editor = h.mm.stores.role('owner');
     if (!editor) throw new Error('owner fehlt');
+    // Im Panel gibt es den Abschnitt einer Stelle nur, solange es ihre Rolle gibt.
+    const sectionRoles = async () =>
+      (await call(owner, 'GET', '/api/panel/settings'))
+        .json<Array<{ area: { id: string; sections: Array<{ role?: string }> } }>>()
+        .find((e) => e.area.id === 'team-apply')
+        ?.area.sections.flatMap((s) => (s.role ? [s.role] : [])) ?? [];
+    expect(await sectionRoles()).not.toContain('supporter');
     const supporter = {
       id: 'supporter',
       name: { de: 'Supporter', en: 'Supporter' },
@@ -459,6 +466,7 @@ describe('Team-Bewerbungen', () => {
     };
     const roles = h.mm.stores.roles().map((r) => (r.position >= 3 ? { ...r, position: r.position + 1 } : r));
     h.mm.stores.saveRoles([...roles, supporter], 'test', editor);
+    expect(await sectionRoles()).toEqual(['moderator', 'supporter', 'builder', 'media', 'admin']);
     const open = (await web('GET', '/api/public/team-apply')).json<{
       positions: Array<{ id: string; role: { symbol: string } }>;
     }>();

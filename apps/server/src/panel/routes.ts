@@ -1,11 +1,17 @@
 import { z } from 'zod';
-import { SETTING_AREAS, modePatchSchema, roleSchema, settingsOf } from '@moinmorni/shared';
+import { SETTING_AREAS, modePatchSchema, roleSchema, settingsOf, type SettingArea } from '@moinmorni/shared';
 import type { Api } from '../app.js';
 import { forbidden } from '../lib/errors.js';
 import type { PanelAuth } from './auth.js';
 import type { Stores } from './stores.js';
 
 const OWNER = 'owner';
+
+/** Abschnitte, die zu einer Rolle gehören (z. B. eine Bewerbungs-Stelle), gibt es nur, solange es die Rolle gibt. */
+function withRoleSections(area: SettingArea, roleIds: ReadonlySet<string>): SettingArea {
+  if (!area.sections.some((s) => s.role)) return area;
+  return { ...area, sections: area.sections.filter((s) => !s.role || roleIds.has(s.role)) };
+}
 
 /** Panel: wer bin ich, Einstellungen nach Katalog, Modi, Rollen-Vorlage. Jede Route prüft den Bereich. */
 /**
@@ -33,8 +39,9 @@ export function registerPanelRoutes(
   app.get('/api/panel/settings', async (request) => {
     const user = await auth.require(request);
     const waiting = new Set(modeRestarts());
+    const roleIds = new Set(stores.roles().map((r) => r.id));
     return SETTING_AREAS.filter((a) => user.areas.has(a.panel)).map((area) => ({
-      area,
+      area: withRoleSections(area, roleIds),
       values: stores.settings(area.id),
       // Spielmodi: Neustart steht noch aus (gilt, sobald gerade niemand spielt).
       ...(area.mode ? { restartPending: waiting.has(area.mode.id) } : {}),
