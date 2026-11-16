@@ -346,6 +346,8 @@ export function createRejoin({ ctx, send, connected, log, now }: RejoinOptions):
         asked.delete(uuid);
         if (from) lastLeft.set(uuid, { server: from, at: now() });
       }
+      // Wieder dort, wo er selbst gegangen ist: eine neue Runde – bricht die ab, gilt das Freihalten wieder.
+      if (onPurpose.get(uuid)?.server === to) onPurpose.delete(uuid);
       const before = early.get(uuid);
       early.delete(uuid);
       if (before?.playing && recent(before, to, EARLY_MS)) playing.set(uuid, to);

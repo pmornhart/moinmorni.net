@@ -375,6 +375,19 @@ describe('Mitten im Spiel', () => {
     await settle();
     expect(hub.heldServers()).toEqual([]);
 
+    // Selbst gegangen, aber gleich wieder in eine neue Runde – bricht die ab, gilt das Freihalten wieder.
+    proxy.send({ t: 'switch', uuid: LENA, server: 'duels' });
+    await settle();
+    duels.send({ t: 'playing', uuid: LENA, playing: true });
+    await settle();
+    proxy.send({ t: 'leave', uuid: LENA });
+    duels.send({ t: 'hold-slot', uuid: LENA, seconds: 120 });
+    await settle();
+    expect(hub.heldServers()).toEqual(['duels']);
+    duels.send({ t: 'hold-slot', uuid: LENA, seconds: 0 });
+    await join(LENA, 'Lena', 'lobby', 'en_us');
+    expect(hub.heldServers()).toEqual([]);
+
     // Ein anderer Server kann Lena nicht „zurückbringen“; ein zu langer Wert wird auf eine Stunde begrenzt.
     proxy.send({ t: 'switch', uuid: LENA, server: 'duels' });
     clock.now += 20 * SECOND;

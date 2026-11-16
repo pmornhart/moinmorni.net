@@ -438,7 +438,8 @@
           "sprache": "Change the language: German or English.",
           "profil": "Make your profile on the website private or public.",
           "voice": "Show voice channels, join one or leave it.",
-          "lobby": "Back to the lobby.",
+          "lobby": "Back to the lobby. In the middle of a round we ask once more – a second /lobby counts as yes.",
+          "rueckkehr": "Lost your connection mid-game? While your spot is still free, this takes you back to your round (the item in the lobby does the same). In English also /rejoin.",
           "discord": "Get a code to link your account with Discord."
         }
       },
