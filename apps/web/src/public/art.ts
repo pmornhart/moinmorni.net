@@ -2,8 +2,9 @@ import type { ResolvedTheme } from '~/lib/theme';
 import type { NewsCategory } from '~/lib/site';
 
 /**
- * Our own 3D renders of the lobby (own textures and skins, never Mojang files), in apps/web/public/bilder/. Every
- * path is written out exactly once here: the demo build swaps these strings for embedded pictures.
+ * Pictures of the lobby taken with the real Minecraft client (finished screenshots only – Mojang's texture files
+ * never go into the repo), in apps/web/public/bilder/. Every path is written out exactly once here: the demo build
+ * swaps these strings for embedded pictures.
  */
 const IMAGES = {
   heroDay: '/bilder/hero-tag.webp',
