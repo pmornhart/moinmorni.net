@@ -1,9 +1,10 @@
 /**
- * Probelauf der Umbenennung mit echten Server-Ordnern: Der echte Provisioner (`src/network/provision.ts`) stellt ein
- * Netzwerk um, das noch unter dem früheren Namen läuft – Netzwerk und Server-Namen im Motor, hub.json im neuen
- * Datenordner, neue Netzwerk-Jar, alte Jar weg. Statt des Motors: ein kleiner Ersatz, der die Dateien direkt in den
- * Ordnern liest und schreibt (Gelöschtes landet in `<ordner>/.papierkorb/`). Die Schlüssel kommen vom selben Geheimnis
- * wie bei `scripts/hub-dev.ts` (MM_HUB_DEV_DIR) – danach starten die Server und verbinden sich mit diesem Hub.
+ * Probelauf der Rückbenennung mit echten Server-Ordnern: Der echte Provisioner (`src/network/provision.ts`) stellt ein
+ * Netzwerk zurück, das noch unter dem Zwischen-Namen läuft – Netzwerk und Server-Namen im Motor, hub.json im
+ * Datenordner plugins/moinmorni/, Netzwerk-Jar MoinMorni-Network.jar, die Jar unter dem Zwischen-Namen weg. Statt des
+ * Motors: ein kleiner Ersatz, der die Dateien direkt in den Ordnern liest und schreibt (Gelöschtes landet in
+ * `<ordner>/.papierkorb/`). Die Schlüssel kommen vom selben Geheimnis wie bei `scripts/hub-dev.ts` (MM_HUB_DEV_DIR) –
+ * danach starten die Server und verbinden sich mit diesem Hub.
  *   tsx scripts/umzug-probe.ts <jar> <hub-url> <proxy-ordner> <lobby-ordner> <bau-ordner>
  */
 import fs from 'node:fs';
@@ -12,7 +13,7 @@ import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import type { Config } from '../src/config.js';
 import { hubSecretOf, serverKeyOf } from '../src/hub/protocol.js';
-import { OLD_TITLE } from '../src/lib/rename.js';
+import { INTERIM_TITLE } from '../src/lib/rename.js';
 import { MotorError, type MotorClient } from '../src/motor/client.js';
 import { createProvisioner } from '../src/network/provision.js';
 
@@ -24,11 +25,11 @@ const secret = fs.readFileSync(path.join(DIR, 'secret'), 'utf8').trim();
 const NOT_FOUND = 404;
 const dirs: Record<string, string> = { proxy: proxyDir, lobby: lobbyDir, bau: bauDir };
 const names: Record<string, string> = {
-  proxy: `${OLD_TITLE} Proxy`,
-  lobby: `${OLD_TITLE} Lobby`,
-  bau: `${OLD_TITLE} Bau`,
+  proxy: `${INTERIM_TITLE} Proxy`,
+  lobby: `${INTERIM_TITLE} Lobby`,
+  bau: `${INTERIM_TITLE} Bau`,
 };
-const net = { name: OLD_TITLE };
+const net = { name: INTERIM_TITLE };
 const view = (): unknown => ({
   id: 'netz',
   name: net.name,
@@ -80,6 +81,10 @@ const motor = {
       const file = inside(id, u.searchParams.get('path') ?? '');
       if (!fs.existsSync(file)) throw new MotorError(NOT_FOUND, 'not_found');
       return { content: fs.readFileSync(file, 'utf8') };
+    }
+    if (sub === 'files' && !action && method === 'GET') {
+      const folder = inside(id, u.searchParams.get('path') ?? '');
+      return fs.existsSync(folder) ? fs.readdirSync(folder).map((name) => ({ name })) : [];
     }
     if (sub === 'files' && action === 'delete') {
       const paths = (body as { paths: string[] }).paths;

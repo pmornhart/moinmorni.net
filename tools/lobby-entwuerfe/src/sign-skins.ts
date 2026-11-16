@@ -7,10 +7,17 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { CAST, CAST_TEXTURES, PENDING_CAST, castSkinPng, skinHash, type SignedSkin } from '@morninet/builder';
+import {
+  CAST,
+  CAST_TEXTURES,
+  PENDING_CAST,
+  castSkinPng,
+  skinHash,
+  type SignedSkin,
+} from '@moinmorni/builder';
 
 const API = 'https://api.mineskin.org/v2/generate';
-const USER_AGENT = 'morni.net-Lobby/0.1 (+https://github.com/pmornhart/morni.net)';
+const USER_AGENT = 'MoinMorni-Lobby/0.1 (+https://github.com/pmornhart/moinmorni.net)';
 const TARGET = path.resolve(import.meta.dirname, '../../../packages/builder/src/cast-textures.ts');
 const FALLBACK_WAIT_MS = 7000;
 const RETRY_LIMIT = 3;
@@ -35,7 +42,7 @@ async function upload(id: string, png: Buffer, attempt = 1): Promise<{ signed: S
   form.append('file', new Blob([png], { type: 'image/png' }), `${id}.png`);
   form.append('variant', 'classic');
   form.append('visibility', 'unlisted');
-  form.append('name', `morninet-${id}`);
+  form.append('name', `moinmorni-${id}`);
   const res = await fetch(API, { method: 'POST', body: form, headers: { 'User-Agent': USER_AGENT } });
   const answer = (await res.json()) as Answer;
   const waitMs = Math.max(answer.rateLimit?.next?.relative ?? 0, answer.rateLimit?.delay?.millis ?? 0, 0);

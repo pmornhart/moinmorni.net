@@ -1,11 +1,10 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { NETWORK_TITLE } from '@morninet/shared';
 import de from './de.json';
 import en from './en.json';
 
 /**
- * One i18next for morni.net and the embedded MorniHosting server pages. morni.net's texts live in the namespace
+ * One i18next for MoinMorni and the embedded MorniHosting server pages. MoinMorni's texts live in the namespace
  * "mm" (`useTranslation('mm')`); MorniHosting's pages use the default namespace "translation". Its texts are big
  * (about 200 KB per language), so they load only when the panel shows a server page (`loadMotorTexts`).
  * MorniHosting imports this module as "@/i18n" (alias in vite.config.ts), so it exports the same names.
@@ -17,8 +16,10 @@ export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 export const MM_NAMESPACE = 'mm';
 const MOTOR_NAMESPACE = 'translation';
 const STORAGE_KEY = 'mm-lang';
-/** Name of morni.net's machine in NetBird (the container's host name, see proxmox/morninet.sh). */
-const NETBIRD_MACHINE = 'morninet';
+/** Name of MoinMorni in NetBird and MorniHosting's messages (MH_BRAND of the motor, see docker-compose.yml). */
+const BRAND = 'MoinMorni';
+/** Name of MoinMorni's machine in NetBird (the container's host name, see proxmox/moinmorni.sh). */
+const NETBIRD_MACHINE = 'moinmorni';
 const FALLBACK: Language = 'de';
 
 function isLanguage(value: unknown): value is Language {
@@ -49,8 +50,8 @@ void i18n.use(initReactI18next).init({
   fallbackLng: FALLBACK,
   ns: [MM_NAMESPACE, MOTOR_NAMESPACE],
   defaultNS: MOTOR_NAMESPACE,
-  // MorniHosting's texts name the product and its machine in NetBird ("{{brand}} Ausgang") – here morni.net.
-  interpolation: { escapeValue: false, defaultVariables: { brand: NETWORK_TITLE, machine: NETBIRD_MACHINE } },
+  // MorniHosting's texts name the product and its machine in NetBird ("{{brand}} Ausgang") – here MoinMorni.
+  interpolation: { escapeValue: false, defaultVariables: { brand: BRAND, machine: NETBIRD_MACHINE } },
   returnNull: false,
   // MorniHosting's option values such as "minecraft:flat" contain colons; namespaces are chosen explicitly.
   nsSeparator: false,
@@ -88,7 +89,7 @@ export function currentLanguage(): Language {
   return isLanguage(i18n.language) ? i18n.language : FALLBACK;
 }
 
-/** morni.net's language switch: shows `language` and remembers it in this browser. */
+/** MoinMorni's language switch: shows `language` and remembers it in this browser. */
 export function chooseLanguage(language: Language): void {
   document.documentElement.lang = language;
   try {
@@ -104,7 +105,7 @@ export function chooseLanguage(language: Language): void {
 
 /**
  * The name MorniHosting's pages call with the language stored in their session (e.g. right after turning on
- * two-factor login). In the panel morni.net's own switch decides the language, so this never switches – it only makes
+ * two-factor login). In the panel MoinMorni's own switch decides the language, so this never switches – it only makes
  * sure MorniHosting's texts for the language shown are there.
  */
 export function setLanguage(_language: Language): void {

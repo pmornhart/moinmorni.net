@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vitest';
-import { DEFAULT_MODES } from '@morninet/shared';
+import { DEFAULT_MODES } from '@moinmorni/shared';
 import { openDatabase } from '../src/db/index.js';
 import { modes } from '../src/db/schema.js';
 import { createEventBus } from '../src/lib/events.js';

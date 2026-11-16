@@ -1,8 +1,8 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- colours of the outfits */
 /**
  * Die Leute der Lobby: Modus-Figuren (zum Anklicken) und Dorfbewohner. Jede Figur hat ein eigenes Outfit
- * (`skins.ts`); das Texturpaket legt sie unter `assets/morninet/textures/npc/<id>.png` ab, Figuren nutzen sie mit
- * `profile:{texture:'morninet:npc/<id>'}`.
+ * (`skins.ts`); das Texturpaket legt sie unter `assets/moinmorni/textures/npc/<id>.png` ab, Figuren nutzen sie mit
+ * `profile:{texture:'moinmorni:npc/<id>'}`.
  */
 import crypto from 'node:crypto';
 import { CAST_TEXTURES } from './cast-textures.js';
@@ -472,7 +472,7 @@ const PACK_FORMAT_MAX = 999;
 export function castPack(): Buffer {
   const meta = {
     pack: {
-      description: 'morni.net – Leute der Lobby',
+      description: 'MoinMorni – Leute der Lobby',
       pack_format: PACK_FORMAT,
       supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
       min_format: PACK_FORMAT,
@@ -482,6 +482,6 @@ export function castPack(): Buffer {
   const ids = Object.keys(CAST).sort();
   return zipOf([
     { name: 'pack.mcmeta', data: Buffer.from(JSON.stringify(meta, null, 2)) },
-    ...ids.map((id) => ({ name: `assets/morninet/textures/npc/${id}.png`, data: castSkinPng(id) })),
+    ...ids.map((id) => ({ name: `assets/moinmorni/textures/npc/${id}.png`, data: castSkinPng(id) })),
   ]);
 }

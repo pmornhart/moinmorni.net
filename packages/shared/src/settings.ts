@@ -88,7 +88,7 @@ export interface SettingArea {
   readonly sections: readonly SettingSection[];
   /**
    * Bereich eines Spielmodus (Duels, Morni Party …): Die Werte gehen in die config.yml seines Plugins und gelten nach
-   * dem nächsten Neustart des Modus – morni.net startet ihn von selbst neu, sobald gerade niemand spielt.
+   * dem nächsten Neustart des Modus – MoinMorni startet ihn von selbst neu, sobald gerade niemand spielt.
    */
   readonly mode?: ModeLink;
 }
@@ -123,7 +123,7 @@ export const NETWORK_AREA: SettingArea = {
         {
           key: 'motd1',
           type: 'text',
-          default: '§6§lmorni.net §7– §aDein Alpen-Netzwerk',
+          default: '§6§lMoinMorni §7– §aDein Alpen-Netzwerk',
           maxLength: 60,
           label: t('Erste Zeile', 'First line'),
           help: t(
@@ -517,7 +517,7 @@ export const LOBBY_AREA: SettingArea = {
         {
           key: 'welcomeTitle',
           type: 'text',
-          default: 'Servus auf morni.net!',
+          default: 'Servus in MoinMorni!',
           maxLength: 40,
           label: t('Titel beim Betreten', 'Title on join'),
           help: t('Groß in der Mitte des Bildschirms.', 'Big in the middle of the screen.'),
@@ -633,8 +633,8 @@ export const LOBBY_AREA: SettingArea = {
           default: false,
           label: t('Möbel-Paket verpflichtend', 'Furniture pack required'),
           help: t(
-            'Stühle, Eckbänke, Tische, Bierbänke und Steinkrüge in der Lobby sind eigene 3D-Modelle aus einem kleinen Ressourcenpaket. Aus: Java-Spieler werden beim Betreten gefragt; wer ablehnt (oder auf Bedrock spielt), sieht einfache Holzstufen. An: ohne Paket kein Zutritt zur Lobby. Gilt, sobald die Lobby leer ist und neu startet (macht morni.net von selbst).',
-            'Chairs, corner benches, tables, beer benches and stone mugs in the lobby are our own 3D models from a small resource pack. Off: Java players are asked when they join; whoever declines (or plays Bedrock) sees simple wooden stairs. On: no pack, no lobby. Applies once the lobby is empty and restarts (morni.net does that by itself).',
+            'Stühle, Eckbänke, Tische, Bierbänke und Steinkrüge in der Lobby sind eigene 3D-Modelle aus einem kleinen Ressourcenpaket. Aus: Java-Spieler werden beim Betreten gefragt; wer ablehnt (oder auf Bedrock spielt), sieht einfache Holzstufen. An: ohne Paket kein Zutritt zur Lobby. Gilt, sobald die Lobby leer ist und neu startet (macht MoinMorni von selbst).',
+            'Chairs, corner benches, tables, beer benches and stone mugs in the lobby are our own 3D models from a small resource pack. Off: Java players are asked when they join; whoever declines (or plays Bedrock) sees simple wooden stairs. On: no pack, no lobby. Applies once the lobby is empty and restarts (MoinMorni does that by itself).',
           ),
           command: '/lobby paket an|aus',
         },
@@ -701,8 +701,8 @@ export const WEBSITE_AREA: SettingArea = {
   id: 'website',
   title: t('Webseite', 'Website'),
   text: t(
-    'Was auf morni.net steht: Regeln, Discord-Einladung, Kanäle in sozialen Netzen.',
-    'What morni.net shows: rules, Discord invite, social media channels.',
+    'Was auf moinmorni.net steht: Regeln, Discord-Einladung, Kanäle in sozialen Netzen.',
+    'What moinmorni.net shows: rules, Discord invite, social media channels.',
   ),
   icon: 'Globe2',
   panel: 'content',
@@ -1364,8 +1364,8 @@ export const REACH_AREA: SettingArea = {
   id: 'reach',
   title: t('Erreichbarkeit', 'Reachability'),
   text: t(
-    'Wie Spieler und Besucher morni.net erreichen: über NetBird, mit HTTPS, ohne Portfreigabe zu Hause – und ohne dass irgendwo die IP deines Hausanschlusses auftaucht.',
-    'How players and visitors reach morni.net: through NetBird, with HTTPS, without opening ports at home – and without your home IP showing up anywhere.',
+    'Wie Spieler und Besucher MoinMorni erreichen: über NetBird, mit HTTPS, ohne Portfreigabe zu Hause – und ohne dass irgendwo die IP deines Hausanschlusses auftaucht.',
+    'How players and visitors reach MoinMorni: through NetBird, with HTTPS, without opening ports at home – and without your home IP showing up anywhere.',
   ),
   icon: 'Network',
   panel: 'settings',
@@ -1393,8 +1393,8 @@ export const UPDATES_AREA: SettingArea = {
   id: 'updates',
   title: t('Updates', 'Updates'),
   text: t(
-    'morni.net hält sich selbst aktuell: vorher eine Sicherung, klappt etwas nicht, geht es zurück auf den alten Stand. Die Minecraft-Server laufen weiter.',
-    'morni.net keeps itself up to date: a backup first, and if something goes wrong it goes back to the old version. The Minecraft servers keep running.',
+    'MoinMorni hält sich selbst aktuell: vorher eine Sicherung, klappt etwas nicht, geht es zurück auf den alten Stand. Die Minecraft-Server laufen weiter.',
+    'MoinMorni keeps itself up to date: a backup first, and if something goes wrong it goes back to the old version. The Minecraft servers keep running.',
   ),
   icon: 'RefreshCw',
   panel: 'updates',
@@ -1451,8 +1451,8 @@ export const UPDATES_AREA: SettingArea = {
           default: false,
           label: t('Motor immer auf den neuesten Stand', 'Always the newest engine'),
           help: t(
-            'Aus: der Motor kommt in der Fassung, die zu morni.net passt (empfohlen). An: bei jedem Update auch die neueste Fassung von MorniHosting – klappt sie nicht, geht es zurück.',
-            'Off: the engine comes in the version that fits morni.net (recommended). On: every update also takes the newest MorniHosting – if it fails, it goes back.',
+            'Aus: der Motor kommt in der Fassung, die zu MoinMorni passt (empfohlen). An: bei jedem Update auch die neueste Fassung von MorniHosting – klappt sie nicht, geht es zurück.',
+            'Off: the engine comes in the version that fits MoinMorni (recommended). On: every update also takes the newest MorniHosting – if it fails, it goes back.',
           ),
           command: '/updates motor an|aus',
         },

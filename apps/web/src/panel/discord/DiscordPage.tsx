@@ -28,7 +28,7 @@ import { mmApi } from '~/lib/mm-api';
 import { AreaGate } from '../AreaGate';
 import { PageHead } from '../PanelShell';
 
-/** State of morni.net's Discord bot (apps/server/src/discord/bot.ts → BotStatus). */
+/** State of MoinMorni's Discord bot (apps/server/src/discord/bot.ts → BotStatus). */
 interface BotStatus {
   readonly configured: boolean;
   readonly connected: boolean;
@@ -385,7 +385,7 @@ function DiscordSetup(): ReactElement {
   );
 }
 
-/** Panel: connect and set up morni.net's own Discord bot – /panel/discord. */
+/** Panel: connect and set up MoinMorni's own Discord bot – /panel/discord. */
 export function DiscordPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (

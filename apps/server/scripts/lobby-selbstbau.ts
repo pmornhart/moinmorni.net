@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
-import { Rcon } from '@morninet/builder';
+import { Rcon } from '@moinmorni/builder';
 import { createLobbyWorld, seasonOf } from '../src/lobby/world.js';
 import { MotorError, type MotorClient } from '../src/motor/client.js';
 

@@ -1,6 +1,6 @@
 /**
  * Testaufbau mit dem echten Motor: MorniHosting aus vendor/mornihosting im Motor-Modus (ohne Oberfläche) mit
- * nachgebautem Docker, auf einem freien Port – und morni.net davor, genau wie im Container.
+ * nachgebautem Docker, auf einem freien Port – und MoinMorni davor, genau wie im Container.
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -58,15 +58,20 @@ export interface Harness {
   readonly motorUrl: string;
   /** Anmelden über die Weiterleitung, wie der Browser: liefert Cookie und CSRF-Token. */
   readonly login: (username: string, password: string) => Promise<{ cookie: string; csrf: string }>;
+  /**
+   * MoinMorni neu starten wie nach einem Update (der Motor läuft weiter, gleicher Datenordner). `between` läuft, wenn
+   * MoinMorni aus ist – z. B. um Dateien im Datenordner umzubenennen.
+   */
+  readonly restart: (between?: () => void) => Promise<void>;
   readonly cleanup: () => Promise<void>;
 }
 
 export interface HarnessOptions {
-  /** false = der Motor ist frisch, noch ohne Konto (Ersteinrichtung über morni.net testen). */
+  /** false = der Motor ist frisch, noch ohne Konto (Ersteinrichtung über MoinMorni testen). */
   readonly motorSetup?: boolean;
   /** Gebaute Webseite ausliefern (Browser-Tests). */
   readonly webDir?: string;
-  /** Fester Port für morni.net (Browser-Tests). */
+  /** Fester Port für MoinMorni (Browser-Tests). */
   readonly port?: number;
   /** Weitere Einstellungen (z. B. MM_DISCORD_TOKEN). */
   readonly env?: Record<string, string>;
@@ -96,37 +101,47 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
   await motor.app.listen({ host: '127.0.0.1', port: 0 });
   const address = motor.app.server.address() as { port: number };
   const motorUrl = `http://127.0.0.1:${address.port}`;
-  // Philip richtet das erste Konto ein (im echten Aufbau über den Einrichtungs-Assistenten von morni.net).
+  // Philip richtet das erste Konto ein (im echten Aufbau über den Einrichtungs-Assistenten von MoinMorni).
   if (options.motorSetup !== false)
     await fetch(`${motorUrl}/api/setup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ username: 'philip', password: OWNER_PASSWORD, locale: 'de' }),
     });
-  const token = (await runCommand(motor.ctx.db, 'service-token', ['morninet'])).message;
-  const mm = await buildApp({
-    config: loadConfig(
-      {
-        MM_SECRET: SECRET,
-        MM_DATA_DIR: mmDir,
-        MM_MOTOR_URL: motorUrl,
-        MM_MOTOR_TOKEN: token,
-        MM_PORT: '0',
-        MM_WEB_DIR: options.webDir ?? mmDir,
-        MM_AUTO_NETWORK: 'false',
-        ...options.env,
-      },
-      mmDir,
-    ),
-    logger: false,
-  });
-  await mm.app.listen({ host: '127.0.0.1', port: options.port ?? 0 });
-  const mmAddress = mm.app.server.address();
-  const mmUrl = `http://127.0.0.1:${typeof mmAddress === 'object' && mmAddress ? mmAddress.port : 0}`;
+  const token = (await runCommand(motor.ctx.db, 'service-token', ['moinmorni'])).message;
+  const build = async (): Promise<{ mm: BuiltApp; mmUrl: string }> => {
+    const app = await buildApp({
+      config: loadConfig(
+        {
+          MM_SECRET: SECRET,
+          MM_DATA_DIR: mmDir,
+          MM_MOTOR_URL: motorUrl,
+          MM_MOTOR_TOKEN: token,
+          MM_PORT: '0',
+          MM_WEB_DIR: options.webDir ?? mmDir,
+          MM_AUTO_NETWORK: 'false',
+          ...options.env,
+        },
+        mmDir,
+      ),
+      logger: false,
+    });
+    await app.app.listen({ host: '127.0.0.1', port: options.port ?? 0 });
+    const address = app.app.server.address();
+    return {
+      mm: app,
+      mmUrl: `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`,
+    };
+  };
+  let { mm, mmUrl } = await build();
 
   return {
-    mm,
-    mmUrl,
+    get mm() {
+      return mm;
+    },
+    get mmUrl() {
+      return mmUrl;
+    },
     mmDir,
     motorUrl,
     login: async (username, password) => {
@@ -140,6 +155,12 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
         await fetch(`${mmUrl}/panel/motor/api/auth/me`, { headers: { cookie } })
       ).json()) as { csrfToken: string };
       return { cookie, csrf: me.csrfToken };
+    },
+    restart: async (between) => {
+      await mm.close();
+      between?.();
+      ({ mm, mmUrl } = await build());
+      await mm.start();
     },
     cleanup: async () => {
       await mm.close();

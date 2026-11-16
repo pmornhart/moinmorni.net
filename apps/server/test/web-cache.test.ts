@@ -11,7 +11,7 @@ describe('Webseite: Zwischenspeichern im Browser', () => {
     web = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-web-'));
     fs.mkdirSync(path.join(web, 'assets'));
     fs.mkdirSync(path.join(web, 'bilder'));
-    fs.writeFileSync(path.join(web, 'index.html'), '<!doctype html><title>morni.net</title>');
+    fs.writeFileSync(path.join(web, 'index.html'), '<!doctype html><title>MoinMorni</title>');
     fs.writeFileSync(path.join(web, 'assets', 'app-1a2b3c.js'), 'console.log(1)');
     fs.writeFileSync(path.join(web, 'bilder', 'dorfplatz-tag.webp'), 'RIFF');
     h = await createHarness({ webDir: web });

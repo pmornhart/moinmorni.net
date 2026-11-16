@@ -82,7 +82,7 @@ function GateError({ error, retry }: { readonly error: unknown; readonly retry: 
 
 /**
  * The door to the panel: first setup (owner account), then sign-in, then the check that the account has a
- * morni.net role. Only then the panel with its menu.
+ * MoinMorni role. Only then the panel with its menu.
  */
 export function PanelGate(): ReactElement {
   const queryClient = useQueryClient();

@@ -19,7 +19,7 @@ import {
 // Pfad wie im Netzwerk-Plugin geprüft: nur a-z 0-9 . _ -, keine leeren Teile.
 // https://regex101.com/?flavor=javascript&regex=%5E%5Ba-z0-9_-%5D%2B(%5C.%5Ba-z0-9_-%5D%2B)*%24&testString=ankauf.stufen.1.prozent
 const CONFIG_PATH = /^[a-z0-9_-]+(\.[a-z0-9_-]+)*$/;
-// Plugin-Name aus der plugin.yml: "MorniDuels".
+// Plugin-Name aus der plugin.yml: "MoinMorniDuels".
 // https://regex101.com/?flavor=javascript&regex=%5E%5BA-Za-z0-9_-%5D%7B1%2C64%7D%24&testString=MorniSMP
 const PLUGIN_NAME = /^[A-Za-z0-9_-]{1,64}$/;
 // Platzhalter im Befehl ohne Leerzeichen: "<sekunden>", "<zufall|fest>".

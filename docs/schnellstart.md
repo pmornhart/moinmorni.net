@@ -1,6 +1,6 @@
-# Von null zu morni.net
+# Von null zu MoinMorni
 
-Diese Anleitung bringt dich vom leeren Rechner bis zum fertigen Minecraft-Netzwerk: Proxmox installieren, morni.net mit
+Diese Anleitung bringt dich vom leeren Rechner bis zum fertigen Minecraft-Netzwerk: Proxmox installieren, MoinMorni mit
 einem Befehl aufsetzen, Owner-Konto anlegen, unter deiner Domain erreichbar machen, Discord-Bot verbinden. Du brauchst
 kein Vorwissen – jeder Schritt sagt dir, **woran du merkst, dass es geklappt hat**.
 
@@ -16,20 +16,20 @@ Plane etwa zwei Stunden ein. Das meiste davon ist Warten (Installation, Updates,
 | [6. Discord-Bot](#6-discord-bot)                                                | Bot anlegen, einladen, Server einrichten lassen      | 10 Min.       |
 | [7. Spielmodi](#7-spielmodi)                                                    | nichts – sie kommen von selbst                       | –             |
 | [8. Modpack, Updates, Sicherungen](#8-modpack-updates-sicherungen-dauerbetrieb) | einmal ansehen, einmal einstellen                    | 10 Min.       |
-| [9. Einmal auf GitHub](#9-einmal-auf-github-nur-philip)                         | Repo umbenennen, `main` anlegen                      | 5 Min.        |
+| [9. Einmal auf GitHub](#9-einmal-auf-github-nur-philip)                         | `main` anlegen                                       | 5 Min.        |
 | [10. Probleme und Lösungen](#10-probleme-und-lösungen)                          | wenn etwas hakt                                      | –             |
 
 So hängt am Ende alles zusammen:
 
 ```text
- Spieler und Besucher tippen „morni.net“
+ Spieler und Besucher tippen „moinmorni.net“
             │  DNS bei INWX
             ▼
  IONOS-Server (feste IP im Internet) ── NetBird-Proxy: Webseite mit HTTPS, Minecraft-Ports
             │  verschlüsselter NetBird-Tunnel – zu Hause bleibt der Router zu
             ▼
  Proxmox bei dir zu Hause
-   └─ Container „morninet“: Webseite + Panel, Motor (MorniHosting), Minecraft-Server (Proxy, Lobby, Spielmodi)
+   └─ Container „moinmorni“: Webseite + Panel, Motor (MorniHosting), Minecraft-Server (Proxy, Lobby, Spielmodi)
 ```
 
 ---
@@ -52,12 +52,12 @@ sparsames Gerät lohnt sich.
 - **Kabel statt WLAN:** Proxmox kommt mit WLAN schlecht zurecht.
 - **Die Festplatte wird komplett gelöscht.** Nimm einen Rechner, auf dem nichts Wichtiges mehr liegt.
 
-**Wie viel Arbeitsspeicher wofür?** Der Container für morni.net bekommt als Standard **32 GB RAM, 8 Kerne und 100 GB
+**Wie viel Arbeitsspeicher wofür?** Der Container für MoinMorni bekommt als Standard **32 GB RAM, 8 Kerne und 100 GB
 Festplatte**. Lobby und Proxy laufen immer (zusammen etwa 6 GB). Jeder Spielmodus, in dem gerade jemand spielt, braucht
 etwa 3 GB (MorniSMP 8 GB, MorniCraft 6 GB). **Leere Spielmodi schlafen** und brauchen dann gar nichts. Sie wachen in
 etwa 20 Sekunden auf, sobald jemand in der Lobby die Figur des Modus anklickt.
 
-| RAM für morni.net | Was gleichzeitig läuft                                                |
+| RAM für MoinMorni | Was gleichzeitig läuft                                                |
 | ----------------- | --------------------------------------------------------------------- |
 | 8 GB              | nur Lobby und Proxy gut, ein kleiner Spielmodus knapp                 |
 | 14–16 GB          | Lobby und 2–3 Spielmodi gleichzeitig                                  |
@@ -72,9 +72,9 @@ Installationsskript von selbst weniger und sagt dir, was das bedeutet.
 
 - **Internet zu Hause:** Wichtiger als Tempo ist eine stabile Leitung. Faustregel: pro Spieler, der gleichzeitig
   spielt, etwa 0,5 Mbit/s im Upload.
-- **Die Domain `morni.net`** bei INWX (dort trägst du später die DNS-Einträge ein).
+- **Die Domain `moinmorni.net`** bei INWX (dort trägst du später die DNS-Einträge ein).
 - **NetBird** mit Reverse Proxy auf einem Server mit fester IP im Internet – bei dir der IONOS-Server, auf dem dein
-  NetBird läuft. Darüber erreichen alle morni.net, ohne dass du zu Hause Ports freigibst und ohne dass jemand die IP
+  NetBird läuft. Darüber erreichen alle MoinMorni, ohne dass du zu Hause Ports freigibst und ohne dass jemand die IP
   deines Hausanschlusses sieht. (Ohne NetBird geht es nur mit Portfreigaben im Router – das beschreibt diese Anleitung
   nicht.)
 - **Ein Discord-Konto** für den Bot (Teil 6).
@@ -85,7 +85,7 @@ Installationsskript von selbst weniger und sagt dir, was das bedeutet.
 ## 2. Proxmox installieren
 
 [Proxmox VE](https://www.proxmox.com/de/) ist ein kostenloses Betriebssystem für Server. Es verwaltet „Container“:
-abgeschlossene kleine Linux-Systeme, in denen jeweils ein Dienst läuft. morni.net bekommt seinen eigenen Container.
+abgeschlossene kleine Linux-Systeme, in denen jeweils ein Dienst läuft. MoinMorni bekommt seinen eigenen Container.
 
 Nimm für alles in diesem Teil nur die offiziellen Seiten von Proxmox und der genannten Programme.
 
@@ -206,7 +206,7 @@ apt full-upgrade
 
 ## 3. Der Container
 
-Jetzt kommt morni.net auf deinen Proxmox – mit **einem** Befehl.
+Jetzt kommt MoinMorni auf deinen Proxmox – mit **einem** Befehl.
 
 > Der Befehl klappt erst, wenn der Code auf GitHub im Branch `main` liegt (siehe [Teil 9](#9-einmal-auf-github-nur-philip)).
 
@@ -221,7 +221,7 @@ Jetzt kommt morni.net auf deinen Proxmox – mit **einem** Befehl.
 2. Diese Zeile kopieren und in die Shell einfügen (Rechtsklick → **Einfügen** oder **Strg+Umschalt+V**), dann Enter:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/morni.net/main/proxmox/morninet.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/moinmorni.net/main/proxmox/moinmorni.sh)"
 ```
 
 Das Skript schaut sich zuerst deinen Rechner an:
@@ -239,7 +239,7 @@ Dann stellt es dir ein paar Fragen in blauen Fenstern. Mit **Tab** springst du z
 1. **Container-ID** – die Nummer, unter der der Container in Proxmox steht. Jede Nummer gibt es nur einmal. Nimm einfach
    den Vorschlag (auf einem frischen Proxmox ist das `100`). Mit dieser Nummer sprichst du den Container später an, in
    dieser Anleitung heißt sie `<ID>`.
-2. **Domain** – `morni.net`. Dort stehen später Webseite und Panel, und die Spieler verbinden sich mit dieser Adresse.
+2. **Domain** – `moinmorni.net`. Dort stehen später Webseite und Panel, und die Spieler verbinden sich mit dieser Adresse.
    Ohne `https://` und ohne `/`.
 3. **Discord-Bot** – den Token einfügen. Die Eingabe bleibt unsichtbar. Der Token landet nur in der
    Einstellungs-Datei im Container, die nur `root` lesen darf – nie in der Ausgabe, in der Prozessliste oder in einem
@@ -264,7 +264,7 @@ Vertippt? Das Skript sagt, was nicht passt, und fragt nochmal.
 ### 3.3 Was jetzt passiert
 
 Das Skript lädt eine Debian-Vorlage, legt den Container an (sicher, ohne Sonderrechte auf dem Proxmox-Rechner), startet
-ihn, installiert Docker aus der offiziellen Quelle von Docker, lädt morni.net von GitHub und baut es. **Beim ersten Mal
+ihn, installiert Docker aus der offiziellen Quelle von Docker, lädt MoinMorni von GitHub und baut es. **Beim ersten Mal
 dauert das 10 bis 30 Minuten**, je nach Rechner und Internet. Du musst nichts tun.
 
 Was genau passiert und alle Einstellungen zum Nachlesen: [Proxmox-Einzeiler im Detail](proxmox-quickstart.md).
@@ -274,25 +274,25 @@ Was genau passiert und alle Einstellungen zum Nachlesen: [Proxmox-Einzeiler im D
 Zum Schluss steht da (mit deinen Werten):
 
 ```text
- 🎉 morni.net ist bereit!
+ 🎉 MoinMorni ist bereit!
 
-    Container 100 „morninet“ · IP 192.168.178.50
+    Container 100 „moinmorni“ · IP 192.168.178.50
 
     1. Leg dein Owner-Konto an – im Browser bei dir zu Hause:
        http://192.168.178.50:8080/panel/einrichtung
        Einrichtungs-Code: ABCD-EFGH-JKLM
-       (Sobald deine Domain steht, geht es auch über https://morni.net/panel/einrichtung)
+       (Sobald deine Domain steht, geht es auch über https://moinmorni.net/panel/einrichtung)
     2. NetBird: im Panel unter Einstellungen → Erreichbarkeit verbinden …
     3. Discord-Bot: Schritt für Schritt im Panel unter „Discord“.
 
-    Code nochmal anzeigen: pct exec 100 -- docker exec morninet cat /data/setup-code
+    Code nochmal anzeigen: pct exec 100 -- docker exec moinmorni cat /data/setup-code
     In den Container:      pct enter 100
 ```
 
 Schreib dir die **IP** und den **Einrichtungs-Code** auf (oder lass das Fenster offen).
 
-**Geklappt, wenn** links in Proxmox ein Container `100 (morninet)` mit grünem Pfeil steht und
-`http://<IP>:8080` im Browser die Webseite von morni.net zeigt.
+**Geklappt, wenn** links in Proxmox ein Container `100 (moinmorni)` mit grünem Pfeil steht und
+`http://<IP>:8080` im Browser die Webseite von MoinMorni zeigt.
 
 Ging etwas schief, sagt das Skript, in welcher Zeile. Der Container bleibt dann zum Nachsehen stehen. Hilfe gibt es in
 [Teil 10](#10-probleme-und-lösungen).
@@ -328,16 +328,16 @@ registrieren: Team-Konten legst du im Panel unter **Team** an.
 
 - **Anmeldung in zwei Schritten (2FA):** Nach dem Passwort fragt das Panel zusätzlich einen Code aus einer App auf
   deinem Handy (z. B. Aegis, 2FAS oder Google Authenticator). Richte das jetzt ein.
-- **Minecraft-Konto:** Trag deinen Minecraft-Namen (Java) ein. Dann erkennt morni.net dich im Spiel, und dein Rang
+- **Minecraft-Konto:** Trag deinen Minecraft-Namen (Java) ein. Dann erkennt MoinMorni dich im Spiel, und dein Rang
   (♛ Owner) gilt dort auch.
 - **Passkeys** (Anmelden mit Fingerabdruck oder Gesicht) gehen nur über HTTPS auf deiner Domain – die richtest du nach
-  Teil 5 ein, wenn `https://morni.net/panel` läuft.
+  Teil 5 ein, wenn `https://moinmorni.net/panel` läuft.
 
 <img src="schnellstart/panel-konto.webp" alt="Mein Konto: Minecraft-Konto, Passwort, Passkeys, 2FA" width="100%">
 
 ### 4.2 Das Netzwerk baut sich selbst
 
-Sobald es das Owner-Konto gibt, legt morni.net von selbst an: den **Proxy** (der Eingang für alle Spieler, mit Java ab
+Sobald es das Owner-Konto gibt, legt MoinMorni von selbst an: den **Proxy** (der Eingang für alle Spieler, mit Java ab
 1.17 und Bedrock), die **Lobby** (das Alpendorf mit den Figuren) und den **Bau-Server** fürs Bauteam. Die Lobby baut
 sich danach Block für Block auf. Das dauert ein paar Minuten.
 
@@ -347,23 +347,23 @@ Hause kannst du jetzt schon spielen:
 - **Java:** Mehrspieler → Direktverbindung → `<IP>` (die IP des Containers).
 - **Bedrock:** Server → Server hinzufügen → Adresse `<IP>`, Port `19132`.
 
-Bist du drin, begrüßt dich das Dorf mit „Servus auf morni.net!“.
+Bist du drin, begrüßt dich das Dorf mit „Servus in MoinMorni!“.
 
 ---
 
 ## 5. Erreichbar machen
 
-Jetzt bekommt morni.net seine Adresse im Internet. Danach gilt für alle:
+Jetzt bekommt MoinMorni seine Adresse im Internet. Danach gilt für alle:
 
-| Wer               | Adresse                                       |
-| ----------------- | --------------------------------------------- |
-| Webseite          | `https://morni.net`                           |
-| Panel fürs Team   | `https://morni.net/panel`                     |
-| Minecraft Java    | `morni.net` (ohne Port, jede Version ab 1.17) |
-| Minecraft Bedrock | `morni.net`, Port `19132`                     |
+| Wer               | Adresse                                           |
+| ----------------- | ------------------------------------------------- |
+| Webseite          | `https://moinmorni.net`                           |
+| Panel fürs Team   | `https://moinmorni.net/panel`                     |
+| Minecraft Java    | `moinmorni.net` (ohne Port, jede Version ab 1.17) |
+| Minecraft Bedrock | `moinmorni.net`, Port `19132`                     |
 
 Und das Schönste: Zu Hause gibst du **keine Ports** frei, und **niemand sieht die IP deines Hausanschlusses**. Alle
-kommen beim IONOS-Server an, NetBird reicht sie durch einen verschlüsselten Tunnel zu dir weiter. Auch was morni.net
+kommen beim IONOS-Server an, NetBird reicht sie durch einen verschlüsselten Tunnel zu dir weiter. Auch was MoinMorni
 selbst im Internet aufruft (Mojang, Modrinth, GitHub, Discord), geht über den IONOS-Server hinaus.
 
 Alle Einzelheiten zu NetBird – mit Erklärungen, was NetBird erlaubt und was nicht – stehen in der
@@ -372,7 +372,7 @@ Alle Einzelheiten zu NetBird – mit Erklärungen, was NetBird erlaubt und was n
 ### 5.1 NetBird im Container
 
 Hast du beim Skript einen Setup-Key angegeben, ist das schon erledigt: Im NetBird-Dashboard unter **Peers** steht ein
-Rechner `morninet`. Sonst holst du es jetzt nach. Wechsle in der Proxmox-Shell in den Container:
+Rechner `moinmorni`. Sonst holst du es jetzt nach. Wechsle in der Proxmox-Shell in den Container:
 
 ```bash
 pct enter <ID>
@@ -404,30 +404,30 @@ netbird up --management-url https://netbird.example.de
 unset NB_SETUP_KEY; exit
 ```
 
-**Geklappt, wenn** `netbird status` im Container `Management: Connected` zeigt und der Rechner `morninet` im
+**Geklappt, wenn** `netbird status` im Container `Management: Connected` zeigt und der Rechner `moinmorni` im
 NetBird-Dashboard unter **Peers** grün ist.
 
 ### 5.2 Domain bei NetBird und INWX
 
-1. Im NetBird-Dashboard: **Reverse Proxy → Custom Domains → Add Domain** → `morni.net` → speichern. morni.net braucht
+1. Im NetBird-Dashboard: **Reverse Proxy → Custom Domains → Add Domain** → `moinmorni.net` → speichern. MoinMorni braucht
    seine **eigene** Domain in NetBird – nicht die deines MorniHosting.
 2. NetBird zeigt dir danach, welche DNS-Einträge nötig sind. Trag sie bei **INWX** ein (im Kundenbereich bei der Domain
-   `morni.net` die DNS- bzw. Nameserver-Einträge öffnen). Meist sind das:
+   `moinmorni.net` die DNS- bzw. Nameserver-Einträge öffnen). Meist sind das:
 
-   | Typ   | Name          | Wert                                    |
-   | ----- | ------------- | --------------------------------------- |
-   | A     | `morni.net`   | die öffentliche IP deines IONOS-Servers |
-   | CNAME | `*.morni.net` | die Adresse deines NetBird-Proxys       |
+   | Typ   | Name              | Wert                                    |
+   | ----- | ----------------- | --------------------------------------- |
+   | A     | `moinmorni.net`   | die öffentliche IP deines IONOS-Servers |
+   | CNAME | `*.moinmorni.net` | die Adresse deines NetBird-Proxys       |
 
-   Für `morni.net` selbst geht nur ein **A-Eintrag**, kein CNAME. Nimm immer genau die Werte, die NetBird anzeigt.
+   Für `moinmorni.net` selbst geht nur ein **A-Eintrag**, kein CNAME. Nimm immer genau die Werte, die NetBird anzeigt.
 
 3. In NetBird **Verify Domain** – das kann ein paar Minuten dauern, selten bis zu einem Tag.
 
 **Geklappt, wenn** NetBird die Domain als bestätigt (**Active**) zeigt. Zusätzlich kannst du auf deinem Rechner prüfen,
-wohin `morni.net` zeigt – es muss die IP deines IONOS-Servers herauskommen:
+wohin `moinmorni.net` zeigt – es muss die IP deines IONOS-Servers herauskommen:
 
 ```bash
-nslookup morni.net
+nslookup moinmorni.net
 ```
 
 ### 5.3 Im Panel: Einstellungen → Erreichbarkeit
@@ -438,11 +438,11 @@ gespeichert und nie wieder angezeigt.
 
 Dann im Panel unter **Einstellungen → Erreichbarkeit**:
 
-1. **NetBird verbinden** – Schlüssel einfügen, Domain `morni.net` und den Rechner `morninet` wählen.
-2. **Webseite auf der Domain** – einrichten. Danach ist `https://morni.net` die Webseite und `https://morni.net/panel`
+1. **NetBird verbinden** – Schlüssel einfügen, Domain `moinmorni.net` und den Rechner `moinmorni` wählen.
+2. **Webseite auf der Domain** – einrichten. Danach ist `https://moinmorni.net` die Webseite und `https://moinmorni.net/panel`
    dein Panel, mit HTTPS.
-3. **Spiel auf der Domain** – den vorgeschlagenen Proxy übernehmen. Dann tippen Spieler nur noch `morni.net`.
-4. **Hausanschluss verstecken** – den NetBird-Server als Ausgang wählen. Danach prüft morni.net, mit welcher IP es ins
+3. **Spiel auf der Domain** – den vorgeschlagenen Proxy übernehmen. Dann tippen Spieler nur noch `moinmorni.net`.
+4. **Hausanschluss verstecken** – den NetBird-Server als Ausgang wählen. Danach prüft MoinMorni, mit welcher IP es ins
    Internet geht: grün heißt versteckt. Zeigt die Karte Namen, die noch auf deinen Hausanschluss zeigen, lösch diese
    Einträge bei INWX. Dafür muss auf dem IONOS-Server neben dem NetBird-Proxy auch der normale NetBird-Agent laufen –
    läuft das für MorniHosting schon, ist nichts zu tun.
@@ -450,22 +450,22 @@ Dann im Panel unter **Einstellungen → Erreichbarkeit**:
 Die genauen Knöpfe und was dahinter passiert: [NetBird-Anleitung](netbird.md).
 
 > **Ports am IONOS-Server:** Ein selbst betriebener NetBird-Proxy lässt nur Ports durch, die auf dem IONOS-Server
-> freigegeben sind – in Docker und in der Firewall im IONOS-Kundenmenü. morni.net braucht HTTPS (443), für Java und den
+> freigegeben sind – in Docker und in der Firewall im IONOS-Kundenmenü. MoinMorni braucht HTTPS (443), für Java und den
 > Sprachchat **TCP und UDP 25565** und für Bedrock **TCP und UDP 19132**. Benutzt in deinem NetBird schon etwas 25565
-> oder 19132 (z. B. der Adress-Verteiler von MorniHosting), bekommt morni.net die nächste freie Nummer – welche, zeigt
+> oder 19132 (z. B. der Adress-Verteiler von MorniHosting), bekommt MoinMorni die nächste freie Nummer – welche, zeigt
 > die Karte unter **Erreichbarkeit**.
 
 **Geklappt, wenn**
 
-- `https://morni.net` die Webseite zeigt (mit Schloss im Browser),
-- du dich unter `https://morni.net/panel` anmelden kannst,
-- Minecraft Java mit der Adresse `morni.net` in die Lobby kommt – auch vom Handy-Hotspot aus, also nicht über dein
+- `https://moinmorni.net` die Webseite zeigt (mit Schloss im Browser),
+- du dich unter `https://moinmorni.net/panel` anmelden kannst,
+- Minecraft Java mit der Adresse `moinmorni.net` in die Lobby kommt – auch vom Handy-Hotspot aus, also nicht über dein
   Heimnetz,
 - die Karte „Hausanschluss verstecken“ grün ist.
 
 <p>
-  <img src="schnellstart/webseite.webp" alt="Startseite von morni.net am Computer (Demo mit ausgedachten Zahlen)" width="72%">
-  <img src="schnellstart/webseite-handy.webp" alt="Startseite von morni.net auf dem Handy (Demo)" width="25%">
+  <img src="schnellstart/webseite.webp" alt="Startseite von MoinMorni am Computer (Demo mit ausgedachten Zahlen)" width="72%">
+  <img src="schnellstart/webseite-handy.webp" alt="Startseite von MoinMorni auf dem Handy (Demo)" width="25%">
 </p>
 
 So sieht die Webseite aus (Bild aus der Demo, die Zahlen sind ausgedacht). Jetzt kannst du unter **Mein Konto →
@@ -475,7 +475,7 @@ Passkeys** einen Passkey anlegen.
 
 ## 6. Discord-Bot
 
-morni.net hat einen eigenen Discord-Bot. Er richtet deinen Discord-Server ein (Rollen, Kanäle, Befehle), zeigt, wer
+MoinMorni hat einen eigenen Discord-Bot. Er richtet deinen Discord-Server ein (Rollen, Kanäle, Befehle), zeigt, wer
 gerade spielt, gleicht Ränge und Strafen ab und kümmert sich um Tickets und Bewerbungen. Im Panel unter **Discord**
 führt dich eine Seite durch dieselben Schritte und hakt ab, was schon klappt.
 
@@ -484,7 +484,7 @@ führt dich eine Seite durch dieselben Schritte und hakt ab, was schon klappt.
 ### 6.1 Bot anlegen (einmal)
 
 1. Öffne das Discord-Entwicklerportal: <https://discord.com/developers/applications> → **New Application** → Name
-   `morni.net` → **Create**.
+   `MoinMorni` → **Create**.
 2. Links **Bot** → **Reset Token** → **Yes, do it!** → den Token kopieren. Er wird nur einmal angezeigt. **Der Token ist
    wie ein Passwort: nie in einen Chat, nie in einen Screenshot, nie ins Repo.**
 3. Auf derselben Seite unter **Privileged Gateway Intents** den Schalter **Server Members Intent** einschalten und
@@ -501,14 +501,14 @@ pct enter <ID>
 ```
 
 ```bash
-nano /opt/morninet/.env
+nano /opt/moinmorni/.env
 ```
 
 Such die Zeile `MM_DISCORD_TOKEN=`, füg den Token direkt hinter dem `=` ein (ohne Leerzeichen), speichere mit
-**Strg+O**, Enter und schließe mit **Strg+X**. Dann morni.net mit dem neuen Wert starten und den Container verlassen:
+**Strg+O**, Enter und schließe mit **Strg+X**. Dann MoinMorni mit dem neuen Wert starten und den Container verlassen:
 
 ```bash
-cd /opt/morninet && docker compose up -d
+cd /opt/moinmorni && docker compose up -d
 ```
 
 ```bash
@@ -517,7 +517,7 @@ exit
 
 ### 6.3 Server anlegen und einrichten lassen
 
-1. In Discord links auf **+** → **Eigenen erstellen** → **Für mich und meine Freunde** → Name, z. B. `morni.net`. Lass ihn
+1. In Discord links auf **+** → **Eigenen erstellen** → **Für mich und meine Freunde** → Name, z. B. `MoinMorni`. Lass ihn
    leer: Discord erlaubt Bots nicht mehr, selbst Server anzulegen – den Rest macht der Bot.
 2. Im Panel unter **Discord** auf **Bot einladen** → deinen neuen Server wählen → **Autorisieren**.
 3. Im Panel **Server einrichten** klicken. Nach etwa einer halben Minute sind Rollen (♛ Owner, ⚔ Moderator, ★ VIP …),
@@ -533,7 +533,7 @@ Mehr dazu (auch „Mit Discord anmelden“ für MorniCraft-Bewerbungen auf der W
 
 ## 7. Spielmodi
 
-Hier musst du nichts tun. Jeder Spielmodus hat sein eigenes Repo auf GitHub. **Einmal pro Stunde schaut morni.net
+Hier musst du nichts tun. Jeder Spielmodus hat sein eigenes Repo auf GitHub. **Einmal pro Stunde schaut MoinMorni
 nach**, welche davon eine fertige Version (ein „Release“) haben, legt für jeden einen eigenen Server an und spielt die
 neueste Version auf. Neue Versionen kommen genauso von selbst.
 
@@ -541,9 +541,9 @@ neueste Version auf. Neue Versionen kommen genauso von selbst.
 - **Panel → Modi:** an- und ausschalten, Wartung, Reihenfolge in der Lobby und auf der Webseite, wie viele Spieler
   hinein dürfen.
 - **Einstellungen der Modi** stehen im Panel in der Gruppe **Spielmodi** – mit Suche und Erklärung. Sie gelten nach dem
-  nächsten Neustart des Modus; morni.net startet ihn von selbst neu, sobald niemand darin spielt.
+  nächsten Neustart des Modus; MoinMorni startet ihn von selbst neu, sobald niemand darin spielt.
 - **MorniCraft** ist ab Werk **aus** und nur für Leute auf der **Whitelist**. Bewerben können sich Spieler auf der
-  Webseite unter `https://morni.net/mornicraft/bewerben` oder im Discord mit `/bewerben`. Annehmen und ablehnen kannst
+  Webseite unter `https://moinmorni.net/mornicraft/bewerben` oder im Discord mit `/bewerben`. Annehmen und ablehnen kannst
   du in Discord oder im Panel unter **Einstellungen → MorniCraft**. Einschalten unter **Modi**.
 
 <img src="schnellstart/panel-modi.webp" alt="Panel → Modi: MorniCraft nur auf Einladung und aus, die anderen Modi offen" width="100%">
@@ -563,13 +563,13 @@ installieren es mit der Modrinth App oder dem Prism Launcher – wie das geht un
 
 ### Updates
 
-morni.net hält sich selbst aktuell: **einmal am Tag um 4 Uhr**, und nur, **wenn niemand spielt**. Vorher macht es eine
+MoinMorni hält sich selbst aktuell: **einmal am Tag um 4 Uhr**, und nur, **wenn niemand spielt**. Vorher macht es eine
 Sicherung; klappt etwas nicht, geht es von selbst zurück auf den alten Stand. Die Minecraft-Server laufen weiter. Im
 Discord-Team-Log steht, was neu ist. Einstellen (Uhrzeit, an/aus) und von Hand starten: **Panel → Einstellungen →
 Updates**. Auch aus der Proxmox-Shell:
 
 ```bash
-pct exec <ID> -- morninet-update
+pct exec <ID> -- moinmorni-update
 ```
 
 Proxmox selbst aktualisierst du ab und zu wie in [Teil 2.6](#26-proxmox-auf-den-neuesten-stand-bringen) – etwa einmal
@@ -577,8 +577,8 @@ im Monat.
 
 ### Sicherungen
 
-- **Vor jedem Update** sichert morni.net seine Datenbanken (Ränge, Strafen, Statistiken, Einstellungen) im Container
-  unter `/var/backups/morninet` – die letzten fünf bleiben.
+- **Vor jedem Update** sichert MoinMorni seine Datenbanken (Ränge, Strafen, Statistiken, Einstellungen) im Container
+  unter `/var/backups/moinmorni` – die letzten fünf bleiben.
 - **Welten** sicherst du im Panel unter **Server** → Server wählen → **Backups**, auch als Zeitplan.
 - **Am einfachsten und vollständig:** Proxmox sichert den ganzen Container. Links **Rechenzentrum → Backup →
   Hinzufügen**: als **Speicher** am besten eine zweite Festplatte oder ein NAS (nie nur dieselbe Platte), als Zeitplan
@@ -588,35 +588,32 @@ im Monat.
 ### Dauerbetrieb
 
 - Der Container **startet mit Proxmox**. Nach einem Stromausfall kommt alles von selbst wieder.
-- morni.net und der Motor starten neu, wenn sie abstürzen. Spielserver, die abstürzen, startet der Motor wieder.
+- MoinMorni und der Motor starten neu, wenn sie abstürzen. Spielserver, die abstürzen, startet der Motor wieder.
 - Auf dem Proxmox-Host passt der **Host-Wächter** auf den Container auf: Ist er aus, ohne dass du ihn gestoppt hast,
-  startet er ihn wieder; hängt er, startet er ihn neu (Status auf dem Host: `morninet-host-guard status`).
-- Im Container prüft ein **Wächter** jede Minute NetBird, DNS, Docker und die Container von morni.net und repariert
+  startet er ihn wieder; hängt er, startet er ihn neu (Status auf dem Host: `moinmorni-host-guard status`).
+- Im Container prüft ein **Wächter** jede Minute NetBird, DNS, Docker und die Container von MoinMorni und repariert
   selbst. Was er tut, steht im Discord-Team-Log (Details in der [NetBird-Anleitung](netbird.md#wächter)). Status:
 
 ```bash
-pct exec <ID> -- morninet-guard status
+pct exec <ID> -- moinmorni-guard status
 ```
 
 ---
 
 ## 9. Einmal auf GitHub (nur Philip)
 
-Ein paar Dinge gehen nur im GitHub-Konto `pmornhart`. In dieser Reihenfolge:
+Ein paar Dinge gehen nur im GitHub-Konto `pmornhart`:
 
-1. **Repo umbenennen:** das Netzwerk-Repo auf GitHub → **Settings → General → Repository name** → `morni.net` →
-   **Rename**. Alte Links leiten von selbst weiter.
-2. **Duels-Repo umbenennen:** genauso in `Morni-Duels`. Vorher findet das Netzwerk keine Duels-Versionen.
-3. **Branch `main`:** Nach deinem Go wird der Entwicklungs-Branch nach `main` übernommen (Pull Request). Dann im
+1. **Branch `main`:** Nach deinem Go wird der Entwicklungs-Branch nach `main` übernommen (Pull Request). Dann im
    Netzwerk-Repo **Settings → General → Default branch** → `main`. **Erst danach gibt es den Befehl aus Teil 3** – er
    lädt das Skript aus `main` (vorher meldet `curl` „404“).
-4. **Die Modus-Repos** brauchen je eine fertige Version (ein Release). Die baut GitHub von selbst, sobald ein Modus nach
-   deinem Go auf `main` landet. Alle Repos bleiben öffentlich – morni.net holt die Versionen ohne Anmeldung.
+2. **Die Modus-Repos** brauchen je eine fertige Version (ein Release). Die baut GitHub von selbst, sobald ein Modus nach
+   deinem Go auf `main` landet. Alle Repos bleiben öffentlich – MoinMorni holt die Versionen ohne Anmeldung.
 
    | Modus       | Repo                          |
    | ----------- | ----------------------------- |
    | MorniCraft  | `pmornhart/MorniCraft`        |
-   | Duels       | `pmornhart/Morni-Duels`       |
+   | Duels       | `pmornhart/MoinMorni-Duels`   |
    | Morni Party | `pmornhart/Morni-Party`       |
    | Gipfelsturm | `pmornhart/Morni-Gipfelsturm` |
    | Burgverlies | `pmornhart/Morni-Burgverlies` |
@@ -630,7 +627,7 @@ Ein paar Dinge gehen nur im GitHub-Konto `pmornhart`. In dieser Reihenfolge:
 
 **Geklappt, wenn** diese Adresse im Browser ein Skript zeigt (statt „404: Not Found“) und unter **Releases** der
 Modus-Repos jeweils eine Version mit einer `.jar`-Datei steht:
-<https://raw.githubusercontent.com/pmornhart/morni.net/main/proxmox/morninet.sh>
+<https://raw.githubusercontent.com/pmornhart/moinmorni.net/main/proxmox/moinmorni.sh>
 
 ---
 
@@ -642,8 +639,7 @@ Containers.
 <details>
 <summary><b>Der Befehl aus Teil 3 meldet „404“ oder „Not Found“</b></summary>
 
-Das Skript liegt noch nicht im Branch `main`, oder das Repo heißt noch nicht `morni.net` – siehe
-[Teil 9](#9-einmal-auf-github-nur-philip).
+Das Skript liegt noch nicht im Branch `main` – siehe [Teil 9](#9-einmal-auf-github-nur-philip).
 
 </details>
 
@@ -661,7 +657,7 @@ Das Skript liegt noch nicht im Branch `main`, oder das Repo heißt noch nicht `m
 <details>
 <summary><b>Das Skript warnt: zu wenig RAM, Kerne oder Platz</b></summary>
 
-Das sind nur Hinweise – morni.net läuft trotzdem. Mit weniger RAM laufen weniger Spielmodi gleichzeitig (leere Modi
+Das sind nur Hinweise – MoinMorni läuft trotzdem. Mit weniger RAM laufen weniger Spielmodi gleichzeitig (leere Modi
 schlafen und brauchen nichts). Später mehr geben: siehe „Mehr RAM oder Kerne für den Container“ und „Speicher voll“
 weiter unten. Ist auf dem Proxmox-Speicher zu wenig frei, nimm unter **Erweitert** eine kleinere Festplatte – sie
 lässt sich später vergrößern.
@@ -695,14 +691,14 @@ Ist der Proxmox-Speicher voll, siehe „Speicher voll“ weiter unten.
 <summary><b>Das Panel ist nicht erreichbar</b></summary>
 
 - Zu Hause mit **`http://`** (nicht `https://`) und **Port 8080** öffnen: `http://<IP>:8080/panel`.
-- Direkt nach dem Skript baut morni.net beim ersten Start noch – ein paar Minuten warten.
+- Direkt nach dem Skript baut MoinMorni beim ersten Start noch – ein paar Minuten warten.
 - Welche IP hat der Container gerade?
 
   ```bash
   pct exec <ID> -- hostname -I
   ```
 
-- Laufen alle drei Teile (`morninet`, `morninet-motor`, `morninet-socket-proxy`)?
+- Laufen alle drei Teile (`moinmorni`, `moinmorni-motor`, `moinmorni-socket-proxy`)?
 
   ```bash
   pct exec <ID> -- docker ps
@@ -711,16 +707,16 @@ Ist der Proxmox-Speicher voll, siehe „Speicher voll“ weiter unten.
 - Wenn nicht, starten:
 
   ```bash
-  pct exec <ID> -- bash -c "cd /opt/morninet && docker compose up -d"
+  pct exec <ID> -- bash -c "cd /opt/moinmorni && docker compose up -d"
   ```
 
-- Was morni.net zuletzt gemeldet hat:
+- Was MoinMorni zuletzt gemeldet hat:
 
   ```bash
-  pct exec <ID> -- docker logs --tail 50 morninet
+  pct exec <ID> -- docker logs --tail 50 moinmorni
   ```
 
-Über `https://morni.net/panel` geht es erst nach Teil 5.
+Über `https://moinmorni.net/panel` geht es erst nach Teil 5.
 
 </details>
 
@@ -728,7 +724,7 @@ Ist der Proxmox-Speicher voll, siehe „Speicher voll“ weiter unten.
 <summary><b>Einrichtungs-Code verloren</b></summary>
 
 ```bash
-pct exec <ID> -- docker exec morninet cat /data/setup-code
+pct exec <ID> -- docker exec moinmorni cat /data/setup-code
 ```
 
 Gibt es die Datei nicht mehr, ist die Einrichtung schon fertig – dann meldest du dich einfach an.
@@ -741,19 +737,19 @@ Gibt es die Datei nicht mehr, ist die Einrichtung schon fertig – dann meldest 
 Neues Passwort für dein Konto (der Name ist der aus der Einrichtung; es steht danach in der Shell):
 
 ```bash
-pct exec <ID> -- docker exec morninet-motor node /app/server/dist/cli.js reset-password <Name>
+pct exec <ID> -- docker exec moinmorni-motor node /app/server/dist/cli.js reset-password <Name>
 ```
 
 Anmeldung in zwei Schritten ausschalten:
 
 ```bash
-pct exec <ID> -- docker exec morninet-motor node /app/server/dist/cli.js reset-2fa <Name>
+pct exec <ID> -- docker exec moinmorni-motor node /app/server/dist/cli.js reset-2fa <Name>
 ```
 
 Alle Konten anzeigen:
 
 ```bash
-pct exec <ID> -- docker exec morninet-motor node /app/server/dist/cli.js list-users
+pct exec <ID> -- docker exec moinmorni-motor node /app/server/dist/cli.js list-users
 ```
 
 Danach unter **Mein Konto** ein eigenes Passwort setzen und 2FA neu einrichten.
@@ -773,7 +769,7 @@ Das Panel zeigt unter **Discord** oben, woran es liegt:
 Was der Bot zuletzt gemeldet hat:
 
 ```bash
-pct exec <ID> -- docker logs --tail 100 morninet
+pct exec <ID> -- docker logs --tail 100 moinmorni
 ```
 
 </details>
@@ -786,7 +782,7 @@ pct exec <ID> -- netbird status
 ```
 
 ```bash
-pct exec <ID> -- morninet-guard status
+pct exec <ID> -- moinmorni-guard status
 ```
 
 Der Wächter verbindet NetBird von selbst neu. Steht bei NetBird „NeedsLogin“, ist die Anmeldung abgelaufen – dann mit
@@ -798,7 +794,7 @@ einem neuen Setup-Key wie in [Teil 5.1](#51-netbird-im-container) verbinden. Meh
 <details>
 <summary><b>Bedrock kommt nicht rein</b></summary>
 
-- Adresse `morni.net`, Port `19132` – oder die Nummer, die das Panel unter **Einstellungen → Erreichbarkeit** nennt.
+- Adresse `moinmorni.net`, Port `19132` – oder die Nummer, die das Panel unter **Einstellungen → Erreichbarkeit** nennt.
 - Seit Bedrock 26.60 braucht es **TCP und UDP** auf dem Bedrock-Port. Am IONOS-Server müssen beide offen sein (Teil
   5.3).
 - Zu Hause testen: Adresse = IP des Containers, Port `19132`. Klappt das, liegt es an NetBird oder dem IONOS-Server.
@@ -808,9 +804,9 @@ einem neuen Setup-Key wie in [Teil 5.1](#51-netbird-im-container) verbinden. Meh
 <details>
 <summary><b>Java kommt von außen nicht rein, zu Hause schon</b></summary>
 
-- Zeigt `nslookup morni.net` die IP deines IONOS-Servers? Sonst stimmen die Einträge bei INWX nicht (Teil 5.2).
+- Zeigt `nslookup moinmorni.net` die IP deines IONOS-Servers? Sonst stimmen die Einträge bei INWX nicht (Teil 5.2).
 - Ist am IONOS-Server Port 25565 offen (Docker und Firewall im Kundenmenü)?
-- Hat morni.net in NetBird eine andere Nummer bekommen (Panel → **Erreichbarkeit**)? Dann geht `morni.net:<Nummer>`
+- Hat MoinMorni in NetBird eine andere Nummer bekommen (Panel → **Erreichbarkeit**)? Dann geht `moinmorni.net:<Nummer>`
   oder ein SRV-Eintrag bei INWX ([NetBird-Anleitung](netbird.md)).
 
 </details>
@@ -873,11 +869,11 @@ pct set <ID> --cores 12
 <details>
 <summary><b>Ein Update ist schiefgegangen</b></summary>
 
-morni.net geht dann von selbst auf den alten Stand zurück und läuft weiter. Das Protokoll steht im Panel unter
+MoinMorni geht dann von selbst auf den alten Stand zurück und läuft weiter. Das Protokoll steht im Panel unter
 **Einstellungen → Updates**. Nochmal von Hand versuchen:
 
 ```bash
-pct exec <ID> -- morninet-update
+pct exec <ID> -- moinmorni-update
 ```
 
 </details>

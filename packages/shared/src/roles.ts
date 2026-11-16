@@ -113,7 +113,7 @@ const TEAM_GAME_RIGHTS: GameRight[] = [
 ];
 const VIP_GAME_RIGHTS: GameRight[] = ['reserved-slot', 'bigger-party', 'lobby-extras', 'chat-colour'];
 
-/** Die Vorlage, mit der morni.net startet (Philip, 14.11.: Owner, Admin, Moderator, Builder, Media, VIP, Spieler). */
+/** Die Vorlage, mit der MoinMorni startet (Philip, 14.11.: Owner, Admin, Moderator, Builder, Media, VIP, Spieler). */
 export const DEFAULT_ROLES: readonly Role[] = [
   {
     id: 'owner',

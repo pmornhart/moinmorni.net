@@ -48,7 +48,7 @@ describe('Team-Konten', () => {
     h = await createHarness();
     owner = await h.login('philip', OWNER_PASSWORD);
     // Zwei Server im Motor, damit der Zugriff auf die Server-Seiten geprüft werden kann.
-    const jar = path.join(h.mmDir, 'MorniNet.jar');
+    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
     fs.writeFileSync(jar, 'plugin');
     await createProvisioner({ ...h.mm.config, pluginFile: jar }, h.mm.motor, h.mm.hub, quiet, {
       proxyAddOns: {},

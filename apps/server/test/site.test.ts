@@ -102,7 +102,7 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
     expect(site.rules.de.length).toBe(5);
     expect(site.voiceChannels.length).toBeGreaterThan(0);
     expect(site.discordInvite).toBeNull();
-    await call('PUT', '/api/panel/settings/website', { discordInvite: 'https://discord.gg/morninet' });
-    expect((await anon('/api/site')).json()).toMatchObject({ discordInvite: 'https://discord.gg/morninet' });
+    await call('PUT', '/api/panel/settings/website', { discordInvite: 'https://discord.gg/moinmorni' });
+    expect((await anon('/api/site')).json()).toMatchObject({ discordInvite: 'https://discord.gg/moinmorni' });
   });
 });

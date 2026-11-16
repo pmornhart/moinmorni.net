@@ -3,7 +3,7 @@
  * Gitter alle 10 Blöcke, Achsen x/z = 0 kräftiger. Nur zum Planen, liest keine Minecraft-Dateien.
  */
 import fs from 'node:fs';
-import { baseName, Picture } from '@morninet/builder';
+import { baseName, Picture } from '@moinmorni/builder';
 import { draftA } from './draft-a.js';
 import { draftB } from './draft-b.js';
 import { draftC } from './draft-c.js';

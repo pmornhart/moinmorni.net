@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test für proxmox/morninet.sh – ohne echten Proxmox:
+# Test für proxmox/moinmorni.sh – ohne echten Proxmox:
 #
 #   sudo bash proxmox/test/run.sh
 #
@@ -14,7 +14,7 @@
 # mitschreiben, und ein Wächter durchsucht währenddessen /proc/*/cmdline.
 #
 # Braucht root (für unshare --mount), script (util-linux) und openssl. Arbeitet in einem Temp-Ordner; nur
-# /run/morninet-setup.* legt das Skript selbst kurz an und löscht es wieder (wird mitgeprüft).
+# /run/moinmorni-setup.* legt das Skript selbst kurz an und löscht es wieder (wird mitgeprüft).
 #
 # Verfasst mit Claude 🤖
 
@@ -24,8 +24,8 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SCRIPT="${REPO}/proxmox/morninet.sh"
-TMP="$(mktemp -d "${TMPDIR:-/tmp}/morninet-proxmox-test.XXXXXX")"
+SCRIPT="${REPO}/proxmox/moinmorni.sh"
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/moinmorni-proxmox-test.XXXXXX")"
 SYS_PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 WRAPPED=(awk sed grep cut tr head tail sort mktemp rm cat chmod cp mv install bash sh openssl tee mkdir seq env stat)
 PASSED=0
@@ -347,7 +347,7 @@ EOF
 
   fake "${W}/ctbin/hostname" <<'EOF'
 #!/bin/bash
-if [[ "${1:-}" == -I ]]; then echo "192.0.2.50 "; else echo morninet; fi
+if [[ "${1:-}" == -I ]]; then echo "192.0.2.50 "; else echo moinmorni; fi
 EOF
 
   fake "${W}/ctbin/getent" <<'EOF'
@@ -416,7 +416,7 @@ printf 'docker %s\n' "$*" >>@W@/log/ct.log
 if [[ -n "${MM_DISCORD_TOKEN+gesetzt}" ]]; then echo "docker $1" >>@W@/log/token-in-env; fi
 case "$1" in
   info) echo "Server Version: 29.0.0 (Test)" ;;
-  exec) [[ "$*" == "exec morninet cat /data/setup-code" ]] && echo "MM-TEST-4711" ;;
+  exec) [[ "$*" == "exec moinmorni cat /data/setup-code" ]] && echo "MM-TEST-4711" ;;
   compose)
     shift
     case "$1" in
@@ -431,9 +431,9 @@ case "$1" in
         svc="$1"
         shift
         case "${svc} $*" in
-          "motor node /app/server/dist/cli.js service-token morninet") echo "mh_testdienstschluessel0123456789" ;;
-          "morninet node -e"*"r.json()"*) echo true ;;
-          "morninet cat /data/setup-code") echo "MM-TEST-4711" ;;
+          "motor node /app/server/dist/cli.js service-token moinmorni") echo "mh_testdienstschluessel0123456789" ;;
+          "moinmorni node -e"*"r.json()"*) echo true ;;
+          "moinmorni cat /data/setup-code") echo "MM-TEST-4711" ;;
         esac
         ;;
     esac
@@ -506,7 +506,7 @@ watch_proc() {
   done
 }
 
-# run_case plain|tty [VAR=Wert …] – startet morninet.sh in der Welt. Werte gehen per export (keine Argumente).
+# run_case plain|tty [VAR=Wert …] – startet moinmorni.sh in der Welt. Werte gehen per export (keine Argumente).
 RC=0
 run_case() {
   local mode="$1" watcher
@@ -562,19 +562,19 @@ check_secrets_safe() {
   check "kein Geheimnis in der Ausgabe" lacks_needles "${W}/out.txt"
   check "kein Geheimnis in pct-Aufrufen" lacks_needles "${W}/log/pct.log"
   check "keine Geheimnis-Datei im Container liegen geblieben" no_secret_files
-  check "nichts unter /run/morninet-setup.* liegen geblieben" no_run_leftovers
+  check "nichts unter /run/moinmorni-setup.* liegen geblieben" no_run_leftovers
   check "docker compose bekommt den Token nicht über die Umgebung" test ! -s "${W}/log/token-in-env"
 }
 lacks_needles() { ! grep -F -f "${W}/needles" "$1" >/dev/null 2>&1; }
 no_secret_files() {
   local hits
-  hits="$(grep -rlF -f "${W}/needles" "${W}/ct" 2>/dev/null | grep -v '/opt/morninet/\.env$' || true)"
+  hits="$(grep -rlF -f "${W}/needles" "${W}/ct" 2>/dev/null | grep -v '/opt/moinmorni/\.env$' || true)"
   [[ -z "${hits}" ]] || {
     echo "     gefunden in: ${hits}"
     return 1
   }
 }
-no_run_leftovers() { ! compgen -G "/run/morninet-setup.*" >/dev/null; }
+no_run_leftovers() { ! compgen -G "/run/moinmorni-setup.*" >/dev/null; }
 created() { grep -E "^pct create $1 " "${W}/log/pct.log" >/dev/null; }
 # Wert im Aufruf „pct create“ (ungequotet aus dem Wrapper-Protokoll; in pct.log stehen Kommas als „\,“).
 create_arg() { grep -E '^pct create ' "${W}/log/argv.log" | grep -F -- "$1" >/dev/null; }
@@ -594,11 +594,11 @@ begin() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-printf '\n %sTest: proxmox/morninet.sh%s (ohne echten Proxmox)\n' "${BL}" "${CL}"
+printf '\n %sTest: proxmox/moinmorni.sh%s (ohne echten Proxmox)\n' "${BL}" "${CL}"
 
 begin "Shellcheck"
 if command -v shellcheck >/dev/null 2>&1; then
-  check "proxmox/morninet.sh" env LANG=C.UTF-8 shellcheck "${SCRIPT}"
+  check "proxmox/moinmorni.sh" env LANG=C.UTF-8 shellcheck "${SCRIPT}"
   check "install.sh" env LANG=C.UTF-8 shellcheck "${REPO}/install.sh"
   check "proxmox/test/run.sh" env LANG=C.UTF-8 shellcheck "${REPO}/proxmox/test/run.sh"
 else
@@ -616,12 +616,12 @@ check "Container 120 angelegt" created 120
 check "Debian 13 als Vorlage (geladen, weil noch nicht da)" has "${W}/log/argv.log" "pveam download local debian-13-standard_13.1-2_amd64.tar.zst"
 check "nimmt die Vorlage für die Bauart des Rechners (amd64), nie arm64" lacks "${W}/log/argv.log" "arm64"
 for want in "--memory 32768" "--cores 8" "--swap 4096" "--rootfs local-lvm:100" "--unprivileged 1" \
-  "--features nesting=1,keyctl=1" "--onboot 1" "--hostname morninet" "--timezone host" "name=eth0,bridge=vmbr0,ip=dhcp"; do
+  "--features nesting=1,keyctl=1" "--onboot 1" "--hostname moinmorni" "--timezone host" "name=eth0,bridge=vmbr0,ip=dhcp"; do
   check "pct create ${want}" has "${W}/log/argv.log" "${want}"
 done
 check "TUN-Gerät für NetBird in der Container-Konfiguration" has "${W}/pve/lxc/120.conf" "lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file"
 check "TUN-Gerät darf benutzt werden (cgroup)" has "${W}/pve/lxc/120.conf" "lxc.cgroup2.devices.allow: c 10:200 rwm"
-module_ok() { grep -Fx "modprobe $1" "${W}/log/argv.log" >/dev/null && grep -Fx "$1" "${W}/modules-load.d/morninet.conf" >/dev/null; }
+module_ok() { grep -Fx "modprobe $1" "${W}/log/argv.log" >/dev/null && grep -Fx "$1" "${W}/modules-load.d/moinmorni.conf" >/dev/null; }
 for module in tun overlay xt_hashlimit xt_connlimit; do
   check "Kernel-Modul ${module} geladen und dauerhaft eingetragen" module_ok "${module}"
 done
@@ -633,16 +633,16 @@ check "Docker-Pakete aus dem offiziellen Repo" has "${W}/log/ct.log" "apt-get in
 check "Docker eingeschaltet" test -f "${W}/state/enabled-docker"
 check "git clone mit Untermodulen" grep -Fx "recurse=yes" "${W}/state/clone"
 check "git clone vom Branch test-zweig" grep -Fx "branch=test-zweig" "${W}/state/clone"
-check "git clone von github.com/pmornhart/morni.net" grep -Fx "url=https://github.com/pmornhart/morni.net.git" "${W}/state/clone"
-check "git clone nach /opt/morninet" grep -Fx "dir=/opt/morninet" "${W}/state/clone"
-check "Bot-Token per pct push mit Rechten 600" grep -Fx "600 /root/.morninet-discord-token" "${W}/log/pushed"
-check "übertragener Token stimmt" same "$(content "${W}/state/pushed..morninet-discord-token")" "${TOKEN}"
-check ".env angelegt, nur für root (600)" same "$(file_mode "${CT}/opt/morninet/.env")" 600
-check ".env: Domain netz.example" same "$(env_value "${CT}/opt/morninet/.env" MM_DOMAIN)" netz.example
-check ".env: Bot-Token übernommen" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
-check ".env: Schlüssel für den Motor" same "$(env_value "${CT}/opt/morninet/.env" MM_MOTOR_TOKEN)" mh_testdienstschluessel0123456789
-check ".env: zufälliges MM_SECRET (64 Zeichen)" test "$(env_value "${CT}/opt/morninet/.env" MM_SECRET | wc -c)" -eq 64
-check ".env: Heimnetz-Adresse" same "$(env_value "${CT}/opt/morninet/.env" MM_LAN_IP)" 192.0.2.50
+check "git clone von github.com/pmornhart/moinmorni.net" grep -Fx "url=https://github.com/pmornhart/moinmorni.net.git" "${W}/state/clone"
+check "git clone nach /opt/moinmorni" grep -Fx "dir=/opt/moinmorni" "${W}/state/clone"
+check "Bot-Token per pct push mit Rechten 600" grep -Fx "600 /root/.moinmorni-discord-token" "${W}/log/pushed"
+check "übertragener Token stimmt" same "$(content "${W}/state/pushed..moinmorni-discord-token")" "${TOKEN}"
+check ".env angelegt, nur für root (600)" same "$(file_mode "${CT}/opt/moinmorni/.env")" 600
+check ".env: Domain netz.example" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DOMAIN)" netz.example
+check ".env: Bot-Token übernommen" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
+check ".env: Schlüssel für den Motor" same "$(env_value "${CT}/opt/moinmorni/.env" MM_MOTOR_TOKEN)" mh_testdienstschluessel0123456789
+check ".env: zufälliges MM_SECRET (64 Zeichen)" test "$(env_value "${CT}/opt/moinmorni/.env" MM_SECRET | wc -c)" -eq 64
+check ".env: Heimnetz-Adresse" same "$(env_value "${CT}/opt/moinmorni/.env" MM_LAN_IP)" 192.0.2.50
 check "kein NetBird ohne Key" lacks "${W}/log/ct.log" "netbird"
 check "zeigt Einrichtungs-Code" has "${W}/out.txt" "Einrichtungs-Code: "$'\e[32m'"MM-TEST-4711"
 check "zeigt Panel-Adresse" has "${W}/out.txt" "https://netz.example/panel/einrichtung"
@@ -652,16 +652,16 @@ check "erkennt Proxmox VE 9" has "${W}/out.txt" "Proxmox VE 9.0.11"
 check "nennt Kerne und RAM des Rechners" has "${W}/out.txt" "Dein Proxmox: 16 Kerne, 64 GB RAM (55 GB gerade frei)"
 check "nennt den freien Platz auf dem Speicher" has "${W}/out.txt" "100 GB auf local-lvm (dort frei: 325 GB)"
 check "keine Warnung, wenn alles passt" lacks "${W}/out.txt" "Achtung –"
-check "Zusammenfassung nennt Container, Name und IP" has "${W}/out.txt" 'Container 120 „morninet“ · IP 192.0.2.50'
-check "Zusammenfassung zeigt, wie man den Code nochmal sieht" has "${W}/out.txt" "pct exec 120 -- docker exec morninet cat /data/setup-code"
+check "Zusammenfassung nennt Container, Name und IP" has "${W}/out.txt" 'Container 120 „moinmorni“ · IP 192.0.2.50'
+check "Zusammenfassung zeigt, wie man den Code nochmal sieht" has "${W}/out.txt" "pct exec 120 -- docker exec moinmorni cat /data/setup-code"
 check "Zusammenfassung verlinkt die Anleitung" has "${W}/out.txt" "docs/schnellstart.md"
 check "install.sh ohne eigene Zusammenfassung – nur die des Einzeilers" lacks "${W}/out.txt" "🎉 Fertig!"
 check "install.sh bekommt MM_NO_SUMMARY=1" grep -F "MM_NO_SUMMARY=1" "${SCRIPT}"
-check "Host-Wächter für Container 120 mit den Namen von morni.net" grep -Fx \
-  "hostguard | morninet morni.net /opt/morninet /usr/local/sbin/morninet-guard morninet-motor-data 120" "${W}/log/host-guard.log"
-check "Host-Wächter in der Zusammenfassung" has "${W}/out.txt" "morninet-host-guard status"
+check "Host-Wächter für Container 120 mit den Namen von MoinMorni" grep -Fx \
+  "hostguard | moinmorni MoinMorni /opt/moinmorni /usr/local/sbin/moinmorni-guard moinmorni-motor-data 120" "${W}/log/host-guard.log"
+check "Host-Wächter in der Zusammenfassung" has "${W}/out.txt" "moinmorni-host-guard status"
 # install.sh von Hand im Container (ohne den Einzeiler): zeigt seine eigene Zusammenfassung wie bisher.
-PATH="${W}/bin:${SYS_PATH}" pct exec 120 -- /bin/bash -c 'export HOME=/root; cd /opt/morninet && bash install.sh' \
+PATH="${W}/bin:${SYS_PATH}" pct exec 120 -- /bin/bash -c 'export HOME=/root; cd /opt/moinmorni && bash install.sh' \
   </dev/null >"${W}/install-again.txt" 2>&1 || true
 check "install.sh von Hand: eigene Zusammenfassung mit Code" has "${W}/install-again.txt" "Einrichtungs-Code: "
 check "install.sh von Hand: Fertig-Block" has "${W}/install-again.txt" "🎉 Fertig!"
@@ -685,13 +685,13 @@ check "nimmt Debian 12, wenn es kein 13 gibt" has "${W}/log/pct.log" "local:vztm
 check "lädt die Vorlage nicht nochmal" lacks "${W}/log/argv.log" "pveam download"
 check "Docker-Repo für bookworm" grep -Fx "Suites: bookworm" "${CT}/etc-apt/sources.list.d/docker.sources"
 check "kein pct push ohne Token" test ! -s "${W}/log/pushed"
-check ".env: Standard-Domain morni.net" same "$(env_value "${CT}/opt/morninet/.env" MM_DOMAIN)" morni.net
-check ".env: Token leer" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_TOKEN)" ""
+check ".env: Standard-Domain moinmorni.net" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DOMAIN)" moinmorni.net
+check ".env: Token leer" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DISCORD_TOKEN)" ""
 check "Branch main" grep -Fx "branch=main" "${W}/state/clone"
 check "Hinweis: Discord-Bot später im Panel" has "${W}/out.txt" 'Discord-Bot: Schritt für Schritt im Panel unter „Discord“'
 check "Hinweis: Erreichbar machen (ohne NetBird)" has "${W}/out.txt" "Einstellungen → Erreichbarkeit"
 check "älterer Host-Wächter läuft nicht" test ! -s "${W}/log/host-guard.log"
-check "sagt, dass der Host-Wächter fehlt – morni.net läuft trotzdem" has "${W}/out.txt" "Host-Wächter ließ sich nicht einrichten"
+check "sagt, dass der Host-Wächter fehlt – MoinMorni läuft trotzdem" has "${W}/out.txt" "Host-Wächter ließ sich nicht einrichten"
 check "läuft trotzdem durch (Exit 0)" test "${RC}" -eq 0
 check_secrets_safe
 show_output_on_failure
@@ -701,20 +701,20 @@ begin "3. Token und NetBird-Key aus Dateien (*_FILE), eigener NetBird-Server, Ne
 new_world env-netbird
 printf '%s\n' "${TOKEN}" >"${W}/token.txt"
 printf '  %s\r\n' "${NB_KEY}" >"${W}/netbird.txt"
-run_case plain CTID=130 MM_DOMAIN=morni.net "MM_DISCORD_TOKEN_FILE=${W}/token.txt" "NETBIRD_SETUP_KEY_FILE=${W}/netbird.txt" \
+run_case plain CTID=130 MM_DOMAIN=moinmorni.net "MM_DISCORD_TOKEN_FILE=${W}/token.txt" "NETBIRD_SETUP_KEY_FILE=${W}/netbird.txt" \
   NETBIRD_MANAGEMENT_URL=https://netbird.example.org
 CT="${W}/ct/130"
 check "läuft durch (Exit 0)" test "${RC}" -eq 0
-check "Token aus der Datei übernommen" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
-check "NetBird-Key per pct push mit Rechten 600" grep -Fx "600 /root/.morninet-netbird-key" "${W}/log/pushed"
-check "NetBird-Key ohne Leerzeichen/Zeilenende übertragen" same "$(content "${W}/state/pushed..morninet-netbird-key")" "${NB_KEY}"
+check "Token aus der Datei übernommen" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
+check "NetBird-Key per pct push mit Rechten 600" grep -Fx "600 /root/.moinmorni-netbird-key" "${W}/log/pushed"
+check "NetBird-Key ohne Leerzeichen/Zeilenende übertragen" same "$(content "${W}/state/pushed..moinmorni-netbird-key")" "${NB_KEY}"
 check "NetBird-Installer erst geladen, dann ausgeführt" grep -E "^curl https://pkgs.netbird.io/install.sh -> /tmp/" "${W}/log/ct.log"
 check "NetBird-Hintergrunddienst gestartet" test -f "${W}/state/netbird-active"
 check "netbird up mit dem richtigen Key (über die Umgebung)" grep -Fx ok "${W}/state/netbird-up"
 check "meldet NetBird verbunden" has "${W}/out.txt" "NetBird verbunden"
 check "netbird up beim eigenen NetBird-Server" grep -Fx "netbird up --management-url https://netbird.example.org" "${W}/log/ct.log"
 check "Zusammenfassung nennt den eigenen NetBird-Server" has "${W}/out.txt" "ja, mit Setup-Key (https://netbird.example.org)"
-check "nächster Schritt: Erreichbarkeit im Panel mit dem Rechner morninet" has "${W}/out.txt" 'Erreichbarkeit verbinden (Rechner „morninet“)'
+check "nächster Schritt: Erreichbarkeit im Panel mit dem Rechner moinmorni" has "${W}/out.txt" 'Erreichbarkeit verbinden (Rechner „moinmorni“)'
 check_secrets_safe
 show_output_on_failure
 
@@ -731,8 +731,8 @@ check "falsches Token → nochmal gefragt mit Hinweis" has "${W}/log/whiptail.lo
 check "Token-Abfrage ist unsichtbar (passwordbox)" has "${W}/log/whiptail.log" "--passwordbox Token deines Discord-Bots"
 check 'Zusammenfassung zeigt den Token nicht, nur „hinterlegt“' has "${W}/log/whiptail.log" "Discord-Bot: Token ist hinterlegt"
 check "Container 121 angelegt" created 121
-check "Domain klein geschrieben" same "$(env_value "${CT}/opt/morninet/.env" MM_DOMAIN)" spiel.example
-check "Token übernommen (Leerzeichen am Rand entfernt)" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
+check "Domain klein geschrieben" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DOMAIN)" spiel.example
+check "Token übernommen (Leerzeichen am Rand entfernt)" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
 check "NetBird verbunden" grep -Fx ok "${W}/state/netbird-up"
 check "NetBird-Server ohne https → nochmal gefragt" has "${W}/log/whiptail.log" '„netbird.example.org“ ist keine Adresse wie https://'
 check "leer = NetBird Cloud (netbird up ohne Server-Adresse)" grep -Fx "netbird up" "${W}/log/ct.log"
@@ -755,8 +755,8 @@ run_case tty
 CT="${W}/ct/105"
 check "läuft durch (Exit 0)" test "${RC}" -eq 0
 check "Vorschlag 105 mit Enter übernommen" created 105
-check "Domain übernommen" same "$(env_value "${CT}/opt/morninet/.env" MM_DOMAIN)" netz.example
-check "Token übernommen" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
+check "Domain übernommen" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DOMAIN)" netz.example
+check "Token übernommen" same "$(env_value "${CT}/opt/moinmorni/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
 check "kein NetBird" lacks "${W}/log/ct.log" "netbird"
 check_secrets_safe
 show_output_on_failure
@@ -764,7 +764,7 @@ show_output_on_failure
 # ---------------------------------------------------------------------------------------------------------------
 begin "6. Fehler vor dem Anlegen: nichts wird angelegt"
 new_world fehler-domain
-run_case plain MM_DOMAIN=https://morni.net/ MM_DISCORD_TOKEN=
+run_case plain MM_DOMAIN=https://moinmorni.net/ MM_DISCORD_TOKEN=
 check "falsche Domain → Abbruch" test "${RC}" -ne 0
 check "falsche Domain → erklärt" has "${W}/out.txt" "keine Domain"
 check "falsche Domain → kein Container" not_created
@@ -823,7 +823,7 @@ show_output_on_failure
 begin "8. Erweitert (whiptail): Name, Kerne, RAM, Swap, Festplatte, Speicher, Bridge, feste IP, Debian 12"
 new_world erweitert
 # Erst „Erweitert“ (no), Fehleingaben werden nochmal gefragt, dann „Anlegen“ (yes).
-with_whiptail 123 morni.net "" no no Morni-Test 99 6 24 2 5 80 local-lvm vmbr1 192.0.2.60/33 192.0.2.60/24 192.0.2.1 12 yes
+with_whiptail 123 moinmorni.net "" no no Morni-Test 99 6 24 2 5 80 local-lvm vmbr1 192.0.2.60/33 192.0.2.60/24 192.0.2.1 12 yes
 run_case tty
 CT="${W}/ct/123"
 check "läuft durch (Exit 0)" test "${RC}" -eq 0

@@ -3,12 +3,12 @@ import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 
 /**
- * Plugins der Spielmodi: Jeder Modus hat ein eigenes Repo (z. B. pmornhart/Morni-Duels). Dort baut GitHub bei
- * jedem Stand auf `main` ein Release mit der Jar. morni.net holt das neueste Release (öffentlich, ohne Schlüssel),
+ * Plugins der Spielmodi: Jeder Modus hat ein eigenes Repo (z. B. pmornhart/MoinMorni-Duels). Dort baut GitHub bei
+ * jedem Stand auf `main` ein Release mit der Jar. MoinMorni holt das neueste Release (öffentlich, ohne Schlüssel),
  * höchstens einmal pro Stunde, und spielt es auf den Server des Modus.
  *
- * Zum Ausprobieren ohne Release: Liegt im Ordner `localDir` eine Jar mit dem Namen des Repos (`Morni-Duels.jar`),
- * nimmt morni.net diese.
+ * Zum Ausprobieren ohne Release: Liegt im Ordner `localDir` eine Jar mit dem Namen des Repos (`MoinMorni-Duels.jar`),
+ * nimmt MoinMorni diese.
  */
 
 export interface ModeRelease {
@@ -40,8 +40,8 @@ const HTTP_REDIRECT_MIN = 300;
 const HTTP_REDIRECT_MAX = 399;
 const HTTP_NOT_FOUND = 404;
 
-// Repo-Namen wie "pmornhart/Morni-Duels".
-// https://regex101.com/?flavor=javascript&regex=%5E%5BA-Za-z0-9-%5D%2B%2F%5BA-Za-z0-9._-%5D%2B%24&testString=pmornhart%2FMorni-Duels
+// Repo-Namen wie "pmornhart/MoinMorni-Duels".
+// https://regex101.com/?flavor=javascript&regex=%5E%5BA-Za-z0-9-%5D%2B%2F%5BA-Za-z0-9._-%5D%2B%24&testString=pmornhart%2FMoinMorni-Duels
 const REPO = /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/;
 
 interface GithubRelease {
@@ -77,7 +77,7 @@ export function githubReleases(log: FastifyBaseLogger, localDir?: string): Relea
     };
   };
   const fromGithub = async (repo: string): Promise<ModeRelease | null> => {
-    const headers = { accept: 'application/vnd.github+json', 'user-agent': 'morni.net' };
+    const headers = { accept: 'application/vnd.github+json', 'user-agent': 'MoinMorni' };
     const res = await fetchFollowing(`${GITHUB_API}/repos/${repo}/releases/latest`, { headers });
     if (res.status === HTTP_NOT_FOUND) return null;
     if (res.status !== HTTP_OK) throw new Error(`github_${res.status}`);
@@ -85,7 +85,7 @@ export function githubReleases(log: FastifyBaseLogger, localDir?: string): Relea
     const asset = release.assets.find((a) => a.name.endsWith('.jar'));
     if (!asset) return null;
     const download = await fetchFollowing(asset.browser_download_url, {
-      headers: { 'user-agent': 'morni.net' },
+      headers: { 'user-agent': 'MoinMorni' },
     });
     if (download.status !== HTTP_OK) throw new Error(`download_${download.status}`);
     const bytes = Buffer.from(await download.arrayBuffer());

@@ -11,4 +11,4 @@ export {
   ramp,
   stallAt,
   type Mode,
-} from '@morninet/builder';
+} from '@moinmorni/builder';

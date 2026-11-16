@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# morni.net – Installation auf Debian/Ubuntu (auch im Proxmox-LXC oder in einer VM).
+# MoinMorni – Installation auf Debian/Ubuntu (auch im Proxmox-LXC oder in einer VM).
 #
-#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/morni.net/main/install.sh)"
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/moinmorni.net/main/install.sh)"
 #
-# Was passiert: Docker wird installiert (falls nötig), morni.net landet in /opt/morninet (mit dem Motor
+# Was passiert: Docker wird installiert (falls nötig), MoinMorni landet in /opt/moinmorni (mit dem Motor
 # MorniHosting als Untermodul), eine .env mit zufälligen Geheimnissen wird angelegt (nur für root lesbar),
-# Motor und morni.net starten, morni.net bekommt seinen Schlüssel für den Motor – und am Ende steht der
+# Motor und MoinMorni starten, MoinMorni bekommt seinen Schlüssel für den Motor – und am Ende steht der
 # Einrichtungs-Code für dein Owner-Konto da.
 #
 # Ohne Fragen (z. B. aus dem Proxmox-Skript): MM_DOMAIN=… MM_DISCORD_TOKEN=… vor den Befehl schreiben.
@@ -23,8 +23,8 @@ mm_version() {
   printf 'v%d.%d.%d-0-g%s\n' $((n / 100)) $((n / 10 % 10)) $((n % 10)) "${sha}"
 }
 
-INSTALL_DIR="${MM_INSTALL_DIR:-/opt/morninet}"
-REPO_URL="${MM_REPO_URL:-https://github.com/pmornhart/morni.net.git}"
+INSTALL_DIR="${MM_INSTALL_DIR:-/opt/moinmorni}"
+REPO_URL="${MM_REPO_URL:-https://github.com/pmornhart/moinmorni.net.git}"
 BRANCH="${MM_BRANCH:-main}"
 WAIT_TRIES=90
 WAIT_SECONDS=2
@@ -53,7 +53,7 @@ if ! command -v apt-get >/dev/null 2>&1; then
   exit 1
 fi
 
-printf '\n %smorni.net%s – dein Minecraft-Netzwerk\n\n' "${BL}" "${CL}"
+printf '\n %sMoinMorni%s – dein Minecraft-Netzwerk\n\n' "${BL}" "${CL}"
 
 # Wert in der .env setzen (ohne sed, damit Sonderzeichen im Wert nichts kaputt machen). Schlüssel und Wert gehen über
 # die Umgebung an awk, nicht als Argument – sonst stünden Geheimnisse wie der Bot-Token kurz in der Prozessliste (ps).
@@ -103,12 +103,12 @@ if ! docker compose version >/dev/null 2>&1; then
   msg_ok "Docker Compose installiert"
 fi
 
-# Eine Installation unter dem früheren Namen (bis 16.11.2026) wird nicht doppelt angelegt: Ihr Update holt den neuen
-# Code und zieht dabei hierher um (Volumes, Container, systemd, /opt).
-OLD_INSTALL_DIR="/opt/moinmorni"
-if [[ -z "${MM_INSTALL_DIR:-}" && ! -d "${INSTALL_DIR}/.git" && -d "${OLD_INSTALL_DIR}/.git" ]]; then
-  msg_info "Vorhandene Installation unter dem früheren Namen gefunden – sie wird aktualisiert und zieht dabei um"
-  exec bash "${OLD_INSTALL_DIR}/update.sh"
+# Eine Installation unter dem Zwischen-Namen vom 16.11.2026 wird nicht doppelt angelegt: Ihr Update holt den neuen
+# Code und zieht dabei hierher zurück (Volumes, Container, systemd, Wächter, /opt).
+INTERIM_INSTALL_DIR="/opt/morninet"
+if [[ -z "${MM_INSTALL_DIR:-}" && ! -d "${INSTALL_DIR}/.git" && -d "${INTERIM_INSTALL_DIR}/.git" ]]; then
+  msg_info "Vorhandene Installation unter dem Zwischen-Namen gefunden – sie wird aktualisiert und zieht dabei zurück"
+  exec bash "${INTERIM_INSTALL_DIR}/update.sh"
 fi
 
 if [[ -d "${INSTALL_DIR}/.git" ]]; then
@@ -116,14 +116,14 @@ if [[ -d "${INSTALL_DIR}/.git" ]]; then
   git -C "${INSTALL_DIR}" pull --ff-only --quiet
   git -C "${INSTALL_DIR}" submodule update --init --quiet
 else
-  msg_info "morni.net wird nach ${INSTALL_DIR} geladen"
+  msg_info "MoinMorni wird nach ${INSTALL_DIR} geladen"
   git clone --quiet --recurse-submodules --branch "${BRANCH}" "${REPO_URL}" "${INSTALL_DIR}"
 fi
 msg_ok "Dateien liegen in ${INSTALL_DIR}"
 cd "${INSTALL_DIR}"
 
 LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')" || LAN_IP=""
-# Domain: nur Buchstaben, Ziffern, Punkte und Bindestriche – "morni.net" ja, "https://x" nein.
+# Domain: nur Buchstaben, Ziffern, Punkte und Bindestriche – "moinmorni.net" ja, "https://x" nein.
 DOMAIN_PATTERN='^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
 # Discord-Bot-Token: drei Teile aus Buchstaben, Ziffern, _ und -, getrennt durch Punkte.
 TOKEN_PATTERN='^[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{20,}$'
@@ -140,11 +140,11 @@ if [[ ! -f .env ]]; then
 
   domain="${MM_DOMAIN:-}"
   if [[ -z "${domain}" && -t 0 ]]; then
-    read -rp " Unter welcher Domain läuft dein Netzwerk? [morni.net] " domain
+    read -rp " Unter welcher Domain läuft dein Netzwerk? [moinmorni.net] " domain
   fi
-  domain="$(printf '%s' "${domain:-morni.net}" | tr '[:upper:]' '[:lower:]')"
+  domain="$(printf '%s' "${domain:-moinmorni.net}" | tr '[:upper:]' '[:lower:]')"
   if [[ ! "${domain}" =~ ${DOMAIN_PATTERN} ]]; then
-    msg_error "${domain} ist keine Domain (Beispiel: morni.net). Bitte nochmal starten."
+    msg_error "${domain} ist keine Domain (Beispiel: moinmorni.net). Bitte nochmal starten."
     rm -f .env
     exit 1
   fi
@@ -168,6 +168,11 @@ else
   msg_ok ".env ist schon da und bleibt unverändert"
 fi
 unset TOKEN_FROM_ENV
+# Updates folgen dem Branch, der hier liegt (das Panel fragt GitHub nach genau diesem).
+branch_here="$(git symbolic-ref --short -q HEAD || true)"
+if [[ "${branch_here}" =~ ^[A-Za-z0-9._/-]+$ && -z "$(get_env MM_UPDATE_BRANCH)" ]]; then
+  set_env MM_UPDATE_BRANCH "${branch_here}"
+fi
 
 # NetBird-Server dieses Rechners (falls NetBird schon verbunden ist) als Vorgabe für „Erreichbarkeit“ im Panel.
 NETBIRD_ENV="${INSTALL_DIR}/vendor/mornihosting/scripts/netbird-env.sh"
@@ -175,12 +180,12 @@ if [[ -f "${NETBIRD_ENV}" ]] && NB_API="$(MH_ENV_FILE="${INSTALL_DIR}/.env" bash
   msg_ok "NetBird-Server dieses Rechners: ${NB_API}"
 fi
 
-msg_info "morni.net wird gebaut (das erste Mal dauert es ein paar Minuten)"
+msg_info "MoinMorni wird gebaut (das erste Mal dauert es ein paar Minuten)"
 export MM_BUILD_VERSION MH_BUILD_VERSION
 MM_BUILD_VERSION="$(mm_version .)"
 MH_BUILD_VERSION="$(mm_version vendor/mornihosting)"
 docker compose build --quiet
-msg_ok "Gebaut: morni.net ${MM_BUILD_VERSION}, Motor ${MH_BUILD_VERSION}"
+msg_ok "Gebaut: MoinMorni ${MM_BUILD_VERSION}, Motor ${MH_BUILD_VERSION}"
 
 msg_info "Motor wird gestartet"
 docker compose up -d socket-proxy motor >/dev/null
@@ -189,8 +194,8 @@ wait_for "Der Motor" docker compose exec -T motor node -e \
 msg_ok "Motor läuft"
 
 if [[ -z "$(get_env MM_MOTOR_TOKEN)" ]]; then
-  msg_info "morni.net bekommt seinen Schlüssel für den Motor"
-  motor_token="$(docker compose exec -T motor node /app/server/dist/cli.js service-token morninet | tr -d '\r\n')"
+  msg_info "MoinMorni bekommt seinen Schlüssel für den Motor"
+  motor_token="$(docker compose exec -T motor node /app/server/dist/cli.js service-token moinmorni | tr -d '\r\n')"
   if [[ "${motor_token}" != mh_* ]]; then
     msg_error "Der Motor hat keinen Schlüssel ausgegeben: ${motor_token}"
     exit 1
@@ -200,32 +205,32 @@ if [[ -z "$(get_env MM_MOTOR_TOKEN)" ]]; then
   msg_ok "Schlüssel liegt in der .env"
 fi
 
-msg_info "morni.net wird gestartet"
+msg_info "MoinMorni wird gestartet"
 docker compose up -d >/dev/null
-wait_for "morni.net" docker compose exec -T morninet node -e \
+wait_for "MoinMorni" docker compose exec -T moinmorni node -e \
   "fetch('http://127.0.0.1:8080/api/setup').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
-msg_ok "morni.net läuft"
+msg_ok "MoinMorni läuft"
 
 # Updates: Der Knopf im Panel (oder das automatische Update) legt update/request.json in den Datenordner –
 # systemd sieht die Datei und startet update.sh. agent.json sagt dem Panel, dass der Updater da ist.
-VOLUME_DIR="$(docker volume inspect -f '{{ .Mountpoint }}' morninet-data 2>/dev/null || true)"
-ln -sf "${INSTALL_DIR}/update.sh" /usr/local/bin/morninet-update
+VOLUME_DIR="$(docker volume inspect -f '{{ .Mountpoint }}' moinmorni-data 2>/dev/null || true)"
+ln -sf "${INSTALL_DIR}/update.sh" /usr/local/bin/moinmorni-update
 if [[ -n "${VOLUME_DIR}" && -d /run/systemd/system ]] && command -v systemctl >/dev/null 2>&1; then
   msg_info "Updates werden eingerichtet"
-  cat >/etc/systemd/system/morninet-update.path <<UNIT
+  cat >/etc/systemd/system/moinmorni-update.path <<UNIT
 [Unit]
-Description=morni.net: Update-Auftrag aus dem Panel
+Description=MoinMorni: Update-Auftrag aus dem Panel
 
 [Path]
 PathExists=${VOLUME_DIR}/update/request.json
-Unit=morninet-update.service
+Unit=moinmorni-update.service
 
 [Install]
 WantedBy=multi-user.target
 UNIT
-  cat >/etc/systemd/system/morninet-update.service <<UNIT
+  cat >/etc/systemd/system/moinmorni-update.service <<UNIT
 [Unit]
-Description=morni.net aktualisieren
+Description=MoinMorni aktualisieren
 After=docker.service
 
 [Service]
@@ -233,7 +238,7 @@ Type=oneshot
 ExecStart=${INSTALL_DIR}/update.sh
 UNIT
   systemctl daemon-reload
-  systemctl enable --now morninet-update.path >/dev/null 2>&1
+  systemctl enable --now moinmorni-update.path >/dev/null 2>&1
   mkdir -p "${VOLUME_DIR}/update"
   agent_tmp="$(mktemp "${VOLUME_DIR}/update/.agent.XXXXXX")"
   printf '{"installed":"%s"}\n' "$(date -Iseconds)" >"${agent_tmp}"
@@ -242,16 +247,16 @@ UNIT
   chown -hR 1000:1000 "${VOLUME_DIR}/update"
   msg_ok "Updates per Knopf im Panel und automatisch (Einstellungen → Updates)"
 else
-  msg_info "Ohne systemd: Updates von Hand mit morninet-update"
+  msg_info "Ohne systemd: Updates von Hand mit moinmorni-update"
 fi
 
-# Wächter aus dem Motor (MorniHosting), mit den Namen von morni.net: prüft jede Minute NetBird, DNS, Docker und die
-# Container von morni.net und repariert selbst. Was er tut, meldet er über den Motor ins Discord-Team-Log.
+# Wächter aus dem Motor (MorniHosting), mit den Namen von MoinMorni: prüft jede Minute NetBird, DNS, Docker und die
+# Container von MoinMorni und repariert selbst. Was er tut, meldet er über den Motor ins Discord-Team-Log.
 GUARD="${INSTALL_DIR}/vendor/mornihosting/scripts/guard.sh"
 if [[ -f "${GUARD}" && -d /run/systemd/system ]] && command -v systemctl >/dev/null 2>&1; then
-  if MH_BRAND=morni.net MH_GUARD_NAME=morninet MH_INSTALL_DIR="${INSTALL_DIR}" MH_DATA_VOLUME=morninet-motor-data \
-    MH_GUARD_CONTAINERS="morninet morninet-motor morninet-socket-proxy" bash "${GUARD}" install >/dev/null; then
-    msg_ok "Wächter läuft (prüft jede Minute) – Status: morninet-guard status"
+  if MH_BRAND=MoinMorni MH_GUARD_NAME=moinmorni MH_INSTALL_DIR="${INSTALL_DIR}" MH_DATA_VOLUME=moinmorni-motor-data \
+    MH_GUARD_CONTAINERS="moinmorni moinmorni-motor moinmorni-socket-proxy" bash "${GUARD}" install >/dev/null; then
+    msg_ok "Wächter läuft (prüft jede Minute) – Status: moinmorni-guard status"
   else
     msg_error "Der Wächter ließ sich nicht einrichten (Details: bash ${GUARD} install)"
   fi
@@ -259,14 +264,14 @@ fi
 
 DOMAIN="$(get_env MM_DOMAIN)"
 PORT="$(get_env MM_PORT)"
-SETUP_REQUIRED="$(docker compose exec -T morninet node -e \
+SETUP_REQUIRED="$(docker compose exec -T moinmorni node -e \
   "fetch('http://127.0.0.1:8080/api/setup').then(r=>r.json()).then(j=>console.log(j.required===true))" \
   | tr -d '\r\n')"
-# Der Code entsteht beim ersten Start, sobald morni.net den Motor erreicht.
+# Der Code entsteht beim ersten Start, sobald MoinMorni den Motor erreicht.
 CODE=""
 if [[ "${SETUP_REQUIRED}" == true ]] &&
-  wait_for "Der Einrichtungs-Code" docker compose exec -T morninet test -f /data/setup-code; then
-  CODE="$(docker compose exec -T morninet cat /data/setup-code | tr -d '\r\n')"
+  wait_for "Der Einrichtungs-Code" docker compose exec -T moinmorni test -f /data/setup-code; then
+  CODE="$(docker compose exec -T moinmorni cat /data/setup-code | tr -d '\r\n')"
 fi
 # Vom Proxmox-Einzeiler aus (MM_NO_SUMMARY=1): keine eigene Zusammenfassung – die zeigt der Einzeiler am Ende.
 if [[ "${MM_NO_SUMMARY:-}" == 1 ]]; then
@@ -279,7 +284,7 @@ if [[ -n "${CODE}" ]]; then
   printf '      %shttps://%s/panel/einrichtung%s\n' "${BL}" "${DOMAIN}" "${CL}"
   printf '      (zu Hause auch: http://%s:%s/panel/einrichtung)\n\n' "${LAN_IP:-<IP>}" "${PORT:-8080}"
   printf '    Einrichtungs-Code: %s%s%s\n' "${GN}" "${CODE}" "${CL}"
-  printf '    (Später nochmal anzeigen: docker exec morninet cat /data/setup-code)\n\n'
+  printf '    (Später nochmal anzeigen: docker exec moinmorni cat /data/setup-code)\n\n'
 else
   printf '    Öffne %shttps://%s/panel%s und melde dich an.\n\n' "${BL}" "${DOMAIN}" "${CL}"
 fi

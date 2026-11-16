@@ -7,8 +7,8 @@ import { bt } from '../discord/texts.js';
 /**
  * Meldungen des Motors ins Discord-Team-Log. Der Motor (MorniHosting) und sein Wächter merken, wenn etwas nicht stimmt
  * – NetBird getrennt, Hausanschluss nicht mehr versteckt, DNS, Docker, ein Server startet nicht, ein Backup scheitert –
- * und sagen, ob es sich selbst behebt oder was zu tun ist. Discord und Mail hat nur morni.net, also schickt der Motor
- * jede Meldung über seine Live-Verbindung (`/api/ws`, Kanal „alerts“). Die zuletzt gesehene merkt sich morni.net im
+ * und sagen, ob es sich selbst behebt oder was zu tun ist. Discord und Mail hat nur MoinMorni, also schickt der Motor
+ * jede Meldung über seine Live-Verbindung (`/api/ws`, Kanal „alerts“). Die zuletzt gesehene merkt sich MoinMorni im
  * Datenordner: nach einem Neustart oder einer kurz getrennten Verbindung kommt nach, was dazwischen kam – nichts doppelt.
  */
 
@@ -29,7 +29,7 @@ export interface MotorAlert {
 export interface AlertRelayOptions {
   /** Adresse des Motors, z. B. http://motor:8080. */
   readonly motorUrl: string;
-  /** Dienst-Schlüssel von morni.net (Admin im Motor, darf also Meldungen hören). */
+  /** Dienst-Schlüssel von MoinMorni (Admin im Motor, darf also Meldungen hören). */
   readonly token: string;
   readonly dataDir: string;
   /** Einstellung Erreichbarkeit → „Probleme im Discord-Team-Log melden“. */

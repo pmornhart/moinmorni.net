@@ -10,20 +10,20 @@ import {
   SEASONS,
   type LobbyPack,
   type Season,
-} from '@morninet/builder';
-import { OLD_LOBBY_PACKS } from '../lib/rename.js';
+} from '@moinmorni/builder';
+import { INTERIM_LOBBY_PACKS } from '../lib/rename.js';
 import { MotorError, type MotorClient } from '../motor/client.js';
 import { readServerFile, removeServerFiles, writeServerFile } from '../motor/files.js';
 
 /**
  * Die Lobby baut sich selbst: Der Bauplan (`packages/builder/src/lobby/`) kommt als Datenpaket auf den Lobby-Server,
- * morni.net ruft die Bau-Funktionen über den Motor nacheinander auf und merkt sich die gebaute Version. Ändert sich
+ * MoinMorni ruft die Bau-Funktionen über den Motor nacheinander auf und merkt sich die gebaute Version. Ändert sich
  * der Plan (Update), wird neu gebaut. Dazu stellt es die server.properties der Lobby ein (Abenteuermodus, friedlich).
  */
 
-const STAMP_FILE = 'plugins/morninet/lobby-world.version';
+const STAMP_FILE = 'plugins/moinmorni/lobby-world.version';
 /** Version, die gerade gebaut wird – das Lobby-Plugin entfernt Wesen aus anderen Bauten, sobald sie geladen werden. */
-const TARGET_FILE = 'plugins/morninet/lobby-world.target';
+const TARGET_FILE = 'plugins/moinmorni/lobby-world.target';
 const PROPERTIES_FILE = 'server.properties';
 const DEFAULT_LEVEL = 'world';
 const PACK_ID = `file/${LOBBY_PACK_DIR}`;
@@ -299,11 +299,11 @@ export function createLobbyWorld(
     const properties = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
     const level = readProperty(properties, 'level-name') || DEFAULT_LEVEL;
     log.info({ version: pack.version, parts: pack.parts }, 'Lobby: Welt wird gebaut');
-    // Umbenennung: Datenpakete unter dem früheren Namen weg (sonst blieben sie für immer in der Welt liegen).
+    // Rückbenennung: Datenpakete unter dem Zwischen-Namen weg (sonst blieben sie für immer in der Welt liegen).
     await removeServerFiles(
       motor,
       serverId,
-      OLD_LOBBY_PACKS.map((dir) => `${level}/datapacks/${dir}`),
+      INTERIM_LOBBY_PACKS.map((dir) => `${level}/datapacks/${dir}`),
     );
     await Object.entries(pack.files).reduce(async (prev, [file, content]) => {
       await prev;

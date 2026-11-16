@@ -113,7 +113,7 @@ function profileOf(skin: string): string {
   const signed = signedSkin(skin);
   return signed
     ? `profile:{properties:[{name:'textures',value:'${signed.value}',signature:'${signed.signature}'}]}`
-    : `profile:{texture:'morninet:npc/${skin}',model:'wide'}`;
+    : `profile:{texture:'moinmorni:npc/${skin}',model:'wide'}`;
 }
 
 /** Hand und Kopf (3D-Frisur, Hut, Bart – ohne Paket unsichtbar). */

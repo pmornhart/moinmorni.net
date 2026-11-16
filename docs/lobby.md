@@ -53,7 +53,7 @@ unter Treppen/Stufen weglässt, malen die Modelle ein Stück Boden (Dielen bzw. 
 Wand eine Eckbank statt eines Stuhls und Kies unter jede Bierbank (Tests in `packages/builder/test/`).
 
 Ausgeliefert unter `/api/public/packs/lobby.zip`; die Lobby bietet es per `server.properties` an (ID
-`6d6f726e-692e-6e65-742d-6d6f6562656c`), Pflicht nur mit dem Schalter **Lobby → Möbel-Paket → Möbel-Paket verpflichtend**
+`6d6f696e-6d6f-726e-692d-6d6f6562656c`), Pflicht nur mit dem Schalter **Lobby → Möbel-Paket → Möbel-Paket verpflichtend**
 (`/lobby paket an|aus`). Der Proxy nimmt es beim Wechsel auf einen anderen Server wieder ab. Ohne Paket (abgelehnt,
 Bedrock) sieht man die normalen Blöcke – nichts fehlt. Echt geprüft mit Client 26.3 in der Docker-Lobby: angeboten,
 geladen, `/bau` → weg, `/lobby` → wieder da.
@@ -98,7 +98,7 @@ Vorschaubilder.
 | `mm_mode_<id>`                    | Anklicken (rechts oder links) → Nachricht `play` an den Hub → Modus beitreten bzw. wecken                                                                                                          |
 | `mm_mode_label`                   | Schild aus dem Bau – das Plugin ersetzt es durch eigene Schilder mit Live-Zahlen                                                                                                                   |
 | `mm_walker`                       | läuft gemütlich in bis zu 8 Blöcken um den Platz herum (nur auf freiem, ebenem Boden)                                                                                                              |
-| `mm_lobby` + `mm_build_<version>` | alles, was der Lobby-Bau setzt; Wesen aus älteren Bauten entfernt das Plugin, sobald sie geladen werden oder die Version wechselt (Datei `plugins/morninet/lobby-world.target`, alle 2 s geprüft) |
+| `mm_lobby` + `mm_build_<version>` | alles, was der Lobby-Bau setzt; Wesen aus älteren Bauten entfernt das Plugin, sobald sie geladen werden oder die Version wechselt (Datei `plugins/moinmorni/lobby-world.target`, alle 2 s geprüft) |
 
 Der Hub schickt allen Spielservern `lobby` mit Zustand und Spielerzahl je Modus (`docs/hub-protokoll.md`). Das Plugin
 hält je Figur zwei Schilder (Deutsch/Englisch); jeder Spieler sieht nur das in seiner Sprache (`/sprache` gilt sofort).
@@ -116,10 +116,10 @@ schickt sie zusammen mit den Panel-Einstellungen als `lobby-settings` an den Lob
   acht Stationen im Zuschauer-Modus, `/rundgang stop` bricht ab.
 - **Launchpads:** zwei Smaragd-Platten am Vorplatz schießen schräg zur Mitte die Schlosstreppe hinauf.
 - **Parkour:** weiß-blaue Spirale im Nordwesten (Start = Smaragd, Kontrollpunkte = Gold, Ziel = Diamant), Zeitmessung,
-  Sturz → letzter Kontrollpunkt, Bestzeiten in `plugins/morninet/parkour.yml`, Bestenliste als Schild und `/parkour`.
+  Sturz → letzter Kontrollpunkt, Bestzeiten in `plugins/moinmorni/parkour.yml`, Bestenliste als Schild und `/parkour`.
 - **Schutz:** kein Abbauen/Setzen, kein Schaden, kein Hunger, nichts fallen lassen; aus der Welt gefallen → Dorfplatz.
 - **Saison-Deko:** Wiesn, Winter, Ostern, Halloween oder keine (`packages/builder/src/lobby/season.ts`, eigenes
-  Datenpaket `morninet-lobby-season`). Wechsel im Panel setzt die Deko sofort neu. Anzeige-Blöcke tragen den Block
+  Datenpaket `moinmorni-lobby-season`). Wechsel im Panel setzt die Deko sofort neu. Anzeige-Blöcke tragen den Block
   doppelt (`Name` bis 26.2, `id` ab 26.3 – sonst zeigt 26.3 nur Luft).
 - **Dorfleute:** wie viele herumlaufen, stellt das Panel ein.
 
@@ -139,19 +139,19 @@ Die Strafe gilt im ganzen Netzwerk:
 
 ## Die Lobby baut sich selbst
 
-Beim Einrichten (und nach jedem Update, wenn sich der Bauplan geändert hat) baut morni.net die Welt auf dem
+Beim Einrichten (und nach jedem Update, wenn sich der Bauplan geändert hat) baut MoinMorni die Welt auf dem
 Lobby-Server auf – ohne RCON von außen, nur über den Motor (`apps/server/src/lobby/world.ts`):
 
 1. server.properties der Lobby: Abenteuermodus, friedlich, kein PvP, kein Nether, kein Texturpaket (die Skins sind
    signiert).
-2. Bauplan als Datenpaket nach `world/datapacks/morninet-lobby/` (`lobbyPack()` in
+2. Bauplan als Datenpaket nach `world/datapacks/moinmorni-lobby/` (`lobbyPack()` in
    `packages/builder/src/lobby/datapack.ts`, ~83 Funktionen à 3000 Befehle).
 3. `minecraft:reload`, Welt-Stücke in kleinen Portionen festhalten (`forceload`, 4×4 Stücke pro Befehl – alles auf
    einmal ließ den Server minutenlang hängen), warten bis geladen, `clean` (alte Wesen weg), Bau-Funktionen
    nacheinander, `finish` (Spielregeln, Ankunftspunkt, Weltgrenze, Reste älterer Bauten), Stücke loslassen,
    Datenpaket wieder ausschalten. Minecraft lädt die Wesen eines Stücks erst nach den Blöcken – was dabei noch nicht
    geladen war, räumt das Lobby-Plugin über die Bau-Version weg.
-4. Version in `plugins/morninet/lobby-world.version` – gleicher Plan = nichts zu tun.
+4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun.
 
 Echt geprüft mit einem frischen Paper 26.3 (`apps/server/scripts/lobby-selbstbau.ts`, Brücke statt Motor):
 Welt-Stücke erzeugen ~4 Min., Bau 55 s, keine Ladefehler, kein Hänger.
@@ -167,5 +167,5 @@ npx tsx tools/lobby-entwuerfe/src/plan.ts a plan.png 130
 ```
 
 Bilder mit dem echten Client: `tools/mc-client` (Texturpaket in `resourcepacks/` und
-`--option 'resourcePacks:["vanilla","file/MorniNet-Lobby.zip"]'`). Aussichtspunkte: `VIEWS_A` in
+`--option 'resourcePacks:["vanilla","file/MoinMorni-Lobby.zip"]'`). Aussichtspunkte: `VIEWS_A` in
 `tools/lobby-entwuerfe/src/draft-a.ts`.

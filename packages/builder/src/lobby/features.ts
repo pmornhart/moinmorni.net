@@ -1,7 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a building plan: positions in the lobby as the world has them */
 /**
  * Was in der Lobby „lebt“, als Daten: Ankunftspunkt, Launchpads, Parkour-Strecke und Stationen des Rundgangs.
- * Der Bau (`dorfplatz.ts`) setzt die Blöcke, morni.net schickt dieselben Punkte ans Lobby-Plugin.
+ * Der Bau (`dorfplatz.ts`) setzt die Blöcke, MoinMorni schickt dieselben Punkte ans Lobby-Plugin.
  */
 import { GROUND } from '../nature.js';
 
@@ -103,7 +103,7 @@ export const TOUR: readonly TourStop[] = [
   stop(
     p(9.5, GROUND + 2, 12.5),
     p(0, 80, -60),
-    { de: 'Servus auf morni.net!', en: 'Welcome to morni.net!' },
+    { de: 'Servus in MoinMorni!', en: 'Welcome to MoinMorni!' },
     {
       de: 'Das ist der Dorfplatz – hier geht alles los.',
       en: 'This is the village square – everything starts here.',

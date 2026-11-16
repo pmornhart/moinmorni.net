@@ -1,4 +1,4 @@
-import type { Text } from '@morninet/shared';
+import type { Text } from '@moinmorni/shared';
 import { useTranslation } from 'react-i18next';
 import { MM_NAMESPACE, type Language } from '~/i18n';
 

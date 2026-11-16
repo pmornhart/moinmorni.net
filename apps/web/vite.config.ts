@@ -4,8 +4,8 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 
 /**
- * morni.net's web app: the public website (/) and the panel (/panel). The panel embeds MorniHosting's server pages
- * straight from the submodule (vendor/mornihosting/apps/web/src), which import their own code as "@/…". morni.net's
+ * MoinMorni's web app: the public website (/) and the panel (/panel). The panel embeds MorniHosting's server pages
+ * straight from the submodule (vendor/mornihosting/apps/web/src), which import their own code as "@/…". MoinMorni's
  * own code therefore uses "~/…".
  */
 
@@ -22,7 +22,7 @@ const DEMO_MODE = 'demo';
 const DEMO_INLINE_BYTES = 100_000_000;
 
 /**
- * Libraries shared by morni.net and the embedded MorniHosting pages: exactly one copy each, otherwise React hooks,
+ * Libraries shared by MoinMorni and the embedded MorniHosting pages: exactly one copy each, otherwise React hooks,
  * contexts (query client, router, translations, toasts, tooltips) would split in two.
  */
 const SHARED_LIBRARIES = [
@@ -66,7 +66,7 @@ function vendorChunk(id: string): string | undefined {
 /** MorniHosting's demo build embeds pictures through this module; outside its demo it is empty. */
 function noDemoImages(): Plugin {
   return {
-    name: 'morninet-no-demo-images',
+    name: 'moinmorni-no-demo-images',
     resolveId: (id) => (id === DEMO_IMAGES ? RESOLVED_DEMO_IMAGES : undefined),
     load: (id) =>
       id === RESOLVED_DEMO_IMAGES
@@ -88,14 +88,14 @@ export default defineConfig(({ mode, command }) => {
         // "~/styles/public.css" matches; "~/styles/panel.css" does not.
         // https://regex101.com/?flavor=javascript&regex=%5E~%5C%2Fstyles%5C%2Fpublic%5C.css%24&testString=~%2Fstyles%2Fpublic.css%0A~%2Fstyles%2Fpanel.css
         ...(demo ? [{ find: /^~\/styles\/public\.css$/, replacement: path.join(src, 'demo/demo.css') }] : []),
-        // MorniHosting's pages take their texts from morni.net's translation setup (one i18next for both).
+        // MorniHosting's pages take their texts from MoinMorni's translation setup (one i18next for both).
         // "@/i18n" matches; "@/i18n/de.json" and "@/lib/api" do not.
         // https://regex101.com/?flavor=javascript&regex=%5E%40%5C%2Fi18n%24&testString=%40%2Fi18n%0A%40%2Fi18n%2Fde.json
         { find: /^@\/i18n$/, replacement: path.join(src, 'i18n/index.ts') },
         // "@/lib/api" → MorniHosting's src/lib/api; "@simplewebauthn/browser" does not match.
         // https://regex101.com/?flavor=javascript&regex=%5E%40%5C%2F&testString=%40%2Flib%2Fapi%0A%40simplewebauthn%2Fbrowser
         { find: /^@\//, replacement: `${vendorSrc}/` },
-        // "~/lib/api" → morni.net's src/lib/api; "~foo" does not match.
+        // "~/lib/api" → MoinMorni's src/lib/api; "~foo" does not match.
         // https://regex101.com/?flavor=javascript&regex=%5E~%5C%2F&testString=~%2Flib%2Fapi%0A~foo
         { find: /^~\//, replacement: `${src}/` },
       ],

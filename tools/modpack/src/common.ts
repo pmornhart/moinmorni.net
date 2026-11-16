@@ -9,7 +9,7 @@ export const DIST_DIR = path.join(PACKAGE_DIR, 'dist');
 /** Modrinth bittet jedes Programm, sich mit Namen und Kontakt zu melden. */
 export function userAgent(): string {
   const pkg = JSON.parse(readFileSync(path.join(PACKAGE_DIR, 'package.json'), 'utf8')) as { version: string };
-  return `morni.net-Modpack/${pkg.version} (+https://morni.net)`;
+  return `MoinMorni-Modpack/${pkg.version} (+https://moinmorni.net)`;
 }
 
 /** Steht nach dem Bauen in `dist/release.json` und sagt `publish.ts`, was hochgeladen wird. */

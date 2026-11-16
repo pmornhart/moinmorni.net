@@ -8,7 +8,7 @@ export default defineConfig({
   target: 'node22',
   clean: true,
   sourcemap: true,
-  noExternal: ['@morninet/shared', '@morninet/builder'],
+  noExternal: ['@moinmorni/shared', '@moinmorni/builder'],
   banner: {
     js: "import { createRequire as __mmCreateRequire } from 'node:module'; const require = __mmCreateRequire(import.meta.url);",
   },

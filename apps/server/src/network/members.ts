@@ -1,5 +1,5 @@
 import type { MotorClient } from '../motor/client.js';
-import { isOurNetwork } from '../lib/rename.js';
+import { isOurNetwork } from '../public/status.js';
 
 /** Welcher Server im Motor hinter einem Namen im Netzwerk steckt („duels“ → Server-ID). */
 

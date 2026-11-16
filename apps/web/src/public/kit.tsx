@@ -3,7 +3,7 @@ import { ArrowRight, Hourglass, Lock, Moon, Sun, Ticket, Wrench, type LucideIcon
 import { useId, type ComponentProps, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import type { ModeStatus } from '@morninet/shared';
+import type { ModeStatus } from '@moinmorni/shared';
 import { textOn } from '~/components/role-visuals';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';

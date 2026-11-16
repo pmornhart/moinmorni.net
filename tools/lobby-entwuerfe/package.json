@@ -1,5 +1,5 @@
 {
-  "name": "@morninet/lobby-entwuerfe",
+  "name": "@moinmorni/lobby-entwuerfe",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,6 +9,6 @@
     "build": "tsx src/build.ts"
   },
   "dependencies": {
-    "@morninet/builder": "workspace:*"
+    "@moinmorni/builder": "workspace:*"
   }
 }

@@ -1,4 +1,4 @@
-import type { Role } from '@morninet/shared';
+import type { Role } from '@moinmorni/shared';
 import type { CSSProperties, ReactElement } from 'react';
 import { cn } from '~/lib/cn';
 import { usePick } from '~/lib/text';

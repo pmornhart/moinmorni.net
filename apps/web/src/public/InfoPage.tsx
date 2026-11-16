@@ -1,7 +1,6 @@
 import { ArrowLeft, Hourglass } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NETWORK_TITLE } from '@morninet/shared';
 import { Link } from 'react-router';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -30,7 +29,7 @@ export function InfoPage({
   const lost = page === 'notFound';
   return (
     <>
-      <PageHero eyebrow={NETWORK_TITLE} title={t(`pages.${page}.title`)} scene={SCENE_OF[page]} />
+      <PageHero eyebrow="MoinMorni" title={t(`pages.${page}.title`)} scene={SCENE_OF[page]} />
       <div className={cn(WRAP, 'grid max-w-[880px] gap-6 py-14 sm:py-16')}>
         <Panel className="grid gap-4 p-6 sm:p-8">
           {follows ? (

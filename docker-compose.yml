@@ -1,30 +1,32 @@
-# morni.net – Start: `docker compose up -d` (die Einrichtung macht install.sh), dann https://<deine Domain>.
-# Von außen erreichbar ist nur morni.net (Webseite + Panel, Port 8080 – NetBird macht HTTPS) und der Proxy der
+# MoinMorni – Start: `docker compose up -d` (die Einrichtung macht install.sh), dann https://<deine Domain>.
+# Von außen erreichbar ist nur MoinMorni (Webseite + Panel, Port 8080 – NetBird macht HTTPS) und der Proxy der
 # Minecraft-Server (legt der Motor an). Motor, Docker-Zugang und Hub bleiben intern.
-name: morninet
+name: moinmorni
 
 services:
-  morninet:
+  moinmorni:
     build:
       context: .
       args:
         MM_VERSION: ${MM_BUILD_VERSION:-dev}
-    container_name: morninet
+    container_name: moinmorni
     restart: unless-stopped
     # Nur die eigenen Werte aus der .env (die Geheimnisse des Motors bleiben beim Motor).
     environment:
       MM_SECRET: ${MM_SECRET:?MM_SECRET fehlt – bitte install.sh ausführen}
       MM_MOTOR_TOKEN: ${MM_MOTOR_TOKEN:-}
-      MM_DOMAIN: ${MM_DOMAIN:-morni.net}
+      MM_DOMAIN: ${MM_DOMAIN:-moinmorni.net}
       MM_DISCORD_TOKEN: ${MM_DISCORD_TOKEN:-}
       MM_DISCORD_CLIENT_SECRET: ${MM_DISCORD_CLIENT_SECRET:-}
+      # Branch, dem die Updates im Panel folgen (install.sh/update.sh tragen den installierten ein).
+      MM_UPDATE_BRANCH: ${MM_UPDATE_BRANCH:-main}
       MM_DATA_DIR: /data
       MM_MOTOR_URL: http://motor:8080
       TZ: ${TZ:-Europe/Berlin}
     ports:
       - '${MM_PORT:-8080}:8080'
     volumes:
-      - morninet-data:/data
+      - moinmorni-data:/data
     networks:
       - intern
       - minecraft
@@ -45,24 +47,24 @@ services:
       context: ./vendor/mornihosting
       args:
         MH_VERSION: ${MH_BUILD_VERSION:-dev}
-    container_name: morninet-motor
+    container_name: moinmorni-motor
     restart: unless-stopped
     environment:
       MH_SECRET: ${MH_SECRET:?MH_SECRET fehlt – bitte install.sh ausführen}
-      MH_PUBLIC_ADDRESS: ${MM_DOMAIN:-morni.net}
+      MH_PUBLIC_ADDRESS: ${MM_DOMAIN:-moinmorni.net}
       MH_LAN_IP: ${MM_LAN_IP:-}
       TZ: ${TZ:-Europe/Berlin}
       MH_HEADLESS: 'true'
-      # Nur morni.net reicht Besucher weiter – nur dessen X-Forwarded-For zählt (Anmelde-Grenzen pro Besucher).
-      MH_TRUST_PROXY_FROM: morninet
+      # Nur MoinMorni reicht Besucher weiter – nur dessen X-Forwarded-For zählt (Anmelde-Grenzen pro Besucher).
+      MH_TRUST_PROXY_FROM: moinmorni
       MH_DOCKER_HOST: tcp://socket-proxy:2375
       MH_DATA_DIR: /data
-      MH_MC_NETWORK: morninet-mc
+      MH_MC_NETWORK: moinmorni-mc
       MH_ROUTER_JAVA_PORT: '0'
       MH_ROUTER_BEDROCK_PORT: '0'
-      # Alles, was der Motor in NetBird anlegt, heißt „morni.net …“ (Netzwerk, Gruppe, Resources, „morni.net Ausgang“) –
-      # so teilt sich morni.net ein NetBird-Konto mit MorniHosting, ohne dessen Dinge anzufassen.
-      MH_BRAND: morni.net
+      # Alles, was der Motor in NetBird anlegt, heißt „MoinMorni …“ (Netzwerk, Gruppe, Resources, „MoinMorni Ausgang“) –
+      # so teilt sich MoinMorni ein NetBird-Konto mit MorniHosting, ohne dessen Dinge anzufassen.
+      MH_BRAND: MoinMorni
       # NetBird-Server dieses Rechners (install.sh/update.sh lesen ihn aus „netbird status“): Vorgabe im Panel.
       MH_NETBIRD_API: ${MH_NETBIRD_API:-}
     volumes:
@@ -85,7 +87,7 @@ services:
   # Der Motor spricht Docker nur über diesen Proxy, nie direkt mit dem Socket.
   socket-proxy:
     image: ghcr.io/tecnativa/docker-socket-proxy:v0.4.1
-    container_name: morninet-socket-proxy
+    container_name: moinmorni-socket-proxy
     restart: unless-stopped
     environment:
       CONTAINERS: 1
@@ -111,18 +113,18 @@ services:
       - no-new-privileges:true
 
 volumes:
-  morninet-data:
-    name: morninet-data
+  moinmorni-data:
+    name: moinmorni-data
   motor-data:
-    name: morninet-motor-data
+    name: moinmorni-motor-data
 
 networks:
   # Nur Motor und Docker-Proxy, ohne Internet.
   docker-api:
     internal: true
-  # morni.net ↔ Motor.
+  # MoinMorni ↔ Motor.
   intern:
     internal: true
-  # Minecraft-Container, Motor (RCON) und morni.net (Hub für die Plugins).
+  # Minecraft-Container, Motor (RCON) und MoinMorni (Hub für die Plugins).
   minecraft:
-    name: morninet-mc
+    name: moinmorni-mc

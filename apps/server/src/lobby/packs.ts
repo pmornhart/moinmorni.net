@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { furniturePack } from '@morninet/builder';
+import { furniturePack } from '@moinmorni/builder';
 import type { Api } from '../app.js';
 
 /**

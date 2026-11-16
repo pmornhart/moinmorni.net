@@ -21,7 +21,6 @@ import {
 import { useState, type MouseEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet, ScrollRestoration, useLocation } from 'react-router';
-import { NETWORK_TITLE } from '@morninet/shared';
 import { Crest } from '~/components/brand';
 import { useCopy } from '~/components/controls';
 import { chooseLanguage, MM_NAMESPACE, SUPPORTED_LANGUAGES } from '~/i18n';
@@ -223,7 +222,7 @@ function DiscordLink({ className }: { readonly className?: string }): ReactEleme
   );
 }
 
-/** Crest + "morni.net" as a small game title. */
+/** Crest + "MoinMorni" as a small game title. */
 function Logo({ className }: { readonly className?: string }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
@@ -234,7 +233,7 @@ function Logo({ className }: { readonly className?: string }): ReactElement {
     >
       <Crest className="size-9 drop-shadow-[0_3px_0_rgba(0,0,0,0.35)] lg:size-10" />
       <span className="mm-wordmark mm-wordmark-small font-pixel text-[1.55rem] font-bold leading-none tracking-[0.01em] lg:text-[1.75rem]">
-        {NETWORK_TITLE}
+        MoinMorni
       </span>
     </Link>
   );
@@ -524,7 +523,7 @@ function Footer(): ReactElement {
         >
           <div className="grid gap-1">
             <span className="font-pixel text-[14px] font-semibold text-band-foreground">
-              © {year} {NETWORK_TITLE}
+              © {year} MoinMorni
             </span>
             <span>{t('footer.disclaimer')}</span>
           </div>

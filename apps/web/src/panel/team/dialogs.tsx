@@ -3,7 +3,7 @@ import { AlertDialog, Dialog as DialogPrimitive } from 'radix-ui';
 import { Check, Copy, Info, KeyRound, UserPlus, X, type LucideIcon } from 'lucide-react';
 import { useId, useState, type FormEvent, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PANEL_AREAS, type Role } from '@morninet/shared';
+import { PANEL_AREAS, type Role } from '@moinmorni/shared';
 import { FieldBlock, useCopy } from '~/components/controls';
 import { RoleBadge } from '~/components/role-visuals';
 import { Button, Input } from '~/components/ui';
@@ -33,7 +33,7 @@ export interface AccessData {
   readonly kind: 'created' | 'reset';
 }
 
-/** The panel's sign-in address on this site, e.g. "https://morni.net/panel". */
+/** The panel's sign-in address on this site, e.g. "https://moinmorni.net/panel". */
 export function loginAddress(): string {
   return `${window.location.origin}/panel`;
 }

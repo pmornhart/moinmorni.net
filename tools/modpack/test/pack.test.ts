@@ -42,7 +42,7 @@ function mod(slug: string, overrides: Partial<PackMod> = {}): PackMod {
 function index(mods: readonly PackMod[]): ModrinthIndex {
   return packIndex({
     versionId: '26.3-2026.11.14',
-    name: 'morni.net',
+    name: 'MoinMorni',
     summary: 'Test',
     minecraft: '26.3',
     loader: 'fabric',
@@ -80,7 +80,7 @@ describe('modrinth.index.json', () => {
     expect(result.formatVersion).toBe(1);
     expect(result.game).toBe('minecraft');
     expect(result.versionId).toBe('26.3-2026.11.14');
-    expect(result.name).toBe('morni.net');
+    expect(result.name).toBe('MoinMorni');
     expect(result.dependencies).toEqual({ minecraft: '26.3', 'fabric-loader': '0.20.1' });
     expect(result.files.map((f) => f.path)).toEqual(['mods/fabric-api.jar', 'mods/sodium.jar']);
     result.files.forEach((f) => {
@@ -128,13 +128,13 @@ describe('.mrpack', () => {
   test('ZIP mit Index und Serverliste unter overrides/', () => {
     const idx = index([mod('sodium')]);
     const pack = mrpack(idx, [
-      { path: 'servers.dat', data: serversDat([{ name: 'morni.net', ip: 'morni.net' }]) },
+      { path: 'servers.dat', data: serversDat([{ name: 'MoinMorni', ip: 'moinmorni.net' }]) },
     ]);
     const items = unzipStored(pack);
     expect(items.map((i) => i.name)).toEqual(['modrinth.index.json', 'overrides/servers.dat']);
     expect(JSON.parse(items[0]?.data.toString('utf8') ?? '')).toEqual(idx);
     const servers = readNbt(items[1]?.data ?? Buffer.alloc(0)).root;
-    expect(JSON.stringify(servers)).toContain('morni.net');
+    expect(JSON.stringify(servers)).toContain('moinmorni.net');
   });
 
   test('gleiche Eingabe ergibt dieselben Bytes', () => {

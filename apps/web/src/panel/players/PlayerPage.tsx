@@ -18,7 +18,7 @@ import { useState, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { mayAssign, type Role } from '@morninet/shared';
+import { mayAssign, type Role } from '@moinmorni/shared';
 import { Button, Card, Kbd, NativeSelect, Pill, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';

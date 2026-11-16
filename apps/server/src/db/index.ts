@@ -23,7 +23,7 @@ function migrationsFolder(): string {
   return found;
 }
 
-/** Öffnet (und legt bei Bedarf an) die Datenbank von morni.net und bringt das Schema auf Stand. */
+/** Öffnet (und legt bei Bedarf an) die Datenbank von MoinMorni und bringt das Schema auf Stand. */
 export function openDatabase(file: string): DbHandle {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
   const sqlite = new Database(file);

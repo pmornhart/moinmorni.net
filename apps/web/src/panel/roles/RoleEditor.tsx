@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DISCORD_RIGHTS, GAME_RIGHTS, PANEL_AREAS, type Role } from '@morninet/shared';
+import { DISCORD_RIGHTS, GAME_RIGHTS, PANEL_AREAS, type Role } from '@moinmorni/shared';
 import { FieldBlock } from '~/components/controls';
 import { Button, Card, Input, Pill, Switch } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';

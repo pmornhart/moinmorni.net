@@ -26,7 +26,7 @@ import {
   roundTree,
   slab,
   terrain,
-} from '@morninet/builder';
+} from '@moinmorni/builder';
 import { fence, forest, houseAt, lampPost, MODES, portalAt, ramp } from './common.js';
 
 const CX = 600;

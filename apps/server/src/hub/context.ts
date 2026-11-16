@@ -1,4 +1,4 @@
-import type { GameRight, Role } from '@morninet/shared';
+import type { GameRight, Role } from '@moinmorni/shared';
 import type { Stores } from '../panel/stores.js';
 import type { PlayerService } from './players.js';
 import type { Presence } from './presence.js';

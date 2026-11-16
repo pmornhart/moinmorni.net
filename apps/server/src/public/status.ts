@@ -1,12 +1,15 @@
-import { NETWORK_TITLE, type Mode, type ModeStatus, type NetworkStatus } from '@morninet/shared';
+import type { Mode, ModeStatus, NetworkStatus } from '@moinmorni/shared';
 import type { Config } from '../config.js';
-import { isOurNetwork } from '../lib/rename.js';
+import { INTERIM_TITLE } from '../lib/rename.js';
 import type { Hub } from '../hub/index.js';
 import type { MotorClient } from '../motor/client.js';
 import type { Stores } from '../panel/stores.js';
 
-/** Name des Netzwerks im Motor, das morni.net bei der Einrichtung anlegt. */
-export const NETWORK_NAME = NETWORK_TITLE;
+/** Name des Netzwerks im Motor, das MoinMorni bei der Einrichtung anlegt. */
+export const NETWORK_NAME = 'MoinMorni';
+/** Unser Netzwerk im Motor – bis zur Rückbenennung auch unter dem Zwischen-Namen (lib/rename.ts). */
+export const isOurNetwork = (n: { readonly name: string }): boolean =>
+  n.name === NETWORK_NAME || n.name === INTERIM_TITLE;
 const CACHE_MS = 5_000;
 const RUNNING = 'running';
 

@@ -20,7 +20,7 @@ import { useState, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
-import type { Role } from '@morninet/shared';
+import type { Role } from '@moinmorni/shared';
 import { MinecraftHead } from '~/components/minecraft-head';
 import { RoleBadge } from '~/components/role-visuals';
 import { Button, Card, Kbd, NativeSelect, Pill, Skeleton, Switch } from '~/components/ui';

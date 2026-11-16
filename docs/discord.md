@@ -1,11 +1,11 @@
 # Discord einrichten
 
-morni.net hat einen eigenen Bot. Discord erlaubt Bots seit 2025 nicht mehr, selbst Server anzulegen – darum legst
+MoinMorni hat einen eigenen Bot. Discord erlaubt Bots seit 2025 nicht mehr, selbst Server anzulegen – darum legst
 du den Server einmal leer an und holst den Bot dazu. Den Rest macht der Bot.
 
 ## 1. Bot anlegen (einmal)
 
-1. Öffne <https://discord.com/developers/applications> → **New Application** → Name „morni.net“.
+1. Öffne <https://discord.com/developers/applications> → **New Application** → Name „MoinMorni“.
 2. Links **Bot** → **Reset Token** → Token kopieren. Er kommt in `install.sh` (Frage nach dem Bot-Token) oder
    später in die `.env` als `MM_DISCORD_TOKEN`. **Nie** in einen Chat oder ins Repo.
 3. Auf derselben Seite unter **Privileged Gateway Intents** den Schalter **Server Members Intent** einschalten

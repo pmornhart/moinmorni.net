@@ -187,7 +187,7 @@ export function createTransport(
     listen: async (host, port) => {
       const http = await import('node:http');
       const httpServer = http.createServer((_req, res) => {
-        res.writeHead(426).end('Hub von morni.net: nur WebSocket');
+        res.writeHead(426).end('MoinMorni-Hub: nur WebSocket');
       });
       httpServer.on('upgrade', (request, socket, head) => {
         if (new URL(request.url ?? '/', 'http://hub').pathname !== HUB_PATH) {

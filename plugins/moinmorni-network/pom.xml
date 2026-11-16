@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MoinMorni-Netzwerk: ein Plugin für den Proxy (Velocity) und die Spielserver (Paper), spricht mit dem Hub. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>de.moinmorni</groupId>
+  <artifactId>moinmorni-network</artifactId>
+  <version>0.2.1</version>
+  <packaging>jar</packaging>
+  <name>MoinMorni</name>
+
+  <properties>
+    <!-- Velocity 4.3 und Paper 26.x laufen nur mit Java 25. -->
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Gleicher Code = gleiche Jar (feste Zeitstempel): MoinMorni startet Server nach einem Update nur neu, wenn sich
+         das Plugin wirklich geändert hat. -->
+    <project.build.outputTimestamp>2026-01-01T00:00:00Z</project.build.outputTimestamp>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>papermc</id>
+      <url>https://repo.papermc.io/repository/maven-public/</url>
+    </repository>
+    <!-- Simple Voice Chat: Sprachchat-Brücke (zur Laufzeit optional, softdepend). -->
+    <repository>
+      <id>henkelmax</id>
+      <url>https://maven.maxhenkel.de/repository/public</url>
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.velocitypowered</groupId>
+      <artifactId>velocity-api</artifactId>
+      <version>4.3.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.papermc.paper</groupId>
+      <artifactId>paper-api</artifactId>
+      <version>26.3.build.249-stable</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>de.maxhenkel.voicechat</groupId>
+      <artifactId>voicechat-api</artifactId>
+      <version>2.6.25</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- Tests ohne Server (Pfade und Listen der Modus-Einstellungen). -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.13.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>MoinMorni-Network</finalName>
+    <plugins>
+      <!-- Seit Java 23 laufen Annotation-Prozessoren nur noch auf Wunsch: Velocity erzeugt so velocity-plugin.json. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.0</version>
+        <configuration>
+          <proc>full</proc>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.4</version>
+      </plugin>
+    </plugins>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+</project>

@@ -42,7 +42,7 @@ export type ModePatch = z.infer<typeof modePatchSchema>;
 
 const t = (de: string, en: string): Text => ({ de, en });
 
-/** Die Modi, mit denen morni.net startet (Philip, 14.11.). */
+/** Die Modi, mit denen MoinMorni startet (Philip, 14.11.). */
 export const DEFAULT_MODES: readonly Mode[] = [
   {
     id: 'mornicraft',
@@ -215,13 +215,13 @@ export const DEFAULT_MODES: readonly Mode[] = [
 ];
 
 /**
- * Repos der Spielmodi: Dort baut GitHub bei jedem Stand auf `main` ein Release mit der Jar, morni.net spielt sie auf
+ * Repos der Spielmodi: Dort baut GitHub bei jedem Stand auf `main` ein Release mit der Jar, MoinMorni spielt sie auf
  * den Server des Modus (und hält sie aktuell).
  */
 export const MODE_REPOS: Readonly<Record<string, string>> = {
   // MorniCraft läuft auch allein und unter MorniHosting; im Netzwerk schaltet es selbst in den Netzwerk-Modus.
   mornicraft: 'pmornhart/MorniCraft',
-  duels: 'pmornhart/Morni-Duels',
+  duels: 'pmornhart/MoinMorni-Duels',
   party: 'pmornhart/Morni-Party',
   gipfelsturm: 'pmornhart/Morni-Gipfelsturm',
   burgverlies: 'pmornhart/Morni-Burgverlies',

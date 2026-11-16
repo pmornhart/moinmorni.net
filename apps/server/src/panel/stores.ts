@@ -12,7 +12,7 @@ import {
   type Mode,
   type ModePatch,
   type Role,
-} from '@morninet/shared';
+} from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import { modes, roles, settingValues } from '../db/schema.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';

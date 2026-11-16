@@ -70,7 +70,7 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     type Status = { connected: boolean; guild: { name: string } | null; inviteUrl: string };
     await until(async () => (await call('GET', '/api/panel/discord')).json<Status>().guild !== null);
     const body = (await call('GET', '/api/panel/discord')).json<Status>();
-    expect(body).toMatchObject({ connected: true, guild: { name: 'morni.net' }, setupDone: false });
+    expect(body).toMatchObject({ connected: true, guild: { name: 'MoinMorni' }, setupDone: false });
     expect(body.inviteUrl).toContain('client_id=777');
     expect(body.inviteUrl).toContain('permissions=8');
   });
@@ -93,7 +93,7 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     const help = channelByName('🎫・hilfe');
     expect(JSON.stringify(dc.messages.get(help?.id ?? ''))).toContain('mm:ticket:open');
     const status = channelByName('🟢・status');
-    expect(JSON.stringify(dc.messages.get(status?.id ?? ''))).toContain('morni.net');
+    expect(JSON.stringify(dc.messages.get(status?.id ?? ''))).toContain('MoinMorni');
     expect(dc.commands.map((c) => (c as { name: string }).name)).toEqual([
       'verbinden',
       'hilfe',

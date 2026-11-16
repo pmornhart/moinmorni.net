@@ -6,7 +6,7 @@ import { parse } from 'yaml';
 import { MODE_REPOS, MODE_SETTING_AREAS, settingsOf, type SettingDef } from '../src/index.js';
 
 /**
- * Standardwerte im Panel = Werte der config.yml, die der Modus mitbringt. Ohne Änderung im Panel darf morni.net dort
+ * Standardwerte im Panel = Werte der config.yml, die der Modus mitbringt. Ohne Änderung im Panel darf MoinMorni dort
  * nichts umstellen. Kopien der config.yml liegen in `test/mode-configs/<modus>.yml`. Mit `MM_CHECK_MODE_REPOS=1` wird
  * zusätzlich verglichen, ob die Repos der Modi daneben (`../<repo>`) noch dieselbe config.yml haben – sonst hat ein
  * Modus etwas geändert, und Kopie und Katalog müssen mit (die Repos können gerade auf anderen Branches stehen).
@@ -14,7 +14,7 @@ import { MODE_REPOS, MODE_SETTING_AREAS, settingsOf, type SettingDef } from '../
 
 const HERE = import.meta.dirname;
 const COPIES = path.join(HERE, 'mode-configs');
-/** Ordner, in dem die Repos der Modi neben diesem Repo liegen (wie in der Entwicklung). */
+/** Ordner, in dem die Repos der Modi neben moinmorni.net liegen (wie in der Entwicklung). */
 const NEIGHBOURS = path.resolve(HERE, '../../../..');
 
 type Yaml = Record<string, unknown>;

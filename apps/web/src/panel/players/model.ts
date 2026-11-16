@@ -1,8 +1,8 @@
 import { keepPreviousData, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-import type { Text } from '@morninet/shared';
+import type { Text } from '@moinmorni/shared';
 import { mmApi } from '~/lib/mm-api';
 
-/** Shapes of morni.net's player and punishment API (apps/server/src/panel/player-routes.ts). */
+/** Shapes of MoinMorni's player and punishment API (apps/server/src/panel/player-routes.ts). */
 
 export type PunishKind = 'ban' | 'mute' | 'jail' | 'warn' | 'kick';
 /** What the panel can hand out. */

@@ -1,7 +1,7 @@
 import { Plus, X } from 'lucide-react';
 import { useState, type KeyboardEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { onStep, type SettingDef } from '@morninet/shared';
+import { onStep, type SettingDef } from '@moinmorni/shared';
 import { Button, Input, NativeSelect, Switch, Textarea } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';

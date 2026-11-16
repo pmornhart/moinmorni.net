@@ -3,7 +3,7 @@
  * Umgebung: MM_RCON=host:port, MM_RCON_PASS_FILE=Pfad zur Passwort-Datei.
  */
 import fs from 'node:fs';
-import { clearCommands, forceloadCommands, Rcon, runAll, type Canvas } from '@morninet/builder';
+import { clearCommands, forceloadCommands, Rcon, runAll, type Canvas } from '@moinmorni/builder';
 import { A, draftA } from './draft-a.js';
 import { B, draftB } from './draft-b.js';
 import { C, draftC } from './draft-c.js';

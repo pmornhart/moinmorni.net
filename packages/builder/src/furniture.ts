@@ -278,7 +278,7 @@ export const FURNITURE_MODELS: Readonly<Record<string, readonly Box[]>> = {
   ...Object.fromEntries(KRUEGE.map((k, i) => [`krug_${i + 1}`, k])),
 };
 
-const NS = 'morninet';
+const NS = 'moinmorni';
 const model = (name: string): string => `${NS}:block/moebel/${name}`;
 
 /**
@@ -286,7 +286,7 @@ const model = (name: string): string => `${NS}:block/moebel/${name}`;
  * jemand die Lobby verlässt – sonst wären z. B. in MorniCraft Mangrove-Stufen plötzlich Stühle. Gleicher Wert in
  * `VelocityPlugin.java`.
  */
-export const MOEBEL_PACK_ID = '6d6f726e-692e-6e65-742d-6d6f6562656c';
+export const MOEBEL_PACK_ID = '6d6f696e-6d6f-726e-692d-6d6f6562656c';
 
 /** Boden, der unter Stuhl/Hocker bzw. Bierbank liegen muss (das Modell zeichnet ihn mit). */
 export const MOEBEL_BODEN = { haus: 'spruce_planks', biergarten: 'gravel' } as const;
@@ -394,7 +394,7 @@ const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, nu
 export function furniturePack(): Buffer {
   const meta = {
     pack: {
-      description: 'morni.net – Möbel, Trachten und Brunnen der Lobby',
+      description: 'MoinMorni – Möbel, Trachten und Brunnen der Lobby',
       pack_format: PACK_FORMAT,
       supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
       min_format: PACK_FORMAT,

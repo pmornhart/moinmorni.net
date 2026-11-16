@@ -40,7 +40,7 @@ const EXTRAS: Readonly<Record<string, (props: { readonly entry: SettingsEntry })
 
 /**
  * Game modes (Duels, Morni Party …): their settings go into the mode's own config file and apply after its next
- * restart – morni.net restarts it by itself as soon as nobody is playing. Says so, and whether a restart is still due.
+ * restart – MoinMorni restarts it by itself as soon as nobody is playing. Says so, and whether a restart is still due.
  */
 function ModeRestartNotice({ pending }: { readonly pending: boolean }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);

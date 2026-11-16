@@ -1,5 +1,5 @@
 /**
- * morni.net's own API (/api/…). Changing requests carry the CSRF token of the team member's session (the motor's
+ * MoinMorni's own API (/api/…). Changing requests carry the CSRF token of the team member's session (the motor's
  * token, which /api/panel/me hands out). The motor's API goes through MorniHosting's `api` with the base
  * "/panel/motor" instead.
  */

@@ -20,7 +20,7 @@ import {
 import { useState, type CSSProperties, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { NETWORK_TITLE, type ModeStatus } from '@morninet/shared';
+import type { ModeStatus } from '@moinmorni/shared';
 import { Crest } from '~/components/brand';
 import { useCopy } from '~/components/controls';
 import { PlayerFace } from '~/components/player-face';
@@ -254,7 +254,7 @@ function Hero(): ReactElement {
               id="hero-title"
               className="mm-wordmark font-pixel text-[clamp(3.3rem,12vw,7.4rem)] font-bold leading-[0.88] tracking-[0.01em]"
             >
-              {NETWORK_TITLE}
+              MoinMorni
             </h1>
           </div>
           <p className="font-pixel text-[14px] font-semibold uppercase tracking-[0.22em] text-gold-bright [text-shadow:0_2px_0_rgba(0,0,0,0.6)] sm:text-[16px]">

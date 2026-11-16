@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { integer, primaryKey, sqliteTable, text, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
-import type { Mode, Role } from '@morninet/shared';
+import type { Mode, Role } from '@moinmorni/shared';
 
 const now = sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`;
 const createdAt = () => text('created_at').notNull().default(now);
@@ -33,7 +33,7 @@ export const modes = sqliteTable('modes', {
   updatedAt: text('updated_at').notNull().default(now),
 });
 
-/** Team-Mitglieder: Konto im Motor (Passkeys, 2FA) → Rolle auf morni.net. */
+/** Team-Mitglieder: Konto im Motor (Passkeys, 2FA) → Rolle in MoinMorni. */
 export const teamMembers = sqliteTable('team_members', {
   motorUserId: integer('motor_user_id').primaryKey(),
   username: text('username').notNull(),

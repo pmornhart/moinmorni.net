@@ -1,8 +1,8 @@
 {
-  "name": "morninet",
+  "name": "moinmorni",
   "version": "0.0.1",
   "private": true,
-  "description": "morni.net – eigenes Minecraft-Netzwerk mit Webseite, Panel, Discord-Bot und Modpack",
+  "description": "MoinMorni – eigenes Minecraft-Netzwerk mit Webseite, Panel, Discord-Bot und Modpack",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.28.0",

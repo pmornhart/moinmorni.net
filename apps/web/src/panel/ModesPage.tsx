@@ -3,7 +3,7 @@ import { ArrowDown, ArrowUp, ChevronDown, Gamepad2, Save } from 'lucide-react';
 import { useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { MODE_ACCESS, MODE_STATES, type Mode, type ModePatch } from '@morninet/shared';
+import { MODE_ACCESS, MODE_STATES, type Mode, type ModePatch } from '@moinmorni/shared';
 import { FieldBlock } from '~/components/controls';
 import { ModeGlyph } from '~/components/mode-visuals';
 import { Button, Card, Input, NativeSelect, Pill, Skeleton, Switch, Textarea } from '~/components/ui';

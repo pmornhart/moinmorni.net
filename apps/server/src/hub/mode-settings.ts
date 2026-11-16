@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MODE_SETTING_AREAS, settingsOf, type SettingArea } from '@morninet/shared';
+import { MODE_SETTING_AREAS, settingsOf, type SettingArea } from '@moinmorni/shared';
 import type { Stores } from '../panel/stores.js';
 import type { Body } from './transport.js';
 
@@ -7,11 +7,11 @@ import type { Body } from './transport.js';
  * Einstellungen der Spielmodi (Panel → Einstellungen → Duels, Morni Party …): Der Hub schickt sie als
  * `mode-settings` an den Server des Modus – mit genau den Werten aus dem Katalog als „Pfad in der config.yml → Wert“.
  * Das Netzwerk-Plugin trägt sie in die config.yml des Modus-Plugins ein und meldet mit `mode-settings-state`, ob der
- * Modus dafür neu starten muss (das macht morni.net, sobald gerade niemand spielt).
+ * Modus dafür neu starten muss (das macht MoinMorni, sobald gerade niemand spielt).
  */
 
 /** So heißt die Datei, in der sich das Netzwerk-Plugin die Werte merkt (und vor dem nächsten Start einträgt). */
-export const MODE_SETTINGS_FILE = 'plugins/morninet/mode-settings.json';
+export const MODE_SETTINGS_FILE = 'plugins/moinmorni/mode-settings.json';
 
 /** Was an den Modus-Server geht und in `mode-settings.json` steht. */
 export interface ModeSettings {

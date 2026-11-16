@@ -4,7 +4,7 @@ import { badRequest, notFound } from '../lib/errors.js';
 import { MotorError, type MotorClient } from '../motor/client.js';
 import { BUILD_MEMBER } from '../network/provision.js';
 import type { Stores } from '../panel/stores.js';
-import { isOurNetwork } from '../lib/rename.js';
+import { isOurNetwork } from '../public/status.js';
 
 /**
  * Bau-Server fürs Bauteam: Kreativ, flache Welt, friedlich, WorldEdit. Was dort mit WorldEdit gespeichert wird
@@ -53,7 +53,7 @@ export function buildProperties(): Record<string, string> {
     'generate-structures': 'false',
     'allow-nether': 'false',
     'spawn-protection': '0',
-    motd: 'morni.net Bau-Server',
+    motd: 'MoinMorni Bau-Server',
   };
 }
 

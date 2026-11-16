@@ -20,7 +20,7 @@ describe('Schlaf-Modus', () => {
         if (path === '/api/networks')
           return Promise.resolve([
             {
-              name: 'morni.net',
+              name: 'MoinMorni',
               members: [
                 { name: 'lobby', serverId: 'l1' },
                 { name: 'duels', serverId: 'd1' },

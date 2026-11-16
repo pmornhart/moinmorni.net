@@ -3,9 +3,9 @@ import type { FastifyInstance } from 'fastify';
 import { notFound } from '../lib/errors.js';
 
 /**
- * morni.net/panel/motor/api/* → Motor /api/*: Login (Passkeys, 2FA), die eingebetteten Server-Seiten und die
+ * moinmorni.net/panel/motor/api/* → Motor /api/*: Login (Passkeys, 2FA), die eingebetteten Server-Seiten und die
  * Live-Verbindung des Motors. Nur freigegebene Pfade gehen durch – Registrieren, Einrichten, Schlüssel,
- * Hoster-Funktionen (Bestellungen, Zahlungen, Freigaben) und Umzug gibt es über morni.net nicht. Bilder von Mojang
+ * Hoster-Funktionen (Bestellungen, Zahlungen, Freigaben) und Umzug gibt es über MoinMorni nicht. Bilder von Mojang
  * (Spielbilder, Item-Texturen aus dem Wiki) bleiben draußen – der Motor zeigt dann seine eigenen Zeichnungen.
  */
 
@@ -57,12 +57,12 @@ export async function registerMotorProxy(app: FastifyInstance, motorUrl: string)
     rewritePrefix: '',
     websocket: true,
     // Der Motor prüft, ob eine Anfrage von seiner eigenen Seite kommt (Origin = Host) – er soll also den Namen sehen,
-    // den der Browser aufgerufen hat (morni.net), nicht „motor:8080“. Wie „Pass Host Header“ bei NetBird.
+    // den der Browser aufgerufen hat (moinmorni.net), nicht „motor:8080“. Wie „Pass Host Header“ bei NetBird.
     replyOptions: {
       rewriteRequestHeaders: (request, headers) => ({
         ...headers,
         host: request.headers.host ?? headers.host,
-        // Der Motor zählt Anmeldeversuche und Anfragen pro Besucher – er glaubt diese Adresse nur morni.net.
+        // Der Motor zählt Anmeldeversuche und Anfragen pro Besucher – er glaubt diese Adresse nur MoinMorni.
         'x-forwarded-for': request.ip,
       }),
     },

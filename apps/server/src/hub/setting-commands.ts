@@ -1,4 +1,4 @@
-import { SETTING_AREAS, onStep, type GameRight, type SettingArea, type SettingDef } from '@morninet/shared';
+import { SETTING_AREAS, onStep, type GameRight, type SettingArea, type SettingDef } from '@moinmorni/shared';
 import type { Command, Actor } from './commands.js';
 import type { HubContext } from './context.js';
 import { mm, text, type Lang } from './texts.js';

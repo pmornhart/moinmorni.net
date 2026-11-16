@@ -1,5 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
-import { MODE_SETTING_AREAS } from '@morninet/shared';
+import { MODE_SETTING_AREAS } from '@moinmorni/shared';
 import type { Hub } from '../hub/index.js';
 import { MODE_SETTINGS_FILE, modeSettingsOf, serverOfModeArea } from '../hub/mode-settings.js';
 import type { EventBus } from '../lib/events.js';
@@ -12,8 +12,8 @@ import type { RestartQueue } from './restart.js';
  * Einstellungen der Spielmodi, die nicht über den Hub gehen können:
  * - Muss ein Modus für neue Einstellungen neu starten (meldet sein Netzwerk-Plugin), kommt er in die Warteschlange
  *   „Neustart, sobald niemand drauf ist“ – stellt jemand den alten Wert wieder ein, wieder heraus.
- * - Schläft ein Modus (oder ist er gestoppt, oder gerade neu angelegt), schreibt morni.net die Werte über den Motor
- *   nach plugins/morninet/mode-settings.json. Das Netzwerk-Plugin trägt sie beim nächsten Start in die config.yml
+ * - Schläft ein Modus (oder ist er gestoppt, oder gerade neu angelegt), schreibt MoinMorni die Werte über den Motor
+ *   nach plugins/moinmorni/mode-settings.json. Das Netzwerk-Plugin trägt sie beim nächsten Start in die config.yml
  *   ein, bevor der Modus sie liest – so gelten sie gleich beim Aufwachen, ohne weiteren Neustart.
  */
 

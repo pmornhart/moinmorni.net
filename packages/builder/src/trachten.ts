@@ -22,7 +22,7 @@ import { random } from './noise.js';
 type Vec = readonly [number, number, number];
 type Face = 'north' | 'south' | 'east' | 'west' | 'up' | 'down';
 const FACES: readonly Face[] = ['north', 'south', 'east', 'west', 'up', 'down'];
-export const TRACHT_NS = 'morninet';
+export const TRACHT_NS = 'moinmorni';
 
 /** Eigene Texturen (16×16), hell gezeichnet – die Farbe kommt beim Zeichnen dazu (`tint`). */
 type TexName = 'haar' | 'filz' | 'stroh' | 'stoff' | 'schuerze' | 'schnuerung' | 'feder' | 'metall' | 'band';

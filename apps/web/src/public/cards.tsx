@@ -12,7 +12,7 @@ import {
 import type { CSSProperties, ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import type { ModeStatus } from '@morninet/shared';
+import type { ModeStatus } from '@moinmorni/shared';
 import { ModeGlyph } from '~/components/mode-visuals';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';

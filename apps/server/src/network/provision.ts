@@ -4,11 +4,11 @@ import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import type { Config } from '../config.js';
 import type { Hub } from '../hub/index.js';
-import type { MotorClient } from '../motor/client.js';
+import { MotorError, type MotorClient } from '../motor/client.js';
 import { readServerFile, removeServerFiles, writeServerFile } from '../motor/files.js';
-import { NETWORK_NAME } from '../public/status.js';
-import { isOurNetwork, OLD_MODE_JARS, OLD_NETWORK_JAR, renamedServer } from '../lib/rename.js';
-import { MODE_MEMORY_MB, MODE_REPOS, NETWORK_TITLE, type Mode } from '@morninet/shared';
+import { isOurNetwork, NETWORK_NAME } from '../public/status.js';
+import { INTERIM_MODE_JARS, INTERIM_NETWORK_JAR, renamedServer } from '../lib/rename.js';
+import { MODE_MEMORY_MB, MODE_REPOS, type Mode } from '@moinmorni/shared';
 import type { ReleaseSource } from './mode-releases.js';
 
 /**
@@ -22,8 +22,8 @@ export const LOBBY_MEMBER = 'lobby';
 /** Bau-Server fürs Bauteam (Kreativ, flach, WorldEdit) – kein Modus, nur mit dem Recht „Bauen“. */
 export const BUILD_MEMBER = 'bau';
 const PLUGIN_DIR = 'plugins';
-const HUB_FILE = 'plugins/morninet/hub.json';
-const STAMP_FILE = 'plugins/morninet/plugin.sha256';
+const HUB_FILE = 'plugins/moinmorni/hub.json';
+const STAMP_FILE = 'plugins/moinmorni/plugin.sha256';
 const PROXY_MEMORY_MB = 1024;
 const LOBBY_MEMORY_MB = 4096;
 const PROXY_PORT = 25565;
@@ -36,7 +36,7 @@ const WORLDEDIT = { source: 'modrinth', projectId: 'worldedit' } as const;
 /** Standard-Arbeitsspeicher eines Modus-Servers (einzelne Modi brauchen mehr, siehe `MODE_MEMORY_MB`). */
 const MODE_DEFAULT_MEMORY_MB = 3072;
 const MODE_PORT_BASE = 25570;
-const MODE_STAMP_FILE = 'plugins/morninet/mode-release.txt';
+const MODE_STAMP_FILE = 'plugins/moinmorni/mode-release.txt';
 /** Falls der Motor gerade keine Versionsliste bekommt (PaperMC nicht erreichbar). */
 const FALLBACK_VERSION: Readonly<Record<'paper' | 'velocity', string>> = { paper: '26.3', velocity: '4.3.1' };
 
@@ -161,6 +161,23 @@ export function createProvisioner(
     writeServerFile(motor, serverId, file, content);
 
   /**
+   * Liegt die Jar wirklich im Plugin-Ordner? Den Stempel kann es auch ohne sie geben (z. B. wenn ein Netzwerk-Plugin unter
+   * dem Zwischen-Namen sie beim Start gelöscht hat) – dann kommt sie neu.
+   */
+  const hasPluginJar = async (serverId: string, name: string): Promise<boolean> => {
+    try {
+      const list = await motor.request<Array<{ readonly name: string }>>(
+        'GET',
+        `/api/servers/${serverId}/files?path=${PLUGIN_DIR}`,
+      );
+      return list.some((f) => f.name === name);
+    } catch (err) {
+      if (err instanceof MotorError) return false;
+      throw err;
+    }
+  };
+
+  /**
    * hub.json und Plugin auf einen Server. `plugin` = Plugin neu, `hub` = Zugang zum Hub geändert (z. B. neuer
    * Schlüssel nach einem Update) – beides wirkt erst nach einem Neustart.
    */
@@ -181,24 +198,26 @@ export function createProvisioner(
       log.warn({ file: config.pluginFile }, 'Netzwerk-Plugin fehlt im Image – Server laufen ohne Hub');
       return { plugin: false, hub: hubChanged };
     }
-    if ((await readFile(serverId, STAMP_FILE))?.trim() === jar.sha) return { plugin: false, hub: hubChanged };
-    await motor.upload(serverId, PLUGIN_DIR, path.basename(config.pluginFile), jar.bytes);
-    // Umbenennung: die Jar unter dem früheren Namen muss weg, sonst laufen nach dem Neustart zwei Netzwerk-Plugins.
-    if (path.basename(config.pluginFile) !== OLD_NETWORK_JAR)
-      await removeServerFiles(motor, serverId, [`${PLUGIN_DIR}/${OLD_NETWORK_JAR}`]);
+    const jarName = path.basename(config.pluginFile);
+    if ((await readFile(serverId, STAMP_FILE))?.trim() === jar.sha && (await hasPluginJar(serverId, jarName)))
+      return { plugin: false, hub: hubChanged };
+    await motor.upload(serverId, PLUGIN_DIR, jarName, jar.bytes);
+    // Rückbenennung: die Jar unter dem Zwischen-Namen muss weg, sonst laufen nach dem Neustart zwei Netzwerk-Plugins.
+    if (jarName !== INTERIM_NETWORK_JAR)
+      await removeServerFiles(motor, serverId, [`${PLUGIN_DIR}/${INTERIM_NETWORK_JAR}`]);
     await writeFile(serverId, STAMP_FILE, `${jar.sha}\n`);
     return { plugin: true, hub: hubChanged };
   };
 
   /**
-   * Umbenennung: Server, die noch mit dem früheren Namen vorne im Motor stehen („… Lobby“), heißen jetzt
-   * „morni.net Lobby“ usw.
+   * Rückbenennung: Server, die noch mit dem Zwischen-Namen vorne im Motor stehen („… Lobby“), heißen wieder
+   * „MoinMorni Lobby“ usw.
    */
   const renameServers = async (network: MotorNetwork): Promise<void> => {
     const all = [network.proxy, ...network.members];
     await all.reduce(async (prev, s) => {
       await prev;
-      const next = renamedServer(s.serverName ?? '');
+      const next = renamedServer(s.serverName ?? '', NETWORK_NAME);
       if (!next) return;
       await motor.request('PATCH', `/api/servers/${s.serverId}`, { name: next });
       log.info({ server: next }, 'Server im Motor umbenannt');
@@ -225,12 +244,12 @@ export function createProvisioner(
       const existing = networks.find(isOurNetwork);
       if (existing && existing.name !== NETWORK_NAME) {
         await motor.request('PATCH', `/api/networks/${existing.id}`, { name: NETWORK_NAME });
-        log.info('Netzwerk im Motor heißt jetzt morni.net');
+        log.info('Netzwerk im Motor heißt wieder MoinMorni');
       }
       const network =
         existing ??
         (await (async () => {
-          const proxy = await createServer(`${NETWORK_TITLE} Proxy`, 'velocity', PROXY_MEMORY_MB, PROXY_PORT);
+          const proxy = await createServer('MoinMorni Proxy', 'velocity', PROXY_MEMORY_MB, PROXY_PORT);
           created.push(PROXY_MEMBER);
           log.info('Netzwerk: Proxy angelegt');
           return motor.request<MotorNetwork>('POST', '/api/networks', {
@@ -240,7 +259,7 @@ export function createProvisioner(
         })());
 
       if (!network.members.some((m) => m.name === LOBBY_MEMBER)) {
-        const lobby = await createServer(`${NETWORK_TITLE} Lobby`, 'paper', LOBBY_MEMORY_MB, LOBBY_PORT);
+        const lobby = await createServer('MoinMorni Lobby', 'paper', LOBBY_MEMORY_MB, LOBBY_PORT);
         await motor.request('POST', `/api/networks/${network.id}/members`, {
           serverId: lobby.id,
           name: LOBBY_MEMBER,
@@ -249,7 +268,7 @@ export function createProvisioner(
         log.info('Netzwerk: Lobby angelegt');
       }
       if (!network.members.some((m) => m.name === BUILD_MEMBER)) {
-        const bau = await createServer(`${NETWORK_TITLE} Bau`, 'paper', BUILD_MEMORY_MB, BUILD_PORT);
+        const bau = await createServer('MoinMorni Bau', 'paper', BUILD_MEMORY_MB, BUILD_PORT);
         await motor.request('POST', `/api/networks/${network.id}/members`, {
           serverId: bau.id,
           name: BUILD_MEMBER,
@@ -271,7 +290,7 @@ export function createProvisioner(
         const member = mode.server ?? '';
         if (network.members.some((m) => m.name === member)) return;
         const server = await createServer(
-          `${NETWORK_TITLE} ${mode.name.de}`,
+          `MoinMorni ${mode.name.de}`,
           'paper',
           MODE_MEMORY_MB[mode.id] ?? MODE_DEFAULT_MEMORY_MB,
           MODE_PORT_BASE + i,
@@ -312,8 +331,8 @@ export function createProvisioner(
           .map((l) => l.trim());
         if (installed === stamp) return done;
         await motor.upload(serverId, PLUGIN_DIR, release.fileName, release.bytes);
-        // Heißt die Jar jetzt anders (z. B. nach einer Umbenennung), muss die alte weg – nie zwei Fassungen.
-        const stale = [installedJar, OLD_MODE_JARS[mode.id] ?? ''].filter(
+        // Heißt die Jar jetzt anders (z. B. nach der Rückbenennung), muss die alte weg – nie zwei Fassungen.
+        const stale = [installedJar, INTERIM_MODE_JARS[mode.id] ?? ''].filter(
           (name, i, all) => name && name !== release.fileName && all.indexOf(name) === i,
         );
         if (stale.length)

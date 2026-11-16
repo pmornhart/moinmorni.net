@@ -12,7 +12,7 @@ const config = (() => {
     // Fehlt etwas in der .env, steht hier was – statt eines langen Stacktraces.
     const missing =
       err instanceof ZodError ? err.issues.map((i) => i.path.join('.')).join(', ') : String(err);
-    process.stderr.write(`morni.net kann nicht starten – in der .env fehlt oder stimmt nicht: ${missing}\n`);
+    process.stderr.write(`MoinMorni kann nicht starten – in der .env fehlt oder stimmt nicht: ${missing}\n`);
     process.stderr.write('Tipp: install.sh legt alles an (auch den Schlüssel für den Motor).\n');
     return process.exit(1);
   }
@@ -28,7 +28,7 @@ process.once('SIGINT', () => void stop());
 
 await built.app.listen({ host: config.host, port: config.port });
 await built.hub.listen(config.host, config.hubPort);
-built.app.log.info({ motor: config.motorUrl, domain: config.domain }, 'morni.net läuft');
+built.app.log.info({ motor: config.motorUrl, domain: config.domain }, 'MoinMorni läuft');
 built
   .start()
   .catch((err: unknown) => built.app.log.error({ err }, 'Motor nicht erreichbar – Einrichtung wartet'));

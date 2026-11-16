@@ -1,4 +1,4 @@
-import { DISCORD_RIGHTS, GAME_RIGHTS, OWNER_ONLY_ROLES, PANEL_AREAS, type Role } from '@morninet/shared';
+import { DISCORD_RIGHTS, GAME_RIGHTS, OWNER_ONLY_ROLES, PANEL_AREAS, type Role } from '@moinmorni/shared';
 
 /** Rules of the role template, kept in step with `roleSchema` in packages/shared/src/roles.ts. */
 export const NAME_MAX = 24;
