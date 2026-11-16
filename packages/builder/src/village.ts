@@ -87,7 +87,7 @@ export const LABEL_LAYOUT = {
   bottom: 2.38,
   gap: 0.03,
   line: 0.25,
-  scale: { name: 0.9, state: 0.72, hint: 0.55 },
+  scale: { name: 0.9, state: 0.75, hint: 0.6 },
 } as const;
 
 const HALF = 0.5;
@@ -546,8 +546,8 @@ export function marketStall(c: Canvas, s: StallSpec): void {
   f.fill(0, 0, 0, 6, 0, 3, 'spruce_planks');
   [0, 6].forEach((u) => [0, 3].forEach((v) => f.fill(u, 1, v, u, 4, v, 'stripped_spruce_log[axis=y]')));
   f.fill(0, 1, 3, 6, 3, 3, 'spruce_planks');
-  // Banner links und rechts über der Ware – nicht direkt hinter der Figur (sah dort aus wie ein Brett am Rücken)
-  [1, 5].forEach((u) => f.set(u, 3, 2, `${s.colour}_wall_banner[facing=${f.dir('front')}]`));
+  // Innen keine Banner (hinter der Figur sahen sie aus wie ein Brett am Rücken) – die dunkle Rückwand bleibt frei,
+  // davor ist das Schild über der Figur gut zu lesen. Die Farbe des Standes tragen Markise und Banner hinten.
   // Rückwand von außen: Banner in der Farbe des Standes und eine Laterne
   f.set(3, 2, 4, `${s.colour}_wall_banner[facing=${f.dir('back')}]`);
   [1, 5].forEach((u) => f.set(u, 1, 4, `lantern[hanging=false]`));
@@ -587,7 +587,8 @@ export function marketStall(c: Canvas, s: StallSpec): void {
     labelTags: s.npcTags ? [] : ['mm_mode_label'],
     label: [
       { size: 'name', parts: [{ text: s.name, color: tint, bold: true }] },
-      { size: 'state', parts: [{ text: s.line, color: 'green' }] },
+      // Modus-Stände: Platzhalter (das Lobby-Plugin setzt den Live-Zustand); andere Stände: warmes Weiß
+      { size: 'state', parts: [{ text: s.line, color: s.npcTags ? '#eadcbc' : 'green' }] },
       { size: 'hint', parts: [{ text: s.status, color: '#c8c8c8' }] },
     ],
   });

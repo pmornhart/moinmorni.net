@@ -60,7 +60,7 @@ describe('Trachten in 3D', () => {
 
   test('Hüte umschließen die gemalten Hutreihen (Wände außerhalb der zweiten Ebene, bis unter die dritte Reihe)', () => {
     const models = trachtModels();
-    ['tyrol', 'straw', 'chef', 'beanie', 'cap', 'helmet'].forEach((hat) => {
+    ['tyrol', 'straw', 'chef', 'beanie', 'cap', 'helmet', 'aviator'].forEach((hat) => {
       const shell = elementsOf(models[`hut_${hat}`]!).find(
         (e) =>
           e.from[0]! < 0.8 &&

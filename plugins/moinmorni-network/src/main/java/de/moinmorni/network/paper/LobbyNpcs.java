@@ -81,8 +81,8 @@ final class LobbyNpcs implements Listener {
     private static final double LABEL_GAP = 0.03;
     private static final double LABEL_LINE = 0.25;
     private static final float NAME_SCALE = 0.9f;
-    private static final float STATE_SCALE = 0.72f;
-    private static final float HINT_SCALE = 0.55f;
+    private static final float STATE_SCALE = 0.75f;
+    private static final float HINT_SCALE = 0.6f;
     /** Dunkler, durchscheinender Grund (Alpha 0 … 255); ohne Hinweis ganz durchsichtig. */
     private static final int LABEL_SHADE = 88;
     private static final int HINT_SHADE = 64;

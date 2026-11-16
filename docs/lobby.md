@@ -6,9 +6,11 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
 ## Was drin ist
 
 - **Dorfmarkt** um den Maibaum: acht Stände eng im Kreis, je zwei an jeder Ecke, Gassen in alle vier Richtungen –
-  je Spielmodus ein Stand mit Markise in der Farbe des Modus, zwei Bannern links und rechts über der Ware und einer
-  Figur mit einem passenden Gegenstand (siehe unten), dazu ein Brezn- und Lebkuchenstand. Ankunft in der Gasse
-  südlich vom Markt. Hier stehen die ersten sieben Modi (`RING_MODES` in `packages/builder/src/lobby/schlossmarkt.ts`).
+  je Spielmodus ein Stand mit Markise in der Farbe des Modus, Banner hinten außen und einer Figur mit einem passenden
+  Gegenstand (siehe unten), dazu ein Brezn- und Lebkuchenstand. Innen bleibt die Rückwand frei (ein Banner direkt
+  hinter der Figur sah aus wie ein Brett am Rücken, und das Schild ist vor dem dunklen Holz gut zu lesen). Ankunft in
+  der Gasse südlich vom Markt. Hier stehen die ersten sieben Modi (`RING_MODES` in
+  `packages/builder/src/lobby/schlossmarkt.ts`).
 - **Schlossmarkt** (16.11., `schlossmarkt.ts`): alle weiteren Modi in einer Marktzeile auf dem Vorplatz vor der
   Schlosstreppe – je drei Stände links und rechts der Prachtstraße (innen zuerst: Wolkenkampf, Versteckerl,
   Wintersport, Adlerflug, Angelkönig, dazu die Blumenfrau mit Blumen und Kräutern), Marktbogen über der Straße mit
@@ -90,7 +92,8 @@ Was über die Figur hinausragt, kommt mit dem Möbel-Paket in 3D dazu (`packages
 Flache malt der Skin selbst (oben). Farben kommen aus der Tracht der Figur (`cast.ts`).
 
 - **Hüte** (Trachtenhut mit Gamsbart, Strohhut, Kochmütze, Mütze mit Bommel, Kappe mit Schirm, Kopftuch, Krone,
-  Partyhut, Helm mit Nasenschutz, Kapuze) sitzen auf dem Kopf: Ihre Wände umschließen die drei obersten Reihen, auf
+  Partyhut, Helm mit kurzem Nasenschutz zwischen den Augen, Fliegerhaube mit Brille und Ohrenklappen, Kapuze) sitzen
+  auf dem Kopf: Ihre Wände umschließen die drei obersten Reihen, auf
   die der Skin seinen Hut malt, mit Abstand zur zweiten Ebene (nichts flimmert, nichts schwebt).
 - **Bart** mit Schnurrbart und Lücke für den Mund, **Dutt** am Hinterkopf (mit Hut tiefer im Nacken).
 - **Am Körper:** Dirndl-Rock in Stufen ab der Taille mit Schürze, Bund und Schleife; langes Haar und Zöpfe den Rücken
@@ -130,10 +133,10 @@ Der Hub schickt allen Spielservern `lobby` mit Zustand und Spielerzahl je Modus 
 Modus-Figur stehen drei Zeilen, jede ein eigenes kleines Schild – unten anfangend 2,38 Blöcke über den Füßen, also
 über jedem Hut:
 
-1. **Name** fett in der Farbe des Modus (Größe 0,9),
-2. **Zustand** (0,72): „● 12 spielen“ / „● 1 spielt“ (grün), „☾ schläft – Klick weckt“ (türkis), „● geschlossen“ (rot),
+1. **Name** fett in der Farbe des Modus (Größe 0,9 – so groß wie der Name über einem Spieler),
+2. **Zustand** (0,75): „● 12 spielen“ / „● 1 spielt“ (grün), „☾ schläft – Klick weckt“ (türkis), „● geschlossen“ (rot),
    „⚒ Wartung“ (gold), „○ bald“ (grau), „☀ Sommerpause“ (gelb),
-3. **Hinweis** klein (0,55): „Rechtsklick: Mitspielen“, „Rechtsklick: Dorf anschauen“ oder „Nur auf Einladung“.
+3. **Hinweis** klein (0,6): „Rechtsklick: Mitspielen“, „Rechtsklick: Dorf anschauen“ oder „Nur auf Einladung“.
 
 Die Schilder drehen sich nur seitlich zum Betrachter (bleiben aufrecht, nichts rutscht ineinander), leuchten immer
 (nachts so lesbar wie am Tag) und haben einen leicht dunklen Grund. Je Sprache gibt es eigene Schilder; jeder Spieler

@@ -18,7 +18,7 @@ import { random } from './noise.js';
 
 export type HairStyle = 'short' | 'long' | 'braids' | 'bun' | 'bald';
 export type HatKind =
-  'tyrol' | 'straw' | 'party' | 'beanie' | 'helmet' | 'hood' | 'chef' | 'cap' | 'scarf' | 'crown';
+  'tyrol' | 'straw' | 'party' | 'beanie' | 'helmet' | 'hood' | 'chef' | 'cap' | 'scarf' | 'crown' | 'aviator';
 
 export interface Outfit {
   readonly skin: number;
@@ -111,7 +111,10 @@ const BUTTON_DARK = 0x9c8650;
 const SILVER = 0xc9ccd0;
 const BLOUSE = 0xf3efe6;
 const LIPS = 0xa04a44;
+const LIPS_WOMAN = 0xc0505e;
 const ROSE = 0xd9776a;
+const GOGGLE_GLASS = 0x7fbfd6;
+const GOGGLE_SHINE = 0xd8f1f8;
 
 /** Hell, Grund, Schatten, tiefer Schatten einer Farbe. */
 interface Tones {
@@ -179,14 +182,17 @@ function headFront(o: Outfit, x: number, y: number): number {
     return cloth(x === 1 || x === 6 ? b.hi : b.base);
   }
   if (y === 4) return edge ? s.lo : s.base;
+  // Nase: Licht von links oben, Schatten rechts daneben
   if (y === 5) {
-    if (x === 3) return s.lo;
-    if (x === 4) return s.deep;
+    if (x === 3) return s.hi;
+    if (x === 4) return s.lo;
     return edge ? s.lo : s.base;
   }
+  // Mund: gedämpft (ein knallroter Mund wirkt aus der Ferne wie eine Clownsnase), Mundwinkel, zarte Wangen
   if (y === 6) {
-    if (x === 3 || x === 4) return woman ? mix(LIPS, 0xd05a6a, 0.45) : LIPS;
-    if (x === 1 || x === 6) return mix(o.skin, ROSE, woman ? 0.4 : 0.25);
+    if (x === 3 || x === 4) return mix(o.skin, woman ? LIPS_WOMAN : LIPS, woman ? 0.6 : 0.5);
+    if (x === 2 || x === 5) return shade(o.skin, 0.88);
+    if (x === 1 || x === 6) return mix(o.skin, ROSE, woman ? 0.3 : 0.14);
     return edge ? s.lo : s.base;
   }
   if (x === 3 || x === 4) return s.base;
@@ -288,7 +294,7 @@ const HATS: Readonly<Record<HatKind, (p: HatPixel) => number | undefined>> = {
   },
   helmet: ({ face, side, x, y, colour, accent }) => {
     if (face === 'top') return x === 3 || x === 4 ? accent : shade(colour, 1.08);
-    if (face === 'front' && y < 6 && (x === 3 || x === 4)) return y < 3 ? accent : shade(accent, 0.9);
+    if (face === 'front' && y < 5 && (x === 3 || x === 4)) return y < 3 ? accent : shade(accent, 0.9);
     if (side && y < 2) return y === 0 ? shade(colour, 1.08) : colour;
     if (side && y === 2) return accent;
     return undefined;
@@ -315,6 +321,21 @@ const HATS: Readonly<Record<HatKind, (p: HatPixel) => number | undefined>> = {
     if (face === 'top') return cloth(colour);
     if (side && y < 2) return (x + y) % 2 === 0 ? cloth(colour) : cloth(accent);
     if (face === 'back' && y < 5) return cloth(y === 4 ? shade(colour, 0.85) : colour);
+    return undefined;
+  },
+  // Fliegerhaube aus Leder: Brille auf der Stirn (Gläser hell, Rahmen in der Zierfarbe), Ohrenklappen
+  aviator: ({ face, side, f, x, y, colour, accent }) => {
+    const seam = x === 3 || x === 4;
+    if (face === 'top') return cloth(seam ? shade(colour, 0.8) : shade(colour, 1.08));
+    if (face === 'front' && y === 2) {
+      if (x === 1 || x === 5) return GOGGLE_GLASS;
+      if (x === 2 || x === 6) return GOGGLE_SHINE;
+      return accent;
+    }
+    if (side && y < 2) return cloth(y === 0 ? shade(colour, 1.08) : colour);
+    if (side && face !== 'front' && y === 2) return shade(accent, 0.75);
+    if ((face === 'right' || face === 'left') && y > 2 && y < 7 && f >= 3 && f <= 5)
+      return cloth(y === 6 ? shade(colour, 0.8) : colour);
     return undefined;
   },
   crown: ({ side, x, y, colour, accent }) => {

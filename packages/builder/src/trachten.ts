@@ -27,7 +27,7 @@ const FACES: readonly Face[] = ['north', 'south', 'east', 'west', 'up', 'down'];
 export const TRACHT_NS = 'moinmorni';
 
 /** Eigene Texturen (16×16), hell gezeichnet – die Farbe kommt beim Zeichnen dazu (`tint`). */
-type TexName = 'haar' | 'filz' | 'stroh' | 'stoff' | 'schuerze' | 'feder' | 'metall' | 'band';
+type TexName = 'haar' | 'filz' | 'stroh' | 'stoff' | 'schuerze' | 'feder' | 'metall' | 'band' | 'glas';
 interface Part {
   readonly from: Vec;
   readonly to: Vec;
@@ -142,7 +142,19 @@ const HATS: Readonly<Record<string, readonly Part[]>> = {
     p([X0, h(4.6), X0], [X1, HI + 1.6, X1], 'metall', 0), // Glocke
     p([X0 - 0.2, h(4.6), X0 - 0.2], [X1 + 0.2, h(4.6) + 1, X1 + 0.2], 'metall', 1), // Rand
     p([7.2, HI + 1.6, X0], [8.8, HI + 3, X1], 'metall', 1), // Kamm
-    p([h(3), h(2), X0 - 0.5], [h(5), h(4.6), X0], 'metall', 1), // Nasenschutz
+    p([h(3), h(3.4), X0 - 0.5], [h(5), h(4.6), X0], 'metall', 1), // Nasenschutz (endet zwischen den Augen)
+  ],
+  // Fliegerhaube: Leder (Farbe 0), Brille auf der Stirn mit Rahmen (Farbe 1) und hellen Gläsern, Ohrenklappen
+  aviator: [
+    p([X0, BRIM, X0], [X1, HI + 1.4, X1], 'filz', 0),
+    p([LO + 0.6, HI + 1.4, LO + 0.6], [HI - 0.6, HI + 2, HI - 0.6], 'filz', 0),
+    p([X0 - 0.2, BRIM + 0.4, X0 - 0.2], [X1 + 0.2, BRIM + 1.4, X1 + 0.2], 'band', 1), // Brillenband
+    p([h(0.7), BRIM, X0 - 1.0], [h(3.5), BRIM + 2.2, X0 - 0.2], 'metall', 1), // Rahmen links
+    p([h(4.5), BRIM, X0 - 1.0], [h(7.3), BRIM + 2.2, X0 - 0.2], 'metall', 1), // Rahmen rechts
+    p([h(1.0), BRIM + 0.3, X0 - 1.2], [h(3.2), BRIM + 1.9, X0 - 1.0], 'glas'), // Glas links
+    p([h(4.8), BRIM + 0.3, X0 - 1.2], [h(7.0), BRIM + 1.9, X0 - 1.0], 'glas'), // Glas rechts
+    p([X0 - 0.3, h(1.4), h(2.6)], [X0, BRIM, h(5.4)], 'filz', 0), // Ohrenklappe rechts
+    p([X1, h(1.4), h(2.6)], [X1 + 0.3, BRIM, h(5.4)], 'filz', 0), // Ohrenklappe links
   ],
   hood: [
     p([LO - 1.2, LO - 1, LO + 1.6], [HI + 1.2, HI + 1.2, HI + 1.2], 'stoff', 0),
@@ -422,5 +434,7 @@ export function trachtTextures(): Record<TexName, Buffer> {
     feder: pic((x, y, r) => grey((y < 4 ? 210 : 70) + r() * 30 - (x % 3 === 0 ? 20 : 0)), 17),
     metall: pic((x, y, r) => grey(230 - (x === 0 || y === 0 ? 40 : 0) + r() * 12), 18),
     band: pic((_x, y, r) => grey(232 - (y % 3 === 0 ? 30 : 0) + r() * 8), 19),
+    // Brillenglas: hellblau mit Glanz oben links (nicht eingefärbt)
+    glas: pic((x, y) => (x + y < 9 && (x + y) % 5 < 2 ? 0xe4f6fb : 0x86c6dc - ((y >> 2) << 18)), 20),
   };
 }
