@@ -6,6 +6,8 @@
 # Nachgebaut sind die Proxmox-Befehle (pct, pveam, pvesm, pvesh, pveversion, modprobe, whiptail) und der Container:
 # „pct exec“ läuft in einem eigenen Mount-Namensraum, in dem /opt, /root, /etc/apt und /etc/os-release Testordner
 # sind – mit nachgebautem apt-get, dpkg, systemctl, hostname, curl, git, docker und netbird. install.sh läuft echt.
+# Der Proxmox-Rechner selbst (Version, Kerne, RAM, freier Platz, Bridges, Gateway) ist je Fall einstellbar – so
+# werden auch die Prüfungen vorab (Proxmox 7/8/9, kleiner Rechner) und die erweiterten Einstellungen getestet.
 #
 # Geprüft wird auch, dass Bot-Token und NetBird-Key nie in Programm-Argumenten, in der Ausgabe oder in liegen
 # gebliebenen Dateien auftauchen: Alle wichtigen Befehle laufen über kleine Wrapper, die ihre Argumente
@@ -127,6 +129,12 @@ fake() {
   chmod 755 "${target}"
 }
 
+# host_ram_gb <gesamt> <frei> – Arbeitsspeicher des nachgebauten Proxmox-Rechners (wie /proc/meminfo, in kB).
+host_ram_gb() {
+  printf 'MemTotal:       %d kB\nMemFree:        1024 kB\nMemAvailable:   %d kB\n' \
+    $(($1 * 1024 * 1024)) $(($2 * 1024 * 1024)) >"${W}/state/meminfo"
+}
+
 new_world() {
   W="${TMP}/$1"
   mkdir -p "${W}"/{bin,ctbin,ctlib,log,state,ct,pve/lxc,modules-load.d}
@@ -139,6 +147,12 @@ new_world() {
   printf 'system          debian-12-standard_12.12-1_amd64.tar.zst\nsystem          debian-13-standard_13.1-2_amd64.tar.zst\nsystem          ubuntu-24.04-standard_24.04-2_amd64.tar.zst\n' \
     >"${W}/state/templates.available"
   : >"${W}/state/templates.local"
+  # Der nachgebaute Proxmox-Rechner: Version, 16 Kerne, 64 GB RAM, 325 GB frei auf local-lvm, Bridges vmbr0 und vmbr1.
+  echo "pve-manager/9.0.11/3bf5476b8a4699e2 (running kernel: 6.14.11-4-pve)" >"${W}/state/pveversion"
+  echo 16 >"${W}/state/cpus"
+  host_ram_gb 64 55
+  echo 341184512 >"${W}/state/lvm-free-kb"
+  mkdir -p "${W}/sysnet/vmbr0/bridge" "${W}/sysnet/vmbr1/bridge" "${W}/sysnet/eth0"
   printf '%s\n' "${TOKEN}" "${NB_KEY}" >"${W}/needles"
   printf '%s' "${NB_KEY}" >"${W}/state/expected-netbird-key"
   local tool
@@ -153,7 +167,24 @@ new_world() {
 write_host_fakes() {
   fake "${W}/bin/pveversion" <<'EOF'
 #!/bin/bash
-echo "pve-manager/9.0.11/3bf5476b8a4699e2 (running kernel: 6.14.11-4-pve)"
+cat @W@/state/pveversion
+EOF
+
+  fake "${W}/bin/nproc" <<'EOF'
+#!/bin/bash
+cat @W@/state/cpus
+EOF
+
+  # Nur die Frage nach dem Standard-Gateway (für eine feste IP) ist nachgebaut.
+  fake "${W}/bin/ip" <<'EOF'
+#!/bin/bash
+printf 'ip %s\n' "$*" >>@W@/log/argv.log
+if [[ "$*" == "-4 route show default" ]]; then
+  echo "default via 192.0.2.1 dev vmbr0 proto kernel onlink"
+  exit 0
+fi
+echo "ip (Test): nicht nachgebaut: $*" >&2
+exit 2
 EOF
 
   fake "${W}/bin/pvesh" <<'EOF'
@@ -181,7 +212,7 @@ printf 'pvesm %s\n' "$*" >>@W@/log/argv.log
 if [[ "$1" == status ]]; then
   echo "Name             Type     Status           Total            Used       Available        %"
   if [[ "$*" != *rootdir* ]]; then echo "local             dir     active        98497780        12345678        86152102   12.53%"; fi
-  echo "local-lvm     lvmthin     active       365760512        24576000       341184512    6.72%"
+  echo "local-lvm     lvmthin     active       365760512        24576000       $(cat @W@/state/lvm-free-kb)    6.72%"
   exit 0
 fi
 exit 2
@@ -479,7 +510,7 @@ run_case() {
   if [[ "${mode}" == plain ]]; then
     (
       export PATH="${W}/bin:${SYS_PATH}" PVE_LXC_CONF_DIR="${W}/pve/lxc" MODULES_LOAD_DIR="${W}/modules-load.d" \
-        TUN_DEVICE=/dev/null
+        TUN_DEVICE=/dev/null HOST_MEMINFO="${W}/state/meminfo" HOST_NET_DIR="${W}/sysnet"
       for kv in "$@"; do export "${kv?}"; done
       exec /bin/bash "${SCRIPT}" </dev/null
     ) >"${W}/out.txt" 2>&1 || RC=$?
@@ -487,7 +518,7 @@ run_case() {
     mkfifo "${W}/in"
     (
       export PATH="${W}/bin:${SYS_PATH}" PVE_LXC_CONF_DIR="${W}/pve/lxc" MODULES_LOAD_DIR="${W}/modules-load.d" \
-        TUN_DEVICE=/dev/null SHELL=/bin/bash TERM=xterm
+        TUN_DEVICE=/dev/null HOST_MEMINFO="${W}/state/meminfo" HOST_NET_DIR="${W}/sysnet" SHELL=/bin/bash TERM=xterm
       for kv in "$@"; do export "${kv?}"; done
       exec script -qfec "/bin/bash ${SCRIPT}" /dev/null <"${W}/in"
     ) >"${W}/out.txt" 2>&1 &
@@ -537,6 +568,8 @@ no_secret_files() {
 }
 no_run_leftovers() { ! compgen -G "/run/morninet-setup.*" >/dev/null; }
 created() { grep -E "^pct create $1 " "${W}/log/pct.log" >/dev/null; }
+# Wert im Aufruf „pct create“ (ungequotet aus dem Wrapper-Protokoll; in pct.log stehen Kommas als „\,“).
+create_arg() { grep -E '^pct create ' "${W}/log/argv.log" | grep -F -- "$1" >/dev/null; }
 not_created() { ! grep -E '^pct create ' "${W}/log/pct.log" >/dev/null 2>&1; }
 
 show_output_on_failure() {
@@ -606,6 +639,14 @@ check "zeigt Einrichtungs-Code" has "${W}/out.txt" "Einrichtungs-Code: "$'\e[32m
 check "zeigt Panel-Adresse" has "${W}/out.txt" "https://netz.example/panel/einrichtung"
 check "zeigt Adresse zu Hause" has "${W}/out.txt" "http://192.0.2.50:8080/panel/einrichtung"
 check "sagt, dass nur Port 8080 offen ist" has "${W}/out.txt" "nur Port 8080 offen"
+check "erkennt Proxmox VE 9" has "${W}/out.txt" "Proxmox VE 9.0.11"
+check "nennt Kerne und RAM des Rechners" has "${W}/out.txt" "Dein Proxmox: 16 Kerne, 64 GB RAM (55 GB gerade frei)"
+check "nennt den freien Platz auf dem Speicher" has "${W}/out.txt" "100 GB auf local-lvm (dort frei: 325 GB)"
+check "keine Warnung, wenn alles passt" lacks "${W}/out.txt" "Achtung –"
+check "Zusammenfassung nennt Container, Name und IP" has "${W}/out.txt" 'Container 120 „morninet“ · IP 192.0.2.50'
+check "Zusammenfassung zeigt, wie man den Code nochmal sieht" has "${W}/out.txt" "pct exec 120 -- docker exec morninet cat /data/setup-code"
+check "Zusammenfassung verlinkt die Anleitung" has "${W}/out.txt" "docs/schnellstart.md"
+check "bei DHCP wird kein Gateway gesucht" lacks "${W}/log/argv.log" "ip -4 route"
 check_secrets_safe
 show_output_on_failure
 
@@ -625,16 +666,18 @@ check "kein pct push ohne Token" test ! -s "${W}/log/pushed"
 check ".env: Standard-Domain morni.net" same "$(env_value "${CT}/opt/morninet/.env" MM_DOMAIN)" morni.net
 check ".env: Token leer" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_TOKEN)" ""
 check "Branch main" grep -Fx "branch=main" "${W}/state/clone"
-check "Hinweis: Token später im Panel" has "${W}/out.txt" "den Token trägst du im Panel"
+check "Hinweis: Discord-Bot später im Panel" has "${W}/out.txt" 'Discord-Bot: Schritt für Schritt im Panel unter „Discord“'
+check "Hinweis: Erreichbar machen (ohne NetBird)" has "${W}/out.txt" "Einstellungen → Erreichbarkeit"
 check_secrets_safe
 show_output_on_failure
 
 # ---------------------------------------------------------------------------------------------------------------
-begin "3. Token und NetBird-Key aus Dateien (*_FILE), NetBird wird verbunden"
+begin "3. Token und NetBird-Key aus Dateien (*_FILE), eigener NetBird-Server, NetBird wird verbunden"
 new_world env-netbird
 printf '%s\n' "${TOKEN}" >"${W}/token.txt"
 printf '  %s\r\n' "${NB_KEY}" >"${W}/netbird.txt"
-run_case plain CTID=130 MM_DOMAIN=morni.net "MM_DISCORD_TOKEN_FILE=${W}/token.txt" "NETBIRD_SETUP_KEY_FILE=${W}/netbird.txt"
+run_case plain CTID=130 MM_DOMAIN=morni.net "MM_DISCORD_TOKEN_FILE=${W}/token.txt" "NETBIRD_SETUP_KEY_FILE=${W}/netbird.txt" \
+  NETBIRD_MANAGEMENT_URL=https://netbird.example.org
 CT="${W}/ct/130"
 check "läuft durch (Exit 0)" test "${RC}" -eq 0
 check "Token aus der Datei übernommen" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
@@ -644,7 +687,9 @@ check "NetBird-Installer erst geladen, dann ausgeführt" grep -E "^curl https://
 check "NetBird-Hintergrunddienst gestartet" test -f "${W}/state/netbird-active"
 check "netbird up mit dem richtigen Key (über die Umgebung)" grep -Fx ok "${W}/state/netbird-up"
 check "meldet NetBird verbunden" has "${W}/out.txt" "NetBird verbunden"
-check "nächster Schritt nennt den Rechner morninet" has "${W}/out.txt" 'auf den Rechner „morninet“'
+check "netbird up beim eigenen NetBird-Server" grep -Fx "netbird up --management-url https://netbird.example.org" "${W}/log/ct.log"
+check "Zusammenfassung nennt den eigenen NetBird-Server" has "${W}/out.txt" "ja, mit Setup-Key (https://netbird.example.org)"
+check "nächster Schritt: Erreichbarkeit im Panel mit dem Rechner morninet" has "${W}/out.txt" 'Erreichbarkeit verbinden (Rechner „morninet“)'
 check_secrets_safe
 show_output_on_failure
 
@@ -652,7 +697,7 @@ show_output_on_failure
 begin "4. Mit Fragen (whiptail), Fehleingaben werden nochmal gefragt"
 new_world whiptail
 # Token mit Leerzeichen drumherum (beim Einfügen mitkopiert) – muss trotzdem passen.
-with_whiptail abc 121 Spiel.Example kaputt " ${TOKEN} " yes "${NB_KEY}" yes
+with_whiptail abc 121 Spiel.Example kaputt " ${TOKEN} " yes "${NB_KEY}" netbird.example.org "" yes
 run_case tty
 CT="${W}/ct/121"
 check "läuft durch (Exit 0)" test "${RC}" -eq 0
@@ -664,6 +709,9 @@ check "Container 121 angelegt" created 121
 check "Domain klein geschrieben" same "$(env_value "${CT}/opt/morninet/.env" MM_DOMAIN)" spiel.example
 check "Token übernommen (Leerzeichen am Rand entfernt)" same "$(env_value "${CT}/opt/morninet/.env" MM_DISCORD_TOKEN)" "${TOKEN}"
 check "NetBird verbunden" grep -Fx ok "${W}/state/netbird-up"
+check "NetBird-Server ohne https → nochmal gefragt" has "${W}/log/whiptail.log" '„netbird.example.org“ ist keine Adresse wie https://'
+check "leer = NetBird Cloud (netbird up ohne Server-Adresse)" grep -Fx "netbird up" "${W}/log/ct.log"
+check "Zusammenfassung mit Knöpfen Anlegen/Erweitert" has "${W}/log/whiptail.log" "--yes-button Anlegen --no-button Erweitert"
 check "alle Antworten verbraucht" test ! -s "${W}/state/whiptail.answers"
 check_secrets_safe
 show_output_on_failure
@@ -715,6 +763,25 @@ new_world fehler-kein-proxmox
   exec /bin/bash "${SCRIPT}" </dev/null
 ) >"${W}/out.txt" 2>&1 && RC=0 || RC=$?
 check "ohne Proxmox → Abbruch mit Erklärung" has "${W}/out.txt" "nur auf einem Proxmox-VE-Host"
+new_world fehler-pve7
+echo "pve-manager/7.4-19/f98bf8d4 (running kernel: 5.15.158-2-pve)" >"${W}/state/pveversion"
+run_case plain CTID=141 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY=
+check "Proxmox 7 → Abbruch" test "${RC}" -ne 0
+check "Proxmox 7 → erklärt, was es braucht" has "${W}/out.txt" "braucht Proxmox VE 8 oder 9"
+check "Proxmox 7 → kein Container" not_created
+new_world fehler-ip
+run_case plain CTID=142 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY= CT_IP=192.0.2.70
+check "feste IP ohne Netzgröße → Abbruch mit Erklärung" has "${W}/out.txt" 'weder „dhcp“ noch eine feste Adresse'
+check "feste IP ohne Netzgröße → kein Container" not_created
+new_world fehler-bridge
+run_case plain CTID=143 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY= BRIDGE=vmbr9
+check "unbekannte Bridge → Abbruch, nennt die vorhandenen" has "${W}/out.txt" 'Eine Netzwerk-Bridge „vmbr9“ gibt es nicht. Vorhanden: vmbr0 vmbr1'
+check "unbekannte Bridge → kein Container" not_created
+new_world fehler-netbird-url
+run_case plain CTID=144 MM_DISCORD_TOKEN= "NETBIRD_SETUP_KEY=${NB_KEY}" NETBIRD_MANAGEMENT_URL=http://netbird.example.org
+check "NetBird-Server ohne https → Abbruch" has "${W}/out.txt" "ist keine Adresse wie https://netbird.example.de"
+check "NetBird-Server ohne https → kein Container" not_created
+check_secrets_safe
 
 # ---------------------------------------------------------------------------------------------------------------
 begin "7. Fehler mitten in install.sh: Container bleibt zum Nachsehen, Geheimnisse sind weg"
@@ -725,6 +792,70 @@ check "Abbruch (Exit ≠ 0)" test "${RC}" -ne 0
 check "sagt, wie man nachsieht" has "${W}/out.txt" "pct enter 150"
 check "sagt, wie man neu anfängt" has "${W}/out.txt" "pct destroy 150"
 check_secrets_safe
+show_output_on_failure
+
+# ---------------------------------------------------------------------------------------------------------------
+begin "8. Erweitert (whiptail): Name, Kerne, RAM, Swap, Festplatte, Speicher, Bridge, feste IP, Debian 12"
+new_world erweitert
+# Erst „Erweitert“ (no), Fehleingaben werden nochmal gefragt, dann „Anlegen“ (yes).
+with_whiptail 123 morni.net "" no no Morni-Test 99 6 24 2 5 80 local-lvm vmbr1 192.0.2.60/33 192.0.2.60/24 192.0.2.1 12 yes
+run_case tty
+CT="${W}/ct/123"
+check "läuft durch (Exit 0)" test "${RC}" -eq 0
+for want in "--hostname morni-test" "--cores 6" "--memory 24576" "--swap 2048" "--rootfs local-lvm:80" \
+  "name=eth0,bridge=vmbr1,ip=192.0.2.60/24,gw=192.0.2.1" "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"; do
+  check "pct create ${want}" create_arg "${want}"
+done
+check "zu viele Kerne → nochmal gefragt" has "${W}/log/whiptail.log" "Dein Proxmox hat 16 Kerne – mehr gehen nicht"
+check "zu kleine Festplatte → nochmal gefragt" has "${W}/log/whiptail.log" '„5“ ist keine ganze Zahl ab 10'
+check "falsche Netzgröße → nochmal gefragt" has "${W}/log/whiptail.log" '„192.0.2.60/33“ ist weder „dhcp“'
+check "Speicher aus einer Liste mit freiem Platz" has "${W}/log/whiptail.log" "local-lvm 325 GB frei"
+check "Bridges aus einer Liste" has "${W}/log/whiptail.log" "vmbr0 Netzwerk-Bridge vmbr1 Netzwerk-Bridge"
+check "Gateway-Vorschlag kommt vom Host" has "${W}/log/argv.log" "ip -4 route show default"
+check "Zusammenfassung danach nochmal mit den neuen Werten" has "${W}/log/whiptail.log" "Netz: vmbr1, feste IP 192.0.2.60/24, Gateway 192.0.2.1"
+check "RAM 24 GB → Hinweis, wie viele Modi gleichzeitig laufen" has "${W}/log/whiptail.log" "Mit 24 GB laufen Lobby und etwa 6 Spielmodi gleichzeitig"
+check "Docker-Repo für bookworm" grep -Fx "Suites: bookworm" "${CT}/etc-apt/sources.list.d/docker.sources"
+check "alle Antworten verbraucht" test ! -s "${W}/state/whiptail.answers"
+check_secrets_safe
+show_output_on_failure
+
+# ---------------------------------------------------------------------------------------------------------------
+begin "9. Kleiner Rechner (4 Kerne, 16 GB RAM, wenig Platz): Standard passt sich an und warnt verständlich"
+new_world klein
+echo 4 >"${W}/state/cpus"
+host_ram_gb 16 12
+echo $((40 * 1024 * 1024)) >"${W}/state/lvm-free-kb"
+run_case plain CTID=160 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY=
+check "läuft durch (Exit 0)" test "${RC}" -eq 0
+check "RAM angepasst: 14 GB (2 GB bleiben für Proxmox)" create_arg "--memory 14336"
+check "Kerne angepasst: 4" create_arg "--cores 4"
+check "sagt, dass der RAM angepasst wurde" has "${W}/out.txt" "Angepasst – RAM: 14 GB statt 32 GB – dein Proxmox hat 16 GB"
+check "sagt, dass die Kerne angepasst wurden" has "${W}/out.txt" "Angepasst – CPU-Kerne: 4 statt 8"
+check "sagt, wie viele Modi gleichzeitig laufen" has "${W}/out.txt" "Mit 14 GB laufen Lobby und etwa 2 Spielmodi gleichzeitig"
+check "warnt vor wenig freiem Speicher" has "${W}/out.txt" "Auf local-lvm sind nur noch 40 GB frei"
+new_world klein-ram-gesetzt
+host_ram_gb 16 12
+run_case plain CTID=161 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY= RAM=32768 DISK=30
+check "gesetzter RAM bleibt (32 GB)" create_arg "--memory 32768"
+check "warnt: mehr RAM als der Rechner hat" has "${W}/out.txt" "Achtung – RAM: Der Container darf 32 GB nutzen, dein Proxmox hat aber nur 16 GB"
+check "warnt: kleine Festplatte" has "${W}/out.txt" "Achtung – Festplatte: Unter 50 GB"
+new_world winzig
+host_ram_gb 8 6
+run_case plain CTID=162 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY=
+check "8-GB-Rechner: 6 GB für den Container" create_arg "--memory 6144"
+check "8-GB-Rechner: sagt, dass nur Lobby und Proxy gut laufen" has "${W}/out.txt" "Mit 6 GB laufen nur Lobby und Proxy gut"
+
+# ---------------------------------------------------------------------------------------------------------------
+begin "10. Proxmox 8: Debian 12; feste IP ohne Fragen (Gateway vom Host)"
+new_world pve8
+echo "pve-manager/8.4.14/b502d23c55afcba1 (running kernel: 6.8.12-15-pve)" >"${W}/state/pveversion"
+run_case plain CTID=170 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY= CT_IP=192.0.2.70/24
+CT="${W}/ct/170"
+check "läuft durch (Exit 0)" test "${RC}" -eq 0
+check "erkennt Proxmox VE 8" has "${W}/out.txt" "Proxmox VE 8.4.14"
+check "nimmt auf Proxmox 8 Debian 12 (lädt es)" has "${W}/log/argv.log" "pveam download local debian-12-standard_12.12-1_amd64.tar.zst"
+check "feste IP mit Gateway vom Host" create_arg "name=eth0,bridge=vmbr0,ip=192.0.2.70/24,gw=192.0.2.1"
+check "Docker-Repo für bookworm" grep -Fx "Suites: bookworm" "${CT}/etc-apt/sources.list.d/docker.sources"
 show_output_on_failure
 
 # ---------------------------------------------------------------------------------------------------------------
