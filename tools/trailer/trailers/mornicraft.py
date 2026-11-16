@@ -206,42 +206,61 @@ SHOTS = [
     # ------------------------------------------------ … und über die Brücke hinab zum Netherportal
     {'id': '08b-bruecke', 'bars': 2, 'time': 6000, 'spec': {
         'wait': 8,
-        'camera': [{'p': A(-25.5, 173.4, -21.8), 'look': A(-46, 160.5, -22.2), 't': 0},
-                   {'p': A(-36.5, 166.4, -21.9), 'look': A(-49, 160.2, -22.2), 't': 5.4, 'ease': 1}],
-        'actors': {'Anna': walk([A(-29.5, 166.6, -22.7), A(-31, 165.6, -22.7), A(-33, 164.1, -22.7), A(-35, 163.1, -22.7),
+        'camera': [{'p': A(-25.0, 171.6, -22.0), 'look': A(-46, 161.5, -22.1), 't': 0},
+                   {'p': A(-35.5, 165.3, -22.0), 'look': A(-49, 160.4, -22.1), 't': 5.4, 'ease': 1}],
+        'actors': {'Anna': walk([A(-28.6, 167.1, -22.7), A(-29.5, 166.6, -22.7), A(-31, 165.6, -22.7), A(-33, 164.1, -22.7), A(-35, 163.1, -22.7),
                                  A(-37, 161.7, -22.7), A(-39, 160.6, -22.7), A(-41, 159.3, -22.7), A(-43, 158.4, -22.7),
                                  A(-45.6, 158.0, -22.7)], 3.6)
                    + [{'p': A(-45.6, 158.0, -22.7), 't': 0.1, 'look': A(-48, 160.2, -22.0), 'hold': 2}],
-                   'Fritz': walk([A(-27.0, 168.0, -21.3), A(-29, 166.8, -21.3), A(-31, 165.6, -21.3), A(-33, 164.1, -21.3),
+                   'Fritz': walk([A(-27.8, 167.6, -21.3), A(-29, 166.8, -21.3), A(-31, 165.6, -21.3), A(-33, 164.1, -21.3),
                                   A(-35, 163.1, -21.3), A(-37, 161.7, -21.3), A(-39, 160.6, -21.3), A(-41, 159.3, -21.3),
                                   A(-43.4, 158.3, -21.3)], 3.6)
                    + [{'p': A(-43.4, 158.3, -21.3), 't': 0.1, 'look': A(-48, 160.2, -22.0), 'hold': 2}]}}},
     # ------------------------------------------------ /end: die Treppe hinab in die Kuppel mit dem Endportal
     {'id': '09-end', 'bars': 2, 'card': 'lt-end.png', 'nv': True, 'time': 6000,
      'before': ['rc:end', 'sleep:6'], 'spec': {
-        'camera': [{'p': A(-18.5, 166.6, -6), 'look': A(-6, 157.5, -6), 't': 0},
-                   {'p': A(-11.5, 159.8, -6), 'look': A(-2, 156.6, -6), 't': 2.4},
-                   {'p': A(-6.0, 158.6, -6), 'look': A(0, 156.4, -6), 't': 2.2, 'ease': 1}]}},
+        'camera': [{'p': A(-15.5, 163.7, -6), 'look': A(-4, 157.6, -6), 't': 0},
+                   {'p': A(-9.6, 158.7, -6), 'look': A(-1, 156.8, -6), 't': 1.9},
+                   {'p': A(-4.2, 158.4, -6), 'look': A(1.5, 156.4, -6), 't': 2.0, 'ease': 1},
+                   {'p': A(-3.6, 158.4, -6), 'look': A(1.5, 156.4, -6), 't': 1.0}]}},
     # ------------------------------------------------ Mächtiger Enderdrache: Blitze auf die Darsteller
-    {'id': '10-drache', 'bars': 2, 'card': 'lt-drache.png', 'nv': True, 'hud': True, 'dimtime': True,
-     'before': [f'rc:execute in {END} run tp Anna 6.5 65 14.5', f'rc:execute in {END} run tp Toni 9.5 65 12.5',
-                f'rc:execute in {END} run tp Clara 3.5 65 16.5', 'rc:effect give @a[name=!McKamera] resistance infinite 4 true',
-                'sleep:3'], 'spec': {
+    {'id': '10-drache', 'bars': 2, 'card': 'lt-drache.png', 'hud': True, 'grade': 'eq=gamma=1.3:saturation=1.15',
+     'before': [f'rc:execute in {END} run tp {n} {x} 62 {z}' for n, x, z in (('Anna', 6.5, 14.5), ('Toni', 9.5, 12.5),
+                                                                         ('Clara', 3.5, 16.5))]
+     + ['rc:effect give @a[name=!McKamera] resistance infinite 4 true', 'rc:clear Anna', 'rc:clear Toni', 'rc:clear Clara',
+        'rc:item replace entity Anna weapon.mainhand with bow', 'rc:item replace entity Anna armor.chest with iron_chestplate',
+        'rc:item replace entity Anna armor.head with iron_helmet',
+        'rc:item replace entity Toni weapon.mainhand with diamond_sword', 'rc:item replace entity Toni weapon.offhand with shield',
+        'rc:item replace entity Toni armor.chest with diamond_chestplate',
+        'rc:item replace entity Clara weapon.mainhand with crossbow', 'rc:item replace entity Clara armor.chest with golden_chestplate',
+        'Anna slot 0', 'Toni slot 0', 'Clara slot 0', f'rc:execute in {END} run gamerule locator_bar false',
+        f'rc:execute in {END} positioned 0 64 0 run kill @e[type=minecraft:enderman,distance=..90]', 'sleep:3'], 'spec': {
         'dim': END, 'wait': 10,
-        'camera': [{'p': [16, 69.5, 28], 'look': [6, 67, 14], 't': 0},
-                   {'p': [19, 70.5, 30], 'look': [6, 68, 13], 't': 5.4, 'ease': 1}],
-        'events': [{'at': 0.4, 'cmd': 'mornicraft drache blitze'}]}},
+        'camera': [{'p': [9.0, 65.4, 20.6], 'look': [6.0, 64.6, 12.5], 't': 0},
+                   {'p': [10.4, 65.9, 21.6], 'look': [5.8, 65.6, 12.0], 't': 5.4, 'ease': 1}],
+        'actors': {'Anna': stand([6.5, 62, 14.5], 5.4, look=[0, 78, -4]),
+                   'Toni': stand([9.5, 62, 12.5], 5.4, look=[0, 78, -4]),
+                   'Clara': stand([3.5, 62, 16.5], 5.4, look=[0, 78, -4])},
+        'events': [{'at': 0.3, 'cmd': 'mornicraft drache blitze'},
+                   {'at': 1.0, 'actor': 'Toni', 'act': 'swing'},
+                   {'at': 2.3, 'cmd': 'mornicraft drache feuerregen'}]}},
     # ------------------------------------------------ Wut: lila Leiste, neue Endkristalle, Feuerregen
-    {'id': '11-wut', 'bars': 2, 'nv': True, 'hud': True, 'spec': {
+    {'id': '11-wut', 'bars': 2, 'hud': True, 'grade': 'eq=gamma=1.3:saturation=1.15',
+     'before': [f'rc:execute in {END} positioned 0 64 0 run kill @e[type=minecraft:enderman,distance=..90]'], 'spec': {
         'dim': END, 'wait': 6, 'follow': '@e[type=minecraft:ender_dragon,limit=1]',
-        'camera': [{'p': [14, 72, 26], 'look': [0, 80, 0], 't': 0},
-                   {'p': [12, 74, 24], 'look': [0, 80, 0], 't': 5.4}],
+        'camera': [{'p': [12, 66, 22], 'look': [0, 80, 0], 't': 0},
+                   {'p': [10, 67.5, 20], 'look': [0, 80, 0], 't': 5.4}],
+        'actors': {'Anna': stand([6.5, 62, 14.5], 5.4, look=[0, 78, -4]),
+                   'Toni': stand([9.5, 62, 12.5], 5.4, look=[0, 78, -4]),
+                   'Clara': stand([3.5, 62, 16.5], 5.4, look=[0, 78, -4])},
         'events': [{'at': 0.3, 'cmd': 'mornicraft drache wut'},
-                   {'at': 0.9, 'cmd': 'mornicraft drache kristalle'},
-                   {'at': 1.8, 'cmd': 'mornicraft drache feuerregen'}]}},
+                   {'at': 0.8, 'cmd': 'mornicraft drache kristalle'},
+                   {'at': 1.6, 'cmd': 'mornicraft drache feuerregen'}]}},
     # ------------------------------------------------ Ende: alle winken auf dem Platz, hinaus über die Insel
     {'id': '12-ende', 'bars': 'rest', 'card': 'ende.png', 'cardAt': 0.5, 'time': 3000,
-     'before': [f'rc:execute in minecraft:overworld run tp Anna {MX} {G} {MZ + 8}', 'rc:effect clear McKamera'], 'spec': {
+     'before': [f'rc:execute in minecraft:overworld run tp {n} {MX + i} {G} {MZ + 8}' for i, n in
+                enumerate(('Anna', 'Toni', 'Clara', 'Dora', 'Fritz'))]
+     + [f'rc:clear {n}' for n in ('Anna', 'Toni', 'Clara', 'Dora', 'Fritz')] + ['rc:effect clear McKamera', 'sleep:2'], 'spec': {
         'camera': [{'p': A(0.5, 172.0, 15.5), 'look': A(0.5, 171.5, 7), 't': 0},
                    {'p': A(0.5, 177, 28), 'look': A(0.5, 172, 4), 't': 3},
                    {'p': A(18, 190, 74), 'look': A(0, 166, 0), 't': 5.4, 'ease': 1}],
@@ -323,6 +342,11 @@ def main(ids):
         finally:
             if s.get('nv'):
                 rc(f'effect clear {cam} night_vision')
+        if s.get('grade'):  # etwas aufhellen (das End ist sehr dunkel)
+            tmp = mp4 + '.tmp.mp4'
+            subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', mp4, '-vf', s['grade'], '-c:v', 'libx264',
+                            '-preset', 'slow', '-crf', '17', '-pix_fmt', 'yuv420p', '-an', tmp], check=True)
+            os.replace(tmp, mp4)
 
 
 def grave_view(owner='Toni'):
