@@ -37,7 +37,7 @@ Videos nur lokal (~/mm-cache/trailer/mornicraft/), nie ins Repo.
 import json, math, os, subprocess, sys, time
 
 STYLE = 'mornicraft'
-FILE = 'MoinMorni-Trailer-MorniCraft.mp4'
+FILE = 'MorniNet-Trailer-MorniCraft.mp4'
 SLOW = 14
 END = 'minecraft:the_end'
 MX, MZ = -467, 272     # Mitte der Spawn-Insel
@@ -51,7 +51,7 @@ def A(x, y, z):
 
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'MoinMorni · Spielmodus', 'title': 'MorniCraft',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'morni.net · Spielmodus', 'title': 'MorniCraft',
      'text': 'Überleben mit Freunden – nur mit Einladung'},
     {'file': 'lt-elytra.png', 'kind': 'lower', 'title': 'Start-Elytra', 'text': 'Vom Spawn abspringen – und losgleiten'},
     {'file': 'lt-raenge.png', 'kind': 'lower', 'title': 'Ränge und Clans', 'text': 'Dein Clan-Kürzel steht über deinem Kopf'},
@@ -61,8 +61,8 @@ CARDS = [
     {'file': 'lt-nether.png', 'kind': 'lower', 'title': 'Tor zum Nether', 'text': 'Über die Brücke zur Insel, die der Nether befallen hat'},
     {'file': 'lt-end.png', 'kind': 'lower', 'title': 'Das Endportal', 'text': 'Tief im Inneren der Spawn-Insel'},
     {'file': 'lt-drache.png', 'kind': 'lower', 'title': 'Mächtiger Enderdrache', 'text': 'Blitze, Feuerregen – und er wird wütend'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
-     'note': 'Nur mit Einladung – bewirb dich auf moinmorni.net'},
+    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
+     'note': 'Nur mit Einladung – bewirb dich auf morni.net'},
 ]
 
 

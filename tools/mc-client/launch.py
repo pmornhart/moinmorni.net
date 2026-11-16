@@ -149,7 +149,7 @@ def main():
     os.makedirs(game_dir, exist_ok=True)
     apply_options(game_dir, a.lang, dict(o.split(':', 1) for o in a.option))
     player_uuid = str(uuid.UUID(bytes=hashlib.md5(f'OfflinePlayer:{a.name}'.encode()).digest(), version=3))
-    args = [a.java, '-Xmx3G', f'-Djava.library.path={game_dir}/natives', '-Dorg.lwjgl.util.Debug=false',
+    args = [a.java, f"-Xmx{os.environ.get('MM_CLIENT_XMX', '3G')}", f'-Djava.library.path={game_dir}/natives', '-Dorg.lwjgl.util.Debug=false',
             '-cp', ':'.join(cp), meta['mainClass'],
             '--username', a.name, '--version', a.version, '--gameDir', game_dir,
             '--assetsDir', f'{cache}/assets', '--assetIndex', meta['assetIndex']['id'],

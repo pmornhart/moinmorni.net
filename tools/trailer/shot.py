@@ -4,13 +4,17 @@
   python3 shot.py <einstellung.json> <ausgabe.mp4>
 
 Umgebung: MM_RCON (host:port), MM_RCON_PASS, MM_CAMERA (Spielername des echten Clients), MM_DISPLAY (z. B. :98),
-MM_ACTORS_FIFO (optional: Datei, über die actors.cjs Handlungen bekommt).
+MM_ACTORS_FIFO (optional: Datei, über die actors.cjs bzw. actors/regie.cjs Handlungen bekommt; dorthin geht auch
+alle 4 Ticks der Ort der Kamera als „* kamera x y z“ – Darsteller können dann zur Kamera schauen),
+MM_HUD_CHECK=0 (Anzeige nicht prüfen; sonst wird sie vorher sicher ausgeschaltet, siehe hud.py).
 
 Einstellung (JSON):
   slow      Zeitlupe (Server läuft 20/slow Ticks pro Sekunde), Standard 6
   setup     Befehle vorher in normaler Geschwindigkeit
   camera    [{"p":[x,y,z], "look":[x,y,z], "t": Sekunden ab dem vorigen Punkt, "ease":1, "hold": s}]
   track     Name eines Darstellers: die Kamera schaut immer auf ihn ("look" kann dann fehlen)
+  follow    Name oder Liste von Spielern (z. B. physikalische Darsteller aus actors/regie.cjs): die Kamera schaut
+            auf ihre Mitte (Brusthöhe), weich nachgeführt – Ort der Spieler kommt per RCON („look“ kann fehlen)
   actors    {"Anna": [{"p":[x,y,z], "t": s, "look":[x,y,z] oder "yaw": Grad, "pitch": Grad, "hold": s}]}
   events    [{"at": s, "cmd": "..."} oder {"at": s, "actor": "Anna", "act": "swing"}]
   after     Befehle danach
@@ -19,6 +23,7 @@ Einstellung (JSON):
 Zeiten sind Spielzeit (so wie es im fertigen Video aussieht).
 """
 import json, math, os, socket, subprocess, sys, time
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'mc-client'))
 import rcon as R
 
@@ -114,11 +119,32 @@ def main():
     duration = max([cam.end] + [p.end for p in actors.values()] + [e['at'] for e in events]) + spec.get('tail', 0.5)
 
     p0 = spec['camera'][0]['p']
+    follow = spec.get('follow')
+    if isinstance(follow, str):
+        follow = [follow]
+
+    def follow_point():
+        pts = []
+        for n in follow or []:
+            v = [float(x) for x in __import__('re').findall(r'-?\d+(?:\.\d+)?(?:E-?\d+)?', rc(f'data get entity {n} Pos'))]
+            if len(v) >= 3:
+                pts.append(v[-3:])
+        if not pts:
+            return None
+        return [sum(p[i] for p in pts) / len(pts) + (1.2 if i == 1 else 0) for i in range(3)]
+    follow_aim = follow_point() if follow else None
+    if follow_aim:
+        for c in spec['camera']:
+            c.setdefault('look', follow_aim)
     if spec.get('track') in actors:
         q = actors[spec['track']].pts[0]['p']
         for c in spec['camera']:
             c.setdefault('look', [q[0], q[1] + 1.2, q[2]])
     yaw0, pitch0 = angles(p0, spec['camera'][0]['look'])
+    from hud import set_hud, require_client
+    require_client(display)
+    if os.environ.get('MM_HUD_CHECK', '1') != '0':
+        set_hud(display, bool(spec.get('hud', False)))
     rc('kill @e[tag=mmcam]')
     rc(f'gamemode spectator {cam_player}')
     rc(at(f'tp {cam_player} {p0[0]} {p0[1]} {p0[2]} {yaw0:.2f} {pitch0:.2f}'))
@@ -153,10 +179,18 @@ def main():
             prev = track_aim or aim
             track_aim = [a + (b - a) * 0.35 for a, b in zip(prev, aim)]
             look = track_aim
+        elif follow:
+            if k % 2 == 0:
+                fp = follow_point()
+                if fp:
+                    follow_aim = [a + (b - a) * 0.3 for a, b in zip(follow_aim or fp, fp)]
+            look = follow_aim
         else:
             look = cam.pos(t, 'look')
         yaw, pitch = angles(pos, look)
         rc(at(f'tp @e[tag=mmcam] {pos[0]:.3f} {pos[1]:.3f} {pos[2]:.3f} {yaw:.2f} {pitch:.2f}'))
+        if act_out and k % 4 == 0:
+            act_out.write(f'* kamera {pos[0]:.2f} {pos[1]:.2f} {pos[2]:.2f}\n')
         for n, path in actors.items():
             p = path.pos(t)
             seg, _ = path.at(t)
