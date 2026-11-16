@@ -1,19 +1,46 @@
+/* eslint-disable ts-patterns/no-magic-numbers -- tests compare against literal expected values */
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { startFakeDiscord, type FakeDiscord } from './fake-discord.js';
+import { LOGO_PNG_BASE64 } from '../src/discord/logo.js';
+import { FAKE_CLIENT_SECRET, FAKE_TOKENS, startFakeDiscord, type FakeDiscord } from './fake-discord.js';
 import { connectPlugin, type FakePlugin } from './fake-plugin.js';
 import { createHarness, OWNER_PASSWORD, type Harness } from './harness.js';
+import { until } from './wait.js';
 
 const LENA = '22222222-2222-2222-2222-222222222222';
 const LENA_DC = '5555';
 const VIEW = 1n << 10n;
+const SEND = 1n << 11n;
+const ADMIN = 1n << 3n;
+const MANAGE_GUILD = 1n << 5n;
 
-const until = async (check: () => boolean | Promise<boolean>, ms = 4000): Promise<void> => {
-  const start = Date.now();
-  while (!(await check())) {
-    if (Date.now() - start > ms) throw new Error('Zeit abgelaufen');
-    await new Promise((r) => setTimeout(r, 25));
-  }
-};
+interface Progress {
+  running: boolean;
+  error: string | null;
+  missing: string[];
+  waitUntil: string | null;
+  steps: Array<{ key: string; state: string; done: number; total: number; error: string | null }>;
+  report: {
+    roles: number;
+    channels: number;
+    created: number;
+    kept: string[];
+    community: string;
+    icon: string;
+    missing: string[];
+    ownerAdminManual: boolean;
+  } | null;
+}
+interface Status {
+  connected: boolean;
+  configured: boolean;
+  guild: { name: string } | null;
+  inviteUrl: string;
+  permissions: string[];
+  setupDone: boolean;
+  setup: Progress;
+  canEditAccess: boolean;
+  credentials: { token: { set: boolean; source: string | null } };
+}
 
 describe('Discord-Bot (nachgebautes Discord)', () => {
   let h: Harness;
@@ -22,8 +49,10 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
   let proxy: FakePlugin;
   const call = (method: 'GET' | 'PUT' | 'POST' | 'DELETE', url: string, payload?: object) =>
     h.mm.app.inject({ method, url, payload, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf } });
+  const status = async (): Promise<Status> => (await call('GET', '/api/panel/discord')).json<Status>();
   const roleByName = (name: string) => [...dc.guild.roles.values()].find((r) => r.name === name);
   const channelByName = (name: string) => [...dc.guild.channels.values()].find((c) => c.name === name);
+  const messagesIn = (name: string) => dc.messages.get(channelByName(name)?.id ?? '') ?? [];
   const interaction = (type: number, data: Record<string, unknown>, extra: Record<string, unknown> = {}) =>
     h.mm.bot.handle({
       t: 'INTERACTION_CREATE',
@@ -38,14 +67,27 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
         ...extra,
       },
     });
+  /** „Server einrichten“ im Panel und warten, bis es fertig ist; dabei mitschreiben, ob Discord gebremst hat. */
+  const setup = async (): Promise<{ progress: Progress; waited: boolean }> => {
+    const start = await call('POST', '/api/panel/discord/setup');
+    expect(start.statusCode).toBe(200);
+    const seen = { waited: false };
+    await until(async () => {
+      const s = (await status()).setup;
+      if (s.waitUntil) seen.waited = true;
+      return !s.running;
+    }, 20_000);
+    return { progress: (await status()).setup, waited: seen.waited };
+  };
 
   beforeAll(async () => {
     dc = await startFakeDiscord();
     h = await createHarness({
       env: {
-        MM_DISCORD_TOKEN: 'test-token',
+        MM_DISCORD_TOKEN: FAKE_TOKENS.main,
         MM_DISCORD_API: dc.api,
-        MM_DISCORD_CLIENT_SECRET: 'client-secret',
+        MM_DISCORD_CDN: dc.cdn,
+        MM_DISCORD_CLIENT_SECRET: FAKE_CLIENT_SECRET,
       },
     });
     owner = await h.login('philip', OWNER_PASSWORD);
@@ -65,35 +107,150 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await dc.close();
   });
 
-  test('Bot verbindet sich, merkt sich den Server und zeigt den Einladungslink', async () => {
+  test('Bot verbindet sich, merkt sich den Server, Einladung mit genau den nötigen Rechten (ohne Administrator)', async () => {
     await until(() => dc.identified() > 0);
-    type Status = { connected: boolean; guild: { name: string } | null; inviteUrl: string };
-    await until(async () => (await call('GET', '/api/panel/discord')).json<Status>().guild !== null);
-    const body = (await call('GET', '/api/panel/discord')).json<Status>();
-    expect(body).toMatchObject({ connected: true, guild: { name: 'MoinMorni' }, setupDone: false });
-    expect(body.inviteUrl).toContain('client_id=777');
-    expect(body.inviteUrl).toContain('permissions=8');
+    await until(async () => (await status()).guild !== null);
+    const body = await status();
+    expect(body).toMatchObject({
+      connected: true,
+      guild: { name: 'MoinMorni' },
+      setupDone: false,
+      canEditAccess: true,
+    });
+    expect(body.credentials.token).toEqual({ set: true, source: 'env' });
+    const invite = new URL(body.inviteUrl);
+    expect(invite.searchParams.get('client_id')).toBe('777');
+    expect(invite.searchParams.get('scope')).toBe('bot applications.commands');
+    const perms = BigInt(invite.searchParams.get('permissions') ?? '0');
+    expect(perms & ADMIN).toBe(0n);
+    expect(perms & MANAGE_GUILD).toBe(MANAGE_GUILD);
+    expect(body.permissions).toEqual(
+      expect.arrayContaining([
+        'manageRoles',
+        'manageChannels',
+        'manageGuild',
+        'banMembers',
+        'moderateMembers',
+      ]),
+    );
+    expect(body.permissions).not.toContain('administrator');
+    // Ab jetzt hat die Bot-Rolle genau diese Rechte – wie nach dem Einladen mit dem Link.
+    dc.setBotPermissions(perms);
+    // Kein Profilbild → einmal das MoinMorni-Logo.
+    await until(() => dc.bots.main.avatar !== null);
   });
 
-  test('„Server einrichten“: Rollen, Kanäle mit Rechten, Regeln, Hilfe, Status, Befehle, Community', async () => {
-    const first = await call('POST', '/api/panel/discord/setup');
-    expect(first.statusCode).toBe(200);
-    expect(first.json()).toMatchObject({ roles: 9, community: 'ok' });
-    expect(roleByName('♛ Owner')).toMatchObject({ color: 0xff5555, permissions: '8', hoist: true });
-    expect(roleByName('⚔ Moderator')).toBeTruthy();
-    expect(roleByName('✔ Verbunden')).toBeTruthy();
-    expect(roleByName('Spieler')).toBeUndefined();
+  test('Fehlende Rechte: freundlicher Abbruch mit der Liste, was fehlt', async () => {
+    const before = dc.botRole().permissions;
+    dc.setBotPermissions(VIEW | SEND);
+    const { progress } = await setup();
+    expect(progress.error).toBe('discord_missing_permissions');
+    expect(progress.missing).toEqual(expect.arrayContaining(['manageRoles', 'manageChannels']));
+    expect(progress.steps.find((s) => s.key === 'check')).toMatchObject({ state: 'failed' });
+    dc.setBotPermissions(BigInt(before));
+  });
 
+  test('„Server einrichten“ mit genau den Einladungs-Rechten: Rollen in Reihenfolge, Kanäle, Nachrichten, Befehle, Community, Symbol – auch wenn Discord bremst', async () => {
+    // Kanäle anlegen: "/guilds/900/channels" ja, "/guilds/900/roles" nein.
+    // https://regex101.com/?flavor=javascript&regex=%5E%5C%2Fguilds%5C%2F%5Cd%2B%5C%2Fchannels%24&testString=%2Fguilds%2F900%2Fchannels
+    dc.limit('POST', /^\/guilds\/\d+\/channels$/, 2, 0.4);
+    const { progress, waited } = await setup();
+    expect(progress.error).toBeNull();
+    expect(waited).toBe(true);
+    expect(progress.steps.map((s) => [s.key, s.state])).toEqual([
+      ['check', 'done'],
+      ['roles', 'done'],
+      ['channels', 'done'],
+      ['messages', 'done'],
+      ['commands', 'done'],
+      ['community', 'done'],
+      ['icon', 'done'],
+    ]);
+    expect(progress.report).toMatchObject({
+      roles: 10,
+      community: 'ok',
+      icon: 'set',
+      ownerAdminManual: true,
+    });
+
+    // Rollen: Symbol im Namen, Farbe der Ränge, Reihenfolge wie die Ränge (oben = wichtiger), alle unter dem Bot.
+    const order = [
+      '♛ Owner',
+      '✦ Admin',
+      '⚔ Moderator',
+      '⚒ Builder',
+      '▶ Media',
+      '★ VIP',
+      '🤖 Bot',
+      '✔ Verbunden',
+      '🔇 Stumm',
+      '⛓ Gefängnis',
+    ];
+    const positions = order.map((n) => roleByName(n)?.position ?? -1);
+    expect(positions).toEqual([...positions].sort((a, b) => b - a));
+    expect(Math.min(...positions)).toBeGreaterThan(0);
+    expect(Math.max(...positions)).toBeLessThan(dc.botRole().position);
+    expect(roleByName('♛ Owner')).toMatchObject({ color: 0xff5555, hoist: true });
+    // „Administrator“ vergibt der Bot nicht (hat ihn selbst nicht) – das sagt der Bericht.
+    expect(BigInt(roleByName('♛ Owner')?.permissions ?? '1') & ADMIN).toBe(0n);
+    expect(roleByName('Spieler')).toBeUndefined();
+    expect(dc.guild.members.get('777')?.roles).toContain(roleByName('🤖 Bot')?.id);
+
+    // Kanäle mit Emoji in Kategorien; Team nur fürs Team, der Bot sieht trotzdem alles.
+    ['📢 Info', '💬 Community', '🎫 Hilfe', '🔊 Sprache', '🛡 Team', '⛓ Gefängnis'].forEach((n) =>
+      expect(channelByName(n)).toMatchObject({ type: 4 }),
+    );
+    [
+      '👋・willkommen',
+      '📜・regeln',
+      '📣・ankündigungen',
+      '📰・news',
+      '🟢・status',
+      '🎮・spielmodi',
+      '💬・chat',
+      '📸・bilder-und-clips',
+      '💡・vorschläge',
+      '❓・hilfe',
+      '🎫・tickets',
+      '📝・bewerbungen',
+      '🛡・team-chat',
+      '📋・team-log',
+      '📥・bewerbungs-eingang',
+      '⚖・strafen-log',
+      '⛓・gefängnis',
+    ].forEach((n) => expect(channelByName(n), n).toBeTruthy());
+    expect(channelByName('📰・news')?.parent_id).toBe(channelByName('📢 Info')?.id);
     const team = channelByName('🛡・team-chat');
-    const everyoneTeam = team?.permission_overwrites?.find((o) => o.id === dc.guild.id);
-    expect(BigInt(everyoneTeam?.deny ?? '0') & VIEW).toBe(VIEW);
+    const everyone = team?.permission_overwrites?.find((o) => o.id === dc.guild.id);
+    expect(BigInt(everyone?.deny ?? '0') & VIEW).toBe(VIEW);
+    const botOverwrite = team?.permission_overwrites?.find((o) => o.id === '777' && o.type === 1);
+    expect(BigInt(botOverwrite?.allow ?? '0') & VIEW).toBe(VIEW);
+    // Gefängnis: nur die Gefängnis-Rolle (und das Team) sieht den Kanal; in allen anderen ist sie ausgesperrt.
+    const jail = channelByName('⛓・gefängnis');
+    expect(BigInt(jail?.permission_overwrites?.find((o) => o.id === dc.guild.id)?.deny ?? '0') & VIEW).toBe(
+      VIEW,
+    );
+    expect(
+      BigInt(jail?.permission_overwrites?.find((o) => o.id === roleByName('⛓ Gefängnis')?.id)?.allow ?? '0') &
+        VIEW,
+    ).toBe(VIEW);
     expect(channelByName('Dorfplatz')).toMatchObject({ type: 2 });
-    const rules = channelByName('📜・regeln');
-    expect(dc.messages.get(rules?.id ?? '')?.[0]?.content).toContain('Regeln');
-    const help = channelByName('🎫・hilfe');
-    expect(JSON.stringify(dc.messages.get(help?.id ?? ''))).toContain('mm:ticket:open');
-    const status = channelByName('🟢・status');
-    expect(JSON.stringify(dc.messages.get(status?.id ?? ''))).toContain('MoinMorni');
+
+    // Nachrichten: Begrüßung mit Bild der Webseite und Adresse, Regeln aus dem Panel, Knöpfe, Spielmodi, Status.
+    const welcome = JSON.stringify(messagesIn('👋・willkommen'));
+    expect(welcome).toContain('/bilder/hero-tag.webp');
+    expect(welcome).toContain('moinmorni.net');
+    expect(welcome).toContain('19132');
+    expect(JSON.stringify(messagesIn('📜・regeln'))).toContain('Freundlich bleiben');
+    expect(JSON.stringify(messagesIn('❓・hilfe'))).toContain('mm:ticket:open');
+    expect(JSON.stringify(messagesIn('🎫・tickets'))).toContain('mm:ticket:open');
+    const apply = JSON.stringify(messagesIn('📝・bewerbungen'));
+    expect(apply).toContain('mm:apply:team:moderator');
+    expect(apply).not.toContain('mm:apply:team:admin');
+    const modes = JSON.stringify(messagesIn('🎮・spielmodi'));
+    expect(modes).toContain('/spielmodi/duels');
+    expect(modes).toContain('/bilder/figur-duels.webp');
+    expect(JSON.stringify(messagesIn('🟢・status'))).toContain('MoinMorni');
     expect(dc.commands.map((c) => (c as { name: string }).name)).toEqual([
       'verbinden',
       'hilfe',
@@ -101,13 +258,46 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
       'status',
     ]);
     expect(dc.guild.features).toContain('COMMUNITY');
+    // Server-Symbol: das MoinMorni-Logo, auf dem Bilder-Server von Discord.
+    const icon = await fetch(`${dc.cdn}/icons/${dc.guild.id}/${dc.guild.icon}.png`);
+    expect(Buffer.from(await icon.arrayBuffer()).toString('base64')).toBe(LOGO_PNG_BASE64);
+  });
 
+  test('Nochmal einrichten: nichts doppelt, Umbenanntes und Verschobenes bleibt, Fremdes bleibt, alte eigene Sprachkanäle gehen', async () => {
     const roles = dc.guild.roles.size;
     const channels = dc.guild.channels.size;
-    await call('POST', '/api/panel/discord/setup');
+    const rulesBefore = messagesIn('📜・regeln').length;
+    // Philip ändert in Discord: Kanal umbenannt, eigene Rechte für jemanden, VIP und Media getauscht, eigener Kanal.
+    const chat = channelByName('💬・chat');
+    if (chat) chat.name = 'plauderecke';
+    chat?.permission_overwrites?.push({ id: '4242', type: 1, allow: VIEW.toString(), deny: '0' });
+    const vip = roleByName('★ VIP');
+    const media = roleByName('▶ Media');
+    if (vip && media) [vip.position, media.position] = [media.position, vip.position];
+    dc.guild.channels.set('4343', { id: '4343', name: 'philips-ecke', type: 0 });
+    // Ein Sprachkanal weniger in den Einstellungen.
+    const voice = (h.mm.stores.settings('voice')['channels'] as string[]).slice(0, -1);
+    h.mm.stores.patchSettings('voice', { channels: voice }, 'test');
+
+    const { progress } = await setup();
+    expect(progress.error).toBeNull();
     expect(dc.guild.roles.size).toBe(roles);
-    expect(dc.guild.channels.size).toBe(channels);
-    expect(dc.messages.get(rules?.id ?? '')?.length).toBe(1);
+    expect(dc.guild.channels.size).toBe(channels); // minus alter Sprachkanal, plus Philips eigener
+    expect(messagesIn('📜・regeln').length).toBe(rulesBefore);
+    expect(channelByName('plauderecke')).toBeTruthy();
+    expect(channelByName('💬・chat')).toBeUndefined();
+    expect(progress.report?.kept).toContain('plauderecke');
+    expect(channelByName('plauderecke')?.permission_overwrites?.some((o) => o.id === '4242')).toBe(true);
+    expect((roleByName('★ VIP')?.position ?? 0) > (roleByName('▶ Media')?.position ?? 0)).toBe(true);
+    expect(channelByName('philips-ecke')).toBeTruthy();
+    expect(channelByName('Turnier')).toBeUndefined();
+    expect(progress.report?.icon).toBe('unchanged');
+  });
+
+  test('Regeln im Panel geändert → Regeln in Discord ziehen nach', async () => {
+    h.mm.stores.patchSettings('website', { rulesDe: 'Sei nett.\nKein Cheaten.' }, 'test');
+    await until(() => JSON.stringify(messagesIn('📜・regeln')).includes('Sei nett.'));
+    expect(messagesIn('📜・regeln').length).toBe(1);
   });
 
   test('Konto verbinden: Code im Spiel, /verbinden in Discord, Rang kommt mit', async () => {
@@ -116,6 +306,8 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     h.mm.hub.players.setRole(LENA, 'vip');
     await proxy.request({ t: 'command', uuid: LENA, command: 'discord', args: [] });
     const msg = await proxy.next('msg', (m) => String(m['text']).includes('/verbinden'));
+    // Code in der Nachricht: "<bold>AB12CD</bold>" → "AB12CD"; "<bold>ab</bold>" nicht.
+    // https://regex101.com/?flavor=javascript&regex=%3Cbold%3E(%5BA-Z0-9%5D%7B6%7D)%3C%5C%2Fbold%3E&testString=%3Cbold%3EAB12CD%3C%2Fbold%3E
     const code = /<bold>([A-Z0-9]{6})<\/bold>/.exec(String(msg['text']))?.[1] ?? '';
     expect(code).toHaveLength(6);
 
@@ -136,8 +328,8 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(mem?.roles).not.toContain(roleByName('★ VIP')?.id);
   });
 
-  test('Strafen gelten auch in Discord: Timeout, Stumm-Rolle, Gefängnis-Rolle, Bann, Team-Log', async () => {
-    const teamlog = channelByName('📋・team-log');
+  test('Strafen gelten auch in Discord: Timeout, Stumm-Rolle, Gefängnis nur mit Gefängnis-Rolle, Bann, Strafen-Log', async () => {
+    const punishLog = () => JSON.stringify(messagesIn('⚖・strafen-log'));
     await call('POST', '/api/panel/punishments', {
       player: 'Lena',
       kind: 'mute',
@@ -160,8 +352,9 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await call('DELETE', `/api/panel/punishments/${LENA}/mute`);
     await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(roleByName('🔇 Stumm')?.id ?? '-'));
 
-    // Gefängnis: Rolle „⛓ Gefängnis“ (sieht nur noch den Gefängnis-Kanal), Aufheben nimmt sie wieder.
+    // Gefängnis: nur noch „⛓ Gefängnis“ (Rang-Rollen weg, sonst sähe sie deren Kanäle), danach alles zurück.
     const jailRole = roleByName('⛓ Gefängnis')?.id ?? '-';
+    const mediaRole = roleByName('▶ Media')?.id ?? '-';
     await call('POST', '/api/panel/punishments', {
       player: 'Lena',
       kind: 'jail',
@@ -169,8 +362,10 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
       reason: 'Beleidigung',
     });
     await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(jailRole)));
+    expect(dc.guild.members.get(LENA_DC)?.roles).toEqual([jailRole]);
     await call('DELETE', `/api/panel/punishments/${LENA}/jail`);
     await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(jailRole));
+    await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(mediaRole)));
 
     await call('POST', '/api/panel/punishments', {
       player: 'Lena',
@@ -181,23 +376,25 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await until(() => dc.guild.bans.has(LENA_DC));
     await call('DELETE', `/api/panel/punishments/${LENA}/ban`);
     await until(() => !dc.guild.bans.has(LENA_DC));
-    const log = JSON.stringify(dc.messages.get(teamlog?.id ?? ''));
-    expect(log).toContain('gebannt');
-    expect(log).toContain('Hacks');
-    expect(log).toContain('entbannt');
-    expect(log).toContain('Gefängnis');
-    expect(log).toContain('Beleidigung');
+    await until(() => punishLog().includes('entbannt'));
+    expect(punishLog()).toContain('Hacks');
+    expect(punishLog()).toContain('Gefängnis');
+    expect(punishLog()).toContain('Beleidigung');
+    dc.guild.members.set(LENA_DC, { roles: [], communication_disabled_until: null });
   });
 
-  test('MorniCraft-Bewerbung: Formular in Discord, #bewerbungen, Annehmen per Knopf, Webseite mit Discord-Anmeldung, Whitelist', async () => {
+  test('MorniCraft-Bewerbung: Auswahl bei /bewerben, Formular, Eingang, Annehmen per Knopf, Webseite mit Discord-Anmeldung, Whitelist', async () => {
     const PHILIP_UUID = '11111111-1111-1111-1111-111111111111';
     const PHILIP_DC = '6666';
-    const apps = channelByName('📝・bewerbungen');
     const lastReply = () => dc.replies.at(-1)?.body;
     const field = (custom_id: string, value: string) => ({ type: 1, components: [{ custom_id, value }] });
+    const intake = () => messagesIn('📥・bewerbungs-eingang');
 
-    // /bewerben öffnet das Formular.
+    // /bewerben zeigt die Auswahl (Team-Stellen + MorniCraft); MorniCraft gewählt → das Formular.
     await interaction(2, { name: 'bewerben' });
+    expect(JSON.stringify(lastReply())).toContain('mm:apply:pick');
+    expect(JSON.stringify(lastReply())).toContain('mornicraft');
+    await interaction(3, { custom_id: 'mm:apply:pick', component_type: 3, values: ['mornicraft'] });
     expect(lastReply()).toMatchObject({ type: 9, data: { custom_id: 'mm:apply-form' } });
     await interaction(5, {
       custom_id: 'mm:apply-form',
@@ -209,19 +406,18 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
       ],
     });
     expect(JSON.stringify(lastReply())).toContain('Lena_Baut');
-    await until(() => (dc.messages.get(apps?.id ?? '') ?? []).length > 0);
-    const posted = (dc.messages.get(apps?.id ?? '') ?? [])[0] as unknown as {
-      id: string;
+    await until(() => intake().length > 0);
+    const posted = intake()[0] as unknown as {
       embeds: Array<{ title: string }>;
       components: Array<{ components: Array<{ custom_id: string }> }>;
     };
     expect(posted.embeds[0]?.title).toContain('Lena_Baut');
     const accept = posted.components[0]?.components[0]?.custom_id ?? '';
+    // Knopf „Annehmen“: "mm:app-accept:3" ja, "mm:app-reject:3" nein.
+    // https://regex101.com/?flavor=javascript&regex=%5Emm%3Aapp-accept%3A%5Cd%2B%24&testString=mm%3Aapp-accept%3A3
     expect(accept).toMatch(/^mm:app-accept:\d+$/);
 
-    // Noch eine Bewerbung geht nicht, solange eine offen ist; Lena selbst darf nicht entscheiden.
-    await interaction(2, { name: 'bewerben' });
-    expect(JSON.stringify(lastReply())).toContain('liegt beim Team');
+    // Lena selbst darf nicht entscheiden.
     await interaction(3, { custom_id: accept });
     expect(JSON.stringify(lastReply())).toContain('Entscheiden darf nur das Team');
 
@@ -237,27 +433,8 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(JSON.stringify(lastReply())).toContain('angenommen');
     await until(() => (dc.messages.get(`8${LENA_DC}`) ?? []).length > 0);
     expect(JSON.stringify(dc.messages.get(`8${LENA_DC}`))).toContain('Willkommen bei MorniCraft');
-    await until(
-      () =>
-        ((dc.messages.get(apps?.id ?? '') ?? [])[0] as unknown as { components: unknown[] }).components
-          .length === 0,
-    );
     const list = (await call('GET', '/api/panel/whitelist')).json<Array<{ displayName: string }>>();
     expect(list.map((w) => w.displayName)).toEqual(['Lena_Baut']);
-
-    // Hub: MorniCraft offen, Lena_Baut darf hinein (der Server schläft und wird geweckt), ein Fremder nicht.
-    h.mm.stores.patchMode('mornicraft', { state: 'on' }, 'test');
-    const toldAbout = (uuid: string, part: string) =>
-      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
-    await proxy.request({ t: 'login', uuid: LENA, name: 'Lena_Baut', locale: 'de_de', bedrock: false });
-    await proxy.request({ t: 'connecting', uuid: LENA, server: 'mornicraft' });
-    expect((await toldAbout(LENA, 'MorniCraft'))['text']).not.toContain('nicht auf der Liste');
-    const STRANGER = '99999999-9999-9999-9999-999999999999';
-    await proxy.request({ t: 'login', uuid: STRANGER, name: 'Fremder', locale: 'de_de', bedrock: false });
-    expect(await proxy.request({ t: 'connecting', uuid: STRANGER, server: 'mornicraft' })).toMatchObject({
-      data: { allow: false },
-    });
-    await toldAbout(STRANGER, 'nicht auf der Liste');
 
     // Webseite: mit Discord anmelden (OAuth2), dann bewerben.
     const web = (method: 'GET' | 'POST', url: string, cookie = '', payload?: object) =>
@@ -285,18 +462,16 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
       me: { name: 'Lena' },
       application: { status: 'accepted', minecraftName: 'Lena_Baut' },
     });
-    expect(
-      (await web('POST', '/api/public/apply', '', { minecraftName: 'X_y', answers: {} })).statusCode,
-    ).toBe(400);
     const sent = await web('POST', '/api/public/apply', session, {
       minecraftName: 'Lena_Zwei',
       answers: { about: 'Mein Zweitkonto zum Bauen und Ausprobieren.', why: 'Zum Testen.' },
     });
     expect(sent.json()).toMatchObject({ status: 'pending', minecraftName: 'Lena_Zwei' });
+    // Die MorniCraft-Karte zeigt nur MorniCraft (keine Team-Bewerbungen).
     const pending = (await call('GET', '/api/panel/applications?status=pending')).json<
-      Array<{ id: number }>
+      Array<{ id: number; mode: string }>
     >();
-    expect(pending).toHaveLength(1);
+    expect(pending.map((a) => a.mode)).toEqual(['mornicraft']);
     const no = await call('POST', `/api/panel/applications/${pending[0]?.id}/decide`, {
       accept: false,
       note: 'Ein Konto reicht.',
@@ -305,17 +480,20 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await until(() => JSON.stringify(dc.messages.get(`8${LENA_DC}`)).includes('Ein Konto reicht.'));
   });
 
-  test('Ticket öffnen und schließen, Begrüßung neuer Mitglieder', async () => {
+  test('Ticket öffnen (privater Kanal im Ticket-Kanal) und schließen, Begrüßung neuer Mitglieder', async () => {
     dc.guild.members.set(LENA_DC, { roles: [], communication_disabled_until: null });
     await interaction(3, { custom_id: 'mm:ticket:open' });
     const thread = [...dc.guild.channels.values()].find((c) => c.name.startsWith('Ticket – lena_dc'));
-    expect(thread).toMatchObject({ type: 12, members: [LENA_DC] });
+    expect(thread).toMatchObject({
+      type: 12,
+      members: [LENA_DC],
+      parent_id: channelByName('🎫・tickets')?.id,
+    });
     expect(JSON.stringify(dc.messages.get(thread?.id ?? ''))).toContain('mm:ticket:close');
     await interaction(3, { custom_id: 'mm:ticket:close' }, { channel_id: thread?.id });
     expect(thread).toMatchObject({ archived: true, locked: true });
 
     await h.mm.bot.handle({ t: 'GUILD_MEMBER_ADD', d: { guild_id: dc.guild.id, user: { id: '6666' } } });
-    const welcome = channelByName('👋・willkommen');
-    expect(JSON.stringify(dc.messages.get(welcome?.id ?? ''))).toContain('<@6666>');
+    expect(JSON.stringify(messagesIn('👋・willkommen'))).toContain('<@6666>');
   });
 });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SETTING_AREAS, modePatchSchema, roleSchema } from '@moinmorni/shared';
+import { SETTING_AREAS, modePatchSchema, roleSchema, settingsOf } from '@moinmorni/shared';
 import type { Api } from '../app.js';
 import { forbidden } from '../lib/errors.js';
 import type { PanelAuth } from './auth.js';
@@ -47,6 +47,14 @@ export function registerPanelRoutes(
     async (request) => {
       const area = SETTING_AREAS.find((a) => a.id === request.params.area);
       const user = await auth.require(request, area?.panel);
+      // Manches ändert nur der Owner (z. B. die Admin-Stelle öffnen) – auch wenn jemand den Bereich sieht.
+      const ownerOnly = area
+        ? settingsOf(area)
+            .filter((d) => d.ownerOnly)
+            .map((d) => d.key)
+        : [];
+      if (user.role.id !== OWNER && Object.keys(request.body).some((k) => ownerOnly.includes(k)))
+        throw forbidden('setting_owner_only');
       return stores.patchSettings(request.params.area, request.body, user.username);
     },
   );

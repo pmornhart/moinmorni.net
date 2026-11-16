@@ -8,6 +8,11 @@ import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fas
 import type { Config } from './config.js';
 import { openDatabase, type Db } from './db/index.js';
 import { createMoinMorniBot, type MoinMorniBot } from './discord/bot.js';
+import { createDiscordCredentials } from './discord/credentials.js';
+import { createApplyLogin } from './applications/login.js';
+import { registerApplicationRoutes } from './applications/routes.js';
+import { createTeamApplications } from './applications/team.js';
+import { createSecretBox } from './lib/secret-box.js';
 import { adoptInterimDatabase } from './lib/rename.js';
 import { createHub, type Hub } from './hub/index.js';
 import { AppError } from './lib/errors.js';
@@ -32,7 +37,7 @@ import { registerApplyRoutes } from './mornicraft/routes.js';
 import { createUpdateService } from './system/update.js';
 import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
-import { registerTeamRoutes } from './panel/team-routes.js';
+import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
@@ -135,6 +140,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const sleepRef: { service: SleepService | null } = { service: null };
   const botRef: { bot: MoinMorniBot | null } = { bot: null };
   const applications = createApplicationService(handle.db, stores, events);
+  // Bot-Token und Client-Secret: aus der .env oder dem Panel (versiegelt mit einem Schlüssel aus MM_SECRET).
+  const credentials = createDiscordCredentials(handle.db, config, createSecretBox(config.secret), app.log);
   const hub = createHub({
     wake: (server) => sleepRef.service?.wake(server) ?? Promise.resolve(false),
     allowedIn: applications.allowed,
@@ -148,6 +155,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     domain: config.domain,
   });
   const status = createStatusService(config, motor, stores, hub);
+  const team = createTeamApplications({ db: handle.db, stores, hub, events });
   const lobbyWorld = createLobbyWorld(motor, app.log, {
     season: () => seasonOf(stores.settings('lobby')['season']),
     packOffer: () => ({
@@ -173,12 +181,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   sleepRef.service = sleep;
   const bot = createMoinMorniBot({
     config,
+    credentials,
     db: handle.db,
     stores,
     hub,
     events,
     status,
     applications,
+    team,
     log: app.log,
     ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
   });
@@ -260,19 +270,32 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerPackRoutes(app);
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
-  teamRef.syncAll = registerTeamRoutes(app, auth, stores, handle.db, motor).syncAll;
-  registerDiscordRoutes(app, auth, bot);
+  const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor);
+  teamRef.syncAll = teamAccess.syncAll;
+  registerDiscordRoutes(app, auth, bot, credentials);
   registerNewsRoutes(app, auth, handle.db, events);
   const updates = createUpdateService(config, motor, stores, options.githubFetch);
   registerUpdateRoutes(app, auth, updates);
   registerBuildRoutes(app, auth, build);
+  const applyLogin = createApplyLogin(config.secret);
   registerApplyRoutes(app, {
     config,
     auth,
     applications,
     discordAppId: bot.applicationId,
-    clientSecret: config.discordClientSecret,
+    clientSecret: credentials.clientSecret,
+    login: applyLogin,
     ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
+  });
+  registerApplicationRoutes(app, {
+    db: handle.db,
+    auth,
+    mornicraft: applications,
+    team,
+    teamAccess: () => teamAccess,
+    login: applyLogin,
+    hub,
+    discordLogin: async () => Boolean(credentials.clientSecret() && (await bot.applicationId())),
   });
   const announceUpdate = async (): Promise<void> => {
     const r = updates.takeResult();
@@ -291,7 +314,12 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       bot.teamLog(bt('de', 'logUpdateStarted', { by })).catch(() => undefined);
     },
   );
-  registerSiteRoutes(app, handle.db, stores, hub, bot.inviteUrl);
+  registerSiteRoutes(app, handle.db, stores, hub, bot.inviteUrl, () =>
+    team
+      .positions()
+      .filter((p) => p.open)
+      .map((p) => ({ id: p.id, name: p.role.name, symbol: p.role.symbol, colour: p.role.colour })),
+  );
   await registerMotorProxy(app, config.motorUrl);
 
   const hasWeb = fs.existsSync(path.join(config.webDir, 'index.html'));
