@@ -6,7 +6,7 @@ keine fremden Melodien.
 
   python3 music.py <stil> <ausgabe.wav> [--takte-json takte.json]
 
-Stile: spawn duels gipfelsturm bollwerk burgverlies party mirni mornicraft wolkenkampf
+Stile: spawn duels gipfelsturm bollwerk burgverlies party mirni mornicraft wolkenkampf versteckerl
 Schreibt neben der WAV-Datei eine JSON mit den Zeitpunkten der Takte (für den Schnitt im Takt).
 """
 import json, os, random, subprocess, sys, tempfile
@@ -67,6 +67,11 @@ STYLES = {
     # Wolkenkampf: luftig und weit (Flöte über Harfen-Wellen, Chor-Fläche), im B-Teil episch mit Horn und Pauken.
     'wolkenkampf': dict(tempo=120, key=2, minor=False, form='IAB AE', lead=73, lead2=60, bass=32, comp=46, pad=91,
                         groove='airy', drums='soar', vel=94),
+    # Versteckerl: verspielt-schleichend in d-Moll – Klarinette über Pizzicato und gezupftem Bass, Glockenspiel,
+    # Holzblöcke auf Zehenspitzen; dazu als Motiv der Pfiff aus dem Spiel („Fiu-fiu“, eine Quarte hinauf).
+    # whistle = Takte, in denen auf Schlag 4 gepfiffen wird (dazu einmal im Schluss), stacc = kurze Melodietöne.
+    'versteckerl': dict(tempo=120, key=2, minor=True, form='IAB AE', lead=71, lead2=9, bass=32, comp=45, pad=49,
+                        groove='sneak', drums='sneak', vel=92, whistle=[1, 3, 11, 23], stacc=0.45),
 }
 
 
@@ -87,12 +92,12 @@ class Song:
         self.ev = []  # (tick, kanal, msg)
         self.bar_ticks = 4 * TPB
 
-    def note(self, ch, tick, pitch, dur, vel):
+    def note(self, ch, tick, pitch, dur, vel, gate=0.92):
         jitter = self.rng.randint(-6, 6) if ch != DRUMS else self.rng.randint(-3, 3)
         t = max(0, int(tick + jitter))
         v = max(1, min(127, int(vel + self.rng.randint(-7, 7))))
         self.ev.append((t, 1, mido.Message('note_on', channel=ch, note=pitch, velocity=v)))
-        self.ev.append((t + max(10, int(dur * TPB * 0.92)), 0, mido.Message('note_off', channel=ch, note=pitch, velocity=0)))
+        self.ev.append((t + max(10, int(dur * TPB * gate)), 0, mido.Message('note_off', channel=ch, note=pitch, velocity=0)))
 
     def chord_at(self, chords, beat):
         c = chords[0] if len(chords) == 1 or beat < 2 else chords[1]
@@ -110,7 +115,8 @@ class Song:
                         p = minorize(p, chords[i][0] if beat < 2 or len(chords[i]) == 1 else chords[i][1])
                     tick = (start_bar + i) * self.bar_ticks + beat * TPB
                     accent = 8 if beat in (0, 2) else 0
-                    self.note(ch, tick, p + self.s['key'], d, vel + accent)
+                    gate = self.s['stacc'] if self.s.get('stacc') and d <= .5 else 0.92  # kurze Töne gezupft
+                    self.note(ch, tick, p + self.s['key'], d, vel + accent, gate)
                     if harmony:  # Terz/Sext darunter aus dem Akkord
                         tones = sorted({(r % 12) for r in CHORD[c]})
                         below = max((q for q in range(p - 9, p - 2) if q % 12 in tones), default=None)
@@ -163,6 +169,12 @@ class Song:
                         step = beat * 2 + e
                         q = tones[step % len(tones)] + 12 * (1 + step // len(tones) % 2)
                         self.note(2, t + e * TPB // 2, q + k, .7, v - 16 + (6 if e == 0 else 0))
+                elif groove == 'sneak':  # Schleichen: gezupfter Bass auf jedem Schlag, Pizzicato dazwischen
+                    walk = (0, 7, 12, 7)
+                    self.note(1, t, root + k + walk[beat], .4, v + 6 - (8 if beat % 2 else 0))
+                    if beat == 0:
+                        for q in tones: self.note(2, t, q + 12 + k, .25, v - 10)
+                    self.note(2, t + TPB // 2, tones[(beat + 1) % len(tones)] + 12 + k, .25, v - 16)
                 elif groove == 'harp':
                     if beat == 0:
                         self.note(1, t, root + k, 4, v)
@@ -207,7 +219,15 @@ class Song:
             elif kind == 'soft':
                 hit(36, 0, v - 30); hit(37, 2, v - 40)
                 for b in range(4): hit(42, b + .5, v - 55)
-            if last and kind not in ('dark', 'soft'):
+            elif kind == 'sneak':  # Holzblöcke auf Zehenspitzen, Seitenschlag, ganz leise Hi-Hat
+                hit(36, 0, v - 24)
+                for b, n in ((.5, 76), (1.5, 77), (2.5, 76), (3.5, 77)): hit(n, b, v - 32)
+                hit(37, 1, v - 30); hit(37, 3, v - 30)
+                for b in range(4): hit(42, b, v - 58)
+                if i % 4 == 0: hit(81, 0, v - 44)
+                if last:
+                    for b, n in ((3, 76), (3.25, 76), (3.5, 77), (3.75, 77)): hit(n, b, v - 22)
+            if last and kind not in ('dark', 'soft', 'sneak'):
                 for b in (2, 2.5, 3, 3.25, 3.5, 3.75): hit(45 if b < 3 else 38, b, v - 10)
 
     def build(self):
@@ -250,7 +270,19 @@ class Song:
                 self.note(DRUMS, t, 49, 1, 110)
                 self.note(DRUMS, t, 36, 1, 110)
                 bar += 2
+        if s.get('whistle'):  # Pfiff als Motiv (eigener Kanal), zuletzt noch einmal im Schluss
+            programs[5] = 78
+            for b in s['whistle']:
+                self.whistle(b, 3.0)
+            if marks and marks[-1][0] == 'ende':
+                self.whistle(marks[-1][1], 1.5)
         return programs, marks, bar
+
+    def whistle(self, bar, beat):
+        """„Fiu-fiu“: zwei kurze Pfiffe eine Quarte hinauf – wie der Pfiff im Spiel (Flöte, Tonhöhe 1,3 → 1,8)."""
+        t = bar * self.bar_ticks + beat * TPB
+        self.note(5, t, 79 + self.s['key'], .35, 100)
+        self.note(5, t + int(.4 * TPB), 84 + self.s['key'], .55, 108)
 
     def write(self, wav):
         programs, marks, bars = self.build()
