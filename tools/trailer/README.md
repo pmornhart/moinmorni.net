@@ -21,7 +21,7 @@ und Titeln im Stil der Webseite.
   mit dem Darsteller-Skin), gesteuert mit echten Eingaben (xdotool) in Zeitlupe. Siehe unten.
 - **Anzeige (F1):** `hud.py` schaltet sie sicher an/aus (Zustand je Client-Prozess gemerkt); `shot.py` schaltet sie
   vor jeder Kamerafahrt aus, `ich.py` an.
-- **Musik:** `music.py` – das morni.net-Thema (selbst geschrieben), je Modus anders arrangiert, gerendert mit FluidSynth
+- **Musik:** `music.py` – das MoinMorni-Thema (selbst geschrieben), je Modus anders arrangiert, gerendert mit FluidSynth
   und dem Klangsatz FluidR3_GM (MIT-Lizenz). Daneben eine JSON mit den Takten.
 - **Karten:** `cards.cjs` – Titel, Bauchbinden und Schlusskarte als PNG (Playwright, Schriften Jersey 10 und Rubik).
 - **Schnitt:** `cut.py` – schneidet im Takt der Musik, blendet Karten ein, legt die Musik darunter.
@@ -70,8 +70,8 @@ eine weiche Feder auf ein Ziel (Punkt oder Spieler, Ort per RCON) und gleicht si
 Ein Client reicht für beides: für Kamerafahrten schaut er als Zuschauer durch die Kamera, für die Ich-Sicht spielt er
 mit (Abenteuer/Überleben). In Spielmodi mit Runden muss er dafür Teil der Runde sein.
 
-## Neuer Name (morni.net)
+## Titel- und Endkarten
 
-Kopfzeile der Titelkarte „morni.net · Spielmodus“ (gesetzt als MORNI.NET · SPIELMODUS), Endkarte „morni.net“ mit
+Kopfzeile der Titelkarte „MoinMorni · Spielmodus“ (gesetzt als MOINMORNI · SPIELMODUS), Endkarte „moinmorni.net“ mit
 „Java & Bedrock · kostenlos“ und dem Hinweis „In der Lobby die Figur „<Modus>“ anklicken“, Dateinamen
-`MorniNet-Trailer-<Modus>.mp4`.
+`MoinMorni-Trailer-<Modus>.mp4`.

@@ -7,7 +7,7 @@ Darsteller werden in die gewünschte Arena gestellt). Darum nicht mit `make.py d
 
   python3 trailers/duels.py [einstellung …]      # vorbereiten + drehen (ohne Angabe: alle)
 
-Server: Morni-Duels `test/run.sh` (Port 25720, RCON 25820) mit ViaVersion für den 26.3-Client, danach in
+Server: MoinMorni-Duels `test/run.sh` (Port 25720, RCON 25820) mit ViaVersion für den 26.3-Client, danach in
 config.yml: zeitlimit-sekunden 3600, countdown-sekunden 1, nachspiel-sekunden 5; fake.properties:
 party.Anna=Anna,Carla und party.Toni=Toni,Dora; Fähigkeiten in spieler/<uuid>.yml (Anna jaeger, Toni bergfuehrer,
 Carla schmied, Dora kraeuterfrau). Darsteller (`actors.cjs`): Anna Toni Carla Dora Otto Fritz – mit den Handlungen
@@ -17,7 +17,7 @@ Vorher ein paar echte gewertete Kämpfe, damit die Ranglisten gefüllt sind.
 import json, math, os, re, socket, subprocess, sys, time
 
 STYLE = 'duels'
-FILE = 'MorniNet-Trailer-Duels.mp4'
+FILE = 'MoinMorni-Trailer-Duels.mp4'
 SLOW = 12
 DIM = 'minecraft:duels'
 Y = 101  # Boden von Turnierhof und Arenen (Füße)
@@ -25,7 +25,7 @@ ACTORS = ['Anna', 'Toni', 'Carla', 'Dora', 'Otto', 'Fritz']
 CAM = os.environ.get('MM_CAMERA', 'MorniTest')
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'morni.net · Spielmodus', 'title': 'Duels',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'MoinMorni · Spielmodus', 'title': 'Duels',
      'text': 'Eins gegen eins – oder zwei gegen zwei'},
     {'file': 'lt-hof.png', 'kind': 'lower', 'title': 'Der Turnierhof', 'text': 'Hier triffst du deine Gegner'},
     {'file': 'lt-kit.png', 'kind': 'lower', 'title': 'Kit-Editor', 'text': 'Ordne deine Ausrüstung, wie du willst'},
@@ -37,7 +37,7 @@ CARDS = [
     {'file': 'lt-zwei.png', 'kind': 'lower', 'title': '2 gegen 2', 'text': 'Mit deiner Party – im Wirtshausgarten'},
     {'file': 'lt-sieg.png', 'kind': 'lower', 'title': 'Gewertet', 'text': 'Jeder Sieg bringt Punkte für die Rangliste'},
     {'file': 'lt-rangliste.png', 'kind': 'lower', 'title': 'Ranglisten', 'text': 'Für jede Kampfart – wer steht oben?'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'In der Lobby die Figur „Duels“ anklicken'},
 ]
 

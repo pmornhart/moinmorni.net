@@ -2,13 +2,13 @@
 import json, os
 
 STYLE = 'spawn'
-FILE = 'MorniNet-Trailer-Spawn.mp4'
+FILE = 'MoinMorni-Trailer-Spawn.mp4'
 G = 65  # Füße auf dem Dorfplatz
 DAYTIME = 'day'
 SLOW = 12
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'Willkommen auf', 'title': 'morni.net',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'Willkommen in', 'title': 'MoinMorni',
      'text': 'Ein Alpendorf voller Spielmodi – für Java und Bedrock'},
     {'file': 'lt-ankunft.png', 'kind': 'lower', 'title': 'Ankunft im Dorf', 'text': 'Mitten auf dem Dorfmarkt am Maibaum'},
     {'file': 'lt-markt.png', 'kind': 'lower', 'title': 'Figur anklicken', 'text': '… und schon bist du im Spielmodus'},
@@ -21,7 +21,7 @@ CARDS = [
     {'file': 'lt-schloss.png', 'kind': 'lower', 'title': 'Das Schloss', 'text': 'Ehrenhof mit Prunkbrunnen'},
     {'file': 'lt-festsaal.png', 'kind': 'lower', 'title': 'Festsaal', 'text': 'Rotunde, Thron und Galerie'},
     {'file': 'lt-nacht.png', 'kind': 'lower', 'title': 'Tag und Nacht wie in echt', 'text': 'Die Lobby-Uhr folgt der Sonne über Bayern'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'Komm vorbei – wir sehen uns im Dorf!'},
 ]
 

@@ -26,7 +26,7 @@ Einstellungen der Runde rechnen damit.
 import json, math, os, re, subprocess, sys, time
 
 STYLE = 'wolkenkampf'
-FILE = 'MorniNet-Trailer-Wolkenkampf.mp4'
+FILE = 'MoinMorni-Trailer-Wolkenkampf.mp4'
 SLOW = 15
 DIM = 'minecraft:wolkenkampf'
 CAM = os.environ.get('MM_CAMERA', 'WkKamera')
@@ -38,7 +38,7 @@ K = 2000.0    # Kristallgipfel (Mitte x)
 MID = 104     # Füße auf der Mittelinsel der Wolkenalm
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'morni.net · Spielmodus', 'title': 'Wolkenkampf',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'MoinMorni · Spielmodus', 'title': 'Wolkenkampf',
      'text': 'Kampf auf schwebenden Inseln über den Wolken'},
     {'file': 'lt-hafen.png', 'kind': 'lower', 'title': 'Der Wolkenhafen', 'text': 'Karte wählen, Ausrüstung aussuchen, bereit sagen'},
     {'file': 'lt-gondel.png', 'kind': 'lower', 'title': 'Ballon-Gondeln', 'text': 'Jeder startet über seiner eigenen Insel'},
@@ -51,7 +51,7 @@ CARDS = [
     {'file': 'lt-nebel.png', 'kind': 'lower', 'title': 'Der Nebel steigt', 'text': 'Von unten verschluckt er Insel um Insel'},
     {'file': 'lt-sieg.png', 'kind': 'lower', 'title': 'Wer zuletzt steht, gewinnt', 'text': 'Allein oder zu zweit, 2 bis 12 Leute'},
     {'file': 'lt-kristall.png', 'kind': 'lower', 'title': 'Zweite Karte: Kristallgipfel', 'text': 'Verschneite Felsen, Eisnadeln und Amethyst'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'In der Lobby die Figur „Wolkenkampf“ anklicken'},
 ]
 

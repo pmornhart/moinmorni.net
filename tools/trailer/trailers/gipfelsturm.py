@@ -28,7 +28,7 @@ Ziel-Zone zählt für das Plugin als Zieleinlauf.
 import json, math, os, re, socket, subprocess, sys, time
 
 STYLE = 'gipfelsturm'
-FILE = 'MorniNet-Trailer-Gipfelsturm.mp4'
+FILE = 'MoinMorni-Trailer-Gipfelsturm.mp4'
 SLOW = 14
 DIM = 'minecraft:gipfelsturm'
 CAM = os.environ.get('MM_CAMERA', 'GipfelKamera')
@@ -39,7 +39,7 @@ SPB = 60 / 152 * 4  # Sekunden pro Takt (Musik „gipfelsturm“)
 EXTRA = 0.35 + 0.25  # Überblendung + etwas Luft
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'morni.net · Spielmodus', 'title': 'Gipfelsturm',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'MoinMorni · Spielmodus', 'title': 'Gipfelsturm',
      'text': 'Parkour quer durch die Alpen – von leicht bis extrem'},
     {'file': 'lt-lager.png', 'kind': 'lower', 'title': 'Das Basislager', 'text': 'Acht Strecken – Schild anklicken und los'},
     {'file': 'lt-alm.png', 'kind': 'lower', 'title': 'Almwiesen-Lauf', 'text': 'Leicht – über Trittsteine zum Heustadel'},
@@ -53,7 +53,7 @@ CARDS = [
     {'file': 'lt-ziel.png', 'kind': 'lower', 'title': 'Im Ziel', 'text': 'Bestzeit und Medaille – bis zum Gipfel ▲'},
     {'file': 'lt-woche.png', 'kind': 'lower', 'title': 'Strecke der Woche', 'text': 'Jeden Montag neu – mit eigener Bestenliste'},
     {'file': 'lt-rennen.png', 'kind': 'lower', 'title': 'Party-Rennen', 'text': 'Mit Freunden um die Wette'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'In der Lobby die Figur „Gipfelsturm“ anklicken'},
 ]
 

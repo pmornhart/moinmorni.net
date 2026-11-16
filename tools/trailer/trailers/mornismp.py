@@ -24,7 +24,7 @@ Videos nur lokal (~/mm-cache/trailer/mornismp/), nie ins Repo.
 import json, math, os, subprocess, sys, time
 
 STYLE = 'mirni'
-FILE = 'MorniNet-Trailer-MorniSMP.mp4'
+FILE = 'MoinMorni-Trailer-MorniSMP.mp4'
 SLOW = 12
 TOWN = 'minecraft:smp_spawn'
 OW = 'minecraft:overworld'
@@ -33,7 +33,7 @@ MEADOW = 104    # Füße auf der Almwiese (Oberwelt, Chunk -6/-4)
 FIGHT = 103     # Füße am Kampfplatz (Oberwelt)
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'morni.net · Spielmodus', 'title': 'MorniSMP',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'MoinMorni · Spielmodus', 'title': 'MorniSMP',
      'text': 'Überleben mit freiem Markt – handeln, bauen, entdecken'},
     {'file': 'lt-markt.png', 'kind': 'lower', 'title': 'Die Marktstadt', 'text': 'Sie schwebt in ihrer eigenen Welt – hier wird gehandelt'},
     {'file': 'lt-auktion.png', 'kind': 'lower', 'title': 'Auktionshaus', 'text': 'Bezahlt wird mit Talern – nur Spielgeld, nichts zu kaufen'},
@@ -44,7 +44,7 @@ CARDS = [
     {'file': 'lt-gs.png', 'kind': 'lower', 'title': 'Grundstück sichern', 'text': 'Dein Land – niemand baut dir hinein'},
     {'file': 'lt-nether.png', 'kind': 'lower', 'title': 'Nether und End', 'text': 'Ganz so, wie du sie kennst'},
     {'file': 'lt-kopfgeld.png', 'kind': 'lower', 'title': 'Kopfgeld', 'text': 'Wer den Gesuchten besiegt, kassiert'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'In der Lobby die Figur „MorniSMP“ anklicken'},
 ]
 

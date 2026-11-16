@@ -246,7 +246,7 @@ CARDS = [
     {'file': 'lt-ich.png', 'kind': 'lower', 'title': 'Ich-Sicht', 'text': 'Mit Anzeige, eigenem Arm und echten Klicks'},
     {'file': 'lt-bruecke.png', 'kind': 'lower', 'title': 'Brücke bauen', 'text': 'Geduckt an die Kante, Brett für Brett'},
     {'file': 'lt-kampf.png', 'kind': 'lower', 'title': 'Kämpfen', 'text': 'Ausweichen, W-Tap, Sprung-Kritische'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'In der Lobby die Figur „Wolkenkampf“ anklicken'},
 ]
 CARD_OF = {'01-ankunft': 'lt-ankunft.png', '02-ich': 'lt-ich.png', '03-bruecke': 'lt-bruecke.png', '04-kampf': 'lt-kampf.png'}

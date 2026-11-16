@@ -23,7 +23,7 @@ die Tafeln, siehe Bericht).
 import json, math, os, re, subprocess, sys, time
 
 STYLE = 'bollwerk'
-FILE = 'MorniNet-Trailer-Bollwerk.mp4'
+FILE = 'MoinMorni-Trailer-Bollwerk.mp4'
 SLOW = 14
 DIM = 'minecraft:bollwerk'
 CAM = os.environ.get('MM_CAMERA', 'BwKamera')
@@ -35,7 +35,7 @@ Y = 101      # Füße
 SPB = 4 * 60 / 112
 
 CARDS = [
-    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'morni.net · Spielmodus', 'title': 'Bollwerk',
+    {'file': 'intro.png', 'kind': 'intro', 'kicker': 'MoinMorni · Spielmodus', 'title': 'Bollwerk',
      'text': 'Verteidigt das Dorf – Welle um Welle'},
     {'file': 'lt-wache.png', 'kind': 'lower', 'title': 'Die Wachstube', 'text': 'Karte wählen, bereit sagen – los geht’s'},
     {'file': 'lt-herz.png', 'kind': 'lower', 'title': 'Das Herz des Dorfes', 'text': 'Der Dorfbrunnen darf nicht fallen'},
@@ -48,7 +48,7 @@ CARDS = [
     {'file': 'lt-ausbau.png', 'kind': 'lower', 'title': 'Welle geschafft!', 'text': 'Gulden verdienen, Bauten verbessern'},
     {'file': 'lt-boss.png', 'kind': 'lower', 'title': 'Boss-Welle', 'text': 'Der Lawinenriese walzt alles nieder'},
     {'file': 'lt-kloster.png', 'kind': 'lower', 'title': 'Zweite Karte: Klosterhof', 'text': 'Verteidigt die Klosterglocke'},
-    {'file': 'ende.png', 'kind': 'end', 'title': 'morni.net', 'text': 'Java & Bedrock · kostenlos',
+    {'file': 'ende.png', 'kind': 'end', 'title': 'moinmorni.net', 'text': 'Java & Bedrock · kostenlos',
      'note': 'In der Lobby die Figur „Bollwerk“ anklicken'},
 ]
 
