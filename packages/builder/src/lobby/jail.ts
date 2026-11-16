@@ -39,6 +39,7 @@ const patch = (list: readonly string[], x: number, y: number, z: number): string
 
 export function buildJail(c: Canvas): void {
   const top = FLOOR + HEIGHT + 1;
+  c.place('Arrestzelle', X1, FLOOR + 1, Z1, X2, Z2);
   // Hülle: Boden, Decke, vier Wände (alles fest, egal was drumherum liegt), innen Luft.
   pairs(range(X1 - 1, X2 + 1), range(Z1 - 1, Z2 + 1)).forEach(([x, z]) => {
     c.set(x, FLOOR, z, patch(FLOORS, x, FLOOR, z));

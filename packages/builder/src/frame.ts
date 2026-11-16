@@ -65,6 +65,13 @@ export class Frame {
     this.c.fill(x1, ya, z1, x2, yb, z2, block);
   }
 
+  /** Raum oder Platz für die Prüfung „zu Fuß erreichbar“: Boden (u1, v1) … (u2, v2), Füße auf Höhe y. */
+  place(name: string, u1: number, y: number, v1: number, u2: number, v2: number): void {
+    const [x1, wy, z1] = this.at(u1, y, v1);
+    const [x2, , z2] = this.at(u2, y, v2);
+    this.c.place(name, x1, wy, z1, x2, z2);
+  }
+
   /** Achse der Vorderseite in Welt-Koordinaten (für Glasscheiben-Verbindungen, Säulen …). */
   frontAxis(): 'x' | 'z' {
     return this.right === 'east' || this.right === 'west' ? 'x' : 'z';

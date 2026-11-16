@@ -16,7 +16,9 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   mit Hecke und Laternenpfeilern zum Schlossberg (der Hang wächst nicht mehr über den Vorplatz), Lager hinter den
   Ständen (Fässer, Heu, Holzstoß), Laternen und Blumen zwischen den Ständen, Brotzeit-Garnituren davor,
   Marktkarren unter Linden an beiden Enden, Blumenbeete zum Dorfplatz, Leute beim Schauen und Bummeln. Die
-  Launchpads und ihre Flugbahn bleiben frei (Test `lobby-market.test.ts`).
+  Launchpads und ihre Flugbahn bleiben frei (Test `lobby-market.test.ts`). Zwischen den Ständen steht nichts mehr
+  in Kopfhöhe der Figuren (vorher ein schwebendes Brett und ein Topf auf dem Fass): vorne die Laterne, ein Blumenbeet
+  im Pflaster, hinten ein Fass; neben den Figuren stehen keine Blumentöpfe auf der Theke (Test).
 - **Neue Figuren** bekommen eigene Trachten (`PENDING_CAST` in `cast.ts`: Ballonfahrerin, Dorfgendarm,
   Skilehrerin, Flieger, Fischer, Blumenfrau). Bis sie bei MineSkin signiert sind
   (`tsx tools/lobby-entwuerfe/src/sign-skins.ts`), trägt jede die Tracht einer passenden bestehenden Figur
@@ -31,7 +33,46 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   mit Theke und Verkäufer). Einrichtung als Daten in `packages/builder/src/village.ts`.
 - **Leute im Dorf**: Figuren mit Tag `mm_walker` schlendern um ihren Platz herum, stehende Figuren schauen Spieler
   in der Nähe an, Kinder sind kleiner.
-- Schloss auf dem Hügel, Prachtstraße, Obstgarten, Felder, Teich, Alpengipfel ringsum.
+- **Schlosstreppe** (`schlosstreppe.ts`): vom Schlossmarkt zu Fuß hinauf zum Schloss – vier Läufe mit 26 Stufen
+  und drei Podesten, dem Schlossberg nachgeführt (Andesit mit hellem Mittelstreifen), Wangen mit Geländer,
+  Laternenpfosten und Blumenkübeln an den Podesten, Blumen am Hang. Unten ein **Aufgang** mit Quarzsäulen, Bogen,
+  Bannern (Smaragd/Gold, Weiß-Blau) und dem Schild „Zum Schloss“, oben der **Schlossvorplatz** mit Mittelweg und Stern
+  aus Gold und Smaragd, Blumenbeeten in Weiß-Blau-Rot, Laternen und zwei Linden. Die Launchpads bleiben zusätzlich –
+  ihre Flugbahn ist frei, gelandet wird auf der Treppe (Test mit Luftreibung wie im Spiel, ganzer Körper).
+- **Schloss** auf dem Hügel: oben an der Treppe das **Schlosstor** (zwei Torpfeiler mit Pilastern, Goldkugel und
+  Laterne, Rundbogen, offene Torflügel, darüber die Attika mit dem Wappen – links Smaragd, rechts Weiß-Blau, Goldrand,
+  Krone – und Banner). Vor Festsaal, Bibliothek und Rittersaal führt je eine **Freitreppe** mit Podest, Wangen,
+  Laternen und Blumen zur Tür (die Säle liegen zwei Blöcke über dem Hof; vorher kam man nicht hinein, und vor jeder
+  Tür stand ein Pilaster). Im Festsaal die **Prunktreppe** zur Galerie: zweiläufig links und rechts der Rotunde,
+  Marmor mit rotem Läufer, schmiedeeisernes Geländer, Goldpfosten mit Laternen, Teppich unten und oben.
+- Obstgarten, Felder, Teich, Alpengipfel ringsum. Die **Gärten** hinter den Häusern der Dorfstraße haben ein
+  Gartentor zur Gasse (vorher lief ihr Zaun quer durch die Häuser – hinten und oben kam man nicht hin), die
+  **Kapelle** ist innen begehbar (durch den Turm: Bänke, Teppich, Altar, goldenes Kreuz).
+
+## Zu Fuß erreichbar (Prüfung ohne Server)
+
+`packages/builder/src/lobby/walk.ts` wertet den fertigen Bauplan aus: Wo kann man stehen (fester Boden, 1,8 Blöcke
+frei), wohin kommt man vom Ankunftspunkt aus zu Fuß? Regeln wie im Spiel: höchstens 1 Block hinauf (über 0,6 nur mit
+Sprung, mit Platz über dem Kopf), Stufen und Treppen mit ihrer echten Höhe (Treppen von vorne und von der Seite in zwei
+halben Stufen, von hinten nur mit Sprung), Zäune und Mauern sind zu hoch, Türen, Tore und Falltüren gehen auf,
+Leitern klettert man, hinunter geht es beliebig. Die Bauten melden ihre Räume und Plätze (`Canvas.place` – Häuser je
+Stockwerk, Säle, Galerie, Stände, Gärten, Plätze, Podeste …).
+
+- Bericht: `npx tsx tools/lobby-entwuerfe/src/zu-fuss.ts` – jeder Ort mit „zu Fuß“ bzw. Zahl der Sprünge, dazu jeder
+  zusammenhängende Boden, den man nicht erreicht (Deko wie Dächer, Baumkronen, Markisen, Möbel-Oberseiten, Hänge und
+  Hohlräume unter dem Gelände zusammengefasst).
+- Test `packages/builder/test/lobby-walk.test.ts`: jeder Ort ist zu Fuß erreichbar **ohne einen einzigen Sprung**,
+  kein anderer Boden bleibt unerreichbar, und die gewollten Ausnahmen bleiben zu (`ON_PURPOSE`: Arrestzelle,
+  Parkour-Ziel, Brunnenbecken der Handwerkergasse). Kommt etwas Neues dazu, das man nicht erreicht, schlägt er an.
+- Echt: `tools/netz-test/treppen-test.cjs` (Test-Spieler, Paper 26.1.2) läuft die Treppen nur mit der Vorwärts-Taste
+  hinauf (an einer ganzen Blockstufe bliebe er stehen) und findet mit Pathfinder ohne Launchpads vom Ankunftspunkt
+  ins Schloss.
+
+Anfangs fand die Prüfung: Festsaal, Galerie, Bibliothek und Rittersaal unerreichbar (Türen zwei Blöcke über dem Hof),
+den Hof nur mit 26 Sprüngen über die Prachtstraße (Rampe aus ganzen Blöcken), die oberste Stufe der alten
+Galerie-Treppe fehlte, die Gartenzäune der Dorfstraße liefen durch acht Häuser (hintere Hälfte des Erdgeschosses und
+alle oberen Stockwerke unerreichbar), sieben Gärten waren rundum zu. Die Bastei hinter dem Schloss liegt unter dem
+Berghang (Hohlraum, kein Platz).
 
 ## Möbel (Ressourcenpaket)
 
@@ -39,13 +80,13 @@ Stühle mit Herz-Lehne, Eckbänke, Wirtstische, Hocker, Bierbänke, Biertische u
 (`packages/builder/src/furniture.ts`). Sie hängen an Blöcken, die es in der Lobby **nur als Möbel** gibt – das Paket
 gibt ihnen ein neues Aussehen, Kollision und Sitzhöhe bleiben echt:
 
-| Block | Möbel |
-| --- | --- |
+| Block                                | Möbel                  |
+| ------------------------------------ | ---------------------- |
 | Mangroven-Treppe unten, gerade/innen | Eckbank (mit Rückwand) |
-| Mangroven-Treppe sonst | Stuhl |
-| Mangroven-Stufe oben / unten | Wirtstisch / Hocker |
-| Birken-Stufe oben / unten | Biertisch / Bierbank |
-| braune Kerze (1–4, aus) | 1–4 Steinkrüge |
+| Mangroven-Treppe sonst               | Stuhl                  |
+| Mangroven-Stufe oben / unten         | Wirtstisch / Hocker    |
+| Birken-Stufe oben / unten            | Biertisch / Bierbank   |
+| braune Kerze (1–4, aus)              | 1–4 Steinkrüge         |
 
 **Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen und keine braunen Kerzen für anderes verbauen.**
 Die Modelle nutzen nur Minecrafts eigene Texturen (es liegen keine Mojang-Dateien im Paket). Weil Minecraft die Fläche
@@ -114,7 +155,8 @@ schickt sie zusammen mit den Panel-Einstellungen als `lobby-settings` an den Lob
   jemand spielt, glänzt das Symbol, geschlossene Modi sind grau. Klick = beitreten bzw. wecken.
 - **Rundgang:** Buch in der Leiste oder `/rundgang`; neue Spieler bekommen ihn einmal automatisch (Schalter im Panel),
   acht Stationen im Zuschauer-Modus, `/rundgang stop` bricht ab.
-- **Launchpads:** zwei Smaragd-Platten am Vorplatz schießen schräg zur Mitte die Schlosstreppe hinauf.
+- **Launchpads:** zwei Smaragd-Platten am Vorplatz schießen schräg zur Mitte die Schlosstreppe hinauf (zu Fuß geht
+  es über die Stufen).
 - **Parkour:** weiß-blaue Spirale im Nordwesten (Start = Smaragd, Kontrollpunkte = Gold, Ziel = Diamant), Zeitmessung,
   Sturz → letzter Kontrollpunkt, Bestzeiten in `plugins/moinmorni/parkour.yml`, Bestenliste als Schild und `/parkour`.
 - **Schutz:** kein Abbauen/Setzen, kein Schaden, kein Hunger, nichts fallen lassen; aus der Welt gefallen → Dorfplatz.

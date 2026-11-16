@@ -52,6 +52,13 @@ async function main() {
     version: '26.1',
     auth: 'offline',
   });
+  // Bietet die Lobby ihr Möbel-Paket an, wartet der Server in der Anmeldung auf eine Antwort – mineflayer schickt sie
+  // dort nicht richtig mit, also hier selbst: angenommen und geladen.
+  bot._client.on('add_resource_pack', (data) => {
+    if (bot._client.state !== 'configuration') return;
+    bot._client.write('resource_pack_receive', { uuid: data.uuid, result: 3 });
+    bot._client.write('resource_pack_receive', { uuid: data.uuid, result: 0 });
+  });
   // Deutscher Client: über den Proxy kommt die Sprache aus den Client-Einstellungen (sonst wäre alles Englisch).
   bot.once('login', () => bot.setSettings({ locale: 'de_DE' }));
   const titles = [];

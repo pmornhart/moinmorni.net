@@ -491,6 +491,7 @@ export interface StallSpec {
 /** Marktstand mit Markise in der Farbe des Modus, Figur in der Mitte (anklickbar), Name über dem Kopf. */
 export function marketStall(c: Canvas, s: StallSpec): void {
   const f = new Frame(c, s.x, s.y, s.z, s.front);
+  f.place(`Stand ${s.name}`, 0, 1, -2, 6, -1);
   f.fill(-1, 0, -2, 7, 0, 4, 'polished_andesite');
   f.fill(0, 0, 0, 6, 0, 3, 'spruce_planks');
   [0, 6].forEach((u) => [0, 3].forEach((v) => f.fill(u, 1, v, u, 4, v, 'stripped_spruce_log[axis=y]')));

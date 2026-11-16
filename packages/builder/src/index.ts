@@ -18,3 +18,4 @@ export * from './lobby/features.js';
 export * from './lobby/jail.js';
 export * from './lobby/schlossmarkt.js';
 export * from './lobby/season.js';
+export * from './lobby/walk.js';

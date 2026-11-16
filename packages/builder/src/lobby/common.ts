@@ -118,7 +118,8 @@ export const MODES: readonly Mode[] = [
     status: 'Klick: Mitspielen',
     skin: 'versteckerl',
     icon: 'hay_block',
-    goods: ['hay_block', 'potted_fern', 'pumpkin', 'decorated_pot'],
+    // Der Topf steht außen (neben der Figur verdeckte er von der Seite ihr Gesicht)
+    goods: ['potted_fern', 'hay_block', 'pumpkin', 'decorated_pot'],
   },
   {
     id: 'wintersport',
@@ -271,6 +272,29 @@ export function fence(
       const ns = z === z1 || z === z2 ? 'east=true,west=true' : 'north=true,south=true';
       c.set(x, y, z, `spruce_fence[${ns}]`);
     });
+}
+
+/**
+ * Garten hinter einem Haus: Zaun an drei Seiten – die vierte ist die Rückwand des Hauses (bei x = `house`) –, in der
+ * Mitte der Seite bei `z1` ein Gartentor zur Gasse. Der Zaun reicht bis an die Ecken des Hauses, damit niemand
+ * dazwischen hängen bleibt.
+ */
+export function garden(c: Canvas, house: number, far: number, z1: number, z2: number): void {
+  const xs = range(house, far);
+  const gate = Math.round((house + far) / 2);
+  xs.forEach((x) =>
+    [z1, z2].forEach((z) =>
+      c.set(
+        x,
+        GROUND + 1,
+        z,
+        x === gate && z === z1 ? 'spruce_fence_gate[facing=south]' : 'spruce_fence[east=true,west=true]',
+      ),
+    ),
+  );
+  range(z1 + 1, z2 - 1).forEach((z) => c.set(far, GROUND + 1, z, 'spruce_fence[north=true,south=true]'));
+  const inside = house + Math.sign(far - house);
+  c.place(`Garten bei ${gate}/${z1}`, inside, GROUND + 1, z1 + 1, far - Math.sign(far - house), z2 - 1);
 }
 
 /** Feld mit reifem Weizen (oder Karotten) in Reihen, dazwischen Wasser. */

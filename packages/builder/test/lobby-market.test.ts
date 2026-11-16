@@ -5,6 +5,8 @@ import { pairs, range } from '../src/range.js';
 import { LAUNCHPADS } from '../src/lobby/features.js';
 import { MODES, modeIcon } from '../src/lobby/common.js';
 import { buildLobby } from '../src/lobby/dorfplatz.js';
+import { LOBBY_SPAWN_VIEW } from '../src/lobby/features.js';
+import { collisionOf, spotKey, walkReport } from '../src/lobby/walk.js';
 import { RING_MODES, SCHLOSSMARKT } from '../src/lobby/schlossmarkt.js';
 
 // Figur eines Modus im Bau: "summon mannequin 20.5 65 -30.5 {Tags:['mm_npc','mm_skin_x','mm_mode_npc','mm_mode_duels'],…"
@@ -13,6 +15,7 @@ const MODE_FIGURE = /^summon mannequin ([-\d.]+) ([-\d.]+) ([-\d.]+) .*'mm_mode_
 
 describe('Dorfmarkt und Schlossmarkt', () => {
   const { canvas } = buildLobby();
+  const walk = walkReport(canvas, LOBBY_SPAWN_VIEW);
   const figures = canvas.extra
     .map((cmd) => MODE_FIGURE.exec(cmd))
     .filter((m): m is RegExpExecArray => m !== null && m[4] !== 'npc')
@@ -64,6 +67,76 @@ describe('Dorfmarkt und Schlossmarkt', () => {
         }),
       );
     });
+  });
+
+  it('Launchpad-Flug wie im Spiel (Luftreibung, ganzer Körper) bis zur Landung frei – gelandet wird auf der Schlosstreppe', () => {
+    const { map, reach } = walk;
+    /** Steckt der Körper (0,6 breit, 1,8 hoch, Füße auf y) in einem Block? */
+    const hits = (x: number, y: number, z: number): string | undefined =>
+      pairs([x - 0.3, x + 0.29], [z - 0.3, z + 0.29])
+        .flatMap(([bx, bz]) =>
+          range(Math.floor(y), Math.floor(y + 1.8)).map((by) => {
+            const block = canvas.get(Math.floor(bx), by, Math.floor(bz)) ?? (by <= GROUND ? 'dirt' : 'air');
+            const shape = collisionOf(block);
+            const inside = shape && y < by + shape[1] && y + 1.8 > by + shape[0];
+            return inside ? `${block} bei ${Math.floor(bx)} ${by} ${Math.floor(bz)}` : undefined;
+          }),
+        )
+        .find((b) => b !== undefined);
+    LAUNCHPADS.forEach((pad) => {
+      const fly = (
+        t: number,
+        p: { x: number; y: number; z: number; vx: number; vy: number; vz: number },
+      ): typeof p & { t: number } => {
+        const next = {
+          x: p.x + p.vx,
+          y: p.y + p.vy,
+          z: p.z + p.vz,
+          vx: p.vx * 0.91,
+          vy: (p.vy - 0.08) * 0.98,
+          vz: p.vz * 0.91,
+        };
+        const blocked = hits(next.x, next.y, next.z);
+        // Fällt der Körper auf etwas, ist er gelandet (darf es nur von oben treffen)
+        if (blocked && p.vy < 0 && !hits(next.x, p.y, next.z)) return { ...p, t };
+        expect(
+          blocked,
+          `Flug von ${pad.x}: Tick ${t} ${next.x.toFixed(1)} ${next.y.toFixed(1)} ${next.z.toFixed(1)}`,
+        ).toBeUndefined();
+        return t > 80 ? { ...next, t } : fly(t + 1, next);
+      };
+      const [vx, vy, vz] = pad.push;
+      const end = fly(1, { x: pad.x + 0.5, y: pad.y + 1, z: pad.z + 0.5, vx, vy, vz });
+      const [x, z] = [Math.floor(end.x), Math.floor(end.z)];
+      const landing = map
+        .column(x, z)
+        .filter((s) => s.h <= end.y * 16 + 1)
+        .sort((a, b) => b.h - a.h)[0];
+      expect(end.t, 'gelandet').toBeLessThan(60);
+      expect(z, 'auf der Schlosstreppe').toBeLessThan(-34);
+      expect(Math.abs(x), 'auf der Schlosstreppe').toBeLessThanOrEqual(5);
+      expect(landing && reach.jumps.get(spotKey(x, z, landing.h)), 'Landeplatz zu Fuß erreichbar').toBe(0);
+    });
+  });
+
+  it('zwischen den Ständen schwebt nichts und nichts reicht in Kopfhöhe der Figuren (Philip: Brett und Topf)', () => {
+    const gaps = SCHLOSSMARKT.slice(0, -2).map((s) => s.x + Math.sign(s.x) * 5);
+    expect(gaps.sort((a, b) => a - b)).toEqual([-35, -25, 25, 35]);
+    gaps.forEach((x) =>
+      range(-34, -31).forEach((z) => {
+        const knee = canvas.get(x, GROUND + 1, z);
+        const head = canvas.get(x, GROUND + 2, z);
+        expect(head === undefined || head === 'air', `${x} ${z}: ${head}`).toBe(true);
+        expect(knee?.includes('trapdoor') ?? false, `${x} ${z}: ${knee}`).toBe(false);
+      }),
+    );
+    // Neben jeder Figur des Schlossmarkts (auf der Theke links und rechts) kein Blumentopf vor dem Gesicht
+    SCHLOSSMARKT.forEach((s) =>
+      [s.x - 2, s.x + 2].forEach((x) => {
+        const goods = canvas.get(x, GROUND + 2, -32);
+        expect(goods?.startsWith('potted_') ?? false, `${s.mode} ${x}: ${goods}`).toBe(false);
+      }),
+    );
   });
 
   it('Marktbogen hängt Wimpel in den Farben der Stände über die Straße', () => {

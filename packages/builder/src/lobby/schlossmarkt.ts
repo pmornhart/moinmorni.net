@@ -27,7 +27,10 @@ const PLAZA = { x1: -50, x2: 50, z1: -38, z2: -23 };
 const STREET = 5;
 const ARCH_POST = STREET + 1;
 
-/** Der sechste Stand gehört keinem Modus: Blumen und Kräuter aus dem Schlossgarten. */
+/**
+ * Der sechste Stand gehört keinem Modus: Blumen und Kräuter aus dem Schlossgarten. Neben der Blumenfrau liegen flache
+ * Blüten auf der Theke (Töpfe dort verdeckten von der Seite ihr Gesicht), Töpfe nur außen.
+ */
 const FLOWER_STAND: Mode = {
   id: 'blumen',
   name: 'Blumen & Kräuter',
@@ -36,8 +39,15 @@ const FLOWER_STAND: Mode = {
   status: 'Grüß Gott!',
   skin: 'blumenfrau',
   icon: 'poppy',
-  goods: ['potted_red_tulip', 'potted_cornflower', 'potted_allium', 'potted_oxeye_daisy'],
+  goods: [
+    'potted_red_tulip',
+    'pink_petals[flower_amount=4,facing=south]',
+    'wildflowers[flower_amount=4,facing=north]',
+    'potted_oxeye_daisy',
+  ],
 };
+/** Niedrige Blumen für die Beete zwischen den Ständen (reichen nicht bis in Kopfhöhe). */
+const GAP_FLOWERS = ['pink_tulip', 'red_tulip', 'cornflower', 'allium', 'oxeye_daisy', 'azure_bluet'];
 
 /** Wo der Stand eines Modus steht (Mitte der Vorderkante), für Bilder, Rundgang und Tests. */
 export interface MarketSlot {
@@ -87,6 +97,7 @@ const CRATES = [
 
 export function buildSchlossmarkt(c: Canvas, height: (x: number, z: number) => number): void {
   const rnd = random(1611);
+  c.place('Schlossmarkt', PLAZA.x1, GROUND + 1, PLAZA.z1, PLAZA.x2, PLAZA.z2);
   levelPlaza(c, height);
   retainingWall(c, height, rnd);
 
@@ -96,14 +107,18 @@ export function buildSchlossmarkt(c: Canvas, height: (x: number, z: number) => n
     else stallAt(c, slot.x, GROUND, slot.z, 'south', FLOWER_STAND, ['mm_village', 'mm_market']);
     storeBehind(c, slot.x, rnd);
   });
-  // Zwischen den Ständen: Laterne, Blumenkübel; davor Brotzeit-Garnituren
+  // Zwischen den Ständen: Laterne vorne, ein Blumenbeet im Pflaster, hinten ein Fass – alles unter Kopfhöhe, damit
+  // man die Figuren auch von der Seite sieht (vorher schwebte hier ein Brett, und ein Topf auf dem Fass stand im Blick);
+  // davor Brotzeit-Garnituren
   [-1, 1].forEach((side) => {
     [25, 35].forEach((ax) => {
       const x = side * ax;
       lampPost(c, x, GROUND, FRONT_Z + 1);
-      c.set(x, GROUND + 1, FRONT_Z - 1, 'spruce_trapdoor[half=top,facing=south,open=false]');
+      [FRONT_Z - 1, FRONT_Z - 2].forEach((z) => {
+        c.set(x, GROUND, z, 'grass_block');
+        c.set(x, GROUND + 1, z, pick(rnd, GAP_FLOWERS));
+      });
       c.set(x, GROUND + 1, FRONT_Z - 3, 'barrel[facing=up]');
-      c.set(x, GROUND + 2, FRONT_Z - 3, pick(rnd, ['potted_red_tulip', 'potted_pink_tulip', 'potted_poppy']));
       brotzeit(c, x, -25);
     });
     marketCart(c, side * 47, FRONT_Z + 1, side, rnd);
@@ -115,19 +130,17 @@ export function buildSchlossmarkt(c: Canvas, height: (x: number, z: number) => n
   marketFolk(c);
 }
 
-/** Wo der Schlossberg schon über den Vorplatz wächst, das Gras wegnehmen (die Pflaster bleiben, die Straße auch). */
+/** Wo der Schlossberg schon über den Vorplatz wächst, das Gras wegnehmen (die Pflaster bleiben). */
 function levelPlaza(c: Canvas, height: (x: number, z: number) => number): void {
-  range(PLAZA.x1, PLAZA.x2)
-    .filter((x) => Math.abs(x) > STREET)
-    .forEach((x) =>
-      range(PLAZA.z1, PLAZA.z2).forEach((z) => {
-        const top = Math.round(height(x, z)) - GROUND;
-        range(GROUND + 1, GROUND + top + 2).forEach((y) => {
-          const b = c.get(x, y, z);
-          if (b && TERRAIN.test(b)) c.set(x, y, z, 'air');
-        });
-      }),
-    );
+  range(PLAZA.x1, PLAZA.x2).forEach((x) =>
+    range(PLAZA.z1, PLAZA.z2).forEach((z) => {
+      const top = Math.round(height(x, z)) - GROUND;
+      range(GROUND + 1, GROUND + top + 2).forEach((y) => {
+        const b = c.get(x, y, z);
+        if (b && TERRAIN.test(b)) c.set(x, y, z, 'air');
+      });
+    }),
+  );
 }
 
 /** Stützmauer mit Hecke am Nordrand: so hoch wie der Hang dahinter, an der Straße mit Pfeilern. */
@@ -147,8 +160,9 @@ function retainingWall(c: Canvas, height: (x: number, z: number) => number, rnd:
       } else {
         c.set(x, top + 1, WALL_Z, pick(rnd, HEDGE));
       }
-      // Hinter der Mauer bis zum Hang auffüllen, damit kein Loch bleibt.
-      range(GROUND + 1, GROUND + slope).forEach((y) => c.soft(x, y, WALL_Z - 1, 'dirt'));
+      // Hinter der Mauer bis zum Hang auffüllen, damit kein Loch bleibt (ohne Hang nichts – `range` zählt auch
+      // rückwärts und setzte sonst einen Erdhügel hinter die niedrige Mauer).
+      if (slope > 0) range(GROUND + 1, GROUND + slope).forEach((y) => c.soft(x, y, WALL_Z - 1, 'dirt'));
     });
 }
 
