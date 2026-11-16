@@ -71,10 +71,13 @@ const LANE = { z1: 4, z2: 10, x1: -116, x2: -47 };
 /** Oberdorf im Nordosten: kleiner Platz mit Brunnen und Linde, Häuser rundherum. */
 const UPPER = { x: 80, z: -40 };
 const LANE_HOUSES = [-58, -72, -86, -100] as const;
-/** Dorfbrunnen: am Ende der Handwerkergasse und im Oberdorf (Mitte x, z). */
+/**
+ * Dorfbrunnen: am Ende der Handwerkergasse und im Oberdorf (Mitte x, z). Im Oberdorf nach Nordwesten gerückt – der
+ * Brunnen ist größer als der alte, an der alten Stelle stand im Winter der Christbaum mitten im Becken.
+ */
 export const VILLAGE_FOUNTAINS: readonly (readonly [number, number])[] = [
   [LANE.x1 + 2, 7],
-  [UPPER.x - 4, UPPER.z + 2],
+  [UPPER.x - 5, UPPER.z - 5],
 ];
 /** Dorflinde im Oberdorf (mit Rundbank). */
 const LINDE = { x: UPPER.x + 4, z: UPPER.z - 2 } as const;

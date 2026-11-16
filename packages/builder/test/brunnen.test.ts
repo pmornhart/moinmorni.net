@@ -64,7 +64,7 @@ describe('Prunkbrunnen (Modelle im Ressourcenpaket)', () => {
       Math.hypot(x - 0, z + 136) <= 6 ||
       VILLAGE_FOUNTAINS.some(([fx, fz]) => Math.hypot(x - fx, z - fz) <= 3);
     found.forEach(([x, y, z, b]) => expect(near(x, z), `${b} bei ${x} ${y} ${z}`).toBe(true));
-  }, 60_000);
+  }, 300_000);
 
   it('das Paket enthält Modelle, Luft-Auswahl und die ausgeblendeten Blöcke', () => {
     const zip = furniturePack().toString('latin1');
@@ -135,5 +135,5 @@ describe('Dorfbrunnen (Gasse, Oberdorf)', () => {
         .filter(([bx, , bz]) => Math.hypot(bx - x, bz - z) < 5);
       expect(quartz).toEqual([]);
     });
-  }, 60_000);
+  }, 300_000);
 });

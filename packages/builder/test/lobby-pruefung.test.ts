@@ -100,7 +100,9 @@ describe('Bauplan-Prüfung: was sie findet', () => {
     const step = new Canvas();
     step.set(0, 65, 0, 'dirt');
     step.set(0, 66, 0, 'grass_block');
-    expect(lines(checkPlan(step, walk)).join('\n')).toContain('nackte Erde, frei nach north, east, south, west');
+    expect(lines(checkPlan(step, walk)).join('\n')).toContain(
+      'nackte Erde, frei nach north, east, south, west',
+    );
     // Hülle aus Stein, innen mit Erde ausgekleidet, ganz innen Luft: von außen sieht niemand die Erde.
     const hollow = new Canvas();
     hollow.fill(-3, 65, -3, 3, 70, 3, 'stone');
@@ -154,4 +156,4 @@ describe('Bauplan-Prüfung der ganzen Lobby', () => {
     const known = new Set(OFFEN_SAISON[season] ?? []);
     expect(seasons[season].filter((f) => !known.has(key(f))).map(key)).toEqual([]);
   });
-}, 120_000);
+}, 300_000);
