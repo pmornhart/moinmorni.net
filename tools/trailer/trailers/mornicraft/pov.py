@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ich-Sicht für den MorniSMP-Trailer: Die Kamera ist der echte Client selbst – als Spieler im Abenteuermodus, mit
+"""Ich-Sicht für den MorniCraft-Trailer (aus dem MorniSMP-Trailer übernommen, erweitert): Die Kamera ist der echte Client selbst – als Spieler im Abenteuermodus, mit
 Anzeige (Leiste, Herzen, Chat) und echten Klicks (xdotool) in die Truhen-Menüs des Plugins. Der Server läuft dabei wie
 bei shot.py in Zeitlupe, die Maus bewegt sich entsprechend langsam; danach wird beschleunigt.
 
@@ -18,6 +18,12 @@ Einstellung (JSON), Zeiten in Video-Sekunden:
   close            am Ende ist noch ein Menü offen → mit Escape schließen
   cursor           Mauszeiger mit aufnehmen (Standard 1; für Ich-Sicht ohne Menü 0 – sonst malt x11grab Kreuze ins Bild)
   after            Befehle danach
+  hud              Anzeige zeigen (Standard 1); 0 = ohne Leiste/Chat (z. B. Flug von hinten)
+  f5               1 = von hinten (dritte Person) – danach zurück in die Ich-Sicht
+  gamemode         Spielmodus der Kamera während der Einstellung (Standard adventure)
+  Zusätzliche Ereignisse: {"at":s, "keydown":"w"} · {"at":s, "keyup":"w"} (Taste halten/loslassen; in Zeitlupe genug
+  Zeit, damit der Client jeden Druck sieht – z. B. Doppelsprung) · {"at":s, "rot":[yaw, pitch], "dur":s} (Blick per
+  /rotate weich drehen, Bewegung bleibt erhalten – z. B. beim Gleiten)
 Umgebung wie shot.py: MM_RCON, MM_RCON_PASS, MM_CAMERA, MM_DISPLAY.
 """
 import json, math, os, subprocess, sys, threading, time
@@ -41,7 +47,7 @@ def main():
     spec = json.load(open(spec_file))
     slow = float(spec.get('slow', 12))
     rc = Rcon(os.environ['MM_RCON'], os.environ['MM_RCON_PASS'])
-    cam = os.environ.get('MM_CAMERA', 'SmpKamera')
+    cam = os.environ.get('MM_CAMERA', 'McKamera')
     display = os.environ.get('MM_DISPLAY', ':102')
     dim = spec.get('dim')
     at = (lambda c: f'execute in {dim} run {c}') if dim else (lambda c: c)
@@ -52,13 +58,18 @@ def main():
     p0 = path[0]
     rc('kill @e[tag=mmcam]')
     rc('minecraft:spectate')
-    rc(f'gamemode adventure {cam}')
+    rc(f'gamemode {spec.get("gamemode", "adventure")} {cam}')
     rc(at(f'tp {cam} {p0["p"][0]} {p0["p"][1]} {p0["p"][2]} {p0.get("yaw", 0)} {p0.get("pitch", 0)}'))
     time.sleep(float(spec.get('wait', 4)))
-    xdo(display, 'key', 'F1')        # Anzeige an (sonst aus)
-    time.sleep(0.4)
+    hud = spec.get('hud', 1)
+    if hud:
+        xdo(display, 'key', 'F1')    # Anzeige an (sonst aus)
+        time.sleep(0.4)
     xdo(display, 'key', 'F3+d')      # Chat leeren
     time.sleep(0.6)
+    if spec.get('f5'):
+        xdo(display, 'key', 'F5')    # von hinten
+        time.sleep(0.6)
     rc(f'tick rate {20 / slow:g}')
     time.sleep(1.0)
 
@@ -83,6 +94,8 @@ def main():
     time.sleep(0.3)
     t0 = time.time()
     moves = []  # laufende Mausbewegungen: (start, ende, von, nach)
+    turns = []  # laufende Drehungen: (start, ende, von, nach)
+    view = [p0.get('yaw', 0), p0.get('pitch', 0)]
     mouse = [800, 450]
     k, ei = 0, 0
     while True:
@@ -103,11 +116,22 @@ def main():
                 xdo(display, 'click', '1')
             elif 'key' in e:
                 xdo(display, 'key', e['key'])
+            elif 'keydown' in e:
+                xdo(display, 'keydown', e['keydown'])
+            elif 'keyup' in e:
+                xdo(display, 'keyup', e['keyup'])
+            elif 'rot' in e:
+                turns.append((e['at'], e['at'] + e.get('dur', 0.5), list(view), e['rot']))
+                view = list(e['rot'])
             elif 'char' in e:
                 xdo(display, 'type', '--delay', '0', e['char'])
             elif 'mouse' in e:
                 moves.append((e['at'], e['at'] + e.get('dur', 0.5), list(mouse), e['mouse']))
                 mouse = list(e['mouse'])
+        for a, b, frm, to in turns:
+            if a <= t <= b + TICK:
+                u = smooth((t - a) / max(1e-6, b - a))
+                rc(f'rotate {cam} {frm[0] + (to[0] - frm[0]) * u:.2f} {frm[1] + (to[1] - frm[1]) * u:.2f}')
         k += 1
         # bis zum nächsten Tick die Maus in kleinen Schritten führen (echte Zeit)
         end = t0 + k * TICK * slow
@@ -123,12 +147,21 @@ def main():
                         str(round(frm[1] + (to[1] - frm[1]) * u)))
             time.sleep(min(0.12, max(0.0, end - time.time())))
     ff.stdin.write(b'q'); ff.stdin.flush(); ff.wait()
+    for e in spec.get('events', []):  # keine Taste bleibt gedrückt
+        if 'keydown' in e:
+            xdo(display, 'keyup', e['keydown'])
     rc('tick rate 20')
     time.sleep(0.5)
     if spec.get('close'):            # Menü noch offen? (sonst würde Escape das Pause-Menü öffnen)
         xdo(display, 'key', 'Escape')
         time.sleep(0.3)
-    xdo(display, 'key', 'F1')        # Anzeige wieder aus
+    if spec.get('f5'):
+        xdo(display, 'key', 'F5')    # dritte Person von vorn …
+        time.sleep(0.3)
+        xdo(display, 'key', 'F5')    # … und zurück in die Ich-Sicht
+        time.sleep(0.3)
+    if hud:
+        xdo(display, 'key', 'F1')    # Anzeige wieder aus
     rc(f'gamemode spectator {cam}')
     for c in spec.get('after', []):
         rc(c)

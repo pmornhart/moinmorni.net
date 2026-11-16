@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Darsteller für den MorniSMP-Trailer – wie tools/trailer/actors.cjs (ohne eigene Physik, der Server bewegt sie per
+// Darsteller für den MorniCraft-Trailer (aus dem MorniSMP-Trailer übernommen) – wie tools/trailer/actors.cjs (ohne eigene Physik, der Server bewegt sie per
 // tp), dazu Handlungen für Markt und Wildnis. Über stdin (eine Zeile je Handlung, z. B. per `tail -n0 -F datei`):
 //   "Anna swing" · "Anna slot 0" · "Anna use" · "Anna chat /gs sichern"
 //   "Anna activate x y z"          Block anklicken (Schild, Kiste, Tresen) – nur das Paket, ohne Blick
@@ -7,7 +7,7 @@
 //   "Anna attack Bert"             echter Schlag (wie Linksklick)
 //   "Anna respawn"                 nach dem Tod wieder einsteigen
 //   "Anna step x y z"              ein echtes Bewegungspaket (z. B. ins Reisetor – das Plugin reagiert nur darauf)
-//   node smp-actors.cjs <host> <port> <version> Anna Bert …
+//   node mc-actors.cjs <host> <port> <version> Anna Bert …
 const mineflayer = require('mineflayer');
 const { Vec3 } = require('vec3');
 const [host, port, version, ...names] = process.argv.slice(2);

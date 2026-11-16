@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""shot.py (unverändert, aus tools/trailer) mit drei Zusätzen für den MorniSMP-Trailer:
+"""shot.py (unverändert, aus tools/trailer) mit drei Zusätzen – aus dem MorniSMP-Trailer übernommen (smp_shot.py):
 
   {"at": s, "cmd": "#release Anna"}   ab hier bewegt die Einstellung Anna nicht mehr (z. B. weil das Plugin sie gerade
                                       durchs Reisetor teleportiert oder sie gestorben ist)
   {"at": s, "cmd": "#key F1"}         Taste im echten Client (xdotool auf MM_DISPLAY)
   "follow": "@e[type=minecraft:ender_dragon,limit=1]"   die Kamera schaut (sanft nachgeführt) auf dieses Wesen
 
-  python3 smp_shot.py <einstellung.json> <ausgabe.mp4>
+  python3 mc_shot.py <einstellung.json> <ausgabe.mp4>
 """
 import json, os, re, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
