@@ -103,9 +103,9 @@ SHOTS = [
     {'id': '01-intro', 'bars': 4, 'card': 'intro.png', 'cardAt': 0.5, 'time': 3000,
      'before': ['rc:nether weg', 'sleep:2'], 'spec': {
         'wait': 16,
-        'camera': [{'p': A(64, 157, 100), 'look': A(0, 161, 0), 't': 0},
-                   {'p': A(45, 166, 72), 'look': A(0, 166, 0), 't': 3.0},
-                   {'p': A(31, 175, 53), 'look': A(0, 171, 2), 't': 2.7},
+        'camera': [{'p': A(66, 165, 104), 'look': A(0, 160, 0), 't': 0},
+                   {'p': A(46, 170, 74), 'look': A(0, 165, 0), 't': 3.0},
+                   {'p': A(30, 177, 50), 'look': A(0, 171, 2), 't': 2.7},
                    {'p': A(16, 181, 34), 'look': A(-2, 171, 0), 't': 2.6, 'ease': 1}],
         'actors': {'Anna': walk([A(-2, G, 13), A(-9, G, 9), A(-11, G, 2)], 2.2),
                    'Dora': walk([A(-1, G, 14), A(-8, G, 10.5), A(-10, G, 3.5)], 2.2),
@@ -128,27 +128,31 @@ SHOTS = [
                    {'at': 4.3, 'rot': [34, 22], 'dur': 3.4}],
         'after': ['effect clear McKamera']}},
     # ------------------------------------------------ Ränge und Clans: Symbole und Kürzel über den Köpfen, Chat
-    {'id': '03-raenge', 'bars': 2, 'card': 'lt-raenge.png', 'hud': True, 'time': 6000,
+    {'id': '03-raenge', 'bars': 2, 'card': 'lt-raenge.png', 'cardAt': 0.15, 'cardEnd': 1.75, 'hud': True, 'time': 6000,
      'before': ['rc:effect clear McKamera'], 'spec': {
-        'camera': [{'p': A(-3.6, 171.75, 12.6), 'look': A(-1.5, 171.9, 7.6), 't': 0},
-                   {'p': A(1.6, 171.7, 12.4), 'look': A(1.2, 171.9, 7.6), 't': 5.4, 'ease': 1}],
-        'actors': {'Anna': stand(A(-2.9, G, 7.9), 5.4, look=A(-1, 171.6, 12.5)),
-                   'Dora': stand(A(-0.7, G, 8.9), 5.4, look=A(-0.4, 171.6, 12.5)),
-                   'Toni': stand(A(1.4, G, 7.6), 5.4, look=A(0.4, 171.6, 12.5)),
-                   'Clara': stand(A(3.5, G, 8.7), 5.4, look=A(1.6, 171.6, 12.5)),
-                   'Fritz': walk([A(-8, G, 4.5), A(-4.6, G, 5.2)], 2.6)},
+        'camera': [{'p': A(0.5, 171.65, 13.4), 'look': A(0.5, 171.9, 7.8), 't': 0},
+                   {'p': A(0.5, 171.6, 12.2), 'look': A(0.5, 171.9, 7.8), 't': 5.4, 'ease': 1}],
+        'actors': {'Anna': stand(A(-3.6, G, 7.2), 5.4, look=A(0.0, 171.6, 12.5)),
+                   'Dora': stand(A(-1.0, G, 9.0), 5.4, look=A(0.3, 171.6, 12.5)),
+                   'Toni': stand(A(2.0, G, 9.0), 5.4, look=A(0.7, 171.6, 12.5)),
+                   'Clara': stand(A(4.6, G, 7.2), 5.4, look=A(1.0, 171.6, 12.5)),
+                   'Fritz': stand(A(-30, G, 30), 5.4)},
         'events': [{'at': 0.25, 'actor': 'Anna', 'act': 'chat', 'arg': 'Moin! Wer kommt mit zur Alm?'},
                    {'at': 0.3, 'actor': 'Anna', 'act': 'swing'},
                    {'at': 1.5, 'actor': 'Toni', 'act': 'chat', 'arg': 'Ich bring Brezn mit!'},
                    {'at': 2.6, 'actor': 'Clara', 'act': 'chat', 'arg': 'Bin dabei!'},
                    {'at': 2.65, 'actor': 'Clara', 'act': 'swing'}]}},
     # ------------------------------------------------ Ich-Sicht: /homes, Bett „Turm“ anklicken, Balken, Ankunft
-    {'id': '04-zuhause', 'bars': 3, 'card': 'lt-zuhause.png', 'cardAt': 0.3, 'time': 6000, 'pov': {
-        'path': [{'p': FOUNTAIN_S, 'yaw': 180, 'pitch': 4, 't': 0}],
+    {'id': '04-zuhause', 'bars': 3, 'card': 'lt-zuhause.png', 'cardAt': 0.3, 'time': 6000,
+     'before': [f'rc:tp {n} {MX + 12 + i} {G} {MZ - 22}' for i, n in enumerate(('Anna', 'Toni', 'Clara', 'Dora', 'Fritz'))],
+     'pov': {
+        'path': [{'p': FOUNTAIN_S, 'yaw': 180, 'pitch': 2, 't': 0}],
         'until': 0.0,
         'events': [{'at': 0.15, 'cmd': f'regie als {CAM} homes'},
-                   {'at': 0.4, 'mouse': slot3(10), 'dur': 0.45},
-                   {'at': 1.0, 'click': 1}]}},
+                   {'at': 0.35, 'mouse': slot3(10), 'dur': 0.5},
+                   {'at': 1.35, 'click': 1},
+                   {'at': 1.75, 'rot': [58, 6], 'dur': 2.4}],
+        'zoom': {'z': 1.6, 'cx': 800, 'cy': 430, 'in': [0.2, 0.5], 'out': [1.4, 1.75]}}},
     # ------------------------------------------------ Grab: ein Creeper erwischt Toni im Kirschhain
     {'id': '05-grab', 'bars': 2, 'card': 'lt-grab.png', 'time': 6000,
      'before': ['rc:kill @e[tag=mmcreeper]', 'rc:effect clear Toni', 'rc:clear Toni',
@@ -156,43 +160,62 @@ SHOTS = [
                 'rc:item replace entity Toni armor.chest with iron_chestplate',
                 'rc:give Toni diamond_sword', 'rc:give Toni golden_apple 3', 'rc:give Toni bread 12',
                 'rc:give Toni iron_pickaxe', 'rc:give Toni torch 24', 'rc:give Toni oak_log 32',
-                'rc:give Toni cookie 8', 'rc:give Toni compass', 'Toni slot 0',
+                'rc:give Toni cookie 8', 'rc:give Toni compass', 'Toni slot 0', 'rc:kill @e[type=item]',
                 'rc:effect give Toni instant_health 1 5 true'], 'spec': {
-        'setup': [f'summon creeper {CHERRY[0] + 1.3} {G} {CHERRY[2] - 1.6} '
-                  '{Tags:["mmcreeper"],NoAI:1b,Silent:0b,Fuse:22,CustomName:"Kriecher",Rotation:[160f,0f]}'],
-        'camera': [{'p': A(8.6, 171.9, -5.2), 'look': A(13.2, 170.9, -10.4), 't': 0},
-                   {'p': A(9.6, 171.6, -6.2), 'look': A(13.4, 170.5, -10.6), 't': 5.4, 'ease': 1}],
-        'actors': {'Toni': [{'p': CHERRY, 't': 0, 'yaw': 210}, {'p': CHERRY, 't': 0.9, 'yaw': 230},
-                            {'p': CHERRY, 't': 0.5, 'yaw': 150}, {'p': CHERRY, 't': 4.0, 'yaw': 150}]},
+        'setup': [f'summon creeper {CHERRY[0] + 1.4} {G} {CHERRY[2] - 1.8} '
+                  '{Tags:["mmcreeper"],NoAI:1b,Fuse:22,CustomName:"Kriecher",Rotation:[15f,0f]}']
+        + [f'tp {n} {MX - 30 - i} {G} {MZ + 18}' for i, n in enumerate(('Anna', 'Clara', 'Dora', 'Fritz'))],
+        'camera': [{'p': A(13.1, 172.9, -5.2), 'look': A(13.9, 170.9, -10.9), 't': 0},
+                   {'p': A(13.3, 172.5, -6.3), 'look': A(13.8, 170.4, -10.9), 't': 5.4, 'ease': 1}],
+        'actors': {'Toni': [{'p': CHERRY, 't': 0, 'yaw': 25}, {'p': CHERRY, 't': 0.8, 'yaw': -30},
+                            {'p': CHERRY, 't': 0.5, 'yaw': 0}, {'p': CHERRY, 't': 4.0, 'yaw': 0}]},
         'events': [{'at': 0.5, 'cmd': 'data merge entity @e[tag=mmcreeper,limit=1] {ignited:1b}'},
                    {'at': 1.55, 'cmd': '#release Toni'},
                    {'at': 1.75, 'cmd': 'damage Toni 60 minecraft:generic'}]}},
     # ------------------------------------------------ Ich-Sicht: Grab anklicken – Tonis Sachen liegen darin
-    {'id': '06-grab-auf', 'bars': 1, 'time': 6000, 'grave': True, 'pov': {
+    {'id': '06-grab-auf', 'bars': 1, 'time': 6000, 'grave': True, 'before': ['Toni respawn', 'sleep:2'], 'pov': {
         'path': [{'p': GRAVE, 'yaw': 0, 'pitch': 40, 't': 0}],
         'until': 0.0,
         'events': [{'at': 0.12, 'rclick': 1},
-                   {'at': 0.45, 'mouse': slot3(0), 'dur': 0.6}],
+                   {'at': 0.95, 'mouse': slot3(0), 'dur': 0.45}],
+        'zoom': {'z': 1.45, 'cx': 800, 'cy': 430, 'in': [0.3, 0.7]},
         'close': 1}},
     # ------------------------------------------------ Hinsetzen: Anna und Dora auf der Bank im Pavillon
     {'id': '07-sitzen', 'bars': 2, 'card': 'lt-sitzen.png', 'time': 6000,
-     'before': ['Toni respawn', 'sleep:2', 'rc:clear Anna', 'rc:clear Dora', 'Anna slot 0', 'Dora slot 0'], 'spec': {
-        'camera': [{'p': A(-7.2, 171.9, -11.0), 'look': A(-14.6, 170.9, -16.2), 't': 0},
-                   {'p': A(-8.2, 171.7, -12.2), 'look': A(-14.8, 170.8, -16.4), 't': 5.4, 'ease': 1}],
-        'actors': {'Anna': walk([A(-6.5, G, -15.5), A(-15.5, G, -15.5)], 4.0)
-                   + [{'p': A(-15.5, G, -15.5), 't': 0.1, 'look': A(-15.5, 170.2, -17.5), 'hold': 3}],
-                   'Dora': walk([A(-4.0, G, -15.5), A(-13.5, G, -15.5)], 3.6)
-                   + [{'p': A(-13.5, G, -15.5), 't': 0.1, 'look': A(-13.5, 170.2, -17.5), 'hold': 3}]},
+     'before': ['rc:clear Anna', 'rc:clear Dora', 'Anna slot 0', 'Dora slot 0'], 'spec': {
+        'camera': [{'p': A(-12.0, 173.3, -11.6), 'look': A(-14.9, 170.7, -17.0), 't': 0},
+                   {'p': A(-12.6, 173.1, -12.2), 'look': A(-14.9, 170.6, -17.0), 't': 5.4, 'ease': 1}],
+        'actors': {'Anna': walk([A(-8.5, G, -15.6), A(-15.5, G, -15.6)], 3.1)
+                   + [{'p': A(-15.5, G, -15.6), 't': 0.15, 'look': A(-13.6, 172.2, -11.5), 'hold': 3}],
+                   'Dora': walk([A(-6.5, G, -15.6), A(-13.5, G, -15.6)], 3.1)
+                   + [{'p': A(-13.5, G, -15.6), 't': 0.15, 'look': A(-12.8, 172.2, -11.5), 'hold': 3}]},
         'events': [{'at': 2.42, 'cmd': '#release Anna'},
                    {'at': 2.45, 'actor': 'Anna', 'act': 'activate', 'arg': ' '.join(map(str, BENCH_ANNA))},
-                   {'at': 2.9, 'cmd': '#release Dora'},
-                   {'at': 2.93, 'actor': 'Dora', 'act': 'activate', 'arg': ' '.join(map(str, BENCH_DORA))}]}},
+                   {'at': 2.75, 'cmd': '#release Dora'},
+                   {'at': 2.78, 'actor': 'Dora', 'act': 'activate', 'arg': ' '.join(map(str, BENCH_DORA))}]}},
     # ------------------------------------------------ /nether: Tor, Treppenbrücke und befallene Insel entstehen
-    {'id': '08-nether', 'bars': 4, 'card': 'lt-nether.png', 'cardAt': 0.6, 'time': 6000,
-     'before': ['rc:nether weg', 'sleep:3'], 'spec': {
-        'camera': [{'p': A(-84, 179, 0), 'look': A(-38, 162, -20), 't': 0},
-                   {'p': A(-77, 176, -9), 'look': A(-37, 163, -21), 't': 8.6, 'ease': 1}],
-        'events': [{'at': 0.5, 'cmd': 'nether'}]}},
+    {'id': '08-nether', 'bars': 2, 'card': 'lt-nether.png', 'cardAt': 0.6, 'cardEnd': 5.4, 'time': 6000,
+     'before': ['rc:nether weg', 'sleep:3', 'rc:fill -527 110 238 -503 160 262 air replace minecraft:weeping_vines_plant',
+                'rc:fill -527 110 238 -503 160 262 air replace minecraft:weeping_vines']
+     + [f'rc:tp {n} {MX - 30 - i} {G} {MZ + 18}' for i, n in enumerate(('Anna', 'Toni', 'Clara', 'Dora', 'Fritz'))],
+     'spec': {
+        'wait': 8,
+        'camera': [{'p': A(-58, 167.5, -3), 'look': A(-37, 163, -20), 't': 0},
+                   {'p': A(-55, 166.5, -6), 'look': A(-37, 163, -20.5), 't': 5.4, 'ease': 1}],
+        'events': [{'at': 0.35, 'cmd': 'nether'}]}},
+    # ------------------------------------------------ … und über die Brücke hinab zum Netherportal
+    {'id': '08b-bruecke', 'bars': 2, 'time': 6000, 'spec': {
+        'wait': 8,
+        'camera': [{'p': A(-25.5, 173.4, -21.8), 'look': A(-46, 160.5, -22.2), 't': 0},
+                   {'p': A(-36.5, 166.4, -21.9), 'look': A(-49, 160.2, -22.2), 't': 5.4, 'ease': 1}],
+        'actors': {'Anna': walk([A(-29.5, 166.6, -22.7), A(-31, 165.6, -22.7), A(-33, 164.1, -22.7), A(-35, 163.1, -22.7),
+                                 A(-37, 161.7, -22.7), A(-39, 160.6, -22.7), A(-41, 159.3, -22.7), A(-43, 158.4, -22.7),
+                                 A(-45.6, 158.0, -22.7)], 3.6)
+                   + [{'p': A(-45.6, 158.0, -22.7), 't': 0.1, 'look': A(-48, 160.2, -22.0), 'hold': 2}],
+                   'Fritz': walk([A(-27.0, 168.0, -21.3), A(-29, 166.8, -21.3), A(-31, 165.6, -21.3), A(-33, 164.1, -21.3),
+                                  A(-35, 163.1, -21.3), A(-37, 161.7, -21.3), A(-39, 160.6, -21.3), A(-41, 159.3, -21.3),
+                                  A(-43.4, 158.3, -21.3)], 3.6)
+                   + [{'p': A(-43.4, 158.3, -21.3), 't': 0.1, 'look': A(-48, 160.2, -22.0), 'hold': 2}]}}},
     # ------------------------------------------------ /end: die Treppe hinab in die Kuppel mit dem Endportal
     {'id': '09-end', 'bars': 2, 'card': 'lt-end.png', 'nv': True, 'time': 6000,
      'before': ['rc:end', 'sleep:6'], 'spec': {
