@@ -13,7 +13,7 @@ wolkenhafen:
 runde:
   # Höchstens so viele Leute in einer Runde (2–12; zu zweit höchstens 6 Teams).
   hoechstens-spieler: 12
-  # So lange wartet man in der Ballon-Gondel, bevor sie sich öffnet.
+  # So lange wartet man in der Ballon-Gondel, bevor sie sich öffnet (3–60 Sekunden).
   gondel-sekunden: 10
   # Nach dem Ende: so lange bis zurück in den Wolkenhafen.
   nachspiel-sekunden: 8

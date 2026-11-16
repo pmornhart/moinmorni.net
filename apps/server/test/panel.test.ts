@@ -103,6 +103,7 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
       'social',
       'lobby',
       'website',
+      'team-apply',
       'mornicraft',
       'duels',
       'party',

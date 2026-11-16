@@ -230,6 +230,21 @@ bash "${INSTALL}/update.sh" >"${WORK}/out.txt" 2>&1
 check "Motor-Datei ist neu" "[[ \$(cat '${INSTALL}/vendor/mornihosting/motor.txt') == v2 ]]"
 check "Status done" "status | grep -q '\"state\":\"done\"'"
 
+echo " 5b) Motor auf main, aber main fehlt die passende Fassung (PR noch nicht übernommen)"
+git_q -C "${WORK}/motor-origin" checkout -q -b pr
+echo v3 >"${WORK}/motor-origin/motor.txt"
+git_q -C "${WORK}/motor-origin" commit -qam "Motor PR"
+PR_MOTOR="$(git -C "${WORK}/motor-origin" rev-parse HEAD)"
+git_q -C "${WORK}/motor-origin" checkout -q main
+git_q -C "${WORK}/mm-origin/vendor/mornihosting" fetch -q origin pr
+git_q -C "${WORK}/mm-origin/vendor/mornihosting" checkout -q "${PR_MOTOR}"
+git_q -C "${WORK}/mm-origin" add vendor/mornihosting && git_q -C "${WORK}/mm-origin" commit -qm "Motor mit PR"
+echo '{"at":"2026-11-14T00:00:00Z","by":"test","motor":"main"}' >"${DATA}/update/request.json"
+bash "${INSTALL}/update.sh" >"${WORK}/out.txt" 2>&1
+check "Motor bleibt auf der passenden Fassung, nicht auf main" "[[ \$(cat '${INSTALL}/vendor/mornihosting/motor.txt') == v3 ]]"
+check "sagt im Protokoll, warum" "grep -q 'der Motor bleibt auf der passenden Fassung' '${WORK}/out.txt'"
+check "Status done" "status | grep -q '\"state\":\"done\"'"
+
 echo " 6) Links im Update-Ordner (vom Container gelegt) werden nicht verfolgt"
 echo "geheim" >"${WORK}/host-datei"
 rm -f "${DATA}/update/log.txt" "${DATA}/update/status.json"

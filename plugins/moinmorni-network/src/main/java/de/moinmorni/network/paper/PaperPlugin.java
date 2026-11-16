@@ -51,10 +51,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     /** Rechte aus dem Rang, pro Spieler (wird bei jedem neuen Profil ersetzt). */
     private final Map<UUID, org.bukkit.permissions.PermissionAttachment> attachments = new ConcurrentHashMap<>();
     private static final String BUILD_SERVER = "bau";
-    /** Rang-Recht → Minecraft-Befehle (auf allen Spielservern). */
-    private static final Map<String, List<String>> RIGHT_PERMISSIONS = Map.of(
-            "teleport", List.of("minecraft.command.teleport", "minecraft.command.tp"),
-            "spectate", List.of("minecraft.command.spectate", "minecraft.command.gamemode"));
+    private static final String NO_CREATIVE_DE = "<red>Den Kreativmodus darf dein Rang nicht.</red> "
+            + "<gray>Dafür braucht der Rang im Panel das Recht „Kreativmodus“.</gray>";
+    private static final String NO_CREATIVE_EN = "<red>Your rank can't use creative mode.</red> "
+            + "<gray>The rank needs the right “Creative mode” in the panel.</gray>";
 
     private final Map<UUID, Profile> profiles = new ConcurrentHashMap<>();
     private HubClient hub;
@@ -112,6 +112,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         clock = new LobbyClock(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
+        // In der Lobby bauen (im Kreativmodus): wer das Recht „Lobby bearbeiten“ hat – oder OP ist.
+        features.setEditors(p -> Rights.mayEditLobby(rankRights(p)));
+        getServer().getScheduler().runTask(this, this::logModeAdmins);
         jail.start();
         features.start();
         // Erst verbinden, wenn alles steht – die ersten Nachrichten des Hubs gehen sonst ins Leere.
@@ -424,10 +427,64 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         return rights;
     }
 
+    /** Rang-Rechte eines Spielers (leer, solange der Hub noch kein Profil geschickt hat). */
+    private java.util.Set<String> rankRights(Player p) {
+        Profile profile = profiles.get(p.getUniqueId());
+        return profile == null ? java.util.Set.of() : profile.rights();
+    }
+
     /**
-     * Rechte aus dem Rang: Teleport/Zuschauen überall fürs Team. Auf dem Bau-Server: wer bauen darf, ist im
-     * Kreativmodus; wer WorldEdit darf, ist dort OP (WorldEdit fragt viele einzelne Rechte ab). Alle anderen sind
-     * dort Gast im Abenteuermodus ohne OP.
+     * Was dieser Server an Rechten kennt (für „Spielmodi verwalten“ und „Alles“): alle angemeldeten Rechte, die Rechte
+     * der Befehle (auch Minecrafts eigene) und welche davon Spielmodi gehören. Jedes Mal neu – Plugins melden manche
+     * Rechte und Befehle erst unterwegs an.
+     */
+    private java.util.List<Rights.Known> knownRights() {
+        org.bukkit.plugin.PluginManager pm = getServer().getPluginManager();
+        java.util.Set<org.bukkit.plugin.Plugin> modePlugins = new java.util.HashSet<>();
+        java.util.Set<String> modeNodes = new java.util.HashSet<>();
+        for (org.bukkit.plugin.Plugin plugin : pm.getPlugins()) {
+            io.papermc.paper.plugin.configuration.PluginMeta meta = plugin.getPluginMeta();
+            if (Rights.isMode(meta.getName(), meta.getPluginDependencies(), meta.getPluginSoftDependencies())) {
+                modePlugins.add(plugin);
+                meta.getPermissions().forEach(perm -> modeNodes.add(perm.getName().toLowerCase(java.util.Locale.ROOT)));
+            }
+        }
+        java.util.List<Rights.Known> known = new java.util.ArrayList<>();
+        for (org.bukkit.permissions.Permission perm : pm.getPermissions()) {
+            org.bukkit.permissions.PermissionDefault def = perm.getDefault();
+            String node = perm.getName().toLowerCase(java.util.Locale.ROOT);
+            known.add(new Rights.Known(node,
+                    def == org.bukkit.permissions.PermissionDefault.OP || def == org.bukkit.permissions.PermissionDefault.TRUE,
+                    modeNodes.contains(node)));
+        }
+        try {
+            for (org.bukkit.command.Command command
+                    : new java.util.HashSet<>(getServer().getCommandMap().getKnownCommands().values())) {
+                boolean mode = command instanceof org.bukkit.command.PluginCommand pc && modePlugins.contains(pc.getPlugin());
+                Rights.split(command.getPermission()).forEach(node ->
+                        known.add(new Rights.Known(node.toLowerCase(java.util.Locale.ROOT), true, mode)));
+            }
+        } catch (RuntimeException e) {
+            getLogger().warning("Befehle des Servers nicht gelesen (" + e.getMessage() + ") – Rechte nur aus den Plugins.");
+        }
+        // Im Modus nur als Recht seines Befehls angegeben, nirgends angemeldet: zählt trotzdem.
+        modeNodes.forEach(node -> known.add(new Rights.Known(node, true, true)));
+        return known;
+    }
+
+    /** Einmal nach dem Start: was „Spielmodi verwalten“ hier bedeutet (fürs Protokoll). */
+    private void logModeAdmins() {
+        java.util.Set<String> admins = Rights.modeAdmins(knownRights());
+        if (!admins.isEmpty()) {
+            getLogger().info("„Spielmodi verwalten“ gibt hier: " + String.join(", ", admins));
+        }
+    }
+
+    /**
+     * Rechte aus dem Rang (siehe {@link Rights}): Teleport, Zuschauen, Spielmodus, Verwaltung der Spielmodi und „Alles“
+     * – jedes Mal komplett neu, ein entzogenes Recht ist sofort weg. Auf dem Bau-Server: wer bauen darf, ist im
+     * Kreativmodus; wer WorldEdit darf, ist dort OP (WorldEdit fragt viele einzelne Rechte ab, die nirgends angemeldet
+     * sind). Alle anderen sind dort Gast im Abenteuermodus ohne OP.
      */
     private void applyRights(Player p, Profile profile) {
         org.bukkit.permissions.PermissionAttachment old = attachments.remove(p.getUniqueId());
@@ -435,9 +492,10 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             p.removeAttachment(old);
         }
         org.bukkit.permissions.PermissionAttachment attachment = p.addAttachment(this);
-        profile.rights().forEach(r -> RIGHT_PERMISSIONS.getOrDefault(r, List.of())
-                .forEach(node -> attachment.setPermission(node, true)));
+        Rights.nodes(profile.rights(), knownRights()).forEach(node -> attachment.setPermission(node, true));
         attachments.put(p.getUniqueId(), attachment);
+        // Befehlsliste des Spiels neu schicken: was jetzt erlaubt ist, schlägt die Tab-Taste vor (und steht nicht rot da).
+        p.updateCommands();
         if (!BUILD_SERVER.equals(serverName)) {
             return;
         }
@@ -447,6 +505,20 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         if (p.getGameMode() != wanted && p.getGameMode() != org.bukkit.GameMode.SPECTATOR) {
             p.setGameMode(wanted);
         }
+    }
+
+    /**
+     * Minecraft kennt für /gamemode nur ein Recht: Wer zuschauen oder den Spielmodus wechseln darf, käme damit auch in
+     * den Kreativmodus. Den gibt es nur mit dem Recht „Kreativmodus“ (oder „Alles“, oder als OP).
+     */
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onCommand(org.bukkit.event.player.PlayerCommandPreprocessEvent event) {
+        Player p = event.getPlayer();
+        if (p.isOp() || !Rights.asksCreative(event.getMessage()) || Rights.mayCreative(rankRights(p))) {
+            return;
+        }
+        event.setCancelled(true);
+        p.sendMessage(MM.deserialize("en".equals(langOf(p)) ? NO_CREATIVE_EN : NO_CREATIVE_DE));
     }
 
     @EventHandler

@@ -554,9 +554,11 @@ describe('Hub', () => {
     expect(await proxy.next('connect', (m) => m['uuid'] === PHILIP)).toMatchObject({ server: 'party' });
     await said(LENA, 'is awake');
 
-    // Geschlossen und Wartung.
+    // Geschlossen und Wartung. Geschlossen gilt für Spieler – das Team kommt zum Vorbereiten trotzdem hinein.
     expect(await go(LENA, 'mornicraft')).toMatchObject({ data: { allow: false } });
     await said(LENA, 'closed');
+    await go(PHILIP, 'mornicraft');
+    await said(PHILIP, 'als Team trotzdem rein');
     stores.patchMode('duels', { state: 'maintenance' }, 'test');
     expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: false } });
     await said(LENA, 'maintenance');
@@ -717,26 +719,73 @@ describe('Hub', () => {
     const partyFirst = (await party.next('mode-settings')) as unknown as { values: Record<string, unknown> };
     expect(partyFirst.values).toMatchObject({
       'minispiele.auswahl': [],
-      'edelweiss-jagd-runden.1': 15,
-      'regeln.minispiel-taler.0': 10,
+      // Listen gehen als Ganzes – so entstehen auch neue Listen in einer älteren config.yml.
+      'edelweiss-jagd-runden': [10, 15, 20],
+      'regeln.minispiel-taler': [10, 6, 4, 3, 2, 1, 1, 1],
+      'minispiel-marathon.runden': [6, 10, 15],
+      'auszeichnungen.welche': [],
     });
-    // Neue Modi genauso: Angelkönig-Preise sind Stellen einer Liste, Wintersport hat eine Auswahl.
+    // Neue Modi genauso: Angelkönig-Preise sind eine Liste, Wintersport hat eine Auswahl.
     const angel = await plugin('angelkoenig', 'backend');
     const angelFirst = (await angel.next('mode-settings')) as unknown as {
       plugin: string;
       values: Record<string, unknown>;
     };
     expect(angelFirst.plugin).toBe('MorniAngelkoenig');
-    expect(angelFirst.values).toMatchObject({ 'turnier.preise.0': 250, 'turnier.alle-minuten': 15 });
+    expect(angelFirst.values).toMatchObject({ 'turnier.preise': [250, 120, 60], 'turnier.alle-minuten': 15 });
     await proxy.request({
       t: 'command',
       uuid: PHILIP,
       command: 'angelconfig',
       args: ['turnier', 'preis1', '300'],
     });
-    expect(await angel.next('mode-settings')).toMatchObject({ values: { 'turnier.preise.0': 300 } });
+    expect(await angel.next('mode-settings')).toMatchObject({ values: { 'turnier.preise': [300, 120, 60] } });
     await proxy.request({ t: 'command', uuid: PHILIP, command: 'winterconfig', args: ['saison', 'winter'] });
     expect(stores.settings('wintersport')['season']).toBe('winter');
+    // Neue Einstellungen der Modi gehen auch im Spiel: Marathon (Stelle einer Liste), Kramerladen und Kramerkiste
+    // von Versteckerl, Händlerhaus von MorniSMP – und landen nur beim jeweiligen Modus.
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'partyconfig',
+      args: ['marathon', 'wahl2', '12'],
+    });
+    expect(await party.next('mode-settings')).toMatchObject({
+      values: { 'minispiel-marathon.runden': [6, 12, 15] },
+    });
+    const hide = await plugin('versteckerl', 'backend');
+    expect(await hide.next('mode-settings')).toMatchObject({
+      plugin: 'MorniVersteckerl',
+      values: { 'laden.pfiffe.kuhglocke.preis': 160, 'rundenladen.laterne.an': true, 'punkte.fund': 10 },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'versteckconfig',
+      args: ['laden', 'pfiff', 'kuhglocke', 'preis', '200'],
+    });
+    expect(await hide.next('mode-settings')).toMatchObject({
+      values: { 'laden.pfiffe.kuhglocke.preis': 200 },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'versteckconfig',
+      args: ['kiste', 'laterne', 'aus'],
+    });
+    expect(await hide.next('mode-settings')).toMatchObject({
+      values: { 'rundenladen.laterne.an': false, 'rundenladen.laterne.preis': 8 },
+    });
+    const smp = await plugin('smp', 'backend');
+    expect(await smp.next('mode-settings')).toMatchObject({
+      plugin: 'MorniSMP',
+      values: { 'haendler.an': true },
+    });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'smpconfig', args: ['haendler', 'aus'] });
+    expect(await smp.next('mode-settings')).toMatchObject({ values: { 'haendler.an': false } });
+    expect(
+      hide.received.filter((m) => m.t === 'mode-settings').every((m) => m['mode'] === 'versteckerl'),
+    ).toBe(true);
     // Panel: nur Duels bekommt die neuen Werte.
     stores.patchSettings('duels', { timeLimit: 300, soupHeal: 6.5 }, 'test');
     expect(await duels.next('mode-settings')).toMatchObject({
@@ -871,6 +920,48 @@ describe('Hub', () => {
     lobby.sendBinary(audioFrame(party?.id ?? '', PHILIP, Buffer.from([7])));
     await settle();
     expect(duels.binaries.at(-1)?.at(-1)).toBe(7);
+  });
+
+  test('Sprachchat-Stumm über die Moderation: Meldung an Spieler und Team, Verlauf, Ablauf, Aufheben, Recht', async () => {
+    const { proxy, duels } = await network();
+    const cmd = (uuid: string, command: string, ...args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    const said = (uuid: string, part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && String(m['text']).includes(part));
+    const mutedList = (m: Msg) => m['muted'] as string[];
+    const MUTE_MINUTES = 10;
+    const MINUTE_MS = 60_000;
+    await duels.next('voice');
+
+    // Wie im Panel: Dauer und Grund, Lena (englisch) liest es, das Team bekommt einen Hinweis.
+    await cmd(PHILIP, 'voicemute', 'Lena', `${MUTE_MINUTES}m`, 'zu laut');
+    await said(LENA, 'You are muted in voice chat');
+    await said(PHILIP, 'im Sprachchat stummgeschaltet');
+    expect(mutedList(await duels.next('voice', (m) => mutedList(m).includes(LENA)))).toEqual([LENA]);
+    const entry = hub.punish.history(LENA)[0];
+    expect(entry).toMatchObject({ kind: 'voice', reason: 'zu laut', byName: 'Philip' });
+    expect(Date.parse(entry?.expiresAt ?? '') - clock.now).toBe(MUTE_MINUTES * MINUTE_MS);
+    // Chat schreiben geht weiter – nur der Sprachchat ist stumm.
+    expect(hub.punish.active(LENA, 'mute')).toBeUndefined();
+
+    // Nach zehn Minuten vorbei: die Spielserver bekommen die neue Liste (sie halten Stumme selbst zurück).
+    clock.now += (MUTE_MINUTES + 1) * MINUTE_MS;
+    duels.send({ t: 'voice-group', uuid: LENA, group: null });
+    expect(mutedList(await duels.next('voice', (m) => !mutedList(m).includes(LENA)))).toEqual([]);
+
+    // Ohne Dauer für immer, /voiceunmute hebt auf; ein zweites Mal gibt es nichts aufzuheben.
+    await cmd(PHILIP, 'voicemute', 'Lena', 'Dauerlärm');
+    expect(hub.punish.active(LENA, 'voice')).toMatchObject({ reason: 'Dauerlärm', expiresAt: null });
+    await cmd(PHILIP, 'voiceunmute', 'Lena');
+    await said(LENA, 'You can speak in voice chat again');
+    await said(PHILIP, 'im Sprachchat freigegeben');
+    await duels.next('voice', (m) => !mutedList(m).includes(LENA));
+    await cmd(PHILIP, 'voiceunmute', 'Lena');
+    await said(PHILIP, 'ist im Sprachchat nicht stumm');
+
+    // Ohne das Recht „voice-mute“ (Lena ist Spielerin) geht es nicht.
+    await cmd(LENA, 'voicemute', 'Philip');
+    expect(hub.punish.active(PHILIP, 'voice')).toBeUndefined();
   });
 
   test('Eigene Sprachgruppen für alle Server: Passwort, besetzter Name, leer → weg, im Panel aus, Hörweite', async () => {

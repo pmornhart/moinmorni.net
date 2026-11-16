@@ -8,7 +8,9 @@ import {
   areaById,
   defaultsFor,
   mayAssign,
+  mayPunish,
   modeSchema,
+  PUNISHMENT_RIGHTS,
   patchSchemaFor,
   modeAreaOf,
   onStep,
@@ -16,13 +18,14 @@ import {
   settingsOf,
 } from '../src/index.js';
 
-// Pfad wie im Netzwerk-Plugin geprüft: nur a-z 0-9 . _ -, keine leeren Teile.
+// Pfad wie im Netzwerk-Plugin geprüft: nur a-z 0-9 . _ -, keine leeren Teile – "ankauf.stufen.1.prozent" passt,
+// "ankauf..preise" und "Welt.Name" nicht.
 // https://regex101.com/?flavor=javascript&regex=%5E%5Ba-z0-9_-%5D%2B(%5C.%5Ba-z0-9_-%5D%2B)*%24&testString=ankauf.stufen.1.prozent
 const CONFIG_PATH = /^[a-z0-9_-]+(\.[a-z0-9_-]+)*$/;
-// Plugin-Name aus der plugin.yml: "MoinMorniDuels".
+// Plugin-Name aus der plugin.yml: "MoinMorniDuels" passt, "Morni Duels" (Leerzeichen) nicht.
 // https://regex101.com/?flavor=javascript&regex=%5E%5BA-Za-z0-9_-%5D%7B1%2C64%7D%24&testString=MorniSMP
 const PLUGIN_NAME = /^[A-Za-z0-9_-]{1,64}$/;
-// Platzhalter im Befehl ohne Leerzeichen: "<sekunden>", "<zufall|fest>".
+// Platzhalter mit Leerzeichen im Befehl (verboten): "<ticks (20)>" passt, "<sekunden>" und "<zufall|fest>" nicht.
 // https://regex101.com/?flavor=javascript&regex=%3C%5B%5E%3E%5D*%5Cs%5B%5E%3E%5D*%3E&testString=%3Cticks%20(20)%3E
 const SPACE_IN_PLACEHOLDER = /<[^>]*\s[^>]*>/;
 
@@ -102,10 +105,22 @@ describe('Einstellungen der Spielmodi', () => {
     expect(party.safeParse({ miniFactor: 0.35 }).success).toBe(false);
     expect(party.safeParse({ tables: 2.5 }).success).toBe(false);
     expect(party.safeParse({ miniKuhglocke: false }).success).toBe(true);
+    expect(party.safeParse({ quickMiniFactor: 0.75 }).success).toBe(true);
+    expect(party.safeParse({ quickMiniFactor: 0.77 }).success).toBe(false);
     const smp = patchSchemaFor(areaById('smp')!);
-    expect(smp.safeParse({ priceBamboo: 0.05, auctionFee: 2.5 }).success).toBe(true);
-    expect(smp.safeParse({ priceBamboo: 0.055 }).success).toBe(false);
+    expect(smp.safeParse({ startBalance: 0.05, auctionFee: 2.5 }).success).toBe(true);
+    expect(smp.safeParse({ startBalance: 0.055 }).success).toBe(false);
     expect(onStep(0.1 + 0.2, 0.1)).toBe(true);
+  });
+
+  test('MorniSMP: vom Sortiment des Händlerhauses nur Schalter und Zahlen, keine einzelne Ware', () => {
+    // MorniSMP nimmt „haendler.waren“ nur als Ganzes: Steht dort auch nur eine Ware in der config.yml, gilt allein
+    // diese Liste – einzelne Werte aus dem Panel würden das Sortiment verkleinern.
+    const paths = settingsOf(areaById('smp')!).map((d) => d.config?.path ?? '');
+    expect(paths).toEqual(
+      expect.arrayContaining(['haendler.an', 'haendler.verkauf-max-prozent', 'haendler.bestaetigen-ab']),
+    );
+    expect(paths.filter((p) => p.startsWith('haendler.waren') || p.startsWith('ankauf.preise'))).toEqual([]);
   });
 });
 
@@ -127,5 +142,23 @@ describe('Rollen und Modi', () => {
     expect(mayAssign(DEFAULT_ROLES, 'moderator', 'media')).toBe(true);
     expect(mayAssign(DEFAULT_ROLES, 'moderator', 'moderator')).toBe(false);
     expect(mayAssign(DEFAULT_ROLES, 'vip', 'player')).toBe(true);
+    // Der Owner vergibt jeden Rang – in seiner Rang-Auswahl ist nichts gesperrt.
+    DEFAULT_ROLES.forEach((r) => expect(mayAssign(DEFAULT_ROLES, 'owner', r.id)).toBe(true));
+  });
+
+  test('Strafen brauchen dasselbe Recht wie der Befehl im Spiel; Sprachchat-Stumm „voice-mute“', () => {
+    const role = (id: string) => DEFAULT_ROLES.find((r) => r.id === id) ?? { id, game: [] };
+    const kinds = Object.keys(PUNISHMENT_RIGHTS) as Array<keyof typeof PUNISHMENT_RIGHTS>;
+    expect(PUNISHMENT_RIGHTS.voice).toBe('voice-mute');
+    kinds.forEach((k) => {
+      expect(mayPunish(role('owner'), k)).toBe(true);
+      expect(mayPunish(role('admin'), k)).toBe(true);
+      expect(mayPunish(role('moderator'), k)).toBe(true);
+      expect(mayPunish(role('vip'), k)).toBe(false);
+    });
+    expect(mayPunish({ id: 'helfer', game: ['mute'] }, 'mute')).toBe(true);
+    expect(mayPunish({ id: 'helfer', game: ['mute'] }, 'voice')).toBe(false);
+    // Owner darf alles, auch wenn die Vorlage ihm ein Recht weggenommen hat.
+    expect(mayPunish({ id: 'owner', game: [] }, 'voice')).toBe(true);
   });
 });

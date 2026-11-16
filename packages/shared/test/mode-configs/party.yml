@@ -4,7 +4,7 @@
 # Eigene, leere Welt für Festplatz, Spielbretter und Minispiel-Plätze. Das Plugin legt sie an und baut alles selbst.
 welt: party
 
-# So viele Partien können gleichzeitig laufen (jeder Tisch hat alle drei Bretter und alle Minispiel-Plätze).
+# So viele Partien können gleichzeitig laufen (jeder Tisch hat alle sechs Bretter und alle Minispiel-Plätze).
 # Ändern baut beim nächsten Start neu.
 tische: 2
 
@@ -37,7 +37,8 @@ minispiele:
   # Welche Minispiele vorkommen (leer = alle): broeckelboden, talerregen, bergsprint, pfeilhagel, heisse-brezn,
   # trachtenfarben, gipfelkoenig, kuhglocke, schaefchen, holzhacker, rempelei, scheibenschiessen, lawinenhang,
   # maibaumkraxeln, eisstockschiessen, murmeltier, goldwaschen, schuhplattler, brueckenbau, schneeballschlacht,
-  # schlittenrennen, enzian-suche, musterweber, foehnsturm
+  # schlittenrennen, enzian-suche, musterweber, foehnsturm – und nur mit Seiten (2 gegen 2, 1 gegen 3, Duell):
+  # tauziehen, gamsjagd
   auswahl: []
   # zufall = gemischt, ohne Wiederholung bis alle dran waren; fest = der Reihe nach wie in „auswahl“.
   reihenfolge: zufall
@@ -58,6 +59,33 @@ minispiel-marathon:
 seilschaft:
   # So viele Runden stehen zur Wahl.
   runden: [10, 15]
+
+# Schnelle Partie: Edelweiß-Jagd in wenigen Runden, mit mehr Start-Talern, günstigerem Edelweiß und kürzeren
+# Minispielen (Dauer × Faktor, zusätzlich zu minispiele.dauer-faktor).
+schnelle-partie:
+  runden: 5
+  start-taler: 20
+  edelweiss-preis: 15
+  dauer-faktor: 0.75
+
+# Bergduell: zwei gegeneinander auf dem Brett, jedes Minispiel ist ein Duell (Tauziehen, Scheibenschießen …).
+bergduell:
+  runden: 8
+
+# Hüttenaufstieg: ohne Spielbrett, jeder hat Leben. Wer ein Minispiel in der unteren Hälfte beendet, verliert eins;
+# wer keine mehr hat, schaut zu. Wer zuletzt übrig ist, gewinnt.
+huettenaufstieg:
+  # Leben am Anfang (1–9).
+  leben: 3
+  # Spätestens nach so vielen Minispielen ist Schluss – dann gewinnt, wer die meisten Leben hat.
+  hoechstens-minispiele: 25
+
+# Auszeichnungen am Ende einer Brett-Partie (Edelweiß-Jagd, Seilschaft, Schnelle Partie, Bergduell): wer vorn liegt,
+# bekommt ein Edelweiß dazu. Zur Wahl: wanderer (meiste Felder), minispiel-meister (meiste Minispiel-Siege),
+# pechvogel (öfter auf roten Feldern – als Trost), duellkoenig (meiste Duell-Siege). Leer = alle.
+auszeichnungen:
+  an: true
+  welche: [wanderer, minispiel-meister, pechvogel, duellkoenig]
 
 regeln:
   start-taler: 10

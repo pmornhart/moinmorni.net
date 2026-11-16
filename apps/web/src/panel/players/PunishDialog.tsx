@@ -4,15 +4,17 @@ import { Info, X } from 'lucide-react';
 import { useId, useState, type FormEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { mayPunish } from '@moinmorni/shared';
 import { FieldBlock } from '~/components/controls';
-import { Button, Input, NativeSelect, Textarea } from '~/components/ui';
+import { Select } from '~/components/select';
+import { Button, Input, Textarea } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useDebounced } from '~/lib/debounce';
 import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
 import { MINUTES_PER_DAY, MINUTES_PER_HOUR, MINUTES_PER_WEEK, useTimeText } from '~/lib/time';
-import { useCan } from '../session';
+import { useCan, usePanel } from '../session';
 import { KIND_ICON } from './badges';
 import {
   isLasting,
@@ -51,6 +53,7 @@ const QUICK_REASONS = ['spam', 'insult', 'cheats', 'grief', 'ads'] as const;
 const DEFAULT_MINUTES: Readonly<Record<ModKind, number>> = {
   ban: MINUTES_PER_DAY,
   mute: MINUTES_PER_HOUR,
+  voice: MINUTES_PER_HOUR,
   jail: HALF_HOUR,
   warn: MINUTES_PER_HOUR,
   kick: MINUTES_PER_HOUR,
@@ -82,8 +85,14 @@ function PunishForm({
   const errorText = useErrorText();
   const refresh = useRefreshPlayers();
   const canSearch = useCan('players');
+  const me = usePanel();
   const id = useId();
-  const [kind, setKind] = useState<ModKind>(initialKind);
+  // Each punishment needs its right, like the command in the game (voice chat mute: "voice-mute").
+  const [kind, setKind] = useState<ModKind>(() =>
+    mayPunish(me.role, initialKind)
+      ? initialKind
+      : (MOD_KINDS.find((k) => mayPunish(me.role, k)) ?? initialKind),
+  );
   const [name, setName] = useState(target?.name ?? '');
   const [choice, setChoice] = useState<Choice>(DEFAULT_MINUTES[initialKind]);
   const [amount, setAmount] = useState('2');
@@ -100,7 +109,11 @@ function PunishForm({
     return choice === 'custom' ? customMinutes : choice;
   })();
   const kickBlocked = kind === 'kick' && target?.online === false;
-  const valid = player.length > 0 && !kickBlocked && (!lasting || choice !== 'custom' || customValid);
+  const valid =
+    player.length > 0 &&
+    !kickBlocked &&
+    mayPunish(me.role, kind) &&
+    (!lasting || choice !== 'custom' || customValid);
 
   const submit = useMutation({
     mutationFn: () =>
@@ -153,20 +166,25 @@ function PunishForm({
 
       <fieldset className="grid gap-2">
         <legend className="mb-2 text-sm font-semibold">{t('punish.kind')}</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {MOD_KINDS.map((k) => {
             const Icon = KIND_ICON[k];
             const offline = k === 'kick' && target?.online === false;
+            const allowed = mayPunish(me.role, k);
+            const why = ((): string | undefined => {
+              if (!allowed) return t('punish.noRight');
+              return offline ? t('punish.kickOffline', { name: target?.name ?? '' }) : undefined;
+            })();
             return (
               <button
                 key={k}
                 type="button"
                 aria-pressed={kind === k}
-                disabled={offline}
-                title={offline ? t('punish.kickOffline', { name: target?.name ?? '' }) : undefined}
+                disabled={offline || !allowed}
+                title={why}
                 onClick={() => setKind(k)}
                 className={cn(
-                  'grid cursor-pointer justify-items-center gap-1.5 rounded-[12px] border px-2 py-3 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+                  'grid cursor-pointer content-start justify-items-center gap-1.5 rounded-[12px] border px-2 py-3 text-center text-[13px] font-semibold leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-45',
                   kind === k
                     ? 'border-primary bg-accent text-foreground ring-3 ring-primary/15'
                     : 'border-input bg-secondary text-muted-foreground hover:text-foreground',
@@ -225,7 +243,7 @@ function PunishForm({
                 <label htmlFor={`${id}-unit`} className="sr-only">
                   {t('punish.unit')}
                 </label>
-                <NativeSelect
+                <Select
                   id={`${id}-unit`}
                   value={unit}
                   onChange={(e) => setUnit(isUnit(e.target.value) ? e.target.value : unit)}
@@ -235,7 +253,7 @@ function PunishForm({
                       {t(`punish.units.${u}`)}
                     </option>
                   ))}
-                </NativeSelect>
+                </Select>
               </div>
               {customValid ? null : (
                 <p className="text-[13px] text-destructive">{t('punish.customInvalid')}</p>

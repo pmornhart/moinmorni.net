@@ -226,6 +226,10 @@ export function lobbyProperties(offer?: PackOffer): Record<string, string> {
     'spawn-protection': '0',
     'allow-nether': 'false',
     'generate-structures': 'false',
+    // Der Selbstbau schickt viele Befehle über RCON – ohne das stünde bei jedem Team-Mitglied mit OP
+    // „[Rcon: 16 Chunks … werden nun dauerhaft geladen]“ im Chat.
+    'broadcast-rcon-to-ops': 'false',
+    'broadcast-console-to-ops': 'false',
     ...pack,
   };
 }

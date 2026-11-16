@@ -150,6 +150,8 @@ final class LobbyFeatures implements Listener {
 
     /** Sitzt jemand im Gefängnis? Dann gibt es kein Menü, keinen Rundgang, keinen Parkour (setzt {@link LobbyJail}). */
     private java.util.function.Predicate<UUID> jailed = id -> false;
+    /** Wer in der Lobby bauen darf (Rang-Recht „Lobby bearbeiten“) – OPs immer. */
+    private java.util.function.Predicate<Player> editors = p -> false;
 
     LobbyFeatures(JavaPlugin plugin, LobbyNpcs npcs, Function<Player, String> langOf) {
         this.plugin = plugin;
@@ -157,6 +159,10 @@ final class LobbyFeatures implements Listener {
         this.langOf = langOf;
         this.itemKey = new NamespacedKey(plugin, ITEM_KEY);
         this.dataDir = plugin.getDataFolder().toPath().getParent().resolve("moinmorni");
+    }
+
+    void setEditors(java.util.function.Predicate<Player> editors) {
+        this.editors = editors;
     }
 
     void setJail(java.util.function.Predicate<UUID> jailed) {
@@ -600,9 +606,9 @@ final class LobbyFeatures implements Listener {
         }
     }
 
-    /** Wer in der Lobby bauen darf: nur das Team im Kreativmodus mit Rechten des Servers. */
-    private static boolean builder(Player p) {
-        return p.getGameMode() == GameMode.CREATIVE && p.isOp();
+    /** Wer in der Lobby bauen darf: nur im Kreativmodus, mit dem Rang-Recht „Lobby bearbeiten“ (oder als OP). */
+    private boolean builder(Player p) {
+        return p.getGameMode() == GameMode.CREATIVE && (p.isOp() || editors.test(p));
     }
 
     @EventHandler(priority = EventPriority.HIGH)

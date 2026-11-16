@@ -76,6 +76,8 @@ export interface SiteInfo {
   readonly socials: Readonly<Record<Social, string | null>>;
   /** Everyone who has ever played on MoinMorni. */
   readonly players: number;
+  /** Open team positions ("Wir suchen …", apply under /team/bewerben). */
+  readonly teamSearch?: readonly Pick<PublicRole, 'id' | 'name' | 'symbol' | 'colour'>[];
 }
 
 const HTTP_NOT_FOUND = 404;

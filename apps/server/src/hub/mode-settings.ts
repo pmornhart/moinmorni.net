@@ -20,9 +20,37 @@ export interface ModeSettings {
   readonly values: Readonly<Record<string, unknown>>;
 }
 
+// Stelle in einer Liste aus Zahlen oder Texten am Ende eines Pfads: "edelweiss-jagd-runden.2" → Liste
+// "edelweiss-jagd-runden", Stelle 2; "ankauf.stufen.1.prozent" (Feld eines Eintrags) passt nicht.
+// https://regex101.com/?flavor=javascript&regex=%5E(.%2B)%5C.(%5Cd%2B)%24&testString=edelweiss-jagd-runden.2
+const LIST_ENTRY = /^(.+)\.(\d+)$/;
+
+type Entry = readonly [string, unknown];
+
+/**
+ * Stellen einer Liste („runden.0“, „runden.1“ …) als ganze Liste: So entsteht sie auch in einer älteren config.yml,
+ * in der es sie noch nicht gibt – eine einzelne Stelle ließe sich dort nicht eintragen, und der Modus würde nach jedem
+ * Neustart wieder „Neustart nötig“ melden. Nur wenn der Katalog die Stellen lückenlos ab 0 hat; sonst wie bisher einzeln.
+ */
+function wholeLists(entries: readonly Entry[]): Entry[] {
+  const byList = entries.reduce<Map<string, Array<readonly [number, unknown]>>>((lists, [path, value]) => {
+    const [, list, index] = LIST_ENTRY.exec(path) ?? [];
+    if (list && index) lists.set(list, [...(lists.get(list) ?? []), [Number(index), value]]);
+    return lists;
+  }, new Map());
+  const whole = [...byList]
+    .map(([list, items]) => [list, [...items].sort(([a], [b]) => a - b)] as const)
+    .filter(([, items]) => items.every(([index], i) => index === i))
+    .map(([list, items]): Entry => [list, items.map(([, value]) => value)]);
+  const merged = new Set(whole.map(([list]) => list));
+  const rest = entries.filter(([path]) => !merged.has(LIST_ENTRY.exec(path)?.[1] ?? ''));
+  return [...rest, ...whole];
+}
+
 /**
  * Pfad → Wert aus den Werten eines Bereichs. An/Aus-Einträge einer Auswahl-Liste (`member`) werden zur Liste der
- * eingeschalteten; sind alle an oder alle aus, bleibt sie leer (= alle im Modus).
+ * eingeschalteten; sind alle an oder alle aus, bleibt sie leer (= alle im Modus). Stellen einer Liste aus Zahlen
+ * oder Texten gehen als ganze Liste (siehe `wholeLists`).
  */
 export function configValues(
   area: SettingArea,
@@ -31,14 +59,14 @@ export function configValues(
   const defs = settingsOf(area).filter((d) => d.config);
   const plain = defs
     .filter((d) => !d.config?.member)
-    .map((d) => [d.config?.path ?? '', values[d.key]] as const);
+    .map((d): Entry => [d.config?.path ?? '', values[d.key]]);
   const lists = [...new Set(defs.flatMap((d) => (d.config?.member ? [d.config.path] : [])))].map((path) => {
     const members = defs.filter((d) => d.config?.path === path && d.config.member);
     const chosen = members.filter((d) => values[d.key] === true).map((d) => d.config?.member ?? '');
     const everything = chosen.length === 0 || chosen.length === members.length;
     return [path, everything ? [] : chosen] as const;
   });
-  return Object.fromEntries([...plain, ...lists]);
+  return Object.fromEntries([...wholeLists(plain), ...lists]);
 }
 
 export function modeSettingsOf(

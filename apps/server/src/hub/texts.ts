@@ -408,6 +408,10 @@ const TEXTS = {
     de: `${P}<gray><white>{mode}</white> ist gerade geschlossen.`,
     en: `${P}<gray><white>{mode}</white> is closed right now.`,
   },
+  'mode.closed_team': {
+    de: `${P}<gold><white>{mode}</white> ist für Spieler geschlossen – du kommst als Team trotzdem rein. Öffnen: Panel → Modi.`,
+    en: `${P}<gold><white>{mode}</white> is closed to players – as team you get in anyway. To open it: panel → modes.`,
+  },
   'mode.soon': {
     de: `${P}<gray><white>{mode}</white> kommt bald – wir bauen noch daran.`,
     en: `${P}<gray><white>{mode}</white> is coming soon – we're still building it.`,

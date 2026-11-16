@@ -6,7 +6,8 @@ import { toast } from 'sonner';
 import { MODE_ACCESS, MODE_STATES, type Mode, type ModePatch } from '@moinmorni/shared';
 import { FieldBlock } from '~/components/controls';
 import { ModeGlyph } from '~/components/mode-visuals';
-import { Button, Card, Input, NativeSelect, Pill, Skeleton, Switch, Textarea } from '~/components/ui';
+import { Select } from '~/components/select';
+import { Button, Card, Input, Pill, Skeleton, Switch, Textarea } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useErrorText } from '~/lib/errors';
@@ -164,7 +165,7 @@ function ModeEditor({
         <div id={id('body')} className="grid gap-5 border-t border-border pt-5">
           <div className="grid gap-4 md:grid-cols-2">
             <FieldBlock id={id('state')} label={t('modes.state')} help={t('modes.stateHelp')}>
-              <NativeSelect
+              <Select
                 id={id('state')}
                 value={draft.state}
                 onChange={(e) => set('state', MODE_STATES.find((s) => s === e.target.value) ?? draft.state)}
@@ -174,17 +175,17 @@ function ModeEditor({
                     {t(`mode.state.${s}`)}
                   </option>
                 ))}
-              </NativeSelect>
+              </Select>
             </FieldBlock>
             <FieldBlock id={id('access')} label={t('modes.access')}>
-              <NativeSelect
+              <Select
                 id={id('access')}
                 value={draft.access}
                 onChange={(e) => set('access', MODE_ACCESS.find((a) => a === e.target.value) ?? draft.access)}
               >
                 <option value="everyone">{t('modes.accessEveryone')}</option>
                 <option value="whitelist">{t('modes.accessWhitelist')}</option>
-              </NativeSelect>
+              </Select>
             </FieldBlock>
             <FieldBlock id={id('name-de')} label={t('modes.nameDe')}>
               <Input

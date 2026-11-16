@@ -1,6 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the game needs them */
 import { z } from 'zod';
 import { MODE_SETTING_AREAS } from './mode-settings.js';
+import { TEAM_APPLY_AREA } from './team-apply.js';
 import type { PanelArea } from './roles.js';
 
 /**
@@ -39,6 +40,8 @@ interface Base {
   readonly command?: string;
   /** Nur in Bereichen eines Spielmodus: Stelle in der config.yml des Modus. */
   readonly config?: ConfigSpot;
+  /** Nur der Owner darf das ändern (im Panel und im Spiel), z. B. die Admin-Stelle öffnen. */
+  readonly ownerOnly?: boolean;
 }
 
 export type SettingDef =
@@ -75,6 +78,8 @@ export interface SettingSection {
   readonly title: Text;
   readonly text?: Text;
   readonly settings: readonly SettingDef[];
+  /** Nur zeigen, wenn es diese Rolle in der Rollen-Vorlage gibt (Stellen der Team-Bewerbungen). */
+  readonly role?: string;
 }
 
 export interface SettingArea {
@@ -1515,6 +1520,7 @@ export const SETTING_AREAS: readonly SettingArea[] = [
   SOCIAL_AREA,
   LOBBY_AREA,
   WEBSITE_AREA,
+  TEAM_APPLY_AREA,
   MORNICRAFT_AREA,
   ...MODE_SETTING_AREAS,
   BUILD_AREA,

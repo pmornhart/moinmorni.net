@@ -1,8 +1,14 @@
 import { mayAssign, type GameRight, type Role } from '@moinmorni/shared';
 import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
-import { JAIL_DEFAULT_MINUTES, type Moderation, type Target } from './moderation.js';
-import { parseDuration, type PunishKind } from './punish.js';
+import {
+  isLasting,
+  JAIL_DEFAULT_MINUTES,
+  type LiftKind,
+  type Moderation,
+  type Target,
+} from './moderation.js';
+import { parseDuration } from './punish.js';
 import { dateText, LANGS, mm, text, type Lang, type TextKey } from './texts.js';
 
 /**
@@ -34,7 +40,8 @@ const NOT_PUNISHED = {
   ban: 'punish.not_banned',
   mute: 'punish.not_muted',
   jail: 'punish.not_jailed',
-} as const;
+  voice: 'voice.not_muted',
+} as const satisfies Record<LiftKind, TextKey>;
 const REMOVE = new Set(['weg', 'keiner', 'none', 'remove']);
 
 export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
@@ -66,22 +73,22 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
     return t;
   };
 
-  /** Bann und Stumm: `<spieler> [dauer] [grund…]`. */
+  /** Bann, Stumm, Gefängnis, Sprachchat-Stumm: `<spieler> [dauer] [grund…]` – wie im Panel über die Moderation. */
   const punishing =
-    (kind: Extract<PunishKind, 'ban' | 'mute' | 'jail'>) =>
+    (kind: LiftKind) =>
     (actor: Actor, args: readonly string[]): void => {
       const t = victim(actor, args[0]);
       if (!t) return;
       const minutes = parseDuration(args[1]);
       const reasonParts = minutes === undefined ? args.slice(1) : args.slice(2);
       const reason = reasonParts.join(' ').trim() || text(t.lang, 'punish.no_reason');
-      // Ohne Dauer: Bann und Stumm für immer, Gefängnis zehn Minuten.
+      // Ohne Dauer: Bann und Stumm (auch im Sprachchat) für immer, Gefängnis zehn Minuten.
       const fallback = kind === 'jail' ? JAIL_DEFAULT_MINUTES : null;
       mod.punish(t, kind, minutes === undefined ? fallback : minutes, reason, actor.name);
     };
 
   const lifting =
-    (kind: Extract<PunishKind, 'ban' | 'mute' | 'jail'>) =>
+    (kind: LiftKind) =>
     (actor: Actor, args: readonly string[]): void => {
       const t = target(args[0]);
       if (!t) {
@@ -261,6 +268,22 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: playerArg,
     },
     {
+      name: 'voicemute',
+      aliases: ['sprachstumm', 'vcmute'],
+      right: 'voice-mute',
+      usage: { de: '/voicemute <spieler> [dauer] [grund]', en: '/voicemute <player> [duration] [reason]' },
+      run: punishing('voice'),
+      complete: punishArgs,
+    },
+    {
+      name: 'voiceunmute',
+      aliases: ['sprachfrei', 'vcunmute'],
+      right: 'voice-mute',
+      usage: { de: '/voiceunmute <spieler>', en: '/voiceunmute <player>' },
+      run: lifting('voice'),
+      complete: playerArg,
+    },
+    {
       name: 'kick',
       aliases: [],
       right: 'kick',
@@ -316,7 +339,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
             text(actor.lang, 'history.line', {
               date: dateText(actor.lang, p.createdAt, ctx.timeZone),
               kind: p.kind,
-              until: p.kind === 'ban' || p.kind === 'mute' ? until(actor.lang, p.expiresAt) : '',
+              until: isLasting(p.kind) ? until(actor.lang, p.expiresAt) : '',
               reason: mm(p.reason),
               by: mm(p.byName),
               state: p.revokedAt ? text(actor.lang, 'history.revoked') : '',

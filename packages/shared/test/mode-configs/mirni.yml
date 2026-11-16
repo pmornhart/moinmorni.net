@@ -87,44 +87,308 @@ grundstuecke:
   preis: 250
   max: 64
 
-# Ankauf der Stadt: nur Ernte und Beute von Monstern/Tieren (keine Erze, keine Blöcke – die handeln Spieler
-# untereinander). „preis“ pro Stück, „tag“ = so viele Stück pro Tag zum vollen Preis; danach zahlt die Stadt
-# weniger (siehe „stufen“: ab dem Vielfachen der Tagesmenge so viel Prozent).
+# Händlerhaus (Server-Shop, /shop): Der Händler der Stadt verkauft zu festen Preisen und kauft an – das ist auch
+# der Ankauf (/verkaufen, Sachen hineinlegen). Damit der freie Markt (Auktionshaus, Aufträge, Ladenkisten) lebt,
+# verkauft der Händler teuer und kauft billig: Ankaufspreise liegen höchstens bei „verkauf-max-prozent“ des
+# Kaufpreises. Gepresste Blöcke (Eisenblock, Heuballen …) kauft er nicht an, damit niemand die Tagesmengen umgeht.
+haendler:
+  # Händlerhaus und /shop an? (aus: auch kein Ankauf)
+  an: true
+  # Ankaufspreis höchstens so viel Prozent vom Kaufpreis (Waren über der Grenze werden beim Laden gesenkt)
+  verkauf-max-prozent: 40
+  # Ab diesem Betrag fragt der Händler noch einmal nach („Wirklich?“)
+  bestaetigen-ab: 250
+  # Abteilungen: Kennung → Symbol (Minecraft-Sorte) und Name auf Deutsch/Englisch. Reihenfolge = Reihenfolge im Menü.
+  abteilungen:
+    bloecke: {symbol: bricks, de: "Baublöcke", en: "Building blocks"}
+    holz: {symbol: oak_sapling, de: "Holz & Pflanzen", en: "Wood & plants"}
+    erze: {symbol: diamond, de: "Erze & Edelsteine", en: "Ores & gems"}
+    deko: {symbol: magenta_dye, de: "Farben & Deko", en: "Colours & decor"}
+    essen: {symbol: bread, de: "Essen & Ernte", en: "Food & crops"}
+    werkzeug: {symbol: iron_pickaxe, de: "Werkzeug & Waffen", en: "Tools & weapons"}
+    traenke: {symbol: brewing_stand, de: "Tränke & Zauber", en: "Potions & magic"}
+    redstone: {symbol: redstone, de: "Redstone & Technik", en: "Redstone & tech"}
+    beute: {symbol: bone, de: "Mob-Beute", en: "Mob drops"}
+    besonderes: {symbol: firework_rocket, de: "Besonderes & Saison", en: "Special & seasonal"}
+
+  # Waren je Abteilung (Reihenfolge = Reihenfolge im Menü). Preise in Talern pro Stück:
+  #   kauf      – so viel zahlen Spieler (weglassen = nicht zu kaufen)
+  #   verkauf   – so viel zahlt der Händler (weglassen = kauft er nicht an)
+  #   tag       – so viele Stück nimmt er pro Spieler und Tag zum vollen Preis an (Vorgabe 256), danach „ankauf.stufen“
+  #   kauf-tag  – so viele Stück darf jeder pro Tag kaufen (weglassen = ohne Grenze)
+  #   monate    – nur in diesen Monaten im Angebot (Saison-Ware), z. B. [10, 11]
+  waren:
+    bloecke:
+      stone: {kauf: 0.6, verkauf: 0.1, tag: 512}
+      cobblestone: {kauf: 0.3, verkauf: 0.05, tag: 512}
+      cobbled_deepslate: {kauf: 0.4, verkauf: 0.05, tag: 512}
+      stone_bricks: {kauf: 0.8}
+      smooth_stone: {kauf: 0.9}
+      polished_andesite: {kauf: 0.6}
+      andesite: {kauf: 0.5, verkauf: 0.05, tag: 256}
+      diorite: {kauf: 0.5, verkauf: 0.05, tag: 256}
+      granite: {kauf: 0.5, verkauf: 0.05, tag: 256}
+      tuff: {kauf: 0.6, verkauf: 0.08, tag: 256}
+      calcite: {kauf: 1.2}
+      dirt: {kauf: 0.2, verkauf: 0.02, tag: 512}
+      grass_block: {kauf: 1.5}
+      sand: {kauf: 0.4, verkauf: 0.06, tag: 512}
+      red_sand: {kauf: 0.6, verkauf: 0.08, tag: 256}
+      gravel: {kauf: 0.4, verkauf: 0.06, tag: 512}
+      clay: {kauf: 1.6}
+      glass: {kauf: 0.8}
+      sandstone: {kauf: 1.2}
+      bricks: {kauf: 2.5}
+      terracotta: {kauf: 1}
+      snow_block: {kauf: 0.6}
+      ice: {kauf: 1}
+      packed_ice: {kauf: 5}
+      blue_ice: {kauf: 40}
+      obsidian: {kauf: 6, verkauf: 1.5, tag: 64}
+      end_stone: {kauf: 2, verkauf: 0.3, tag: 128}
+      netherrack: {kauf: 0.2, verkauf: 0.02, tag: 512}
+      nether_bricks: {kauf: 1.5}
+      blackstone: {kauf: 0.5, verkauf: 0.05, tag: 256}
+      basalt: {kauf: 0.5}
+      quartz_block: {kauf: 7}
+      prismarine: {kauf: 3}
+      purpur_block: {kauf: 3}
+      copper_block: {kauf: 10}
+    holz:
+      oak_log: {kauf: 1.2, verkauf: 0.3, tag: 256}
+      spruce_log: {kauf: 1.2, verkauf: 0.3, tag: 256}
+      birch_log: {kauf: 1.2, verkauf: 0.3, tag: 256}
+      jungle_log: {kauf: 1.2, verkauf: 0.3, tag: 256}
+      acacia_log: {kauf: 1.2, verkauf: 0.3, tag: 256}
+      dark_oak_log: {kauf: 1.2, verkauf: 0.3, tag: 256}
+      mangrove_log: {kauf: 1.4, verkauf: 0.3, tag: 256}
+      cherry_log: {kauf: 1.4, verkauf: 0.3, tag: 256}
+      pale_oak_log: {kauf: 1.6, verkauf: 0.3, tag: 256}
+      crimson_stem: {kauf: 1.6, verkauf: 0.3, tag: 128}
+      warped_stem: {kauf: 1.6, verkauf: 0.3, tag: 128}
+      bamboo_block: {kauf: 1.5}
+      oak_planks: {kauf: 0.4}
+      spruce_planks: {kauf: 0.4}
+      birch_planks: {kauf: 0.4}
+      dark_oak_planks: {kauf: 0.4}
+      stick: {kauf: 0.15}
+      oak_sapling: {kauf: 1}
+      spruce_sapling: {kauf: 1}
+      birch_sapling: {kauf: 1}
+      cherry_sapling: {kauf: 2}
+      azalea: {kauf: 2}
+      flowering_azalea: {kauf: 3}
+      moss_block: {kauf: 1.2}
+      vine: {kauf: 0.5}
+      lily_pad: {kauf: 1}
+      cactus: {kauf: 1, verkauf: 0.3, tag: 256}
+      bamboo: {kauf: 0.2, verkauf: 0.05, tag: 512}
+      kelp: {kauf: 0.3, verkauf: 0.05, tag: 512}
+      brown_mushroom: {kauf: 0.8, verkauf: 0.15, tag: 128}
+      red_mushroom: {kauf: 0.8, verkauf: 0.15, tag: 128}
+      wheat_seeds: {kauf: 0.2}
+      pumpkin_seeds: {kauf: 0.5}
+      melon_seeds: {kauf: 0.5}
+    erze:
+      coal: {kauf: 1.5, verkauf: 0.4, tag: 128}
+      charcoal: {kauf: 1.4, verkauf: 0.3, tag: 128}
+      raw_copper: {kauf: 1, verkauf: 0.25, tag: 128}
+      copper_ingot: {kauf: 1.2, verkauf: 0.3, tag: 128}
+      raw_iron: {kauf: 7, verkauf: 1.8, tag: 64}
+      iron_ingot: {kauf: 8, verkauf: 2.4, tag: 64}
+      iron_nugget: {kauf: 1}
+      raw_gold: {kauf: 9, verkauf: 2.4, tag: 64}
+      gold_ingot: {kauf: 10, verkauf: 3, tag: 64}
+      gold_nugget: {kauf: 1.2}
+      lapis_lazuli: {kauf: 2, verkauf: 0.5, tag: 128}
+      quartz: {kauf: 1.5, verkauf: 0.4, tag: 128}
+      amethyst_shard: {kauf: 2, verkauf: 0.5, tag: 64}
+      emerald: {kauf: 25, verkauf: 6, tag: 32}
+      diamond: {kauf: 80, verkauf: 20, tag: 16}
+      netherite_scrap: {kauf: 400, kauf-tag: 2}
+      coal_block: {kauf: 13.5}
+      iron_block: {kauf: 72}
+      gold_block: {kauf: 90}
+      emerald_block: {kauf: 225}
+    deko:
+      white_wool: {kauf: 2, verkauf: 0.5, tag: 128}
+      red_wool: {kauf: 2}
+      yellow_wool: {kauf: 2}
+      lime_wool: {kauf: 2}
+      light_blue_wool: {kauf: 2}
+      blue_wool: {kauf: 2}
+      white_concrete: {kauf: 1.2}
+      red_concrete: {kauf: 1.2}
+      blue_concrete: {kauf: 1.2}
+      black_concrete: {kauf: 1.2}
+      white_dye: {kauf: 0.8}
+      red_dye: {kauf: 0.8}
+      yellow_dye: {kauf: 0.8}
+      lime_dye: {kauf: 0.8}
+      green_dye: {kauf: 0.8}
+      blue_dye: {kauf: 0.8}
+      black_dye: {kauf: 0.8}
+      dandelion: {kauf: 0.5}
+      poppy: {kauf: 0.5}
+      cornflower: {kauf: 0.5}
+      oxeye_daisy: {kauf: 0.5}
+      lily_of_the_valley: {kauf: 0.8}
+      sunflower: {kauf: 1}
+      peony: {kauf: 1}
+      torch: {kauf: 0.3}
+      lantern: {kauf: 4}
+      soul_lantern: {kauf: 4}
+      white_candle: {kauf: 2}
+      flower_pot: {kauf: 1}
+      painting: {kauf: 3}
+      item_frame: {kauf: 2}
+      white_bed: {kauf: 5}
+      white_banner: {kauf: 4}
+      iron_chain: {kauf: 3}
+      glass_pane: {kauf: 0.3}
+      sea_lantern: {kauf: 9}
+      end_rod: {kauf: 3}
+    essen:
+      wheat: {kauf: 1.5, verkauf: 0.5, tag: 256}
+      carrot: {kauf: 1, verkauf: 0.3, tag: 256}
+      potato: {kauf: 1, verkauf: 0.3, tag: 256}
+      beetroot: {kauf: 1.2, verkauf: 0.4, tag: 256}
+      melon_slice: {kauf: 0.3, verkauf: 0.1, tag: 512}
+      pumpkin: {kauf: 3, verkauf: 1, tag: 128}
+      sugar_cane: {kauf: 1.2, verkauf: 0.4, tag: 256}
+      cocoa_beans: {kauf: 1.2, verkauf: 0.4, tag: 256}
+      sweet_berries: {kauf: 0.6, verkauf: 0.2, tag: 256}
+      glow_berries: {kauf: 1, verkauf: 0.2, tag: 128}
+      apple: {kauf: 3, verkauf: 1, tag: 64}
+      egg: {kauf: 1, verkauf: 0.3, tag: 128}
+      bread: {kauf: 1.5}
+      baked_potato: {kauf: 1.5}
+      cookie: {kauf: 0.5}
+      pumpkin_pie: {kauf: 4}
+      cake: {kauf: 12}
+      honey_bottle: {kauf: 3}
+      dried_kelp: {kauf: 0.3}
+      beef: {kauf: 2, verkauf: 0.6, tag: 128}
+      porkchop: {kauf: 2, verkauf: 0.6, tag: 128}
+      chicken: {kauf: 1.6, verkauf: 0.5, tag: 128}
+      mutton: {kauf: 1.6, verkauf: 0.5, tag: 128}
+      cod: {kauf: 1.6, verkauf: 0.5, tag: 128}
+      salmon: {kauf: 2, verkauf: 0.6, tag: 128}
+      cooked_beef: {kauf: 3}
+      cooked_porkchop: {kauf: 3}
+      cooked_chicken: {kauf: 2.5}
+      cooked_salmon: {kauf: 3}
+      hay_block: {kauf: 15}
+      melon: {kauf: 3}
+      golden_apple: {kauf: 100, kauf-tag: 4}
+    werkzeug:
+      stone_pickaxe: {kauf: 2}
+      stone_axe: {kauf: 2}
+      stone_sword: {kauf: 1.5}
+      iron_pickaxe: {kauf: 30}
+      iron_axe: {kauf: 30}
+      iron_shovel: {kauf: 10}
+      iron_sword: {kauf: 20}
+      diamond_pickaxe: {kauf: 260, kauf-tag: 1}
+      diamond_sword: {kauf: 170, kauf-tag: 1}
+      bow: {kauf: 10}
+      crossbow: {kauf: 15}
+      arrow: {kauf: 0.3, verkauf: 0.1, tag: 256}
+      shield: {kauf: 12}
+      fishing_rod: {kauf: 5}
+      shears: {kauf: 18}
+      flint_and_steel: {kauf: 10}
+      iron_helmet: {kauf: 45}
+      iron_chestplate: {kauf: 70}
+      iron_leggings: {kauf: 60}
+      iron_boots: {kauf: 35}
+      bucket: {kauf: 25}
+      water_bucket: {kauf: 26}
+      compass: {kauf: 40}
+      clock: {kauf: 45}
+      spyglass: {kauf: 10}
+    traenke:
+      glass_bottle: {kauf: 0.5}
+      nether_wart: {kauf: 1.5, verkauf: 0.5, tag: 256}
+      blaze_powder: {kauf: 5}
+      glowstone_dust: {kauf: 2, verkauf: 0.5, tag: 128}
+      sugar: {kauf: 1}
+      spider_eye: {kauf: 1.2, verkauf: 0.4, tag: 128}
+      fermented_spider_eye: {kauf: 3}
+      magma_cream: {kauf: 5}
+      ghast_tear: {kauf: 20, verkauf: 5, tag: 16}
+      rabbit_foot: {kauf: 10, verkauf: 3, tag: 16}
+      phantom_membrane: {kauf: 6, verkauf: 2, tag: 32}
+      golden_carrot: {kauf: 12}
+      glistering_melon_slice: {kauf: 10}
+      brewing_stand: {kauf: 15}
+      cauldron: {kauf: 60}
+      experience_bottle: {kauf: 10, kauf-tag: 64}
+      book: {kauf: 4}
+      paper: {kauf: 0.5}
+      bookshelf: {kauf: 12}
+      enchanting_table: {kauf: 180, kauf-tag: 1}
+    redstone:
+      redstone: {kauf: 1.5, verkauf: 0.4, tag: 128}
+      redstone_block: {kauf: 13.5}
+      redstone_torch: {kauf: 2}
+      repeater: {kauf: 5}
+      comparator: {kauf: 8}
+      piston: {kauf: 12}
+      sticky_piston: {kauf: 14}
+      observer: {kauf: 6}
+      hopper: {kauf: 45}
+      dropper: {kauf: 3}
+      dispenser: {kauf: 13}
+      lever: {kauf: 0.5}
+      stone_button: {kauf: 0.6}
+      rail: {kauf: 3}
+      powered_rail: {kauf: 18}
+      minecart: {kauf: 45}
+      chest: {kauf: 3}
+      trapped_chest: {kauf: 12}
+      barrel: {kauf: 3}
+      target: {kauf: 3}
+      redstone_lamp: {kauf: 5}
+      tnt: {kauf: 8, kauf-tag: 16}
+    beute:
+      rotten_flesh: {kauf: 0.5, verkauf: 0.1, tag: 512}
+      bone: {kauf: 1, verkauf: 0.3, tag: 256}
+      bone_meal: {kauf: 0.4}
+      string: {kauf: 1.2, verkauf: 0.4, tag: 256}
+      gunpowder: {kauf: 3, verkauf: 1, tag: 128}
+      ender_pearl: {kauf: 9, verkauf: 3, tag: 32}
+      slime_ball: {kauf: 3, verkauf: 1, tag: 64}
+      blaze_rod: {kauf: 12, verkauf: 4, tag: 32}
+      leather: {kauf: 3, verkauf: 1, tag: 64}
+      rabbit_hide: {kauf: 1, verkauf: 0.3, tag: 64}
+      feather: {kauf: 0.6, verkauf: 0.2, tag: 256}
+      ink_sac: {kauf: 1.5, verkauf: 0.5, tag: 64}
+      glow_ink_sac: {kauf: 3, verkauf: 0.8, tag: 64}
+      prismarine_shard: {kauf: 2, verkauf: 0.5, tag: 64}
+      prismarine_crystals: {kauf: 2, verkauf: 0.5, tag: 64}
+      ender_eye: {kauf: 15, kauf-tag: 12}
+    besonderes:
+      name_tag: {kauf: 15}
+      saddle: {kauf: 25}
+      lead: {kauf: 3}
+      firework_rocket: {kauf: 1}
+      armor_stand: {kauf: 2}
+      map: {kauf: 2}
+      bundle: {kauf: 8}
+      honeycomb: {kauf: 3}
+      bell: {kauf: 30}
+      ender_chest: {kauf: 70, kauf-tag: 2}
+      carved_pumpkin: {kauf: 4, monate: [9, 10, 11]}
+      jack_o_lantern: {kauf: 5, monate: [9, 10, 11]}
+      snowball: {kauf: 0.2, monate: [12, 1, 2]}
+      spruce_leaves: {kauf: 0.5, monate: [12]}
+      pink_tulip: {kauf: 0.6, monate: [3, 4, 5]}
+      torchflower: {kauf: 2, monate: [3, 4, 5]}
+
+# Stufen des Ankaufs (gilt für alles, was der Händler ankauft): Wer mehr als die Tagesmenge („tag“ der Ware) bringt,
+# bekommt weniger – ab dem Vielfachen der Tagesmenge so viel Prozent.
 ankauf:
-  preise:
-    wheat: {preis: 0.5, tag: 256}
-    carrot: {preis: 0.3, tag: 256}
-    potato: {preis: 0.3, tag: 256}
-    beetroot: {preis: 0.4, tag: 256}
-    melon_slice: {preis: 0.1, tag: 512}
-    pumpkin: {preis: 1.0, tag: 128}
-    sugar_cane: {preis: 0.4, tag: 256}
-    cactus: {preis: 0.3, tag: 256}
-    bamboo: {preis: 0.05, tag: 512}
-    cocoa_beans: {preis: 0.4, tag: 256}
-    nether_wart: {preis: 0.5, tag: 256}
-    sweet_berries: {preis: 0.2, tag: 256}
-    apple: {preis: 1.0, tag: 64}
-    egg: {preis: 0.3, tag: 128}
-    rotten_flesh: {preis: 0.1, tag: 512}
-    bone: {preis: 0.3, tag: 256}
-    string: {preis: 0.4, tag: 256}
-    spider_eye: {preis: 0.4, tag: 128}
-    gunpowder: {preis: 1.0, tag: 128}
-    arrow: {preis: 0.1, tag: 256}
-    ender_pearl: {preis: 3.0, tag: 32}
-    slime_ball: {preis: 1.0, tag: 64}
-    blaze_rod: {preis: 4.0, tag: 32}
-    leather: {preis: 1.0, tag: 64}
-    feather: {preis: 0.2, tag: 256}
-    white_wool: {preis: 0.5, tag: 128}
-    ink_sac: {preis: 0.5, tag: 64}
-    beef: {preis: 0.6, tag: 128}
-    porkchop: {preis: 0.6, tag: 128}
-    chicken: {preis: 0.5, tag: 128}
-    mutton: {preis: 0.5, tag: 128}
-    cod: {preis: 0.5, tag: 128}
-    salmon: {preis: 0.6, tag: 128}
   stufen:
     - {ab: 0, prozent: 100}
     - {ab: 1, prozent: 50}
