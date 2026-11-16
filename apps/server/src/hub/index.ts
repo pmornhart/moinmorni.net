@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
 import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
-import { areaById, MODE_PHASE_PAUSE, type GameRight, type Role } from '@moinmorni/shared';
+import { alwaysIn, areaById, MODE_PHASE_PAUSE, type GameRight, type Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
@@ -397,12 +397,12 @@ export function createHub(options: HubOptions): Hub {
       ctx.msg(uuid, text(lang, 'mode.closed_team', { mode: name }));
     }
     if (mode?.state === 'soon') return stop(text(lang, 'mode.soon', { mode: name }));
-    if (mode?.state === 'maintenance' && !hasRight(players.roleOf(uuid), 'maintenance-join'))
+    if (mode?.state === 'maintenance' && !alwaysIn(players.roleOf(uuid)))
       return stop(text(lang, 'mode.maintenance', { mode: name }));
-    // Nur auf Einladung (MorniCraft): Whitelist – das Team kommt immer hinein.
+    // Nur auf Einladung (MorniCraft): Whitelist – das Team kommt immer hinein (dieselbe Regel zeigt das Panel).
     if (
       mode?.access === 'whitelist' &&
-      !hasRight(players.roleOf(uuid), 'maintenance-join') &&
+      !alwaysIn(players.roleOf(uuid)) &&
       !(
         options.allowedIn?.(mode.id, uuid, presence.get(uuid)?.name ?? players.get(uuid)?.name ?? '') ?? false
       )
@@ -531,7 +531,7 @@ export function createHub(options: HubOptions): Hub {
       return;
     }
     const net = stores.settings('network');
-    if (net['maintenance'] === true && !hasRight(role, 'maintenance-join')) {
+    if (net['maintenance'] === true && !alwaysIn(role)) {
       deny(text(lang, 'maintenance.screen', { message: mm(String(net['maintenanceMessage'] ?? '')) }));
       return;
     }

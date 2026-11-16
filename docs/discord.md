@@ -22,7 +22,7 @@ du den Server einmal leer an und holst den Bot dazu. Den Rest macht der Bot.
 
 Der Bot legt dann an (vorhandene Rollen und Kanäle gleichen Namens werden übernommen, nichts doppelt):
 
-- **Rollen** aus der Rollen-Vorlage (♛ Owner, ✦ Admin, ⚔ Moderator, ⚒ Builder, ▶ Media, ★ VIP) mit Farbe und
+- **Rollen** aus der Rollen-Vorlage (♛ Owner, ✦ Admin, ⚔ Moderator, ✚ Supporter, ⚒ Builder, ▶ Media, ★ VIP) mit Farbe und
   Rechten, dazu ✔ Verbunden, 🔇 Stumm und ⛓ Gefängnis.
 - **Kanäle**: Info (Willkommen, Regeln, Ankündigungen, Status), Community, Hilfe mit Ticket-Knopf, Sprachkanäle wie
   im Spiel (Dorfplatz, Biergarten, Turnier), VIP-Lounge, Bauteam, Team (Chat, Log, Bewerbungen), Gefängnis.

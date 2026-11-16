@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ListChecks, Plus, Search, Trash2 } from 'lucide-react';
-import { useId, useState, type FormEvent, type ReactElement } from 'react';
+import { ListChecks, Plus, Search, ShieldCheck, Trash2 } from 'lucide-react';
+import { useId, useState, type FormEvent, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { MinecraftHead } from '~/components/minecraft-head';
+import { RoleBadge } from '~/components/role-visuals';
 import { Button, Input, Pill, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -16,15 +18,53 @@ import {
   isBedrockName,
   MINECRAFT_NAME_MAX,
   useWhitelistQuery,
+  useWhitelistTeamQuery,
   validMinecraftName,
   WHITELIST_KEY,
   type WhitelistEntry,
+  type WhitelistTeamEntry,
 } from './model';
 import { ExtraCard } from './parts';
 
 const SKELETON_ROWS = ['a', 'b', 'c'];
 /** From this many names on, a search field helps. */
 const SEARCH_FROM = 8;
+const ROW = 'flex min-w-0 items-center gap-3 px-4 py-3 sm:px-5';
+
+/** Someone who gets in through their rank: head, name, rank badge – nothing to remove here. */
+function TeamEntry({ entry }: { readonly entry: WhitelistTeamEntry }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const notes = [
+    t('whitelistCard.team'),
+    ...(entry.listed !== null ? [t('whitelistCard.alsoListed')] : []),
+    ...(entry.seen ? [] : [t('whitelistCard.notSeen')]),
+  ];
+  return (
+    <li className={ROW}>
+      <MinecraftHead
+        uuid={entry.uuid}
+        name={entry.name.replace('.', '')}
+        className="size-9 rounded-[10px] bg-muted text-base"
+        letterClassName="text-muted-foreground"
+      />
+      <div className="grid min-w-0 flex-1 gap-0.5">
+        <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="min-w-0 font-semibold [overflow-wrap:anywhere]">{entry.name}</span>
+          <RoleBadge role={entry.role} />
+          {isBedrockName(entry.name) ? <Pill tone="blue">{t('applicationsCard.bedrock')}</Pill> : null}
+        </p>
+        <p className="text-[13px] text-muted-foreground">{notes.join(' · ')}</p>
+      </div>
+      <span
+        className="grid size-9 shrink-0 place-items-center rounded-[10px] text-success"
+        title={t('whitelistCard.teamHelp')}
+      >
+        <ShieldCheck className="size-5" aria-hidden />
+        <span className="sr-only">{t('whitelistCard.teamHelp')}</span>
+      </span>
+    </li>
+  );
+}
 
 function Entry({
   entry,
@@ -37,7 +77,7 @@ function Entry({
   const time = useTimeText();
   const name = entry.displayName;
   return (
-    <li className="flex min-w-0 items-center gap-3 px-4 py-3 sm:px-5">
+    <li className={ROW}>
       <NameHead name={name} className="size-9 rounded-[10px] text-base" />
       <div className="grid min-w-0 flex-1 gap-0.5">
         <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
@@ -66,7 +106,33 @@ function Entry({
   );
 }
 
-/** Einstellungen → MorniCraft: who may join. Accepted applications land here by themselves. */
+/** A titled part of the list (team first, then the names added by hand or by an application). */
+function Group({
+  title,
+  children,
+}: {
+  readonly title: string | null;
+  readonly children: ReactNode;
+}): ReactElement {
+  const headingId = useId();
+  return (
+    <section className="grid gap-2" aria-labelledby={title ? headingId : undefined}>
+      {title ? (
+        <h3 id={headingId} className="text-sm font-semibold text-muted-foreground">
+          {title}
+        </h3>
+      ) : null}
+      <div className="overflow-hidden rounded-[14px] border border-border">
+        <ul className="grid divide-y divide-border">{children}</ul>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Einstellungen → MorniCraft: who may join. The team (everyone whose rank always gets in) shows up by itself;
+ * accepted applications land here by themselves.
+ */
 export function WhitelistCard(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const errorText = useErrorText();
@@ -74,12 +140,18 @@ export function WhitelistCard(): ReactElement {
   const inputId = useId();
   const searchId = useId();
   const list = useWhitelistQuery();
+  const team = useWhitelistTeamQuery();
   const [name, setName] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [removing, setRemoving] = useState<WhitelistEntry | null>(null);
-  const rows = list.data ?? [];
+  const teamRows = team.data ?? [];
+  // Someone in the team who was also added by hand shows up once – as team member.
+  const inTeam = new Set(teamRows.flatMap((row) => (row.listed === null ? [] : [row.listed])));
+  const rows = (list.data ?? []).filter((r) => !inTeam.has(r.id));
+  const total = teamRows.length + rows.length;
   const words = query.trim().toLowerCase();
+  const shownTeam = words ? teamRows.filter((r) => r.name.toLowerCase().includes(words)) : teamRows;
   const shown = words ? rows.filter((r) => r.name.includes(words)) : rows;
 
   const add = useMutation({
@@ -110,11 +182,16 @@ export function WhitelistCard(): ReactElement {
   const submit = (e: FormEvent): void => {
     e.preventDefault();
     const value = name.trim();
+    const lower = value.toLowerCase();
     if (!validMinecraftName(value)) {
       setProblem(t('whitelistCard.invalidName'));
       return;
     }
-    if (rows.some((r) => r.name === value.toLowerCase())) {
+    if (teamRows.some((r) => r.seen && r.name.toLowerCase() === lower)) {
+      setProblem(t('whitelistCard.alreadyTeam', { name: value }));
+      return;
+    }
+    if ((list.data ?? []).some((r) => r.name === lower)) {
       setProblem(t('whitelistCard.already', { name: value }));
       return;
     }
@@ -122,6 +199,7 @@ export function WhitelistCard(): ReactElement {
     add.mutate(value);
   };
 
+  const loaded = list.isSuccess && (team.isSuccess || team.isError);
   return (
     <ExtraCard
       id="whitelist"
@@ -129,10 +207,8 @@ export function WhitelistCard(): ReactElement {
       title={t('whitelistCard.title')}
       text={t('whitelistCard.text')}
       aside={
-        list.data ? (
-          <span className="text-sm text-muted-foreground">
-            {t('whitelistCard.count', { count: rows.length })}
-          </span>
+        loaded ? (
+          <span className="text-sm text-muted-foreground">{t('whitelistCard.count', { count: total })}</span>
         ) : null
       }
     >
@@ -173,19 +249,20 @@ export function WhitelistCard(): ReactElement {
       </form>
 
       {list.isError ? <p className="text-muted-foreground">{errorText(list.error)}</p> : null}
-      {list.isPending ? (
+      {team.isError ? <p className="text-muted-foreground">{errorText(team.error)}</p> : null}
+      {list.isPending || team.isPending ? (
         <div className="grid gap-2">
           {SKELETON_ROWS.map((row) => (
             <Skeleton key={row} className="h-14 rounded-[12px]" />
           ))}
         </div>
       ) : null}
-      {list.isSuccess && !rows.length ? (
+      {loaded && !total ? (
         <p className="rounded-[14px] border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">
           {t('whitelistCard.empty')}
         </p>
       ) : null}
-      {rows.length >= SEARCH_FROM ? (
+      {total >= SEARCH_FROM ? (
         <div className="relative">
           <label htmlFor={searchId} className="sr-only">
             {t('whitelistCard.search')}
@@ -205,17 +282,22 @@ export function WhitelistCard(): ReactElement {
           />
         </div>
       ) : null}
-      {rows.length && !shown.length ? (
+      {total && !shownTeam.length && !shown.length ? (
         <p className="text-sm text-muted-foreground">{t('whitelistCard.noMatch')}</p>
       ) : null}
+      {shownTeam.length ? (
+        <Group title={t('whitelistCard.teamTitle')}>
+          {shownTeam.map((entry) => (
+            <TeamEntry key={entry.uuid} entry={entry} />
+          ))}
+        </Group>
+      ) : null}
       {shown.length ? (
-        <div className="overflow-hidden rounded-[14px] border border-border">
-          <ul className="grid divide-y divide-border">
-            {shown.map((entry) => (
-              <Entry key={entry.id} entry={entry} onRemove={() => setRemoving(entry)} />
-            ))}
-          </ul>
-        </div>
+        <Group title={teamRows.length ? t('whitelistCard.ownTitle') : null}>
+          {shown.map((entry) => (
+            <Entry key={entry.id} entry={entry} onRemove={() => setRemoving(entry)} />
+          ))}
+        </Group>
       ) : null}
 
       <ConfirmDialog
