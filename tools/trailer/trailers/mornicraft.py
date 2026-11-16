@@ -2,7 +2,7 @@
 Gräber, Sitzen, Portale zum Nether und End, mächtiger Enderdrache.
 
 Gedreht auf einem eigenen Test-Server: Paper 26.1.2 + MorniCraft 1.11.0 + ViaVersion/ViaBackwards 5.12.2 (für den
-26.3-Client), Port 25750, RCON 25850, view-distance 12, normale Welt. In `plugins/MorniCraft/config.yml`:
+26.3-Client), Port 25750, RCON 25850, normale Welt. In `plugins/MorniCraft/config.yml`:
 `spawn-island: 'on'` und `network: 'off'` (in Anführungszeichen – YAML liest on/off sonst als true/false), für den Dreh
 `teleport-delay: 3` und `dragon.attack-seconds: 60` (die Angriffe löst das Drehbuch selbst aus). Dazu das Hilfs-Plugin
 „Trailer-Regie“ (`regie als <spieler> <befehl>`, nur im Test-Server, liegt im Cache). MorniCraft baut die Insel selbst
@@ -12,18 +12,24 @@ Kamera = echter Client „McKamera“ (MM_CAMERA, ohne OP), Darsteller Anna Toni
 (`mornicraft/mc-actors.cjs`, Datei per `tail -n0 -F` = MM_ACTORS_FIFO). Vorher per RCON: Ränge `rang Anna owner`,
 `rang Clara moderator`, `rang Dora vip`, `rang Toni media`; Clans gründen die Darsteller selbst im Chat
 (`/clan create Almrausch ALM`, `/clan farbe gruen`, `/clan invite …`, `/clan accept`; Toni: Seebande SEE, himmelblau).
-Zuhause der Kamera (Turm, Teich, Pavillon) per `regie als McKamera sethome …`.
+Zuhause der Kamera (zuerst „Insel“ auf der Nebeninsel -40/34 mit Blick auf den Turm, dann Teich, Pavillon, Turm) per
+`regie als McKamera sethome …`. Client mit `--option renderDistance:16 --option 'renderClouds:"false"'
+--option 'graphicsPreset:"custom"'`, Server view-distance 16 (sonst endet das Meer unter der Insel im Dunst);
+`gamerule locator_bar false` in Oberwelt und End.
 
 Alles Spielgeschehen macht das Plugin selbst:
 - 02 Start-Elytra: Ich-Sicht von hinten (F5) – echter Client läuft über den Steg, springt ab, Doppelsprung in der Luft
   (Leertaste 2×, in Zeitlupe gedrückt), das Plugin legt Flügel an, der Client gleitet mit eigener Physik.
 - 03 Ränge + Clans: Rang-Symbol und farbiges Clan-Kürzel über dem Kopf und im Chat (Anzeige an).
-- 04 Zuhause: Ich-Sicht – `/homes` (über die Regie als Kamera), Bett anklicken, Wartebalken, Ankunft auf dem Turm.
+- 04 Zuhause: Ich-Sicht – `/homes` (über die Regie als Kamera), Bett „Insel“ anklicken, Wartebalken, Ankunft auf der
+  Nebeninsel.
 - 05 Grab: ein Creeper erwischt Toni – das Plugin baut das Grab (Kreuz mit Namensbrett). 06: die Kamera öffnet es.
 - 07 Sitzen: Anna und Dora klicken mit leerer Hand auf die Bank im Pavillon und setzen sich.
-- 08 `/nether` (Konsole): Tor in der Hecke, Treppenbrücke und die befallene Nebeninsel entstehen Stück für Stück.
+- 08 `/nether` (Konsole): Tor in der Hecke, Treppenbrücke und die befallene Nebeninsel entstehen Stück für Stück;
+  08b: Anna und Fritz gehen die Brücke hinab zum Netherportal.
 - 09 `/end`: Flug die Treppe hinab in die Kuppel mit dem Endportal (vorher gebaut).
-- 10/11 Mächtiger Enderdrache: `/mornicraft drache blitze|feuerregen|wut|kristalle` (Konsole).
+- 10/11 Mächtiger Enderdrache: `/mornicraft drache blitze|feuerregen|wut|kristalle` (Konsole). Die Wut bleibt am
+  Drachen: zum Neudrehen von 10 vorher `hard-dragon` aus + reload, 8 s warten, wieder an + reload.
 Videos nur lokal (~/mm-cache/trailer/mornicraft/), nie ins Repo.
 
   python3 trailers/mornicraft.py [einstellung …]      # drehen (ohne Angabe: alle)
