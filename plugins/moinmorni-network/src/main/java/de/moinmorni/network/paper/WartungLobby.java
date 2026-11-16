@@ -177,6 +177,8 @@ final class WartungLobby implements Listener {
     private void tick() {
         Bukkit.getOnlinePlayers().forEach(this::showBar);
         updateBoard();
+        // Die Alm bleibt ohne Tiere (die flache Welt setzt beim Erzeugen welche hin).
+        world().getEntitiesByClass(org.bukkit.entity.Animals.class).forEach(Entity::remove);
     }
 
     private String lang(Player p) {
@@ -286,11 +288,13 @@ final class WartungLobby implements Listener {
             p.showTitle(Title.title(
                     Component.text(en ? "⚒ Maintenance lobby" : "⚒ Wartungs-Lobby", NamedTextColor.GOLD,
                             TextDecoration.BOLD),
-                    Component.text(en ? "Back in a moment – try the jump course meanwhile!"
-                            : "Gleich geht’s weiter – probier solange den Sprung-Parcours!", NamedTextColor.WHITE),
+                    Component.text(en ? "Back in a moment!" : "Gleich geht’s weiter!", NamedTextColor.WHITE),
                     Title.Times.times(FADE_IN, STAY, FADE_OUT)));
             showBar(p);
             p.sendMessage(arrival(p, en));
+            p.sendMessage(Component.text(en ? "Pass the time: the jump course on the left starts at the plate – up to the bell!"
+                    : "Zum Zeitvertreib: Der Sprung-Parcours links beginnt an der Platte – hinauf zur Glocke!",
+                    NamedTextColor.GRAY));
         }, TICK);
     }
 

@@ -1186,7 +1186,7 @@
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt. Unter „Netzwerk“ stellst du die Wartung ein: Wer nicht hinein darf – oder nicht in die Lobby kann, weil sie neu startet –, wartet in der Wartungs-Lobby und kommt danach von selbst zurück."
     },
     "news": {
       "title": "News",

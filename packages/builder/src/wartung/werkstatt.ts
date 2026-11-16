@@ -26,8 +26,11 @@ const OUTER = 64;
 const PEAK = 42;
 /** So weit reicht die gebaute Fläche (dahinter flaches Gras, von den Bergen verdeckt). */
 export const WARTUNG_RADIUS = 72;
-/** Weltgrenze (Seitenlänge): man bleibt im Talkessel. */
-export const WARTUNG_BORDER = 78;
+/**
+ * Weltgrenze (Seitenlänge): am Ende der gebauten Fläche, hinter den Bergen – näher dran läge ihr Streifenmuster vor
+ * den Bergen und wäre vom Talkessel aus zu sehen.
+ */
+export const WARTUNG_BORDER = 2 * WARTUNG_RADIUS;
 
 /** Flache Welt: Grundgestein, Stein, Erde, Gras auf y = 64 (wie die Grundwelt der Lobby), Biom Alm. */
 export const WARTUNG_GENERATOR = {
@@ -56,7 +59,7 @@ function look(from: LobbyPoint, at: LobbyPoint): LobbyView {
 const p = (x: number, y: number, z: number): LobbyPoint => ({ x, y, z });
 
 /** Ein Sprung des Parcours: Block, auf dem man landet. */
-interface Step extends LobbyPoint {
+export interface Step extends LobbyPoint {
   readonly block: string;
 }
 
@@ -68,7 +71,7 @@ const LOG = 'stripped_spruce_log[axis=y]';
  * Sprung-Parcours im Westen: von der Startplatte über Heuballen, Fässer und Stämme hinauf zur Plattform mit der Glocke.
  * Nur einfache Sprünge: 2 Blöcke vor und 1 hoch, oder 3 Blöcke vor auf gleicher Höhe.
  */
-const PARKOUR_STEPS: readonly Step[] = [
+export const WARTUNG_PARKOUR_STEPS: readonly Step[] = [
   { x: -12, y: G + 1, z: 15, block: HAY },
   { x: -15, y: G + 1, z: 15, block: BARREL },
   { x: -17, y: G + 2, z: 15, block: HAY },
@@ -82,7 +85,7 @@ const PARKOUR_STEPS: readonly Step[] = [
   { x: -15, y: G + 6, z: 3, block: HAY },
 ];
 /** Plattform am Ende (3 × 3) mit Zielplatte und Glocke. */
-const PARKOUR_TOP = p(-15, G + 6, 0);
+export const WARTUNG_PARKOUR_TOP = p(-15, G + 6, 0);
 
 /** Punkte für das Wartungs-Plugin (schickt der Hub mit dem Zustand der Wartungs-Lobby). */
 export const WARTUNG_POINTS = {
@@ -90,7 +93,7 @@ export const WARTUNG_POINTS = {
   spawn: look(p(0.5, G + 1, 18.5), p(0.5, G + 3.5, 8)),
   /** Startplatte (leichte Druckplatte) und Zielplatte (schwere) des Parcours. */
   parkourStart: p(-10, G + 1, 15),
-  parkourFinish: p(PARKOUR_TOP.x, PARKOUR_TOP.y + 1, PARKOUR_TOP.z),
+  parkourFinish: p(WARTUNG_PARKOUR_TOP.x, WARTUNG_PARKOUR_TOP.y + 1, WARTUNG_PARKOUR_TOP.z),
   /** Unter dieser Höhe zählt ein Versuch als runtergefallen. */
   parkourFloor: G + 1,
 } as const;
@@ -105,7 +108,7 @@ export const WARTUNG_VIEWS = [
   '3-werkstatt -1.5 66.8 -2 @ 0 66 -13',
   '4-baustelle 9 67 6 @ 17 69 -4',
   '5-parcours -6 67 20 @ -17 69 6',
-  '6-von-oben 26 92 34 @ 0 66 -2',
+  '6-von-oben 18 90 26 @ 0 66 -2',
 ];
 
 function snbt(parts: readonly TextPart[]): string {
@@ -384,11 +387,11 @@ function parkour(c: Canvas): void {
   const s = WARTUNG_POINTS.parkourStart;
   c.set(s.x, G, s.z, 'polished_andesite');
   c.set(s.x, s.y, s.z, 'light_weighted_pressure_plate');
-  PARKOUR_STEPS.forEach((st) => {
+  WARTUNG_PARKOUR_STEPS.forEach((st) => {
     c.set(st.x, st.y, st.z, st.block);
     range(G + 1, st.y - 1).forEach((y) => c.set(st.x, y, st.z, 'spruce_fence'));
   });
-  const t = PARKOUR_TOP;
+  const t = WARTUNG_PARKOUR_TOP;
   c.fill(t.x - 1, t.y, t.z - 1, t.x + 1, t.y, t.z + 1, 'spruce_planks');
   range(G + 1, t.y - 1).forEach((y) => c.set(t.x, y, t.z, 'spruce_log[axis=y]'));
   c.set(t.x, t.y + 1, t.z, 'heavy_weighted_pressure_plate');
@@ -400,8 +403,8 @@ function parkour(c: Canvas): void {
     p(s.x + 0.5, s.y + 1.4, s.z + 0.5),
     'center',
     [
-      { text: '⏱ Sprung-Parcours\n', color: 'green', bold: true },
-      { text: 'Jump course – auf die Platte! / step on the plate!', color: 'gray' },
+      { text: '⏱ Sprung-Parcours · Jump course\n', color: 'green', bold: true },
+      { text: 'Auf die Platte! · Step on the plate!', color: 'gray' },
     ],
     ['mm_sign'],
     0.8,

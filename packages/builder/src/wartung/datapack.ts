@@ -29,6 +29,18 @@ const VERSION_LENGTH = 16;
 const ENTITY_REACH = 120;
 const MIDDAY = 6000;
 const JSON_INDENT = 2;
+/** Tiere, die Minecraft beim Erzeugen einer Welt mit Wiese setzt. */
+const PASTURE_ANIMALS = [
+  'sheep',
+  'cow',
+  'pig',
+  'chicken',
+  'rabbit',
+  'horse',
+  'donkey',
+  'llama',
+  'goat',
+] as const;
 
 let cached: LobbyPack | null = null;
 
@@ -45,6 +57,8 @@ export function wartungPack(): LobbyPack {
   const clean = [`kill @e[type=!player,x=0,y=64,z=0,distance=..${ENTITY_REACH}]`];
   const finish = [
     `kill @e[type=item,x=0,y=64,z=0,distance=..${ENTITY_REACH}]`,
+    // Beim Erzeugen der flachen Welt entstehen Tiere – die Alm bleibt ohne (danach spawnt nichts mehr).
+    ...PASTURE_ANIMALS.map((type) => `kill @e[type=${type}]`),
     // Ohne Blickrichtung: 26.x will dort zwei Werte, ältere einen – die Blickrichtung setzt das Plugin beim Ankommen.
     `setworldspawn ${Math.floor(spawn.x)} ${spawn.y} ${Math.floor(spawn.z)}`,
     ...Object.entries(LOBBY_RULES).map(([rule, value]) => `gamerule ${rule} ${value}`),
