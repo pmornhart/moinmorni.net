@@ -5,7 +5,10 @@ RCON 25870). Die Welt heißt „party“ (eigene Dimension): Befehle mit Ort bra
 das Plugin belegt `/spectate` als Alias für /zuschauen – darum laufen die Einstellungen über einen kleinen Aufsatz
 für shot.py, der beides erledigt. Die Partie-Einstellungen (ab 06) spielt das Plugin wirklich: eine Regie stellt
 vorher per `/mparty` Felder, Würfel und Stand ein, Platzhalter `{cur}` = wer gerade dran ist; die Minispiel-
-Einstellungen beginnen, sobald das Minispiel läuft (Darsteller-Wege dann ab ihrem echten Startplatz).
+Einstellungen beginnen, sobald das Minispiel läuft (Server dann sofort auf `tick rate 1`, Darsteller-Wege ab ihrem
+echten Startplatz). Regie, Aufsatz und Darsteller mit Menü-Klicks liegen in `trailers/party/` (regie.py,
+party_shot.py, party-actors.cjs). Statische Einstellungen (01–05, 17)
+gehen auch mit `make.py party shot …`, sofern die Befehle in der Welt „party“ landen.
 """
 import math
 
@@ -171,7 +174,7 @@ SHOTS = [
         'fit': False,
         'camera': [{'p': M('broeckelboden', 4, 4.8, -10.5), 'look': M('broeckelboden', 0, 0.5, 0), 't': 0},
                    {'p': M('broeckelboden', -2.5, 4.5, -10), 'look': M('broeckelboden', -1, 0.3, 0.5), 't': 4.6, 'ease': 1}]}},
-    {'id': '13-brezn', 'bars': 2, 'card': 'lt-brezn.png', 'start': 0.3, 'mini': 'heisse-brezn', 'spec': {
+    {'id': '13-brezn', 'bars': 2, 'card': 'lt-brezn.png', 'start': 1.0, 'mini': 'heisse-brezn', 'spec': {
         'fit': False,
         'camera': [{'p': M('heisse-brezn', 5.5, 4.2, -8.5), 'look': M('heisse-brezn', -0.5, 1.4, 0), 't': 0},
                    {'p': M('heisse-brezn', 2.5, 3.8, -8.5), 'look': M('heisse-brezn', 0, 1.4, 0.5), 't': 4.6, 'ease': 1}]}},
@@ -185,7 +188,7 @@ SHOTS = [
                    {'p': M('talerregen', -2.5, 4, -9.5), 'look': M('talerregen', -1, 1.2, 1), 't': 4.6, 'ease': 1}]}},
     # ------------------------------------------------ Gipfelrennen auf dem Almsommer: {cur} erreicht das Gipfelkreuz
     # (das Plugin zündet Feuerwerk am Ziel und zur Siegerehrung; dazu ein paar Raketen ums Gipfelkreuz)
-    {'id': '16-sieg', 'bars': 2, 'card': 'lt-sieg.png', 'start': 1.9, 'game': {
+    {'id': '16-sieg', 'bars': 2, 'card': 'lt-sieg.png', 'start': 2.5, 'game': {
         'board': 'almsommer', 'cur': 32, 'roll': 3, 'stand': 5, 'others': [29, 30, 27]}, 'spec': {
         'fit': False,
         'camera': [{'p': [1006, 134, -284], 'look': [996, 131, -297], 't': 0},
