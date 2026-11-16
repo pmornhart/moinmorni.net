@@ -21,10 +21,13 @@ export interface Events {
   'news.published': { slug: string };
   /** Rang oder Name eines Spielers geändert (Discord zieht die Rolle nach). */
   'player.changed': { uuid: string };
-  /** Neue Bewerbung (Discord postet sie in #bewerbungen). */
+  /** Neue Bewerbung – MorniCraft oder Team (Discord postet sie in den Bewerbungs-Eingang). */
   'application.created': { id: number };
-  /** Bewerbung entschieden (Discord passt die Nachricht an und sagt es der Person). */
-  'application.decided': { id: number };
+  /**
+   * Bewerbung entschieden (Discord passt die Nachricht an und sagt es der Person). `account`: bei einer Zusage wurde
+   * auch ein Team-Konto fürs Panel angelegt.
+   */
+  'application.decided': { id: number; account?: boolean };
   /** Ein Spielserver hat sich beim Hub angemeldet (z. B. nach einem Neustart). */
   'server.connected': { server: string };
   /**

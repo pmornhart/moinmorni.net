@@ -246,12 +246,7 @@
         "Listen to the team. Questions or trouble? Open a ticket on Discord."
       ]
     },
-    "voiceChannels": [
-      "Dorfplatz",
-      "Biergarten",
-      "Turnier",
-      "Gipfelfunk"
-    ],
+    "voiceChannels": ["Dorfplatz", "Biergarten", "Turnier", "Gipfelfunk"],
     "discordInvite": "https://moinmorni.net/discord",
     "socials": {
       "youtube": "https://moinmorni.net/youtube",
@@ -1485,5 +1480,10 @@
     "open": true,
     "discordLogin": true,
     "demoDiscordName": "lena.baut"
+  },
+  "teamApply": {
+    "positions": ["moderator", "supporter", "builder", "media"],
+    "minecraftName": "LenaBaut",
+    "cooldownDays": 14
   }
 }

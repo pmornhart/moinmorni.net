@@ -39,6 +39,8 @@ const envSchema = z.object({
   MM_DISCORD_CLIENT_SECRET: z.string().optional(),
   /** Discord-API (nur Tests zeigen auf ein nachgebautes Discord). */
   MM_DISCORD_API: z.string().url().default('https://discord.com/api/v10'),
+  /** Bilder-Server von Discord (Server-Symbol, Profilbild – nur Tests zeigen auf ein nachgebautes Discord). */
+  MM_DISCORD_CDN: z.string().url().default('https://cdn.discordapp.com'),
   /** Zeitzone für Zeiten im Spiel (bis wann ein Bann gilt). */
   TZ: z.string().default('Europe/Berlin'),
   /** Gebaute Version (update.sh/install.sh: „v0.1.2-0-g<commit>“), „dev“ ohne. */
@@ -66,6 +68,7 @@ export interface Config {
   readonly autoNetwork: boolean;
   readonly discordToken: string | null;
   readonly discordApi: string;
+  readonly discordCdn: string;
   readonly discordClientSecret: string | null;
   readonly version: string;
   readonly updateBranch: string;
@@ -91,6 +94,7 @@ export function loadConfig(env: Record<string, string | undefined>, here: string
     autoNetwork: e.MM_AUTO_NETWORK === 'true',
     discordToken: e.MM_DISCORD_TOKEN?.trim() || null,
     discordApi: e.MM_DISCORD_API.replace(TRAILING_SLASHES, ''),
+    discordCdn: e.MM_DISCORD_CDN.replace(TRAILING_SLASHES, ''),
     discordClientSecret: e.MM_DISCORD_CLIENT_SECRET?.trim() || null,
     version: e.MM_VERSION,
     updateBranch: e.MM_UPDATE_BRANCH,

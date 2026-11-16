@@ -71,8 +71,13 @@ export interface ApplicationService {
 
 export function createApplicationService(db: Db, stores: Stores, events: EventBus): ApplicationService {
   const settings = (): Record<string, unknown> => stores.settings('mornicraft');
+  // Nur MorniCraft – Team-Bewerbungen (mode „team“) hat applications/team.ts.
   const get = (id: number): Application | undefined =>
-    db.select().from(applications).where(eq(applications.id, id)).get();
+    db
+      .select()
+      .from(applications)
+      .where(and(eq(applications.id, id), eq(applications.mode, APPLY_MODE)))
+      .get();
   const entryOf = (mode: string, name: string): WhitelistEntry | undefined =>
     db
       .select()
@@ -127,7 +132,7 @@ export function createApplicationService(db: Db, stores: Stores, events: EventBu
       db
         .select()
         .from(applications)
-        .where(status ? eq(applications.status, status) : undefined)
+        .where(and(eq(applications.mode, APPLY_MODE), status ? eq(applications.status, status) : undefined))
         .orderBy(desc(applications.id))
         .all(),
     get,
@@ -135,7 +140,7 @@ export function createApplicationService(db: Db, stores: Stores, events: EventBu
       db
         .select()
         .from(applications)
-        .where(eq(applications.discordId, discordId))
+        .where(and(eq(applications.mode, APPLY_MODE), eq(applications.discordId, discordId)))
         .orderBy(desc(applications.id))
         .get(),
     decide: (id, accept, by, note) => {
