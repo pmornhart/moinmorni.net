@@ -21,6 +21,10 @@ const FLASH_MS = 3200;
 /** After saving a game mode's settings: ask again once its server has answered. */
 const MODE_STATE_REFRESH_MS = 2500;
 const SETTING_ANCHOR = '#setting-';
+/** Prefix of a section card's id (jump target of the section index). */
+const SECTION_ANCHOR = 'section-';
+/** From this many sections an area gets a row of jump links on top (game modes with long lists). */
+const SECTION_INDEX_FROM = 6;
 
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
@@ -98,7 +102,10 @@ function SectionCard({
 }): ReactElement {
   const pick = usePick();
   return (
-    <Card className="grid gap-1 px-5 pt-5 pb-1 sm:px-7 sm:pt-6">
+    <Card
+      id={`${SECTION_ANCHOR}${section.id}`}
+      className="grid scroll-mt-28 gap-1 px-5 pt-5 pb-1 sm:px-7 sm:pt-6"
+    >
       <div className="grid gap-1 border-b border-border pb-4">
         <h2 className="font-display text-xl font-semibold">{pick(section.title)}</h2>
         {section.text ? <p className="text-sm text-muted-foreground">{pick(section.text)}</p> : null}
@@ -202,6 +209,37 @@ function AreaForm({ entry }: { readonly entry: SettingsEntry }): ReactElement {
   );
 }
 
+/**
+ * Long areas (Morni Party, MorniSMP, Versteckerl …): one chip per section that scrolls to its card. On the phone the
+ * row scrolls sideways instead of wrapping into many lines.
+ */
+function SectionIndex({ sections }: { readonly sections: readonly SettingSection[] }): ReactElement | null {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  if (sections.length < SECTION_INDEX_FROM) return null;
+  return (
+    <nav
+      aria-label={t('settings.sections')}
+      className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+    >
+      {sections.map((section) => (
+        <Button
+          key={section.id}
+          variant="secondary"
+          size="sm"
+          onClick={() =>
+            document
+              .getElementById(`${SECTION_ANCHOR}${section.id}`)
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        >
+          {pick(section.title)}
+        </Button>
+      ))}
+    </nav>
+  );
+}
+
 /** Jumps to a setting named in the address ("#setting-slowMode") and lets it glow for a moment. */
 function useJumpToSetting(ready: boolean): void {
   const { hash } = useLocation();
@@ -241,6 +279,7 @@ export function SettingsPage(): ReactElement {
             text={pick(entry.area.text)}
           />
           <AreaExtras key={`extras-${entry.area.id}`} entry={entry} />
+          <SectionIndex sections={entry.area.sections} />
           <AreaForm key={entry.area.id} entry={entry} />
         </>
       ) : null}

@@ -1,5 +1,5 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the modes need them */
-import type { SettingArea, SettingDef, Text } from './settings.js';
+import type { SettingArea, SettingDef, SettingSection, Text } from './settings.js';
 
 /**
  * Einstellungen der Spielmodi (Duels, Morni Party, Gipfelsturm, Burgverlies, Bollwerk, MorniSMP, Wolkenkampf,
@@ -419,6 +419,107 @@ const MINIGAMES: ReadonlyArray<{ readonly id: string; readonly name: Text; reado
     name: t('Murmeltier-Klopfen', 'Marmot Bonk'),
     help: t('Murmeltiere erwischen, bevor sie verschwinden.', 'Bonk the marmots before they disappear.'),
   },
+  {
+    id: 'goldwaschen',
+    name: t('Goldwaschen', 'Gold Panning'),
+    help: t(
+      'Kies- und Sandhaufen am Bach auswaschen – in manchen steckt Gold.',
+      'Pan gravel and sand piles by the stream – some hide gold.',
+    ),
+  },
+  {
+    id: 'schuhplattler',
+    name: t('Schuhplattler', 'Slap Dance'),
+    help: t(
+      'Im Takt springen, ducken, klatschen oder stillstehen.',
+      'Jump, duck, clap or stand still to the beat.',
+    ),
+  },
+  {
+    id: 'brueckenbau',
+    name: t('Brückenbau', 'Bridge Builders'),
+    help: t(
+      'Mit Brettern eine Brücke über die Schlucht bauen.',
+      'Build a bridge across the gorge with planks.',
+    ),
+  },
+  {
+    id: 'schneeballschlacht',
+    name: t('Schneeballschlacht', 'Snowball Fight'),
+    help: t('Schneebälle holen und die anderen treffen.', 'Grab snowballs and hit the others.'),
+  },
+  {
+    id: 'schlittenrennen',
+    name: t('Schlittenrennen', 'Sled Race'),
+    help: t('Zwei Runden im Schlitten über die Eisbahn.', 'Two laps in a sled on the ice track.'),
+  },
+  {
+    id: 'enzian-suche',
+    name: t('Enzian-Suche', 'Gentian Hunt'),
+    help: t(
+      'Blaue Enziane auf der Almwiese finden und pflücken.',
+      'Find and pick blue gentians on the alpine meadow.',
+    ),
+  },
+  {
+    id: 'musterweber',
+    name: t('Musterweber', 'Pattern Weaver'),
+    help: t(
+      'Ein Muster merken und auf dem Webrahmen nachweben.',
+      'Remember a pattern and weave it on the loom.',
+    ),
+  },
+  {
+    id: 'foehnsturm',
+    name: t('Föhnsturm', 'Foehn Storm'),
+    help: t(
+      'Hinter Felsen Schutz vor den Böen suchen oder sich ducken.',
+      'Take cover from the gusts behind rocks or duck.',
+    ),
+  },
+  {
+    id: 'tauziehen',
+    name: t('Tauziehen', 'Tug of War'),
+    help: t(
+      'Nur mit Seiten (2 gegen 2 oder Duell): so schnell klicken, wie es geht.',
+      'Only with sides (2 vs 2 or duel): click as fast as you can.',
+    ),
+  },
+  {
+    id: 'gamsjagd',
+    name: t('Gamsjagd', 'Chamois Chase'),
+    help: t(
+      'Nur einer gegen drei: Der Jäger fängt die Gämsen.',
+      'Only one against three: the hunter catches the chamois.',
+    ),
+  },
+];
+
+/** Auszeichnungen am Ende einer Brett-Partie (Kennung in der config.yml, Name, wofür). */
+const AWARDS: ReadonlyArray<{ readonly id: string; readonly name: Text; readonly help: Text }> = [
+  {
+    id: 'wanderer',
+    name: t('Wanderer', 'Hiker'),
+    help: t('Wer die meisten Felder gelaufen ist.', 'Whoever walked the most fields.'),
+  },
+  {
+    id: 'minispiel-meister',
+    name: t('Minispiel-Meister', 'Minigame Master'),
+    help: t('Wer die meisten Minispiele gewonnen hat.', 'Whoever won the most minigames.'),
+  },
+  {
+    id: 'pechvogel',
+    name: t('Pechvogel', 'Unlucky Bird'),
+    help: t(
+      'Wer am häufigsten auf roten Feldern stand – als Trost.',
+      'Whoever landed on red fields most often – as a consolation.',
+    ),
+  },
+  {
+    id: 'duellkoenig',
+    name: t('Duellkönig', 'Duel King'),
+    help: t('Wer die meisten Duelle gewonnen hat.', 'Whoever won the most duels.'),
+  },
 ];
 const keyOf = (prefix: string, id: string): string =>
   prefix +
@@ -430,6 +531,37 @@ const keyOf = (prefix: string, id: string): string =>
 /** Taler für Platz 1 bis 8 in den Minispielen (wie in der config.yml). */
 const MINI_TALER = [10, 6, 4, 3, 2, 1, 1, 1];
 const HUNT_ROUNDS = [10, 15, 20];
+/** Minispiel-Marathon: Zahl der Minispiele zur Wahl und Punkte für Platz 1 bis 7 (wie in der config.yml). */
+const MARATHON_ROUNDS = [6, 10, 15];
+const MARATHON_POINTS = [10, 7, 5, 4, 3, 2, 1];
+/** Seilschaft: Rundenzahlen zur Wahl. */
+const ROPE_ROUNDS = [10, 15];
+const ROUNDS: Unit = { unit: t('Runden', 'rounds'), arg: 'runden' };
+const MINIS: Unit = { unit: t('Minispiele', 'minigames'), arg: 'zahl' };
+
+/** Rundenzahlen zur Wahl (Abstimmung vor der Partie) – eine Einstellung je Stelle der Liste. */
+const roundChoices = (
+  keyPrefix: string,
+  at: string,
+  values: readonly number[],
+  cmd: string,
+  name: Text,
+  unit: Unit,
+  help: Text,
+): SettingDef[] =>
+  values.map((value, i) =>
+    party.number({
+      key: `${keyPrefix}${i + 1}`,
+      at: `${at}.${i}`,
+      value,
+      min: 1,
+      max: 50,
+      ...unit,
+      cmd: `${cmd}${i + 1}`,
+      label: t(`${name.de}: ${i + 1}. Wahl`, `${name.en}: choice ${i + 1}`),
+      help,
+    }),
+  );
 
 const taler = (
   key: string,
@@ -445,8 +577,8 @@ export const PARTY_AREA: SettingArea = {
   id: 'party',
   title: t('Morni Party', 'Morni Party'),
   text: t(
-    'Brettspiel für 2–8: Tische, Wartezeiten, Züge, welche Minispiele vorkommen und alle Zahlen der Spielregeln. Gilt für neue Partien.',
-    'Board game for 2–8: tables, waiting times, turns, which minigames appear and all the numbers of the rules. Applies to new games.',
+    'Brettspiel für 2–8 und Spielarten ohne Brett: Tische, Wartezeiten, Züge, welche Minispiele vorkommen, die Zahlen der Spielregeln und jede Spielart (Schnelle Partie, Seilschaft, Bergduell, Minispiel-Marathon, Hüttenaufstieg). Gilt für neue Partien.',
+    'Board game for 2–8 and modes without a board: tables, waiting times, turns, which minigames appear, the numbers of the rules and every mode (quick game, rope team, mountain duel, minigame marathon, hut climb). Applies to new games.',
   ),
   icon: 'Dices',
   panel: 'modes',
@@ -465,8 +597,8 @@ export const PARTY_AREA: SettingArea = {
           cmd: 'tische',
           label: t('Partien gleichzeitig', 'Games at once'),
           help: t(
-            'Jeder Tisch hat alle drei Spielbretter und alle Minispiel-Plätze. Mehr Tische brauchen mehr Speicher; neue werden beim Neustart dazugebaut.',
-            'Every table has all three boards and all minigame areas. More tables need more memory; new ones are built at the restart.',
+            'Jeder Tisch hat alle sechs Spielbretter und alle Minispiel-Plätze. Mehr Tische brauchen mehr Speicher; neue werden beim Neustart dazugebaut.',
+            'Every table has all six boards and all minigame areas. More tables need more memory; new ones are built at the restart.',
           ),
         }),
         party.number({
@@ -492,7 +624,10 @@ export const PARTY_AREA: SettingArea = {
           ...PLAYERS,
           cmd: 'spieler hoechstens',
           label: t('Höchstens pro Partie', 'At most per game'),
-          help: t('Mehr als 8 passen nicht an einen Tisch.', 'More than 8 do not fit at one table.'),
+          help: t(
+            'Mehr als 8 passen nicht an ein Spielbrett. Für den Minispiel-Marathon gilt eine eigene Grenze (weiter unten).',
+            'More than 8 do not fit at one board. The minigame marathon has its own limit (further down).',
+          ),
         }),
       ],
     },
@@ -539,22 +674,17 @@ export const PARTY_AREA: SettingArea = {
       id: 'turns',
       title: t('Züge und Runden', 'Turns and rounds'),
       settings: [
-        ...HUNT_ROUNDS.map((value, i) =>
-          party.number({
-            key: `huntRounds${i + 1}`,
-            at: `edelweiss-jagd-runden.${i}`,
-            value,
-            min: 1,
-            max: 50,
-            unit: t('Runden', 'rounds'),
-            arg: 'runden',
-            cmd: `jagd wahl${i + 1}`,
-            label: t(`Edelweiß-Jagd: ${i + 1}. Wahl`, `Edelweiss hunt: choice ${i + 1}`),
-            help: t(
-              'Vor jeder Edelweiß-Jagd stimmen alle über die Länge ab – diese drei Rundenzahlen stehen zur Wahl.',
-              'Before every edelweiss hunt everyone votes on its length – these three round counts are the choices.',
-            ),
-          }),
+        ...roundChoices(
+          'huntRounds',
+          'edelweiss-jagd-runden',
+          HUNT_ROUNDS,
+          'jagd wahl',
+          t('Edelweiß-Jagd', 'Edelweiss hunt'),
+          ROUNDS,
+          t(
+            'Vor jeder Edelweiß-Jagd stimmen alle über die Länge ab – diese drei Rundenzahlen stehen zur Wahl.',
+            'Before every edelweiss hunt everyone votes on its length – these three round counts are the choices.',
+          ),
         ),
         party.number({
           key: 'turnSeconds',
@@ -601,8 +731,8 @@ export const PARTY_AREA: SettingArea = {
       id: 'minigames',
       title: t('Minispiele', 'Minigames'),
       text: t(
-        'Welche Minispiele vorkommen. Sind alle an (oder alle aus), kommen alle vor – auch neue aus späteren Updates.',
-        'Which minigames appear. If all are on (or all off), all appear – including new ones from later updates.',
+        'Welche Minispiele vorkommen. Sind alle an (oder alle aus), kommen alle vor – auch neue aus späteren Updates. Tauziehen und Gamsjagd gibt es nur, wenn Seiten gegeneinander spielen (2 gegen 2, 1 gegen 3, Duell).',
+        'Which minigames appear. If all are on (or all off), all appear – including new ones from later updates. Tug of War and Chamois Chase only come up when sides play against each other (2 vs 2, 1 vs 3, duel).',
       ),
       settings: [
         party.choice({
@@ -699,8 +829,11 @@ export const PARTY_AREA: SettingArea = {
           5,
           100,
           'regel duell',
-          t('Würfelduell', 'Dice duel'),
-          t('So viele Taler gehen an den Sieger.', 'This many coins go to the winner.'),
+          t('Duellfeld', 'Duel field'),
+          t(
+            'So viele Taler gibt, wer das Duell-Minispiel verliert, dem Sieger (ein Schild schützt davor).',
+            'Whoever loses the duel minigame gives the winner this many coins (a shield protects against it).',
+          ),
         ),
         taler(
           'stealTaler',
@@ -785,6 +918,63 @@ export const PARTY_AREA: SettingArea = {
       ],
     },
     {
+      id: 'sides',
+      title: t('Seiten: 2 gegen 2 und 1 gegen 3', 'Sides: 2 vs 2 and 1 vs 3'),
+      text: t(
+        'Zu viert entscheidet die Farbe der zuletzt betretenen Felder, wie das Minispiel gespielt wird: alle gleich = jeder gegen jeden, zwei und zwei = 2 gegen 2, eins anders = einer gegen drei.',
+        'With four players, the colour of the fields they last stepped on decides how the minigame is played: all the same = everyone for themselves, two and two = 2 vs 2, one different = one against three.',
+      ),
+      settings: [
+        taler(
+          'teamTaler',
+          'regeln.team-taler',
+          8,
+          100,
+          'regel team',
+          t('Sieg einer Seite', 'Win of a side'),
+          t(
+            'Taler für jede Person auf der Seite, die das Minispiel gewinnt.',
+            'Coins for every person on the side that wins the minigame.',
+          ),
+        ),
+        taler(
+          'teamDrawTaler',
+          'regeln.team-unentschieden-taler',
+          3,
+          100,
+          'regel gleichstand',
+          t('Gleichstand', 'Draw'),
+          t('Taler für alle, wenn keine Seite vorn liegt.', 'Coins for everyone when no side is ahead.'),
+        ),
+        taler(
+          'soloTaler',
+          'regeln.einzel-taler',
+          18,
+          100,
+          'regel einzel',
+          t('Sieg des Einzelnen', 'Win of the single player'),
+          t(
+            'So viele Taler bekommt, wer allein gegen drei spielt und gewinnt.',
+            'Coins for whoever plays alone against three and wins.',
+          ),
+        ),
+        party.number({
+          key: 'soloFactor',
+          at: 'regeln.einzel-faktor',
+          value: 4,
+          min: 1,
+          max: 5,
+          arg: 'faktor',
+          cmd: 'regel einzel-faktor',
+          label: t('Punkte des Einzelnen zählen (mal)', 'Points of the single player count (times)'),
+          help: t(
+            'Sein Vorteil gegen drei: So oft zählen seine Punkte im Minispiel.',
+            'Their advantage against three: their minigame points count this many times.',
+          ),
+        }),
+      ],
+    },
+    {
       id: 'mini-taler',
       title: t('Taler für die Minispiele', 'Coins for the minigames'),
       text: t('Was es für die Plätze in einem Minispiel gibt.', 'What each place in a minigame earns.'),
@@ -799,6 +989,223 @@ export const PARTY_AREA: SettingArea = {
           t(`Taler für Platz ${i + 1}.`, `Coins for place ${i + 1}.`),
         ),
       ),
+    },
+    {
+      id: 'quick',
+      title: t('Schnelle Partie', 'Quick game'),
+      text: t(
+        'Edelweiß-Jagd in wenigen Runden – mit mehr Start-Talern, günstigerem Edelweiß und kürzeren Minispielen.',
+        'Edelweiss hunt in just a few rounds – with more starting coins, cheaper edelweiss and shorter minigames.',
+      ),
+      settings: [
+        party.number({
+          key: 'quickRounds',
+          at: 'schnelle-partie.runden',
+          value: 5,
+          min: 1,
+          max: 50,
+          ...ROUNDS,
+          cmd: 'schnell runden',
+          label: t('Runden', 'Rounds'),
+          help: t('So lange dauert eine schnelle Partie.', 'This is how long a quick game lasts.'),
+        }),
+        taler(
+          'quickStartTaler',
+          'schnelle-partie.start-taler',
+          20,
+          100,
+          'schnell start',
+          t('Taler zum Start', 'Coins at the start'),
+          t('Damit beginnt jeder.', 'Everyone starts with this.'),
+        ),
+        party.number({
+          key: 'quickEdelweissPrice',
+          at: 'schnelle-partie.edelweiss-preis',
+          value: 15,
+          min: 1,
+          max: 200,
+          ...TALER,
+          cmd: 'schnell edelweiss',
+          label: t('Preis eines Edelweiß', 'Price of an edelweiss'),
+          help: t('Am wandernden Edelweiß-Stand.', 'At the wandering edelweiss stall.'),
+        }),
+        party.number({
+          key: 'quickMiniFactor',
+          at: 'schnelle-partie.dauer-faktor',
+          value: 0.75,
+          min: 0.2,
+          max: 3,
+          step: 0.05,
+          arg: 'faktor',
+          cmd: 'schnell dauer',
+          label: t('Dauer der Minispiele (mal)', 'Length of minigames (times)'),
+          help: t(
+            'Kommt zur allgemeinen Dauer der Minispiele dazu: 0,75 = ein Viertel kürzer.',
+            'On top of the general length of the minigames: 0.75 = a quarter shorter.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'rope',
+      title: t('Seilschaft', 'Rope team'),
+      text: t(
+        'Edelweiß-Jagd zu zweit: Taler und Edelweiß gehören beiden. Partys aus zwei Leuten sind eine Seilschaft, zu viert ist jedes Minispiel 2 gegen 2.',
+        'Edelweiss hunt in pairs: coins and edelweiss belong to both. Parties of two are a rope team; with four, every minigame is 2 vs 2.',
+      ),
+      settings: roundChoices(
+        'ropeRounds',
+        'seilschaft.runden',
+        ROPE_ROUNDS,
+        'seilschaft wahl',
+        t('Seilschaft', 'Rope team'),
+        ROUNDS,
+        t(
+          'Vor der Partie stimmen alle über die Länge ab – diese Rundenzahlen stehen zur Wahl.',
+          'Before the game everyone votes on its length – these round counts are the choices.',
+        ),
+      ),
+    },
+    {
+      id: 'duel',
+      title: t('Bergduell', 'Mountain duel'),
+      text: t(
+        'Zwei gegeneinander auf dem Brett – jedes Minispiel ist ein Duell.',
+        'Two against each other on the board – every minigame is a duel.',
+      ),
+      settings: [
+        party.number({
+          key: 'duelRounds',
+          at: 'bergduell.runden',
+          value: 8,
+          min: 1,
+          max: 50,
+          ...ROUNDS,
+          cmd: 'bergduell runden',
+          label: t('Runden', 'Rounds'),
+          help: t('So lange dauert ein Bergduell.', 'This is how long a mountain duel lasts.'),
+        }),
+      ],
+    },
+    {
+      id: 'marathon',
+      title: t('Minispiel-Marathon', 'Minigame marathon'),
+      text: t(
+        'Ohne Spielbrett, nur Minispiele (aus der Auswahl oben, gemischt). Nach jedem gibt es Punkte für den Platz – wer am Ende die meisten hat, gewinnt.',
+        'No board, only minigames (from the selection above, mixed). After each one there are points for your place – whoever has the most at the end wins.',
+      ),
+      settings: [
+        ...roundChoices(
+          'marathonRounds',
+          'minispiel-marathon.runden',
+          MARATHON_ROUNDS,
+          'marathon wahl',
+          t('Marathon', 'Marathon'),
+          MINIS,
+          t(
+            'Vor dem Marathon stimmen alle ab, wie viele Minispiele es werden – diese Zahlen stehen zur Wahl.',
+            'Before the marathon everyone votes on how many minigames there will be – these numbers are the choices.',
+          ),
+        ),
+        party.number({
+          key: 'marathonMax',
+          at: 'minispiel-marathon.hoechstens',
+          value: 16,
+          min: 2,
+          max: 16,
+          ...PLAYERS,
+          cmd: 'marathon hoechstens',
+          label: t('Höchstens pro Marathon', 'At most per marathon'),
+          help: t(
+            'Bis zu 16. Eisstockschießen und Brückenbau haben nur 8 Plätze und fallen bei mehr Leuten aus.',
+            'Up to 16. Ice Stock Sport and Bridge Builders only have 8 spots and are left out with more players.',
+          ),
+        }),
+        ...MARATHON_POINTS.map((value, i) =>
+          party.number({
+            key: `marathonPoints${i + 1}`,
+            at: `minispiel-marathon.punkte.${i}`,
+            value,
+            min: 0,
+            max: 100,
+            ...POINTS,
+            cmd: `marathon-punkte platz${i + 1}`,
+            label: t(`Punkte für Platz ${i + 1}`, `Points for place ${i + 1}`),
+            help:
+              i + 1 < MARATHON_POINTS.length
+                ? t(`Nach jedem Minispiel für Platz ${i + 1}.`, `After every minigame for place ${i + 1}.`)
+                : t(
+                    `Nach jedem Minispiel für Platz ${i + 1} – und für alle Plätze danach.`,
+                    `After every minigame for place ${i + 1} – and for every place after it.`,
+                  ),
+          }),
+        ),
+      ],
+    },
+    {
+      id: 'hut',
+      title: t('Hüttenaufstieg', 'Hut climb'),
+      text: t(
+        'Ohne Spielbrett: Wer ein Minispiel in der unteren Hälfte beendet, verliert ein Leben. Wer keins mehr hat, schaut zu – wer zuletzt übrig ist, gewinnt.',
+        'No board: whoever finishes a minigame in the bottom half loses a life. Whoever has none left watches – the last one standing wins.',
+      ),
+      settings: [
+        party.number({
+          key: 'hutLives',
+          at: 'huettenaufstieg.leben',
+          value: 3,
+          min: 1,
+          max: 9,
+          unit: t('Leben', 'lives'),
+          arg: 'leben',
+          cmd: 'huette leben',
+          label: t('Leben am Anfang', 'Lives at the start'),
+          help: t('So viele Leben hat jeder zu Beginn.', 'Everyone starts with this many lives.'),
+        }),
+        party.number({
+          key: 'hutMaxMinigames',
+          at: 'huettenaufstieg.hoechstens-minispiele',
+          value: 25,
+          min: 2,
+          max: 100,
+          ...MINIS,
+          cmd: 'huette hoechstens',
+          label: t('Spätestens Schluss nach', 'Ends at the latest after'),
+          help: t('Dann gewinnt, wer die meisten Leben hat.', 'Then whoever has the most lives wins.'),
+        }),
+      ],
+    },
+    {
+      id: 'awards',
+      title: t('Auszeichnungen', 'Awards'),
+      text: t(
+        'Am Ende einer Brett-Partie (Edelweiß-Jagd, Seilschaft, Schnelle Partie, Bergduell) bekommt, wer vorn liegt, ein Edelweiß dazu. Sind alle Auszeichnungen aus, gibt es alle – ganz abschalten geht mit dem ersten Schalter.',
+        'At the end of a board game (edelweiss hunt, rope team, quick game, mountain duel), whoever is ahead gets an extra edelweiss. If all awards are off, all are handed out – switch them off completely with the first switch.',
+      ),
+      settings: [
+        party.flag({
+          key: 'awards',
+          at: 'auszeichnungen.an',
+          value: true,
+          cmd: 'auszeichnungen',
+          label: t('Auszeichnungen verleihen', 'Hand out awards'),
+          help: t(
+            'Aus: keine Auszeichnungen und kein Edelweiß dazu.',
+            'Off: no awards and no extra edelweiss.',
+          ),
+        }),
+        ...AWARDS.map((a) =>
+          party.flag({
+            key: keyOf('award', a.id),
+            at: 'auszeichnungen.welche',
+            member: a.id,
+            value: true,
+            cmd: `auszeichnung ${a.id}`,
+            label: a.name,
+            help: a.help,
+          }),
+        ),
+      ],
     },
   ],
 };
@@ -1200,43 +1607,6 @@ export const BOLLWERK_AREA: SettingArea = {
 
 const smp = settingsFor('smpconfig');
 
-/** Was die Stadt ankauft (Kennung in der config.yml, Wort im Befehl, Name, Preis pro Stück, volle Menge am Tag). */
-const BUYBACK: ReadonlyArray<readonly [string, string, string, string, number, number]> = [
-  ['wheat', 'weizen', 'Weizen', 'Wheat', 0.5, 256],
-  ['carrot', 'karotte', 'Karotte', 'Carrot', 0.3, 256],
-  ['potato', 'kartoffel', 'Kartoffel', 'Potato', 0.3, 256],
-  ['beetroot', 'rote-bete', 'Rote Bete', 'Beetroot', 0.4, 256],
-  ['melon_slice', 'melone', 'Melonenscheibe', 'Melon slice', 0.1, 512],
-  ['pumpkin', 'kuerbis', 'Kürbis', 'Pumpkin', 1, 128],
-  ['sugar_cane', 'zuckerrohr', 'Zuckerrohr', 'Sugar cane', 0.4, 256],
-  ['cactus', 'kaktus', 'Kaktus', 'Cactus', 0.3, 256],
-  ['bamboo', 'bambus', 'Bambus', 'Bamboo', 0.05, 512],
-  ['cocoa_beans', 'kakao', 'Kakaobohnen', 'Cocoa beans', 0.4, 256],
-  ['nether_wart', 'netherwarze', 'Netherwarze', 'Nether wart', 0.5, 256],
-  ['sweet_berries', 'suessbeeren', 'Süßbeeren', 'Sweet berries', 0.2, 256],
-  ['apple', 'apfel', 'Apfel', 'Apple', 1, 64],
-  ['egg', 'ei', 'Ei', 'Egg', 0.3, 128],
-  ['rotten_flesh', 'fleisch-verrottet', 'Verrottetes Fleisch', 'Rotten flesh', 0.1, 512],
-  ['bone', 'knochen', 'Knochen', 'Bone', 0.3, 256],
-  ['string', 'faden', 'Faden', 'String', 0.4, 256],
-  ['spider_eye', 'spinnenauge', 'Spinnenauge', 'Spider eye', 0.4, 128],
-  ['gunpowder', 'schwarzpulver', 'Schwarzpulver', 'Gunpowder', 1, 128],
-  ['arrow', 'pfeil', 'Pfeil', 'Arrow', 0.1, 256],
-  ['ender_pearl', 'enderperle', 'Enderperle', 'Ender pearl', 3, 32],
-  ['slime_ball', 'schleimball', 'Schleimball', 'Slimeball', 1, 64],
-  ['blaze_rod', 'lohenrute', 'Lohenrute', 'Blaze rod', 4, 32],
-  ['leather', 'leder', 'Leder', 'Leather', 1, 64],
-  ['feather', 'feder', 'Feder', 'Feather', 0.2, 256],
-  ['white_wool', 'wolle', 'Weiße Wolle', 'White wool', 0.5, 128],
-  ['ink_sac', 'tintenbeutel', 'Tintenbeutel', 'Ink sac', 0.5, 64],
-  ['beef', 'rind', 'Rohes Rindfleisch', 'Raw beef', 0.6, 128],
-  ['porkchop', 'schwein', 'Rohes Schweinefleisch', 'Raw porkchop', 0.6, 128],
-  ['chicken', 'huhn', 'Rohes Hühnchen', 'Raw chicken', 0.5, 128],
-  ['mutton', 'hammel', 'Rohes Hammelfleisch', 'Raw mutton', 0.5, 128],
-  ['cod', 'kabeljau', 'Roher Kabeljau', 'Raw cod', 0.5, 128],
-  ['salmon', 'lachs', 'Roher Lachs', 'Raw salmon', 0.6, 128],
-];
-
 /** Ringe des Zufalls-Teleports: kleinster und größter Abstand zur Weltmitte (wie in der config.yml). */
 const RTP_RINGS: ReadonlyArray<readonly [string, Text, number, number]> = [
   ['nah', t('Nah', 'Near'), 500, 2000],
@@ -1246,7 +1616,7 @@ const RTP_RINGS: ReadonlyArray<readonly [string, Text, number, number]> = [
   ['end', t('End', 'End'), 1000, 5000],
 ];
 
-/** Ankauf: die Stufen 2–4 (Stufe 1 = voller Preis bis zur Tagesmenge, die setzt der Modus selbst). */
+/** Ankauf im Händlerhaus: die Stufen 2–4 (Stufe 1 = voller Preis bis zur Tagesmenge, die setzt der Modus selbst). */
 const BUYBACK_TIERS: ReadonlyArray<readonly [number, number]> = [
   [1, 50],
   [2, 20],
@@ -1263,8 +1633,8 @@ export const SMP_AREA: SettingArea = {
   id: 'smp',
   title: t('MorniSMP', 'MorniSMP'),
   text: t(
-    'Überleben mit freiem Markt: Taler, Weltgrenzen, Reisen, Auktionshaus, Aufträge, Stände, Grundstücke, Ankauf der Stadt und tägliche Belohnung. Nichts davon gibt es für echtes Geld.',
-    'Survival with a free market: coins, world borders, travel, auction house, orders, stalls, plots, the town’s buyback and the daily reward. None of it is for real money.',
+    'Überleben mit freiem Markt: Taler, Weltgrenzen, Reisen, Auktionshaus, Aufträge, Stände, Grundstücke, das Händlerhaus der Stadt und tägliche Belohnung. Nichts davon gibt es für echtes Geld.',
+    'Survival with a free market: coins, world borders, travel, auction house, orders, stalls, plots, the town’s merchant house and the daily reward. None of it is for real money.',
   ),
   icon: 'Store',
   panel: 'modes',
@@ -1628,11 +1998,57 @@ export const SMP_AREA: SettingArea = {
       ],
     },
     {
-      id: 'buyback',
-      title: t('Ankauf der Stadt: Stufen', 'Town buyback: tiers'),
+      id: 'merchant',
+      title: t('Händlerhaus', 'Merchant house'),
       text: t(
-        'Die Stadt kauft Ernte und Beute an. Bis zur Tagesmenge zahlt sie den vollen Preis, danach weniger: ab dem Vielfachen der Tagesmenge nur noch so viel Prozent. Das hält die Preise fair.',
-        'The town buys harvest and loot. Up to the daily amount it pays the full price, after that less: from a multiple of the daily amount only this many percent. That keeps prices fair.',
+        'Händlerin Vroni in der Stadt (/shop) verkauft zu festen Preisen und kauft an – das ist auch der Ankauf (/verkaufen). Damit der freie Markt unter Spielern lebt, verkauft sie teuer und kauft billig.',
+        'Vroni the merchant in town (/shop) sells at fixed prices and buys things up – that is also the buyback (/verkaufen). So the free market between players stays alive, she sells dear and buys cheap.',
+      ),
+      settings: [
+        smp.flag({
+          key: 'merchant',
+          at: 'haendler.an',
+          value: true,
+          cmd: 'haendler',
+          label: t('Händlerhaus offen', 'Merchant house open'),
+          help: t(
+            'Aus: kein /shop und auch kein Ankauf – gehandelt wird nur noch unter Spielern.',
+            'Off: no /shop and no buyback either – trading only happens between players.',
+          ),
+        }),
+        smp.number({
+          key: 'merchantSellCap',
+          at: 'haendler.verkauf-max-prozent',
+          value: 40,
+          min: 0,
+          max: 90,
+          ...PERCENT,
+          cmd: 'haendler ankauf-max',
+          label: t('Ankauf höchstens', 'Buyback at most'),
+          help: t(
+            'So viel Prozent ihres Verkaufspreises zahlt die Händlerin höchstens, wenn sie etwas ankauft. Teurere Ankaufspreise senkt sie von selbst.',
+            'The merchant pays at most this many percent of her selling price when she buys something. Higher buyback prices are lowered automatically.',
+          ),
+        }),
+        money(
+          'merchantConfirmAbove',
+          'haendler.bestaetigen-ab',
+          250,
+          'haendler nachfragen-ab',
+          t('Nachfragen ab', 'Ask again from'),
+          t(
+            'Ab diesem Betrag fragt die Händlerin beim Kaufen und Verkaufen noch einmal nach („Wirklich?“). 0 = nie.',
+            'From this amount the merchant asks once more when buying or selling (“Really?”). 0 = never.',
+          ),
+        ),
+      ],
+    },
+    {
+      id: 'buyback',
+      title: t('Händlerhaus: Ankauf-Stufen', 'Merchant house: buyback tiers'),
+      text: t(
+        'Für alles, was die Händlerin ankauft: Bis zur Tagesmenge einer Ware zahlt sie den vollen Preis, danach weniger – ab dem Vielfachen der Tagesmenge nur noch so viel Prozent. Das hält die Preise fair.',
+        'For everything the merchant buys: up to a ware’s daily amount she pays the full price, after that less – from a multiple of the daily amount only this many percent. That keeps prices fair.',
       ),
       settings: BUYBACK_TIERS.flatMap(([from, percent], i) => [
         smp.number({
@@ -1663,45 +2079,6 @@ export const SMP_AREA: SettingArea = {
           help: t('So viel Prozent des vollen Preises.', 'This many percent of the full price.'),
         }),
       ]),
-    },
-    {
-      id: 'buyback-prices',
-      title: t('Ankauf der Stadt: Preis pro Stück', 'Town buyback: price per piece'),
-      text: t(
-        'Voller Preis bis zur Tagesmenge (nächster Abschnitt).',
-        'Full price up to the daily amount (next section).',
-      ),
-      settings: BUYBACK.map(([id, word, de, en, price]) =>
-        money(
-          keyOf('price', id.replaceAll('_', '-')),
-          `ankauf.preise.${id}.preis`,
-          price,
-          `ankauf ${word} preis`,
-          t(de, en),
-          t(`Preis für ein Stück ${de}.`, `Price for one piece of ${en.toLowerCase()}.`),
-        ),
-      ),
-    },
-    {
-      id: 'buyback-daily',
-      title: t('Ankauf der Stadt: Tagesmenge', 'Town buyback: daily amount'),
-      text: t(
-        'So viele Stück kauft die Stadt jedem pro Tag zum vollen Preis ab, danach gelten die Stufen.',
-        'The town buys this many pieces from everyone per day at the full price, after that the tiers apply.',
-      ),
-      settings: BUYBACK.map(([id, word, de, en, , daily]) =>
-        smp.number({
-          key: keyOf('daily', id.replaceAll('_', '-')),
-          at: `ankauf.preise.${id}.tag`,
-          value: daily,
-          min: 1,
-          max: 100_000,
-          unit: t('Stück', 'pieces'),
-          cmd: `ankauf ${word} tag`,
-          label: t(de, en),
-          help: t(`Tagesmenge für ${de}.`, `Daily amount for ${en.toLowerCase()}.`),
-        }),
-      ),
     },
     {
       id: 'reward',
@@ -1983,12 +2360,578 @@ export const WOLKENKAMPF_AREA: SettingArea = {
 
 const versteck = settingsFor('versteckconfig');
 
+/** Punkte der Runde (`punkte.*`): so viele nimmt der Modus höchstens an. Nur Punkte aus dem Spiel, nie echtes Geld. */
+const MAX_ROUND_POINTS = 1000;
+const MAX_SHOP_PRICE = 100_000;
+const roundPoints = (
+  key: string,
+  at: string,
+  value: number,
+  cmd: string,
+  label: Text,
+  help: Text,
+): SettingDef =>
+  versteck.number({
+    key,
+    at: `punkte.${at}`,
+    value,
+    min: 0,
+    max: MAX_ROUND_POINTS,
+    ...POINTS,
+    cmd: `punkte ${cmd}`,
+    label,
+    help,
+  });
+
+/**
+ * Eine Hilfe der Kramerkiste (Rundenladen, `rundenladen.<id>`): bezahlt mit Punkten der laufenden Runde, begrenzt je
+ * Runde. Nur was die Hilfe in der config.yml hat, kommt ins Panel (Pause, Dauer und Reichweite nicht bei jeder).
+ */
+interface SupplyHelp {
+  readonly id: string;
+  readonly name: Text;
+  readonly help: Text;
+  readonly price: number;
+  readonly perRound: number;
+  readonly cooldown?: number;
+  readonly seconds?: number;
+  readonly range?: { readonly value: number; readonly help: Text };
+}
+
+const HIDER_HELPS: readonly SupplyHelp[] = [
+  {
+    id: 'lockpfiff',
+    name: t('Lockpfiff', 'Decoy whistle'),
+    help: t(
+      'Der eigene Pfiff erklingt ein Stück weiter weg und lockt die Gendarmen auf die falsche Fährte – ohne Punkte, zählt nicht als Pflicht-Pfiff.',
+      'Your whistle sounds a bit further away and sends the constables on a wild goose chase – no points, does not count as a compulsory whistle.',
+    ),
+    price: 6,
+    perRound: 2,
+    cooldown: 30,
+    range: {
+      value: 12,
+      help: t('So weit weg erklingt der Lockpfiff.', 'This far away the decoy whistle sounds.'),
+    },
+  },
+  {
+    id: 'nebelwolke',
+    name: t('Nebelwolke', 'Fog cloud'),
+    help: t(
+      'Kurz Nebel um einen herum: Gendarmen darin sehen einen Moment nichts und kommen langsamer voran.',
+      'A moment of fog around you: constables inside can’t see for a moment and move more slowly.',
+    ),
+    price: 8,
+    perRound: 1,
+    cooldown: 45,
+    seconds: 4,
+    range: { value: 4, help: t('So weit reicht der Nebel.', 'This far the fog reaches.') },
+  },
+  {
+    id: 'gestaltwechsel',
+    name: t('Noch ein Gestaltwechsel', 'Another disguise change'),
+    help: t(
+      'Noch einmal die Gestalt wechseln, wenn der eine Wechsel der Runde schon weg ist.',
+      'Change your disguise once more when the round’s one change is already used.',
+    ),
+    price: 10,
+    perRound: 1,
+  },
+];
+
+const SEEKER_HELPS: readonly SupplyHelp[] = [
+  {
+    id: 'laterne',
+    name: t('Laterne', 'Lantern'),
+    help: t(
+      'Zeigt ein paar Sekunden, wer sich in der Nähe bewegt – wer still hält oder eingerastet ist, bleibt unsichtbar.',
+      'Shows for a few seconds who is moving nearby – anyone who keeps still or is locked in place stays hidden.',
+    ),
+    price: 8,
+    perRound: 2,
+    cooldown: 40,
+    seconds: 5,
+    range: { value: 16, help: t('So weit zeigt die Laterne.', 'This far the lantern shows.') },
+  },
+  {
+    id: 'spuernase',
+    name: t('Noch eine Spürnase', 'Another sniff'),
+    help: t(
+      'Noch einmal schnuppern, wenn die Spürnase der Runde schon benutzt ist.',
+      'Sniff once more when the round’s sniffer is already used.',
+    ),
+    price: 12,
+    perRound: 1,
+  },
+];
+
+/** Einstellungen einer Hilfe der Kramerkiste: an/aus, Preis, Pause, wie oft je Runde, Dauer, Reichweite. */
+function supplyHelp(h: SupplyHelp): SettingDef[] {
+  const at = `rundenladen.${h.id}`;
+  const key = keyOf('supply', h.id);
+  const cmd = `kiste ${h.id}`;
+  const named = (de: string, en: string): Text => t(`${h.name.de}: ${de}`, `${h.name.en}: ${en}`);
+  return [
+    versteck.flag({ key, at: `${at}.an`, value: true, cmd, label: h.name, help: h.help }),
+    versteck.number({
+      key: `${key}Price`,
+      at: `${at}.preis`,
+      value: h.price,
+      min: 0,
+      max: MAX_ROUND_POINTS,
+      ...POINTS,
+      cmd: `${cmd} preis`,
+      label: named('Preis', 'price'),
+      help: t(
+        'Kostet so viele Punkte aus der laufenden Runde.',
+        'Costs this many points from the current round.',
+      ),
+    }),
+    ...(h.cooldown === undefined
+      ? []
+      : [
+          versteck.number({
+            key: `${key}Cooldown`,
+            at: `${at}.abklingzeit-sekunden`,
+            value: h.cooldown,
+            min: 0,
+            max: 600,
+            ...SECONDS,
+            cmd: `${cmd} pause`,
+            label: named('Pause danach', 'pause after'),
+            help: t('So lange, bis man sie wieder kaufen kann.', 'This long until it can be bought again.'),
+          }),
+        ]),
+    versteck.number({
+      key: `${key}PerRound`,
+      at: `${at}.je-runde`,
+      value: h.perRound,
+      min: 0,
+      max: 20,
+      unit: t('mal', 'times'),
+      arg: 'zahl',
+      cmd: `${cmd} je-runde`,
+      label: named('je Runde höchstens', 'at most per round'),
+      help: t(
+        'So oft kann man sie in einer Runde kaufen.',
+        'This is how often it can be bought in one round.',
+      ),
+    }),
+    ...(h.seconds === undefined
+      ? []
+      : [
+          versteck.number({
+            key: `${key}Seconds`,
+            at: `${at}.sekunden`,
+            value: h.seconds,
+            min: 1,
+            max: 30,
+            ...SECONDS,
+            cmd: `${cmd} dauer`,
+            label: named('hält', 'lasts'),
+            help: t('So lange wirkt sie.', 'This is how long it works.'),
+          }),
+        ]),
+    ...(h.range === undefined
+      ? []
+      : [
+          versteck.number({
+            key: `${key}Range`,
+            at: `${at}.reichweite`,
+            value: h.range.value,
+            min: 1,
+            max: 48,
+            ...BLOCKS,
+            cmd: `${cmd} weite`,
+            label: named('Reichweite', 'range'),
+            help: h.range.help,
+          }),
+        ]),
+  ];
+}
+
+/** Ein Stück aus dem Kramerladen (`laden.<abteilung>.<id>`) mit Name, Beschreibung und Preis wie in der config.yml. */
+interface StoreItem {
+  readonly id: string;
+  readonly name: Text;
+  readonly help: Text;
+  readonly price: number;
+}
+
+/** Eine Abteilung des Kramerladens: Abschnitt im Panel, Wort im Befehl („/versteckconfig laden pfiff …“). */
+interface StoreShelf {
+  readonly id: string;
+  readonly section: string;
+  readonly word: string;
+  readonly key: string;
+  readonly title: Text;
+  readonly text: Text;
+  readonly items: readonly StoreItem[];
+}
+
+const item = (id: string, name: Text, help: Text, price: number): StoreItem => ({ id, name, help, price });
+
+const STORE: readonly StoreShelf[] = [
+  {
+    id: 'gestalten',
+    section: 'store-shapes',
+    word: 'gestalt',
+    key: 'storeShape',
+    title: t('Kramerladen: Gestalten', 'General store: disguises'),
+    text: t(
+      'Gestalten zum Freischalten. Es gibt sie nur auf Karten, auf denen genug echte Attrappen stehen.',
+      'Disguises to unlock. They only come up on maps with enough real look-alikes.',
+    ),
+    items: [
+      item(
+        'werkbank',
+        t('Werkbank', 'Workbench'),
+        t(
+          'Steht in Schmiede, Holzlege, Tenne und Küche.',
+          'Found in the smithy, woodshed, threshing floor and kitchen.',
+        ),
+        150,
+      ),
+      item(
+        'schleifstein',
+        t('Schleifstein', 'Grindstone'),
+        t(
+          'Steht, wo Messer und Sensen geschliffen werden.',
+          'Found wherever knives and scythes get sharpened.',
+        ),
+        150,
+      ),
+      item(
+        'webstuhl',
+        t('Webstuhl', 'Loom'),
+        t('Steht in der Bauernstube und im Laden.', 'Found in the farmhouse parlour and the shop.'),
+        150,
+      ),
+      item(
+        'busch',
+        t('Blühender Busch', 'Flowering bush'),
+        t('Wächst auf den Wiesen.', 'Grows on the meadows.'),
+        300,
+      ),
+      item(
+        'lesepult',
+        t('Lesepult', 'Lectern'),
+        t(
+          'Steht in der Stube, in den Gästezimmern und im Saal.',
+          'Found in the parlour, the guest rooms and the hall.',
+        ),
+        300,
+      ),
+      item(
+        'kuchen',
+        t('Kuchen', 'Cake'),
+        t('Steht auf Tischen und Theken.', 'Found on tables and counters.'),
+        300,
+      ),
+      item(
+        'kuerbislaterne',
+        t('Kürbislaterne', 'Jack-o’-lantern'),
+        t('Leuchtet – im Laden, im Garten, am Zaun.', 'It glows – in the shop, the garden, on the fence.'),
+        600,
+      ),
+      item(
+        'festtagskuchen',
+        t('Festtagskuchen', 'Festive cake'),
+        t('Mit Kerze – auf den Tischen im Tanzsaal.', 'With a candle – on the tables in the dance hall.'),
+        600,
+      ),
+    ],
+  },
+  {
+    id: 'pfiffe',
+    section: 'store-whistles',
+    word: 'pfiff',
+    key: 'storeWhistle',
+    title: t('Kramerladen: Pfiff-Klänge', 'General store: whistle sounds'),
+    text: t(
+      'Laute und sehr laute Klänge hört man weiter – dafür bringen sie Extrapunkte (siehe „Punkte der Versteckten“).',
+      'Loud and very loud sounds carry further – so they earn extra points (see “Points for hiders”).',
+    ),
+    items: [
+      item(
+        'kuckuck',
+        t('Kuckuck', 'Cuckoo'),
+        t('„Kuck-kuck, kuck-kuck“ aus dem Wald. Leise.', '“Cuck-oo, cuck-oo” from the woods. Quiet.'),
+        80,
+      ),
+      item(
+        'henne',
+        t('Henne', 'Hen'),
+        t('Gegacker – und plopp, ein Ei. Leise.', 'Clucking – and plop, an egg. Quiet.'),
+        80,
+      ),
+      item(
+        'murmeltier',
+        t('Murmeltier-Pfiff', 'Marmot whistle'),
+        t('Schriller Warnpfiff wie auf der Alm. Laut.', 'A shrill alarm whistle like up on the alp. Loud.'),
+        160,
+      ),
+      item(
+        'kuhglocke',
+        t('Kuhglocke', 'Cowbell'),
+        t('Bimmel-bammel wie auf der Weide. Laut.', 'Ding-dong like out on the pasture. Loud.'),
+        160,
+      ),
+      item(
+        'jodler',
+        t('Jodler', 'Yodel'),
+        t(
+          '„Holla-di-ri-di“ – hoch und tief im Wechsel. Sehr laut.',
+          '“Holla-dee-ree-dee” – high and low in turn. Very loud.',
+        ),
+        280,
+      ),
+      item(
+        'trompete',
+        t('Trompete', 'Trumpet'),
+        t('Eine kleine Fanfare: Tä-tä-tä-täää! Sehr laut.', 'A little fanfare: ta-ta-ta-taaa! Very loud.'),
+        280,
+      ),
+      item(
+        'alphorn',
+        t('Alphorn', 'Alphorn'),
+        t(
+          'Ein langer, tiefer Ruf über die Berge. Sehr laut.',
+          'A long, deep call across the mountains. Very loud.',
+        ),
+        280,
+      ),
+    ],
+  },
+  {
+    id: 'fund-effekte',
+    section: 'store-finds',
+    word: 'fund',
+    key: 'storeFind',
+    title: t('Kramerladen: Fund-Effekte', 'General store: find effects'),
+    text: t(
+      'Was erscheint, wenn man als Gendarm jemanden findet.',
+      'What appears when you find someone as a constable.',
+    ),
+    items: [
+      item(
+        'herzerl',
+        t('Herzerl', 'Little hearts'),
+        t('Herzen steigen auf, wo man jemanden findet.', 'Hearts rise where you find someone.'),
+        100,
+      ),
+      item(
+        'rauchwolke',
+        t('Rauchwolke', 'Puff of smoke'),
+        t('Puff! Eine dicke Wolke.', 'Poof! A big cloud.'),
+        100,
+      ),
+      item(
+        'konfetti',
+        t('Konfetti', 'Confetti'),
+        t('Bunte Schnipsel in alle Richtungen.', 'Colourful bits in every direction.'),
+        200,
+      ),
+      item(
+        'blueten',
+        t('Blütenregen', 'Blossom shower'),
+        t('Rosa Blütenblätter wirbeln.', 'Pink petals swirl around.'),
+        200,
+      ),
+      item(
+        'weissblau',
+        t('Weiß-blaue Funken', 'White-and-blue sparks'),
+        t('Ein Ring aus weißen und blauen Funken.', 'A ring of white and blue sparks.'),
+        350,
+      ),
+      item(
+        'goldregen',
+        t('Goldregen', 'Golden rain'),
+        t('Goldstaub rieselt herab.', 'Gold dust trickles down.'),
+        350,
+      ),
+    ],
+  },
+  {
+    id: 'spuren',
+    section: 'store-trails',
+    word: 'spur',
+    key: 'storeTrail',
+    title: t('Kramerladen: Spuren', 'General store: trails'),
+    text: t(
+      'Spuren beim Laufen – nur in der Gendarmerie, nie in einer Runde.',
+      'Trails while walking – only in the constabulary, never during a round.',
+    ),
+    items: [
+      item(
+        'noten',
+        t('Notenspur', 'Trail of notes'),
+        t('Bunte Noten bei jedem Schritt.', 'Colourful notes with every step.'),
+        100,
+      ),
+      item(
+        'herzerl',
+        t('Herzerlspur', 'Trail of hearts'),
+        t('Kleine Herzen hinter einem.', 'Little hearts behind you.'),
+        100,
+      ),
+      item(
+        'schneeflocken',
+        t('Schneeflocken', 'Snowflakes'),
+        t('Es schneit, wo man geht.', 'It snows wherever you walk.'),
+        200,
+      ),
+      item(
+        'blueten',
+        t('Blütenblätter', 'Petals'),
+        t('Rosa Blätter fallen hinter einem.', 'Pink petals fall behind you.'),
+        200,
+      ),
+      item(
+        'funken',
+        t('Weiß-blaue Funken', 'White-and-blue sparks'),
+        t('Funken in Weiß und Blau.', 'Sparks in white and blue.'),
+        350,
+      ),
+      item(
+        'gluehwuermchen',
+        t('Glühwürmchen', 'Fireflies'),
+        t('Kleine Lichter tanzen um einen herum.', 'Tiny lights dance around you.'),
+        350,
+      ),
+    ],
+  },
+  {
+    id: 'sieg-effekte',
+    section: 'store-wins',
+    word: 'sieg',
+    key: 'storeWin',
+    title: t('Kramerladen: Sieg-Effekte', 'General store: victory effects'),
+    text: t('Am Ende einer gewonnenen Runde.', 'At the end of a round you won.'),
+    items: [
+      item('glocken', t('Glockenläuten', 'Bells ringing'), t('Die Glocken läuten.', 'The bells ring.'), 120),
+      item(
+        'konfetti',
+        t('Konfetti-Regen', 'Confetti shower'),
+        t('Bunte Schnipsel über dem Kopf.', 'Colourful bits above your head.'),
+        220,
+      ),
+      item('goldregen', t('Goldregen', 'Golden rain'), t('Gold rieselt herab.', 'Gold trickles down.'), 220),
+      item(
+        'feuerwerk',
+        t('Feuerwerk', 'Fireworks'),
+        t('Grün-goldenes Feuerwerk über einem.', 'Green-and-gold fireworks above you.'),
+        400,
+      ),
+      item(
+        'weissblau',
+        t('Weiß-blaue Fontäne', 'White-and-blue fountain'),
+        t('Eine Fontäne aus weißen und blauen Funken.', 'A fountain of white and blue sparks.'),
+        400,
+      ),
+    ],
+  },
+  {
+    id: 'titel',
+    section: 'store-titles',
+    word: 'titel',
+    key: 'storeTitle',
+    title: t('Kramerladen: Titel', 'General store: titles'),
+    text: t(
+      'Im Steckbrief, in der Leiste der Runde und in der Rangliste. Manche gibt es erst ab einer Zahl Pfiffe, Funde oder Runden.',
+      'In the profile card, the round’s sidebar and the leaderboard. Some are only available after a number of whistles, finds or rounds.',
+    ),
+    items: [
+      item(
+        'dorfkind',
+        t('Dorfkind', 'Village kid'),
+        t('Hier kennt einen jeder.', 'Everybody here knows you.'),
+        60,
+      ),
+      item(
+        'heustadl-held',
+        t('Heustadl-Held', 'Hay barn hero'),
+        t('Kein Heuballen ist vor einem sicher.', 'No hay bale is safe from you.'),
+        120,
+      ),
+      item(
+        'pfeifkoenig',
+        t('Pfeifkönig', 'Whistle royalty'),
+        t(
+          'Für alle, die sich trauen zu pfeifen – erst ab 50 Pfiffen.',
+          'For everyone who dares to whistle – from 50 whistles.',
+        ),
+        200,
+      ),
+      item(
+        'spuernase',
+        t('Spürnase', 'Sharp nose'),
+        t('Findet sie alle – erst ab 25 Funden.', 'Finds them all – from 25 finds.'),
+        250,
+      ),
+      item(
+        'meister-der-tarnung',
+        t('Meister der Tarnung', 'Master of disguise'),
+        t(
+          'Niemand hat einen je gesehen – erst ab 15 Runden unentdeckt.',
+          'Nobody has ever seen you – from 15 rounds undiscovered.',
+        ),
+        300,
+      ),
+      item(
+        'oberwachtmeister',
+        t('Oberwachtmeister', 'Chief constable'),
+        t(
+          'Die Gendarmerie hört aufs Kommando – erst ab 75 Funden.',
+          'The constabulary follows your lead – from 75 finds.',
+        ),
+        500,
+      ),
+      item(
+        'dorflegende',
+        t('Dorflegende', 'Village legend'),
+        t(
+          'Man erzählt sich Geschichten – erst ab 100 Runden.',
+          'People tell stories about you – from 100 rounds.',
+        ),
+        800,
+      ),
+    ],
+  },
+];
+
+/** Abschnitt einer Abteilung des Kramerladens: je Stück „im Laden“ (an/aus) und Preis. */
+const storeSection = (shelf: StoreShelf): SettingSection => ({
+  id: shelf.section,
+  title: shelf.title,
+  text: shelf.text,
+  settings: shelf.items.flatMap((i) => {
+    const key = keyOf(shelf.key, i.id);
+    const at = `laden.${shelf.id}.${i.id}`;
+    const cmd = `laden ${shelf.word} ${i.id}`;
+    return [
+      versteck.flag({ key, at: `${at}.an`, value: true, cmd, label: i.name, help: i.help }),
+      versteck.number({
+        key: `${key}Price`,
+        at: `${at}.preis`,
+        value: i.price,
+        min: 0,
+        max: MAX_SHOP_PRICE,
+        ...POINTS,
+        cmd: `${cmd} preis`,
+        label: t(`${i.name.de}: Preis`, `${i.name.en}: price`),
+        help: t('So viele Punkte vom Guthaben kostet es.', 'Costs this many points from the balance.'),
+      }),
+    ];
+  }),
+});
+
 export const VERSTECKERL_AREA: SettingArea = {
   id: 'versteckerl',
   title: t('Versteckerl', 'Hide & Seek'),
   text: t(
-    'Verstecken mit Verwandlung: Zeiten, wie viele Gendarmen suchen, wie viel ein Treffer zählt und die Hilfen (Pfiff, Sprungkraft, Spürnase).',
-    'Hide and seek with a twist: times, how many constables seek, what a hit counts and the helpers (whistle, jump boost, sniffer).',
+    'Verstecken mit Verwandlung: Zeiten, wie viele Gendarmen suchen, wie viel ein Treffer zählt, die Hilfen (Pfiff, Sprungkraft, Spürnase), Punkte, die Kramerkiste in der Runde und der Kramerladen. Punkte gibt es nur im Spiel – nichts davon für echtes Geld.',
+    'Hide and seek with a twist: times, how many constables seek, what a hit counts, the helpers (whistle, jump boost, sniffer), points, the supply box in the round and the general store. Points only exist in the game – none of it is for real money.',
   ),
   icon: 'EyeOff',
   panel: 'modes',
@@ -2249,6 +3192,270 @@ export const VERSTECKERL_AREA: SettingArea = {
         }),
       ],
     },
+    {
+      id: 'points-seekers',
+      title: t('Punkte der Gendarmen', 'Points for constables'),
+      text: t(
+        'Punkte gibt es in der Runde. Was am Ende übrig ist, kommt aufs Guthaben – damit kauft man im Kramerladen ein. „Punkte insgesamt“ (Steckbrief, Bestenliste) zählen alles Verdiente und sinken nie.',
+        'Points are earned in the round. Whatever is left at the end goes onto the balance – to shop with at the general store. “Total points” (profile card, leaderboard) count everything earned and never go down.',
+      ),
+      settings: [
+        roundPoints(
+          'pointsHit',
+          'treffer',
+          2,
+          'treffer',
+          t('Treffer', 'Hit'),
+          t('Für jeden Schlag, der einen Versteckten trifft.', 'For every blow that hits a hider.'),
+        ),
+        roundPoints(
+          'pointsFind',
+          'fund',
+          10,
+          'fund',
+          t('Fund', 'Find'),
+          t('Wenn ein Versteckter gefunden ist.', 'When a hider is found.'),
+        ),
+        roundPoints(
+          'pointsFirstFind',
+          'erster-fund',
+          5,
+          'erster-fund',
+          t('Erster Fund der Runde', 'First find of the round'),
+          t('Kommt beim ersten Fund obendrauf.', 'Added on top for the first find.'),
+        ),
+        roundPoints(
+          'pointsSeekersWin',
+          'gendarmen-sieg',
+          5,
+          'sieg',
+          t('Sieg der Gendarmen', 'Constables win'),
+          t(
+            'Für jeden Gendarmen, wenn am Ende niemand mehr versteckt ist.',
+            'For every constable when nobody is hidden at the end.',
+          ),
+        ),
+      ],
+    },
+    {
+      id: 'points-hiders',
+      title: t('Punkte der Versteckten', 'Points for hiders'),
+      text: t(
+        'Ein freiwilliger Pfiff ist mutig: Je näher ein Gendarm steht, desto mehr gibt es.',
+        'A voluntary whistle takes courage: the closer a constable stands, the more you get.',
+      ),
+      settings: [
+        roundPoints(
+          'pointsHalfMinute',
+          'je-halbe-minute',
+          1,
+          'halbe-minute',
+          t('Je halbe Minute unentdeckt', 'Per half minute undiscovered'),
+          t(
+            'Für jede volle halbe Minute der Suchzeit, die man versteckt bleibt.',
+            'For every full half minute of the seeking time you stay hidden.',
+          ),
+        ),
+        versteck.number({
+          key: 'pointsWhistleMax',
+          at: 'punkte.pfiff-hoechstens',
+          value: 10,
+          min: 1,
+          max: MAX_ROUND_POINTS,
+          ...POINTS,
+          cmd: 'punkte pfiff-max',
+          label: t('Freiwilliger Pfiff: höchstens', 'Voluntary whistle: at most'),
+          help: t(
+            'Ein Pfiff bringt 1 Punkt, je halbe Minute Suche einen mehr – höchstens so viele.',
+            'A whistle brings 1 point, one more per half minute of seeking – at most this many.',
+          ),
+        }),
+        roundPoints(
+          'pointsLoud',
+          'pfiff-laut',
+          2,
+          'laut',
+          t('Extra für einen lauten Pfiff-Klang', 'Extra for a loud whistle sound'),
+          t(
+            'Murmeltier-Pfiff und Kuhglocke aus dem Kramerladen hört man weiter.',
+            'The marmot whistle and the cowbell from the general store carry further.',
+          ),
+        ),
+        roundPoints(
+          'pointsVeryLoud',
+          'pfiff-sehr-laut',
+          4,
+          'sehr-laut',
+          t('Extra für einen sehr lauten Pfiff-Klang', 'Extra for a very loud whistle sound'),
+          t(
+            'Jodler, Trompete und Alphorn hört man am weitesten.',
+            'The yodel, trumpet and alphorn carry the furthest.',
+          ),
+        ),
+        versteck.number({
+          key: 'pointsBraveNearBlocks',
+          at: 'punkte.mutig-nah-bloecke',
+          value: 6,
+          min: 1,
+          max: 64,
+          ...BLOCKS,
+          cmd: 'punkte mutig-nah-weite',
+          label: t(
+            'Ganz mutig: Gendarm höchstens so weit weg',
+            'Very brave: constable at most this far away',
+          ),
+          help: t(
+            'Steht beim Pfiff ein Gendarm so nah oder näher, gibt es die Extrapunkte für „ganz mutig“.',
+            'If a constable stands this close or closer during the whistle, the extra points for “very brave” apply.',
+          ),
+        }),
+        roundPoints(
+          'pointsBraveNear',
+          'mutig-nah',
+          4,
+          'mutig-nah',
+          t('Extra für ganz mutig', 'Extra for very brave'),
+          t('Für einen Pfiff ganz nah am Gendarmen.', 'For a whistle very close to a constable.'),
+        ),
+        versteck.number({
+          key: 'pointsBraveBlocks',
+          at: 'punkte.mutig-bloecke',
+          value: 12,
+          min: 1,
+          max: 64,
+          ...BLOCKS,
+          cmd: 'punkte mutig-weite',
+          label: t('Mutig: Gendarm höchstens so weit weg', 'Brave: constable at most this far away'),
+          help: t(
+            'Steht beim Pfiff ein Gendarm so nah oder näher, gibt es die Extrapunkte für „mutig“.',
+            'If a constable stands this close or closer during the whistle, the extra points for “brave” apply.',
+          ),
+        }),
+        roundPoints(
+          'pointsBrave',
+          'mutig',
+          2,
+          'mutig',
+          t('Extra für mutig', 'Extra for brave'),
+          t('Für einen Pfiff nah am Gendarmen.', 'For a whistle close to a constable.'),
+        ),
+        roundPoints(
+          'pointsLastHider',
+          'letzter-versteckter',
+          10,
+          'letzter',
+          t('Letzter Versteckter', 'Last one hidden'),
+          t(
+            'Wer als Letzter noch versteckt ist, bekommt einmal so viel (wenn es am Anfang mindestens zwei Versteckte gab).',
+            'Whoever is the last one still hidden gets this much once (if there were at least two hiders at the start).',
+          ),
+        ),
+        roundPoints(
+          'pointsSurvive',
+          'bis-zum-schluss',
+          20,
+          'bis-zum-schluss',
+          t('Bis zum Schluss unentdeckt', 'Undiscovered until the end'),
+          t(
+            'Für jeden, der bis zum Ende der Suchzeit versteckt bleibt.',
+            'For everyone who stays hidden until the seeking time is up.',
+          ),
+        ),
+      ],
+    },
+    {
+      id: 'points-balance',
+      title: t('Nach der Runde: Guthaben', 'After the round: balance'),
+      text: t(
+        'Zu den Punkten der Runde kommen Serie und Tagesbonus dazu.',
+        'The streak and the daily bonus are added to the round’s points.',
+      ),
+      settings: [
+        roundPoints(
+          'pointsStreak',
+          'serie-je-sieg',
+          3,
+          'serie',
+          t('Serie: je weiterem Sieg in Folge', 'Streak: per further win in a row'),
+          t(
+            'So viele Punkte mehr für jeden weiteren Sieg in Folge.',
+            'This many extra points for every further win in a row.',
+          ),
+        ),
+        versteck.number({
+          key: 'pointsStreakMax',
+          at: 'punkte.serie-hoechstens',
+          value: 5,
+          min: 0,
+          max: 50,
+          unit: t('Siege', 'wins'),
+          arg: 'siege',
+          cmd: 'punkte serie-max',
+          label: t('Serie zählt höchstens', 'Streak counts at most'),
+          help: t(
+            'Für so viele Siege in Folge wächst die Serie, danach bleibt sie gleich.',
+            'The streak grows for this many wins in a row, then it stays the same.',
+          ),
+        }),
+        roundPoints(
+          'pointsDaily',
+          'tagesbonus',
+          25,
+          'tagesbonus',
+          t('Tagesbonus', 'Daily bonus'),
+          t('Für den ersten Sieg des Tages.', 'For the first win of the day.'),
+        ),
+      ],
+    },
+    {
+      id: 'supply-hiders',
+      title: t('Kramerkiste: Hilfen der Versteckten', 'Supply box: helpers for hiders'),
+      text: t(
+        'Kleine Hilfen während der Suche (in der Schnellleiste), bezahlt mit Punkten aus der laufenden Runde – begrenzt je Runde und mit Pause danach.',
+        'Small helpers during the search (in the hotbar), paid with points from the current round – limited per round and with a pause afterwards.',
+      ),
+      settings: [
+        versteck.flag({
+          key: 'supplyBox',
+          at: 'rundenladen.an',
+          value: true,
+          cmd: 'kiste',
+          label: t('Kramerkiste in der Runde', 'Supply box in the round'),
+          help: t(
+            'Aus: keine Hilfen zu kaufen – für Versteckte und Gendarmen.',
+            'Off: no helpers to buy – for hiders and constables.',
+          ),
+        }),
+        ...HIDER_HELPS.flatMap(supplyHelp),
+      ],
+    },
+    {
+      id: 'supply-seekers',
+      title: t('Kramerkiste: Hilfen der Gendarmen', 'Supply box: helpers for constables'),
+      settings: SEEKER_HELPS.flatMap(supplyHelp),
+    },
+    {
+      id: 'store',
+      title: t('Kramerladen', 'General store'),
+      text: t(
+        'Beim Krämer Wastl in der Gendarmerie (/laden) schaltet man mit dem Guthaben dauerhaft frei: Gestalten, Pfiff-Klänge, Effekte und Titel. Aus bei einem Stück nimmt es aus dem Laden und aus dem Spiel – wer es schon hat, behält es für später.',
+        'At Wastl’s stall in the constabulary (/laden) you unlock things for good with your balance: disguises, whistle sounds, effects and titles. Switching an item off takes it out of the store and the game – whoever already has it keeps it for later.',
+      ),
+      settings: [
+        versteck.flag({
+          key: 'store',
+          at: 'laden.an',
+          value: true,
+          cmd: 'laden',
+          label: t('Kramerladen offen', 'General store open'),
+          help: t(
+            'Aus: Es gibt nichts zu kaufen, und Stücke aus dem Laden ruhen, bis er wieder offen ist.',
+            'Off: nothing can be bought, and items from the store rest until it opens again.',
+          ),
+        }),
+      ],
+    },
+    ...STORE.map(storeSection),
   ],
 };
 

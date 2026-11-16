@@ -47,6 +47,7 @@ import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
 import { createStatusService } from './public/status.js';
+import { registerWwwRedirect } from './public/www.js';
 import { registerSetupRoutes } from './setup/routes.js';
 import { createSetupService, type SetupService } from './setup/service.js';
 
@@ -127,6 +128,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   await app.register(helmet, { contentSecurityPolicy: false, referrerPolicy: { policy: 'same-origin' } });
   // Nur Routen mit eigener Grenze (Einrichtung, später Anmeldung im Hub) – der Rest bleibt frei.
   await app.register(rateLimit, { global: false });
+  // www.<Domain> → https://<Domain> (vor allem anderen, auch vor der Webseite und der Weiterleitung zum Motor).
+  registerWwwRedirect(app, config.domain);
 
   app.setErrorHandler((err, request, reply) => {
     if (err instanceof AppError) return reply.code(err.status).send({ error: err.code });
