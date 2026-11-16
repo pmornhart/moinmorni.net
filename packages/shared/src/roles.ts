@@ -6,7 +6,16 @@ import { z } from 'zod';
  * Philip kann alles im Panel ändern; das hier ist der Startpunkt.
  */
 
-export const ROLE_IDS = ['owner', 'admin', 'moderator', 'builder', 'media', 'vip', 'player'] as const;
+export const ROLE_IDS = [
+  'owner',
+  'admin',
+  'moderator',
+  'supporter',
+  'builder',
+  'media',
+  'vip',
+  'player',
+] as const;
 export type RoleId = (typeof ROLE_IDS)[number];
 
 /** Bereiche im Panel. */
@@ -28,7 +37,13 @@ export const PANEL_AREAS = [
 ] as const;
 export type PanelArea = (typeof PANEL_AREAS)[number];
 
-/** Rechte im Spiel (das Netzwerk-Plugin übersetzt sie in Plugin- und Minecraft-Rechte). */
+/**
+ * Rechte im Spiel. Strafen, Ränge, Sprachchat und Party prüft der Hub selbst (Befehle des Netzwerks); auf jedem
+ * Spielserver übersetzt das Netzwerk-Plugin den Rest in Rechte des Servers (plugins/moinmorni-network,
+ * paper/Rights.java): Teleport, Zuschauen und Spielmodus als Minecraft-Befehle (Kreativ nur mit „creative“),
+ * „modes-admin“ als die Verwaltungs-Rechte der Spielmodi dort (jedes Recht eines Modus, das auf „.admin“ endet),
+ * „admin“ als alles, was ein Operator über Rechte bekäme – ohne OP zu vergeben.
+ */
 export const GAME_RIGHTS = [
   'kick',
   'ban',
@@ -53,6 +68,7 @@ export const GAME_RIGHTS = [
   'chat-colour',
   'maintenance-join',
   'ranks',
+  'modes-admin',
   'admin',
 ] as const;
 export type GameRight = (typeof GAME_RIGHTS)[number];
@@ -111,9 +127,26 @@ const TEAM_GAME_RIGHTS: GameRight[] = [
   'voice-mute',
   'maintenance-join',
 ];
+/**
+ * Supporter helfen Spielern: verwarnen, stummschalten (auch im Sprachchat), hinreisen, zuschauen, ansehen – aber
+ * nicht bannen, einsperren oder rauswerfen (das bleibt beim Moderator).
+ */
+export const SUPPORTER_GAME_RIGHTS: readonly GameRight[] = [
+  'mute',
+  'warn',
+  'teleport',
+  'spectate',
+  'inspect',
+  'voice-mute',
+  'maintenance-join',
+];
 const VIP_GAME_RIGHTS: GameRight[] = ['reserved-slot', 'bigger-party', 'lobby-extras', 'chat-colour'];
 
-/** Die Vorlage, mit der MoinMorni startet (Philip, 14.11.: Owner, Admin, Moderator, Builder, Media, VIP, Spieler). */
+/**
+ * Die Vorlage, mit der MoinMorni startet (Philip, 14.11.: Owner, Admin, Moderator, Builder, Media, VIP, Spieler;
+ * 16.11. Supporter dazu, zwischen Moderator und Builder). Das ganze Team – auch Builder und Media – kommt immer
+ * hinein („Teammitglieder müssen automatisch da sein“, Philip 16.11.).
+ */
 export const DEFAULT_ROLES: readonly Role[] = [
   {
     id: 'owner',
@@ -150,12 +183,27 @@ export const DEFAULT_ROLES: readonly Role[] = [
     fallback: false,
   },
   {
+    id: 'supporter',
+    name: { de: 'Supporter', en: 'Supporter' },
+    // Grünes Schild mit weißem Plus (Abzeichen „plus“); ein satteres Grün als Builder (#55ff55), damit man beide
+    // im Chat und über dem Kopf auseinanderhält.
+    symbol: '✚',
+    colour: '#22c55e',
+    // Strafen-Seite: das Panel prüft jede Strafe einzeln (`mayPunish`) – der Supporter verwarnt und schaltet stumm,
+    // bannen, einsperren und rauswerfen bleiben gesperrt.
+    panel: ['overview', 'players', 'punishments'],
+    game: [...SUPPORTER_GAME_RIGHTS],
+    discord: ['tickets', 'team-area', 'links'],
+    position: ROLE_IDS.indexOf('supporter'),
+    fallback: false,
+  },
+  {
     id: 'builder',
     name: { de: 'Builder', en: 'Builder' },
     symbol: '⚒',
     colour: '#55ff55',
     panel: ['overview', 'build'],
-    game: ['build', 'worldedit', 'lobby-edit', 'gamemode', 'creative'],
+    game: ['build', 'worldedit', 'lobby-edit', 'gamemode', 'creative', 'maintenance-join'],
     discord: ['builder-area', 'links'],
     position: ROLE_IDS.indexOf('builder'),
     fallback: false,
@@ -166,7 +214,7 @@ export const DEFAULT_ROLES: readonly Role[] = [
     symbol: '▶',
     colour: '#ff6ad5',
     panel: [],
-    game: ['streamer', ...VIP_GAME_RIGHTS],
+    game: ['streamer', ...VIP_GAME_RIGHTS, 'maintenance-join'],
     discord: ['media-area', 'links'],
     position: ROLE_IDS.indexOf('media'),
     fallback: false,
@@ -227,4 +275,16 @@ export function mayAssign(roles: readonly Role[], actor: string, target: string)
   if (a.id === 'owner') return true;
   if (OWNER_ASSIGNS.includes(t.id)) return false;
   return t.position > a.position;
+}
+
+/**
+ * Das Team kommt immer hinein: auch während der Wartung und in Modi „nur auf Einladung“ (MorniCraft) ohne Eintrag
+ * in der Whitelist. Wer dazugehört, entscheidet dieses eine Recht im Rang – der Hub lässt danach hinein, und die
+ * Whitelist im Panel zeigt genau diese Leute von selbst mit.
+ */
+export const ALWAYS_IN_RIGHT = 'maintenance-join' satisfies GameRight;
+
+/** Kommt jemand mit diesem Rang immer hinein (Wartung, nur auf Einladung)? */
+export function alwaysIn(role: Pick<Role, 'game'>): boolean {
+  return role.game.includes(ALWAYS_IN_RIGHT);
 }

@@ -22,7 +22,9 @@ export const INTENT_GUILD_VOICE_STATES = 128;
 /** Discord: „Disallowed intents“ – der Mitglieder-Intent ist im Entwicklerportal nicht eingeschaltet. */
 const CLOSE_DISALLOWED_INTENTS = 4014;
 const CLOSE_AUTH_FAILED = 4004;
-const RETRY_MAX = 3;
+const RETRY_MAX = 5;
+/** Länger als das wartet eine Anfrage nicht auf Discord (z. B. Profilbild des Bots: Discord sperrt das für länger). */
+const WAIT_MAX_MS = 20_000;
 const RECONNECT_MIN_MS = 2_000;
 const RECONNECT_MAX_MS = 120_000;
 const MS = 1000;
@@ -36,10 +38,21 @@ export class DiscordError extends Error {
     readonly status: number,
     readonly code: number | null,
     message: string,
+    /** Bei „zu viele Anfragen“: so viele Sekunden will Discord Ruhe. */
+    readonly retryAfter: number | null = null,
   ) {
     super(message);
   }
 }
+
+/** Discord-Fehlercodes, die wir freundlich erklären (https://docs.discord.com/developers/topics/opcodes-and-status-codes). */
+export const DISCORD_CODES = {
+  unknownChannel: 10003,
+  unknownMessage: 10008,
+  missingAccess: 50001,
+  missingPermissions: 50013,
+  invalidFormBody: 50035,
+} as const;
 
 export interface GatewayEvent {
   readonly t: string;
@@ -53,6 +66,8 @@ export interface DiscordClient {
   readonly close: () => void;
   /** Gateway-Zustand fürs Panel. */
   readonly state: () => { connected: boolean; membersIntent: boolean; error: string | null };
+  /** Bremst Discord gerade („zu viele Anfragen“), erfährt das `listener` (Wartezeit in ms); Rückgabe: abmelden. */
+  readonly onWait: (listener: (ms: number) => void) => () => void;
 }
 
 interface Gateway {
@@ -77,6 +92,7 @@ export function createDiscordClient(
   log: FastifyBaseLogger,
   fetchImpl: typeof fetch = fetch,
 ): DiscordClient {
+  const waiting = new Set<(ms: number) => void>();
   const request = async <T>(
     method: string,
     path: string,
@@ -95,12 +111,17 @@ export function createDiscordClient(
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (res.status === HTTP_TOO_MANY && tries < RETRY_MAX) {
-      const wait = Number(
-        ((await res.json().catch(() => ({}))) as { retry_after?: number }).retry_after ?? 1,
-      );
-      await sleep(Math.ceil(wait * MS));
-      return request(method, path, body, reason, tries + 1);
+    if (res.status === HTTP_TOO_MANY) {
+      const answer = (await res.json().catch(() => ({}))) as { retry_after?: number; code?: number };
+      // Discord sagt in Sekunden (mit Komma), wie lange Ruhe sein soll – im Text oder im Kopf „Retry-After“.
+      const seconds = Number(answer.retry_after ?? res.headers.get('retry-after') ?? 1);
+      const ms = Math.ceil(seconds * MS);
+      if (tries < RETRY_MAX && ms <= WAIT_MAX_MS) {
+        waiting.forEach((listener) => listener(ms));
+        await sleep(ms);
+        return request(method, path, body, reason, tries + 1);
+      }
+      throw new DiscordError(res.status, answer.code ?? null, `${method} ${path}: 429`, seconds);
     }
     if (!res.ok) {
       const err = (await res.json().catch(() => ({}))) as { code?: number; message?: string };
@@ -250,5 +271,9 @@ export function createDiscordClient(
       membersIntent: (gw.intents & INTENT_GUILD_MEMBERS) !== 0,
       error: gw.error,
     }),
+    onWait: (listener) => {
+      waiting.add(listener);
+      return () => waiting.delete(listener);
+    },
   };
 }

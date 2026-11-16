@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import { eq, like } from 'drizzle-orm';
 import type { FastifyBaseLogger } from 'fastify';
-import type { Mode, Role } from '@moinmorni/shared';
+import type { Role } from '@moinmorni/shared';
+import type { TeamApplicationService } from '../applications/team.js';
 import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
 import { discordObjects, news } from '../db/schema.js';
@@ -10,40 +11,35 @@ import type { HubContext } from '../hub/context.js';
 import type { Hub } from '../hub/index.js';
 import { mm } from '../hub/texts.js';
 import type { EventBus } from '../lib/events.js';
+import type { ApplicationService } from '../mornicraft/applications.js';
 import type { Stores } from '../panel/stores.js';
 import type { StatusService } from '../public/status.js';
-import { createDiscordClient, DiscordError, type DiscordClient, type GatewayEvent } from './client.js';
-import {
-  CHANNEL_CATEGORY,
-  colourInt,
-  discordRoleName,
-  EXTRA_ROLES,
-  isTeam,
-  layout,
-  overwritesFor,
-  rolePermissions,
-  type Audience,
-  type ExtraRole,
-  type RoleIds,
-} from './layout.js';
-import { botLang, bt, RULES_TEXT, type BotLang } from './texts.js';
+import { createAppearance, type Appearance } from './appearance.js';
 import { APPLY_BUTTON, APPLY_FORM, createApplicationBot } from './applications.js';
-import type { ApplicationService } from '../mornicraft/applications.js';
+import { createDiscordClient, DiscordError, type DiscordClient, type GatewayEvent } from './client.js';
+import type { DiscordCredentials, CredentialsView } from './credentials.js';
+import { EXTRA_ROLES, invitePermissions, permNames, type ExtraRole, type PermName } from './layout.js';
+import { CUSTOM_IDS, EMERALD, statusMessage, type BoardContext } from './messages.js';
+import { createDiscordSetup, type SetupProgress, type SetupReport } from './setup.js';
+import { createDiscordStore } from './store.js';
+import { createTeamBot } from './team-apply.js';
+import { botLang, bt, type BotLang } from './texts.js';
 
 /**
- * Der MoinMorni-Bot: richtet den Discord-Server ein (Rollen aus der Vorlage, Kanäle mit Rechten, Regeln, Hilfe mit
- * Ticket-Knopf), hält eine Status-Nachricht aktuell, verbindet Minecraft- und Discord-Konten, überträgt Ränge und
- * Strafen (Bann, Timeout/Stumm, Gefängnis-Rolle, Sprachchat-Stumm im Sprachkanal) und schreibt ins Team-Log. Ein
- * Discord-Server: der, auf den Philip den Bot holt.
+ * Der MoinMorni-Bot: richtet den Discord-Server ein (discord/setup.ts), hält Status, Regeln, Stellen und Spielmodi
+ * aktuell, verbindet Minecraft- und Discord-Konten, überträgt Ränge und Strafen (Bann, Timeout/Stumm, Gefängnis, Sprachchat-Stumm),
+ * schreibt ins Team- und Strafen-Log, nimmt Bewerbungen an (Team und MorniCraft) und öffnet Tickets. Der Token kommt
+ * aus der .env oder dem Panel (discord/credentials.ts); ändert er sich, verbindet sich der Bot sofort neu.
+ * Ein Discord-Server: der, auf den Philip den Bot holt.
  */
 
-const ADMINISTRATOR = '8';
 const STATUS_MS = 60_000;
 const CLEANUP_MS = 300_000;
 const CODE_MINUTES = 10;
 const MINUTE_MS = 60_000;
 const SECOND_MS = 1000;
-const TIMEOUT_MAX_MS = 28 * 24 * 60 * MINUTE_MS;
+/** Länger als 28 Tage geht kein Timeout in Discord (dann die Rolle „Stumm“). */
+const TIMEOUT_MAX_MS = 2_419_200_000;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_LENGTH = 6;
 const EPHEMERAL = 64;
@@ -51,10 +47,8 @@ const REPLY = 4;
 const INTERACTION_COMMAND = 2;
 const INTERACTION_COMPONENT = 3;
 const INTERACTION_MODAL = 5;
-const BUTTON_SECONDARY = 2;
 const ROW = 1;
 const BUTTON = 2;
-const BUTTON_PRIMARY = 1;
 const BUTTON_DANGER = 4;
 const PRIVATE_THREAD = 12;
 const OPTION_STRING = 3;
@@ -67,59 +61,55 @@ const MISSING_PERMISSIONS = 50013;
 const NO_RIGHT_PAUSE_MS = 10 * MINUTE_MS;
 /** Gemerkt: wen der Bot im Sprachkanal stummgeschaltet hat (Schlüssel + UUID → Discord-ID). */
 const VOICE_MUTE_KEY = 'voicemute:';
-const EMERALD = 0x1fa463;
-const GREY = 0x6b7280;
-const TICKET_OPEN = 'mm:ticket:open';
-const TICKET_CLOSE = 'mm:ticket:close';
-const MODE_ICON: Readonly<Record<Mode['state'], string>> = {
-  on: '🟢',
-  off: '⚫',
-  maintenance: '🛠',
-  soon: '🕓',
-};
-const MODE_STATE: Readonly<Record<Mode['state'], 'modeOn' | 'modeOff' | 'modeMaintenance' | 'modeSoon'>> = {
-  on: 'modeOn',
-  off: 'modeOff',
-  maintenance: 'modeMaintenance',
-  soon: 'modeSoon',
-};
-
-interface DRole {
-  readonly id: string;
-  readonly name: string;
-}
-interface DChannel {
-  readonly id: string;
-  readonly name: string;
-  readonly type: number;
-}
+const HTTP_UNAUTHORIZED = 401;
+// Einladung für einen Klick-Befehl im Spiel: "https://discord.gg/moinmorni" ja, "https://x.y/'a'" und "http://…" nein.
+// https://regex101.com/?flavor=javascript&regex=%5Ehttps%3A%5C%2F%5C%2F%5B%5E%5Cs'%22%3C%3E%5D%2B%24&testString=https%3A%2F%2Fdiscord.gg%2Fmoinmorni
+const SAFE_LINK = /^https:\/\/[^\s'"<>]+$/;
+const NEWS_TEXT_MAX = 1500;
+const THREAD_NAME_MAX = 90;
+const SELF_CACHE_MS = 60_000;
+const CHECK_TIMEOUT_MS = 15_000;
 
 export interface BotStatus {
   readonly configured: boolean;
   readonly connected: boolean;
   readonly error: string | null;
   readonly membersIntent: boolean;
+  /** Einladung mit genau den Rechten, die der Bot braucht. */
   readonly inviteUrl: string | null;
+  /** Die Rechte, nach denen die Einladung fragt. */
+  readonly permissions: readonly PermName[];
   readonly guild: { readonly id: string; readonly name: string } | null;
   readonly setupDone: boolean;
-}
-
-export interface SetupReport {
-  readonly roles: number;
-  readonly channels: number;
-  readonly community: 'ok' | 'failed';
+  /** Woher Token und Client-Secret kommen (nie der Wert). */
+  readonly credentials: CredentialsView;
+  /** Der Bot, wie Discord ihn kennt. */
+  readonly bot: { readonly id: string; readonly name: string } | null;
+  /** Für „Mit Discord anmelden“: diese Adresse kommt im Developer Portal unter OAuth2 → Redirects hinein. */
+  readonly redirectUrl: string;
+  readonly setup: SetupProgress;
 }
 
 export interface MoinMorniBot {
   readonly start: () => void;
   readonly stop: () => void;
   readonly status: () => Promise<BotStatus>;
+  /** Ganze Einrichtung (wartet bis zum Ende). */
   readonly setup: () => Promise<SetupReport>;
+  /** Einrichtung im Hintergrund starten (Panel), Fortschritt über `status().setup`. */
+  readonly startSetup: () => SetupProgress;
+  /** Token oder Client-Secret geändert: neu verbinden. */
+  readonly reconnect: () => void;
+  /** Bot-Token prüfen, ohne ihn zu speichern: wer ist der Bot? */
+  readonly checkToken: (token: string) => Promise<{ readonly id: string; readonly name: string }>;
+  /** Client-Secret prüfen (gehört es zu dieser Anwendung?). */
+  readonly checkClientSecret: (secret: string) => Promise<boolean>;
+  readonly appearance: Appearance;
   /** In-game /discord (für die Hub-Befehle). */
   readonly commands: (ctx: HubContext) => Command[];
   /** Status-Nachricht jetzt aktualisieren (Tests). */
   readonly refreshStatus: () => Promise<void>;
-  /** Abgelaufene Stumm-Rollen entfernen (läuft sonst alle 5 Minuten). */
+  /** Abgelaufene Stumm- und Gefängnis-Rollen entfernen (läuft sonst alle 5 Minuten). */
   readonly cleanup: () => Promise<void>;
   /** Einladung in den Discord (legt der Bot beim Einrichten an), sonst null. */
   readonly inviteUrl: () => string | null;
@@ -133,8 +123,11 @@ export interface MoinMorniBot {
 
 export interface BotDeps {
   readonly config: Config;
-  /** Bewerbungen für MorniCraft (Formular, Posten in #bewerbungen, Entscheiden per Knopf). */
+  readonly credentials: DiscordCredentials;
+  /** Bewerbungen für MorniCraft (Formular, Posten in #bewerbungs-eingang, Entscheiden per Knopf). */
   readonly applications?: ApplicationService;
+  /** Bewerbungen ins Team. */
+  readonly team?: TeamApplicationService;
   readonly db: Db;
   readonly stores: Stores;
   readonly hub: Hub;
@@ -144,34 +137,62 @@ export interface BotDeps {
   readonly fetchImpl?: typeof fetch;
 }
 
+const NO_CLIENT = new Error('discord_not_configured');
+
 export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
   const { config, db, stores, hub, events, log } = deps;
-  const client: DiscordClient | null = config.discordToken
-    ? createDiscordClient(config.discordToken, config.discordApi, log, deps.fetchImpl)
-    : null;
+  const store = createDiscordStore(db);
   const codes = new Map<string, { uuid: string; until: number }>();
   const timers: Array<ReturnType<typeof setInterval>> = [];
-  const app = { id: null as string | null };
+  const live: {
+    client: DiscordClient | null;
+    token: string | null;
+    started: boolean;
+    appId: string | null;
+    self: { id: string; name: string; at: number } | null;
+    waits: Set<(ms: number) => void>;
+    unhook: (() => void) | null;
+  } = { client: null, token: null, started: false, appId: null, self: null, waits: new Set(), unhook: null };
 
-  // ---------- gemerkte IDs ----------
-  const get = (key: string): string | null =>
-    db.select().from(discordObjects).where(eq(discordObjects.key, key)).get()?.discordId ?? null;
-  const put = (key: string, id: string): void => {
-    db.insert(discordObjects)
-      .values({ key, discordId: id })
-      .onConflictDoUpdate({
-        target: discordObjects.key,
-        set: { discordId: id, updatedAt: new Date().toISOString() },
-      })
-      .run();
-  };
-  const drop = (key: string): void => {
-    db.delete(discordObjects).where(eq(discordObjects.key, key)).run();
+  // ---------- Verbindung (Token aus .env oder Panel) ----------
+  const clientFor = (token: string): DiscordClient =>
+    createDiscordClient(token, config.discordApi, log, deps.fetchImpl);
+  /** Der aktuelle Client – passt nicht mehr zum gespeicherten Token, wird er ersetzt. */
+  const client = (): DiscordClient | null => {
+    const token = deps.credentials.token();
+    if (token === live.token) return live.client;
+    live.client?.close();
+    live.unhook?.();
+    live.client = token ? clientFor(token) : null;
+    live.unhook = live.client ? live.client.onWait((ms) => live.waits.forEach((w) => w(ms))) : null;
+    live.token = token;
+    live.appId = null;
+    live.self = null;
+    if (live.started && live.client) connect(live.client);
+    return live.client;
   };
   const rest = <T>(method: string, path: string, body?: unknown, reason?: string): Promise<T> => {
-    if (!client) return Promise.reject(new Error('discord_not_configured'));
-    return client.rest<T>(method, path, body, reason);
+    const c = client();
+    if (!c) return Promise.reject(NO_CLIENT);
+    return c.rest<T>(method, path, body, reason);
   };
+  const get = store.get;
+  const put = (key: string, id: string): void => store.put(key, id);
+  const drop = store.drop;
+  const guildId = (): string | null => get('guild');
+  const appId = async (): Promise<string> => {
+    if (live.appId) return live.appId;
+    const me = await rest<{ id: string }>('GET', '/applications/@me');
+    live.appId = me.id;
+    return me.id;
+  };
+  const self = async (): Promise<{ id: string; name: string }> => {
+    if (live.self && Date.now() - live.self.at < SELF_CACHE_MS) return live.self;
+    const me = await rest<{ id: string; username: string }>('GET', '/users/@me');
+    live.self = { id: me.id, name: me.username, at: Date.now() };
+    return live.self;
+  };
+
   const appBot = deps.applications
     ? createApplicationBot({
         rest,
@@ -182,118 +203,49 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         log,
       })
     : null;
-  const guildId = (): string | null => get('guild');
-  const appId = async (): Promise<string> => {
-    if (app.id) return app.id;
-    const me = await rest<{ id: string }>('GET', '/applications/@me');
-    app.id = me.id;
-    return me.id;
-  };
+  const teamBot = deps.team
+    ? createTeamBot({
+        rest,
+        channel: (key) => get(`ch:${key}`),
+        team: deps.team,
+        hub,
+        mornicraft: appBot ? (d, lang) => appBot.open(d, lang) : null,
+        mornicraftOpen: () => deps.applications?.open() ?? false,
+        domain: config.domain,
+        log,
+        onPosted: (id, messageId) => deps.applications?.setDiscordMessage(id, messageId),
+      })
+    : null;
 
-  // ---------- Einrichtung ----------
   const templateRoles = (): Role[] => stores.roles().filter((r) => !r.fallback);
-
-  const ensureRole = async (
-    g: string,
-    existing: readonly DRole[],
-    key: string,
-    body: { name: string; color: number; permissions: string; hoist: boolean; mentionable: boolean },
-  ): Promise<string> => {
-    const known = get(key);
-    const found = existing.find((r) => r.id === known) ?? existing.find((r) => r.name === body.name);
-    const role = found
-      ? await rest<DRole>('PATCH', `/guilds/${g}/roles/${found.id}`, body, 'MoinMorni: Rolle aktualisieren')
-      : await rest<DRole>('POST', `/guilds/${g}/roles`, body, 'MoinMorni: Rolle anlegen');
-    put(key, role.id);
-    return role.id;
-  };
-
-  const ensureChannel = async (
-    g: string,
-    existing: readonly DChannel[],
-    key: string,
-    body: Record<string, unknown> & { name: string; type: number },
-  ): Promise<string> => {
-    const known = get(key);
-    const found =
-      existing.find((c) => c.id === known) ??
-      existing.find((c) => c.name === body.name && c.type === body.type);
-    const channel = found
-      ? await rest<DChannel>('PATCH', `/channels/${found.id}`, body, 'MoinMorni: Kanal aktualisieren')
-      : await rest<DChannel>('POST', `/guilds/${g}/channels`, body, 'MoinMorni: Kanal anlegen');
-    put(key, channel.id);
-    return channel.id;
-  };
-
-  const ensureMessage = async (
-    key: string,
-    channel: string,
-    body: Record<string, unknown>,
-  ): Promise<void> => {
-    const known = get(key);
-    if (known) {
-      try {
-        await rest('PATCH', `/channels/${channel}/messages/${known}`, body);
-        return;
-      } catch (err) {
-        if (!(err instanceof DiscordError && err.status === HTTP_NOT_FOUND)) throw err;
-      }
-    }
-    const msg = await rest<{ id: string }>('POST', `/channels/${channel}/messages`, body);
-    put(key, msg.id);
-  };
-
-  const audienceRoles = (a: Audience): string[] => {
-    const wants: Readonly<Record<Audience, readonly string[]>> = {
-      everyone: [],
-      jail: [],
-      team: ['team-area'],
-      builder: ['builder-area', 'team-area'],
-      media: ['media-area', 'team-area'],
-      vip: ['vip-area', 'media-area', 'team-area'],
-    };
-    return templateRoles()
-      .filter((r) => r.discord.some((d) => wants[a].includes(d)) || r.discord.includes('administrator'))
-      .map((r) => get(`role:${r.id}`))
-      .filter((id): id is string => Boolean(id));
-  };
-
-  const helpMessage = (): Record<string, unknown> => ({
-    embeds: [
-      {
-        title: `${bt('de', 'helpTitle')} · ${bt('en', 'helpTitle')}`,
-        description: `${bt('de', 'helpText')}\n\n*${bt('en', 'helpText')}*`,
-        color: EMERALD,
-      },
-    ],
-    components: [
-      {
-        type: ROW,
-        components: [
-          {
-            type: BUTTON,
-            style: BUTTON_PRIMARY,
-            label: bt('de', 'ticketButton'),
-            custom_id: TICKET_OPEN,
-            emoji: { name: '🎫' },
-          },
-          ...(deps.applications
-            ? [
-                {
-                  type: BUTTON,
-                  style: BUTTON_SECONDARY,
-                  label: bt('de', 'applyButton'),
-                  custom_id: APPLY_BUTTON,
-                  emoji: { name: '📝' },
-                },
-              ]
-            : []),
-        ],
-      },
-    ],
+  const appearance = createAppearance({
+    rest,
+    store,
+    guildId,
+    cdn: config.discordCdn,
+    log,
   });
 
-  const slashCommands = [
+  // ---------- Nachrichten und Einrichtung ----------
+  const board = async (): Promise<BoardContext> => {
+    const s = stores.settings('website');
+    const lines = (v: unknown): string[] =>
+      String(v ?? '')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean);
+    return {
+      domain: config.domain,
+      status: await deps.status.status(),
+      channel: (key) => get(`ch:${key}`),
+      rules: { de: lines(s['rulesDe']), en: lines(s['rulesEn']) },
+      modes: stores.modes(),
+      positions: deps.team?.positions().filter((p) => p.open) ?? [],
+      mornicraftOpen: deps.applications?.open() ?? false,
+    };
+  };
+
+  const slashCommands = (): unknown[] => [
     {
       name: 'verbinden',
       description: 'Minecraft-Konto verbinden – Code bekommst du im Spiel mit /discord',
@@ -309,8 +261,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     },
     {
       name: 'bewerben',
-      description: 'Für MorniCraft bewerben',
-      description_localizations: { 'en-US': 'Apply for MorniCraft' },
+      description: bt('de', 'commandApply'),
+      description_localizations: { 'en-US': bt('en', 'commandApply') },
     },
     {
       name: 'status',
@@ -319,129 +271,39 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     },
   ];
 
-  const setup = async (): Promise<SetupReport> => {
-    // Ohne Bot-Token zuerst das sagen – sonst hieße es „kein Server“, obwohl der Bot fehlt.
-    if (!client) throw new Error('discord_not_configured');
-    const g = guildId();
-    if (!g) throw new Error('discord_no_guild');
-    const roles = await rest<DRole[]>('GET', `/guilds/${g}/roles`);
-    const template = templateRoles();
-    await template.reduce(async (prev, r) => {
-      await prev;
-      await ensureRole(g, roles, `role:${r.id}`, {
-        name: discordRoleName(r),
-        color: colourInt(r.colour),
-        permissions: rolePermissions(r),
-        hoist: isTeam(r) || r.discord.includes('vip-area') || r.discord.includes('media-area'),
-        mentionable: isTeam(r),
-      });
-    }, Promise.resolve());
-    await EXTRA_ROLES.reduce(async (prev, r) => {
-      await prev;
-      await ensureRole(g, roles, `role:${r.key}`, {
-        name: r.name,
-        color: r.colour,
-        permissions: '0',
-        hoist: false,
-        mentionable: false,
-      });
-    }, Promise.resolve());
-
-    const ids: RoleIds = {
-      everyone: g,
-      audience: audienceRoles,
-      team: audienceRoles('team'),
-      muted: get('role:muted') ?? g,
-      jail: get('role:jail') ?? g,
-    };
-    const channels = await rest<DChannel[]>('GET', `/guilds/${g}/channels`);
-    const voice = (stores.settings('voice')['channels'] as string[] | undefined) ?? [];
-    const cats = layout(voice);
-    const count = await cats.reduce(async (prev, cat) => {
-      const before = await prev;
-      const parent = await ensureChannel(g, channels, `cat:${cat.key}`, {
-        name: cat.name,
-        type: CHANNEL_CATEGORY,
-        permission_overwrites: overwritesFor(cat.audience, false, ids),
-      });
-      await cat.channels.reduce(async (p, ch) => {
-        await p;
-        await ensureChannel(g, channels, `ch:${ch.key}`, {
-          name: ch.name,
-          type: ch.type,
-          parent_id: parent,
-          ...(ch.topic ? { topic: ch.topic } : {}),
-          permission_overwrites: overwritesFor(ch.audience, ch.readOnly ?? false, ids),
-        });
-      }, Promise.resolve());
-      return before + 1 + cat.channels.length;
-    }, Promise.resolve(0));
-
-    const rules = get('ch:rules');
-    const help = get('ch:help');
-    if (rules) await ensureMessage('msg:rules', rules, { content: RULES_TEXT });
-    const welcome = get('ch:welcome');
-    if (welcome && !get('invite')) {
-      const invite = await rest<{ code: string }>('POST', `/channels/${welcome}/invites`, {
-        max_age: 0,
-        max_uses: 0,
-        unique: false,
-      });
-      put('invite', invite.code);
-    }
-    if (help) await ensureMessage('msg:help', help, helpMessage());
-    await rest('PUT', `/applications/${await appId()}/guilds/${g}/commands`, slashCommands);
-    await refreshStatus();
-
-    const community = await (async (): Promise<'ok' | 'failed'> => {
-      try {
-        const guild = await rest<{ features: string[] }>('GET', `/guilds/${g}`);
-        await rest('PATCH', `/guilds/${g}`, {
-          verification_level: 1,
-          explicit_content_filter: 2,
-          features: [...new Set([...guild.features, 'COMMUNITY'])],
-          rules_channel_id: rules,
-          public_updates_channel_id: get('ch:teamlog'),
-        });
-        return 'ok';
-      } catch (err) {
-        log.warn({ err }, 'Discord: Community-Server ließ sich nicht einschalten');
-        return 'failed';
-      }
-    })();
-    put('setup', new Date().toISOString().slice(0, 10).replaceAll('-', ''));
-    log.info({ guild: g, channels: count }, 'Discord: Server eingerichtet');
-    return { roles: template.length + EXTRA_ROLES.length, channels: count, community };
-  };
+  const setupRunner = createDiscordSetup({
+    rest,
+    store,
+    stores,
+    guildId,
+    botUserId: async () => (await self()).id,
+    commands: async () => ({ appId: await appId(), list: slashCommands() }),
+    board,
+    appearance,
+    onWait: (listener) => {
+      live.waits.add(listener);
+      return () => live.waits.delete(listener);
+    },
+    log,
+  });
 
   // ---------- Status ----------
   async function refreshStatus(): Promise<void> {
     const channel = get('ch:status');
-    if (!client || !channel) return;
-    const s = await deps.status.status();
-    const lang: BotLang = 'de';
-    const lines = s.modes
-      .filter((m) => m.state !== 'off' || m.players > 0)
-      .map((m) => {
-        const state = bt(lang, MODE_STATE[m.state]);
-        const asleep = m.state === 'on' && !m.awake ? ` · ${bt(lang, 'modeAsleep')}` : '';
-        const players = m.state === 'on' ? ` · ${m.players}/${m.maxPlayers}` : '';
-        return `${MODE_ICON[m.state]} **${m.name.de}** – ${state}${players}${asleep}`;
-      });
-    const head = s.online
-      ? bt(lang, 'statusOnline', { players: s.players, max: s.maxPlayers })
-      : bt(lang, 'statusOffline');
-    await ensureMessage('msg:status', channel, {
-      embeds: [
-        {
-          title: bt(lang, 'statusTitle'),
-          description: [head, '', ...lines].join('\n'),
-          color: s.online ? EMERALD : GREY,
-          footer: { text: bt(lang, 'statusFooter', { address: s.javaAddress, port: s.bedrockPort }) },
-          timestamp: s.updatedAt,
-        },
-      ],
-    });
+    const key = 'msg:status';
+    const known = store.entry(key);
+    if (!client() || !channel) return;
+    const body = statusMessage(await deps.status.status());
+    if (known) {
+      try {
+        await rest('PATCH', `/channels/${channel}/messages/${known.id}`, body);
+        return;
+      } catch (err) {
+        if (!(err instanceof DiscordError && err.status === HTTP_NOT_FOUND)) throw err;
+      }
+    }
+    const msg = await rest<{ id: string }>('POST', `/channels/${channel}/messages`, body);
+    store.put(key, msg.id, { created: true, applied: { channel } });
   }
 
   // ---------- Ränge und Strafen ----------
@@ -454,19 +316,25 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     }
   };
 
+  /**
+   * Rollen eines verbundenen Spielers: sein Rang + „Verbunden“. Im Gefängnis nur die Gefängnis-Rolle – dann sieht er
+   * auch wirklich nur den Gefängnis-Kanal (Rechte anderer Rollen würden sonst dazukommen). Danach kommt alles zurück.
+   */
   const syncRoles = async (uuid: string): Promise<void> => {
     const g = guildId();
     const player = hub.players.get(uuid);
-    if (!g || !player?.discordId) return;
+    if (!g || !player?.discordId || !client()) return;
     const m = await member(g, player.discordId);
     if (!m) return;
     const role = hub.players.roleOf(uuid);
-    const managed = templateRoles()
-      .map((r) => get(`role:${r.id}`))
-      .filter((id): id is string => Boolean(id));
+    const jailRole = get('role:jail');
+    const jailed = Boolean(jailRole && hub.punish.active(uuid, 'jail'));
+    const managed = [...templateRoles().map((r) => get(`role:${r.id}`)), get('role:linked'), jailRole].filter(
+      (id): id is string => Boolean(id),
+    );
     const wanted = new Set(
-      [role.fallback ? null : get(`role:${role.id}`), get('role:linked')].filter((id): id is string =>
-        Boolean(id),
+      (jailed ? [jailRole] : [role.fallback ? null : get(`role:${role.id}`), get('role:linked')]).filter(
+        (id): id is string => Boolean(id),
       ),
     );
     const add = [...wanted].filter((id) => !m.roles.includes(id));
@@ -479,11 +347,9 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         rest('DELETE', `/guilds/${g}/members/${player.discordId}/roles/${id}`, undefined, 'MoinMorni: Rang'),
       ),
     ]);
-    // Wer erst nach der Strafe sein Konto verbindet, bekommt die Gefängnis-Rolle trotzdem.
-    const jail = get('role:jail');
-    if (jail && hub.punish.active(uuid, 'jail') && !m.roles.includes(jail))
-      await setExtra(uuid, 'jail', true, 'MoinMorni: Gefängnis');
-    // Ebenso Sprachchat-Stumm, falls die Person gerade in einem Sprachkanal sitzt.
+    if (jailed) put(`jail:${uuid}`, player.discordId);
+    else drop(`jail:${uuid}`);
+    // Sprachchat-Stumm, falls die Person gerade in einem Sprachkanal sitzt (sonst beim nächsten Betreten).
     if (hub.punish.active(uuid, 'voice') && !get(`${VOICE_MUTE_KEY}${uuid}`))
       await setVoiceMute(uuid, true, 'MoinMorni: Sprachchat stumm');
   };
@@ -542,11 +408,15 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       await setVoiceMute(player.uuid, false, 'MoinMorni: Sprachchat-Stumm vorbei');
   };
 
-  const log2team = async (line: string): Promise<void> => {
-    const channel = get('ch:teamlog');
+  const post = async (channelKey: string, line: string): Promise<void> => {
+    const channel = get(`ch:${channelKey}`);
     if (channel)
       await rest('POST', `/channels/${channel}/messages`, { content: line, allowed_mentions: { parse: [] } });
   };
+  const log2team = (line: string): Promise<void> => post('teamlog', line);
+  /** Strafen haben einen eigenen Kanal; gibt es ihn (noch) nicht, landen sie im Team-Log. */
+  const log2punish = (line: string): Promise<void> =>
+    post(get('ch:punishlog') ? 'punishlog' : 'teamlog', line);
 
   const onPunishment = async (c: {
     uuid: string;
@@ -557,7 +427,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     by: string;
   }): Promise<void> => {
     const g = guildId();
-    if (!client || !g) return;
+    if (!client() || !g) return;
     const player = hub.players.get(c.uuid);
     const name = player?.name ?? c.uuid;
     const until = c.until ? bt('de', 'until', { ts: Math.floor(Date.parse(c.until) / SECOND_MS) }) : '';
@@ -572,14 +442,14 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
             { delete_message_seconds: 0 },
             `MoinMorni: ${c.reason}`,
           );
-        await log2team(bt('de', 'logBan', vars));
+        await log2punish(bt('de', 'logBan', vars));
       },
       'ban:lift': async () => {
         if (discordId)
           await rest('DELETE', `/guilds/${g}/bans/${discordId}`, undefined, 'MoinMorni: entbannt').catch(
             () => undefined,
           );
-        await log2team(bt('de', 'logLiftBan', vars));
+        await log2punish(bt('de', 'logLiftBan', vars));
       },
       'mute:add': async () => {
         const ms = c.until ? Date.parse(c.until) - Date.now() : Infinity;
@@ -591,7 +461,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
             `MoinMorni: ${c.reason}`,
           );
         else await setExtra(c.uuid, 'muted', true, `MoinMorni: ${c.reason}`);
-        await log2team(bt('de', 'logMute', vars));
+        await log2punish(bt('de', 'logMute', vars));
       },
       'mute:lift': async () => {
         if (discordId)
@@ -599,16 +469,16 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
             communication_disabled_until: null,
           }).catch(() => undefined);
         await setExtra(c.uuid, 'muted', false, 'MoinMorni: Stumm vorbei');
-        await log2team(bt('de', 'logLiftMute', vars));
+        await log2punish(bt('de', 'logLiftMute', vars));
       },
-      // Gefängnis: Rolle „⛓ Gefängnis“ – sieht dann nur noch den Gefängnis-Kanal.
+      // Gefängnis: nur noch die Rolle „⛓ Gefängnis“ – sieht dann nur den Gefängnis-Kanal; danach alles zurück.
       'jail:add': async () => {
-        await setExtra(c.uuid, 'jail', true, `MoinMorni: ${c.reason}`);
-        await log2team(bt('de', 'logJail', vars));
+        await syncRoles(c.uuid);
+        await log2punish(bt('de', 'logJail', vars));
       },
       'jail:lift': async () => {
-        await setExtra(c.uuid, 'jail', false, 'MoinMorni: Gefängnis vorbei');
-        await log2team(bt('de', 'logLiftJail', vars));
+        await syncRoles(c.uuid);
+        await log2punish(bt('de', 'logLiftJail', vars));
       },
       // Sprachchat-Stumm: im Discord-Sprachkanal stumm (Server-Stummschaltung), solange die Strafe läuft.
       'voice:add': async () => {
@@ -617,25 +487,24 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
           return 'failed' as const;
         });
         const hint = result === 'no-right' ? bt('de', 'logVoiceNoRight') : '';
-        await log2team(`${bt('de', 'logVoiceMute', vars)}${hint}`);
+        await log2punish(`${bt('de', 'logVoiceMute', vars)}${hint}`);
       },
       'voice:lift': async () => {
         await setVoiceMute(c.uuid, false, 'MoinMorni: Sprachchat-Stumm aufgehoben').catch((err: unknown) => {
           log.warn({ err }, 'Discord: Sprachchat-Stumm nicht aufgehoben');
         });
-        await log2team(bt('de', 'logLiftVoiceMute', vars));
+        await log2punish(bt('de', 'logLiftVoiceMute', vars));
       },
-      'warn:add': () => log2team(bt('de', 'logWarn', vars)),
-      'kick:add': () => log2team(bt('de', 'logKick', vars)),
+      'warn:add': () => log2punish(bt('de', 'logWarn', vars)),
+      'kick:add': () => log2punish(bt('de', 'logKick', vars)),
     };
     await actions[`${c.kind}:${c.action}`]?.();
   };
 
-  const NEWS_TEXT_MAX = 1500;
   const postNews = async (slug: string): Promise<void> => {
     const channel = get('ch:news');
     const row = db.select().from(news).where(eq(news.slug, slug)).get();
-    if (!client || !channel || !row) return;
+    if (!client() || !channel || !row) return;
     const text = row.bodyDe.length > NEWS_TEXT_MAX ? `${row.bodyDe.slice(0, NEWS_TEXT_MAX)} …` : row.bodyDe;
     await rest('POST', `/channels/${channel}/messages`, {
       embeds: [
@@ -652,24 +521,26 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
   };
 
   /**
-   * Abgelaufene Stumm- und Gefängnis-Strafen: die Rolle in Discord wieder abnehmen. Sprachchat-Stumm: die
-   * Stummschaltung aufheben (sitzt die Person gerade nicht im Sprachkanal, beim nächsten Betreten).
+   * Abgelaufene Stumm- und Gefängnis-Strafen: die Rolle in Discord wieder abnehmen (und die Ränge zurückgeben).
+   * Sprachchat-Stumm: die Stummschaltung im Sprachkanal aufheben.
    */
   const cleanup = async (): Promise<void> => {
-    const over = (prefix: string, kind: 'mute' | 'jail' | 'voice'): string[] =>
+    const expired = (prefix: string, kind: 'mute' | 'jail' | 'voice'): string[] =>
       db
         .select()
         .from(discordObjects)
-        .where(like(discordObjects.key, `${prefix}%`))
+        .where(like(discordObjects.key, `${prefix}:%`))
         .all()
-        .map((row) => row.key.slice(prefix.length))
+        .map((row) => row.key.slice(prefix.length + 1))
         .filter((uuid) => !hub.punish.active(uuid, kind));
-    const expired = (extra: 'muted' | 'jail', kind: 'mute' | 'jail'): Promise<void>[] =>
-      over(`${extra}:`, kind).map((uuid) => setExtra(uuid, extra, false, 'MoinMorni: Strafe vorbei'));
-    const voiceOver = over(VOICE_MUTE_KEY, 'voice').map(async (uuid) => {
-      await setVoiceMute(uuid, false, 'MoinMorni: Strafe vorbei');
-    });
-    await Promise.all([...expired('muted', 'mute'), ...expired('jail', 'jail'), ...voiceOver]);
+    await Promise.all([
+      ...expired('muted', 'mute').map((uuid) => setExtra(uuid, 'muted', false, 'MoinMorni: Strafe vorbei')),
+      ...expired('jail', 'jail').map((uuid) => syncRoles(uuid)),
+      // Sprachchat-Stumm vorbei: Stummschaltung aufheben (sitzt die Person nicht im Sprachkanal, beim nächsten Betreten).
+      ...expired(VOICE_MUTE_KEY.slice(0, -1), 'voice').map(async (uuid) => {
+        await setVoiceMute(uuid, false, 'MoinMorni: Strafe vorbei');
+      }),
+    ]);
   };
 
   // ---------- Verbinden ----------
@@ -678,14 +549,33 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       '',
     );
 
+  /**
+   * Einladung für den Chat im Spiel: die aus dem Panel (Webseite → Links), sonst die, die der Bot angelegt hat. Nur
+   * https-Links ohne Leerzeichen, Anführungszeichen und spitze Klammern – der Link landet in einem Klick-Befehl.
+   */
+  const gameInvite = (): string | null => {
+    const fromPanel = stores.settings('website')['discordInvite'];
+    const code = get('invite');
+    const link =
+      typeof fromPanel === 'string' && fromPanel.trim()
+        ? fromPanel.trim()
+        : code
+          ? `https://discord.gg/${code}`
+          : '';
+    return SAFE_LINK.test(link) ? link : null;
+  };
+
   const commands = (ctx: HubContext): Command[] => [
     {
       name: 'discord',
       aliases: ['dc', 'verbinden'],
       usage: { de: '/discord', en: '/discord' },
       run: (actor) => {
-        if (!client || !guildId()) {
-          ctx.msg(actor.uuid, bt(actor.lang, 'noBotGame'));
+        // Erst die Einladung (aus dem Panel, sonst die des Bots), dann – mit Bot – der Code zum Verbinden.
+        const invite = gameInvite();
+        if (invite) ctx.msg(actor.uuid, bt(actor.lang, 'inviteGame', { invite }));
+        if (!client() || !guildId()) {
+          if (!invite) ctx.msg(actor.uuid, bt(actor.lang, 'noBotGame'));
           return;
         }
         [...codes.entries()].filter(([, v]) => v.uuid === actor.uuid).forEach(([k]) => codes.delete(k));
@@ -713,7 +603,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
 
   const hilfe = async (d: Record<string, unknown>, lang: BotLang): Promise<void> => {
     const s = await deps.status.status();
-    const help = get('ch:help');
+    const where = get('ch:tickets') ?? get('ch:help');
     await respond(d, {
       embeds: [
         {
@@ -728,7 +618,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
             {
               name: bt(lang, 'hilfeHelp'),
               value: bt(lang, 'hilfeHelpText', {
-                help: help ? `<#${help}>` : '#hilfe',
+                help: where ? `<#${where}>` : '#hilfe',
                 web: `https://${config.domain}`,
               }),
             },
@@ -756,12 +646,13 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     if (online) hub.tell(entry.uuid, bt(online.lang, 'linkDoneGame', { name: mm(user.name) }));
   };
 
+  /** Ticket: privater Kanal (Thread) nur für die Person und das Team – im Ticket-Kanal, sonst in #hilfe. */
   const ticket = async (d: Record<string, unknown>, lang: BotLang): Promise<void> => {
-    const help = get('ch:help');
+    const parent = get('ch:tickets') ?? get('ch:help');
     const user = userOf(d);
-    if (!help) return;
-    const thread = await rest<{ id: string }>('POST', `/channels/${help}/threads`, {
-      name: `Ticket – ${user.name}`.slice(0, 90),
+    if (!parent) return;
+    const thread = await rest<{ id: string }>('POST', `/channels/${parent}/threads`, {
+      name: `Ticket – ${user.name}`.slice(0, THREAD_NAME_MAX),
       type: PRIVATE_THREAD,
       invitable: false,
     });
@@ -778,7 +669,12 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         {
           type: ROW,
           components: [
-            { type: BUTTON, style: BUTTON_DANGER, label: bt(lang, 'ticketClose'), custom_id: TICKET_CLOSE },
+            {
+              type: BUTTON,
+              style: BUTTON_DANGER,
+              label: bt(lang, 'ticketClose'),
+              custom_id: CUSTOM_IDS.ticketClose,
+            },
           ],
         },
       ],
@@ -796,8 +692,37 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     await rest('PATCH', `/channels/${channel}`, { archived: true, locked: true });
   };
 
+  /** Bewerben: Auswahl (Team-Stellen + MorniCraft); ohne Team-Bewerbungen gleich das MorniCraft-Formular. */
+  const apply = async (d: Record<string, unknown>, lang: BotLang): Promise<void> => {
+    if (teamBot) await teamBot.pick(d, lang);
+    else await appBot?.open(d, lang);
+  };
+
+  /** Neuer Bot (anderer Token, andere Anwendung): der alte Server gehört nicht automatisch dazu. */
+  const ready = async (d: Record<string, unknown>): Promise<void> => {
+    const application = (d['application'] as { id?: unknown } | undefined)?.id;
+    const user = d['user'] as { id?: unknown; username?: unknown } | undefined;
+    if (typeof user?.id === 'string')
+      live.self = { id: user.id, name: String(user.username ?? ''), at: Date.now() };
+    if (typeof application === 'string') {
+      live.appId = application;
+      const before = get('bot:app');
+      if (before && before !== application) {
+        log.info('Discord: anderer Bot – er verbindet sich mit dem Server, auf den du ihn holst');
+        ['guild', 'invite', 'setup'].forEach(drop);
+      }
+      put('bot:app', application);
+    }
+    // Hat der Bot noch kein Profilbild, bekommt er einmal das MoinMorni-Logo (nicht bei jedem Start).
+    await appearance.ensureBotLogo();
+  };
+
   const handle = async (e: GatewayEvent): Promise<void> => {
     const d = e.d;
+    if (e.t === 'READY') {
+      await ready(d);
+      return;
+    }
     if (e.t === 'GUILD_CREATE') {
       if (!guildId()) {
         put('guild', String(d['id']));
@@ -840,7 +765,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const data = (d['data'] ?? {}) as { name?: string; custom_id?: string };
     const type = Number(d['type']);
     const commandsByName: Readonly<Record<string, () => Promise<void>>> = {
-      ...(appBot ? { bewerben: () => appBot.open(d, lang) } : {}),
+      bewerben: () => apply(d, lang),
       verbinden: () => link(d, lang),
       hilfe: () => hilfe(d, lang),
       status: async () => {
@@ -850,8 +775,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       },
     };
     const buttons: Readonly<Record<string, () => Promise<void>>> = {
-      [TICKET_OPEN]: () => ticket(d, lang),
-      [TICKET_CLOSE]: () => closeTicket(d, lang),
+      [CUSTOM_IDS.ticketOpen]: () => ticket(d, lang),
+      [CUSTOM_IDS.ticketClose]: () => closeTicket(d, lang),
       ...(appBot ? { [APPLY_BUTTON]: () => appBot.open(d, lang) } : {}),
     };
     const component = data.custom_id ?? '';
@@ -859,76 +784,173 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     if (type === INTERACTION_COMPONENT) {
       const plain = buttons[component];
       if (plain) await plain();
-      else await appBot?.button(d, lang, component);
+      else if (!(await teamBot?.component(d, lang, component))) await appBot?.button(d, lang, component);
     }
-    if (type === INTERACTION_MODAL && component === APPLY_FORM) await appBot?.submit(d, lang);
+    if (type === INTERACTION_MODAL) {
+      if (component === APPLY_FORM) await appBot?.submit(d, lang);
+      else await teamBot?.modal(d, lang, component);
+    }
   };
+
+  /** Im Hintergrund erledigen; geht etwas schief, steht es im Protokoll. */
+  const background = (job: () => Promise<unknown> | undefined, what: string): void => {
+    void (async () => {
+      try {
+        await job();
+      } catch (err) {
+        log.warn({ err }, what);
+      }
+    })();
+  };
+
+  const connect = (c: DiscordClient): void => {
+    c.connect((e) => background(() => handle(e), `Discord: Ereignis ${e.t} fehlgeschlagen`));
+  };
+
+  /** Feste Nachrichten nachziehen, wenn sich im Panel etwas ändert (nur wenn eingerichtet). */
+  const refresh = (which: Parameters<typeof setupRunner.refreshMessages>[0]): void => {
+    if (!client()) return;
+    background(() => setupRunner.refreshMessages(which), 'Discord: Nachricht nicht aktualisiert');
+  };
+
+  const inviteUrl = (id: string): string =>
+    `https://discord.com/oauth2/authorize?client_id=${id}&scope=bot%20applications.commands&permissions=${invitePermissions(templateRoles()).toString()}&integration_type=0`;
 
   return {
     start: () => {
-      if (!client) return;
-      client.connect((e) => {
-        handle(e).catch((err: unknown) => log.warn({ err, t: e.t }, 'Discord: Ereignis fehlgeschlagen'));
-      });
-      events.on('punishments.changed', (c) => {
-        onPunishment(c).catch((err: unknown) => log.warn({ err }, 'Discord: Strafe nicht übertragen'));
-      });
+      if (live.started) return;
+      live.started = true;
+      // Gab es den Client schon (z. B. vom Panel gefragt), jetzt verbinden; ein neuer verbindet sich selbst.
+      const before = live.client;
+      const c = client();
+      if (c && c === before) connect(c);
+      events.on('punishments.changed', (c2) =>
+        background(() => onPunishment(c2), 'Discord: Strafe nicht übertragen'),
+      );
       events.on('application.created', ({ id }) => {
-        appBot?.posted(id).catch((err: unknown) => log.warn({ err }, 'Discord: Bewerbung nicht gepostet'));
+        const team = deps.team?.get(id);
+        background(
+          () => (team ? teamBot?.posted(team) : appBot?.posted(id)),
+          'Discord: Bewerbung nicht gepostet',
+        );
       });
-      events.on('application.decided', ({ id }) => {
-        appBot
-          ?.decided(id)
-          .catch((err: unknown) => log.warn({ err }, 'Discord: Entscheidung nicht übertragen'));
+      events.on('application.decided', ({ id, account }) => {
+        const team = deps.team?.get(id);
+        background(
+          () => (team ? teamBot?.decided(team, account === true) : appBot?.decided(id)),
+          'Discord: Entscheidung nicht übertragen',
+        );
       });
-      events.on('news.published', ({ slug }) => {
-        postNews(slug).catch((err: unknown) => log.warn({ err }, 'Discord: News nicht gepostet'));
+      events.on('news.published', ({ slug }) =>
+        background(() => postNews(slug), 'Discord: News nicht gepostet'),
+      );
+      events.on('player.changed', ({ uuid }) =>
+        background(() => syncRoles(uuid), 'Discord: Rang nicht übertragen'),
+      );
+      events.on('settings.changed', ({ area }) => {
+        const which: Readonly<Record<string, Parameters<typeof refresh>[0]>> = {
+          website: 'rules',
+          'team-apply': 'apply',
+          mornicraft: 'apply',
+        };
+        const w = which[area];
+        if (w) refresh(w);
       });
-      events.on('player.changed', ({ uuid }) => {
-        syncRoles(uuid).catch((err: unknown) => log.warn({ err }, 'Discord: Rang nicht übertragen'));
-      });
-      const statusTimer = setInterval(() => {
-        refreshStatus().catch((err: unknown) => log.warn({ err }, 'Discord: Status nicht aktualisiert'));
-      }, STATUS_MS);
-      const cleanupTimer = setInterval(() => {
-        cleanup().catch((err: unknown) => log.warn({ err }, 'Discord: Aufräumen fehlgeschlagen'));
-      }, CLEANUP_MS);
+      events.on('modes.changed', () => refresh('modes'));
+      events.on('roles.changed', () => refresh('apply'));
+      const statusTimer = setInterval(
+        () => background(refreshStatus, 'Discord: Status nicht aktualisiert'),
+        STATUS_MS,
+      );
+      const cleanupTimer = setInterval(
+        () => background(cleanup, 'Discord: Aufräumen fehlgeschlagen'),
+        CLEANUP_MS,
+      );
       statusTimer.unref();
       cleanupTimer.unref();
       timers.push(statusTimer, cleanupTimer);
     },
     stop: () => {
       timers.forEach((t) => clearInterval(t));
-      client?.close();
+      live.started = false;
+      live.client?.close();
+    },
+    reconnect: () => {
+      // client() merkt den neuen Token und baut die Verbindung neu auf.
+      live.token = null;
+      live.client?.close();
+      live.client = null;
+      client();
     },
     status: async () => {
-      const state = client?.state() ?? { connected: false, membersIntent: false, error: null };
-      const id = client ? await appId().catch(() => null) : null;
+      const c = client();
+      const state = c?.state() ?? { connected: false, membersIntent: false, error: null };
+      const id = c ? await appId().catch(() => null) : null;
+      const me = c ? await self().catch(() => null) : null;
       const g = guildId();
       const guild =
-        g && client
-          ? await rest<{ id: string; name: string }>('GET', `/guilds/${g}`).catch(() => null)
-          : null;
+        g && c ? await rest<{ id: string; name: string }>('GET', `/guilds/${g}`).catch(() => null) : null;
       return {
-        configured: Boolean(client),
+        configured: Boolean(c),
         connected: state.connected,
         error: state.error,
         membersIntent: state.membersIntent,
-        inviteUrl: id
-          ? `https://discord.com/oauth2/authorize?client_id=${id}&scope=bot%20applications.commands&permissions=${ADMINISTRATOR}`
-          : null,
+        inviteUrl: id ? inviteUrl(id) : null,
+        permissions: permNames(invitePermissions(templateRoles())),
         guild: guild ? { id: guild.id, name: guild.name } : null,
         setupDone: Boolean(get('setup')),
+        credentials: deps.credentials.view(),
+        bot: me ? { id: me.id, name: me.name } : null,
+        redirectUrl: `https://${config.domain}/api/public/apply/callback`,
+        setup: setupRunner.progress(),
       };
     },
-    setup,
+    setup: async () => {
+      // Ohne Bot-Token zuerst das sagen – sonst hieße es „kein Server“, obwohl der Bot fehlt.
+      if (!client()) throw NO_CLIENT;
+      if (!guildId()) throw new Error('discord_no_guild');
+      return setupRunner.run();
+    },
+    startSetup: () => {
+      if (!client()) throw NO_CLIENT;
+      if (!guildId()) throw new Error('discord_no_guild');
+      return setupRunner.start();
+    },
+    checkToken: async (token) => {
+      const res = await (deps.fetchImpl ?? fetch)(`${config.discordApi}/users/@me`, {
+        headers: {
+          authorization: `Bot ${token}`,
+          'user-agent': 'DiscordBot (https://moinmorni.net, 1.0) MoinMorni',
+        },
+        signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+      });
+      if (res.status === HTTP_UNAUTHORIZED) throw new Error('discord_token_invalid');
+      if (!res.ok) throw new Error('discord_unreachable');
+      const me = (await res.json()) as { id?: unknown; username?: unknown; bot?: unknown };
+      if (me.bot !== true || typeof me.id !== 'string') throw new Error('discord_token_not_bot');
+      return { id: me.id, name: String(me.username ?? '') };
+    },
+    checkClientSecret: async (secret) => {
+      const id = await appId();
+      const res = await (deps.fetchImpl ?? fetch)(`${config.discordApi}/oauth2/token`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}`,
+        },
+        body: new URLSearchParams({ grant_type: 'client_credentials', scope: 'identify' }).toString(),
+        signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+      });
+      return res.ok;
+    },
+    appearance,
     commands,
     /** Zeile in den Team-Log-Kanal (z. B. „MoinMorni wurde aktualisiert“). */
     teamLog: async (line: string) => {
-      if (client) await log2team(line);
+      if (client()) await log2team(line);
     },
     applicationId: async () => {
-      if (!client) return null;
+      if (!client()) return null;
       try {
         return await appId();
       } catch {
@@ -944,3 +966,6 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     handle,
   };
 }
+
+// Rollen, die der Bot neben den Rängen verwaltet (für Tests und Doku).
+export const MANAGED_EXTRA_ROLES = EXTRA_ROLES.map((r) => r.key);

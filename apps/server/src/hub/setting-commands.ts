@@ -107,6 +107,9 @@ function parseValue(p: Pattern, args: readonly string[], current: unknown): unkn
 /** Darf diese Person den Bereich ändern? Wie im Panel – plus das Spiel-Recht „admin“ für alles. */
 const mayChange = (actor: Actor, area: SettingArea): boolean =>
   actor.role.panel.includes(area.panel) || actor.role.game.includes('admin' satisfies GameRight);
+/** Manche Einstellungen ändert nur der Owner (z. B. die Admin-Stelle öffnen). */
+const mayChangeSetting = (actor: Actor, p: Pattern): boolean =>
+  mayChange(actor, p.area) && (!p.def.ownerOnly || actor.role.id === 'owner');
 
 export function createSettingCommands(ctx: HubContext): Command[] {
   const valueOf = (p: Pattern): unknown => ctx.stores.settings(p.area.id)[p.def.key];
@@ -160,6 +163,10 @@ export function createSettingCommands(ctx: HubContext): Command[] {
               usage: mm(p.usage),
             }),
           );
+          return;
+        }
+        if (!mayChangeSetting(actor, p)) {
+          say(actor, text(actor.lang, 'cmd.no_right'));
           return;
         }
         const value = parseValue(p, rest, valueOf(p));
