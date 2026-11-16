@@ -574,6 +574,38 @@ Updates**. Auch aus der Proxmox-Shell:
 pct exec <ID> -- moinmorni-update
 ```
 
+**Nach einem Update starten die Server gleich neu**, die etwas Neues haben (Netzwerk-Plugin, Spielmodus,
+Einstellungen) – nacheinander, damit Speicher und Prozessor reichen: erst die Spielmodi, dann der Bau-Server und die
+Lobby, zuletzt der Proxy. Spieler sehen vorher **30 Sekunden** lang „Update eingespielt – Duels startet in 30 s neu“
+(oben als Leiste und im Chat, Deutsch oder Englisch), wer in einem Spielmodus ist, kommt vorher in die Lobby. Neue
+**Spielmodi** bekommen von selbst ihren Server, sobald ihr Repo ein Release hat; neue Fassungen der Modi sieht
+MoinMorni alle 10 Minuten. Einstellen (Countdown, „gleich neu starten“, „neue Spielmodi automatisch“, neue Fassung
+eines Modus gleich einspielen): **Panel → Einstellungen → Updates**.
+
+<details>
+<summary><b>„GitHub lässt uns gerade nicht öfter fragen“ – GitHub-Schlüssel (freiwillig)</b></summary>
+
+Ob es etwas Neues gibt, sieht MoinMorni über Git selbst – das zählt bei GitHub nicht mit. Nur für die **Liste der
+Änderungen** fragt es die GitHub-API, und die beantwortet ohne Anmeldung nur **60 Fragen pro Stunde je
+Internet-Adresse**. Hinter einem gemeinsamen Ausgang (NetBird) teilen sich alle deine Rechner diese 60 – auch
+MorniHosting fragt dort. Ist die Grenze erreicht, steht im Panel, um wie viel Uhr die Liste kommt; **Update starten
+geht trotzdem**.
+
+Wer öfter fragen will: einen GitHub-Schlüssel anlegen, der **nur lesen** darf (5000 Fragen pro Stunde).
+
+1. Auf GitHub: **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+   Name z. B. „MoinMorni“, **Repository access: Public repositories (read-only)**, keine weiteren Rechte.
+2. In der Proxmox-Shell in die .env eintragen und MoinMorni neu starten:
+
+```bash
+pct exec <ID> -- bash -c 'echo "MM_GITHUB_TOKEN=github_pat_…" >> /opt/moinmorni/.env && cd /opt/moinmorni && docker compose up -d moinmorni'
+```
+
+Der Schlüssel geht nur an die GitHub-API, nie an Git oder andere Adressen, und steht nirgends im Panel oder in
+Protokollen. Nimmt GitHub ihn nicht mehr an (abgelaufen), sagt das Panel es und MoinMorni fragt ohne ihn weiter.
+
+</details>
+
 Proxmox selbst aktualisierst du ab und zu wie in [Teil 2.6](#26-proxmox-auf-den-neuesten-stand-bringen) – etwa einmal
 im Monat.
 

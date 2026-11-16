@@ -8,6 +8,7 @@ import { forbidden, notFound, unauthorized } from '../lib/errors.js';
 import {
   APPLY_MODE,
   decideSchema,
+  mayDecideMornicraft,
   type Application,
   type ApplicationService,
 } from '../mornicraft/applications.js';
@@ -30,6 +31,8 @@ const EMAIL_MAX = 254;
 const NAME_MAX = 17;
 const MINE_MAX = 5;
 const KINDS = ['all', 'team', 'mornicraft'] as const;
+/** Bewerbungen von der Webseite: pro Besucher und Minute (genug für Menschen, zu wenig zum Fluten). */
+const APPLY_LIMIT = { max: 10, timeWindow: '1 minute' } as const;
 // Benutzername wie im Motor: Buchstaben, Ziffern, Punkt, Unterstrich, Bindestrich – z. B. "lena.mod".
 // https://regex101.com/?flavor=javascript&regex=%5E%5Ba-zA-Z0-9._-%5D%2B%24&testString=lena.mod
 const USERNAME = /^[a-zA-Z0-9._-]+$/;
@@ -76,9 +79,10 @@ export function registerApplicationRoutes(app: Api, deps: ApplicationRouteDeps):
   const { db, team, mornicraft } = deps;
 
   const kindOf = (a: Application): 'team' | 'mornicraft' => (a.mode === TEAM_MODE ? 'team' : 'mornicraft');
-  /** Darf diese Person die Bewerbung entscheiden? Team: wer die Rolle vergeben darf; MorniCraft: Bereich „Spieler“. */
+  /** Darf diese Person die Bewerbung entscheiden? Team: wer die Rolle vergeben darf; MorniCraft: wer kicken darf. */
   const canDecide = (user: PanelUser, a: Application): boolean =>
-    a.status === 'pending' && (kindOf(a) === 'team' ? team.mayDecide(user.role, a.position ?? '') : true);
+    a.status === 'pending' &&
+    (kindOf(a) === 'team' ? team.mayDecide(user.role, a.position ?? '') : mayDecideMornicraft(user.role));
   const row = (id: number): Application => {
     const a = db.select().from(applications).where(eq(applications.id, id)).get();
     if (!a || (a.mode !== TEAM_MODE && a.mode !== APPLY_MODE)) throw notFound('application_unknown');
@@ -189,6 +193,7 @@ export function registerApplicationRoutes(app: Api, deps: ApplicationRouteDeps):
       const a = row(request.params.id);
       const { accept, note, account } = request.body;
       if (kindOf(a) === APPLY_MODE) {
+        if (!mayDecideMornicraft(user.role)) throw forbidden('mornicraft_no_right');
         const decided = mornicraft.decide(a.id, accept, user.username, note);
         return { ...decided, application: decided, account: null };
       }
@@ -254,26 +259,30 @@ export function registerApplicationRoutes(app: Api, deps: ApplicationRouteDeps):
     };
   });
 
-  app.post('/api/public/team-apply', { schema: { body: teamApplyBody } }, async (request) => {
-    const login = deps.login.open(request.headers.cookie);
-    if (!login) throw unauthorized('apply_login_required');
-    const a = team.apply({
-      position: request.body.position,
-      answers: request.body.answers,
-      lang: request.body.lang,
-      discordId: login.id,
-      discordName: login.name,
-      minecraftName: request.body.minecraftName ?? null,
-      via: 'website',
-    });
-    return {
-      id: a.id,
-      position: a.position,
-      status: a.status,
-      minecraftName: a.minecraftName,
-      createdAt: a.createdAt,
-      decidedAt: a.decidedAt,
-      note: null,
-    };
-  });
+  app.post(
+    '/api/public/team-apply',
+    { schema: { body: teamApplyBody }, config: { rateLimit: APPLY_LIMIT } },
+    async (request) => {
+      const login = deps.login.open(request.headers.cookie);
+      if (!login) throw unauthorized('apply_login_required');
+      const a = team.apply({
+        position: request.body.position,
+        answers: request.body.answers,
+        lang: request.body.lang,
+        discordId: login.id,
+        discordName: login.name,
+        minecraftName: request.body.minecraftName ?? null,
+        via: 'website',
+      });
+      return {
+        id: a.id,
+        position: a.position,
+        status: a.status,
+        minecraftName: a.minecraftName,
+        createdAt: a.createdAt,
+        decidedAt: a.decidedAt,
+        note: null,
+      };
+    },
+  );
 }

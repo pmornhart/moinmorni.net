@@ -77,6 +77,14 @@ class RightsTest {
         assertTrue(Rights.mayCreative(Set.of("creative")));
         assertTrue(Rights.mayCreative(Set.of("admin")));
         assertFalse(Rights.mayCreative(Set.of("spectate", "gamemode")));
+        // F3+F4 (Spielmodus-Umschalter): ohne Befehl – trotzdem nur mit eigenem Recht in den Kreativmodus.
+        assertTrue(Rights.blocksSwitcher("GAMEMODE_SWITCHER", true, Set.of("spectate", "gamemode")));
+        assertFalse(Rights.blocksSwitcher("GAMEMODE_SWITCHER", false, Set.of("spectate")));
+        assertFalse(Rights.blocksSwitcher("GAMEMODE_SWITCHER", true, Set.of("creative")));
+        assertFalse(Rights.blocksSwitcher("GAMEMODE_SWITCHER", true, Set.of("admin")));
+        // Andere Ursachen (Plugins, Befehle der Konsole, Standard-Spielmodus) bleiben unberührt.
+        assertFalse(Rights.blocksSwitcher("PLUGIN", true, Set.of()));
+        assertFalse(Rights.blocksSwitcher("COMMAND", true, Set.of()));
     }
 
     @Test

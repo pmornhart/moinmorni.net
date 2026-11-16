@@ -49,6 +49,13 @@ const envSchema = z.object({
   MM_UPDATE_BRANCH: z.string().default('main'),
   /** GitHub-API (Tests zeigen auf ein nachgebautes GitHub). */
   MM_GITHUB_API: z.string().url().default('https://api.github.com'),
+  /** GitHub selbst – dort fragt MoinMorni Git nach dem neuesten Stand (Tests zeigen auf ein nachgebautes GitHub). */
+  MM_GITHUB_WEB: z.string().url().default('https://github.com'),
+  /**
+   * Freiwillig: ein GitHub-Schlüssel, der nur lesen darf. Ohne ihn beantwortet GitHub 60 API-Fragen pro Stunde je
+   * Internet-Adresse, mit ihm 5000. Es geht auch ohne.
+   */
+  MM_GITHUB_TOKEN: z.string().optional(),
 });
 
 export interface Config {
@@ -73,6 +80,9 @@ export interface Config {
   readonly version: string;
   readonly updateBranch: string;
   readonly githubApi: string;
+  readonly githubWeb: string;
+  /** Nie ausgeben oder protokollieren – geht nur an die GitHub-API (lib/github.ts). */
+  readonly githubToken: string | null;
 }
 
 export function loadConfig(env: Record<string, string | undefined>, here: string): Config {
@@ -99,5 +109,7 @@ export function loadConfig(env: Record<string, string | undefined>, here: string
     version: e.MM_VERSION,
     updateBranch: e.MM_UPDATE_BRANCH,
     githubApi: e.MM_GITHUB_API.replace(TRAILING_SLASHES, ''),
+    githubWeb: e.MM_GITHUB_WEB.replace(TRAILING_SLASHES, ''),
+    githubToken: e.MM_GITHUB_TOKEN?.trim() || null,
   };
 }

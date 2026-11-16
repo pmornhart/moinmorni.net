@@ -41,7 +41,8 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
     expect(list[0]?.title.en).toBe('Neu: Morni Party!');
     expect((await anon('/api/news/neu-morni-party')).json()).toMatchObject({
       category: 'update',
-      author: 'philip',
+      // Nie der Anmeldename fürs Panel (security.test.ts): ohne verbundenes Minecraft-Konto „MoinMorni-Team“.
+      author: 'MoinMorni-Team',
     });
     const second = (await call('POST', '/api/panel/news', { ...draft, publish: true })).json<{
       slug: string;
@@ -69,8 +70,18 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
   test('Bestenlisten der Spielmodi: welche es gibt, Zeiten aufsteigend, private Profile zählen nicht', async () => {
     // Finn ist seit dem Test oben privat.
     h.mm.hub.players.seen({ uuid: MIA, name: 'Mia', bedrock: false });
-    h.mm.hub.stats.record({ mode: 'gipfelsturm', uuid: LENA, add: { finishes: 3 }, min: { best_ms: 83_000 } });
-    h.mm.hub.stats.record({ mode: 'gipfelsturm', uuid: FINN, add: { finishes: 5 }, min: { best_ms: 61_000 } });
+    h.mm.hub.stats.record({
+      mode: 'gipfelsturm',
+      uuid: LENA,
+      add: { finishes: 3 },
+      min: { best_ms: 83_000 },
+    });
+    h.mm.hub.stats.record({
+      mode: 'gipfelsturm',
+      uuid: FINN,
+      add: { finishes: 5 },
+      min: { best_ms: 61_000 },
+    });
     h.mm.hub.stats.record({ mode: 'duels', uuid: MIA, add: { wins: 7 } });
     h.mm.hub.stats.record({ mode: 'duels', uuid: FINN, add: { wins: 9 } });
     h.mm.hub.stats.record({ mode: 'gibtsnicht', uuid: MIA, add: { wins: 1 } });
