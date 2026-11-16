@@ -260,14 +260,29 @@ export interface ModeStatus {
   /** Name im Netzwerk (für `/server <name>`); null = noch keiner. */
   readonly server: string | null;
   /**
-   * Was der Modus selbst zuletzt gemeldet hat („waiting“, „running“, „open“ …); `closed` = er hat gerade Pause
-   * (Wintersport außerhalb der Saison – das Dorf ist trotzdem offen). null = noch nichts gemeldet.
+   * Was der Modus gerade meldet („waiting“, „running“, „open“ …) – nur solange sein Server wach ist (ein schlafender
+   * Server meldet nichts, sein letzter Zustand gilt dann nicht mehr). `closed` = er hat gerade zu (siehe `modePause`).
+   * null = nichts gemeldet oder Server schläft.
    */
   readonly phase: string | null;
 }
 
-/** Zustand, den ein Modus meldet, wenn er gerade Pause hat (Wintersport im Sommer). */
+/** Zustand, den ein Modus meldet, wenn er gerade zu hat (Wintersport außerhalb der Saison, ein Modus beim Beenden). */
 export const MODE_PHASE_PAUSE = 'closed';
+/** Modi, deren „zu“ eine Saison-Pause ist: Wintersport außerhalb des Winters – „Sommerpause“, das Dorf bleibt offen. */
+export const MODE_SEASON_BREAK: ReadonlySet<string> = new Set(['wintersport']);
+
+/**
+ * Hat ein Modus gerade zu? `summer` = Sommerpause (nur Saison-Modi wie Wintersport), `closed` = gerade geschlossen
+ * (andere Modi, z. B. während der Server beendet wird), null = nein. Gilt nur, solange sein Server wach ist – ein
+ * schlafender Modus ist nicht geschlossen, er wacht auf, sobald jemand kommt.
+ */
+export function modePause(
+  mode: Pick<ModeStatus, 'id' | 'state' | 'server' | 'awake' | 'phase'>,
+): 'summer' | 'closed' | null {
+  if (mode.state !== 'on' || !mode.server || !mode.awake || mode.phase !== MODE_PHASE_PAUSE) return null;
+  return MODE_SEASON_BREAK.has(mode.id) ? 'summer' : 'closed';
+}
 
 /**
  * Wichtigster Wert eines Modus für die Bestenliste (Top 3 auf der Modus-Seite), wenn es nicht „Siege“ o. Ä. sein soll.

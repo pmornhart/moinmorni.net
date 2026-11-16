@@ -26,6 +26,19 @@ const tinyPack = (version: string) => () => ({
   seasonFiles: {
     'pack.mcmeta': '{"pack":{"description":"Saison","pack_format":48}}\n',
     'data/moinmorni_season/function/wiesn.mcfunction': 'kill @e[tag=mm_season]\n',
+    'data/moinmorni_season/function/winter/off_000.mcfunction':
+      'fill 0 65 0 3 65 3 air replace snow strict\n',
+  },
+  seasonSteps: {
+    none: ['function moinmorni_season:none'],
+    wiesn: [
+      'function moinmorni_season:wiesn',
+      'execute if data storage moinmorni:season {winter:1b} run function moinmorni_season:winter/off_000',
+      'data remove storage moinmorni:season winter',
+    ],
+    winter: ['function moinmorni_season:winter'],
+    easter: ['function moinmorni_season:easter'],
+    halloween: ['function moinmorni_season:halloween'],
   },
   seasonLoad: ['forceload add 0 0 31 31'],
   seasonUnload: ['forceload remove 0 0 31 31'],
@@ -144,10 +157,13 @@ describe('Lobby baut sich selbst', () => {
       commands.indexOf('minecraft:function moinmorni_lobby:part/001'),
     );
     expect(commands).toContain('minecraft:datapack disable "file/moinmorni-lobby"');
-    // Danach die Saison-Deko: Bereich festhalten, Funktion, loslassen.
-    expect(commands.filter((c) => !c.includes('execute if loaded')).slice(-3)).toEqual([
+    // Danach die Saison-Deko: Bereich festhalten, Schritte der Saison nacheinander (liegt Winter-Schnee, kommt er
+    // weg), loslassen.
+    expect(commands.filter((c) => !c.includes('execute if loaded')).slice(-5)).toEqual([
       'minecraft:forceload add 0 0 31 31',
       'minecraft:function moinmorni_season:wiesn',
+      'minecraft:execute if data storage moinmorni:season {winter:1b} run function moinmorni_season:winter/off_000',
+      'minecraft:data remove storage moinmorni:season winter',
       'minecraft:forceload remove 0 0 31 31',
     ]);
     expect(
@@ -208,8 +224,7 @@ describe('Lobby baut sich selbst', () => {
       ...h.mm.motor,
       request: async <T>(method: string, url: string, body?: unknown): Promise<T> => {
         const command = url.endsWith('/command') ? (body as { command: string }).command : '';
-        if (command.endsWith('part/001'))
-          return { answer: 'Unknown function moinmorni_lobby:part/001' } as T;
+        if (command.endsWith('part/001')) return { answer: 'Unknown function moinmorni_lobby:part/001' } as T;
         return h.mm.motor.request<T>(method, url, body);
       },
     };

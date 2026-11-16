@@ -1,44 +1,28 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a decoration plan: positions, sizes and colours as the lobby needs them */
 /**
- * Saison-Deko der Lobby (Panel: Lobby → Saison-Deko): Wiesn, Winter, Ostern, Halloween. Alles sind Anzeige-Wesen
+ * Saison-Deko der Lobby (Panel: Lobby → Saison-Deko): Wiesn, Winter, Ostern, Halloween. Die Deko sind Anzeige-Wesen
  * (block_display/text_display) mit dem Tag `mm_season` + `mm_season_<name>` – Umschalten = alte weg, neue hin; das
- * Lobby-Plugin räumt Deko einer anderen Saison weg, sobald sie geladen wird. Keine Blöcke, nichts bleibt zurück.
+ * Lobby-Plugin räumt Deko einer anderen Saison weg, sobald sie geladen wird.
+ * Der Winter setzt dazu Blöcke (Schnee, Eis, Christbaum, Eisbahn – `winter.ts`); jede Saison stellt sie über
+ * `winter/off_…` genau wieder her (datapack.ts).
  */
+import type { Canvas } from '../canvas.js';
 import { GROUND } from '../nature.js';
 import { random } from '../noise.js';
+import { buildLobby } from './dorfplatz.js';
+import { blockDisplay, multiply, type Quat, type Vec } from './deko.js';
+import { winterPlan, type WinterPlan } from './winter.js';
 
 export const SEASONS = ['none', 'wiesn', 'winter', 'easter', 'halloween'] as const;
 export type Season = (typeof SEASONS)[number];
-
-type Vec = readonly [number, number, number];
-type Quat = readonly [number, number, number, number];
 
 const HALF = 0.5;
 const FLAG_SPACING = 0.9;
 const FLAG_SIZE = 0.42;
 const FLAG_DEPTH = 0.04;
 const LIGHT_SIZE = 0.22;
-const NO_TURN: Quat = [0, 0, 0, 1];
 /** 45° um die Blickachse: aus dem Quadrat wird eine Raute. */
 const DIAMOND: Quat = [0, 0, Math.sin(Math.PI / 8), Math.cos(Math.PI / 8)];
-
-function multiply(a: Quat, b: Quat): Quat {
-  const [ax, ay, az, aw] = a;
-  const [bx, by, bz, bw] = b;
-  return [
-    aw * bx + ax * bw + ay * bz - az * by,
-    aw * by - ax * bz + ay * bw + az * bx,
-    aw * bz + ax * by - ay * bx + az * bw,
-    aw * bw - ax * bx - ay * by - az * bz,
-  ];
-}
-
-/** Vektor mit einer Drehung (Quaternion) drehen. */
-function rotate(q: Quat, v: Vec): Vec {
-  const [x, y, z] = v;
-  const [rx, ry, rz] = multiply(multiply(q, [x, y, z, 0]), [-q[0], -q[1], -q[2], q[3]]);
-  return [rx, ry, rz];
-}
 
 /** Drehung um die Hochachse, so dass die Fläche quer zur Richtung (dx, dz) steht. */
 function turnAlong(dx: number, dz: number): Quat {
@@ -46,9 +30,9 @@ function turnAlong(dx: number, dz: number): Quat {
   return [0, Math.sin(angle / 2), 0, Math.cos(angle / 2)];
 }
 
-/** Zahl für NBT (Kommazahl mit f) bzw. für Koordinaten (ohne). */
-const f = (n: number): string => `${Number(n.toFixed(4))}f`;
+/** Zahl für Koordinaten (ohne f). */
 const c = (n: number): string => `${Number(n.toFixed(4))}`;
+const f = (n: number): string => `${Number(n.toFixed(4))}f`;
 const tags = (season: Season): string => `Tags:['mm_season','mm_season_${season}']`;
 
 interface DisplayOptions {
@@ -61,24 +45,7 @@ interface DisplayOptions {
 
 /** Block-Anzeige mit Mitte bei (x, y, z) – gedreht um ihre eigene Mitte. */
 function display(season: Season, at: Vec, block: string, o: DisplayOptions): string {
-  const [x, y, z] = at;
-  const [sx, sy, sz] = o.scale;
-  const list = o.properties
-    ? `{${Object.entries(o.properties)
-        .map(([k, v]) => `${k}:'${v}'`)
-        .join(',')}}`
-    : '';
-  // Bis 26.2 heißt es Name/Properties, ab 26.3 id/properties – beide mitgeben, jede Version nimmt ihre.
-  const props = list ? `,Properties:${list},properties:${list}` : '';
-  const rotation = o.rotation ?? NO_TURN;
-  // Minecraft dreht erst und verschiebt dann: damit die Drehung um die Mitte geht, die Verschiebung mitdrehen.
-  const [tx, ty, tz] = rotate(rotation, [sx * HALF, sy * HALF, sz * HALF]);
-  const glow = o.glow ? ',brightness:{sky:15,block:15}' : '';
-  return (
-    `summon block_display ${c(x)} ${c(y)} ${c(z)} {${tags(season)},block_state:{Name:'minecraft:${block}',id:'minecraft:${block}'${props}},` +
-    `transformation:{left_rotation:[${rotation.map(f).join(',')}],right_rotation:[0f,0f,0f,1f],` +
-    `translation:[${f(-tx)},${f(-ty)},${f(-tz)}],scale:[${f(sx)},${f(sy)},${f(sz)}]}${glow}}`
-  );
+  return blockDisplay(tags(season), at, block, o);
 }
 
 /** Wimpel- bzw. Lichterkette von a nach b, mit Durchhang; Wimpel als Rauten quer zur Kette. */
@@ -117,7 +84,7 @@ function chains(season: Season, colours: readonly string[], lights = false): str
   const lane = [-55, -69, -83, -97, -111].flatMap((x) =>
     chain(season, [x + HALF, y, 0], [x + HALF, y, 15], 0.8, colours, lights),
   );
-  const ring = Array.from({ length: 8 }, (_, i) => {
+  const radial = Array.from({ length: 8 }, (_, i) => {
     const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
     return chain(
       season,
@@ -128,7 +95,7 @@ function chains(season: Season, colours: readonly string[], lights = false): str
       lights,
     );
   }).flat();
-  return [...street, ...lane, ...ring];
+  return [...street, ...lane, ...radial];
 }
 
 /** Text-Anzeige (für Lebkuchenherzen u. ä.). */
@@ -166,12 +133,6 @@ const EASTER: readonly string[] = [
   'magenta_wool',
 ];
 const HALLOWEEN: readonly string[] = ['orange_wool', 'purple_wool', 'black_wool'];
-const LIGHTS: readonly string[] = [
-  'ochre_froglight',
-  'pearlescent_froglight',
-  'verdant_froglight',
-  'red_concrete',
-];
 const EGG_COLOURS: readonly string[] = [
   'pink_concrete',
   'yellow_concrete',
@@ -200,51 +161,13 @@ function wiesn(): string[] {
   return [...chains(s, WIESN), ...hearts, ...barrels];
 }
 
-function winter(): string[] {
-  const s: Season = 'winter';
-  const tree = (cx: number, cz: number): string[] => {
-    const layers = [3.2, 2.7, 2.2, 1.7, 1.2, 0.7];
-    const leaves = layers.map((w, i) =>
-      display(s, [cx, GROUND + 1.6 + i * 1.1, cz], 'spruce_leaves', {
-        scale: [w * 2, 1.2, w * 2],
-        properties: { persistent: 'true' },
-      }),
-    );
-    const trunk = display(s, [cx, GROUND + 1.5, cz], 'spruce_log', { scale: [0.6, 1, 0.6] });
-    const star = display(s, [cx, GROUND + 8.4, cz], 'gold_block', {
-      scale: [0.5, 0.5, 0.5],
-      rotation: DIAMOND,
-      glow: true,
-    });
-    const balls = layers.flatMap((w, i) =>
-      [0, 1, 2, 3].map((k) => {
-        const a = ((k + i * 0.5) / 4) * Math.PI * 2;
-        return display(
-          s,
-          [cx + Math.cos(a) * w, GROUND + 1.3 + i * 1.1, cz + Math.sin(a) * w],
-          LIGHTS[(k + i) % LIGHTS.length] ?? 'ochre_froglight',
-          {
-            scale: [0.3, 0.3, 0.3],
-            glow: true,
-          },
-        );
-      }),
-    );
-    return [trunk, ...leaves, star, ...balls];
-  };
-  const snowman = (x: number, z: number, facing: string): string[] => [
-    display(s, [x, GROUND + 1.45, z], 'snow_block', { scale: [0.9, 0.9, 0.9] }),
-    display(s, [x, GROUND + 2.2, z], 'snow_block', { scale: [0.65, 0.65, 0.65] }),
-    display(s, [x, GROUND + 2.8, z], 'carved_pumpkin', { scale: [0.5, 0.5, 0.5], properties: { facing } }),
-  ];
-  return [
-    ...chains(s, LIGHTS, true),
-    ...tree(-11.5, 9.5),
-    ...tree(78.5, -36.5),
-    ...snowman(12.5, 6.5, 'south'),
-    ...snowman(-6.5, 20.5, 'south'),
-    ...snowman(-50.5, 12.5, 'north'),
-  ];
+/**
+ * Winter-Wunderland: alles aus dem Winter-Plan (Dächer, Baum, Stände, Lichterketten vom Maibaum …). Die Ketten quer
+ * über Dorfstraße und Gasse hängen im Winter nicht – ihre Enden schwebten frei vor den Häusern; dort leuchten jetzt
+ * die Lichter an den Giebeln.
+ */
+function winter(plan: WinterPlan): string[] {
+  return [...plan.displays, ...plan.moves];
 }
 
 function easter(): string[] {
@@ -316,15 +239,18 @@ function halloween(): string[] {
   return [...chains(s, HALLOWEEN), ...pumpkins, ...stalls, ...graves, ...webs];
 }
 
-const PLANS: Readonly<Record<Season, () => string[]>> = {
+const PLANS: Readonly<Record<Season, (plan: () => WinterPlan) => string[]>> = {
   none: () => [],
   wiesn,
-  winter,
+  winter: (plan) => winter(plan()),
   easter,
   halloween,
 };
 
-/** Befehle für eine Saison: erst alles Alte weg (soweit geladen), dann die neue Deko. */
-export function seasonCommands(season: Season): string[] {
-  return ['kill @e[tag=mm_season]', ...PLANS[season]()];
+/**
+ * Anzeige-Wesen einer Saison: erst alles Alte weg (soweit geladen), dann die neue Deko. Für den Winter braucht es den
+ * Bauplan der Lobby (Dächer, Zäune, Stände); ohne wird er hier gebaut.
+ */
+export function seasonCommands(season: Season, lobby?: Canvas): string[] {
+  return ['kill @e[tag=mm_season]', ...PLANS[season](() => winterPlan(lobby ?? buildLobby().canvas))];
 }

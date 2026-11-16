@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
 import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
-import { alwaysIn, areaById, MODE_PHASE_PAUSE, type GameRight, type Role } from '@moinmorni/shared';
+import { alwaysIn, areaById, modePause, type GameRight, type Mode, type Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
@@ -442,14 +442,31 @@ export function createHub(options: HubOptions): Hub {
       ctx.msg(uuid, text(p.lang, 'mode.already', { mode: name }));
       return;
     }
+    const pause = pauseOf(mode);
+    // Gerade zu (nicht Sommerpause), z. B. während der Server beendet wird: nicht hin, sondern Bescheid sagen.
+    if (pause === 'closed') {
+      ctx.msg(uuid, text(p.lang, 'mode.closed', { mode: name }));
+      return;
+    }
     if (admit(uuid, mode.server, p.lang) !== 'go') return;
     if (mode.access === 'whitelist') ctx.msg(uuid, text(p.lang, 'mode.invite_only', { mode: name }));
-    if (modeRuns.get(mode.id)?.state === MODE_PHASE_PAUSE)
-      ctx.msg(uuid, text(p.lang, 'mode.pause', { mode: name }));
+    if (pause === 'summer') ctx.msg(uuid, text(p.lang, 'mode.pause', { mode: name }));
     ctx.msg(uuid, text(p.lang, 'mode.joining', { mode: name }));
     ctx.connect(uuid, mode.server);
   };
 
+  /** Was der Modus gerade meldet – nur solange sein Server verbunden ist (schlafend meldet er nichts). */
+  const phaseOf = (md: Mode): string | null =>
+    md.server !== null && conns.backends.has(md.server) ? (modeRuns.get(md.id)?.state ?? null) : null;
+  /** Sommerpause (Wintersport außerhalb der Saison), gerade geschlossen oder offen. */
+  const pauseOf = (md: Mode): 'summer' | 'closed' | null =>
+    modePause({
+      id: md.id,
+      state: md.state,
+      server: md.server,
+      awake: md.server !== null && conns.backends.has(md.server),
+      phase: phaseOf(md),
+    });
   /** Was die Figuren in der Lobby über ihren Modus zeigen: Name, Zustand, Spielerzahl, wach oder schlafend. */
   const lobbyState = (): Body => ({
     t: 'lobby',
@@ -464,8 +481,9 @@ export function createHub(options: HubOptions): Hub {
         players: md.server ? presence.on(md.server).length : 0,
         hasServer: md.server !== null,
         awake: md.server !== null && conns.backends.has(md.server),
-        // Was der Modus selbst meldet – „closed“ = Pause (Wintersport im Sommer), das Schild sagt es dann.
-        phase: modeRuns.get(md.id)?.state ?? null,
+        // Was der Modus selbst meldet (nur wach); `pause` sagt dem Schild, ob Sommerpause oder gerade zu.
+        phase: phaseOf(md),
+        pause: pauseOf(md),
         icon: modeIcon(md.id),
       })),
   });
@@ -741,6 +759,11 @@ export function createHub(options: HubOptions): Hub {
       if (conns.proxy === conn) conns.proxy = null;
       if (conns.backends.get(conn.server) === conn) {
         conns.backends.delete(conn.server);
+        // Was der Modus zuletzt gemeldet hat (z. B. „closed“ beim Beenden), gilt nicht mehr – er schläft jetzt.
+        stores
+          .modes()
+          .filter((md) => md.server === conn.server)
+          .forEach((md) => modeRuns.delete(md.id));
         lobbySoon();
         // Gestoppt oder neu gestartet: Beim nächsten Start trägt das Plugin die Werte vorher ein.
         [...restartPending]

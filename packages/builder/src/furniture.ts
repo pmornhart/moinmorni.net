@@ -3,6 +3,7 @@ import type { Canvas } from './canvas.js';
 import { zipOf } from './png.js';
 import { airItemDefinition, TRACHT_NS, trachtModels, trachtTextures } from './trachten.js';
 import { BRUNNEN_ERSATZ, brunnenItemCases, brunnenModels } from './brunnen.js';
+import { schmuckModels } from './schmuck.js';
 import { STEP, type Facing } from './shapes.js';
 
 /**
@@ -394,14 +395,15 @@ const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, nu
 export function furniturePack(): Buffer {
   const meta = {
     pack: {
-      description: 'MoinMorni – Möbel, Trachten und Brunnen der Lobby',
+      description: 'MoinMorni – Möbel, Trachten, Brunnen und Christbaumschmuck der Lobby',
       pack_format: PACK_FORMAT,
       supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
       min_format: PACK_FORMAT,
       max_format: PACK_FORMAT_MAX,
     },
   };
-  const states = { ...furnitureBlockstates(), ...hiddenBlockstates() };
+  const schmuck = schmuckModels(NS);
+  const states = { ...furnitureBlockstates(), ...hiddenBlockstates(), ...schmuck.blockstates };
   return zipOf([
     { name: 'pack.mcmeta', data: json(meta) },
     ...Object.keys(states)
@@ -412,6 +414,13 @@ export function furniturePack(): Buffer {
       .map((name) => ({
         name: `assets/${NS}/models/block/moebel/${name}.json`,
         data: json(modelJson(FURNITURE_MODELS[name] ?? [])),
+      })),
+    // Christbaumkugeln (Winter): runde Form für Trockenbeton, siehe schmuck.ts
+    ...Object.keys(schmuck.models)
+      .sort()
+      .map((name) => ({
+        name: `assets/${NS}/models/block/schmuck/${name}.json`,
+        data: json(schmuck.models[name]),
       })),
     // Trachten und Prunkbrunnen über das (sonst leere) Luft-Modell, siehe trachten.ts und brunnen.ts
     { name: 'assets/minecraft/items/air.json', data: json(airWithFountain()) },

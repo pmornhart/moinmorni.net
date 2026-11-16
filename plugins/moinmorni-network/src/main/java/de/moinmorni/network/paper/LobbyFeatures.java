@@ -466,17 +466,20 @@ final class LobbyFeatures implements Listener {
     private ItemStack modeItem(Player p, LobbyNpcs.ModeInfo m) {
         boolean english = en(p);
         boolean soon = "soon".equals(m.state()) || !m.hasServer();
-        boolean open = !"off".equals(m.state()) && !soon && !"maintenance".equals(m.state());
+        boolean open = !"off".equals(m.state()) && !soon && !"maintenance".equals(m.state()) && !m.closedNow();
         Component state;
-        if (m.paused()) {
-            state = Component.text(english ? "Summer break – the village is open to look around"
-                    : "Sommerpause – das Dorf ist zum Anschauen offen", NamedTextColor.YELLOW);
-        } else if ("off".equals(m.state())) {
+        if ("off".equals(m.state())) {
             state = Component.text(english ? "Closed" : "Geschlossen", NamedTextColor.RED);
         } else if (soon) {
             state = Component.text(english ? "Coming soon" : "Bald", NamedTextColor.GRAY);
         } else if ("maintenance".equals(m.state())) {
             state = Component.text(english ? "Maintenance" : "Wartung", NamedTextColor.GOLD);
+        } else if (m.summerBreak()) {
+            state = Component.text(english ? "Summer break – the village is open to look around"
+                    : "Sommerpause – das Dorf ist zum Anschauen offen", NamedTextColor.YELLOW);
+        } else if (m.closedNow()) {
+            state = Component.text(english ? "Closed right now – back in a moment" : "Gerade geschlossen – gleich wieder offen",
+                    NamedTextColor.GOLD);
         } else if (!m.awake()) {
             state = Component.text(english ? "Asleep – click to wake" : "Schläft – Klick weckt", NamedTextColor.AQUA);
         } else {
@@ -497,7 +500,7 @@ final class LobbyFeatures implements Listener {
         }
         if (open) {
             lore.add(Component.empty());
-            lore.add(Component.text(m.paused() ? (english ? "▶ Click to look around" : "▶ Klick: Dorf anschauen")
+            lore.add(Component.text(m.summerBreak() ? (english ? "▶ Click to look around" : "▶ Klick: Dorf anschauen")
                             : english ? "▶ Click to play" : "▶ Klick: Mitspielen", NamedTextColor.YELLOW)
                     .decoration(TextDecoration.ITALIC, false));
         }
@@ -825,6 +828,8 @@ final class LobbyFeatures implements Listener {
             d.setBillboard(Display.Billboard.CENTER);
             d.setShadowed(true);
             d.text(content);
+            // Keine Hitbox mit F3+B (Anzeige bleibt sichtbar), wie bei der Deko aus dem Datenpaket
+            d.setInvisible(true);
         });
     }
 

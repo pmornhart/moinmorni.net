@@ -1,3 +1,4 @@
+/* eslint-disable ts-patterns/no-magic-numbers -- tests compare against literal expected values */
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { openDatabase, type Db } from '../src/db/index.js';
@@ -82,6 +83,15 @@ describe('Hub', () => {
     await plugin('lobby', 'backend');
     expect(connected).toEqual(['lobby']);
   });
+
+  /** Wartet, bis `look` etwas findet (höchstens drei Sekunden). */
+  const until = <T>(look: () => T | undefined, left = 150): Promise<T> =>
+    new Promise((resolve, reject) => {
+      const found = look();
+      if (found !== undefined) resolve(found);
+      else if (left <= 0) reject(new Error('nicht eingetreten'));
+      else setTimeout(() => until(look, left - 1).then(resolve, reject), 20);
+    });
 
   /** Proxy + zwei Spielserver, Philip (Owner) und Lena (Spielerin) online. */
   const network = async (): Promise<{ proxy: FakePlugin; lobby: FakePlugin; duels: FakePlugin }> => {
@@ -619,6 +629,47 @@ describe('Hub', () => {
     // Wechsel → neue Zahlen kommen an.
     proxy.send({ t: 'switch', uuid: PHILIP, server: 'duels' });
     await lobby.next('lobby', (m) => row(m, 'duels')?.players === 2);
+  });
+
+  test('„closed“ ist nur bei Wintersport Sommerpause; ein Modus, der beim Beenden „closed“ meldet, schläft danach', async () => {
+    const { proxy, lobby } = await network();
+    type Row = { id: string; awake: boolean; phase: string | null; pause: string | null };
+    const row = (m: Msg, id: string): Row | undefined => (m['modes'] as Row[]).find((md) => md.id === id);
+    const said = (part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === PHILIP && String(m['text']).includes(part));
+
+    // MorniSMP meldet beim Beenden „closed“ (onDisable) – kein Saison-Modus: „gerade geschlossen“, nicht hin.
+    const smp = await plugin('smp', 'backend');
+    smp.send({ t: 'mode-state', mode: 'mirni', state: 'closed', players: 0 });
+    const closed = await lobby.next('lobby', (m) => row(m, 'mirni')?.phase === 'closed');
+    expect(row(closed, 'mirni')).toMatchObject({ awake: true, pause: 'closed' });
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'mirni' });
+    await said('gerade geschlossen');
+    expect(proxy.received.some((m) => m.t === 'connect' && m['server'] === 'smp')).toBe(false);
+
+    // Server weg (gestoppt, schläft): die alte Meldung gilt nicht mehr – keine Sommerpause, kein „geschlossen“.
+    // (Nur Lobby-Meldungen nach dem Trennen zählen – vor dem Verbinden schlief MorniSMP auch schon.)
+    const from = lobby.received.length;
+    smp.close();
+    const asleep = await until(() =>
+      lobby.received.slice(from).find((m) => m.t === 'lobby' && row(m, 'mirni')?.awake === false),
+    );
+    expect(row(asleep, 'mirni')).toMatchObject({ phase: null, pause: null });
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'mirni' });
+    await said('wacht gerade auf');
+    expect(woken).toContain('smp');
+
+    // Wacht er wieder auf und meldet „waiting“, ist er offen – auch nach dem alten „closed“.
+    const again = await plugin('smp', 'backend');
+    again.send({ t: 'mode-state', mode: 'mirni', state: 'waiting', players: 0 });
+    const open = await lobby.next('lobby', (m) => row(m, 'mirni')?.phase === 'waiting');
+    expect(row(open, 'mirni')).toMatchObject({ awake: true, pause: null });
+
+    // Wintersport mit „closed“: Sommerpause.
+    const winter = await plugin('wintersport', 'backend');
+    winter.send({ t: 'mode-state', mode: 'wintersport', state: 'closed', players: 0 });
+    const summer = await lobby.next('lobby', (m) => row(m, 'wintersport')?.pause === 'summer');
+    expect(row(summer, 'wintersport')).toMatchObject({ awake: true, phase: 'closed' });
   });
 
   test('Lobby-Einstellungen: nur die Lobby bekommt sie, Änderungen im Panel kommen sofort an', async () => {

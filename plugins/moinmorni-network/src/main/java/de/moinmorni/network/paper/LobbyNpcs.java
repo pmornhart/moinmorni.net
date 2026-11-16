@@ -18,6 +18,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Tag;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -86,13 +87,18 @@ final class LobbyNpcs implements Listener {
     private static final int PAUSE_SPREAD = 160;
 
     /**
-     * Ein Modus, wie die Lobby ihn zeigt. {@code phase} = was der Modus selbst zuletzt gemeldet hat; „closed“ heißt
-     * Pause (Wintersport im Sommer): man darf trotzdem hin und sich umschauen.
+     * Ein Modus, wie die Lobby ihn zeigt. {@code pause} sagt der Hub: „summer“ = Sommerpause (Wintersport außerhalb
+     * der Saison – man darf trotzdem hin und sich umschauen), „closed“ = gerade geschlossen (z. B. während der Server
+     * beendet wird), sonst null. Ein schlafender Modus ist nie geschlossen – er wacht auf, sobald jemand kommt.
      */
     record ModeInfo(String id, String nameDe, String nameEn, String state, String access, int players,
-                    boolean hasServer, boolean awake, String icon, String phase) {
-        boolean paused() {
-            return "on".equals(state) && hasServer && "closed".equals(phase);
+                    boolean hasServer, boolean awake, String icon, String phase, String pause) {
+        boolean summerBreak() {
+            return "on".equals(state) && hasServer && "summer".equals(pause);
+        }
+
+        boolean closedNow() {
+            return "on".equals(state) && hasServer && "closed".equals(pause);
         }
     }
 
@@ -161,7 +167,7 @@ final class LobbyNpcs implements Listener {
             fresh.put(id, new ModeInfo(id, HubClient.str(name, "de"), HubClient.str(name, "en"),
                     HubClient.str(o, "state"), HubClient.str(o, "access"), o.get("players").getAsInt(),
                     o.get("hasServer").getAsBoolean(), o.get("awake").getAsBoolean(), HubClient.str(o, "icon"),
-                    HubClient.str(o, "phase")));
+                    HubClient.str(o, "phase"), HubClient.str(o, "pause")));
         }
         modes.clear();
         modes.putAll(fresh);
@@ -197,16 +203,21 @@ final class LobbyNpcs implements Listener {
             state = Component.text(en ? "○ Coming soon" : "○ Bald", NamedTextColor.GRAY);
         } else if ("maintenance".equals(m.state())) {
             state = Component.text(en ? "⚒ Maintenance" : "⚒ Wartung", NamedTextColor.GOLD);
-        } else if (m.paused()) {
+        } else if (m.summerBreak()) {
             state = Component.text(en ? "☀ Summer break" : "☀ Sommerpause", NamedTextColor.YELLOW);
+        } else if (m.closedNow()) {
+            state = Component.text(en ? "● Closed right now" : "● Gerade geschlossen", NamedTextColor.GOLD);
         } else if (!m.awake()) {
             state = Component.text(en ? "☾ Asleep – click to wake" : "☾ Schläft – Klick weckt", NamedTextColor.AQUA);
         } else {
             String unit = en ? (m.players() == 1 ? " player" : " players") : " Spieler";
             state = Component.text("● " + m.players() + unit, NamedTextColor.GREEN);
         }
-        if (m.paused()) {
+        if (m.summerBreak()) {
             hint = Component.text(en ? "Click to look around the village" : "Klick: Dorf anschauen", NamedTextColor.GRAY,
+                    TextDecoration.ITALIC);
+        } else if (m.closedNow()) {
+            hint = Component.text(en ? "Back in a moment" : "Gleich wieder offen", NamedTextColor.GRAY,
                     TextDecoration.ITALIC);
         } else if (!"off".equals(m.state()) && !soon) {
             hint = "whitelist".equals(m.access())
@@ -296,6 +307,8 @@ final class LobbyNpcs implements Listener {
             TextDisplay label = npc.getWorld().spawn(at, TextDisplay.class, d -> {
                 d.setPersistent(false);
                 d.setVisibleByDefault(false);
+                // Keine Hitbox mit F3+B (Anzeige bleibt sichtbar), wie bei der Deko aus dem Datenpaket
+                d.setInvisible(true);
                 d.setBillboard(Display.Billboard.CENTER);
                 d.setShadowed(true);
                 d.setBackgroundColor(Color.fromARGB(LABEL_SHADE, 0, 0, 0));
@@ -567,7 +580,9 @@ final class LobbyNpcs implements Listener {
         for (double[] c : corners) {
             Block feet = at.clone().add(c[0], 0, c[1]).getBlock();
             Block below = feet.getRelative(BlockFace.DOWN);
+            // Nicht unter tief hängende Zweige (z. B. unter den Christbaum im Winter) – der Kopf steckte darin.
             if (!feet.isPassable() || !feet.getRelative(BlockFace.UP).isPassable()
+                    || Tag.LEAVES.isTagged(feet.getRelative(BlockFace.UP, 2).getType())
                     || below.isPassable() || below.isLiquid()) {
                 return false;
             }

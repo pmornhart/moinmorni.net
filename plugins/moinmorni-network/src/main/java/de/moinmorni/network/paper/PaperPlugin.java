@@ -65,6 +65,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private LobbyJail jail;
     /** Tageszeit der Lobby (wie in echt) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyClock clock;
+    private LobbyWinter winter;
 
     /** Einstellungen des Spielmodus auf diesem Server (aus dem Panel) – trägt sie in seine config.yml ein. */
     private ModeSettings modes;
@@ -107,6 +108,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         features = new LobbyFeatures(this, lobby, this::langOf);
         jail = new LobbyJail(this, features, this::langOf);
         clock = new LobbyClock(this);
+        winter = new LobbyWinter(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
         // In der Lobby bauen (im Kreativmodus): wer das Recht „Lobby bearbeiten“ hat – oder OP ist.
@@ -114,6 +116,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         getServer().getScheduler().runTask(this, this::logModeAdmins);
         jail.start();
         features.start();
+        winter.start();
         // Erst verbinden, wenn alles steht – die ersten Nachrichten des Hubs gehen sonst ins Leere.
         if (hub != null) {
             try {
@@ -183,6 +186,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         if (clock != null) {
             clock.stop();
         }
+        if (winter != null) {
+            winter.stop();
+        }
         if (hub != null) {
             hub.stop();
         }
@@ -230,6 +236,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             case "lobby-settings" -> {
                 features.onSettings(m);
                 clock.onSettings(m);
+                winter.onSettings(m);
             }
             case "jail" -> jail.onState(m);
             case "mornicraft-settings" -> morniCraftSettings(m);

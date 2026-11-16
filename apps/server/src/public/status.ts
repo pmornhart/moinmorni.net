@@ -131,6 +131,7 @@ export function createStatusService(
   ): ModeStatus => {
     const member = network?.members.find((s) => s.name === m.server);
     const live = counts && m.server ? (counts[m.server] ?? 0) : null;
+    const awake = member?.state === RUNNING;
     return {
       id: m.id,
       name: m.name,
@@ -139,9 +140,10 @@ export function createStatusService(
       access: m.access,
       players: live ?? member?.players ?? 0,
       maxPlayers: m.maxPlayers,
-      awake: member?.state === RUNNING,
+      awake,
       server: m.server,
-      phase: runs[m.id]?.state ?? null,
+      // Nur was ein wacher Modus meldet – ein schlafender ist nicht „geschlossen“, er wacht auf, sobald jemand kommt.
+      phase: awake ? (runs[m.id]?.state ?? null) : null,
     };
   };
   const networksOrNone = async (): Promise<MotorNetwork[]> => {

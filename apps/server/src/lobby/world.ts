@@ -5,7 +5,6 @@ import {
   lobbyPack,
   MOEBEL_PACK_ID,
   partName,
-  SEASON_NAMESPACE,
   SEASON_PACK_DIR,
   SEASONS,
   type LobbyPack,
@@ -54,7 +53,8 @@ const DEFAULTS = {
 } as const;
 /** Ecken (so weit draußen, wie gebaut wird) und Mitte: sind sie geladen, ist es der Rest auch. */
 const EDGE = 200;
-const SEASON_EDGE = 100;
+/** Die Saison-Deko reicht bis an die Berge (Winter-Schnee bis ±223). */
+const SEASON_EDGE = 220;
 const probesAt = (edge: number): readonly (readonly [number, number])[] => [
   [0, 0],
   [-edge, -edge],
@@ -388,12 +388,23 @@ export function createLobbyWorld(
       await run(serverId, `minecraft:${command}`);
     }, Promise.resolve());
 
-  /** Deko der eingestellten Saison setzen: Bereich festhalten, Funktion aufrufen, wieder loslassen. */
+  /**
+   * Deko der eingestellten Saison setzen: Bereich festhalten, die Schritte der Saison nacheinander (Winter: Schnee in
+   * Stücken; jede andere Saison räumt liegenden Winter-Schnee weg), wieder loslassen.
+   */
   const season = async (serverId: string, pack: LobbyPack): Promise<void> => {
     const current = options.season?.() ?? 'none';
     await runAll(serverId, pack.seasonLoad);
     await until(() => allLoaded(serverId, SEASON_PROBES), opts.loadTimeoutMs);
-    await run(serverId, `minecraft:function ${SEASON_NAMESPACE}:${current}`);
+    const steps = pack.seasonSteps[current];
+    const missing = await steps.reduce<Promise<string[]>>(async (prev, step) => {
+      const list = await prev;
+      const answer = await run(serverId, `minecraft:${step}`);
+      await sleep(opts.gapMs);
+      return answer.includes(UNKNOWN_FUNCTION) ? [...list, step] : list;
+    }, Promise.resolve([]));
+    if (missing.length > 0)
+      log.error({ steps: missing }, 'Lobby: Teile der Saison-Deko ließen sich nicht laden');
     await runAll(serverId, pack.seasonUnload);
     log.info({ season: current }, 'Lobby: Saison-Deko gesetzt');
   };
