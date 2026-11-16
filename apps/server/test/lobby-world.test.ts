@@ -144,6 +144,10 @@ describe('Lobby baut sich selbst', () => {
       commands.indexOf('minecraft:function moinmorni_lobby:part/001'),
     );
     expect(commands).toContain('minecraft:datapack disable "file/moinmorni-lobby"');
+    // Gespeichert wird, bevor die Bau-Version in der Datei steht (Absturz danach → keine halbe Welt mit neuer Version)
+    expect(commands.indexOf('minecraft:save-all flush')).toBeGreaterThan(
+      commands.indexOf('minecraft:function moinmorni_lobby:finish'),
+    );
     // Danach die Saison-Deko: Bereich festhalten, Funktion, loslassen.
     expect(commands.filter((c) => !c.includes('execute if loaded')).slice(-3)).toEqual([
       'minecraft:forceload add 0 0 31 31',
@@ -208,8 +212,7 @@ describe('Lobby baut sich selbst', () => {
       ...h.mm.motor,
       request: async <T>(method: string, url: string, body?: unknown): Promise<T> => {
         const command = url.endsWith('/command') ? (body as { command: string }).command : '';
-        if (command.endsWith('part/001'))
-          return { answer: 'Unknown function moinmorni_lobby:part/001' } as T;
+        if (command.endsWith('part/001')) return { answer: 'Unknown function moinmorni_lobby:part/001' } as T;
         return h.mm.motor.request<T>(method, url, body);
       },
     };
