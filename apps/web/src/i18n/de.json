@@ -442,7 +442,8 @@
           "sprache": "Sprache wechseln: Deutsch oder Englisch.",
           "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
           "voice": "Sprachkanäle anzeigen, einem beitreten oder ihn verlassen.",
-          "lobby": "Zurück in die Lobby.",
+          "lobby": "Zurück in die Lobby. Mitten in einer Runde fragen wir lieber noch einmal nach – ein zweites /lobby gilt als Ja.",
+          "rueckkehr": "Verbindung mitten im Spiel weg? Solange dein Platz frei ist, bringt dich das zurück in deine Runde (geht auch mit dem Gegenstand in der Lobby).",
           "discord": "Einen Code holen, um dein Konto mit Discord zu verbinden."
         }
       },

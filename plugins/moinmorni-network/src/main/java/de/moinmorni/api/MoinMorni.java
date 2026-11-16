@@ -14,12 +14,13 @@ import org.bukkit.plugin.RegisteredServiceProvider;
  * {@code depend: [MoinMorni]} (oder {@code softdepend}, wenn es auch allein laufen soll).
  *
  * <p>Ändert sich diese Datei, müssen die Kopien in den Modus-Repos gleich bleiben (Paket {@code de.moinmorni.api},
- * dort nur zum Übersetzen, nicht in die Jar).
+ * dort nur zum Übersetzen, nicht in die Jar). Methoden ab Version 2 fehlen in älteren Netzwerk-Plugins: Modi rufen
+ * sie so auf, dass ein {@link LinkageError} abgefangen wird, und laufen dann wie bisher weiter.
  */
 public interface MoinMorni {
 
     /** Version dieser Schnittstelle; neue Methoden erhöhen sie. */
-    int API_VERSION = 1;
+    int API_VERSION = 2;
 
     /** Das Netzwerk, falls das Netzwerk-Plugin läuft. */
     static Optional<MoinMorni> get() {
@@ -57,8 +58,28 @@ public interface MoinMorni {
     /** Zustand melden (Lobby-Figur, Webseite): z. B. „waiting“, „running“, „full“. */
     void state(String mode, String state, int players);
 
-    /** Spieler zurück in die Lobby schicken. */
+    /** Spieler zurück in die Lobby schicken – sofort, ohne Nachfrage (z. B. am Ende einer Runde). */
     void toLobby(Player player);
+
+    /**
+     * Der Spieler will selbst in die Lobby (Knopf oder Gegenstand des Modus). Spielt er gerade ({@link #playing}),
+     * fragt das Netzwerk erst nach, ob er wirklich gehen will; sonst geht es sofort. Seit Version 2.
+     */
+    void askToLobby(Player player);
+
+    /**
+     * Spielt der Spieler gerade eine Runde ({@code true}) oder wartet, schaut zu oder ist ausgeschieden
+     * ({@code false})? Solange er spielt, fragt „/lobby“ erst nach. Der Modus meldet jede Änderung; beim Verlassen
+     * des Servers vergisst das Netzwerk den Stand. Seit Version 2.
+     */
+    void playing(Player player, boolean playing);
+
+    /**
+     * Platz im laufenden Spiel freihalten: Der Spieler hat mitten im Spiel die Verbindung verloren, der Modus wartet
+     * so viele Sekunden auf ihn. So lange bietet die Lobby „Zurück ins Spiel“ an und schickt ihn auf diesen Server
+     * zurück. {@code 0} nimmt das Angebot zurück (Runde vorbei, Platz vergeben). Seit Version 2.
+     */
+    void holdSlot(UUID player, int seconds);
 
     /** Rang eines Spielers. Farbe als „#rrggbb“; Symbol kann leer sein. */
     record Rank(String id, String symbol, String colour, int position) {
