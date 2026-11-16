@@ -53,6 +53,13 @@ export function dateTime(iso: string, language: Language): string {
   }).format(new Date(iso));
 }
 
+/** "21:30" */
+export function clockTime(iso: string, language: Language): string {
+  return new Intl.DateTimeFormat(LOCALES[language], { hour: '2-digit', minute: '2-digit' }).format(
+    new Date(iso),
+  );
+}
+
 /** "14. November 2026" */
 export function longDate(iso: string, language: Language): string {
   return new Intl.DateTimeFormat(LOCALES[language], {
@@ -78,6 +85,7 @@ export function useTimeText(): {
   readonly relative: (iso: string) => string;
   readonly date: (iso: string) => string;
   readonly day: (iso: string) => string;
+  readonly clock: (iso: string) => string;
   readonly duration: (minutes: number) => string;
   readonly playtime: (minutes: number) => string;
 } {
@@ -87,6 +95,7 @@ export function useTimeText(): {
     relative: (iso) => relativeTime(iso, language) ?? t('time.justNow'),
     date: (iso) => dateTime(iso, language),
     day: (iso) => longDate(iso, language),
+    clock: (iso) => clockTime(iso, language),
     // The largest unit that fits evenly: 1440 → "1 Tag", 90 → "90 Minuten".
     duration: (minutes) => {
       if (minutes % MINUTES_PER_DAY === 0) return t('time.days', { count: minutes / MINUTES_PER_DAY });

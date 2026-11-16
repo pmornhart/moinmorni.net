@@ -3,10 +3,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   CircleDashed,
+  Clock,
   CloudOff,
   Cog,
   GitBranch,
   History,
+  KeyRound,
   Loader2,
   Minus,
   PackageCheck,
@@ -71,7 +73,7 @@ const LOOK_TONE: Readonly<Record<Look, PillTone>> = {
 function lookOf(view: UpdateView): Look {
   if (view.updating) return 'updating';
   if (view.available) return 'available';
-  if (view.checkFailed) return 'failed';
+  if (view.checkFailed || view.branchMissing) return 'failed';
   if (view.checkedAt === null) return 'unknown';
   return 'current';
 }
@@ -120,10 +122,12 @@ function Facts({ view }: { readonly view: UpdateView }): ReactElement {
   const { moinmorni, motor } = view;
   const motorFoot = ((): ReactNode => {
     if (!motor.latest) return t('updatesCard.motorUnknown');
-    if (motor.behind <= 0) return t('updatesCard.motorCurrent');
+    if (motor.behind !== null && motor.behind <= 0) return t('updatesCard.motorCurrent');
     return (
       <>
-        {t('updatesCard.motorBehind', { count: motor.behind, latest: motor.latest })}{' '}
+        {motor.behind === null
+          ? t('updatesCard.motorNewer', { latest: motor.latest })
+          : t('updatesCard.motorBehind', { count: motor.behind, latest: motor.latest })}{' '}
         <Link
           to={{ hash: MOTOR_SETTING }}
           className="font-semibold text-primary underline-offset-2 hover:underline"
@@ -134,6 +138,7 @@ function Facts({ view }: { readonly view: UpdateView }): ReactElement {
     );
   })();
   const newestFoot = (): string => {
+    if (moinmorni.behind === null) return t('updatesCard.newer');
     if (moinmorni.behind > 0) return t('updatesCard.behind', { count: moinmorni.behind });
     return moinmorni.latest ? t('updatesCard.isNewest') : t('updatesCard.notChecked');
   };
@@ -418,6 +423,37 @@ function ChangeList({ view }: { readonly view: UpdateView }): ReactElement | nul
   );
 }
 
+/**
+ * There is a new version, only its list of changes has not arrived: GitHub slows us down (says until when) or did not
+ * answer. Starting the update works anyway – Git already told us there is something new.
+ */
+function PendingList({ view }: { readonly view: UpdateView }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const time = useTimeText();
+  const ready = view.available && view.canUpdate ? t('updatesCard.pendingCanStart') : null;
+  if (!view.limitedUntil) {
+    return (
+      <Notice tone="neutral" icon={Clock} title={t('updatesCard.pendingTitle')}>
+        <p>
+          {t('updatesCard.pendingText')} {ready}
+        </p>
+      </Notice>
+    );
+  }
+  return (
+    <Notice
+      tone="blue"
+      icon={Clock}
+      title={t('updatesCard.limitedTitle', { time: time.clock(view.limitedUntil) })}
+    >
+      <p>
+        {t('updatesCard.limitedText')} {ready}
+      </p>
+      {view.githubKey === 'none' ? <p className="text-[13px]">{t('updatesCard.limitedKeyTip')}</p> : null}
+    </Notice>
+  );
+}
+
 function StatusPill({ view }: { readonly view: UpdateView }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const look = lookOf(view);
@@ -449,6 +485,8 @@ function UpdatesBody({
     onSuccess: (fresh) => {
       queryClient.setQueryData(UPDATES_KEY, fresh);
       if (fresh.checkFailed) toast.error(t('updatesCard.checkFailedToast'));
+      else if (fresh.branchMissing)
+        toast.error(t('updatesCard.branchMissingToast', { branch: fresh.branch }));
       else toast.success(fresh.available ? t('updatesCard.foundToast') : t('updatesCard.currentToast'));
     },
     onError: (err) => toast.error(errorText(err)),
@@ -502,6 +540,21 @@ function UpdatesBody({
           <p>{t('updatesCard.checkFailedText')}</p>
         </Notice>
       ) : null}
+      {view.branchMissing && !view.checkFailed ? (
+        <Notice
+          tone="warning"
+          icon={GitBranch}
+          title={t('updatesCard.branchMissingTitle', { branch: view.branch })}
+        >
+          <p>{t('updatesCard.branchMissingText')}</p>
+        </Notice>
+      ) : null}
+      {view.changesPending && !view.updating ? <PendingList view={view} /> : null}
+      {view.githubKey === 'rejected' ? (
+        <Notice tone="warning" icon={KeyRound} title={t('updatesCard.keyRejectedTitle')}>
+          <p>{t('updatesCard.keyRejectedText')}</p>
+        </Notice>
+      ) : null}
       {!view.canUpdate ? (
         <Notice tone="neutral" icon={Cog} title={t('updatesCard.noAgentTitle')}>
           <p>{t('updatesCard.noAgentText')}</p>
@@ -517,7 +570,7 @@ function UpdatesBody({
           <p>{t('updatesCard.devBuild')}</p>
         </Notice>
       ) : null}
-      {!view.available && !view.updating && view.checkedAt && !view.checkFailed ? (
+      {!view.available && !view.updating && view.checkedAt && !view.checkFailed && !view.branchMissing ? (
         <Notice tone="success" icon={CheckCircle2} title={t('updatesCard.allCurrentTitle')}>
           <p>{t('updatesCard.allCurrentText')}</p>
         </Notice>

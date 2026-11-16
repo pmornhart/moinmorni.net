@@ -1447,6 +1447,72 @@ export const UPDATES_AREA: SettingArea = {
       ],
     },
     {
+      id: 'restart',
+      title: t('Neustart der Server', 'Restarting the servers'),
+      text: t(
+        'Neues gilt auf einem Server erst nach seinem Neustart. Spieler sehen vorher einen Countdown; wer in einem Spielmodus ist, kommt erst in die Lobby.',
+        'Something new only applies on a server after it restarts. Players see a countdown first; anyone in a game mode is moved to the lobby first.',
+      ),
+      settings: [
+        {
+          key: 'restartAfterUpdate',
+          type: 'boolean',
+          default: true,
+          label: t('Nach einem Update gleich neu starten', 'Restart right after an update'),
+          help: t(
+            'Nach einem Update von MoinMorni starten alle Server, die etwas Neues haben (Netzwerk-Plugin, Spielmodus, Einstellungen), gleich neu – nacheinander und mit Countdown: erst die Spielmodi, dann der Bau-Server und die Lobby, zuletzt der Proxy. Aus: jeder Server erst, wenn gerade niemand drauf ist.',
+            'After a MoinMorni update, every server with something new (network plugin, game mode, settings) restarts right away – one after another and with a countdown: game modes first, then the build server and the lobby, the proxy last. Off: each server only when nobody is on it.',
+          ),
+          command: '/updates neustart an|aus',
+        },
+        {
+          key: 'restartCountdown',
+          type: 'number',
+          default: 30,
+          min: 10,
+          max: 300,
+          unit: seconds,
+          label: t('Countdown vor dem Neustart', 'Countdown before the restart'),
+          help: t(
+            'So lange sehen die Spieler vorher den Hinweis „Update eingespielt – Duels startet in 30 s neu“ (oben als Leiste und im Chat).',
+            'How long players see the notice “Update installed – Duels restarts in 30 s” beforehand (as a bar at the top and in chat).',
+          ),
+          command: '/updates countdown <sekunden>',
+        },
+        {
+          key: 'modeUpdatesNow',
+          type: 'boolean',
+          default: false,
+          label: t(
+            'Neue Fassung eines Spielmodus gleich einspielen',
+            'Install a new game-mode version right away',
+          ),
+          help: t(
+            'An: Kommt eine neue Fassung eines Spielmodus heraus, startet sein Server gleich mit Countdown neu. Aus: sobald gerade niemand darin spielt. MoinMorni schaut alle 10 Minuten nach neuen Fassungen.',
+            'On: when a new version of a game mode comes out, its server restarts right away with a countdown. Off: as soon as nobody is playing in it. MoinMorni looks for new versions every 10 minutes.',
+          ),
+          command: '/updates modi-sofort an|aus',
+        },
+      ],
+    },
+    {
+      id: 'modes',
+      title: t('Neue Spielmodi', 'New game modes'),
+      settings: [
+        {
+          key: 'addModes',
+          type: 'boolean',
+          default: true,
+          label: t('Neue Spielmodi automatisch hinzufügen', 'Add new game modes automatically'),
+          help: t(
+            'Hat ein neuer Spielmodus seine erste fertige Fassung (ein Release auf GitHub), bekommt er von selbst seinen Server und eine Figur in der Lobby. Aus: neue Modi warten, bis du das wieder anschaltest – Modi, die schon da sind, bekommen ihre neuen Fassungen trotzdem.',
+            'When a new game mode has its first finished version (a release on GitHub), it gets its own server and a figure in the lobby by itself. Off: new modes wait until you switch this back on – modes that are already there still get their new versions.',
+          ),
+          command: '/updates neue-modi an|aus',
+        },
+      ],
+    },
+    {
       id: 'motor',
       title: t('Motor (MorniHosting)', 'Engine (MorniHosting)'),
       settings: [
