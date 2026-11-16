@@ -16,16 +16,24 @@ const ICON_TIER = 2;
 const ICON_PIXELS = 20;
 const TILE_SIZE = ICON_PIXELS / BADGE_TILE;
 
-/** One role as Discord shows it: icon (the badge tile) or nothing, then the name in the role's colour. */
-function RankRow({ rank }: { readonly rank: RankView }): ReactElement {
+/**
+ * One role as Discord shows it: the badge tile as role icon (when Discord shows pictures; a role without symbol keeps
+ * the free space so the names line up), then the name in the role's colour.
+ */
+function RankRow({ rank, icons }: { readonly rank: RankView; readonly icons: boolean }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
     <li className="flex min-w-0 items-center gap-2.5 py-1.5">
-      <span className="grid size-5 shrink-0 place-items-center">
-        {rank.icon ? (
-          <PixelTile look={{ text: rank.name, symbol: rank.symbol, colour: rank.colour }} scale={TILE_SIZE} />
-        ) : null}
-      </span>
+      {icons ? (
+        <span className="grid size-5 shrink-0 place-items-center">
+          {rank.icon ? (
+            <PixelTile
+              look={{ text: rank.name, symbol: rank.symbol, colour: rank.colour }}
+              scale={TILE_SIZE}
+            />
+          ) : null}
+        </span>
+      ) : null}
       <span className="min-w-0 truncate text-[14.5px] font-semibold" style={{ color: rank.colour }}>
         {rank.discordName}
       </span>
@@ -81,7 +89,7 @@ export function RanksCard({ ready }: { readonly ready: boolean }): ReactElement 
               aria-label={t('discordRanks.preview')}
             >
               {ranks.roles.map((r) => (
-                <RankRow key={r.id} rank={r} />
+                <RankRow key={r.id} rank={r} icons={icons} />
               ))}
             </ul>
           </div>
@@ -92,7 +100,7 @@ export function RanksCard({ ready }: { readonly ready: boolean }): ReactElement 
               </Notice>
             ) : null}
             {ranks.reason === 'boost' ? (
-              <Notice tone="neutral" icon={Lock} title={t('discordRanks.boostTitle')}>
+              <Notice tone="neutral" icon={Lock} title={t('discordRanks.boostTitle', { need: ICON_TIER })}>
                 {t('discordRanks.boostText', { tier: view?.guild?.premiumTier ?? 0, need: ICON_TIER })}
               </Notice>
             ) : null}
