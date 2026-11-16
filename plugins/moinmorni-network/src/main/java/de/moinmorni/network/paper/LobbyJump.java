@@ -58,7 +58,7 @@ import org.joml.Vector3f;
  * Welcher Block wo kommt und wie schwer, rechnet {@link JumpCourse} (ohne Server, mit Tests).
  *
  * <p>Lag-sicher: Gelandet ist, wer nach seinen eigenen Bewegungen (vom Spiel gemeldet) auf der Fläche des nächsten
- * Blocks steht – nicht nach der Zeit. Jeder Block wird regelmäßig neu geschickt (ein Klick auf einen Block lässt das
+ * Blocks steht – nicht nach der Zeit und nicht nach „steht auf dem Boden“ des Servers (der kennt den Block nicht). Jeder Block wird regelmäßig neu geschickt (ein Klick auf einen Block lässt das
  * Spiel sonst den echten Block zeigen). Bedrock (Geyser) bekommt dieselben Blöcke; nur das Aufploppen (Anzeige-Wesen)
  * sieht man dort nicht.
  *
@@ -127,6 +127,8 @@ final class LobbyJump implements Listener {
     /** So genau muss man auf der Fläche stehen (Höhe); auf Schleim prallt man nur einen Augenblick auf. */
     private static final double LAND_TOLERANCE = 0.1;
     private static final double SLIME_TOLERANCE = 0.45;
+    /** Wer so wenig steigt, steht (oder fällt) – Rundungen des Spiels. */
+    private static final double RISE_TOLERANCE = 0.001;
     /** So weit unter dem tieferen der beiden Blöcke ist man gefallen. */
     private static final double FALL_DEPTH = 3;
     /** Aufploppen: von dieser Größe auf ganz, in so vielen Ticks; danach steht der Block wirklich da. */
@@ -268,7 +270,7 @@ final class LobbyJump implements Listener {
         Run run = runs.get(p.getUniqueId());
         Location to = event.getTo();
         if (run != null) {
-            follow(p, run, to);
+            follow(p, run, event.getFrom(), to);
             return;
         }
         if (!s.on() || !p.isOnGround() || to.getBlockX() != s.startX() || to.getBlockZ() != s.startZ()
@@ -346,7 +348,12 @@ final class LobbyJump implements Listener {
 
     // ---------- Unterwegs ----------
 
-    private void follow(Player p, Run run, Location to) {
+    /**
+     * Gelandet? Nur nach Lage: auf der Fläche des nächsten Blocks, genau auf Höhe der Oberkante und nicht im Aufsteigen.
+     * „Steht auf dem Boden“ des Servers hilft hier nicht – der Server kennt den Block nicht und hält den Läufer für
+     * schwebend (Minecraft 26.x rechnet das selbst nach, egal was das Spiel meldet).
+     */
+    private void follow(Player p, Run run, Location from, Location to) {
         double lowest = Math.min(run.current.top(), run.next.top());
         if (to.getY() < lowest - FALL_DEPTH) {
             Bukkit.getScheduler().runTask(plugin, () -> {
@@ -357,9 +364,10 @@ final class LobbyJump implements Listener {
             return;
         }
         Step n = run.next;
+        boolean notRising = to.getY() <= from.getY() + RISE_TOLERANCE;
         boolean landed = n.kind() == Kind.SLIME
                 ? n.holds(to.getX(), to.getY(), to.getZ(), SLIME_TOLERANCE) && to.getY() <= n.top() + LAND_TOLERANCE
-                : p.isOnGround() && n.holds(to.getX(), to.getY(), to.getZ(), LAND_TOLERANCE);
+                : notRising && n.holds(to.getX(), to.getY(), to.getZ(), LAND_TOLERANCE);
         if (landed) {
             advance(p, run);
         }

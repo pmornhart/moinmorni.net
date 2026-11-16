@@ -78,9 +78,16 @@ async function main() {
   bot._client.on('action_bar', (p) => actionbars.push(JSON.stringify(p)));
   bot._client.on('sound_effect', (p) => sounds.push(JSON.stringify(p.sound ?? p.soundId ?? p).slice(0, 120)));
   bot.on('soundEffectHeard', (name) => sounds.push(String(name)));
+  // mineflayer teilt die Geschwindigkeit ab 26.x noch durch 8000 (neues Format) – beim Doppelsprung echt anwenden.
+  let realVelocity = false;
   bot._client.on('entity_velocity', (p) => {
-    if (p.entityId === bot.entity?.id) pushes.push(p);
+    if (p.entityId !== bot.entity?.id) return;
+    pushes.push(p);
+    if (realVelocity) setImmediate(() => bot.entity.velocity.set(p.velocity.x, p.velocity.y, p.velocity.z));
   });
+  // Fliegen erlaubt? (Doppelsprung) – von Anfang an mitschreiben, der Server schickt es nur bei Änderungen.
+  const abilities = [];
+  bot._client.on('abilities', (p) => abilities.push(p.flags));
   await new Promise((r) => bot.once('spawn', r));
   await wait(2500);
 
@@ -153,8 +160,6 @@ async function main() {
   await wait(4000);
 
   // ---------- Jump and Run ----------
-  const abilities = [];
-  bot._client.on('abilities', (p) => abilities.push(p.flags));
   const particles = [];
   bot._client.on('world_particles', (p) => particles.push(p));
   const allowFlying = () => abilities.length > 0 && (abilities[abilities.length - 1] & 0x04) !== 0;
@@ -246,8 +251,9 @@ async function main() {
     const target = next[next.length - 1];
     kinds.add(target.name.replace(/^.*_(slab|fence|wall|trapdoor)$/, '$1'));
     const s = surface(target);
-    // Positions-Teleport des Test-Spielers selbst (wie ein Sprung: der Server sieht nur die neue Stelle).
-    bot.entity.position.set(s.x, s.y, s.z);
+    // Positions-Teleport des Test-Spielers selbst – knapp über den Block, dann fällt er darauf wie am Ende eines
+    // Sprungs (der Server zählt eine Landung von oben, nicht ein Hochrutschen).
+    bot.entity.position.set(s.x, s.y + 0.7, s.z);
     bot.entity.velocity.set(0, 0, 0);
     const before = actionbars.length;
     const ok = await waitFor(() => actionbars.slice(before).some((a) => a.includes(`★ ${i + 1}`)), 2500);
@@ -298,13 +304,13 @@ async function main() {
       text.slice(0, 160),
     );
   }
-  const board = rcon(
-    'data get entity @e[type=text_display,x=-59.5,y=65,z=-46.4,distance=..1.5,limit=1] text',
-  );
+  // Erste Zeilen der Tafel (je Name, dann Punkte) – die ganze Schrift kürzt RCON ab.
+  const boardAt = 'data get entity @e[type=text_display,x=-59.5,y=65,z=-46.4,distance=..1.5,limit=1]';
+  const board = rcon(...[0, 1, 2, 3, 4, 5].map((i) => `${boardAt} text.extra[${i}].text`));
   check(
     'Tafel am Start: Top 10 mit dem Test-Spieler',
-    board.includes(NAME) && board.includes(String(made)),
-    board.slice(0, 200),
+    board.includes(`. ${NAME}`) && board.includes(`★ ${made}`),
+    board.replace(/\s+/g, ' ').slice(0, 200),
   );
   if (process.env.MM_HUB_DB) {
     await wait(500);
@@ -356,6 +362,9 @@ async function main() {
   bot.setControlState('jump', false);
   await wait(150);
   // Zweimal Springen will das Fliegen einschalten – das Plugin macht daraus den Schwung.
+  const mark = abilities.length;
+  const pushMark = pushes.length;
+  realVelocity = true;
   bot._client.write('abilities', { flags: 0x02 });
   let peak = y0;
   const until = Date.now() + 1500;
@@ -363,15 +372,18 @@ async function main() {
     peak = Math.max(peak, bot.entity.position.y);
     await wait(50);
   }
+  realVelocity = false;
+  const boost = pushes.slice(pushMark).find((p) => p.velocity.y > 0.5);
   check(
-    'Doppelsprung: zweiter Schwung nach oben',
-    peak - y0 > 2.2,
-    `höchstens ${(peak - y0).toFixed(2)} über dem Boden`,
+    'Doppelsprung: zweiter Schwung nach vorn und oben',
+    Boolean(boost) && peak - y0 > 2.2,
+    `Schwung ${boost ? JSON.stringify(boost.velocity) : '–'}, höchstens ${(peak - y0).toFixed(2)} über dem Boden`,
   );
   check('Doppelsprung: Funken', particles.length > 0, `${particles.length} Partikel-Pakete`);
   check(
     'Doppelsprung: in der Luft kein zweiter (Fliegen erst nach der Landung wieder erlaubt)',
-    abilities.some((f) => (f & 0x04) === 0),
+    abilities.slice(mark).some((f) => (f & 0x04) === 0),
+    String(abilities.slice(mark)),
   );
   await waitFor(() => bot.entity.onGround, 3000);
   check('Nach der Landung wieder erlaubt', await waitFor(allowFlying, 2000));
