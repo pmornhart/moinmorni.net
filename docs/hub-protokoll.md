@@ -99,6 +99,11 @@ des Spielers.
 | `voice-join`          | Spielserver            | `uuid, group, force?` – Spieler in eine Gruppe setzen (Team ohne Passwort)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | _(binär)_ Audio       | Spielserver            | Sprache von anderen Servern zum Abspielen                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
+In `mode-settings` kommen Listen aus Zahlen oder Texten (Rundenzahlen zur Wahl, Taler oder Punkte je Platz …) immer
+als ganze Liste (`"edelweiss-jagd-runden": [10, 15, 20]`), Felder von Listen-Einträgen einzeln
+(`ankauf.stufen.1.prozent`). So entsteht eine Liste auch in einer älteren config.yml, die sie noch nicht hat – eine
+einzelne Stelle ließe sich dort nicht eintragen.
+
 Fällt der Hub aus, läuft das Netzwerk weiter: Chat bleibt auf dem eigenen Server, Banns aus der letzten `bans`-Liste
 gelten weiter, das Plugin verbindet sich alle paar Sekunden neu.
 

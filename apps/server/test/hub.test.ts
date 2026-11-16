@@ -717,26 +717,73 @@ describe('Hub', () => {
     const partyFirst = (await party.next('mode-settings')) as unknown as { values: Record<string, unknown> };
     expect(partyFirst.values).toMatchObject({
       'minispiele.auswahl': [],
-      'edelweiss-jagd-runden.1': 15,
-      'regeln.minispiel-taler.0': 10,
+      // Listen gehen als Ganzes – so entstehen auch neue Listen in einer älteren config.yml.
+      'edelweiss-jagd-runden': [10, 15, 20],
+      'regeln.minispiel-taler': [10, 6, 4, 3, 2, 1, 1, 1],
+      'minispiel-marathon.runden': [6, 10, 15],
+      'auszeichnungen.welche': [],
     });
-    // Neue Modi genauso: Angelkönig-Preise sind Stellen einer Liste, Wintersport hat eine Auswahl.
+    // Neue Modi genauso: Angelkönig-Preise sind eine Liste, Wintersport hat eine Auswahl.
     const angel = await plugin('angelkoenig', 'backend');
     const angelFirst = (await angel.next('mode-settings')) as unknown as {
       plugin: string;
       values: Record<string, unknown>;
     };
     expect(angelFirst.plugin).toBe('MorniAngelkoenig');
-    expect(angelFirst.values).toMatchObject({ 'turnier.preise.0': 250, 'turnier.alle-minuten': 15 });
+    expect(angelFirst.values).toMatchObject({ 'turnier.preise': [250, 120, 60], 'turnier.alle-minuten': 15 });
     await proxy.request({
       t: 'command',
       uuid: PHILIP,
       command: 'angelconfig',
       args: ['turnier', 'preis1', '300'],
     });
-    expect(await angel.next('mode-settings')).toMatchObject({ values: { 'turnier.preise.0': 300 } });
+    expect(await angel.next('mode-settings')).toMatchObject({ values: { 'turnier.preise': [300, 120, 60] } });
     await proxy.request({ t: 'command', uuid: PHILIP, command: 'winterconfig', args: ['saison', 'winter'] });
     expect(stores.settings('wintersport')['season']).toBe('winter');
+    // Neue Einstellungen der Modi gehen auch im Spiel: Marathon (Stelle einer Liste), Kramerladen und Kramerkiste
+    // von Versteckerl, Händlerhaus von MorniSMP – und landen nur beim jeweiligen Modus.
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'partyconfig',
+      args: ['marathon', 'wahl2', '12'],
+    });
+    expect(await party.next('mode-settings')).toMatchObject({
+      values: { 'minispiel-marathon.runden': [6, 12, 15] },
+    });
+    const hide = await plugin('versteckerl', 'backend');
+    expect(await hide.next('mode-settings')).toMatchObject({
+      plugin: 'MorniVersteckerl',
+      values: { 'laden.pfiffe.kuhglocke.preis': 160, 'rundenladen.laterne.an': true, 'punkte.fund': 10 },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'versteckconfig',
+      args: ['laden', 'pfiff', 'kuhglocke', 'preis', '200'],
+    });
+    expect(await hide.next('mode-settings')).toMatchObject({
+      values: { 'laden.pfiffe.kuhglocke.preis': 200 },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'versteckconfig',
+      args: ['kiste', 'laterne', 'aus'],
+    });
+    expect(await hide.next('mode-settings')).toMatchObject({
+      values: { 'rundenladen.laterne.an': false, 'rundenladen.laterne.preis': 8 },
+    });
+    const smp = await plugin('smp', 'backend');
+    expect(await smp.next('mode-settings')).toMatchObject({
+      plugin: 'MorniSMP',
+      values: { 'haendler.an': true },
+    });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'smpconfig', args: ['haendler', 'aus'] });
+    expect(await smp.next('mode-settings')).toMatchObject({ values: { 'haendler.an': false } });
+    expect(
+      hide.received.filter((m) => m.t === 'mode-settings').every((m) => m['mode'] === 'versteckerl'),
+    ).toBe(true);
     // Panel: nur Duels bekommt die neuen Werte.
     stores.patchSettings('duels', { timeLimit: 300, soupHeal: 6.5 }, 'test');
     expect(await duels.next('mode-settings')).toMatchObject({

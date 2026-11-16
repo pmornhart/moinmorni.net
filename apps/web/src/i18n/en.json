@@ -750,7 +750,8 @@
     "off": "Off",
     "missing": "This area does not exist – or you may not see it.",
     "default": "Default: {{value}}",
-    "savedMode": "Saved – applies after the mode’s next restart (as soon as nobody is playing)."
+    "savedMode": "Saved – applies after the mode’s next restart (as soon as nobody is playing).",
+    "sections": "Sections"
   },
   "modes": {
     "title": "Modes",

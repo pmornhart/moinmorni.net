@@ -750,7 +750,8 @@
     "off": "Aus",
     "missing": "Diesen Bereich gibt es nicht – oder du darfst ihn nicht sehen.",
     "default": "Standard: {{value}}",
-    "savedMode": "Gespeichert – gilt nach dem nächsten Neustart des Modus (sobald gerade niemand spielt)."
+    "savedMode": "Gespeichert – gilt nach dem nächsten Neustart des Modus (sobald gerade niemand spielt).",
+    "sections": "Abschnitte"
   },
   "modes": {
     "title": "Modi",
