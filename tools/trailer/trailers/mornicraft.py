@@ -194,7 +194,7 @@ SHOTS = [
                    {'at': 2.75, 'cmd': '#release Dora'},
                    {'at': 2.78, 'actor': 'Dora', 'act': 'activate', 'arg': ' '.join(map(str, BENCH_DORA))}]}},
     # ------------------------------------------------ /nether: Tor, Treppenbrücke und befallene Insel entstehen
-    {'id': '08-nether', 'bars': 2, 'card': 'lt-nether.png', 'cardAt': 0.6, 'cardEnd': 5.4, 'time': 6000,
+    {'id': '08-nether', 'bars': 2, 'card': 'lt-nether.png', 'cardAt': 0.4, 'time': 6000,
      'before': ['rc:nether weg', 'sleep:3', 'rc:fill -527 110 238 -503 160 262 air replace minecraft:weeping_vines_plant',
                 'rc:fill -527 110 238 -503 160 262 air replace minecraft:weeping_vines']
      + [f'rc:tp {n} {MX - 30 - i} {G} {MZ + 18}' for i, n in enumerate(('Anna', 'Toni', 'Clara', 'Dora', 'Fritz'))],
@@ -205,7 +205,7 @@ SHOTS = [
         'events': [{'at': 0.35, 'cmd': 'nether'}]}},
     # ------------------------------------------------ … und über die Brücke hinab zum Netherportal
     {'id': '08b-bruecke', 'bars': 2, 'time': 6000, 'spec': {
-        'wait': 8,
+        'wait': 14, 'slow': 17,
         'camera': [{'p': A(-25.0, 171.6, -22.0), 'look': A(-46, 161.5, -22.1), 't': 0},
                    {'p': A(-35.5, 165.3, -22.0), 'look': A(-49, 160.4, -22.1), 't': 5.4, 'ease': 1}],
         'actors': {'Anna': walk([A(-28.6, 167.1, -22.7), A(-29.5, 166.6, -22.7), A(-31, 165.6, -22.7), A(-33, 164.1, -22.7), A(-35, 163.1, -22.7),
@@ -257,7 +257,7 @@ SHOTS = [
                    {'at': 0.8, 'cmd': 'mornicraft drache kristalle'},
                    {'at': 1.6, 'cmd': 'mornicraft drache feuerregen'}]}},
     # ------------------------------------------------ Ende: alle winken auf dem Platz, hinaus über die Insel
-    {'id': '12-ende', 'bars': 'rest', 'card': 'ende.png', 'cardAt': 0.5, 'time': 3000,
+    {'id': '12-ende', 'bars': 'rest', 'card': 'ende.png', 'cardAt': 2.3, 'time': 3000,
      'before': [f'rc:execute in minecraft:overworld run tp {n} {MX + i} {G} {MZ + 8}' for i, n in
                 enumerate(('Anna', 'Toni', 'Clara', 'Dora', 'Fritz'))]
      + [f'rc:clear {n}' for n in ('Anna', 'Toni', 'Clara', 'Dora', 'Fritz')] + ['rc:effect clear McKamera', 'sleep:2'], 'spec': {
