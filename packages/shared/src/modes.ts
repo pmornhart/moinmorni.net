@@ -135,7 +135,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
       'Überleben mit freiem Markt: Stadt mit Marktplatz, Auktionshaus, Aufträgen, eigenen Läden und Zufalls-Teleport.',
       'Survival with a free market: town with market square, auction house, orders, your own shops and random teleport.',
     ),
-    state: 'soon',
+    state: 'on',
     access: 'everyone',
     position: 6,
     maxPlayers: 60,

@@ -104,7 +104,7 @@
 ## Offen
 
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
-- MorniSMP im Panel von „bald“ auf „an“ stellen; MorniCraft ist bis zum Einschalten aus.
+- MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).
 - **Philip testet.** Morni Party: Burg Weißenstein + Minispiel-Kulissen (Helfer), danach Go fürs Release. MoinMorni selbst (`main`) und MorniHosting-PR #117 brauchen noch ein eigenes Go, danach Submodul wieder auf MorniHosting `main`.
 - Braucht echte Zugänge, in der Sandbox nicht prüfbar: Discord mit echtem Bot-Token (Einrichten, Rollen, Bewerbungen, OAuth), Modpack auf Modrinth (Schlüssel), Proxmox-Einzeiler auf echtem Proxmox, systemd-Update-Helfer, Bedrock-Spieler über Geyser, Sprachchat mit echten Spielern.
 - Bausteine siehe Fortschrittsseite (`docs/fortschritt/index.html`, Artefakt https://claude.ai/artifact/FDBGtjXT6fgaY85Z1AvTsR).

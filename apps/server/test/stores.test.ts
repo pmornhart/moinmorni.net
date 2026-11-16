@@ -49,7 +49,8 @@ describe('Spielmodi beim Start', () => {
     const smp = handle.db.select().from(modes).where(eq(modes.id, 'mirni')).get()?.data;
     expect(smp?.description.de).toContain('freiem Markt');
     expect(smp?.server).toBe('smp');
-    expect(smp?.state).toBe('soon');
+    // Der Zustand bleibt, wie er war (das Team schaltet im Panel).
+    expect(smp?.state).toBe(DEFAULT_MODES.find((m) => m.id === 'mirni')?.state);
 
     const own = { de: 'Unser Markt-Survival', en: 'Our market survival' };
     handle.db
