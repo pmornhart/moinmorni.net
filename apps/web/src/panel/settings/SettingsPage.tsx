@@ -18,6 +18,8 @@ import { fieldId, SettingInput, valueValid } from './fields';
 import { SettingsSearch } from './SettingsSearch';
 
 const FLASH_MS = 3200;
+/** After saving a game mode's settings: ask again once its server has answered. */
+const MODE_STATE_REFRESH_MS = 2500;
 const SETTING_ANCHOR = '#setting-';
 
 function same(a: unknown, b: unknown): boolean {
@@ -148,7 +150,13 @@ function AreaForm({ entry }: { readonly entry: SettingsEntry }): ReactElement {
         list?.map((e) => (e.area.id === area.id ? { ...e, values: fresh } : e)),
       );
       setDraft(fresh);
-      toast.success(t('settings.saved'));
+      toast.success(t(area.mode ? 'settings.savedMode' : 'settings.saved'));
+      // Game modes: the server reports a moment later whether a restart is due – then show it.
+      if (area.mode)
+        window.setTimeout(
+          () => void queryClient.invalidateQueries({ queryKey: SETTINGS_KEY }),
+          MODE_STATE_REFRESH_MS,
+        );
     },
     onError: (err) => toast.error(errorText(err)),
   });

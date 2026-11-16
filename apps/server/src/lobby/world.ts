@@ -12,6 +12,7 @@ import {
   type Season,
 } from '@moinmorni/builder';
 import { MotorError, type MotorClient } from '../motor/client.js';
+import { readServerFile, writeServerFile } from '../motor/files.js';
 
 /**
  * Die Lobby baut sich selbst: Der Bauplan (`packages/builder/src/lobby/`) kommt als Datenpaket auf den Lobby-Server,
@@ -247,20 +248,10 @@ export function createLobbyWorld(
   const plan = options.pack ?? lobbyPack;
   const busy = new Set<string>();
 
-  const readFile = async (serverId: string, file: string): Promise<string | null> => {
-    try {
-      const r = await motor.request<{ content: string }>(
-        'GET',
-        `/api/servers/${serverId}/files/content?path=${encodeURIComponent(file)}`,
-      );
-      return r.content;
-    } catch (err) {
-      if (err instanceof MotorError) return null;
-      throw err;
-    }
-  };
+  const readFile = (serverId: string, file: string): Promise<string | null> =>
+    readServerFile(motor, serverId, file);
   const writeFile = (serverId: string, file: string, content: string): Promise<void> =>
-    motor.request('PUT', `/api/servers/${serverId}/files/content`, { path: file, content });
+    writeServerFile(motor, serverId, file, content);
   /**
    * Ein Befehl über den Motor. Antwortet der Server zu langsam (gleich nach dem Start ist er beschäftigt), kommt
    * „command_failed“ – dann kurz warten und noch einmal; die Bau-Befehle dürfen doppelt laufen (`summonOnce`).

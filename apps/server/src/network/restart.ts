@@ -2,8 +2,8 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { MotorClient } from '../motor/client.js';
 
 /**
- * Nach einem Update: Server mit neuem Plugin, neuem Hub-Schlüssel oder neuen Einstellungen starten neu, sobald
- * niemand drauf ist – so fliegt keiner mitten im Spiel raus. Ein gestoppter Server holt sich das Neue beim nächsten
+ * Nach einem Update oder neuen Einstellungen eines Spielmodus: Server mit neuem Plugin, neuem Hub-Schlüssel oder
+ * neuen Einstellungen starten neu, sobald niemand drauf ist – so fliegt keiner mitten im Spiel raus. Ein gestoppter Server holt sich das Neue beim nächsten
  * Start von selbst und fällt aus der Liste. Die Spielerzahl kommt vom Motor (der Hub kennt sie nicht, solange das
  * alte Plugin mit altem Schlüssel nicht hineinkommt).
  */
@@ -17,6 +17,8 @@ interface MotorLive {
 
 export interface RestartQueue {
   readonly add: (servers: ReadonlyArray<{ readonly serverId: string; readonly member: string }>) => void;
+  /** Doch nicht mehr nötig (z. B. Einstellung wieder auf den alten Wert gestellt). */
+  readonly remove: (serverId: string) => void;
   /** Einmal prüfen (sonst alle 30 s von selbst). */
   readonly check: () => Promise<void>;
   readonly pending: () => string[];
@@ -42,7 +44,7 @@ export function createRestartQueue(
     waiting.delete(serverId);
     log.info(
       { server: member },
-      'Netzwerk: Server startet neu, damit das Update gilt (gerade niemand drauf)',
+      'Netzwerk: Server startet neu, damit Update oder neue Einstellungen gelten (gerade niemand drauf)',
     );
     await motor.request('POST', `/api/servers/${serverId}/actions/restart`);
   };
@@ -81,6 +83,9 @@ export function createRestartQueue(
     add: (servers) => {
       servers.forEach((s) => waiting.set(s.serverId, s.member));
       if (servers.length > 0) void check();
+    },
+    remove: (serverId) => {
+      waiting.delete(serverId);
     },
     check,
     pending: () => [...waiting.values()],

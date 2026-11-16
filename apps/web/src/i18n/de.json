@@ -521,7 +521,8 @@
     "discord": "Discord",
     "team": "Team",
     "myAccount": "Mein Konto",
-    "accountShort": "Konto"
+    "accountShort": "Konto",
+    "modeSettings": "Spielmodi"
   },
   "overview": {
     "greeting": "Servus, {{name}}!",
@@ -562,7 +563,8 @@
     "on": "An",
     "off": "Aus",
     "missing": "Diesen Bereich gibt es nicht – oder du darfst ihn nicht sehen.",
-    "default": "Standard: {{value}}"
+    "default": "Standard: {{value}}",
+    "savedMode": "Gespeichert – gilt nach dem nächsten Neustart des Modus (sobald gerade niemand spielt)."
   },
   "modes": {
     "title": "Modi",
@@ -978,7 +980,7 @@
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und mehr. Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt."
     },
     "news": {
       "title": "News",
@@ -1654,5 +1656,11 @@
     "application_already_listed": "Dieser Name steht schon auf der Whitelist – du kannst direkt losspielen!",
     "application_pending": "Für dich oder diesen Minecraft-Namen liegt schon eine Bewerbung beim Team. Wir melden uns!",
     "apply_login_required": "Deine Anmeldung ist abgelaufen. Melde dich bitte noch mal mit Discord an – deine Antworten merkt sich die Seite."
+  },
+  "modeSettings": {
+    "title": "Gilt nach dem nächsten Neustart des Modus",
+    "text": "Diese Einstellungen stehen in der Datei des Spielmodus. MoinMorni trägt sie dort ein und startet den Modus von selbst neu, sobald gerade niemand spielt – niemand fliegt mitten im Spiel raus. Schläft der Modus, gelten sie beim Aufwachen.",
+    "pendingTitle": "Neustart steht noch aus",
+    "pendingText": "Die neuen Werte sind eingetragen. Gerade spielt noch jemand – sobald der Modus leer ist, startet er neu, dann gelten sie."
   }
 }

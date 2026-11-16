@@ -34,6 +34,7 @@ describe('Hub', () => {
   let clock: { now: number };
   let woken: string[];
   let connected: string[];
+  let restartsSeen: Array<{ mode: string; server: string; needed: boolean }>;
   const open: FakePlugin[] = [];
   const close = (): void => undefined;
 
@@ -43,6 +44,8 @@ describe('Hub', () => {
     const events = createEventBus();
     connected = [];
     events.on('server.connected', ({ server }) => connected.push(server));
+    restartsSeen = [];
+    events.on('mode.restart', (r) => restartsSeen.push(r));
     stores = createStores(handle.db, events);
     clock = { now: Date.parse('2026-11-14T12:00:00Z') };
     woken = [];
@@ -663,6 +666,70 @@ describe('Hub', () => {
       config: { network: { 'rules-de': ['Eins', 'Zwei'] } },
     });
     expect(duels.received.some((m) => m.t === 'mornicraft-settings')).toBe(false);
+  });
+
+  test('Einstellungen der Spielmodi: nur der Server des Modus bekommt sie (Pfad → Wert), Panel und Befehl, Neustart-Meldung', async () => {
+    const { proxy, lobby, duels } = await network();
+    // Beim Verbinden schon geschickt (network() verbindet Duels): Standardwerte = mitgelieferte config.yml.
+    const first = (await duels.next('mode-settings')) as unknown as {
+      mode: string;
+      plugin: string;
+      values: Record<string, unknown>;
+    };
+    expect(first).toMatchObject({ mode: 'duels', plugin: 'MoinMorniDuels' });
+    expect(first.values).toMatchObject({
+      'kampf.zeitlimit-sekunden': 600,
+      'suppe.heilung': 7,
+      'arena-kopien': 3,
+    });
+    const party = await plugin('party', 'backend');
+    const partyFirst = (await party.next('mode-settings')) as unknown as { values: Record<string, unknown> };
+    expect(partyFirst.values).toMatchObject({
+      'minispiele.auswahl': [],
+      'edelweiss-jagd-runden.1': 15,
+      'regeln.minispiel-taler.0': 10,
+    });
+    // Panel: nur Duels bekommt die neuen Werte.
+    stores.patchSettings('duels', { timeLimit: 300, soupHeal: 6.5 }, 'test');
+    expect(await duels.next('mode-settings')).toMatchObject({
+      values: { 'kampf.zeitlimit-sekunden': 300, 'suppe.heilung': 6.5 },
+    });
+    // Im Spiel per Befehl (Owner), Komma geht auch.
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'partyconfig',
+      args: ['minispiele', 'dauer', '0,5'],
+    });
+    expect(await party.next('mode-settings')).toMatchObject({ values: { 'minispiele.dauer-faktor': 0.5 } });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'partyconfig',
+      args: ['minispiel', 'kuhglocke', 'aus'],
+    });
+    const chosen = (await party.next('mode-settings')) as unknown as { values: Record<string, string[]> };
+    expect(chosen.values['minispiele.auswahl']).not.toContain('kuhglocke');
+    expect(chosen.values['minispiele.auswahl']).toContain('rempelei');
+    // Lena (Spielerin) darf nicht.
+    await proxy.request({ t: 'command', uuid: LENA, command: 'duelsconfig', args: ['zeitlimit', '60'] });
+    expect(stores.settings('duels')['timeLimit']).toBe(300);
+    expect(lobby.received.some((m) => m.t === 'mode-settings')).toBe(false);
+    expect(duels.received.filter((m) => m.t === 'mode-settings').every((m) => m['mode'] === 'duels')).toBe(
+      true,
+    );
+
+    // Neustart nötig: nur der Server des Modus darf es melden.
+    lobby.send({ t: 'mode-settings-state', mode: 'duels', restart: true, changed: 2 });
+    duels.send({ t: 'mode-settings-state', mode: 'duels', restart: true, changed: 2 });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(restartsSeen).toEqual([{ mode: 'duels', server: 'duels', needed: true }]);
+    expect(hub.modeRestarts()).toEqual(['duels']);
+    // Server geht weg (Neustart oder Schlaf): nicht mehr offen.
+    duels.close();
+    await new Promise((r) => setTimeout(r, 150));
+    expect(hub.modeRestarts()).toEqual([]);
+    expect(restartsSeen.at(-1)).toEqual({ mode: 'duels', server: 'duels', needed: false });
   });
 
   test('MorniCraft meldet Spieler-Daten fürs Panel: nur der MorniCraft-Server, nur gültige', async () => {

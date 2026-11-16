@@ -26,6 +26,11 @@ export interface Events {
   'application.decided': { id: number };
   /** Ein Spielserver hat sich beim Hub angemeldet (z. B. nach einem Neustart). */
   'server.connected': { server: string };
+  /**
+   * Einstellungen eines Spielmodus: Muss sein Server neu starten, damit sie gelten (`needed`), oder nicht mehr (alter
+   * Wert zurück, Server neu gestartet oder gestoppt)? MoinMorni startet ihn neu, sobald gerade niemand spielt.
+   */
+  'mode.restart': { mode: string; server: string; needed: boolean };
 }
 
 export interface EventBus {

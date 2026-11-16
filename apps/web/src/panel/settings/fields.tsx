@@ -1,7 +1,7 @@
 import { Plus, X } from 'lucide-react';
 import { useState, type KeyboardEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SettingDef } from '@moinmorni/shared';
+import { onStep, type SettingDef } from '@moinmorni/shared';
 import { Button, Input, NativeSelect, Switch, Textarea } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -13,7 +13,7 @@ type Def<K extends SettingDef['type']> = Extract<SettingDef, { type: K }>;
 export function valueValid(def: SettingDef, value: unknown): boolean {
   const checks: { [K in SettingDef['type']]: (d: Def<K>) => boolean } = {
     boolean: () => typeof value === 'boolean',
-    number: (d) => typeof value === 'number' && Number.isInteger(value) && value >= d.min && value <= d.max,
+    number: (d) => typeof value === 'number' && onStep(value, d.step) && value >= d.min && value <= d.max,
     text: (d) => typeof value === 'string' && value.length <= d.maxLength,
     select: (d) => d.options.some((o) => o.value === value),
     list: (d) => Array.isArray(value) && value.length <= d.maxItems,
@@ -57,10 +57,10 @@ function NumberField({ def, value, onChange }: FieldProps<'number'>): ReactEleme
         <Input
           id={fieldId(def.key)}
           type="number"
-          inputMode="numeric"
+          inputMode={def.step ? 'decimal' : 'numeric'}
           min={def.min}
           max={def.max}
-          step={1}
+          step={def.step ?? 1}
           value={typeof value === 'number' ? value : String(value ?? '')}
           aria-invalid={invalid}
           className={cn(

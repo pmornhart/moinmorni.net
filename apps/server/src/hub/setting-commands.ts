@@ -1,4 +1,4 @@
-import { SETTING_AREAS, type GameRight, type SettingArea, type SettingDef } from '@moinmorni/shared';
+import { SETTING_AREAS, onStep, type GameRight, type SettingArea, type SettingDef } from '@moinmorni/shared';
 import type { Command, Actor } from './commands.js';
 import type { HubContext } from './context.js';
 import { mm, text, type Lang } from './texts.js';
@@ -14,6 +14,7 @@ const OFF = new Set(['aus', 'off', 'nein', 'no', 'false', '0']);
 const ADD = new Set(['hinzu', 'add', 'plus']);
 const REMOVE = new Set(['weg', 'remove', 'entfernen', 'minus']);
 const LIST_SEPARATOR = ', ';
+const LOCALES: Readonly<Record<Lang, string>> = { de: 'de-DE', en: 'en-GB' };
 // Platzhalter mit Auswahl im Befehl: "<keine|wiesn|winter>" → ["keine", "wiesn", "winter"].
 // https://regex101.com/?flavor=javascript&regex=%5E%3C(.%2B%5C%7C.%2B)%3E%24&testString=%3Ckeine%7Cwiesn%7Cwinter%3E
 const CHOICES = /^<(.+\|.+)>$/;
@@ -59,7 +60,11 @@ function shown(lang: Lang, def: SettingDef, value: unknown): string {
     const list = Array.isArray(value) ? value.map(String) : [];
     return list.length ? mm(list.join(LIST_SEPARATOR)) : text(lang, 'set.empty');
   }
-  if (def.type === 'number' && def.unit) return `${String(value)} ${def.unit[lang]}`;
+  if (def.type === 'number') {
+    // Kommazahlen wie man sie schreibt: „3,5“ auf Deutsch, „3.5“ auf Englisch.
+    const n = def.step && typeof value === 'number' ? value.toLocaleString(LOCALES[lang]) : String(value);
+    return def.unit ? `${n} ${def.unit[lang]}` : n;
+  }
   const plain = String(value ?? '');
   return plain ? mm(plain) : text(lang, 'set.empty');
 }
@@ -73,8 +78,9 @@ function parseValue(p: Pattern, args: readonly string[], current: unknown): unkn
     return OFF.has(first) ? false : undefined;
   }
   if (def.type === 'number') {
-    const n = Number(first);
-    return Number.isInteger(n) && n >= def.min && n <= def.max ? n : undefined;
+    // „3,5“ und „3.5“ gehen beide.
+    const n = Number(first.replace(',', '.'));
+    return first && onStep(n, def.step) && n >= def.min && n <= def.max ? n : undefined;
   }
   if (def.type === 'text') {
     const value = args.join(' ').trim();

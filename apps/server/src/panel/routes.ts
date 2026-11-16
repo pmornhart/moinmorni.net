@@ -8,7 +8,15 @@ import type { Stores } from './stores.js';
 const OWNER = 'owner';
 
 /** Panel: wer bin ich, Einstellungen nach Katalog, Modi, Rollen-Vorlage. Jede Route prüft den Bereich. */
-export function registerPanelRoutes(app: Api, auth: PanelAuth, stores: Stores): void {
+/**
+ * @param modeRestarts Spielmodi, die für neue Einstellungen noch auf ihren Neustart warten (vom Hub).
+ */
+export function registerPanelRoutes(
+  app: Api,
+  auth: PanelAuth,
+  stores: Stores,
+  modeRestarts: () => readonly string[] = () => [],
+): void {
   app.get('/api/panel/me', async (request) => {
     const user = await auth.require(request);
     return {
@@ -24,9 +32,12 @@ export function registerPanelRoutes(app: Api, auth: PanelAuth, stores: Stores): 
   /** Die Bereiche, die diese Person sieht – mit Katalog und aktuellen Werten. */
   app.get('/api/panel/settings', async (request) => {
     const user = await auth.require(request);
+    const waiting = new Set(modeRestarts());
     return SETTING_AREAS.filter((a) => user.areas.has(a.panel)).map((area) => ({
       area,
       values: stores.settings(area.id),
+      // Spielmodi: Neustart steht noch aus (gilt, sobald gerade niemand spielt).
+      ...(area.mode ? { restartPending: waiting.has(area.mode.id) } : {}),
     }));
   });
 

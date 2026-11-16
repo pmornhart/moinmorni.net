@@ -2,23 +2,29 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
   Castle,
   Compass,
+  Dices,
   Gamepad2,
   Gavel,
   Globe,
   Globe2,
   Hammer,
   House,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Menu,
   MessagesSquare,
   Mic,
+  Mountain,
   Newspaper,
   Pickaxe,
   RefreshCw,
   Server,
   Settings2,
+  Shield,
   ShieldHalf,
+  Store,
+  Swords,
   UserCog,
   UserRoundCog,
   Users,
@@ -38,7 +44,7 @@ import { cn } from '~/lib/cn';
 import { usePick } from '~/lib/text';
 import { useLogout } from './PanelGate';
 import { RoleBadge } from '~/components/role-visuals';
-import { usePanel, useSettingsQuery } from './session';
+import { usePanel, useSettingsQuery, type SettingsEntry } from './session';
 import { TourProvider, useTour } from './tour/Tour';
 
 /** The catalog names an icon per settings area; these are the ones it uses (others get a cog). */
@@ -53,6 +59,12 @@ const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
   Pickaxe,
   Hammer,
   RefreshCw,
+  Swords,
+  Dices,
+  Mountain,
+  KeyRound,
+  Shield,
+  Store,
 };
 
 export function areaIcon(name: string): LucideIcon {
@@ -63,6 +75,9 @@ export function areaIcon(name: string): LucideIcon {
 const ForcePassword = lazy(async () => ({
   default: (await import('./account/ForcePassword')).ForcePassword,
 }));
+
+/** Settings areas of the game modes (MorniCraft, Duels …) get their own group in the menu. */
+const MODE_PANEL = 'modes';
 
 /** Areas listed under "Verwaltung". */
 const MANAGE_AREAS = ['players', 'punishments', 'roles', 'discord', 'servers'] as const;
@@ -119,6 +134,16 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
   const tour = useTour();
   const can = (area: (typeof me.areas)[number]): boolean => me.areas.includes(area);
   const areas = settings.data ?? [];
+  const modeAreas = areas.filter(({ area }) => area.panel === MODE_PANEL);
+  const settingsLink = ({ area }: SettingsEntry): ReactElement => (
+    <Item
+      key={area.id}
+      to={`/einstellungen/${area.id}`}
+      icon={areaIcon(area.icon)}
+      label={pick(area.title)}
+      onNavigate={onNavigate}
+    />
+  );
   return (
     <div className="flex min-h-full flex-col gap-1 px-3.5 py-5">
       <div className="px-2 pb-4">
@@ -141,15 +166,9 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
         {areas.length ? (
           <div className="grid gap-0.5 rounded-[12px]" data-tour="settings">
             <Group label={t('shell.settings')} />
-            {areas.map(({ area }) => (
-              <Item
-                key={area.id}
-                to={`/einstellungen/${area.id}`}
-                icon={areaIcon(area.icon)}
-                label={pick(area.title)}
-                onNavigate={onNavigate}
-              />
-            ))}
+            {areas.filter(({ area }) => area.panel !== MODE_PANEL).map(settingsLink)}
+            {modeAreas.length ? <Group label={t('shell.modeSettings')} /> : null}
+            {modeAreas.map(settingsLink)}
           </div>
         ) : null}
         {can('content') ? (

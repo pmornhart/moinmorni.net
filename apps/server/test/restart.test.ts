@@ -34,3 +34,21 @@ test('Neustart nach dem Update erst, wenn niemand mehr drauf ist; gestoppte Serv
   expect(queue.pending()).toEqual([]);
   queue.stop();
 });
+
+test('Neustart wieder abbestellen (Einstellung zurückgestellt)', async () => {
+  const restarted: string[] = [];
+  const motor = {
+    request: async <T>(method: string, path: string): Promise<T> => {
+      if (method === 'POST') restarted.push(path.split('/')[3] ?? '');
+      return { live: { state: 'running', playersOnline: 1 } } as T;
+    },
+  };
+  const queue = createRestartQueue(motor as never, quiet, 60_000);
+  queue.add([{ serverId: 'duels', member: 'duels' }]);
+  await queue.check();
+  expect(queue.pending()).toEqual(['duels']);
+  queue.remove('duels');
+  expect(queue.pending()).toEqual([]);
+  expect(restarted).toEqual([]);
+  queue.stop();
+});

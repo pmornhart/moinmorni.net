@@ -521,7 +521,8 @@
     "discord": "Discord",
     "team": "Team",
     "myAccount": "My account",
-    "accountShort": "Account"
+    "accountShort": "Account",
+    "modeSettings": "Game modes"
   },
   "overview": {
     "greeting": "Hello, {{name}}!",
@@ -562,7 +563,8 @@
     "on": "On",
     "off": "Off",
     "missing": "This area does not exist – or you may not see it.",
-    "default": "Default: {{value}}"
+    "default": "Default: {{value}}",
+    "savedMode": "Saved – applies after the mode’s next restart (as soon as nobody is playing)."
   },
   "modes": {
     "title": "Modes",
@@ -978,7 +980,7 @@
     },
     "settings": {
       "title": "Settings",
-      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and more. Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game."
+      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – MoinMorni does that by itself as soon as nobody is playing."
     },
     "news": {
       "title": "News",
@@ -1654,5 +1656,11 @@
     "application_already_listed": "This name is already on the whitelist – you can start playing right away!",
     "application_pending": "There is already an application from you or for this Minecraft name. We will get back to you!",
     "apply_login_required": "Your sign-in has expired. Please sign in with Discord again – the page remembers your answers."
+  },
+  "modeSettings": {
+    "title": "Applies after the mode’s next restart",
+    "text": "These settings live in the game mode’s own file. MoinMorni writes them there and restarts the mode by itself as soon as nobody is playing – nobody gets thrown out mid-game. If the mode is asleep, they apply when it wakes up.",
+    "pendingTitle": "Restart still to come",
+    "pendingText": "The new values are written. Someone is still playing – as soon as the mode is empty it restarts, then they apply."
   }
 }

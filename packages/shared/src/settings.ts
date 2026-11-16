@@ -1,5 +1,6 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the game needs them */
 import { z } from 'zod';
+import { MODE_SETTING_AREAS } from './mode-settings.js';
 import type { PanelArea } from './roles.js';
 
 /**
@@ -13,12 +14,31 @@ export interface Text {
   readonly en: string;
 }
 
+/**
+ * Wo eine Einstellung eines Spielmodus in der config.yml seines Plugins steht. Der Hub schickt dem Modus-Server
+ * „Pfad → Wert“, das Netzwerk-Plugin trägt es dort ein.
+ */
+export interface ConfigSpot {
+  /**
+   * Pfad mit Punkten: "kampf.zeitlimit-sekunden". Eine Zahl als Teil ist die Stelle in einer Liste:
+   * "edelweiss-jagd-runden.0" = erster Eintrag von [10, 15, 20], "ankauf.stufen.1.prozent" = Feld im zweiten Eintrag.
+   */
+  readonly path: string;
+  /**
+   * Nur bei An/Aus: Eintrag einer Auswahl-Liste (z. B. ein Minispiel). An = steht in der Liste. Sind alle an (oder
+   * alle aus), bleibt die Liste leer – das heißt im Modus „alle“, so kommen auch spätere neue Einträge von selbst dazu.
+   */
+  readonly member?: string;
+}
+
 interface Base {
   readonly key: string;
   readonly label: Text;
   readonly help: Text;
   /** Befehl im Spiel, der denselben Wert ändert (im Panel als Hinweis gezeigt). */
   readonly command?: string;
+  /** Nur in Bereichen eines Spielmodus: Stelle in der config.yml des Modus. */
+  readonly config?: ConfigSpot;
 }
 
 export type SettingDef =
@@ -29,6 +49,8 @@ export type SettingDef =
       readonly min: number;
       readonly max: number;
       readonly unit?: Text;
+      /** Schrittweite für Kommazahlen (0.5, 0.1, 0.01); ohne = nur ganze Zahlen. */
+      readonly step?: number;
     })
   | (Base & {
       readonly type: 'text';
@@ -64,6 +86,19 @@ export interface SettingArea {
   /** Wer den Bereich im Panel sieht. */
   readonly panel: PanelArea;
   readonly sections: readonly SettingSection[];
+  /**
+   * Bereich eines Spielmodus (Duels, Morni Party …): Die Werte gehen in die config.yml seines Plugins und gelten nach
+   * dem nächsten Neustart des Modus – MoinMorni startet ihn von selbst neu, sobald gerade niemand spielt.
+   */
+  readonly mode?: ModeLink;
+}
+
+/** Zu welchem Spielmodus ein Einstellungs-Bereich gehört. */
+export interface ModeLink {
+  /** Kennung des Modus (wie unter „Modi“, z. B. "duels", "mirni"). */
+  readonly id: string;
+  /** Name des Plugins (aus seiner plugin.yml) – seine config.yml liegt in plugins/<Name>/. */
+  readonly plugin: string;
 }
 
 const t = (de: string, en: string): Text => ({ de, en });
@@ -1392,6 +1427,7 @@ export const UPDATES_AREA: SettingArea = {
   ],
 };
 
+/** Alle Bereiche: erst das Netzwerk, dann die Spielmodi in der Reihenfolge der Lobby, dann Bau-Server und Updates. */
 export const SETTING_AREAS: readonly SettingArea[] = [
   NETWORK_AREA,
   CHAT_AREA,
@@ -1400,14 +1436,29 @@ export const SETTING_AREAS: readonly SettingArea[] = [
   LOBBY_AREA,
   WEBSITE_AREA,
   MORNICRAFT_AREA,
+  ...MODE_SETTING_AREAS,
   BUILD_AREA,
   UPDATES_AREA,
 ];
 
+/** Kleinste Abweichung, die bei Kommazahlen noch als „liegt auf dem Raster“ gilt (0.1 + 0.2 ist nicht genau 0.3). */
+const STEP_TOLERANCE = 1e-9;
+
+/** Liegt der Wert auf dem Raster der Einstellung? Ohne Schrittweite: ganze Zahl. */
+export function onStep(value: number, step = 1): boolean {
+  const steps = value / step;
+  return Number.isFinite(steps) && Math.abs(steps - Math.round(steps)) < STEP_TOLERANCE;
+}
+
 function validator(def: SettingDef): z.ZodType {
   const kinds: { [K in SettingDef['type']]: (d: Extract<SettingDef, { type: K }>) => z.ZodType } = {
     boolean: () => z.boolean(),
-    number: (d) => z.number().int().min(d.min).max(d.max),
+    number: (d) =>
+      z
+        .number()
+        .min(d.min)
+        .max(d.max)
+        .refine((v) => onStep(v, d.step)),
     text: (d) => z.string().max(d.maxLength),
     select: (d) => z.enum(d.options.map((o) => o.value) as [string, ...string[]]),
     list: (d) => z.array(z.string().trim().min(1).max(d.maxLength)).max(d.maxItems),
@@ -1432,4 +1483,9 @@ export function defaultsFor(area: SettingArea): Record<string, unknown> {
 
 export function areaById(id: string): SettingArea | undefined {
   return SETTING_AREAS.find((a) => a.id === id);
+}
+
+/** Der Einstellungs-Bereich eines Spielmodus (über die Kennung des Modus, z. B. "mirni"). */
+export function modeAreaOf(modeId: string): SettingArea | undefined {
+  return SETTING_AREAS.find((a) => a.mode?.id === modeId);
 }

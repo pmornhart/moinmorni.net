@@ -85,7 +85,9 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
   });
 
   test('Einstellungen nach Katalog: geprüft, gespeichert, nur mit CSRF-Token', async () => {
-    const areas = (await call('GET', '/api/panel/settings', owner)).json<Array<{ area: { id: string } }>>();
+    const areas = (await call('GET', '/api/panel/settings', owner)).json<
+      Array<{ area: { id: string }; restartPending?: boolean }>
+    >();
     expect(areas.map((a) => a.area.id)).toEqual([
       'network',
       'chat',
@@ -94,9 +96,24 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
       'lobby',
       'website',
       'mornicraft',
+      'duels',
+      'party',
+      'gipfelsturm',
+      'burgverlies',
+      'bollwerk',
+      'smp',
       'build',
       'updates',
     ]);
+    // Spielmodi zeigen, ob noch ein Neustart aussteht; andere Bereiche haben das Feld nicht.
+    expect(areas.find((a) => a.area.id === 'duels')?.restartPending).toBe(false);
+    expect(areas.find((a) => a.area.id === 'chat')).not.toHaveProperty('restartPending');
+    const party = await call('PUT', '/api/panel/settings/party', owner, { miniFactor: 0.5, minPlayers: 3 });
+    expect(party.json()).toMatchObject({ miniFactor: 0.5, minPlayers: 3, tables: 2 });
+    expect((await call('PUT', '/api/panel/settings/party', owner, { miniFactor: 0.55 })).statusCode).toBe(
+      400,
+    );
+    expect((await call('PUT', '/api/panel/settings/party', owner, { tables: 1.5 })).statusCode).toBe(400);
     const saved = await call('PUT', '/api/panel/settings/chat', owner, { slowMode: 5, badWords: ['doof'] });
     expect(saved.json()).toMatchObject({ slowMode: 5, badWords: ['doof'], global: true });
     expect((await call('PUT', '/api/panel/settings/chat', owner, { slowMode: 999 })).statusCode).toBe(400);

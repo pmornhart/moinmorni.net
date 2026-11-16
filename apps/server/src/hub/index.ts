@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
 import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
-import type { GameRight, Role } from '@moinmorni/shared';
+import { areaById, type GameRight, type Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
@@ -9,6 +9,12 @@ import { createChat, type ChatSettings } from './chat.js';
 import { allowed, createCommands, findCommand, type Actor, type Command } from './commands.js';
 import { hasRight, type HubContext } from './context.js';
 import { createModeration, type Moderation } from './moderation.js';
+import {
+  modeAreaOfServer,
+  modeSettingsBody,
+  modeSettingsStateSchema,
+  serverOfModeArea,
+} from './mode-settings.js';
 import {
   MODE_PLAYER_SCHEMAS,
   MORNICRAFT_AREAS,
@@ -163,6 +169,8 @@ export interface Hub {
   readonly stats: ModeStatsService;
   /** Was die Modus-Server zuletzt über sich gemeldet haben (Runde läuft, wartet …). */
   readonly modeStates: () => Record<string, ModeRun>;
+  /** Spielmodi, die für neue Einstellungen auf einen Neustart warten (Kennungen wie "duels"). */
+  readonly modeRestarts: () => string[];
 }
 
 /** Zustand eines Spielmodus, wie sein Server ihn meldet. */
@@ -294,6 +302,14 @@ export function createHub(options: HubOptions): Hub {
   const social = createSocial(ctx, db, now, () => voiceRef.broadcast());
   const stats = createModeStats(db);
   const modeRuns = new Map<string, ModeRun>();
+  /** Modus → Server, der für neue Einstellungen neu starten muss. */
+  const restartPending = new Map<string, string>();
+  const setRestart = (mode: string, server: string, needed: boolean): void => {
+    if (needed === (restartPending.get(mode) === server)) return;
+    if (needed) restartPending.set(mode, server);
+    else restartPending.delete(mode);
+    events.emit('mode.restart', { mode, server, needed });
+  };
   /** Gehört dieser Server zu diesem Modus? Nur dann darf er für ihn sprechen. */
   const servesMode = (conn: Connection, modeId: string): boolean =>
     conn.kind === 'backend' && stores.modes().some((md) => md.id === modeId && md.server === conn.server);
@@ -606,6 +622,17 @@ export function createHub(options: HubOptions): Hub {
       }
       saveModePlayer(db, m.mode, normalUuid(m.uuid), data.data);
     },
+    // Einstellungen eingetragen: muss der Modus dafür neu starten?
+    'mode-settings-state': (conn, body) => {
+      const m = modeSettingsStateSchema.parse(body);
+      if (!servesMode(conn, m.mode)) return;
+      if (m.restart)
+        log.info(
+          { server: conn.server, mode: m.mode, changed: m.changed },
+          'Hub: neue Einstellungen eingetragen – Neustart, sobald niemand spielt',
+        );
+      setRestart(m.mode, conn.server, m.restart);
+    },
     'mode-state': (conn, body) => {
       const m = modeStateSchema.parse(body);
       if (!servesMode(conn, m.mode)) return;
@@ -670,6 +697,9 @@ export function createHub(options: HubOptions): Hub {
         conn.send(jailState());
       }
       if (conn.server === morniCraftServer(stores)) conn.send(morniCraft());
+      const modeArea = modeAreaOfServer(stores, conn.server);
+      const modeSettings = modeArea ? modeSettingsBody(stores, modeArea) : null;
+      if (modeSettings) conn.send(modeSettings);
       lobbySoon();
       presence.on(conn.server).forEach((p) => sendProfile(p.uuid));
       // Aufgewacht: wer gewartet hat, kommt jetzt hinein.
@@ -700,6 +730,10 @@ export function createHub(options: HubOptions): Hub {
       if (conns.backends.get(conn.server) === conn) {
         conns.backends.delete(conn.server);
         lobbySoon();
+        // Gestoppt oder neu gestartet: Beim nächsten Start trägt das Plugin die Werte vorher ein.
+        [...restartPending]
+          .filter(([, server]) => server === conn.server)
+          .forEach(([mode]) => setRestart(mode, conn.server, false));
       }
     },
   });
@@ -710,6 +744,11 @@ export function createHub(options: HubOptions): Hub {
     if (area === 'network') toProxy(network());
     if (area === 'lobby') toBackend(LOBBY_SERVER, lobbySettings());
     if (area === 'voice') voice.broadcast();
+    // Einstellungen eines Spielmodus → an seinen Server (schläft er, trägt MoinMorni sie vor dem Aufwachen ein).
+    const modeServer = serverOfModeArea(stores, area);
+    const changed = modeServer ? areaById(area) : undefined;
+    const modeSettings = changed ? modeSettingsBody(stores, changed) : null;
+    if (modeServer && modeSettings) toBackend(modeServer, modeSettings);
   });
   events.on('roles.changed', () => presence.all().forEach((p) => sendProfile(p.uuid)));
   events.on('modes.changed', lobbySoon);
@@ -731,5 +770,6 @@ export function createHub(options: HubOptions): Hub {
     connectedServers: () => [...conns.backends.keys()],
     stats,
     modeStates: () => Object.fromEntries(modeRuns),
+    modeRestarts: () => [...restartPending.keys()],
   };
 }

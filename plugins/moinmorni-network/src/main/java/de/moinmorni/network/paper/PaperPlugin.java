@@ -64,6 +64,17 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     /** Tageszeit der Lobby (wie in echt) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyClock clock;
 
+    /** Einstellungen des Spielmodus auf diesem Server (aus dem Panel) – trägt sie in seine config.yml ein. */
+    private ModeSettings modes;
+
+    /** Vor allen anderen Plugins: gemerkte Einstellungen des Modus eintragen, bevor er seine config.yml liest. */
+    @Override
+    public void onLoad() {
+        Path plugins = getDataFolder().toPath().getParent();
+        modes = new ModeSettings(plugins, plugins.resolve(HUB_DIR), getName(), getLogger());
+        modes.applySaved();
+    }
+
     @Override
     public void onEnable() {
         Path dir = getDataFolder().toPath().getParent().resolve(HUB_DIR);
@@ -181,6 +192,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             }
             case "jail" -> jail.onState(m);
             case "mornicraft-settings" -> morniCraftSettings(m);
+            case "mode-settings" -> modeSettings(m);
             case "voice" -> {
                 if (voice != null) {
                     VoiceSetup.apply(voice, m);
@@ -200,6 +212,39 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             default -> {
             }
         }
+    }
+
+    // ---------- Einstellungen der Spielmodi (Duels, Morni Party …) ----------
+
+    /**
+     * Einstellungen aus dem Panel: in die config.yml des Modus-Plugins (Kommentare bleiben), nur wenn sich etwas
+     * ändert. Gelten nach dem nächsten Neustart des Modus – ob einer nötig ist, erfährt der Hub; MoinMorni startet den
+     * Server dann neu, sobald gerade niemand spielt.
+     */
+    private void modeSettings(JsonObject m) {
+        ModeSettings.Settings settings;
+        try {
+            settings = modes.parse(m);
+        } catch (IllegalArgumentException e) {
+            getLogger().warning("Einstellungen des Modus abgelehnt: " + e.getMessage());
+            return;
+        }
+        Bukkit.getScheduler().runTask(this, () -> {
+            try {
+                boolean present = getServer().getPluginManager().getPlugin(settings.plugin()) != null;
+                ModeSettings.Result result = modes.apply(settings, present);
+                JsonObject body = new JsonObject();
+                body.addProperty("t", "mode-settings-state");
+                body.addProperty("mode", settings.mode());
+                body.addProperty("restart", result.restart());
+                body.addProperty("changed", result.changed());
+                if (hub != null) {
+                    hub.send(body);
+                }
+            } catch (java.io.IOException | RuntimeException e) {
+                getLogger().warning("Einstellungen des Modus nicht eingetragen: " + e.getMessage());
+            }
+        });
     }
 
     // ---------- MorniCraft (pmornhart/MorniCraft) ----------

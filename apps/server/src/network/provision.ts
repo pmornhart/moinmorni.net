@@ -4,7 +4,8 @@ import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import type { Config } from '../config.js';
 import type { Hub } from '../hub/index.js';
-import { MotorError, type MotorClient } from '../motor/client.js';
+import type { MotorClient } from '../motor/client.js';
+import { readServerFile, writeServerFile } from '../motor/files.js';
 import { NETWORK_NAME } from '../public/status.js';
 import { MODE_MEMORY_MB, MODE_REPOS, type Mode } from '@moinmorni/shared';
 import type { ReleaseSource } from './mode-releases.js';
@@ -84,6 +85,10 @@ export interface ProvisionOptions {
   readonly modes?: () => readonly Mode[];
   /** Woher die Jars der Spielmodi kommen (GitHub-Releases). */
   readonly releases?: ReleaseSource;
+  /** Neu angelegte Server vor dem ersten Start vorbereiten (z. B. Einstellungen der Spielmodi). */
+  readonly prepare?: (
+    servers: ReadonlyArray<{ readonly serverId: string; readonly member: string }>,
+  ) => Promise<void>;
 }
 
 const PROXY_ADD_ONS = { geyser: true, via: true, voice: true };
@@ -148,20 +153,10 @@ export function createProvisioner(
     }
   };
 
-  const readFile = async (serverId: string, file: string): Promise<string | null> => {
-    try {
-      const r = await motor.request<{ content: string }>(
-        'GET',
-        `/api/servers/${serverId}/files/content?path=${encodeURIComponent(file)}`,
-      );
-      return r.content;
-    } catch (err) {
-      if (err instanceof MotorError) return null;
-      throw err;
-    }
-  };
+  const readFile = (serverId: string, file: string): Promise<string | null> =>
+    readServerFile(motor, serverId, file);
   const writeFile = (serverId: string, file: string, content: string): Promise<void> =>
-    motor.request('PUT', `/api/servers/${serverId}/files/content`, { path: file, content });
+    writeServerFile(motor, serverId, file, content);
 
   /**
    * hub.json und Plugin auf einen Server. `plugin` = Plugin neu, `hub` = Zugang zum Hub geändert (z. B. neuer
@@ -313,6 +308,17 @@ export function createProvisioner(
         .map((t) => ({ serverId: t.serverId, member: t.member }));
 
       // Neu angelegte Server erst jetzt starten – mit Plugin, Schlüssel und Einstellungen.
+      const newcomers = targets.filter((t) => created.includes(t.member));
+      if (options.prepare && newcomers.length) {
+        try {
+          await options.prepare(newcomers.map((t) => ({ serverId: t.serverId, member: t.member })));
+        } catch (err) {
+          log.warn(
+            { err },
+            'Netzwerk: neue Server ließen sich nicht ganz vorbereiten – sie starten trotzdem',
+          );
+        }
+      }
       await Promise.all(
         targets
           .filter((t) => created.includes(t.member))

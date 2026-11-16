@@ -18,6 +18,8 @@ export interface PanelMe {
 export interface SettingsEntry {
   readonly area: SettingArea;
   readonly values: Readonly<Record<string, unknown>>;
+  /** Only for game modes: new settings wait for the mode's next restart (as soon as nobody is playing). */
+  readonly restartPending?: boolean;
 }
 
 export const PANEL_ME_KEY = ['panel', 'me'] as const;

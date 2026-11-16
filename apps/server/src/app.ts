@@ -16,6 +16,8 @@ import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
 import { githubReleases } from './network/mode-releases.js';
 import { createProvisioner, LOBBY_MEMBER, type NetworkProvisioner } from './network/provision.js';
+import { createMemberIds } from './network/members.js';
+import { createModeSettingsSync, type ModeSettingsSync } from './network/mode-settings.js';
 import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
@@ -149,12 +151,16 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   });
   const lobbyRef = { id: '', season: seasonOf(stores.settings('lobby')['season']) };
   const build = createBuildService(motor, stores);
+  /** Gibt es erst nach Hub und Neustart-Warteschlange (weiter unten). */
+  const modeSettingsRef: { prepare: ModeSettingsSync['prepare'] } = { prepare: () => Promise.resolve() };
   const network = createProvisioner(config, motor, hub, app.log, {
     configureLobby: lobbyWorld.configure,
     configureBuild: build.configure,
     modes: () => stores.modes(),
     // Jars zum Ausprobieren ohne Release: <Datenordner>/mode-jars/<Repo-Name>.jar
     releases: githubReleases(app.log, path.join(config.dataDir, 'mode-jars')),
+    // Neue Modus-Server starten gleich mit den Einstellungen aus dem Panel.
+    prepare: (servers) => modeSettingsRef.prepare(servers),
   });
   const sleep = createSleepService(motor, hub, stores, app.log);
   sleepRef.service = sleep;
@@ -179,6 +185,16 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   };
   events.on('roles.changed', syncTeam);
   const restarts = createRestartQueue(motor, app.log);
+  const modeSettings = createModeSettingsSync({
+    motor,
+    hub,
+    stores,
+    events,
+    restarts,
+    idOf: createMemberIds(motor).idOf,
+    log: app.log,
+  });
+  modeSettingsRef.prepare = modeSettings.prepare;
   const hubCheck: { timer: NodeJS.Timeout | undefined } = { timer: undefined };
   const provision = async (): Promise<void> => {
     if (!config.autoNetwork) return;
@@ -186,6 +202,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       const result = await network.ensure();
       app.log.info(result, 'Netzwerk geprüft');
       restarts.add(result.restart);
+      // Spielmodi, die gerade schlafen: Einstellungen aus dem Panel für den nächsten Start eintragen.
+      void modeSettings.syncFiles();
       // Wer zwei Minuten nach dem Start noch ohne Hub läuft (z. B. alter Schlüssel im Speicher), startet neu, sobald
       // niemand drauf ist. Schlafende und gestoppte Server holen sich alles beim nächsten Start.
       clearTimeout(hubCheck.timer);
@@ -233,7 +251,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
   registerPackRoutes(app);
-  registerPanelRoutes(app, auth, stores);
+  registerPanelRoutes(app, auth, stores, hub.modeRestarts);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   teamRef.syncAll = registerTeamRoutes(app, auth, stores, handle.db, motor).syncAll;
   registerDiscordRoutes(app, auth, bot);

@@ -2,7 +2,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { Hub } from '../hub/index.js';
 import type { MotorClient } from '../motor/client.js';
 import type { Stores } from '../panel/stores.js';
-import { NETWORK_NAME } from '../public/status.js';
+import { createMemberIds } from './members.js';
 
 /**
  * Schlaf-Modus: Ist in einem Modus (mit „schlafen, wenn leer“) eine Weile niemand, hält der Motor seinen Server an.
@@ -13,12 +13,6 @@ import { NETWORK_NAME } from '../public/status.js';
 const CHECK_MS = 30_000;
 const BUILD_SERVER = 'bau';
 const MINUTE_MS = 60_000;
-const IDS_CACHE_MS = 60_000;
-
-interface MotorNetwork {
-  readonly name: string;
-  readonly members: ReadonlyArray<{ readonly serverId: string; readonly name: string }>;
-}
 
 export interface SleepService {
   /** Server im Netzwerk wecken (Motor startet ihn). */
@@ -36,20 +30,11 @@ export function createSleepService(
   log: FastifyBaseLogger,
 ): SleepService {
   const emptySince = new Map<string, number>();
-  const ids = { at: 0, map: new Map<string, string>() };
+  const members = createMemberIds(motor);
   const timer = { id: null as ReturnType<typeof setInterval> | null };
 
-  const serverId = async (name: string): Promise<string | undefined> => {
-    if (Date.now() - ids.at > IDS_CACHE_MS) {
-      const networks = await motor.request<MotorNetwork[]>('GET', '/api/networks');
-      const net = networks.find((n) => n.name === NETWORK_NAME);
-      ids.map = new Map((net?.members ?? []).map((m) => [m.name, m.serverId]));
-      ids.at = Date.now();
-    }
-    return ids.map.get(name);
-  };
   const action = async (name: string, what: 'start' | 'stop'): Promise<boolean> => {
-    const id = await serverId(name);
+    const id = await members.idOf(name);
     if (!id) return false;
     await motor.request('POST', `/api/servers/${id}/actions/${what}`);
     return true;
