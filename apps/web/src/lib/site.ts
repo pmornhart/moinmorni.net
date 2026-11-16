@@ -1,5 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import type { ModeStatus, Text } from '@moinmorni/shared';
+import type { ModeStatus, Text } from '@morninet/shared';
 import { mmApi, MmApiError } from './mm-api';
 
 /**
@@ -72,7 +72,7 @@ export interface SiteInfo {
   readonly voiceChannels?: readonly string[];
   readonly discordInvite: string | null;
   readonly socials: Readonly<Record<Social, string | null>>;
-  /** Everyone who has ever played on MoinMorni. */
+  /** Everyone who has ever played on morni.net. */
   readonly players: number;
 }
 

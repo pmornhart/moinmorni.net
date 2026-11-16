@@ -117,7 +117,7 @@ function VersionText({ version }: { readonly version: string | null }): ReactEle
 
 function Facts({ view }: { readonly view: UpdateView }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
-  const { moinmorni, motor } = view;
+  const { morninet, motor } = view;
   const motorFoot = ((): ReactNode => {
     if (!motor.latest) return t('updatesCard.motorUnknown');
     if (motor.behind <= 0) return t('updatesCard.motorCurrent');
@@ -134,8 +134,8 @@ function Facts({ view }: { readonly view: UpdateView }): ReactElement {
     );
   })();
   const newestFoot = (): string => {
-    if (moinmorni.behind > 0) return t('updatesCard.behind', { count: moinmorni.behind });
-    return moinmorni.latest ? t('updatesCard.isNewest') : t('updatesCard.notChecked');
+    if (morninet.behind > 0) return t('updatesCard.behind', { count: morninet.behind });
+    return morninet.latest ? t('updatesCard.isNewest') : t('updatesCard.notChecked');
   };
   return (
     <div className="grid gap-3 md:grid-cols-3">
@@ -151,8 +151,8 @@ function Facts({ view }: { readonly view: UpdateView }): ReactElement {
         <VersionText version={view.version} />
       </Fact>
       <Fact label={t('updatesCard.newest')} foot={newestFoot()}>
-        {moinmorni.latest ? (
-          <Kbd className="text-[13px] text-foreground">{moinmorni.latest}</Kbd>
+        {morninet.latest ? (
+          <Kbd className="text-[13px] text-foreground">{morninet.latest}</Kbd>
         ) : (
           <span className="text-muted-foreground">–</span>
         )}
@@ -242,7 +242,7 @@ function Running({
       <Notice tone="warning" icon={AlertTriangle} title={t('updatesCard.stuckTitle')}>
         <p>{t('updatesCard.stuckText')}</p>
         <p>
-          <Kbd>systemctl status moinmorni-update.path</Kbd>
+          <Kbd>systemctl status morninet-update.path</Kbd>
         </p>
       </Notice>
     ) : (
@@ -341,7 +341,7 @@ function LastRun({
 function ChangeList({ view }: { readonly view: UpdateView }): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
   const time = useTimeText();
-  const changes: readonly UpdateChange[] = view.moinmorni.changes;
+  const changes: readonly UpdateChange[] = view.morninet.changes;
   if (!changes.length) return null;
   const groups = CHANGE_KINDS.map((kind) => ({
     kind,
@@ -506,13 +506,13 @@ function UpdatesBody({
         <Notice tone="neutral" icon={Cog} title={t('updatesCard.noAgentTitle')}>
           <p>{t('updatesCard.noAgentText')}</p>
           <p>
-            <Kbd>sudo moinmorni-update</Kbd>
+            <Kbd>sudo morninet-update</Kbd>
           </p>
         </Notice>
       ) : null}
       {view.updating ? <Running view={view} reconnecting={reconnecting} /> : null}
       {finished ? <LastRun run={finished} justFinished={sawUpdating.current} /> : null}
-      {view.moinmorni.current === null && !view.updating ? (
+      {view.morninet.current === null && !view.updating ? (
         <Notice tone="neutral" icon={GitBranch}>
           <p>{t('updatesCard.devBuild')}</p>
         </Notice>

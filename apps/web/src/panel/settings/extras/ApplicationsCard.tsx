@@ -41,8 +41,8 @@ const SKELETON_ROWS = ['a', 'b'];
 const ANSWER_ORDER = ['about', 'why', 'age'] as const;
 const APPLY_PATH = '/mornicraft/bewerben';
 const OPEN_SETTING = 'setting-applicationsOpen';
-// The scheme in front of an address, shown without it: "https://moinmorni.net/…" → "moinmorni.net/…"; "moinmorni.net" stays.
-// https://regex101.com/?flavor=javascript&regex=%5Ehttps%3F%3A%5C%2F%5C%2F&testString=https%3A%2F%2Fmoinmorni.net%2Fmornicraft%2Fbewerben
+// The scheme in front of an address, shown without it: "https://morni.net/…" → "morni.net/…"; "morni.net" stays.
+// https://regex101.com/?flavor=javascript&regex=%5Ehttps%3F%3A%5C%2F%5C%2F&testString=https%3A%2F%2Fmorni.net%2Fmornicraft%2Fbewerben
 const SCHEME = /^https?:\/\//;
 
 const EMPTY_ICON: Readonly<Record<ApplicationStatus, LucideIcon>> = {

@@ -1,7 +1,7 @@
 /**
- * Lokale Entwicklung: Motor (MorniHosting, Motor-Modus, nachgebautes Docker) auf :8180 und MoinMorni auf :8080,
+ * Lokale Entwicklung: Motor (MorniHosting, Motor-Modus, nachgebautes Docker) auf :8180 und morni.net auf :8080,
  * mit Owner-Konto „philip“ (Passwort aus MM_DEV_PASSWORD, Standard „Test-Passwort-12345“). Daten unter
- * MM_DEV_DIR (Standard ~/mm-dev). Start: pnpm --filter @moinmorni/server exec tsx scripts/dev-stack.ts
+ * MM_DEV_DIR (Standard ~/mm-dev). Start: pnpm --filter @morninet/server exec tsx scripts/dev-stack.ts
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -57,13 +57,13 @@ const tokenFile = path.join(DIR, 'motor-token');
 if (!fs.existsSync(tokenFile))
   fs.writeFileSync(
     tokenFile,
-    (await cli['runCommand'](motor.ctx.db, 'service-token', ['moinmorni'])).message,
+    (await cli['runCommand'](motor.ctx.db, 'service-token', ['morninet'])).message,
   );
 const mm = await buildApp({
   config: loadConfig(
     {
       MM_SECRET: secret,
-      MM_DATA_DIR: path.join(DIR, 'moinmorni'),
+      MM_DATA_DIR: path.join(DIR, 'morninet'),
       MM_MOTOR_URL: motorUrl,
       MM_MOTOR_TOKEN: fs.readFileSync(tokenFile, 'utf8').trim(),
       MM_PORT: String(MM_PORT),
@@ -106,21 +106,21 @@ if (!mm.hub.players.get(DEMO[0].uuid)) {
     minutes: 7 * 24 * 60,
   });
 }
-console.log(`Motor: ${motorUrl} · MoinMorni: http://127.0.0.1:${MM_PORT} · Login: philip / ${PASSWORD}`);
+console.log(`Motor: ${motorUrl} · morni.net: http://127.0.0.1:${MM_PORT} · Login: philip / ${PASSWORD}`);
 
 // Beispiel-News (nur lokal).
 if (!mm.db.select().from(news).get()) {
   const day = 86_400_000;
   const items = [
     {
-      slug: 'willkommen-in-moinmorni',
+      slug: 'servus-auf-morni-net',
       category: 'info' as const,
-      titleDe: 'Servus in MoinMorni!',
-      titleEn: 'Welcome to MoinMorni!',
+      titleDe: 'Servus auf morni.net!',
+      titleEn: 'Welcome to morni.net!',
       bodyDe:
-        'Unser Netzwerk ist da: Lobby im Alpendorf, Duels, Morni Party und mehr. Komm vorbei auf moinmorni.net!',
+        'Unser Netzwerk ist da: Lobby im Alpendorf, Duels, Morni Party und mehr. Komm vorbei auf morni.net!',
       bodyEn:
-        'Our network is here: a lobby in an alpine village, Duels, Morni Party and more. Join us at moinmorni.net!',
+        'Our network is here: a lobby in an alpine village, Duels, Morni Party and more. Join us at morni.net!',
       pinned: true,
       at: 3,
     },

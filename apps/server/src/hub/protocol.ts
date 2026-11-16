@@ -27,7 +27,7 @@ const hmac = (key: string | Buffer, text: string): string =>
 
 /** Geheimnis des Hubs, abgeleitet aus MM_SECRET (das selbst nie direkt benutzt wird). */
 export const hubSecretOf = (secret: string): Buffer =>
-  crypto.createHmac('sha256', secret).update('moinmorni-hub').digest();
+  crypto.createHmac('sha256', secret).update('morninet-hub').digest();
 
 /**
  * Schlüssel eines Servers – steht in dessen hub.json. Die Art (Proxy oder Spielserver) steckt mit drin: ein Spielserver

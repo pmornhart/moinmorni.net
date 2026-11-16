@@ -15,7 +15,7 @@ import { MotorError, type MotorClient, type MotorMe } from '../motor/client.js';
  * Ersteinrichtung: Solange es im Motor noch keine Person gibt, kann genau einmal ein Owner-Konto angelegt werden –
  * nur mit dem Einrichtungs-Code, den das Installationsskript anzeigt (liegt in `<Daten>/setup-code`, nur für den
  * Container lesbar). So kann niemand, der die Seite zufällig vor Philip findet, das Netzwerk übernehmen.
- * Danach (und bei jedem Start) stellt MoinMorni den Motor passend ein: keine offene Registrierung.
+ * Danach (und bei jedem Start) stellt morni.net den Motor passend ein: keine offene Registrierung.
  */
 
 const CODE_FILE = 'setup-code';

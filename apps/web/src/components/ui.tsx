@@ -2,7 +2,7 @@ import { Slot, Switch as SwitchPrimitive } from 'radix-ui';
 import type { ComponentProps, ReactElement, ReactNode } from 'react';
 import { cn } from '~/lib/cn';
 
-/* Small building blocks in MoinMorni's look (Smaragd family with gold). */
+/* Small building blocks in morni.net's look (Smaragd family with gold). */
 
 const BUTTON_BASE =
   'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[12px] text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0';

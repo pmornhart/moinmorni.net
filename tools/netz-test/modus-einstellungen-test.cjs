@@ -172,7 +172,7 @@ const countdownOf = (bot) => {
     await until(async () => !(await status()).connected.includes('bollwerk'), 60000),
   );
   await call('/', { area: 'bollwerk', values: { hallCountdown: 9 } });
-  const saved = path.join(DIR, 'plugins', 'moinmorni', 'mode-settings.json');
+  const saved = path.join(DIR, 'plugins', 'morninet', 'mode-settings.json');
   check(
     'schlafend: Werte landen über den Motor in mode-settings.json',
     await until(

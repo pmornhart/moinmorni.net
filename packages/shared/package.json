@@ -1,9 +1,9 @@
 {
-  "name": "@moinmorni/shared",
+  "name": "@morninet/shared",
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Gemeinsame Typen, Schemas, Rollen-Vorlage und Einstellungs-Katalog von MoinMorni",
+  "description": "Gemeinsame Typen, Schemas, Rollen-Vorlage und Einstellungs-Katalog von morni.net",
   "exports": {
     ".": "./src/index.ts"
   },

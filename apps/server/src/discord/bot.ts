@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { eq, like } from 'drizzle-orm';
 import type { FastifyBaseLogger } from 'fastify';
-import type { Mode, Role } from '@moinmorni/shared';
+import type { Mode, Role } from '@morninet/shared';
 import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
 import { discordObjects, news } from '../db/schema.js';
@@ -31,7 +31,7 @@ import { APPLY_BUTTON, APPLY_FORM, createApplicationBot } from './applications.j
 import type { ApplicationService } from '../mornicraft/applications.js';
 
 /**
- * Der MoinMorni-Bot: richtet den Discord-Server ein (Rollen aus der Vorlage, Kanäle mit Rechten, Regeln, Hilfe mit
+ * Der morni.net-Bot: richtet den Discord-Server ein (Rollen aus der Vorlage, Kanäle mit Rechten, Regeln, Hilfe mit
  * Ticket-Knopf), hält eine Status-Nachricht aktuell, verbindet Minecraft- und Discord-Konten, überträgt Ränge und
  * Strafen (Bann, Timeout/Stumm) und schreibt ins Team-Log. Ein Discord-Server: der, auf den Philip den Bot holt.
  */
@@ -101,7 +101,7 @@ export interface SetupReport {
   readonly community: 'ok' | 'failed';
 }
 
-export interface MoinMorniBot {
+export interface MorniNetBot {
   readonly start: () => void;
   readonly stop: () => void;
   readonly status: () => Promise<BotStatus>;
@@ -135,7 +135,7 @@ export interface BotDeps {
   readonly fetchImpl?: typeof fetch;
 }
 
-export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
+export function createMorniNetBot(deps: BotDeps): MorniNetBot {
   const { config, db, stores, hub, events, log } = deps;
   const client: DiscordClient | null = config.discordToken
     ? createDiscordClient(config.discordToken, config.discordApi, log, deps.fetchImpl)
@@ -193,8 +193,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const known = get(key);
     const found = existing.find((r) => r.id === known) ?? existing.find((r) => r.name === body.name);
     const role = found
-      ? await rest<DRole>('PATCH', `/guilds/${g}/roles/${found.id}`, body, 'MoinMorni: Rolle aktualisieren')
-      : await rest<DRole>('POST', `/guilds/${g}/roles`, body, 'MoinMorni: Rolle anlegen');
+      ? await rest<DRole>('PATCH', `/guilds/${g}/roles/${found.id}`, body, 'morni.net: Rolle aktualisieren')
+      : await rest<DRole>('POST', `/guilds/${g}/roles`, body, 'morni.net: Rolle anlegen');
     put(key, role.id);
     return role.id;
   };
@@ -210,8 +210,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       existing.find((c) => c.id === known) ??
       existing.find((c) => c.name === body.name && c.type === body.type);
     const channel = found
-      ? await rest<DChannel>('PATCH', `/channels/${found.id}`, body, 'MoinMorni: Kanal aktualisieren')
-      : await rest<DChannel>('POST', `/guilds/${g}/channels`, body, 'MoinMorni: Kanal anlegen');
+      ? await rest<DChannel>('PATCH', `/channels/${found.id}`, body, 'morni.net: Kanal aktualisieren')
+      : await rest<DChannel>('POST', `/guilds/${g}/channels`, body, 'morni.net: Kanal anlegen');
     put(key, channel.id);
     return channel.id;
   };
@@ -295,8 +295,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     },
     {
       name: 'hilfe',
-      description: 'So geht MoinMorni',
-      description_localizations: { 'en-US': 'How MoinMorni works' },
+      description: 'So geht morni.net',
+      description_localizations: { 'en-US': 'How morni.net works' },
     },
     {
       name: 'bewerben',
@@ -464,16 +464,16 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const remove = m.roles.filter((id) => managed.includes(id) && !wanted.has(id));
     await Promise.all([
       ...add.map((id) =>
-        rest('PUT', `/guilds/${g}/members/${player.discordId}/roles/${id}`, undefined, 'MoinMorni: Rang'),
+        rest('PUT', `/guilds/${g}/members/${player.discordId}/roles/${id}`, undefined, 'morni.net: Rang'),
       ),
       ...remove.map((id) =>
-        rest('DELETE', `/guilds/${g}/members/${player.discordId}/roles/${id}`, undefined, 'MoinMorni: Rang'),
+        rest('DELETE', `/guilds/${g}/members/${player.discordId}/roles/${id}`, undefined, 'morni.net: Rang'),
       ),
     ]);
     // Wer erst nach der Strafe sein Konto verbindet, bekommt die Gefängnis-Rolle trotzdem.
     const jail = get('role:jail');
     if (jail && hub.punish.active(uuid, 'jail') && !m.roles.includes(jail))
-      await setExtra(uuid, 'jail', true, 'MoinMorni: Gefängnis');
+      await setExtra(uuid, 'jail', true, 'morni.net: Gefängnis');
   };
 
   const setExtra = async (uuid: string, extra: ExtraRole, on: boolean, reason: string): Promise<void> => {
@@ -514,13 +514,13 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
             'PUT',
             `/guilds/${g}/bans/${discordId}`,
             { delete_message_seconds: 0 },
-            `MoinMorni: ${c.reason}`,
+            `morni.net: ${c.reason}`,
           );
         await log2team(bt('de', 'logBan', vars));
       },
       'ban:lift': async () => {
         if (discordId)
-          await rest('DELETE', `/guilds/${g}/bans/${discordId}`, undefined, 'MoinMorni: entbannt').catch(
+          await rest('DELETE', `/guilds/${g}/bans/${discordId}`, undefined, 'morni.net: entbannt').catch(
             () => undefined,
           );
         await log2team(bt('de', 'logLiftBan', vars));
@@ -532,9 +532,9 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
             'PATCH',
             `/guilds/${g}/members/${discordId}`,
             { communication_disabled_until: c.until },
-            `MoinMorni: ${c.reason}`,
+            `morni.net: ${c.reason}`,
           );
-        else await setExtra(c.uuid, 'muted', true, `MoinMorni: ${c.reason}`);
+        else await setExtra(c.uuid, 'muted', true, `morni.net: ${c.reason}`);
         await log2team(bt('de', 'logMute', vars));
       },
       'mute:lift': async () => {
@@ -542,16 +542,16 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
           await rest('PATCH', `/guilds/${g}/members/${discordId}`, {
             communication_disabled_until: null,
           }).catch(() => undefined);
-        await setExtra(c.uuid, 'muted', false, 'MoinMorni: Stumm vorbei');
+        await setExtra(c.uuid, 'muted', false, 'morni.net: Stumm vorbei');
         await log2team(bt('de', 'logLiftMute', vars));
       },
       // Gefängnis: Rolle „⛓ Gefängnis“ – sieht dann nur noch den Gefängnis-Kanal.
       'jail:add': async () => {
-        await setExtra(c.uuid, 'jail', true, `MoinMorni: ${c.reason}`);
+        await setExtra(c.uuid, 'jail', true, `morni.net: ${c.reason}`);
         await log2team(bt('de', 'logJail', vars));
       },
       'jail:lift': async () => {
-        await setExtra(c.uuid, 'jail', false, 'MoinMorni: Gefängnis vorbei');
+        await setExtra(c.uuid, 'jail', false, 'morni.net: Gefängnis vorbei');
         await log2team(bt('de', 'logLiftJail', vars));
       },
       'warn:add': () => log2team(bt('de', 'logWarn', vars)),
@@ -590,7 +590,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         .all()
         .map((row) => row.key.slice(extra.length + 1))
         .filter((uuid) => !hub.punish.active(uuid, kind))
-        .map((uuid) => setExtra(uuid, extra, false, 'MoinMorni: Strafe vorbei'));
+        .map((uuid) => setExtra(uuid, extra, false, 'morni.net: Strafe vorbei'));
     await Promise.all([...expired('muted', 'mute'), ...expired('jail', 'jail')]);
   };
 
@@ -841,7 +841,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     },
     setup,
     commands,
-    /** Zeile in den Team-Log-Kanal (z. B. „MoinMorni wurde aktualisiert“). */
+    /** Zeile in den Team-Log-Kanal (z. B. „morni.net wurde aktualisiert“). */
     teamLog: async (line: string) => {
       if (client) await log2team(line);
     },

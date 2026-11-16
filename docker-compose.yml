@@ -1,21 +1,21 @@
-# MoinMorni – Start: `docker compose up -d` (die Einrichtung macht install.sh), dann https://<deine Domain>.
-# Von außen erreichbar ist nur MoinMorni (Webseite + Panel, Port 8080 – NetBird macht HTTPS) und der Proxy der
+# morni.net – Start: `docker compose up -d` (die Einrichtung macht install.sh), dann https://<deine Domain>.
+# Von außen erreichbar ist nur morni.net (Webseite + Panel, Port 8080 – NetBird macht HTTPS) und der Proxy der
 # Minecraft-Server (legt der Motor an). Motor, Docker-Zugang und Hub bleiben intern.
-name: moinmorni
+name: morninet
 
 services:
-  moinmorni:
+  morninet:
     build:
       context: .
       args:
         MM_VERSION: ${MM_BUILD_VERSION:-dev}
-    container_name: moinmorni
+    container_name: morninet
     restart: unless-stopped
     # Nur die eigenen Werte aus der .env (die Geheimnisse des Motors bleiben beim Motor).
     environment:
       MM_SECRET: ${MM_SECRET:?MM_SECRET fehlt – bitte install.sh ausführen}
       MM_MOTOR_TOKEN: ${MM_MOTOR_TOKEN:-}
-      MM_DOMAIN: ${MM_DOMAIN:-moinmorni.net}
+      MM_DOMAIN: ${MM_DOMAIN:-morni.net}
       MM_DISCORD_TOKEN: ${MM_DISCORD_TOKEN:-}
       MM_DISCORD_CLIENT_SECRET: ${MM_DISCORD_CLIENT_SECRET:-}
       MM_DATA_DIR: /data
@@ -24,7 +24,7 @@ services:
     ports:
       - '${MM_PORT:-8080}:8080'
     volumes:
-      - moinmorni-data:/data
+      - morninet-data:/data
     networks:
       - intern
       - minecraft
@@ -45,19 +45,19 @@ services:
       context: ./vendor/mornihosting
       args:
         MH_VERSION: ${MH_BUILD_VERSION:-dev}
-    container_name: moinmorni-motor
+    container_name: morninet-motor
     restart: unless-stopped
     environment:
       MH_SECRET: ${MH_SECRET:?MH_SECRET fehlt – bitte install.sh ausführen}
-      MH_PUBLIC_ADDRESS: ${MM_DOMAIN:-moinmorni.net}
+      MH_PUBLIC_ADDRESS: ${MM_DOMAIN:-morni.net}
       MH_LAN_IP: ${MM_LAN_IP:-}
       TZ: ${TZ:-Europe/Berlin}
       MH_HEADLESS: 'true'
-      # Nur MoinMorni reicht Besucher weiter – nur dessen X-Forwarded-For zählt (Anmelde-Grenzen pro Besucher).
-      MH_TRUST_PROXY_FROM: moinmorni
+      # Nur morni.net reicht Besucher weiter – nur dessen X-Forwarded-For zählt (Anmelde-Grenzen pro Besucher).
+      MH_TRUST_PROXY_FROM: morninet
       MH_DOCKER_HOST: tcp://socket-proxy:2375
       MH_DATA_DIR: /data
-      MH_MC_NETWORK: moinmorni-mc
+      MH_MC_NETWORK: morninet-mc
       MH_ROUTER_JAVA_PORT: '0'
       MH_ROUTER_BEDROCK_PORT: '0'
     volumes:
@@ -80,7 +80,7 @@ services:
   # Der Motor spricht Docker nur über diesen Proxy, nie direkt mit dem Socket.
   socket-proxy:
     image: ghcr.io/tecnativa/docker-socket-proxy:v0.4.1
-    container_name: moinmorni-socket-proxy
+    container_name: morninet-socket-proxy
     restart: unless-stopped
     environment:
       CONTAINERS: 1
@@ -106,18 +106,18 @@ services:
       - no-new-privileges:true
 
 volumes:
-  moinmorni-data:
-    name: moinmorni-data
+  morninet-data:
+    name: morninet-data
   motor-data:
-    name: moinmorni-motor-data
+    name: morninet-motor-data
 
 networks:
   # Nur Motor und Docker-Proxy, ohne Internet.
   docker-api:
     internal: true
-  # MoinMorni ↔ Motor.
+  # morni.net ↔ Motor.
   intern:
     internal: true
-  # Minecraft-Container, Motor (RCON) und MoinMorni (Hub für die Plugins).
+  # Minecraft-Container, Motor (RCON) und morni.net (Hub für die Plugins).
   minecraft:
-    name: moinmorni-mc
+    name: morninet-mc

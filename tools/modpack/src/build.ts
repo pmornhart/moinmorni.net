@@ -1,11 +1,11 @@
 /**
- * Baut das MoinMorni-Modpack: fragt Modrinth nach den passenden Mod-Versionen, holt Pflicht-Abhängigkeiten dazu und
+ * Baut das morni.net-Modpack: fragt Modrinth nach den passenden Mod-Versionen, holt Pflicht-Abhängigkeiten dazu und
  * schreibt nach `tools/modpack/dist/`:
- * - `MoinMorni-<version>.mrpack` – das Pack (Index + Serverliste)
+ * - `morni.net-<version>.mrpack` – das Pack (Index + Serverliste)
  * - `mods.md` – Übersicht mit Version und Lizenz jeder Mod
  * - `release.json` – Angaben fürs Hochladen (`src/publish.ts`)
  *
- * Aufruf: `pnpm --filter @moinmorni/modpack build [-- --version 26.3-2026.11.14b] [--out <ordner>]`
+ * Aufruf: `pnpm --filter @morninet/modpack build [-- --version 26.3-2026.11.14b] [--out <ordner>]`
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';

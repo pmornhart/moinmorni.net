@@ -30,7 +30,7 @@ const uuidOf = (b: Buffer): string => {
 
 /** Gleiche ID auf jedem Server: aus dem Namen gerechnet (wie Javas UUID.nameUUIDFromBytes, Version 3). */
 export function groupId(name: string): string {
-  const md5 = crypto.createHash('md5').update(`moinmorni-voice:${name.toLowerCase()}`).digest();
+  const md5 = crypto.createHash('md5').update(`morninet-voice:${name.toLowerCase()}`).digest();
   md5[6] = ((md5[6] ?? 0) & 0x0f) | 0x30;
   md5[8] = ((md5[8] ?? 0) & 0x3f) | 0x80;
   return uuidOf(md5);

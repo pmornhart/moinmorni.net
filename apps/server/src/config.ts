@@ -23,14 +23,14 @@ const envSchema = z.object({
   /** Der Motor (MorniHosting im Motor-Modus) und sein Dienst-Schlüssel. */
   MM_MOTOR_URL: z.string().url().default('http://motor:8080'),
   MM_MOTOR_TOKEN: z.string().min(1),
-  /** Öffentliche Adresse, z. B. moinmorni.net. */
-  MM_DOMAIN: z.string().default('moinmorni.net'),
+  /** Öffentliche Adresse, z. B. morni.net. */
+  MM_DOMAIN: z.string().default('morni.net'),
   MM_BEDROCK_PORT: z.coerce.number().int().min(1).max(PORT_MAX).default(DEFAULT_BEDROCK_PORT),
   MM_WEB_DIR: z.string().optional(),
   /** Wie die Plugins den Hub erreichen (Container-Name im Minecraft-Netz). */
-  MM_HUB_URL: z.string().default('ws://moinmorni:8090/hub'),
-  /** Das Netzwerk-Plugin, das MoinMorni auf Proxy und Spielserver legt (im Image unter /app/plugins). */
-  MM_PLUGIN_FILE: z.string().default('/app/plugins/MoinMorni-Network.jar'),
+  MM_HUB_URL: z.string().default('ws://morninet:8090/hub'),
+  /** Das Netzwerk-Plugin, das morni.net auf Proxy und Spielserver legt (im Image unter /app/plugins). */
+  MM_PLUGIN_FILE: z.string().default('/app/plugins/MorniNet.jar'),
   /** Netzwerk (Proxy + Lobby) nach der Einrichtung selbst anlegen; false nur für Tests. */
   MM_AUTO_NETWORK: z.enum(['true', 'false']).default('true'),
   /** Token des eigenen Discord-Bots (optional; lässt sich auch im Panel eintragen). */

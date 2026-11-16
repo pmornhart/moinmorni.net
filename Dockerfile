@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.7
-# MoinMorni: Webseite, Panel, Hub für die Plugins und Discord-Bot in einem Image. Der Motor (MorniHosting) hat sein
+# morni.net: Webseite, Panel, Hub für die Plugins und Discord-Bot in einem Image. Der Motor (MorniHosting) hat sein
 # eigenes Image aus vendor/mornihosting.
 
-# Das Netzwerk-Plugin (Velocity + Paper, Java 25). Scheitert sein Bau, entsteht das Image trotzdem – MoinMorni
+# Das Netzwerk-Plugin (Velocity + Paper, Java 25). Scheitert sein Bau, entsteht das Image trotzdem – morni.net
 # meldet dann, dass das Plugin fehlt, statt das ganze Update abzubrechen.
 FROM maven:3.9.16-eclipse-temurin-25 AS plugin
 WORKDIR /src
-COPY plugins/moinmorni-network/pom.xml ./
-COPY plugins/moinmorni-network/src ./src
+COPY plugins/morninet-network/pom.xml ./
+COPY plugins/morninet-network/src ./src
 RUN mkdir -p target && (mvn -B -q package || echo "Netzwerk-Plugin konnte nicht gebaut werden" > target/BUILD_FAILED.txt)
 
 FROM node:22-alpine AS build
@@ -30,16 +30,16 @@ COPY vendor/mornihosting/packages/shared/package.json vendor/mornihosting/packag
 RUN pnpm --dir vendor/mornihosting install --frozen-lockfile
 COPY . .
 ARG MM_VERSION=dev
-RUN pnpm --filter @moinmorni/web build \
- && pnpm --filter @moinmorni/server build \
- && pnpm --filter @moinmorni/server deploy --prod --legacy /out \
+RUN pnpm --filter @morninet/web build \
+ && pnpm --filter @morninet/server build \
+ && pnpm --filter @morninet/server deploy --prod --legacy /out \
  && cp -r apps/server/dist apps/server/drizzle /out/
 
 FROM node:22-alpine
 ARG MM_VERSION=dev
-LABEL org.opencontainers.image.title="MoinMorni" \
-      org.opencontainers.image.description="Webseite, Panel und Hub des Minecraft-Netzwerks MoinMorni" \
-      org.opencontainers.image.source="https://github.com/pmornhart/moinmorni.net" \
+LABEL org.opencontainers.image.title="morni.net" \
+      org.opencontainers.image.description="Webseite, Panel und Hub des Minecraft-Netzwerks morni.net" \
+      org.opencontainers.image.source="https://github.com/pmornhart/morni.net" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${MM_VERSION}"
 ENV NODE_ENV=production \

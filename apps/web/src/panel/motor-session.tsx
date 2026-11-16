@@ -29,7 +29,7 @@ function LiveSync(): null {
 
 /**
  * Everything MorniHosting's own parts need: its texts and its session (`/panel/motor/api/auth/me`), handed over with
- * MoinMorni's theme and language. Used by the embedded server pages, the account page and the window that asks for
+ * morni.net's theme and language. Used by the embedded server pages, the account page and the window that asks for
  * an own password. `quiet` shows nothing while loading (for the password window on top of any page); a session that
  * ends there (signed out in that window) starts the panel afresh.
  */
@@ -48,7 +48,7 @@ export function MotorSession({
   const language = useLanguage();
   const texts = useMotorTexts();
   const me = useQuery(meQuery);
-  // MorniHosting applies the user's theme and language from its session; hand it MoinMorni's current choice.
+  // MorniHosting applies the user's theme and language from its session; hand it morni.net's current choice.
   const session = useMemo<MeResponse | null>(
     () => (me.data ? { ...me.data, user: { ...me.data.user, theme: theme.choice, locale: language } } : null),
     [me.data, theme.choice, language],

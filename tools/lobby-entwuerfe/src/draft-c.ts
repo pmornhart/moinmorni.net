@@ -19,7 +19,7 @@ import {
   range,
   roundTree,
   terrain,
-} from '@moinmorni/builder';
+} from '@morninet/builder';
 import { fence, forest, houseAt, lampPost, MODES, portalAt, ramp } from './common.js';
 
 const CX = 1200;

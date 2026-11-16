@@ -1,11 +1,12 @@
-import type { Mode, ModeStatus, NetworkStatus } from '@moinmorni/shared';
+import { NETWORK_TITLE, type Mode, type ModeStatus, type NetworkStatus } from '@morninet/shared';
 import type { Config } from '../config.js';
+import { isOurNetwork } from '../lib/rename.js';
 import type { Hub } from '../hub/index.js';
 import type { MotorClient } from '../motor/client.js';
 import type { Stores } from '../panel/stores.js';
 
-/** Name des Netzwerks im Motor, das MoinMorni bei der Einrichtung anlegt. */
-export const NETWORK_NAME = 'MoinMorni';
+/** Name des Netzwerks im Motor, das morni.net bei der Einrichtung anlegt. */
+export const NETWORK_NAME = NETWORK_TITLE;
 const CACHE_MS = 5_000;
 const RUNNING = 'running';
 
@@ -65,7 +66,7 @@ export function createStatusService(
   };
   const load = async (): Promise<NetworkStatus> => {
     const networks = await networksOrNone();
-    const network = networks.find((n) => n.name === NETWORK_NAME);
+    const network = networks.find(isOurNetwork);
     const settings = stores.settings('network');
     const counts = hub.proxyOnline() ? hub.presence.counts() : null;
     return {

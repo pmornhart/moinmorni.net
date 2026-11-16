@@ -1,8 +1,9 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- drawing coordinates of the crest */
 import type { ReactElement } from 'react';
+import { NETWORK_TITLE } from '@morninet/shared';
 import { cn } from '~/lib/cn';
 
-/** MoinMorni's crest: a forest-green shield with a golden castle (own drawing, also the favicon). */
+/** morni.net's crest: a forest-green shield with a golden castle (own drawing, also the favicon). */
 export function Crest({ className }: { readonly className?: string }): ReactElement {
   return (
     <svg viewBox="0 0 32 32" className={cn('size-9 shrink-0', className)} aria-hidden>
@@ -22,7 +23,7 @@ export function Crest({ className }: { readonly className?: string }): ReactElem
   );
 }
 
-/** Crest + "MoinMorni" in the display face; `tag` adds a small gold word (e.g. "Panel"). */
+/** Crest + "morni.net" in the display face; `tag` adds a small gold word (e.g. "Panel"). */
 export function Wordmark({
   tag,
   className,
@@ -36,7 +37,7 @@ export function Wordmark({
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <Crest className={crestClassName} />
       <span className="font-display text-[1.35rem] font-semibold leading-none tracking-[-0.01em]">
-        MoinMorni
+        {NETWORK_TITLE}
       </span>
       {tag ? (
         <span className="rounded-full border border-gold/40 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] text-gold">

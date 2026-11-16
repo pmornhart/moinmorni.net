@@ -32,7 +32,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import type { PanelArea } from '@moinmorni/shared';
+import type { PanelArea } from '@morninet/shared';
 import { Button } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';

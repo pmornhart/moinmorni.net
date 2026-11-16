@@ -1,8 +1,8 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import type { Role } from '@moinmorni/shared';
+import type { Role } from '@morninet/shared';
 import { mmApi } from '~/lib/mm-api';
 
-/** Shapes of MoinMorni's team API (apps/server/src/panel/team-routes.ts). */
+/** Shapes of morni.net's team API (apps/server/src/panel/team-routes.ts). */
 
 export interface TeamMember {
   /** The account's id in the motor. */

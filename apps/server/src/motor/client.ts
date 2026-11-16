@@ -1,8 +1,8 @@
 /**
- * Der Motor: MorniHosting im Motor-Modus (MH_HEADLESS), nur im internen Netz erreichbar. MoinMorni spricht ihn
- * mit einem Dienst-Schlüssel an (`service-token moinmorni`) – für alles, was MoinMorni selbst tut (Server
+ * Der Motor: MorniHosting im Motor-Modus (MH_HEADLESS), nur im internen Netz erreichbar. morni.net spricht ihn
+ * mit einem Dienst-Schlüssel an (`service-token morninet`) – für alles, was morni.net selbst tut (Server
  * anlegen, starten, Netzwerk verdrahten). Team-Mitglieder melden sich beim Motor an (Passkeys, 2FA); deren
- * Sitzung prüft MoinMorni über `/api/auth/me` mit ihrem eigenen Cookie.
+ * Sitzung prüft morni.net über `/api/auth/me` mit ihrem eigenen Cookie.
  */
 
 const HTTP_UNAUTHORIZED = 401;

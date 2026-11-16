@@ -31,7 +31,7 @@ describe('Figuren der Lobby', () => {
     npc(c, { x: 0, y: 65, z: 0, look: 'south', skin: 'wirt' });
     npc(c, { x: 2, y: 65, z: 0, look: 'north', skin: 'gast1', sit: true });
     expect(c.extra[0]).toContain("profile:{properties:[{name:'textures',value:'");
-    expect(c.extra[0]).not.toContain('moinmorni:npc/');
+    expect(c.extra[0]).not.toContain('morninet:npc/');
     expect(c.extra[1]).toMatch(/^summon block_display .*Passengers:\[\{id:'minecraft:mannequin'/); // eslint-disable-line ts-patterns/require-regex-example -- seated figure rides a display: "summon block_display … Passengers:[{id:'minecraft:mannequin'"
   });
 });

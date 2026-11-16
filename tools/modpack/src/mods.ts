@@ -1,5 +1,5 @@
 /**
- * Was ins MoinMorni-Modpack gehört. Philips Wünsche: alles, was Minecraft schöner macht, Werkzeuge für Builder,
+ * Was ins morni.net-Modpack gehört. Philips Wünsche: alles, was Minecraft schöner macht, Werkzeuge für Builder,
  * Zoom an, Sprachchat wie im Netzwerk (Simple Voice Chat), keine Minimap, kein Axiom (erst nach Freigabe).
  *
  * Jede Mod kommt von Modrinth (Slug = Name in der Adresse, z. B. modrinth.com/mod/sodium). Das Bau-Skript nimmt pro
@@ -12,13 +12,13 @@ export const MINECRAFT_VERSION = '26.3';
 export const LOADER = 'fabric';
 export const LOADER_NAME = 'Fabric';
 
-export const PACK_NAME = 'MoinMorni';
+export const PACK_NAME = 'morni.net';
 export const PACK_SUMMARY =
-  'Das offizielle Modpack für moinmorni.net: schöner, flüssiger, mit Zoom und Sprachchat – dazu Bau-Werkzeuge fürs Bauteam.';
+  'Das offizielle Modpack für morni.net: schöner, flüssiger, mit Zoom und Sprachchat – dazu Bau-Werkzeuge fürs Bauteam.';
 
 /** Eintrag in der Serverliste, den das Modpack mitbringt. */
-export const SERVER_NAME = 'MoinMorni';
-export const SERVER_ADDRESS = 'moinmorni.net';
+export const SERVER_NAME = 'morni.net';
+export const SERVER_ADDRESS = 'morni.net';
 
 /** pflicht = immer dabei, optional = Launcher wie Prism fragen beim Installieren, ob man sie haben will. */
 export type Need = 'pflicht' | 'optional';

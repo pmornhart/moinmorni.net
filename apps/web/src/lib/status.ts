@@ -1,5 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { MODE_PHASE_PAUSE, type ModeState, type ModeStatus, type NetworkStatus } from '@moinmorni/shared';
+import { MODE_PHASE_PAUSE, type ModeState, type ModeStatus, type NetworkStatus } from '@morninet/shared';
 import { mmApi } from './mm-api';
 
 const MS_PER_SECOND = 1000;

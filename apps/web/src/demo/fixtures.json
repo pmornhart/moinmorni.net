@@ -3,8 +3,8 @@
     "online": true,
     "lobbyPlayers": 23,
     "maxPlayers": 200,
-    "javaAddress": "moinmorni.net",
-    "bedrockAddress": "moinmorni.net",
+    "javaAddress": "morni.net",
+    "bedrockAddress": "morni.net",
     "bedrockPort": 19132,
     "modes": [
       {
@@ -252,28 +252,28 @@
       "Turnier",
       "Gipfelfunk"
     ],
-    "discordInvite": "https://moinmorni.net/discord",
+    "discordInvite": "https://morni.net/discord",
     "socials": {
-      "youtube": "https://moinmorni.net/youtube",
-      "tiktok": "https://moinmorni.net/tiktok",
+      "youtube": "https://morni.net/youtube",
+      "tiktok": "https://morni.net/tiktok",
       "instagram": null
     },
     "players": 1284
   },
   "news": [
     {
-      "slug": "servus-in-moinmorni",
+      "slug": "servus-auf-morni-net",
       "category": "info",
       "pinned": true,
       "daysAgo": 6,
       "author": "Morni",
       "title": {
-        "de": "Servus in MoinMorni!",
-        "en": "Welcome to MoinMorni!"
+        "de": "Servus auf morni.net!",
+        "en": "Welcome to morni.net!"
       },
       "body": {
-        "de": "Unser Netzwerk hat die Tore geöffnet! Du startest im Alpendorf: Am Dorfmarkt rund um den Maibaum stehen die Figuren der Spielmodi – sprich eine an, und schon bist du im Spiel.\nDuels, Morni Party und Gipfelsturm sind von Anfang an dabei. MorniCraft ist unser Freunde-Survival für alle auf der Whitelist – bewerben kannst du dich hier auf der Webseite.\nDu spielst mit der Java Edition ab Version 1.17 oder mit Bedrock auf Handy, Konsole und Windows. Die Adresse ist moinmorni.net. Wir sehen uns im Biergarten!",
-        "en": "Our network has opened its gates! You start in the alpine village: around the maypole at the village market stand the figures of the game modes – talk to one and you are in the game.\nDuels, Morni Party and Summit Rush are there from day one. MorniCraft is our friends’ survival for everyone on the whitelist – you can apply right here on the website.\nPlay with Java Edition from version 1.17 or with Bedrock on phone, console and Windows. The address is moinmorni.net. See you in the beer garden!"
+        "de": "Unser Netzwerk hat die Tore geöffnet! Du startest im Alpendorf: Am Dorfmarkt rund um den Maibaum stehen die Figuren der Spielmodi – sprich eine an, und schon bist du im Spiel.\nDuels, Morni Party und Gipfelsturm sind von Anfang an dabei. MorniCraft ist unser Freunde-Survival für alle auf der Whitelist – bewerben kannst du dich hier auf der Webseite.\nDu spielst mit der Java Edition ab Version 1.17 oder mit Bedrock auf Handy, Konsole und Windows. Die Adresse ist morni.net. Wir sehen uns im Biergarten!",
+        "en": "Our network has opened its gates! You start in the alpine village: around the maypole at the village market stand the figures of the game modes – talk to one and you are in the game.\nDuels, Morni Party and Summit Rush are there from day one. MorniCraft is our friends’ survival for everyone on the whitelist – you can apply right here on the website.\nPlay with Java Edition from version 1.17 or with Bedrock on phone, console and Windows. The address is morni.net. See you in the beer garden!"
       }
     },
     {
@@ -347,8 +347,8 @@
         "en": "Voice chat across all game modes"
       },
       "body": {
-        "de": "Mit der Mod „Simple Voice Chat“ redest du auf MoinMorni mit anderen – mit Leuten in deiner Nähe, mit deiner Party oder in festen Kanälen wie „Dorfplatz“.\nDas Besondere: Die Kanäle sind in jedem Spielmodus gleich. Du kannst also in Duels sein und mit Freunden aus dem Gipfelsturm weiterreden.\nWie es geht, steht auf der Hilfe-Seite. Mit Bedrock gibt es leider keinen Sprachchat.",
-        "en": "With the mod “Simple Voice Chat” you can talk to others on MoinMorni – with people nearby, with your party or in fixed channels like “Dorfplatz”.\nThe special part: the channels are the same in every game mode. You can be in Duels and keep talking to friends in Summit Rush.\nThe help page explains how. Sadly there is no voice chat on Bedrock."
+        "de": "Mit der Mod „Simple Voice Chat“ redest du auf morni.net mit anderen – mit Leuten in deiner Nähe, mit deiner Party oder in festen Kanälen wie „Dorfplatz“.\nDas Besondere: Die Kanäle sind in jedem Spielmodus gleich. Du kannst also in Duels sein und mit Freunden aus dem Gipfelsturm weiterreden.\nWie es geht, steht auf der Hilfe-Seite. Mit Bedrock gibt es leider keinen Sprachchat.",
+        "en": "With the mod “Simple Voice Chat” you can talk to others on morni.net – with people nearby, with your party or in fixed channels like “Dorfplatz”.\nThe special part: the channels are the same in every game mode. You can be in Duels and keep talking to friends in Summit Rush.\nThe help page explains how. Sadly there is no voice chat on Bedrock."
       }
     },
     {

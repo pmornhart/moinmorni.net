@@ -9,7 +9,7 @@ import type { SettingArea, SettingDef, Text } from './settings.js';
  *
  * Der Weg: Panel (oder Befehl) → Hub schickt `mode-settings` (Pfad → Wert) an den Server des Modus → das
  * Netzwerk-Plugin schreibt die config.yml (Kommentare bleiben) → Neustart des Modus, sobald gerade niemand spielt.
- * Schläft der Modus, trägt MoinMorni die Werte vor dem Aufwachen ein. Ein neuer Modus braucht hier nur einen Bereich.
+ * Schläft der Modus, trägt morni.net die Werte vor dem Aufwachen ein. Ein neuer Modus braucht hier nur einen Bereich.
  */
 
 const t = (de: string, en: string): Text => ({ de, en });
@@ -135,7 +135,7 @@ export const DUELS_AREA: SettingArea = {
   ),
   icon: 'Swords',
   panel: 'modes',
-  mode: { id: 'duels', plugin: 'MoinMorniDuels' },
+  mode: { id: 'duels', plugin: 'MorniDuels' },
   sections: [
     {
       id: 'arenas',
@@ -1797,7 +1797,7 @@ export const SMP_AREA: SettingArea = {
         smp.text({
           key: 'address',
           at: 'anzeige.adresse',
-          value: 'moinmorni.net',
+          value: 'morni.net',
           maxLength: 64,
           arg: 'adresse',
           cmd: 'adresse',

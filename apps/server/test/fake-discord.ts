@@ -1,6 +1,6 @@
 /**
  * Nachgebautes Discord für Tests: REST (Rollen, Kanäle, Nachrichten, Mitglieder, Banns, Befehle, Threads,
- * Antworten auf Klicks) und ein Gateway, das READY und GUILD_CREATE schickt. Nur was der MoinMorni-Bot braucht.
+ * Antworten auf Klicks) und ein Gateway, das READY und GUILD_CREATE schickt. Nur was der morni.net-Bot braucht.
  */
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -57,7 +57,7 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
   const next = (): string => String((ids.n += 1));
   const guild = {
     id: '900',
-    name: 'MoinMorni',
+    name: 'morni.net',
     features: [] as string[],
     verification_level: 0,
     roles: new Map<string, FRole>([
@@ -82,7 +82,7 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
   type Handler = (m: RegExpMatchArray, body: Record<string, unknown>, res: http.ServerResponse) => void;
   const routes: Array<[string, RegExp, Handler]> = [
     ['GET', /^\/gateway\/bot$/, (_m, _b, res) => json(res, 200, { url: `ws://127.0.0.1:${port()}` })],
-    ['GET', /^\/applications\/@me$/, (_m, _b, res) => json(res, 200, { id: '777', name: 'MoinMorni' })],
+    ['GET', /^\/applications\/@me$/, (_m, _b, res) => json(res, 200, { id: '777', name: 'morni.net' })],
     [
       'GET',
       /^\/guilds\/(\d+)$/,
@@ -156,7 +156,7 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
         return json(res, 200, msg);
       },
     ],
-    ['POST', /^\/channels\/(\d+)\/invites$/, (_m, _b, res) => json(res, 200, { code: 'moinmorni' })],
+    ['POST', /^\/channels\/(\d+)\/invites$/, (_m, _b, res) => json(res, 200, { code: 'morninet' })],
     [
       'POST',
       /^\/channels\/(\d+)\/threads$/,

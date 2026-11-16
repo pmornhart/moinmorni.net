@@ -16,7 +16,7 @@ const PLACEHOLDER = /\{(\w+)\}/g;
 /** Text eines Spielers sicher in MiniMessage einsetzen. */
 export const mm = (text: string): string => text.replace(MM_SPECIAL, '\\$&');
 
-const P = '<dark_gray>[<gradient:#3ddc84:#1fa463>MoinMorni</gradient>]</dark_gray> ';
+const P = '<dark_gray>[<gradient:#3ddc84:#1fa463>morni.net</gradient>]</dark_gray> ';
 
 const F = '<dark_gray>[<aqua>Freunde</aqua>]</dark_gray> ';
 const FE = '<dark_gray>[<aqua>Friends</aqua>]</dark_gray> ';

@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import type { Role } from '@moinmorni/shared';
+import type { Role } from '@morninet/shared';
 import type { Api } from '../app.js';
 import type { Db } from '../db/index.js';
 import { players, teamMembers } from '../db/schema.js';
@@ -12,7 +12,7 @@ import type { Stores } from './stores.js';
 
 /**
  * Team-Konten: Wer ins Panel darf, legt das Team hier an. Das Konto selbst lebt im Motor (Passwort, Passkeys,
- * 2FA – alles von MorniHosting); MoinMorni merkt sich dazu die Rolle. Neue Konten bekommen ein Startpasswort,
+ * 2FA – alles von MorniHosting); morni.net merkt sich dazu die Rolle. Neue Konten bekommen ein Startpasswort,
  * das beim ersten Anmelden durch ein eigenes ersetzt werden muss. Wer die Server-Seiten sehen darf (Bereich
  * „Server“), bekommt im Motor Zugriff auf alle Server des Netzwerks: Admins als Besitzer, alle anderen als
  * Moderator. Niemand legt Konten mit einer Rolle über (oder gleich) der eigenen an – außer dem Owner.

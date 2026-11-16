@@ -58,7 +58,7 @@
     },
     "privacy": {
       "title": "Privacy",
-      "text": "Soon you will read here which data MoinMorni keeps and why."
+      "text": "Soon you will read here which data morni.net keeps and why."
     },
     "notFound": {
       "title": "This page does not exist",
@@ -67,7 +67,7 @@
     }
   },
   "site": {
-    "home": "MoinMorni – to the start page",
+    "home": "morni.net – to the start page",
     "playNow": "Play now",
     "panelHint": "To the panel – for the team only",
     "loadError": "This can't be loaded right now. Please try again in a moment.",
@@ -85,7 +85,7 @@
       "offline": "Offline right now",
       "statusLoading": "Checking who's online …",
       "statusError": "Status not available right now",
-      "imageAlt": "MoinMorni's Alpine village: houses, market stalls around the maypole and the castle on the mountain",
+      "imageAlt": "morni.net's Alpine village: houses, market stalls around the maypole and the castle on the mountain",
       "editions": "Java and Bedrock",
       "javaShort": "Java from version 1.17",
       "bedrockShort": "Bedrock · port {{port}}",
@@ -162,7 +162,7 @@
     "mode": {
       "eyebrow": "Game mode",
       "howTitle": "How to get there",
-      "step1": "Connect to MoinMorni:",
+      "step1": "Connect to morni.net:",
       "step2": "In the lobby: talk to the figure “{{name}}”",
       "step2Text": "The figures stand in the village with the game mode's name above their heads. One right-click (on a phone: tap) – and off you go.",
       "step3": "Or type in the chat:",
@@ -191,7 +191,7 @@
     "stats": {
       "eyebrow": "Leaderboards",
       "title": "Statistics",
-      "text": "Who has spent the most time on MoinMorni? Search for yourself or your friends too.",
+      "text": "Who has spent the most time on morni.net? Search for yourself or your friends too.",
       "total": "Players in total",
       "totalHint": "Everyone who has ever joined",
       "online": "Online now",
@@ -202,7 +202,7 @@
       "privateHint": "Private profiles are not on the leaderboard.",
       "emptyTitle": "Still empty",
       "place": "Place {{rank}}",
-      "homeTitle": "MoinMorni in numbers",
+      "homeTitle": "morni.net in numbers",
       "modesOpen": "Game modes open",
       "modesOpenHint": "Empty modes sleep and wake up as soon as someone arrives.",
       "modeBoards": "Game mode leaderboards",
@@ -220,7 +220,7 @@
       "searchHint": "Names of Bedrock players (phone, console) start with a dot, e.g. “.Name”.",
       "back": "To the leaderboard",
       "unknownTitle": "We don't know this player yet",
-      "unknownText": "“{{name}}” has never been on MoinMorni – or the name is spelled differently.",
+      "unknownText": "“{{name}}” has never been on morni.net – or the name is spelled differently.",
       "privateTitle": "This profile is private",
       "privateText": "This profile is private. With /profile public it becomes visible.",
       "privateHow": "Is it your profile? Type in the game:",
@@ -309,7 +309,7 @@
       }
     },
     "team": {
-      "eyebrow": "Who's behind MoinMorni",
+      "eyebrow": "Who's behind morni.net",
       "title": "The team",
       "text": "These people keep the network running. If you have questions, talk to them in the game or on Discord.",
       "count_one": "{{count}} person",
@@ -327,7 +327,7 @@
     "rules": {
       "eyebrow": "Play fair",
       "title": "Rules",
-      "text": "So everyone feels at home: these rules apply everywhere on MoinMorni – in every game mode and on our Discord.",
+      "text": "So everyone feels at home: these rules apply everywhere on morni.net – in every game mode and on our Discord.",
       "number": "Rule {{n}}:",
       "emptyTitle": "No rules yet",
       "empty": "The rules will appear here as soon as the team has added them.",
@@ -354,7 +354,7 @@
       "help": "Help",
       "legal": "Legal",
       "panel": "Team panel",
-      "follow": "MoinMorni online"
+      "follow": "morni.net online"
     },
     "help": {
       "eyebrow": "Questions & answers",
@@ -365,7 +365,7 @@
       "join": {
         "title": "How to join",
         "short": "Add the address – with Java or Bedrock",
-        "intro": "MoinMorni works with the Java Edition (PC) and the Bedrock Edition (phone, console, Windows). All you need is your Minecraft – there's no sign-up with us.",
+        "intro": "morni.net works with the Java Edition (PC) and the Bedrock Edition (phone, console, Windows). All you need is your Minecraft – there's no sign-up with us.",
         "javaTitle": "Java Edition (PC)",
         "java1": "Start Minecraft and click “Multiplayer”.",
         "java2": "Click “Add Server”.",
@@ -383,10 +383,10 @@
       "voice": {
         "title": "Voice chat",
         "short": "Talk to others – across all game modes",
-        "intro": "On MoinMorni you can talk to others: to people near you, to your party, or in fixed channels that are the same in every game mode. For this you need the free mod “Simple Voice Chat” (Java only).",
+        "intro": "On morni.net you can talk to others: to people near you, to your party, or in fixed channels that are the same in every game mode. For this you need the free mod “Simple Voice Chat” (Java only).",
         "step1": "Install the mod for your Minecraft version:",
         "modLink": "Simple Voice Chat on Modrinth",
-        "step2": "Start Minecraft with the mod and join MoinMorni – the voice chat connects by itself.",
+        "step2": "Start Minecraft with the mod and join morni.net – the voice chat connects by itself.",
         "step3a": "The",
         "step3b": "key opens the voice chat settings (test your microphone, volume),",
         "step3c": "opens the groups. To talk, hold the push-to-talk key – or switch to voice activation in the settings.",
@@ -641,7 +641,7 @@
   },
   "login": {
     "title": "Team area",
-    "subtitle": "Sign in with your MoinMorni account.",
+    "subtitle": "Sign in with your morni.net account.",
     "username": "Name or email",
     "password": "Password",
     "submit": "Sign in",
@@ -660,7 +660,7 @@
   },
   "notInTeam": {
     "title": "You are not on the team (yet)",
-    "text": "You are signed in, but you have no role in MoinMorni yet. Ask the owner to give you one – then you can continue here.",
+    "text": "You are signed in, but you have no role on morni.net yet. Ask the owner to give you one – then you can continue here.",
     "logout": "Sign out"
   },
   "gate": {
@@ -669,7 +669,7 @@
     "retry": "Try again"
   },
   "setup": {
-    "title": "Welcome to MoinMorni!",
+    "title": "Welcome to morni.net!",
     "text": "Create your owner account. You will manage the whole network with it.",
     "codeHelp": "The installation script showed the setup code. Lost it? This command on the server shows it:",
     "code": "Setup code",
@@ -685,7 +685,7 @@
     "nameInvalid": "The name does not fit yet: 3–32 characters, only letters, numbers, dot, dash and underscore.",
     "passwordShort": "The password needs at least 10 characters.",
     "codeMissing": "Please enter the setup code.",
-    "doneTitle": "MoinMorni is already set up",
+    "doneTitle": "morni.net is already set up",
     "doneText": "There is an owner account already. Just sign in.",
     "toLogin": "Go to sign in"
   },
@@ -894,7 +894,7 @@
       "roles": "This page: change roles and their rights.",
       "content": "Texts and news on the website.",
       "discord": "Set up the Discord bot and its channels.",
-      "updates": "Install MoinMorni updates.",
+      "updates": "Install morni.net updates.",
       "servers": "The single servers with console, files and backups.",
       "build": "The build server for the build team.",
       "settings": "General settings of the whole network."
@@ -940,8 +940,8 @@
   },
   "servers": {
     "title": "Servers",
-    "text": "All of MoinMorni's Minecraft servers: console, files, backups, plugins and more – click a server.",
-    "empty": "No servers yet. MoinMorni creates them itself when it sets up the network.",
+    "text": "All of morni.net's Minecraft servers: console, files, backups, plugins and more – click a server.",
+    "empty": "No servers yet. morni.net creates them itself when it sets up the network.",
     "players": "{{online}} / {{max}} players",
     "open": "Open",
     "loading": "Loading servers …",
@@ -970,7 +970,7 @@
   },
   "players": {
     "title": "Players",
-    "text": "Everyone who has ever been on MoinMorni – with rank, play time and punishments. Whoever is online right now is at the top.",
+    "text": "Everyone who has ever been on morni.net – with rank, play time and punishments. Whoever is online right now is at the top.",
     "search": "Search players …",
     "searchLabel": "Search for a player name",
     "searchHint": "Tip: names of Bedrock players (phone, console) start with a dot, e.g. “.Tobi_04”.",
@@ -990,7 +990,7 @@
     "muted": "Muted",
     "open": "Open {{name}}'s profile",
     "back": "All players",
-    "unknown": "MoinMorni does not know this player (any more).",
+    "unknown": "morni.net does not know this player (any more).",
     "profile": "Profile",
     "firstSeen": "First joined",
     "lastSeenLabel": "Last seen",
@@ -1166,7 +1166,7 @@
     },
     "settings": {
       "title": "Settings",
-      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – MoinMorni does that by itself as soon as nobody is playing."
+      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – morni.net does that by itself as soon as nobody is playing."
     },
     "news": {
       "title": "News",
@@ -1257,7 +1257,7 @@
   },
   "discordAdmin": {
     "title": "Discord",
-    "text": "MoinMorni has its own Discord bot. Here you connect it and let it set up your Discord server – step by step.",
+    "text": "morni.net has its own Discord bot. Here you connect it and let it set up your Discord server – step by step.",
     "refresh": "Check again",
     "overall": {
       "missing": {
@@ -1307,9 +1307,9 @@
         "title": "Create the bot in the Discord developer portal",
         "a": "Open the",
         "portal": "Discord developer portal",
-        "b": "Click “New Application” and name it “MoinMorni”.",
+        "b": "Click “New Application” and name it “morni.net”.",
         "c": "On the left, click “Bot”, then “Reset Token”, and copy the token.",
-        "d": "Enter it during installation (the script asks for it) – or add it to the .env on the server and restart MoinMorni:",
+        "d": "Enter it during installation (the script asks for it) – or add it to the .env on the server and restart morni.net:",
         "secret": "The token is like a password: never post it in a chat or share it."
       },
       "s2": {
@@ -1444,7 +1444,7 @@
       "username": "Username",
       "password": "Start password",
       "copyAll": "Copy everything",
-      "allText": "MoinMorni panel\nAddress: {{address}}\nUsername: {{username}}\nStart password: {{password}}\nAt the first sign-in you set your own password.",
+      "allText": "morni.net panel\nAddress: {{address}}\nUsername: {{username}}\nStart password: {{password}}\nAt the first sign-in you set your own password.",
       "done": "Done",
       "copyAddress": "Copy address",
       "copyUsername": "Copy username",
@@ -1475,9 +1475,9 @@
     "roleText": "Your role decides what you see in the panel and may do in the game. Someone with a higher role can change it.",
     "toTeam": "To the team",
     "minecraftTitle": "Link your Minecraft account",
-    "minecraftText": "Enter your Minecraft name (Java Edition) below. Then MoinMorni recognises you in the game, and your team role counts there too – with its symbol in the chat and the rights of your role.",
+    "minecraftText": "Enter your Minecraft name (Java Edition) below. Then morni.net recognises you in the game, and your team role counts there too – with its symbol in the chat and the rights of your role.",
     "minecraftLinkedTitle": "Your Minecraft account is linked",
-    "minecraftLinked": "MoinMorni recognises you in the game: your team role counts there too – with its symbol in the chat and the rights of your role.",
+    "minecraftLinked": "morni.net recognises you in the game: your team role counts there too – with its symbol in the chat and the rights of your role.",
     "terms": {
       "title": "In short",
       "password": {
@@ -1499,8 +1499,8 @@
     }
   },
   "updatesCard": {
-    "title": "MoinMorni version",
-    "text": "New versions come from GitHub, where MoinMorni’s code lives. Every update starts with a backup – if something goes wrong, MoinMorni goes back to the old version by itself.",
+    "title": "morni.net version",
+    "text": "New versions come from GitHub, where morni.net’s code lives. Every update starts with a backup – if something goes wrong, morni.net goes back to the old version by itself.",
     "look": {
       "updating": "Updating",
       "failed": "Not checked",
@@ -1531,7 +1531,7 @@
     "noAgentTitle": "Update helper missing on this machine",
     "noAgentText": "The panel cannot replace itself – a small helper on the machine does that, set up by install.sh (needs systemd). It is missing here, so automatic updates do not run either. Until then, start an update on the machine yourself:",
     "checkFailedTitle": "GitHub cannot be reached right now",
-    "checkFailedText": "We could not check whether there is something new. Usually GitHub or the machine’s internet is the reason – MoinMorni keeps running as usual. Try again in a few minutes.",
+    "checkFailedText": "We could not check whether there is something new. Usually GitHub or the machine’s internet is the reason – morni.net keeps running as usual. Try again in a few minutes.",
     "checkFailedToast": "GitHub is not answering right now – try again later.",
     "foundToast": "There is an update!",
     "currentToast": "Up to date – nothing to do.",
@@ -1545,7 +1545,7 @@
       "pull": "Fetching the new code",
       "build": "Building the new version – this takes a few minutes",
       "backup": "Making a backup",
-      "restart": "MoinMorni is restarting",
+      "restart": "morni.net is restarting",
       "check": "Checking that everything runs",
       "rollback": "Going back to the old version"
     },
@@ -1557,8 +1557,8 @@
       "check": "Check"
     },
     "since": "since {{time}}",
-    "rollingBack": "Something went wrong – MoinMorni is going back to the old version by itself (code and databases from the backup).",
-    "reconnecting": "MoinMorni is restarting – the page reconnects in a moment.",
+    "rollingBack": "Something went wrong – morni.net is going back to the old version by itself (code and databases from the backup).",
+    "reconnecting": "morni.net is restarting – the page reconnects in a moment.",
     "log": "Update log",
     "logEmpty": "No output yet.",
     "showLog": "Show log",
@@ -1570,16 +1570,16 @@
       },
       "rolled_back": {
         "title": "Last update was undone ({{time}})",
-        "text": "Something went wrong with the new version. So MoinMorni went back to the old version ({{from}}) by itself – including the databases from the backup. Everything runs as before; the log shows what happened."
+        "text": "Something went wrong with the new version. So morni.net went back to the old version ({{from}}) by itself – including the databases from the backup. Everything runs as before; the log shows what happened."
       },
       "failed": {
         "title": "Last update failed ({{time}})",
-        "text": "The log shows what happened. If only the new code could not be fetched, MoinMorni keeps running unchanged ({{from}}). Otherwise please look at the machine – backups are in /var/backups/moinmorni."
+        "text": "The log shows what happened. If only the new code could not be fetched, morni.net keeps running unchanged ({{from}}). Otherwise please look at the machine – backups are in /var/backups/morninet."
       }
     },
     "allCurrentTitle": "Up to date",
-    "allCurrentText": "You have the newest version of MoinMorni – nothing to do.",
-    "devBuild": "This version was built without a version number, so MoinMorni cannot compare what is new.",
+    "allCurrentText": "You have the newest version of morni.net – nothing to do.",
+    "devBuild": "This version was built without a version number, so morni.net cannot compare what is new.",
     "changesTitle": "What’s new",
     "changesCount_one": "{{count}} update",
     "changesCount_other": "{{count}} updates",
@@ -1680,7 +1680,7 @@
     "title": "Saved builds",
     "text": "What the build team saves with WorldEdit on the build server lands here. With one click you copy a build into the lobby or a mode – someone places it there with WorldEdit.",
     "missingTitle": "The build server does not exist yet",
-    "missingText": "MoinMorni creates it by itself when it sets up the network (together with proxy and lobby). If it is missing here, the setup is still running or it was deleted in the engine – it is created again at the next start of MoinMorni.",
+    "missingText": "morni.net creates it by itself when it sets up the network (together with proxy and lobby). If it is missing here, the setup is still running or it was deleted in the engine – it is created again at the next start of morni.net.",
     "howTitle": "How the build team saves a build",
     "how1": "Go to the build server (only with the right “build”):",
     "how2": "Get the wooden axe with",
@@ -1794,7 +1794,7 @@
     "no_pending_login": "The sign-in has expired. Please start again.",
     "email_unconfirmed": "Please confirm your email address first.",
     "account_pending_approval": "Your account is still waiting for approval.",
-    "not_in_team": "Your account has no role in MoinMorni yet.",
+    "not_in_team": "Your account has no role on morni.net yet.",
     "panel_area_forbidden": "Your role may not change this area.",
     "csrf": "Your session has expired. Reload the page and try again.",
     "bad_origin": "The request came from another site and was refused.",
@@ -1806,11 +1806,11 @@
     "internal": "An error happened in the panel. Please try again in a moment.",
     "too_many": "Too many attempts. Wait a little and try again.",
     "passkey_cancelled": "Passkey sign-in cancelled.",
-    "passkey_unknown": "MoinMorni does not know this passkey.",
+    "passkey_unknown": "morni.net does not know this passkey.",
     "setup_code_wrong": "The setup code is not right. Have another close look.",
-    "setup_done": "MoinMorni is already set up. Just sign in.",
+    "setup_done": "morni.net is already set up. Just sign in.",
     "setup_invalid": "Name or password do not fit the rules yet.",
-    "player_unknown": "MoinMorni does not know this player. They must have been on the network at least once – check the spelling too.",
+    "player_unknown": "morni.net does not know this player. They must have been on the network at least once – check the spelling too.",
     "player_higher": "This person has the same or a higher rank than you – you may not do that.",
     "player_offline": "Kicking only works while the person is online.",
     "punishment_none": "There is nothing to lift right now – maybe the punishment has already run out.",
@@ -1845,7 +1845,7 @@
   },
   "modeSettings": {
     "title": "Applies after the mode’s next restart",
-    "text": "These settings live in the game mode’s own file. MoinMorni writes them there and restarts the mode by itself as soon as nobody is playing – nobody gets thrown out mid-game. If the mode is asleep, they apply when it wakes up.",
+    "text": "These settings live in the game mode’s own file. morni.net writes them there and restarts the mode by itself as soon as nobody is playing – nobody gets thrown out mid-game. If the mode is asleep, they apply when it wakes up.",
     "pendingTitle": "Restart still to come",
     "pendingText": "The new values are written. Someone is still playing – as soon as the mode is empty it restarts, then they apply."
   }

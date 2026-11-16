@@ -36,7 +36,7 @@ export const T = {
     de: 'Servus {user}, schön dass du da bist! 👋\nSpielen: **{address}** (Java) · Bedrock: **{address}**, Port **{port}**\nVerbinde dein Minecraft-Konto: im Spiel `/discord` eingeben. Hilfe: `/hilfe`',
     en: 'Hi {user}, great to have you! 👋\nPlay: **{address}** (Java) · Bedrock: **{address}**, port **{port}**\nLink your Minecraft account: type `/discord` in game. Help: `/hilfe`',
   },
-  hilfeTitle: { de: 'So geht MoinMorni', en: 'How MoinMorni works' },
+  hilfeTitle: { de: 'So geht morni.net', en: 'How morni.net works' },
   hilfeJoin: { de: 'Mitspielen', en: 'Join' },
   hilfeJoinText: {
     de: '**Java:** Mehrspieler → Server hinzufügen → `{address}`\n**Bedrock (Handy, Konsole, Windows):** `{address}`, Port `{port}`',
@@ -60,7 +60,7 @@ export const T = {
     de: 'Der Code stimmt nicht oder ist abgelaufen. Im Spiel `/discord` eingeben, dann den neuen Code hier nutzen.',
     en: 'That code is wrong or expired. Type `/discord` in game and use the new code here.',
   },
-  statusTitle: { de: 'MoinMorni – gerade', en: 'MoinMorni – right now' },
+  statusTitle: { de: 'morni.net – gerade', en: 'morni.net – right now' },
   statusOnline: {
     de: '🟢 **{players}** von {max} Spielern online',
     en: '🟢 **{players}** of {max} players online',
@@ -136,20 +136,20 @@ export const T = {
     en: 'Thank you for applying to MorniCraft. Unfortunately it was not a fit this time.{note}',
   },
   logUpdateStarted: {
-    de: '🔄 Update von MoinMorni gestartet ({by}) – das Panel ist gleich ein paar Minuten weg, die Minecraft-Server laufen weiter.',
-    en: '🔄 MoinMorni update started ({by}) – the panel is gone for a few minutes, the Minecraft servers keep running.',
+    de: '🔄 Update von morni.net gestartet ({by}) – das Panel ist gleich ein paar Minuten weg, die Minecraft-Server laufen weiter.',
+    en: '🔄 morni.net update started ({by}) – the panel is gone for a few minutes, the Minecraft servers keep running.',
   },
   logUpdateDone: {
-    de: '✅ MoinMorni ist aktualisiert: {from} → {to}',
-    en: '✅ MoinMorni is updated: {from} → {to}',
+    de: '✅ morni.net ist aktualisiert: {from} → {to}',
+    en: '✅ morni.net is updated: {from} → {to}',
   },
   logUpdateRolledBack: {
-    de: '↩️ Das Update von MoinMorni hat nicht geklappt – alles läuft wieder in der alten Fassung {from}. Protokoll im Panel unter Updates.',
-    en: '↩️ The MoinMorni update did not work – everything runs the old version {from} again. Log in the panel under Updates.',
+    de: '↩️ Das Update von morni.net hat nicht geklappt – alles läuft wieder in der alten Fassung {from}. Protokoll im Panel unter Updates.',
+    en: '↩️ The morni.net update did not work – everything runs the old version {from} again. Log in the panel under Updates.',
   },
   logUpdateFailed: {
-    de: '⚠️ Das Update von MoinMorni ist fehlgeschlagen. Protokoll im Panel unter Updates.',
-    en: '⚠️ The MoinMorni update failed. Log in the panel under Updates.',
+    de: '⚠️ Das Update von morni.net ist fehlgeschlagen. Protokoll im Panel unter Updates.',
+    en: '⚠️ The morni.net update failed. Log in the panel under Updates.',
   },
   logLiftBan: { de: '✅ **{name}** entbannt von {by}', en: '✅ **{name}** unbanned by {by}' },
   logLiftMute: {

@@ -1,6 +1,6 @@
 /**
  * Testaufbau mit dem echten Motor: MorniHosting aus vendor/mornihosting im Motor-Modus (ohne Oberfläche) mit
- * nachgebautem Docker, auf einem freien Port – und MoinMorni davor, genau wie im Container.
+ * nachgebautem Docker, auf einem freien Port – und morni.net davor, genau wie im Container.
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -62,11 +62,11 @@ export interface Harness {
 }
 
 export interface HarnessOptions {
-  /** false = der Motor ist frisch, noch ohne Konto (Ersteinrichtung über MoinMorni testen). */
+  /** false = der Motor ist frisch, noch ohne Konto (Ersteinrichtung über morni.net testen). */
   readonly motorSetup?: boolean;
   /** Gebaute Webseite ausliefern (Browser-Tests). */
   readonly webDir?: string;
-  /** Fester Port für MoinMorni (Browser-Tests). */
+  /** Fester Port für morni.net (Browser-Tests). */
   readonly port?: number;
   /** Weitere Einstellungen (z. B. MM_DISCORD_TOKEN). */
   readonly env?: Record<string, string>;
@@ -96,14 +96,14 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
   await motor.app.listen({ host: '127.0.0.1', port: 0 });
   const address = motor.app.server.address() as { port: number };
   const motorUrl = `http://127.0.0.1:${address.port}`;
-  // Philip richtet das erste Konto ein (im echten Aufbau über den Einrichtungs-Assistenten von MoinMorni).
+  // Philip richtet das erste Konto ein (im echten Aufbau über den Einrichtungs-Assistenten von morni.net).
   if (options.motorSetup !== false)
     await fetch(`${motorUrl}/api/setup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ username: 'philip', password: OWNER_PASSWORD, locale: 'de' }),
     });
-  const token = (await runCommand(motor.ctx.db, 'service-token', ['moinmorni'])).message;
+  const token = (await runCommand(motor.ctx.db, 'service-token', ['morninet'])).message;
   const mm = await buildApp({
     config: loadConfig(
       {

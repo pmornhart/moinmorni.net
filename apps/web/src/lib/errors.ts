@@ -15,7 +15,7 @@ function hasCode(err: unknown): err is { readonly code: string; readonly status?
 }
 
 /**
- * The error code behind an error from MoinMorni's API, the motor's API (MorniHosting's ApiError has the same
+ * The error code behind an error from morni.net's API, the motor's API (MorniHosting's ApiError has the same
  * shape) or a passkey dialog.
  */
 export function errorCode(err: unknown): string {
@@ -26,7 +26,7 @@ export function errorCode(err: unknown): string {
   return GENERIC;
 }
 
-/** A friendly sentence for any error (texts under errors.* in MoinMorni's namespace). */
+/** A friendly sentence for any error (texts under errors.* in morni.net's namespace). */
 export function useErrorText(): (err: unknown) => string {
   const { t, i18n } = useTranslation(MM_NAMESPACE);
   return (err) => {

@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
-import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@moinmorni/builder';
-import { areaById, MODE_PHASE_PAUSE, type GameRight, type Role } from '@moinmorni/shared';
+import { JAIL, LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR, TOUR, modeIcon } from '@morninet/builder';
+import { areaById, MODE_PHASE_PAUSE, type GameRight, type Role } from '@morninet/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
@@ -34,7 +34,7 @@ import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
 
 /**
- * Der Hub: verbindet Proxy und Spielserver mit MoinMorni (docs/hub-protokoll.md). Hier laufen Anmeldung (Bann,
+ * Der Hub: verbindet Proxy und Spielserver mit morni.net (docs/hub-protokoll.md). Hier laufen Anmeldung (Bann,
  * Wartung, voll), Anwesenheit, Chat, Befehle und Ränge zusammen.
  */
 
@@ -137,7 +137,7 @@ export interface HubOptions {
   readonly events: EventBus;
   readonly log: FastifyBaseLogger;
   readonly timeZone: string;
-  /** Öffentliche Adresse für Links (moinmorni.net). */
+  /** Öffentliche Adresse für Links (morni.net). */
   readonly domain?: string;
   readonly now?: () => number;
   /** Weitere Befehle im Spiel (z. B. /discord vom Discord-Bot). */
@@ -255,7 +255,7 @@ export function createHub(options: HubOptions): Hub {
     punish,
     stores,
     timeZone: options.timeZone,
-    domain: options.domain ?? 'moinmorni.net',
+    domain: options.domain ?? 'morni.net',
     msg: (uuid, line) => {
       if (toProxy({ t: 'msg', uuid, text: line })) return;
       const server = presence.get(uuid)?.server;
@@ -485,8 +485,9 @@ export function createHub(options: HubOptions): Hub {
   const morniCraft = (): Body =>
     morniCraftSettings(stores, { domain: ctx.domain, timeZone: options.timeZone });
   let lobbyTimer: ReturnType<typeof setTimeout> | null = null;
+  let closed = false;
   const lobbySoon = (): void => {
-    if (lobbyTimer) return;
+    if (lobbyTimer || closed) return;
     lobbyTimer = setTimeout(() => {
       lobbyTimer = null;
       const body = lobbyState();
@@ -748,7 +749,7 @@ export function createHub(options: HubOptions): Hub {
     if (area === 'network') toProxy(network());
     if (area === 'lobby') toBackend(LOBBY_SERVER, lobbySettings());
     if (area === 'voice') voice.broadcast();
-    // Einstellungen eines Spielmodus → an seinen Server (schläft er, trägt MoinMorni sie vor dem Aufwachen ein).
+    // Einstellungen eines Spielmodus → an seinen Server (schläft er, trägt morni.net sie vor dem Aufwachen ein).
     const modeServer = serverOfModeArea(stores, area);
     const changed = modeServer ? areaById(area) : undefined;
     const modeSettings = changed ? modeSettingsBody(stores, changed) : null;
@@ -761,6 +762,10 @@ export function createHub(options: HubOptions): Hub {
     listen: transport.listen,
     close: async () => {
       voice.stop();
+      // Sonst feuert die verzögerte Lobby-Meldung noch nach dem Schließen (Datenbank schon zu).
+      closed = true;
+      if (lobbyTimer) clearTimeout(lobbyTimer);
+      lobbyTimer = null;
       await transport.close();
     },
     keyFor: (server, kind) => serverKeyOf(hubSecret, server, kind),

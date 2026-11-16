@@ -1,6 +1,6 @@
 import { desc, like, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { mayAssign } from '@moinmorni/shared';
+import { mayAssign } from '@morninet/shared';
 import type { Api } from '../app.js';
 import type { Db } from '../db/index.js';
 import { players, punishments } from '../db/schema.js';

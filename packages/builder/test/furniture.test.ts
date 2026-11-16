@@ -49,8 +49,8 @@ describe('Möbel-Paket', () => {
     const names = new Set(Object.keys(FURNITURE_MODELS));
     Object.values(states).forEach((s) =>
       Object.values(s.variants).forEach((v) => {
-        const own = v.model.startsWith('moinmorni:block/moebel/');
-        if (own) expect(names.has(v.model.replace('moinmorni:block/moebel/', ''))).toBe(true);
+        const own = v.model.startsWith('morninet:block/moebel/');
+        if (own) expect(names.has(v.model.replace('morninet:block/moebel/', ''))).toBe(true);
         else expect(v.model).toMatch(/^minecraft:block\/(mangrove|birch)_planks$/); // e.g. "minecraft:block/birch_planks"
       }),
     );

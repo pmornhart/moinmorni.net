@@ -623,7 +623,7 @@ describe('Hub', () => {
     const { lobby, duels } = await network();
     const first = await lobby.next('lobby-settings');
     expect(first).toMatchObject({
-      welcome: { title: 'Servus in MoinMorni!' },
+      welcome: { title: 'Servus auf morni.net!' },
       season: 'none',
       parkour: true,
     });
@@ -645,7 +645,7 @@ describe('Hub', () => {
     const mc = await plugin('mornicraft', 'backend');
     const first = (await mc.next('mornicraft-settings')) as unknown as { config: Record<string, unknown> };
     expect(first.config).toMatchObject({
-      'server-name': 'MorniCraft auf MoinMorni',
+      'server-name': 'MorniCraft auf morni.net',
       'teleport-delay': 5,
       'max-homes': 5,
       limits: { spawn: { uses: 0, hours: 24 } },
@@ -653,7 +653,7 @@ describe('Hub', () => {
       'hard-dragon': true,
       dragon: { health: 600, damage: 175, egg: true },
       'update-check': false,
-      network: { address: 'moinmorni.net', 'panel-players': 'https://moinmorni.net/panel/spieler' },
+      network: { address: 'morni.net', 'panel-players': 'https://morni.net/panel/spieler' },
     });
     // Regeln wie auf der Webseite, eine pro Zeile, beide Sprachen.
     const rules = first.config['network'] as { 'rules-de': string[]; 'rules-en': string[] };
@@ -707,7 +707,7 @@ describe('Hub', () => {
       plugin: string;
       values: Record<string, unknown>;
     };
-    expect(first).toMatchObject({ mode: 'duels', plugin: 'MoinMorniDuels' });
+    expect(first).toMatchObject({ mode: 'duels', plugin: 'MorniDuels' });
     expect(first.values).toMatchObject({
       'kampf.zeitlimit-sekunden': 600,
       'suppe.heilung': 7,

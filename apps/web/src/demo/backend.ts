@@ -1,4 +1,4 @@
-import { MODE_HEADLINE_STATS, type ModeStatus, type NetworkStatus, type Text } from '@moinmorni/shared';
+import { MODE_HEADLINE_STATS, type ModeStatus, type NetworkStatus, type Text } from '@morninet/shared';
 import type {
   ModeBoard,
   ModeTopEntry,
@@ -81,7 +81,7 @@ type Handler = (request: DemoRequest) => DemoResponse;
 const DATA = fixtures as unknown as Fixtures;
 
 const API = '/api/';
-const DEMO_ORIGIN = 'https://demo.moinmorni.invalid';
+const DEMO_ORIGIN = 'https://demo.morni.invalid';
 const ANSWER_DELAY_MS = 140;
 const MINUTE_MS = 60_000;
 const DAY_MS = 86_400_000;

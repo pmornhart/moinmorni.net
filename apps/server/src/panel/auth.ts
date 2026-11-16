@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { count, eq } from 'drizzle-orm';
 import type { FastifyRequest } from 'fastify';
-import type { PanelArea, Role } from '@moinmorni/shared';
+import type { PanelArea, Role } from '@morninet/shared';
 import type { Db } from '../db/index.js';
 import { teamMembers } from '../db/schema.js';
 import { forbidden, unauthorized } from '../lib/errors.js';
@@ -10,8 +10,8 @@ import type { Stores } from './stores.js';
 
 /**
  * Login-Brücke: Das Team meldet sich beim Motor an (Passkeys, 2FA – alles von MorniHosting), über
- * moinmorni.net/panel/motor/…, also mit dem Cookie des Motors auf unserer Domain. MoinMorni fragt den Motor,
- * wer zum Cookie gehört, und gibt dem Konto seine MoinMorni-Rolle. Das allererste Admin-Konto wird Owner.
+ * morni.net/panel/motor/…, also mit dem Cookie des Motors auf unserer Domain. morni.net fragt den Motor,
+ * wer zum Cookie gehört, und gibt dem Konto seine morni.net-Rolle. Das allererste Admin-Konto wird Owner.
  */
 
 const CACHE_MS = 10_000;

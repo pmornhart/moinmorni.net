@@ -2,7 +2,7 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Db } from '../db/index.js';
 import { modeStats, players } from '../db/schema.js';
-import { MODE_HEADLINE_STATS } from '@moinmorni/shared';
+import { MODE_HEADLINE_STATS } from '@morninet/shared';
 import { normalUuid } from './players.js';
 
 /**

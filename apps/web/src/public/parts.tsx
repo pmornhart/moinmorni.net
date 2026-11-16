@@ -1,6 +1,7 @@
 import { Camera, Clapperboard, Music2, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { NETWORK_TITLE } from '@morninet/shared';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { SOCIALS, type SiteInfo, type Social } from '~/lib/site';
@@ -13,7 +14,7 @@ import { timeOf, type DayTime } from './art';
 export const WRAP = 'mx-auto w-full max-w-[1240px] px-4 sm:px-6';
 
 /** Shown until the status arrives (and when it cannot be fetched): the real address of the network. */
-export const FALLBACK_ADDRESS = 'moinmorni.net';
+export const FALLBACK_ADDRESS = NETWORK_TITLE;
 export const FALLBACK_BEDROCK_PORT = 19132;
 /** "Jetzt spielen" leads to the help on how to join. */
 export const JOIN_LINK = '/hilfe#reinkommen';
@@ -21,9 +22,9 @@ export const APPLY_PAGE = '/mornicraft/bewerben';
 /** The team's panel lives outside the website's router. */
 export const PANEL_PAGE = '/panel';
 
-const SITE_NAME = 'MoinMorni';
+const SITE_NAME = NETWORK_TITLE;
 
-/** "News · MoinMorni" in the browser tab; the start page keeps the full title from index.html. */
+/** "News · morni.net" in the browser tab; the start page keeps the full title from index.html. */
 export function usePageTitle(title?: string): void {
   useEffect(() => {
     const before = document.title;

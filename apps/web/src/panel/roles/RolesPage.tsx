@@ -3,7 +3,7 @@ import { Info, Plus, RotateCcw, Save, ShieldHalf } from 'lucide-react';
 import { useEffect, useId, useState, type FormEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import type { Role } from '@moinmorni/shared';
+import type { Role } from '@morninet/shared';
 import { Button, Card, Input, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';

@@ -35,7 +35,7 @@ export interface UpdateRun {
 export interface UpdateView {
   readonly version: string;
   readonly branch: string;
-  readonly moinmorni: {
+  readonly morninet: {
     readonly current: string | null;
     readonly latest: string | null;
     readonly behind: number;
@@ -62,7 +62,7 @@ export const UPDATES_KEY = ['panel', 'updates'] as const;
 
 const SECOND_MS = 1000;
 const POLL_SECONDS = 3;
-/** While an update runs the card asks every few seconds (MoinMorni restarts in between – errors are expected). */
+/** While an update runs the card asks every few seconds (morni.net restarts in between – errors are expected). */
 export const UPDATE_POLL_MS = POLL_SECONDS * SECOND_MS;
 
 export function useUpdatesQuery(): UseQueryResult<UpdateView> {

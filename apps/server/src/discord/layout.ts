@@ -1,8 +1,8 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- Discord-Rechte sind Bit-Nummern aus der Discord-Doku */
-import type { DiscordRight, Role } from '@moinmorni/shared';
+import type { DiscordRight, Role } from '@morninet/shared';
 
 /**
- * So sieht der MoinMorni-Discord aus: Rollen aus der Rollen-Vorlage (+ „Verbunden“, „Stumm“, „Gefängnis“),
+ * So sieht der morni.net-Discord aus: Rollen aus der Rollen-Vorlage (+ „Verbunden“, „Stumm“, „Gefängnis“),
  * Kategorien und Kanäle mit Rechten. Der Bot legt fehlendes an und lässt Vorhandenes stehen (gleicher Name).
  * Rechte: https://docs.discord.com/developers/topics/permissions
  */
@@ -94,7 +94,7 @@ export function layout(voiceChannels: readonly string[]): CategorySpec[] {
       channels: [
         text('welcome', '👋・willkommen', 'Servus! Hier geht es los.', 'everyone', true),
         text('rules', '📜・regeln', 'Unsere Regeln – im Spiel und hier.', 'everyone', true),
-        text('news', '📣・ankündigungen', 'Neuigkeiten aus MoinMorni.', 'everyone', true),
+        text('news', '📣・ankündigungen', 'Neuigkeiten von morni.net.', 'everyone', true),
         text(
           'status',
           '🟢・status',

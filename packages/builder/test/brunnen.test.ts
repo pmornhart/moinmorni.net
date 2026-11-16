@@ -59,7 +59,7 @@ describe('Prunkbrunnen (Modelle im Ressourcenpaket)', () => {
 
   it('das Paket enthält Modelle, Luft-Auswahl und die ausgeblendeten Blöcke', () => {
     const zip = furniturePack().toString('latin1');
-    expect(zip).toContain('assets/moinmorni/models/item/brunnen/krone.json');
+    expect(zip).toContain('assets/morninet/models/item/brunnen/krone.json');
     expect(zip).toContain('assets/minecraft/blockstates/tuff_brick_wall.json');
     expect(zip).toContain('assets/minecraft/blockstates/end_rod.json');
   });

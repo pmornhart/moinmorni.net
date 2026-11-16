@@ -7,7 +7,8 @@ import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod';
 import type { Config } from './config.js';
 import { openDatabase, type Db } from './db/index.js';
-import { createMoinMorniBot, type MoinMorniBot } from './discord/bot.js';
+import { createMorniNetBot, type MorniNetBot } from './discord/bot.js';
+import { adoptOldDatabase } from './lib/rename.js';
 import { createHub, type Hub } from './hub/index.js';
 import { AppError } from './lib/errors.js';
 import { createEventBus, type EventBus } from './lib/events.js';
@@ -67,7 +68,7 @@ export interface BuiltApp {
   readonly hub: Hub;
   readonly network: NetworkProvisioner;
   readonly sleep: SleepService;
-  readonly bot: MoinMorniBot;
+  readonly bot: MorniNetBot;
   /** Nach dem Start im Hintergrund: Einrichtungs-Code bereitlegen, Motor einstellen. */
   readonly start: () => Promise<void>;
   readonly close: () => Promise<void>;
@@ -98,7 +99,10 @@ const PICTURES = `${path.sep}bilder${path.sep}`;
 
 export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const { config } = options;
-  const handle = openDatabase(path.join(config.dataDir, 'moinmorni.db'));
+  const dbFile = path.join(config.dataDir, 'morninet.db');
+  // Umbenennung in morni.net: Datenbank unter dem früheren Namen übernehmen (einmalig nach dem Update).
+  const adopted = adoptOldDatabase(dbFile);
+  const handle = openDatabase(dbFile);
   const events = createEventBus();
   const stores = createStores(handle.db, events);
   const motor = createMotorClient(config.motorUrl, config.motorToken, options.motorFetch);
@@ -108,6 +112,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     // einer Adresse, die ein Besucher selbst in X-Forwarded-For schreibt.
     trustProxy: TRUSTED_HOPS,
   }).withTypeProvider<ZodTypeProvider>();
+  if (adopted) app.log.info('Datenbank unter dem früheren Namen übernommen – das Netzwerk heißt jetzt morni.net');
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   await app.register(helmet, { contentSecurityPolicy: false, referrerPolicy: { policy: 'same-origin' } });
@@ -126,7 +131,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const auth = createPanelAuth(handle.db, motor, stores);
   // Der Hub weckt schlafende Modi über den Schlaf-Dienst (der wiederum den Hub fragt, wer wo ist).
   const sleepRef: { service: SleepService | null } = { service: null };
-  const botRef: { bot: MoinMorniBot | null } = { bot: null };
+  const botRef: { bot: MorniNetBot | null } = { bot: null };
   const applications = createApplicationService(handle.db, stores, events);
   const hub = createHub({
     wake: (server) => sleepRef.service?.wake(server) ?? Promise.resolve(false),
@@ -164,7 +169,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   });
   const sleep = createSleepService(motor, hub, stores, app.log);
   sleepRef.service = sleep;
-  const bot = createMoinMorniBot({
+  const bot = createMorniNetBot({
     config,
     db: handle.db,
     stores,

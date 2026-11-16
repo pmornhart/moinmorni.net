@@ -4,7 +4,7 @@ import { badRequest, notFound } from '../lib/errors.js';
 import { MotorError, type MotorClient } from '../motor/client.js';
 import { BUILD_MEMBER } from '../network/provision.js';
 import type { Stores } from '../panel/stores.js';
-import { NETWORK_NAME } from '../public/status.js';
+import { isOurNetwork } from '../lib/rename.js';
 
 /**
  * Bau-Server fürs Bauteam: Kreativ, flache Welt, friedlich, WorldEdit. Was dort mit WorldEdit gespeichert wird
@@ -53,7 +53,7 @@ export function buildProperties(): Record<string, string> {
     'generate-structures': 'false',
     'allow-nether': 'false',
     'spawn-protection': '0',
-    motd: 'MoinMorni Bau-Server',
+    motd: 'morni.net Bau-Server',
   };
 }
 
@@ -81,7 +81,7 @@ export interface BuildService {
 export function createBuildService(motor: MotorClient, stores: Stores): BuildService {
   const members = async (): Promise<Map<string, string>> => {
     const networks = await motor.request<MotorNetwork[]>('GET', '/api/networks');
-    const net = networks.find((n) => n.name === NETWORK_NAME);
+    const net = networks.find(isOurNetwork);
     return new Map((net?.members ?? []).map((m) => [m.name, m.serverId]));
   };
   /** Wohin Bauten dürfen: Lobby und alle Modi mit Server (nicht der Bau-Server selbst). */

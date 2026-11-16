@@ -3,7 +3,7 @@
  * `tsx src/pack.ts <ziel.zip> [vorschau.png]`.
  */
 import fs from 'node:fs';
-import { CAST, castPack, Picture, skinPicture } from '@moinmorni/builder';
+import { CAST, castPack, Picture, skinPicture } from '@morninet/builder';
 
 const SCALE = 8;
 const FIGURE_W = 16;
@@ -53,7 +53,7 @@ function preview(): Picture {
   return pic;
 }
 
-const [zip = 'MoinMorni-Lobby.zip', png] = process.argv.slice(2);
+const [zip = 'MorniNet-Lobby.zip', png] = process.argv.slice(2);
 fs.writeFileSync(zip, castPack());
 console.log('Texturpaket:', zip, Object.keys(CAST).length, 'Figuren');
 if (png) {

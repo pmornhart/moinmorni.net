@@ -3,9 +3,9 @@
  * (API `POST /v2/version`, https://docs.modrinth.com/api/operations/createversion/).
  *
  * Der Schlüssel kommt nur aus der Umgebung, nie aus einer Datei im Repo:
- *   MODRINTH_TOKEN=mrp_… pnpm --filter @moinmorni/modpack publish:modrinth
+ *   MODRINTH_TOKEN=mrp_… pnpm --filter @morninet/modpack publish:modrinth
  * Weitere Angaben (alle freiwillig):
- *   MODRINTH_PROJECT  Slug oder ID des Projekts (Standard: moinmorni)
+ *   MODRINTH_PROJECT  Slug oder ID des Projekts (Standard: morninet)
  *   --type beta       Version als Beta (Standard: release); auch alpha
  *   --trocken         nichts hochladen, nur zeigen, was geschickt würde (geht ohne Schlüssel)
  */
@@ -15,7 +15,7 @@ import { parseArgs } from 'node:util';
 import { DIST_DIR, readRelease, run, startedDirectly, userAgent, type ReleaseInfo } from './common.js';
 import { MODRINTH_API, type VersionType } from './modrinth.js';
 
-const DEFAULT_PROJECT = 'moinmorni';
+const DEFAULT_PROJECT = 'morninet';
 const MRPACK_TYPE = 'application/x-modrinth-modpack+zip';
 const VERSION_TYPES: readonly VersionType[] = ['release', 'beta', 'alpha'];
 const HTTP_NOT_FOUND = 404;
@@ -117,7 +117,7 @@ async function main(): Promise<void> {
   const type = VERSION_TYPES.find((t) => t === values.type);
   if (type === undefined) throw new Error(`--type muss ${VERSION_TYPES.join(', ')} sein`);
   if (!existsSync(path.join(DIST_DIR, 'release.json'))) {
-    throw new Error('Noch keine Packung gebaut. Erst: pnpm --filter @moinmorni/modpack build');
+    throw new Error('Noch keine Packung gebaut. Erst: pnpm --filter @morninet/modpack build');
   }
   const release = readRelease(DIST_DIR);
   const packPath = path.join(DIST_DIR, release.file);
@@ -147,7 +147,7 @@ async function main(): Promise<void> {
       'So geht es: Auf modrinth.com → Einstellungen → „Personal access tokens“ einen Schlüssel mit',
     );
     console.log('„Create versions“ anlegen, dann im Terminal (nicht ins Repo schreiben!):');
-    console.log('  MODRINTH_TOKEN=mrp_… pnpm --filter @moinmorni/modpack publish:modrinth');
+    console.log('  MODRINTH_TOKEN=mrp_… pnpm --filter @morninet/modpack publish:modrinth');
     process.exitCode = 1;
     return;
   }

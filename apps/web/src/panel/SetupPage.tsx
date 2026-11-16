@@ -19,7 +19,7 @@ import { PANEL_ME_KEY, SETUP_KEY, useSetupQuery } from './session';
 // https://regex101.com/?flavor=javascript&regex=%5E%5Ba-zA-Z0-9_.-%5D%7B3%2C32%7D%24&testString=Philip_M
 const USERNAME = /^[a-zA-Z0-9_.-]{3,32}$/;
 const PASSWORD_MIN = 10;
-const SETUP_CODE_COMMAND = 'docker exec moinmorni cat /data/setup-code';
+const SETUP_CODE_COMMAND = 'docker exec morninet cat /data/setup-code';
 
 /** What still keeps the form from being sent, as a text key (null = all good). */
 function problemOf(code: string, username: string, password: string, repeat: string): string | null {

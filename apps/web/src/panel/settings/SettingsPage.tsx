@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router';
 import { toast } from 'sonner';
-import type { SettingDef, SettingSection } from '@moinmorni/shared';
+import type { SettingDef, SettingSection } from '@morninet/shared';
 import { Button, Card, Kbd, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';

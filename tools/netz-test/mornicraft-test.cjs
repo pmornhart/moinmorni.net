@@ -137,9 +137,9 @@ async function network() {
   const bar = sidebarText(philip);
   check('Leiste rechts: Rang des Netzwerks', bar.includes('Owner'), bar);
   const title = [...JSON.stringify(philip.scoreboards?.mornicraft?.title ?? '').matchAll(/"value":"(.)"/g)].map((m) => m[1]).join('');
-  check('Leiste rechts: Name „MorniCraft auf MoinMorni“ (Smaragd → Gold)', title === 'MorniCraft auf MoinMorni'
+  check('Leiste rechts: Name „MorniCraft auf morni.net“ (Smaragd → Gold)', title === 'MorniCraft auf morni.net'
     && JSON.stringify(philip.scoreboards?.mornicraft?.title).includes('#FBBF24'), title);
-  check('Leiste rechts: Adresse moinmorni.net', bar.includes('moinmorni.net'), bar);
+  check('Leiste rechts: Adresse morni.net', bar.includes('morni.net'), bar);
 
   // ---- Clan-Kürzel nach dem Rang ----
   philip.chat('/clan create Testclan TC');
@@ -169,7 +169,7 @@ async function network() {
   philip.chat('/sethome basis');
   check('/sethome', Boolean(await sees(philip, /basis.*(gespeichert|verschoben)/)));
   philip.chat('/info');
-  check('/info mit MoinMorni-Befehlen', Boolean(await sees(philip, /\/lobby/)));
+  check('/info mit morni.net-Befehlen', Boolean(await sees(philip, /\/lobby/)));
   philip.chat('/rules');
   check('/rules: Regeln des Netzwerks (Deutsch)', Boolean(await sees(philip, /Freundlich bleiben/)));
   lena.chat('/rules');
@@ -177,11 +177,11 @@ async function network() {
   philip.chat('/team');
   check('/team: wer vom Team online ist', Boolean(await sees(philip, /Gerade online im Team/)));
   philip.chat('/teamdashboard');
-  check('/teamdashboard → MoinMorni-Panel', Boolean(await sees(philip, /MoinMorni-Panel/)));
+  check('/teamdashboard → Panel von morni.net', Boolean(await sees(philip, /morni\.net[- ]?Panel|Panel von morni\.net/i)));
   lena.chat('/teamdashboard');
   check('/teamdashboard: Spieler darf nicht', Boolean(await sees(lena, /moderators and owners/)));
   philip.chat('/freilassen Lena');
-  check('Strafen sind Sache des Netzwerks', Boolean(await sees(philip, /macht auf MoinMorni das Netzwerk/)));
+  check('Strafen sind Sache des Netzwerks', Boolean(await sees(philip, /auf morni\.net das Netzwerk|das Netzwerk morni\.net/)));
   philip.chat('/mute Lena 10m Test');
   check('/mute vom Netzwerk', Boolean(await sees(lena, /muted|stummgeschaltet/)));
   lena.chat('Geht das?');
@@ -234,7 +234,7 @@ async function standalone() {
   const lena = await join('Lena');
   await sleep(3000);
   lena.chat('/info');
-  check('Allein: /info ohne MoinMorni-Teil', Boolean(await sees(lena, /\/spawn/)) && !(await sees(lena, /\/lobby/, 1500)));
+  check('Allein: /info ohne morni.net-Teil', Boolean(await sees(lena, /\/spawn/)) && !(await sees(lena, /\/lobby/, 1500)));
   lena.chat('/rules');
   check('Allein: /rules aus der config.yml', Boolean(await sees(lena, /Regeln|Rules|rules/)));
   lena.chat('/team');
@@ -246,7 +246,7 @@ async function standalone() {
   lena.chat('/sethome basis');
   check('Allein: /sethome', Boolean(await sees(lena, /basis/)));
   const bar = sidebarText(lena);
-  check('Allein: Leiste ohne moinmorni.net', bar.length > 0 && !bar.includes('moinmorni.net'), bar);
+  check('Allein: Leiste ohne morni.net', bar.length > 0 && !bar.includes('morni.net'), bar);
   lena.quit();
 }
 

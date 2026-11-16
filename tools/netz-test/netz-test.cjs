@@ -72,7 +72,7 @@ async function refused(username) {
 async function main() {
   const ping = await mc.ping({ host: HOST, port: PORT });
   const motd = JSON.stringify(ping.description);
-  check('MOTD kommt aus dem Panel', motd.includes('MoinMorni'), motd.slice(0, 80));
+  check('MOTD kommt aus dem Panel', motd.includes('morni.net'), motd.slice(0, 80));
   check('Spielerzahl aus dem Panel', ping.players.max === 200, `max ${ping.players.max}`);
 
   const philip = await join('Philip');

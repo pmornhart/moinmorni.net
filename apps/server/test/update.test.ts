@@ -76,16 +76,16 @@ describe('Updates', () => {
   test('fragt GitHub, zeigt Änderungen ohne Merge, merkt sich die Antwort', async () => {
     const updates = service(`v0.0.5-0-g${OLD}`);
     const view = await updates.view();
-    expect(calls[0]).toContain(`/repos/pmornhart/moinmorni.net/compare/${OLD}...main`);
+    expect(calls[0]).toContain(`/repos/pmornhart/morni.net/compare/${OLD}...main`);
     expect(view).toMatchObject({
       available: true,
       canUpdate: false,
       updating: false,
-      moinmorni: { current: OLD, latest: 'def5678', behind: 2 },
+      morninet: { current: OLD, latest: 'def5678', behind: 2 },
       motor: { current: '1046a49', behind: 3 },
     });
-    expect(view.moinmorni.changes).toHaveLength(1);
-    expect(view.moinmorni.changes[0]?.items.map((i) => i.kind)).toEqual(['new', 'fixed']);
+    expect(view.morninet.changes).toHaveLength(1);
+    expect(view.morninet.changes[0]?.items.map((i) => i.kind)).toEqual(['new', 'fixed']);
     await updates.view();
     expect(calls).toHaveLength(1);
   });

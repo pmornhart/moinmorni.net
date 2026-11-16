@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 
-/** Ereignisse innerhalb von MoinMorni (z. B. Hub und Bot hören auf geänderte Einstellungen). */
+/** Ereignisse innerhalb von morni.net (z. B. Hub und Bot hören auf geänderte Einstellungen). */
 export interface Events {
   'settings.changed': { area: string; values: Record<string, unknown>; by: string };
   'modes.changed': { by: string };
@@ -28,7 +28,7 @@ export interface Events {
   'server.connected': { server: string };
   /**
    * Einstellungen eines Spielmodus: Muss sein Server neu starten, damit sie gelten (`needed`), oder nicht mehr (alter
-   * Wert zurück, Server neu gestartet oder gestoppt)? MoinMorni startet ihn neu, sobald gerade niemand spielt.
+   * Wert zurück, Server neu gestartet oder gestoppt)? morni.net startet ihn neu, sobald gerade niemand spielt.
    */
   'mode.restart': { mode: string; server: string; needed: boolean };
 }

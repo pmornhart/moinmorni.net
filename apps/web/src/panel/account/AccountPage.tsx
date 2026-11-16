@@ -23,7 +23,7 @@ import { refreshPanelMe, useCan, usePanel } from '../session';
 
 /**
  * MorniHosting's account cards fold; they remember open/closed per browser under this prefix. On the first visit the
- * Minecraft card is open – it is the one that matters most in MoinMorni.
+ * Minecraft card is open – it is the one that matters most in morni.net.
  */
 const FOLD_STORE = 'mh:fold:';
 const OPEN_ON_FIRST_VISIT = ['account-minecraft'] as const;
@@ -155,7 +155,7 @@ function Glossary(): ReactElement {
   );
 }
 
-/** "Mein Konto": the signed-in person's own access – MorniHosting's account cards inside MoinMorni's page. */
+/** "Mein Konto": the signed-in person's own access – MorniHosting's account cards inside morni.net's page. */
 export function AccountPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (

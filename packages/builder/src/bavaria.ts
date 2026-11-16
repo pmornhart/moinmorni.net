@@ -1,6 +1,6 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a building plan: block offsets as the build needs them */
 /**
- * Bayerische Bauteile im MoinMorni-Stil (eigene Entwürfe, keine Nachbauten echter Gebäude):
+ * Bayerische Bauteile im morni.net-Stil (eigene Entwürfe, keine Nachbauten echter Gebäude):
  * Alpenhaus, Maibaum, Biergarten, Schloss-Teile (Flügel, Turm mit Zwiebelhaube), Portal-Bogen, Launchpad, Brunnen.
  * Alle Maße stehen als Bauplan in `D` bzw. direkt an der Stelle, an der der Bau sie braucht.
  */

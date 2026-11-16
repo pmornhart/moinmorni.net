@@ -17,7 +17,7 @@ import {
 import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
-import type { ModeStatus } from '@moinmorni/shared';
+import type { ModeStatus } from '@morninet/shared';
 import { useCopy } from '~/components/controls';
 import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';

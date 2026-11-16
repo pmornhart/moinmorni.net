@@ -1,9 +1,9 @@
 {
-  "name": "@moinmorni/server",
+  "name": "@morninet/server",
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "MoinMorni: Webseite-API, Panel-API, Hub für die Plugins, Anbindung an den Motor (MorniHosting)",
+  "description": "morni.net: Webseite-API, Panel-API, Hub für die Plugins, Anbindung an den Motor (MorniHosting)",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/index.ts",
     "build": "tsup",
@@ -18,7 +18,7 @@
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/static": "^10.1.6",
     "@fastify/websocket": "^11.2.0",
-    "@moinmorni/builder": "workspace:*",
+    "@morninet/builder": "workspace:*",
     "better-sqlite3": "^12.4.1",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.6.1",
@@ -27,7 +27,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@moinmorni/shared": "workspace:*",
+    "@morninet/shared": "workspace:*",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.18.0",
     "@types/ws": "^8.18.1",

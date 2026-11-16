@@ -6,7 +6,7 @@ import type { MotorClient } from '../motor/client.js';
 import type { Stores } from '../panel/stores.js';
 
 /**
- * Updates: MoinMorni folgt dem Branch `main` auf GitHub. MoinMorni kennt den Commit, aus dem es gebaut wurde, und
+ * Updates: morni.net folgt dem Branch `main` auf GitHub. morni.net kennt den Commit, aus dem es gebaut wurde, und
  * fragt GitHub, was seitdem dazukam. Den eigenen Container kann es nicht tauschen – es legt eine Auftrags-Datei
  * in seinen Datenordner (`update/request.json`); der Updater auf dem Rechner (systemd aus install.sh) startet
  * dann `update.sh`: Code holen, bauen, Sicherung, neu starten, prüfen – und wenn etwas schiefgeht, zurück auf den
@@ -14,7 +14,7 @@ import type { Stores } from '../panel/stores.js';
  * Automatisch: einmal am Tag zur eingestellten Stunde (auf Wunsch nur, wenn niemand spielt).
  */
 
-const REPO = 'pmornhart/moinmorni.net';
+const REPO = 'pmornhart/morni.net';
 const SHORT_SHA = 7;
 const MAX_CHANGES = 30;
 const LOG_LINES = 40;
@@ -77,7 +77,7 @@ export interface UpdateRun {
 export interface UpdateView {
   readonly version: string;
   readonly branch: string;
-  readonly moinmorni: UpdateComponent;
+  readonly morninet: UpdateComponent;
   readonly motor: {
     readonly current: string | null;
     readonly latest: string | null;
@@ -182,7 +182,7 @@ export function createUpdateService(
 
   const github = async <T>(urlPath: string, schema: z.ZodType<T>): Promise<T> => {
     const res = await fetchImpl(`${config.githubApi}/repos/${REPO}${urlPath}`, {
-      headers: { accept: 'application/vnd.github+json', 'user-agent': 'moinmorni-updater' },
+      headers: { accept: 'application/vnd.github+json', 'user-agent': 'morninet-updater' },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`GitHub ${res.status}`);
@@ -250,7 +250,7 @@ export function createUpdateService(
     return {
       version: config.version,
       branch: config.updateBranch,
-      moinmorni: state.component,
+      morninet: state.component,
       motor: state.motor,
       available,
       checkedAt: state.checkedAt === null ? null : new Date(state.checkedAt).toISOString(),

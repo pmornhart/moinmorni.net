@@ -20,7 +20,7 @@ const CODE_LENGTH = 6;
 
 /**
  * Sign in to the panel. The accounts live in the motor (MorniHosting): password, then the 6-digit code if two-step
- * sign-in is on, or a passkey. The motor's session cookie then also opens MoinMorni's panel.
+ * sign-in is on, or a passkey. The motor's session cookie then also opens morni.net's panel.
  */
 export function LoginPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);

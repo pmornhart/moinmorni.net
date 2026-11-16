@@ -1,8 +1,0 @@
-name: MoinMorni
-version: '${project.version}'
-main: de.moinmorni.network.paper.PaperPlugin
-api-version: '1.21'
-description: Verbindet den Spielserver mit dem MoinMorni-Netzwerk (Chat, Ränge, Strafen).
-authors: [MoinMorni]
-website: https://moinmorni.net
-softdepend: [voicechat]

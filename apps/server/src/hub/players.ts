@@ -1,5 +1,5 @@
 import { desc, eq, isNotNull, sql } from 'drizzle-orm';
-import type { Role } from '@moinmorni/shared';
+import type { Role } from '@morninet/shared';
 import type { Db } from '../db/index.js';
 import { players, teamMembers } from '../db/schema.js';
 import type { Stores } from '../panel/stores.js';

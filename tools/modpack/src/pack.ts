@@ -3,7 +3,7 @@
  * eine ZIP-Datei mit `modrinth.index.json` (welche Mods, woher, mit Prüfsummen) und `overrides/` (Dateien, die so ins
  * Spiel-Verzeichnis kommen). Die Mods selbst stecken nicht drin – der Launcher lädt sie von Modrinth.
  */
-import { zipOf } from '@moinmorni/builder';
+import { zipOf } from '@morninet/builder';
 import { GROUP_NAMES, type Excluded, type Group, type ModSpec } from './mods.js';
 import type { ModrinthFile, VersionType } from './modrinth.js';
 
@@ -262,7 +262,7 @@ export function modsMarkdown(report: ModsReport): string {
     ...report.forbidden.map((m) => `- ${m.slug}: ${m.reason}`),
   ];
   return [
-    `# MoinMorni-Modpack ${report.versionId}`,
+    `# morni.net-Modpack ${report.versionId}`,
     '',
     `Minecraft ${report.minecraft} · Fabric Loader ${report.loaderVersion} · ${report.mods.length} Mods`,
     '',

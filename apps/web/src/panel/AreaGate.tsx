@@ -1,7 +1,7 @@
 import { Lock } from 'lucide-react';
 import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PanelArea } from '@moinmorni/shared';
+import type { PanelArea } from '@morninet/shared';
 import { Card } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { useCan } from './session';

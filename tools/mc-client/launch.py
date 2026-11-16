@@ -117,7 +117,7 @@ def write_server_list(game_dir, address, packs):
 
     Quick Play nimmt den vorhandenen Eintrag – so kommt das Paket der Lobby ohne Rückfrage-Fenster."""
     entry = b'\x08' + nbt_string('ip') + nbt_string(address)
-    entry += b'\x08' + nbt_string('name') + nbt_string('MoinMorni')
+    entry += b'\x08' + nbt_string('name') + nbt_string('morni.net')
     if packs is not None:
         entry += b'\x01' + nbt_string('acceptTextures') + (b'\x01' if packs else b'\x00')
     entry += b'\x00'

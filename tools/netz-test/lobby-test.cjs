@@ -87,7 +87,7 @@ async function main() {
   check('Buch (Rundgang) in der Leiste', hotbar8?.name === 'writable_book', hotbar8?.name);
   check(
     'Begrüßung als Titel',
-    titles.some((t) => t.includes('Servus in MoinMorni')),
+    titles.some((t) => t.includes('Servus auf morni.net')),
     titles.slice(0, 2).join(' | '),
   );
   check(

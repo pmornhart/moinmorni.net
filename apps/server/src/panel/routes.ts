@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SETTING_AREAS, modePatchSchema, roleSchema } from '@moinmorni/shared';
+import { SETTING_AREAS, modePatchSchema, roleSchema } from '@morninet/shared';
 import type { Api } from '../app.js';
 import { forbidden } from '../lib/errors.js';
 import type { PanelAuth } from './auth.js';

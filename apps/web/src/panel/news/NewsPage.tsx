@@ -18,7 +18,7 @@ import { useId, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import type { Text } from '@moinmorni/shared';
+import type { Text } from '@morninet/shared';
 import { Button, Card, Input, Pill, Skeleton, Switch, Textarea, type PillTone } from '~/components/ui';
 import { MM_NAMESPACE, SUPPORTED_LANGUAGES, type Language } from '~/i18n';
 import { cn } from '~/lib/cn';

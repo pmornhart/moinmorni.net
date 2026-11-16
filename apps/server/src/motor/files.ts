@@ -28,3 +28,16 @@ export function writeServerFile(
 ): Promise<void> {
   return motor.request('PUT', `/api/servers/${serverId}/files/content`, { path: file, content });
 }
+
+/**
+ * Dateien oder Ordner eines Servers löschen (der Motor legt sie 7 Tage in seinen Papierkorb). Was es nicht gibt, wird
+ * übersprungen; zurück kommt, wie viele es waren.
+ */
+export async function removeServerFiles(
+  motor: Pick<MotorClient, 'request'>,
+  serverId: string,
+  paths: readonly string[],
+): Promise<number> {
+  const r = await motor.request<{ moved?: number }>('POST', `/api/servers/${serverId}/files/delete`, { paths });
+  return r?.moved ?? 0;
+}

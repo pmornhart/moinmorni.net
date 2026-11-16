@@ -1,6 +1,6 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- tests compare against literal expected values */
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import type { Mode, NetworkStatus } from '@moinmorni/shared';
+import type { Mode, NetworkStatus } from '@morninet/shared';
 import { motorPathAllowed } from '../src/motor/proxy.js';
 import { createHarness, OWNER_PASSWORD, type Harness } from './harness.js';
 
@@ -32,7 +32,7 @@ describe('Weiterleitung an den Motor', () => {
   });
 });
 
-describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () => {
+describe('morni.net mit echtem Motor (MorniHosting, nachgebautes Docker)', () => {
   let h: Harness;
   let owner: { cookie: string; csrf: string };
   const call = (
@@ -59,7 +59,7 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
   test('der öffentliche Status zeigt alle Modi, auch ohne laufendes Netzwerk', async () => {
     const status = (await call('GET', '/api/status')).json<NetworkStatus>();
     expect(status.online).toBe(false);
-    expect(status.javaAddress).toBe('moinmorni.net');
+    expect(status.javaAddress).toBe('morni.net');
     expect(status.modes.map((m) => m.id)).toEqual([
       'mornicraft',
       'duels',

@@ -42,8 +42,8 @@ function paint(): void {
 media.addEventListener('change', () => {
   if (state.choice === 'system') paint();
 });
-// Embedded MorniHosting pages set the class themselves – usually with MoinMorni's choice, but right after some
-// account changes with the theme stored in their session. MoinMorni's switch decides: put it back if it differs.
+// Embedded MorniHosting pages set the class themselves – usually with morni.net's choice, but right after some
+// account changes with the theme stored in their session. morni.net's switch decides: put it back if it differs.
 new MutationObserver(() => {
   const dark = document.documentElement.classList.contains('dark');
   if (dark !== (resolve(state.choice) === 'dark')) paint();

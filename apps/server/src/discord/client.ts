@@ -2,7 +2,7 @@ import { WebSocket } from 'ws';
 import type { FastifyBaseLogger } from 'fastify';
 
 /**
- * Schlanker Discord-Client für den MoinMorni-Bot: REST-Aufrufe (mit Warten bei „zu viele Anfragen“) und das Gateway
+ * Schlanker Discord-Client für den morni.net-Bot: REST-Aufrufe (mit Warten bei „zu viele Anfragen“) und das Gateway
  * für Ereignisse (Klicks, Befehle, neue Mitglieder). Das Gateway braucht keinen offenen Port – der Bot baut die
  * Verbindung selbst auf. https://docs.discord.com/developers/topics/gateway
  */
@@ -86,7 +86,7 @@ export function createDiscordClient(
       method,
       headers: {
         authorization: `Bot ${token}`,
-        'user-agent': 'DiscordBot (https://moinmorni.net, 1.0) MoinMorni',
+        'user-agent': 'DiscordBot (https://morni.net, 1.0) morni.net',
         ...(body === undefined ? {} : { 'content-type': 'application/json' }),
         ...(reason ? { 'x-audit-log-reason': encodeURIComponent(reason) } : {}),
       },
@@ -173,7 +173,7 @@ export function createDiscordClient(
               send(OP_IDENTIFY, {
                 token,
                 intents: gw.intents,
-                properties: { os: 'linux', browser: 'moinmorni', device: 'moinmorni' },
+                properties: { os: 'linux', browser: 'morninet', device: 'morninet' },
               });
           },
           [OP_HEARTBEAT]: () => send(OP_HEARTBEAT, gw.seq),

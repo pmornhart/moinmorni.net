@@ -1,6 +1,6 @@
 import { useQuery, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
-import type { PanelArea, Role, SettingArea } from '@moinmorni/shared';
+import type { PanelArea, Role, SettingArea } from '@morninet/shared';
 import { setCsrfToken } from '@/lib/api';
 import { mmApi, MmApiError, setPanelCsrf } from '~/lib/mm-api';
 
@@ -31,7 +31,7 @@ const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
 const MAX_RETRIES = 2;
 const MINUTE_MS = 60_000;
-/** MoinMorni's server keeps "who is signed in" for 10 s (apps/server/src/panel/auth.ts); ask again after that. */
+/** morni.net's server keeps "who is signed in" for 10 s (apps/server/src/panel/auth.ts); ask again after that. */
 const PANEL_ME_CACHE_MS = 11_000;
 
 /** No retry for "not signed in" or "not in the team": those are answers, not hiccups. */
@@ -46,7 +46,7 @@ export function usePanelMeQuery(): UseQueryResult<PanelMe> {
     queryKey: PANEL_ME_KEY,
     queryFn: async () => {
       const me = await mmApi<PanelMe>('/api/panel/me');
-      // The same token protects MoinMorni's changes and the motor's (MorniHosting's pages).
+      // The same token protects morni.net's changes and the motor's (MorniHosting's pages).
       setPanelCsrf(me.csrfToken);
       setCsrfToken(me.csrfToken);
       return me;
@@ -65,7 +65,7 @@ export function refreshPanelMe(client: QueryClient): void {
   window.setTimeout(() => void client.invalidateQueries({ queryKey: PANEL_ME_KEY }), PANEL_ME_CACHE_MS);
 }
 
-/** Does MoinMorni still need its first owner account? */
+/** Does morni.net still need its first owner account? */
 export function useSetupQuery(): UseQueryResult<{ readonly required: boolean }> {
   return useQuery({
     queryKey: SETUP_KEY,

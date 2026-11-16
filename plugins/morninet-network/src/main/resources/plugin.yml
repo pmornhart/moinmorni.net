@@ -1,0 +1,8 @@
+name: MorniNet
+version: '${project.version}'
+main: net.morni.network.paper.PaperPlugin
+api-version: '1.21'
+description: Verbindet den Spielserver mit dem Netzwerk morni.net (Chat, Ränge, Strafen).
+authors: [morni.net]
+website: https://morni.net
+softdepend: [voicechat]

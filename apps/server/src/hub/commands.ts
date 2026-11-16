@@ -1,4 +1,4 @@
-import { mayAssign, type GameRight, type Role } from '@moinmorni/shared';
+import { mayAssign, type GameRight, type Role } from '@morninet/shared';
 import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
 import { JAIL_DEFAULT_MINUTES, type Moderation, type Target } from './moderation.js';

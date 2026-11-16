@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, describe, expect, test } from 'vitest';
-import { MOEBEL_PACK_ID } from '@moinmorni/builder';
+import { MOEBEL_PACK_ID } from '@morninet/builder';
+import { OLD_LOBBY_PACKS } from '../src/lib/rename.js';
 import { lobbyPackInfo, lobbyPackUrl } from '../src/lobby/packs.js';
 import { createLobbyWorld, lobbyProperties, patchProperties } from '../src/lobby/world.js';
 import { MotorError, type MotorClient } from '../src/motor/client.js';
@@ -24,17 +25,17 @@ const tinyPack = (version: string) => () => ({
   unload: ['forceload remove 0 0 15 15'],
   seasonFiles: {
     'pack.mcmeta': '{"pack":{"description":"Saison","pack_format":48}}\n',
-    'data/moinmorni_season/function/wiesn.mcfunction': 'kill @e[tag=mm_season]\n',
+    'data/morninet_season/function/wiesn.mcfunction': 'kill @e[tag=mm_season]\n',
   },
   seasonLoad: ['forceload add 0 0 31 31'],
   seasonUnload: ['forceload remove 0 0 31 31'],
   files: {
     'pack.mcmeta': '{"pack":{"description":"Test","pack_format":48}}\n',
-    'data/moinmorni_lobby/function/prepare.mcfunction': '# geladen\n',
-    'data/moinmorni_lobby/function/clean.mcfunction': 'kill @e[type=!player,x=0,y=64,z=0,distance=..320]\n',
-    'data/moinmorni_lobby/function/part/000.mcfunction': 'setblock 0 64 0 stone strict\n',
-    'data/moinmorni_lobby/function/part/001.mcfunction': 'setblock 1 64 0 stone strict\n',
-    'data/moinmorni_lobby/function/finish.mcfunction': 'forceload remove 0 0\n',
+    'data/morninet_lobby/function/prepare.mcfunction': '# geladen\n',
+    'data/morninet_lobby/function/clean.mcfunction': 'kill @e[type=!player,x=0,y=64,z=0,distance=..320]\n',
+    'data/morninet_lobby/function/part/000.mcfunction': 'setblock 0 64 0 stone strict\n',
+    'data/morninet_lobby/function/part/001.mcfunction': 'setblock 1 64 0 stone strict\n',
+    'data/morninet_lobby/function/finish.mcfunction': 'forceload remove 0 0\n',
   },
 });
 
@@ -64,7 +65,7 @@ describe('Lobby baut sich selbst', () => {
 
   test('Einrichten: Lobby-Einstellungen vor dem Start, Welt per Datenpaket bauen, beim zweiten Mal nichts', async () => {
     const h = await harness();
-    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    const jar = path.join(h.mmDir, 'MorniNet.jar');
     fs.writeFileSync(jar, 'plugin');
     const config = { ...h.mm.config, pluginFile: jar };
     const commands: string[] = [];
@@ -110,33 +111,47 @@ describe('Lobby baut sich selbst', () => {
     expect(props).toMatch(/^resource-pack=$/m); // eslint-disable-line ts-patterns/require-regex-example -- empty pack line: "resource-pack=" yes, "resource-pack=https://…" no
     expect(props).toContain('require-resource-pack=false');
 
+    // Umbenennung: Datenpakete unter dem früheren Namen liegen noch in der Welt – nach dem Bau sind sie weg.
+    await Promise.all(
+      OLD_LOBBY_PACKS.map((dir) =>
+        h.mm.motor.request('PUT', `/api/servers/${result.lobbyServerId}/files/content`, {
+          path: `world/datapacks/${dir}/pack.mcmeta`,
+          content: '{}',
+        }),
+      ),
+    );
     expect(await world.build(result.lobbyServerId)).toBe('built');
+    await Promise.all(
+      OLD_LOBBY_PACKS.map((dir) =>
+        expect(read(`world/datapacks/${dir}/pack.mcmeta`)).rejects.toBeInstanceOf(MotorError),
+      ),
+    );
     expect(
-      await read('world/datapacks/moinmorni-lobby/data/moinmorni_lobby/function/part/001.mcfunction'),
+      await read('world/datapacks/morninet-lobby/data/morninet_lobby/function/part/001.mcfunction'),
     ).toContain('setblock 1 64 0');
-    expect((await read('plugins/moinmorni/lobby-world.version')).trim()).toBe('v1');
-    expect((await read('plugins/moinmorni/lobby-world.target')).trim()).toBe('v1');
+    expect((await read('plugins/morninet/lobby-world.version')).trim()).toBe('v1');
+    expect((await read('plugins/morninet/lobby-world.target')).trim()).toBe('v1');
     expect(commands[0]).toBe('minecraft:reload');
     // Aufräumen erst nach dem Laden der Stücke, vor dem ersten Bau-Schritt.
-    expect(commands.indexOf('minecraft:function moinmorni_lobby:clean')).toBeGreaterThan(
+    expect(commands.indexOf('minecraft:function morninet_lobby:clean')).toBeGreaterThan(
       commands.indexOf('minecraft:forceload add 0 0 15 15'),
     );
-    expect(commands.indexOf('minecraft:function moinmorni_lobby:clean')).toBeLessThan(
-      commands.indexOf('minecraft:function moinmorni_lobby:part/000'),
+    expect(commands.indexOf('minecraft:function morninet_lobby:clean')).toBeLessThan(
+      commands.indexOf('minecraft:function morninet_lobby:part/000'),
     );
-    expect(commands).toContain('minecraft:function moinmorni_lobby:part/001');
-    expect(commands.indexOf('minecraft:function moinmorni_lobby:finish')).toBeGreaterThan(
-      commands.indexOf('minecraft:function moinmorni_lobby:part/001'),
+    expect(commands).toContain('minecraft:function morninet_lobby:part/001');
+    expect(commands.indexOf('minecraft:function morninet_lobby:finish')).toBeGreaterThan(
+      commands.indexOf('minecraft:function morninet_lobby:part/001'),
     );
-    expect(commands).toContain('minecraft:datapack disable "file/moinmorni-lobby"');
+    expect(commands).toContain('minecraft:datapack disable "file/morninet-lobby"');
     // Danach die Saison-Deko: Bereich festhalten, Funktion, loslassen.
     expect(commands.filter((c) => !c.includes('execute if loaded')).slice(-3)).toEqual([
       'minecraft:forceload add 0 0 31 31',
-      'minecraft:function moinmorni_season:wiesn',
+      'minecraft:function morninet_season:wiesn',
       'minecraft:forceload remove 0 0 31 31',
     ]);
     expect(
-      await read('world/datapacks/moinmorni-lobby-season/data/moinmorni_season/function/wiesn.mcfunction'),
+      await read('world/datapacks/morninet-lobby-season/data/morninet_season/function/wiesn.mcfunction'),
     ).toContain('kill @e[tag=mm_season]');
 
     commands.length = 0;
@@ -146,7 +161,7 @@ describe('Lobby baut sich selbst', () => {
 
   test('Server antwortet gleich nach dem Start zu langsam: Befehl wird wiederholt, der Bau läuft durch', async () => {
     const h = await harness();
-    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    const jar = path.join(h.mmDir, 'MorniNet.jar');
     fs.writeFileSync(jar, 'plugin');
     const config = { ...h.mm.config, pluginFile: jar };
     const slow = { left: 2 };
@@ -186,7 +201,7 @@ describe('Lobby baut sich selbst', () => {
 
   test('Ein Stück lässt sich auf dem Server nicht laden (z. B. alter Blockname): Bau läuft durch, Fehler im Protokoll', async () => {
     const h = await harness();
-    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    const jar = path.join(h.mmDir, 'MorniNet.jar');
     fs.writeFileSync(jar, 'plugin');
     const config = { ...h.mm.config, pluginFile: jar };
     const motor: MotorClient = {
@@ -194,7 +209,7 @@ describe('Lobby baut sich selbst', () => {
       request: async <T>(method: string, url: string, body?: unknown): Promise<T> => {
         const command = url.endsWith('/command') ? (body as { command: string }).command : '';
         if (command.endsWith('part/001'))
-          return { answer: 'Unknown function moinmorni_lobby:part/001' } as T;
+          return { answer: 'Unknown function morninet_lobby:part/001' } as T;
         return h.mm.motor.request<T>(method, url, body);
       },
     };
@@ -221,9 +236,9 @@ describe('Lobby baut sich selbst', () => {
   });
 
   test('Möbel-Paket: mit Domain bietet die Lobby es an (feste Kennung, Pflicht per Schalter), die Webseite liefert es', async () => {
-    const offer = { url: lobbyPackUrl('moinmorni.net'), sha1: lobbyPackInfo().sha1, required: true };
+    const offer = { url: lobbyPackUrl('morni.net'), sha1: lobbyPackInfo().sha1, required: true };
     const props = lobbyProperties(offer);
-    expect(props['resource-pack']).toBe('https://moinmorni.net/api/public/packs/lobby.zip');
+    expect(props['resource-pack']).toBe('https://morni.net/api/public/packs/lobby.zip');
     expect(props['resource-pack-sha1']).toMatch(/^[0-9a-f]{40}$/); // eslint-disable-line ts-patterns/require-regex-example -- SHA-1 hex: "da39a3ee5e6b4b0d3255bfef95601890afd80709" yes, "abc" no
     expect(props['resource-pack-id']).toBe(MOEBEL_PACK_ID);
     expect(props['require-resource-pack']).toBe('true');

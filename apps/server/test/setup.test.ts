@@ -3,7 +3,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, test } from 'vitest';
 import { createHarness, OWNER_PASSWORD, type Harness } from './harness.js';
 
-describe('Ersteinrichtung über MoinMorni', () => {
+describe('Ersteinrichtung über morni.net', () => {
   let h: Harness;
   afterEach(async () => {
     await h.cleanup();

@@ -45,7 +45,7 @@ export function morniCraftSettings(stores: Stores, ctx: MorniCraftContext): Body
     t: 'mornicraft-settings',
     config: {
       language: net['defaultLanguage'] === 'en' ? 'en' : 'de',
-      'server-name': 'MorniCraft auf MoinMorni',
+      'server-name': 'MorniCraft auf morni.net',
       timezone: ctx.timeZone,
       link: '',
       'update-check': false,
