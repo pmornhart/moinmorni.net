@@ -554,9 +554,11 @@ describe('Hub', () => {
     expect(await proxy.next('connect', (m) => m['uuid'] === PHILIP)).toMatchObject({ server: 'party' });
     await said(LENA, 'is awake');
 
-    // Geschlossen und Wartung.
+    // Geschlossen und Wartung. Geschlossen gilt für Spieler – das Team kommt zum Vorbereiten trotzdem hinein.
     expect(await go(LENA, 'mornicraft')).toMatchObject({ data: { allow: false } });
     await said(LENA, 'closed');
+    await go(PHILIP, 'mornicraft');
+    await said(PHILIP, 'als Team trotzdem rein');
     stores.patchMode('duels', { state: 'maintenance' }, 'test');
     expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: false } });
     await said(LENA, 'maintenance');

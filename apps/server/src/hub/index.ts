@@ -388,7 +388,12 @@ export function createHub(options: HubOptions): Hub {
             : text(lang, 'punish.forever'),
         }),
       );
-    if (mode?.state === 'off') return stop(text(lang, 'mode.closed', { mode: name }));
+    // Geschlossen: Spieler bleiben draußen, das Team (darf auch bei Wartung rein) kommt zum Vorbereiten trotzdem hinein.
+    if (mode?.state === 'off') {
+      if (!hasRight(players.roleOf(uuid), 'maintenance-join'))
+        return stop(text(lang, 'mode.closed', { mode: name }));
+      ctx.msg(uuid, text(lang, 'mode.closed_team', { mode: name }));
+    }
     if (mode?.state === 'soon') return stop(text(lang, 'mode.soon', { mode: name }));
     if (mode?.state === 'maintenance' && !hasRight(players.roleOf(uuid), 'maintenance-join'))
       return stop(text(lang, 'mode.maintenance', { mode: name }));
