@@ -3,7 +3,7 @@
 import type { Canvas } from '../canvas.js';
 import { alpineHouse, portalArch } from '../bavaria.js';
 import { fbm } from '../noise.js';
-import { GROUND, roundTree, spruce } from '../nature.js';
+import { GROUND, ORIGIN, roundTree, spruce } from '../nature.js';
 import { pairs, range } from '../range.js';
 import { STEP, type Facing } from '../shapes.js';
 import { marketStall, type RoomKind } from '../village.js';
@@ -190,18 +190,20 @@ export function houseAt(
 ): void {
   const [rx, rz] = STEP[RIGHT_SEEN_FROM_FRONT[front]];
   const half = Math.floor((width - 1) / 2);
-  alpineHouse(c, {
-    x: cx - rx * half,
-    y,
-    z: cz - rz * half,
-    front,
-    width,
-    depth,
-    floors,
-    rnd,
-    roof,
-    ...extra,
-  });
+  c.tagged(`haus ${cx},${cz}`, () =>
+    alpineHouse(c, {
+      x: cx - rx * half,
+      y,
+      z: cz - rz * half,
+      front,
+      width,
+      depth,
+      floors,
+      rnd,
+      roof,
+      ...extra,
+    }),
+  );
 }
 
 /** Rechts aus Sicht von jemandem, der vor dem Gebäude steht und es anschaut. */
@@ -238,23 +240,25 @@ export function stallAt(
   npcTags?: readonly string[],
 ): void {
   const [rx, rz] = STEP[RIGHT_SEEN_FROM_FRONT[front]];
-  marketStall(c, {
-    x: cx - rx * 3,
-    y,
-    z: cz - rz * 3,
-    front,
-    colour: mode.colour,
-    skin: mode.skin,
-    name: mode.name,
-    line: mode.line,
-    status: mode.status,
-    mode: mode.id,
-    goods: mode.goods,
-    ...(npcTags ? { npcTags } : {}),
-  });
+  c.tagged(`stand ${mode.id}`, () =>
+    marketStall(c, {
+      x: cx - rx * 3,
+      y,
+      z: cz - rz * 3,
+      front,
+      colour: mode.colour,
+      skin: mode.skin,
+      name: mode.name,
+      line: mode.line,
+      status: mode.status,
+      mode: mode.id,
+      goods: mode.goods,
+      ...(npcTags ? { npcTags } : {}),
+    }),
+  );
 }
 
-/** Garten-Zaun um ein Rechteck (mit Lücke vorne in der Mitte). */
+/** Garten-Zaun um ein Rechteck (mit Lücke um `gapAt`), an den Ecken und am Tor richtig verbunden. */
 export function fence(
   c: Canvas,
   x1: number,
@@ -264,14 +268,24 @@ export function fence(
   y: number,
   gapAt?: [number, number],
 ): void {
-  pairs(range(x1, x2), range(z1, z2))
-    .filter(([x, z]) => x === x1 || x === x2 || z === z1 || z === z2)
-    .filter(([x, z]) => !gapAt || Math.abs(x - gapAt[0]) + Math.abs(z - gapAt[1]) > 1)
-    .forEach(([x, z]) => {
-      const ns = z === z1 || z === z2 ? 'east=true,west=true' : 'north=true,south=true';
-      c.set(x, y, z, `spruce_fence[${ns}]`);
-    });
+  const onFence = (x: number, z: number): boolean =>
+    x >= x1 &&
+    x <= x2 &&
+    z >= z1 &&
+    z <= z2 &&
+    (x === x1 || x === x2 || z === z1 || z === z2) &&
+    (!gapAt || Math.abs(x - gapAt[0]) + Math.abs(z - gapAt[1]) > 1);
+  c.tagged(`zaun ${x1},${z1}`, () =>
+    pairs(range(x1, x2), range(z1, z2))
+      .filter(([x, z]) => onFence(x, z))
+      .forEach(([x, z]) => {
+        const arms = SIDES.filter((d) => onFence(x + STEP[d][0], z + STEP[d][1])).map((d) => `${d}=true`);
+        c.set(x, y, z, arms.length > 0 ? `spruce_fence[${arms.join(',')}]` : 'spruce_fence');
+      }),
+  );
 }
+
+const SIDES: readonly Facing[] = ['north', 'east', 'south', 'west'];
 
 /** Feld mit reifem Weizen (oder Karotten) in Reihen, dazwischen Wasser. */
 export function field(
@@ -283,21 +297,59 @@ export function field(
   y: number,
   crop = 'wheat[age=7]',
 ): void {
-  pairs(range(x1, x2), range(z1, z2)).forEach(([x, z]) => {
-    const water = (x - x1) % 5 === 2;
-    c.set(x, y, z, water ? 'water' : 'farmland[moisture=7]');
-    if (!water) c.set(x, y + 1, z, crop);
-  });
+  c.tagged(`feld ${x1},${z1}`, () =>
+    pairs(range(x1, x2), range(z1, z2)).forEach(([x, z]) => {
+      const water = (x - x1) % 5 === 2;
+      c.set(x, y, z, water ? 'water' : 'farmland[moisture=7]');
+      if (!water) c.set(x, y + 1, z, crop);
+    }),
+  );
 }
 
 /** Laternenpfahl. */
 export function lampPost(c: Canvas, x: number, y: number, z: number): void {
-  c.set(x, y, z, 'polished_andesite');
-  range(y + 1, y + 3).forEach((py) => c.set(x, py, z, 'dark_oak_fence'));
-  c.set(x, y + 4, z, 'lantern');
+  c.tagged(`laterne ${x},${z}`, () => {
+    c.set(x, y, z, 'polished_andesite');
+    range(y + 1, y + 3).forEach((py) => c.set(x, py, z, 'dark_oak_fence'));
+    c.set(x, y + 4, z, 'lantern');
+  });
 }
 
-/** Wald: Fichten an den Hängen, Laubbäume unten – nur wo `ok` erlaubt. */
+/**
+ * Platz für einen Baum: im Umkreis `reach` von der Stammhöhe bis über die Spitze steht nichts Gebautes, und der Stamm
+ * steht auf Gelände (nicht auf Weg, Feld oder Pflaster). So wächst kein Wald in Kapelle, Felder oder Wege.
+ */
+function roomFor(c: Canvas, x: number, h: number, z: number, reach: number, tall: number): boolean {
+  const ground = c.get(x, h, z);
+  // Außerhalb des Geländes (über dem Rand hinaus) gäbe es keinen Boden unter dem Stamm
+  if (ground === undefined && h !== GROUND) return false;
+  if (ground !== undefined && c.originAt(x, h, z) !== ORIGIN.terrain) return false;
+  const r = Math.ceil(reach);
+  return pairs(range(x - r, x + r), range(z - r, z + r))
+    .filter(([px, pz]) => (px - x) ** 2 + (pz - z) ** 2 <= (reach + 0.5) ** 2)
+    .every(([px, pz]) =>
+      range(h + 1, h + tall + 2).every((py) => {
+        const b = c.get(px, py, pz);
+        const origin = c.originAt(px, py, pz);
+        return b === undefined || b === 'air' || origin === ORIGIN.terrain || origin === ORIGIN.tree;
+      }),
+    );
+}
+
+/** Wie ein Wald gemischt ist. */
+export interface ForestMix {
+  /** Darüber nur Fichten (Höhe der Oberfläche). */
+  readonly spruceAbove: number;
+  /** Anteil Laubbäume darunter, der Rest sind Fichten. */
+  readonly broadleaf: number;
+  /** Anteil Birken unter den Laubbäumen (helles Laub, weiße Stämme). */
+  readonly birch: number;
+}
+
+/** Bergwald: an den Hängen Fichten, unten halb Laubbäume. */
+const MOUNTAIN_FOREST: ForestMix = { spruceAbove: GROUND + 6, broadleaf: 0.5, birch: 0 };
+
+/** Wald: Fichten an den Hängen, Laubbäume unten – nur wo `ok` erlaubt und Platz ist. */
 export function forest(
   c: Canvas,
   x1: number,
@@ -308,6 +360,7 @@ export function forest(
   ok: (x: number, z: number, h: number) => boolean,
   seed: number,
   rnd: () => number,
+  mix: ForestMix = MOUNTAIN_FOREST,
 ): void {
   pairs(range(x1, x2), range(z1, z2))
     .filter(([x, z]) => x % 5 === 0 && z % 5 === 0)
@@ -316,8 +369,23 @@ export function forest(
       const z = gz + Math.floor(rnd() * 4);
       const h = Math.round(height(x, z));
       if (!ok(x, z, h) || fbm(seed + 11, x, z, 40, 2) < 0.48) return;
-      if (h > GROUND + 6) spruce(c, x, h + 1, z, 9 + Math.floor(rnd() * 8));
-      else if (rnd() < 0.5) roundTree(c, x, h + 1, z, { height: 9, radius: 3 + rnd() * 1.5, rnd });
-      else spruce(c, x, h + 1, z, 8 + Math.floor(rnd() * 6));
+      if (h > mix.spruceAbove) {
+        const tall = 9 + Math.floor(rnd() * 8);
+        if (roomFor(c, x, h, z, spruceReach(tall), tall)) spruce(c, x, h + 1, z, tall);
+      } else if (rnd() < mix.broadleaf) {
+        const radius = 3 + rnd() * 1.5;
+        const birch = mix.birch > 0 && rnd() < mix.birch;
+        const wood = birch ? { log: 'birch_log', leaves: 'birch_leaves' } : {};
+        if (roomFor(c, x, h, z, radius * ROUND_CROWN_REACH, 9))
+          roundTree(c, x, h + 1, z, { height: 9, radius, rnd, ...wood });
+      } else {
+        const tall = 8 + Math.floor(rnd() * 6);
+        if (roomFor(c, x, h, z, spruceReach(tall), tall)) spruce(c, x, h + 1, z, tall);
+      }
     });
 }
+
+/** Wie weit eine Fichte zur Seite reicht (unterster Ring + Spitze der Raute). */
+const spruceReach = (tall: number): number => Math.max(1, Math.round(tall / 4)) + 1;
+/** Laubkrone mit Ausbuchtungen reicht etwa so weit wie das 1,3-Fache des Radius. */
+const ROUND_CROWN_REACH = 1.3;

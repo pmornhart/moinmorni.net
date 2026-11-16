@@ -7,6 +7,7 @@
  */
 import crypto from 'node:crypto';
 import { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG } from '../village.js';
+import { biomeCommands } from '../shapes.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
 import { SEASONS, seasonCommands } from './season.js';
 
@@ -94,6 +95,16 @@ export function clearCommands(cx: number, cz: number, radius = RADIUS): string[]
   );
 }
 
+/**
+ * Biom der Lobby: Wald. Die Farbe von Gras, Blumen-Grün und Laub hängt am Biom – die Lobby liegt in einer normal
+ * erzeugten Welt, deren Biom an der Stelle zufällig ist (bei Philip „bewaldete Tafelberge“: fahles, bräunliches Gras).
+ * Im Wald ist Gras saftig grün (#79C05A), Laub kräftig (#59AE30), Wasser normal blau.
+ */
+export const LOBBY_BIOME = 'minecraft:forest';
+/** Höhenbereich, in dem das Biom gesetzt wird (vom Grund bis über die Berggipfel). */
+const BIOME_FROM = 48;
+const BIOME_TO = 303;
+
 /** Spielregeln der Lobby (Namen ab Minecraft 1.21.11, mit Paper 26.3 geprüft). */
 const LOBBY_RULES: Readonly<Record<string, string>> = {
   advance_time: 'false',
@@ -134,7 +145,16 @@ export function lobbyPack(): LobbyPack {
   if (cached) return cached;
   const { cx, cz } = LOBBY;
   const { canvas } = buildLobby();
-  const body = [...clearCommands(cx, cz), ...canvas.commands().map(summonOnce)];
+  const biome = biomeCommands(
+    cx - RADIUS,
+    BIOME_FROM,
+    cz - RADIUS,
+    cx + RADIUS,
+    BIOME_TO,
+    cz + RADIUS,
+    LOBBY_BIOME,
+  );
+  const body = [...clearCommands(cx, cz), ...biome, ...canvas.commands().map(summonOnce)];
   const parts = Array.from({ length: Math.ceil(body.length / PART_SIZE) }, (_, i) =>
     body.slice(i * PART_SIZE, (i + 1) * PART_SIZE),
   );

@@ -21,17 +21,27 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   Skilehrerin, Flieger, Fischer, Blumenfrau). Bis sie bei MineSkin signiert sind
   (`tsx tools/lobby-entwuerfe/src/sign-skins.ts`), trägt jede die Tracht einer passenden bestehenden Figur
   (`STAND_IN`); danach von selbst die eigene – Skin und 3D-Tracht passen immer zusammen.
-- **Dorfstraße** nach Süden: Bäckerei, Krämerladen, Apotheke, Wohnhäuser, Kapelle; am Platz Rathaus und Gäste-Info.
+- **Dorfstraße** nach Süden (heller Sandweg, Laternen zwischen den Häusern): Bäckerei, Krämerladen, Apotheke,
+  Wohnhäuser mit Gärten und Obstbaum, Kapelle (begehbar: Turmtür, Vorhalle, Bänke, Altar); am Platz Rathaus und
+  Gäste-Info.
 - **Handwerkergasse** nach Westen (zwischen den Ständen hindurch): Schmiede, Trachten, Schreinerei, Wohnhäuser,
-  Vorgärten, Brunnen am Ende.
-- **Oberdorf** im Nordosten: kleiner Platz mit Brunnen und Linde, vier Häuser.
+  Vorgärten, **Dorfbrunnen** am Ende.
+- **Oberdorf** im Nordosten: kleiner Platz mit Dorfbrunnen und Dorflinde (Rundbank), vier Häuser.
 - **Wirtshaus „Zum Morni“** mit Wirt hinterm Tresen, Stammtisch und Gästen; davor der **Biergarten** mit Ausschank
-  (Wirt), Kastanien, Lampions und Gästen an den Tischen.
+  (Wirt, Laternen unter der Markise), Kastanien in den Gängen zwischen den Tischen, Laternen an Ketten unter den
+  Kronen, Laternenmasten an den Ecken und Gäste an den Tischen.
 - Alle Häuser sind **begehbar und eingerichtet** (Küche, Eckbank, Kachelofen, Schlafzimmer, Leiter nach oben; Läden
   mit Theke und Verkäufer). Einrichtung als Daten in `packages/builder/src/village.ts`.
 - **Leute im Dorf**: Figuren mit Tag `mm_walker` schlendern um ihren Platz herum, stehende Figuren schauen Spieler
   in der Nähe an, Kinder sind kleiner.
-- Schloss auf dem Hügel, Prachtstraße, Obstgarten, Felder, Teich, Alpengipfel ringsum.
+- Schloss auf dem Hügel, Prachtstraße (am Hangfuß auf einem gemauerten Damm), Obstgarten, Felder, Teich,
+  Alpengipfel ringsum.
+- **Saftig und hell** (16.11., Philip: „Wir sind in Bayern für schön saftigen Boden bekannt“): Die Lobby setzt beim
+  Bau das Biom **Wald** (`LOBBY_BIOME` in `datapack.ts`, `fillbiome` über die ganze Fläche) – Gras, Blätter und Wiesen
+  werden saftig grün, egal welches Biom die Welt dort erzeugt hatte (bei Philip „bewaldete Tafelberge“ mit fahlem,
+  bräunlichem Gras). Helles Pflaster (Steinziegel, polierter Andesit, Stein, etwas Diorit statt Moos-Kopfstein),
+  Sandwege auf Dorfstraße, Gasse und Feldwegen, am Schlossberg Laubbäume und Birken statt nur Fichten und dichtes
+  Gras mit Blumen über den Erdstufen, Dächer an der Dorfstraße im Wechsel hell und dunkel.
 
 ## Möbel (Ressourcenpaket)
 
@@ -39,13 +49,13 @@ Stühle mit Herz-Lehne, Eckbänke, Wirtstische, Hocker, Bierbänke, Biertische u
 (`packages/builder/src/furniture.ts`). Sie hängen an Blöcken, die es in der Lobby **nur als Möbel** gibt – das Paket
 gibt ihnen ein neues Aussehen, Kollision und Sitzhöhe bleiben echt:
 
-| Block | Möbel |
-| --- | --- |
+| Block                                | Möbel                  |
+| ------------------------------------ | ---------------------- |
 | Mangroven-Treppe unten, gerade/innen | Eckbank (mit Rückwand) |
-| Mangroven-Treppe sonst | Stuhl |
-| Mangroven-Stufe oben / unten | Wirtstisch / Hocker |
-| Birken-Stufe oben / unten | Biertisch / Bierbank |
-| braune Kerze (1–4, aus) | 1–4 Steinkrüge |
+| Mangroven-Treppe sonst               | Stuhl                  |
+| Mangroven-Stufe oben / unten         | Wirtstisch / Hocker    |
+| Birken-Stufe oben / unten            | Biertisch / Bierbank   |
+| braune Kerze (1–4, aus)              | 1–4 Steinkrüge         |
 
 **Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen und keine braunen Kerzen für anderes verbauen.**
 Die Modelle nutzen nur Minecrafts eigene Texturen (es liegen keine Mojang-Dateien im Paket). Weil Minecraft die Fläche
@@ -57,6 +67,19 @@ Ausgeliefert unter `/api/public/packs/lobby.zip`; die Lobby bietet es per `serve
 (`/lobby paket an|aus`). Der Proxy nimmt es beim Wechsel auf einen anderen Server wieder ab. Ohne Paket (abgelehnt,
 Bedrock) sieht man die normalen Blöcke – nichts fehlt. Echt geprüft mit Client 26.3 in der Docker-Lobby: angeboten,
 geladen, `/bau` → weg, `/lobby` → wieder da.
+
+## Dorfbrunnen (Ressourcenpaket)
+
+Am Ende der Handwerkergasse und im Oberdorf steht je ein **Dorfbrunnen** (`packages/builder/src/dorfbrunnen.ts`) – so
+fein gearbeitet wie der Prunkbrunnen im Schlosshof (`brunnen.ts`), aber kleiner und ländlicher: achteckiger Trog aus
+Tuffstein mit Sockel, glatter Abdeckung und Zierfeldern, in der Mitte die Brunnensäule mit Kupferband, Kapitell und
+goldenem Zapfen, vier Wasserspeier aus Kupfer mit Wasserstrahlen ins Becken, Geranien auf dem Rand, Blumenbeete an den
+Ecken. Wie beim Prunkbrunnen sind es Item-Anzeigen mit dem leeren Modell `minecraft:air` (Teile `dorf_*` im
+Möbel-Paket), Spritzer und Plätschern kommen vom Lobby-Plugin.
+
+**Ohne Paket und auf Bedrock** steht ein schlichter Brunnen aus Blöcken da: niedrige Tuffziegel-Mauer als Becken mit
+echtem Wasser, Säule aus Mauer-Pfosten mit einem Endstab als Fontäne, dieselben Blumen. Tuffziegel-Mauern und
+Endstäbe gibt es in der Lobby nur an den Brunnen – das Paket blendet sie aus.
 
 ## Trachten in 3D (Ressourcenpaket)
 
@@ -137,6 +160,27 @@ Die Strafe gilt im ganzen Netzwerk:
 - Discord: Rolle „⛓ Gefängnis“ (sieht nur den Gefängnis-Kanal), wird nach Ablauf wieder abgenommen; Eintrag im
   Team-Log.
 
+## Bauplan-Prüfung
+
+`packages/builder/src/pruefung.ts` prüft den fertigen Bauplan (`checkLobby()` in `lobby/pruefen.ts`) samt aller
+Saison-Dekos und meldet jeden Fund mit Koordinaten:
+
+- Laternen, Fackeln, Schilder, Banner, Falltüren, Blumentöpfe, Teppiche, Kerzen, Glocken, Knöpfe ohne Halt;
+- Ketten, die oben bzw. an einem Ende im Leeren enden; Zäune, Mauern und Scheiben mit Armen ins Leere;
+- Türen ohne Boden, Rahmen oder Sturz oder in eine Wand hinein;
+- Bäume, die in Häuser, Dächer, Stände oder Wege wachsen, auf Pflaster stehen oder auf Kopfhöhe über den Weg hängen;
+  zwei Bauten an derselben Stelle (an der Herkunft, die `Canvas.tagged` vergibt);
+- auslaufendes Wasser, Pflanzen ohne passenden Boden, schwebende Blöcke (Parkour ausgenommen);
+- **offen liegende Erde** dort, wo man herumläuft – nur, was man auch sieht: unter freiem Himmel oder wenige Schritte
+  davon (Hohlräume im Berg, die das Gelände lässt, zählen nicht);
+- Figuren in Wänden oder in der Luft, Saison-Deko in Blöcken oder ohne Halt, Wimpel- und Lichterketten ohne Ende.
+
+Auf der Kommandozeile: `npx tsx tools/lobby-entwuerfe/src/pruefen.ts [art …]`. Der Test
+`packages/builder/test/lobby-pruefung.test.ts` schlägt bei jedem neuen Fund an; Funde in Teilen, an denen gerade
+andere arbeiten (Schloss, Schlossmarkt, Saison-Deko), stehen in `test/pruefung-offen.ts` – ist einer behoben, die
+Zeile dort löschen. Die Lobby baut ohne Block-Updates; `fitConnections` (`verbindungen.ts`) verbindet darum Zäune,
+Mauern und Scheiben wie beim Setzen von Hand.
+
 ## Die Lobby baut sich selbst
 
 Beim Einrichten (und nach jedem Update, wenn sich der Bauplan geändert hat) baut MoinMorni die Welt auf dem
@@ -151,7 +195,8 @@ Lobby-Server auf – ohne RCON von außen, nur über den Motor (`apps/server/src
    nacheinander, `finish` (Spielregeln, Ankunftspunkt, Weltgrenze, Reste älterer Bauten), Stücke loslassen,
    Datenpaket wieder ausschalten. Minecraft lädt die Wesen eines Stücks erst nach den Blöcken – was dabei noch nicht
    geladen war, räumt das Lobby-Plugin über die Bau-Version weg.
-4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun.
+4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun. Die Bau-Version ist die Prüfsumme
+   des Datenpakets: Jede Änderung am Bauplan zählt sie von selbst weiter, die Lobby baut sich beim nächsten Start neu.
 
 Echt geprüft mit einem frischen Paper 26.3 (`apps/server/scripts/lobby-selbstbau.ts`, Brücke statt Motor):
 Welt-Stücke erzeugen ~4 Min., Bau 55 s, keine Ladefehler, kein Hänger.

@@ -246,9 +246,10 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
       [-5, 2, -4, 'brewing_stand'],
       [-2, 2, -4, 'cake'],
       [-3, 2, -4, 'candle[candles=2,lit=true]'],
-      [1, 2, 2, 'light_blue_wall_banner[facing={R}]'],
-      [1, 2, 5, 'white_wall_banner[facing={R}]'],
-      [1, 2, 8, 'light_blue_wall_banner[facing={R}]'],
+      // Fahnen an der Seitenwand zwischen den Fenstern (die sitzen bei 2, 5, 8)
+      [1, 2, 3, 'light_blue_wall_banner[facing={R}]'],
+      [1, 2, 6, 'white_wall_banner[facing={R}]'],
+      [1, 2, 9, 'light_blue_wall_banner[facing={R}]'],
       [-6, 1, -1, 'barrel[facing={F}]', -3, -1],
       [-6, 2, -1, 'barrel[facing={F}]', -3, -1],
       [-6, 3, -1, 'barrel[facing={F}]', -4, -1],
@@ -299,7 +300,9 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
       [-1, 1, 2, 'grindstone[face=floor,facing={L}]'],
       [-1, 1, 3, 'chest[facing={L}]'],
       [-1, 1, 4, 'barrel[facing=up]'],
+      // Kette von der Decke bis aufs Fass
       [-1, 2, 4, 'iron_chain[axis=y]'],
+      [-1, 3, 4, 'iron_chain[axis=y]'],
       [1, 1, 2, 'stonecutter[facing={R}]'],
       [1, 1, 3, 'iron_block'],
       [2, 3, -1, LANTERN_HANGING],
