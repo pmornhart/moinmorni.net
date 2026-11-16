@@ -231,8 +231,9 @@ Das Skript schaut sich zuerst deinen Rechner an:
  ✔ Dein Proxmox: 16 Kerne, 63 GB RAM (58 GB gerade frei)
 ```
 
-Dann stellt es dir ein paar Fragen in blauen Fenstern. Mit **Tab** springst du zwischen Feld und Knöpfen, mit
-**Enter** bestätigst du, mit **Esc** brichst du ab (dann wird nichts angelegt).
+Dann stellt es dir ein paar Fragen in blauen Fenstern. Die Maus geht dort meist nicht, alles geht mit der Tastatur:
+Mit **Tab** springst du zwischen Feld und Knöpfen, in Listen wählst du mit den **Pfeiltasten**, mit **Enter** bestätigst
+du, mit **Esc** brichst du ab (dann wird nichts angelegt). Das steht auch oben auf jedem Fenster.
 
 ### 3.2 Die Fragen
 
@@ -250,11 +251,12 @@ Dann stellt es dir ein paar Fragen in blauen Fenstern. Mit **Tab** springst du z
      so wie du das NetBird-Dashboard öffnest, z. B. `https://netbird.example.de`. Nutzt du NetBird Cloud (netbird.io),
      lass das Feld leer.
 5. **So wird der Container angelegt** – alle Werte auf einen Blick, dazu Hinweise, falls an deinem Rechner etwas knapp
-   ist (RAM, Kerne, freier Platz). Zwei Knöpfe:
+   ist (RAM, Kerne, freier Platz). Die Festplatte nimmt höchstens 60 % vom freien Platz auf dem Speicher mit dem
+   meisten Platz (mindestens 40 GB, höchstens 100 GB) – vergrößern geht später jederzeit. Zwei Knöpfe:
    - **Anlegen** – nimmt die Standard-Einstellungen. Das ist für fast alle richtig.
-   - **Erweitert** – du legst selbst fest: Name des Containers, CPU-Kerne, RAM, Swap, Festplatte, Proxmox-Speicher,
-     Netzwerk-Bridge, **feste IP-Adresse** (statt vom Router) samt Gateway und Debian-Version. Danach siehst du die
-     Übersicht nochmal.
+   - **Erweitert** (mit **Tab** hinüber, dann **Enter**) – du legst selbst fest: Name des Containers, CPU-Kerne, RAM,
+     Swap, Proxmox-Speicher, Festplatte, Netzwerk-Bridge, **feste IP-Adresse** (statt vom Router) samt Gateway und
+     Debian-Version. Danach siehst du die Übersicht nochmal.
 
 Vertippt? Das Skript sagt, was nicht passt, und fragt nochmal.
 

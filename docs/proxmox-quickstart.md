@@ -11,8 +11,8 @@ Owner-Konto.
 
 - **Proxmox VE 8 oder 9** mit Internet (frisch installiert reicht).
 - Platz für den Container – Standard: **32 GB RAM, 8 Kerne, 100 GB Festplatte**. Leere Spielmodi schlafen und
-  brauchen dann nichts. Hat dein Proxmox weniger Kerne oder RAM, nimmt das Skript von selbst weniger und sagt dir, was
-  das bedeutet.
+  brauchen dann nichts. Hat dein Proxmox weniger Kerne, RAM oder freien Platz, nimmt das Skript von selbst weniger und
+  sagt dir, was das bedeutet.
 - Deine **Domain** (z. B. `moinmorni.net`) – DNS bei INWX, Verkehr über NetBird.
 - Optional: den **Token deines Discord-Bots** (geht auch später, siehe [Discord einrichten](discord.md)).
 - Optional: einen **NetBird-Setup-Key** (NetBird-Dashboard → _Setup Keys → Create Setup Key_), dann ist der
@@ -33,10 +33,18 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/moinmorni.net/
 - **Kerne und RAM:** Hat dein Proxmox weniger als 8 Kerne, bekommt der Container so viele, wie da sind. Hat er weniger
   als 34 GB RAM, bekommt der Container den RAM des Rechners minus 2 GB (die braucht Proxmox selbst). Das Skript sagt
   dir, wie viele Spielmodi dann gleichzeitig laufen.
-- **Freier Platz:** Ist auf dem Proxmox-Speicher weniger frei, als der Container werden darf, kommt eine Warnung –
-  läuft der Speicher voll, bleiben alle Container stehen.
+- **Speicher und Festplatte:** Vorgeschlagen wird der Proxmox-Speicher mit dem meisten freien Platz (bei Gleichstand
+  `local-lvm`), nicht einfach der erste der Liste. Die Festplatte nimmt höchstens 60 % von dessen freiem Platz –
+  mindestens 40 GB, höchstens 100 GB –, damit Proxmox, Sicherungen und andere Container Luft haben. Vergrößern geht
+  später jederzeit (siehe unten).
+- **Freier Platz:** Darf der Container mehr als 60 % vom freien Platz belegen (z. B. weil du `DISK` selbst setzt),
+  kommt eine Warnung – läuft der Speicher voll, bleiben alle Container stehen.
 
 ### Die Fragen
+
+Die Fenster bedienst du mit der Tastatur – die Maus geht in der Proxmox-Konsole meist nicht: **Pfeiltasten** wählen in
+Listen, **Tab** springt zu den Knöpfen (z. B. zu „Erweitert“), **Enter** bestätigt, **Esc** bricht ab. Das steht auch
+oben auf jedem Fenster.
 
 | Frage                  | Vorschlag              | Hinweis                                                                                          |
 | ---------------------- | ---------------------- | ------------------------------------------------------------------------------------------------ |
@@ -49,9 +57,10 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/moinmorni.net/
 Danach zeigt das Skript alle Werte auf einen Blick – mit Hinweisen, falls am Rechner etwas knapp ist:
 
 - **Anlegen** nimmt die Standard-Einstellungen.
-- **Erweitert** lässt dich alles selbst festlegen: Name des Containers, CPU-Kerne, RAM, Swap, Festplatte,
-  Proxmox-Speicher (aus einer Liste mit freiem Platz), Netzwerk-Bridge (aus einer Liste), **feste IP-Adresse** mit
-  Gateway (statt per DHCP vom Router) und Debian-Version. Danach kommt die Übersicht nochmal.
+- **Erweitert** (mit **Tab** hinüber, dann **Enter**) lässt dich alles selbst festlegen: Name des Containers,
+  CPU-Kerne, RAM, Swap, Proxmox-Speicher (aus einer Liste mit freiem Platz, der Vorschlag ist markiert), Festplatte
+  (mit dem Vorschlag für den gewählten Speicher), Netzwerk-Bridge (aus einer Liste), **feste IP-Adresse** mit Gateway
+  (statt per DHCP vom Router) und Debian-Version. Danach kommt die Übersicht nochmal.
 
 Vertippt? Das Skript sagt, was nicht passt, und fragt nochmal. Mit **Esc** brichst du ab, dann wird nichts angelegt.
 
@@ -104,8 +113,8 @@ Alle Antworten lassen sich vorher setzen – dann fragt das Skript gar nichts:
 | `CT_HOSTNAME`            | `moinmorni`                                | Name des Containers (auch in NetBird)                                                          |
 | `CORES`                  | `8` (höchstens so viele, wie der Host hat) | CPU-Kerne                                                                                      |
 | `RAM` / `SWAP`           | `32768` / `4096`                           | Arbeitsspeicher und Auslagerung in MB (RAM: höchstens Host-RAM minus 2 GB, außer du setzt ihn) |
-| `DISK`                   | `100`                                      | Festplatte in GB                                                                               |
-| `STORAGE`                | erster Speicher für Container              | z. B. `local-lvm`                                                                              |
+| `DISK`                   | 60 % vom freien Platz, 40–100              | Festplatte in GB                                                                               |
+| `STORAGE`                | der mit dem meisten freien Platz           | z. B. `local-lvm`                                                                              |
 | `TEMPLATE_STORAGE`       | `local`                                    | wo die Debian-Vorlage liegt                                                                    |
 | `BRIDGE`                 | `vmbr0`                                    | Netzwerk-Bridge                                                                                |
 | `CT_IP`                  | `dhcp`                                     | oder eine feste Adresse mit Netzgröße, z. B. `192.168.178.50/24`                               |

@@ -212,6 +212,7 @@ printf 'pvesm %s\n' "$*" >>@W@/log/argv.log
 if [[ "$1" == status ]]; then
   echo "Name             Type     Status           Total            Used       Available        %"
   if [[ "$*" != *rootdir* ]]; then echo "local             dir     active        98497780        12345678        86152102   12.53%"; fi
+  if [[ "$*" == *rootdir* && -f @W@/state/extra-rootdir ]]; then cat @W@/state/extra-rootdir; fi
   echo "local-lvm     lvmthin     active       365760512        24576000       $(cat @W@/state/lvm-free-kb)    6.72%"
   exit 0
 fi
@@ -737,6 +738,15 @@ check "NetBird verbunden" grep -Fx ok "${W}/state/netbird-up"
 check "NetBird-Server ohne https → nochmal gefragt" has "${W}/log/whiptail.log" '„netbird.example.org“ ist keine Adresse wie https://'
 check "leer = NetBird Cloud (netbird up ohne Server-Adresse)" grep -Fx "netbird up" "${W}/log/ct.log"
 check "Zusammenfassung mit Knöpfen Anlegen/Erweitert" has "${W}/log/whiptail.log" "--yes-button Anlegen --no-button Erweitert"
+# Jeder Aufruf beginnt eine Zeile mit --backtitle (mehrzeilige Texte gehen danach weiter).
+backtitles_ok() {
+  local calls hinted
+  calls="$(grep -c -E -- '^--backtitle ' "${W}/log/whiptail.log")"
+  hinted="$(grep -c -F -- "--backtitle MoinMorni  |  Pfeiltasten: wählen · Tab: zu den Knöpfen · Enter: weiter · Esc: abbrechen" "${W}/log/whiptail.log")"
+  ((calls > 0 && calls == hinted))
+}
+check "jedes Fenster sagt oben, wie man es bedient (Pfeiltasten, Tab, Enter, Esc)" backtitles_ok
+check 'Zusammenfassung sagt, wie man zu „Erweitert“ kommt' has "${W}/log/whiptail.log" '„Erweitert“ (mit Tab hinüber, dann Enter)'
 check "alle Antworten verbraucht" test ! -s "${W}/state/whiptail.answers"
 check_secrets_safe
 show_output_on_failure
@@ -823,7 +833,7 @@ show_output_on_failure
 begin "8. Erweitert (whiptail): Name, Kerne, RAM, Swap, Festplatte, Speicher, Bridge, feste IP, Debian 12"
 new_world erweitert
 # Erst „Erweitert“ (no), Fehleingaben werden nochmal gefragt, dann „Anlegen“ (yes).
-with_whiptail 123 moinmorni.net "" no no Morni-Test 99 6 24 2 5 80 local-lvm vmbr1 192.0.2.60/33 192.0.2.60/24 192.0.2.1 12 yes
+with_whiptail 123 moinmorni.net "" no no Morni-Test 99 6 24 2 local-lvm 5 80 vmbr1 192.0.2.60/33 192.0.2.60/24 192.0.2.1 12 yes
 run_case tty
 CT="${W}/ct/123"
 check "läuft durch (Exit 0)" test "${RC}" -eq 0
@@ -834,7 +844,8 @@ done
 check "zu viele Kerne → nochmal gefragt" has "${W}/log/whiptail.log" "Dein Proxmox hat 16 Kerne – mehr gehen nicht"
 check "zu kleine Festplatte → nochmal gefragt" has "${W}/log/whiptail.log" '„5“ ist keine ganze Zahl ab 10'
 check "falsche Netzgröße → nochmal gefragt" has "${W}/log/whiptail.log" '„192.0.2.60/33“ ist weder „dhcp“'
-check "Speicher aus einer Liste mit freiem Platz" has "${W}/log/whiptail.log" "local-lvm 325 GB frei"
+check "Speicher aus einer Liste mit freiem Platz, Vorschlag markiert" has "${W}/log/whiptail.log" "local-lvm 325 GB frei – Vorschlag"
+check "Festplatte nach dem Speicher, mit Vorschlag für diesen Speicher" has "${W}/log/whiptail.log" "Vorschlag für local-lvm: 100 GB (dort frei: 325 GB) – höchstens 60 % vom freien Platz"
 check "Bridges aus einer Liste" has "${W}/log/whiptail.log" "vmbr0 Netzwerk-Bridge vmbr1 Netzwerk-Bridge"
 check "Gateway-Vorschlag kommt vom Host" has "${W}/log/argv.log" "ip -4 route show default"
 check "Zusammenfassung danach nochmal mit den neuen Werten" has "${W}/log/whiptail.log" "Netz: vmbr1, feste IP 192.0.2.60/24, Gateway 192.0.2.1"
@@ -858,12 +869,16 @@ check "sagt, dass der RAM angepasst wurde" has "${W}/out.txt" "Angepasst – RAM
 check "sagt, dass die Kerne angepasst wurden" has "${W}/out.txt" "Angepasst – CPU-Kerne: 4 statt 8"
 check "sagt, wie viele Modi gleichzeitig laufen" has "${W}/out.txt" "Mit 14 GB laufen Lobby und etwa 2 Spielmodi gleichzeitig"
 check "warnt vor wenig freiem Speicher" has "${W}/out.txt" "Auf local-lvm sind nur noch 40 GB frei"
+check "Festplatte: nie unter 40 GB vorgeschlagen" create_arg "--rootfs local-lvm:40"
+check "sagt, warum die Festplatte kleiner ist" has "${W}/out.txt" "Angepasst – Festplatte: 40 GB statt 100 GB – auf local-lvm sind 40 GB frei. Vorgeschlagen sind höchstens 60 % davon (mindestens 40 GB)"
 new_world klein-ram-gesetzt
 host_ram_gb 16 12
 run_case plain CTID=161 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY= RAM=32768 DISK=30
 check "gesetzter RAM bleibt (32 GB)" create_arg "--memory 32768"
 check "warnt: mehr RAM als der Rechner hat" has "${W}/out.txt" "Achtung – RAM: Der Container darf 32 GB nutzen, dein Proxmox hat aber nur 16 GB"
-check "warnt: kleine Festplatte" has "${W}/out.txt" "Achtung – Festplatte: Unter 50 GB"
+check "warnt: kleine Festplatte" has "${W}/out.txt" "Achtung – Festplatte: Unter 40 GB"
+check 'gesetzte Festplatte bleibt (30 GB), ohne „Angepasst“' create_arg "--rootfs local-lvm:30"
+check "keine Erklärung zur Festplatte, wenn DISK gesetzt ist" lacks "${W}/out.txt" "Angepasst – Festplatte"
 new_world winzig
 host_ram_gb 8 6
 run_case plain CTID=162 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY=
@@ -881,6 +896,39 @@ check "erkennt Proxmox VE 8" has "${W}/out.txt" "Proxmox VE 8.4.14"
 check "nimmt auf Proxmox 8 Debian 12 (lädt es)" has "${W}/log/argv.log" "pveam download local debian-12-standard_12.12-1_amd64.tar.zst"
 check "feste IP mit Gateway vom Host" create_arg "name=eth0,bridge=vmbr0,ip=192.0.2.70/24,gw=192.0.2.1"
 check "Docker-Repo für bookworm" grep -Fx "Suites: bookworm" "${CT}/etc-apt/sources.list.d/docker.sources"
+show_output_on_failure
+
+# ---------------------------------------------------------------------------------------------------------------
+begin "11. Speicher und Festplatte: der Speicher mit dem meisten Platz, Festplatte höchstens 60 % davon"
+new_world speicher
+# „local“ nimmt hier auch Container auf und steht zuerst in der Liste – hat aber weniger frei als local-lvm.
+echo "local             dir     active        98497780        12345678        86152102   12.53%" >"${W}/state/extra-rootdir"
+echo $((150 * 1024 * 1024)) >"${W}/state/lvm-free-kb"
+run_case plain CTID=180 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY=
+check "läuft durch (Exit 0)" test "${RC}" -eq 0
+check "nimmt local-lvm (mehr Platz), nicht den ersten der Liste" create_arg "--rootfs local-lvm:"
+check "Festplatte 60 % von 150 GB = 90 GB" create_arg "--rootfs local-lvm:90"
+check "sagt, warum es 90 GB sind" has "${W}/out.txt" "Angepasst – Festplatte: 90 GB statt 100 GB – auf local-lvm sind 150 GB frei"
+check "keine Warnung zum Speicher (Vorschlag passt)" lacks "${W}/out.txt" "Achtung – Speicher"
+new_world speicher-gross
+echo "local             dir     active        98497780        12345678        86152102   12.53%" >"${W}/state/extra-rootdir"
+run_case plain CTID=181 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY=
+check "viel Platz (325 GB): höchstens 100 GB" create_arg "--rootfs local-lvm:100"
+check "dann keine Erklärung nötig" lacks "${W}/out.txt" "Angepasst – Festplatte"
+new_world speicher-gesetzt
+echo "local             dir     active        98497780        12345678        86152102   12.53%" >"${W}/state/extra-rootdir"
+echo $((150 * 1024 * 1024)) >"${W}/state/lvm-free-kb"
+run_case plain CTID=182 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY= DISK=120
+check "gesetzte Festplatte bleibt (120 GB)" create_arg "--rootfs local-lvm:120"
+check "warnt: mehr als 60 % vom freien Platz" has "${W}/out.txt" "Auf local-lvm sind nur noch 150 GB frei, der Container darf bis zu 120 GB groß werden – mehr als 60 % davon"
+new_world speicher-local
+echo "local             dir     active        98497780        12345678        86152102   12.53%" >"${W}/state/extra-rootdir"
+run_case plain CTID=183 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY= STORAGE=local
+check "gesetzter Speicher bleibt, Festplatte passend dazu (60 % von 82 GB = 49 GB)" create_arg "--rootfs local:49"
+new_world speicher-gleich
+echo "data-lvm      lvmthin     active       365760512        24576000       341184512    6.72%" >"${W}/state/extra-rootdir"
+run_case plain CTID=184 MM_DISCORD_TOKEN= NETBIRD_SETUP_KEY=
+check "gleich viel Platz: local-lvm vor einem anderen Speicher" create_arg "--rootfs local-lvm:100"
 show_output_on_failure
 
 # ---------------------------------------------------------------------------------------------------------------

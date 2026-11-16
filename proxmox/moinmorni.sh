@@ -22,10 +22,12 @@
 #
 # Geheimnisse (Bot-Token, NetBird-Key) am besten fragen lassen oder per *_FILE aus einer Datei lesen – direkt in der
 # Befehlszeile landen sie in der Shell-History. MM_DISCORD_TOKEN= (leer) heißt: kein Token, nicht fragen.
-# Weitere Werte: CT_HOSTNAME (moinmorni), CORES (8), RAM (32768 MB), SWAP (4096 MB), DISK (100 GB), STORAGE,
-# TEMPLATE_STORAGE (local), BRIDGE (vmbr0), CT_IP (dhcp oder z. B. 192.168.178.50/24), CT_GATEWAY (bei fester IP),
-# DEBIAN_VERSION (Proxmox 9: 13, Proxmox 8: 12), NETBIRD_MANAGEMENT_URL (eigener NetBird-Server), MM_BRANCH (main).
-# Hat dein Proxmox weniger Kerne oder RAM, nimmt das Skript von selbst weniger (außer du setzt CORES bzw. RAM).
+# Weitere Werte: CT_HOSTNAME (moinmorni), CORES (8), RAM (32768 MB), SWAP (4096 MB), DISK (100 GB),
+# STORAGE (der mit dem meisten freien Platz), TEMPLATE_STORAGE (local), BRIDGE (vmbr0), CT_IP (dhcp oder z. B.
+# 192.168.178.50/24), CT_GATEWAY (bei fester IP), DEBIAN_VERSION (Proxmox 9: 13, Proxmox 8: 12),
+# NETBIRD_MANAGEMENT_URL (eigener NetBird-Server), MM_BRANCH (main).
+# Hat dein Proxmox weniger Kerne oder RAM, nimmt das Skript von selbst weniger (außer du setzt CORES bzw. RAM); die
+# Festplatte nimmt höchstens 60 % vom freien Platz des Speichers, mindestens 40 GB (außer du setzt DISK).
 #
 # Anleitung von null an: docs/schnellstart.md
 #
@@ -37,6 +39,8 @@
 set -Eeuo pipefail
 
 APP="MoinMorni"
+# Steht oben auf jedem Fenster: Die Maus geht in der Proxmox-Konsole meist nicht, die Knöpfe erreicht man mit Tab.
+BACKTITLE="${APP}  |  Pfeiltasten: wählen · Tab: zu den Knöpfen · Enter: weiter · Esc: abbrechen"
 REPO_URL="${MM_REPO_URL:-https://github.com/pmornhart/moinmorni.net.git}"
 BRANCH="${MM_BRANCH:-main}"
 INSTALL_DIR="/opt/moinmorni"
@@ -82,8 +86,11 @@ BASE_RAM_MB=6144
 MODE_RAM_MB=3072
 # Darunter laufen nur Lobby und Proxy gut.
 MIN_RAM_MB=8192
-# Darunter wird es mit Welten, Sicherungen und Docker-Images schnell eng.
-MIN_DISK_GB=50
+# Darunter wird es mit Welten, Sicherungen und Docker-Images schnell eng – so klein schlägt das Skript nie vor.
+MIN_DISK_GB=40
+# Vorschlag für die Festplatte: höchstens so viel Prozent vom freien Platz des Speichers (Proxmox, Sicherungen und
+# andere Container brauchen auch Platz), mindestens MIN_DISK_GB, höchstens DEFAULT_DISK_GB.
+DISK_SHARE_PERCENT=60
 SMALLEST_DISK_GB=10
 # Nur für den Test (proxmox/test/run.sh) änderbar:
 PVE_LXC_CONF_DIR="${PVE_LXC_CONF_DIR:-/etc/pve/lxc}"
@@ -154,7 +161,7 @@ cancelled() {
 ask_text() {
   local title="$1" text="$2" value="$3" answer
   if has_whiptail; then
-    whiptail --backtitle "${APP}" --title "${title}" --inputbox "${text}" 16 76 "${value}" 3>&1 1>&2 2>&3
+    whiptail --backtitle "${BACKTITLE}" --title "${title}" --inputbox "${text}" 16 76 "${value}" 3>&1 1>&2 2>&3
   else
     printf '%b\n' "${text}" >&2
     read -r -p " [${value}]: " answer || return 1
@@ -166,7 +173,7 @@ ask_text() {
 ask_secret() {
   local title="$1" text="$2" answer
   if has_whiptail; then
-    whiptail --backtitle "${APP}" --title "${title}" --passwordbox "${text}" 16 76 3>&1 1>&2 2>&3
+    whiptail --backtitle "${BACKTITLE}" --title "${title}" --passwordbox "${text}" 16 76 3>&1 1>&2 2>&3
   else
     printf '%b\n' "${text}" >&2
     read -r -s -p " > " answer || return 1
@@ -181,7 +188,7 @@ ask_yesno() {
   if has_whiptail; then
     local extra=()
     if [[ "${default}" == no ]]; then extra=(--defaultno); fi
-    whiptail --backtitle "${APP}" --title "${title}" "${extra[@]}" --yesno "${text}" 22 76
+    whiptail --backtitle "${BACKTITLE}" --title "${title}" "${extra[@]}" --yesno "${text}" 22 76
   else
     printf '%b\n' "${text}" >&2
     if [[ "${default}" == no ]]; then
@@ -203,7 +210,7 @@ ask_menu() {
   local title="$1" text="$2" current="$3" answer i
   shift 3
   if has_whiptail; then
-    whiptail --backtitle "${APP}" --title "${title}" --default-item "${current}" --menu "${text}" 20 76 8 "$@" \
+    whiptail --backtitle "${BACKTITLE}" --title "${title}" --default-item "${current}" --menu "${text}" 20 76 8 "$@" \
       3>&1 1>&2 2>&3
     return
   fi
@@ -226,7 +233,7 @@ ask_menu() {
 ask_summary() {
   local text="$1" answer
   if has_whiptail; then
-    whiptail --backtitle "${APP}" --title "So wird der Container angelegt" --scrolltext \
+    whiptail --backtitle "${BACKTITLE}" --title "So wird der Container angelegt" --scrolltext \
       --yes-button "Anlegen" --no-button "Erweitert" --yesno "${text}" 24 78
     return
   fi
@@ -387,8 +394,25 @@ storages() {
   pvesm status -content rootdir 2>/dev/null |
     awk -v kb="${KB_PER_GB}" 'NR > 1 && $3 == "active" { printf "%s %d\n", $1, $6 / kb }'
 }
-default_storage() { storages | awk 'NR == 1 { print $1 }'; }
+# Vorschlag: der Speicher mit dem meisten freien Platz, bei Gleichstand local-lvm (der übliche für Container) – nicht
+# einfach der erste der Liste (oft ein kleiner Ordner-Speicher wie „local“).
+default_storage() {
+  storages | awk 'NR == 1 || $2 > best || ($2 == best && $1 == "local-lvm") { best = $2; name = $1 } END { print name }'
+}
 storage_free_gb() { storages | awk -v s="$1" '$1 == s { print $2; exit }'; }
+# Vorschlag für die Festplatte auf einem Speicher (siehe DISK_SHARE_PERCENT); ohne Angaben zum Speicher der Standard.
+suggested_disk() {
+  local free share
+  free="$(storage_free_gb "$1")"
+  if [[ -z "${free}" ]]; then
+    printf '%s' "${DEFAULT_DISK_GB}"
+    return
+  fi
+  share=$((free * DISK_SHARE_PERCENT / 100))
+  if ((share > DEFAULT_DISK_GB)); then share="${DEFAULT_DISK_GB}"; fi
+  if ((share < MIN_DISK_GB)); then share="${MIN_DISK_GB}"; fi
+  printf '%s' "${share}"
+}
 # Netzwerk-Bridges des Hosts (vmbr0 …).
 bridges() {
   local dir
@@ -471,8 +495,15 @@ if [[ -z "${RAM:-}" ]]; then
   fi
 fi
 SWAP="${SWAP:-${DEFAULT_SWAP_MB}}"
-DISK="${DISK:-${DEFAULT_DISK_GB}}"
 STORAGE="${STORAGE:-$(default_storage)}"
+# Festplatte: passend zum freien Platz auf dem Speicher, außer DISK ist gesetzt (oder unter „Erweitert“ gewählt).
+DISK_AUTO=""
+if [[ -z "${DISK:-}" ]]; then
+  DISK="$(suggested_disk "${STORAGE}")"
+  DISK_AUTO="yes"
+else
+  DISK=$((10#${DISK}))
+fi
 TEMPLATE_STORAGE="${TEMPLATE_STORAGE:-local}"
 BRIDGE="${BRIDGE:-vmbr0}"
 CT_IP="${CT_IP:-dhcp}"
@@ -545,7 +576,7 @@ fi
 
 # Erweiterte Einstellungen: alles, was „Anlegen“ sonst von selbst nimmt.
 advanced_settings() {
-  local value name free storage_items=() bridge_items=()
+  local value name free label suggestion storage_items=() bridge_items=()
   ask_checked CT_HOSTNAME hostname_problem lower "Name" "Name des Containers – in Proxmox und in NetBird (Standard: moinmorni):"
   value="${CORES}"
   ask_checked value cores_problem text "CPU-Kerne" "Wie viele Prozessorkerne darf MoinMorni nutzen? Dein Proxmox hat ${HOST_CPUS}.\n\nMinecraft mag schnelle Kerne mehr als viele. Empfohlen: ${DEFAULT_CORES}."
@@ -556,14 +587,23 @@ advanced_settings() {
   value=$((SWAP / MB_PER_GB))
   ask_checked value swap_problem text "Swap" "Auslagerung in GB – eine Notreserve, wenn der RAM knapp wird. Empfohlen: 4."
   SWAP=$((10#${value} * MB_PER_GB))
-  value="${DISK}"
-  ask_checked value disk_problem text "Festplatte" "Größe in GB für Welten, Sicherungen und Docker-Images. Empfohlen: ${DEFAULT_DISK_GB}.\n\nVergrößern geht später jederzeit, verkleinern nicht."
-  DISK=$((10#${value}))
-  while read -r name free; do storage_items+=("${name}" "${free} GB frei"); done < <(storages)
+  suggestion="$(default_storage)"
+  while read -r name free; do
+    label="${free} GB frei"
+    if [[ "${name}" == "${suggestion}" ]]; then label="${label} – Vorschlag"; fi
+    storage_items+=("${name}" "${label}")
+  done < <(storages | sort -k2,2nr)
   if ((${#storage_items[@]})); then
-    STORAGE="$(ask_menu "Speicher" "Auf welchem Proxmox-Speicher soll der Container liegen?" "${STORAGE}" "${storage_items[@]}")" ||
+    STORAGE="$(ask_menu "Speicher" "Auf welchem Proxmox-Speicher soll der Container liegen? Vorschlag: der mit dem meisten freien Platz." "${STORAGE}" "${storage_items[@]}")" ||
       cancelled
   fi
+  suggestion="$(suggested_disk "${STORAGE}")"
+  free="$(storage_free_gb "${STORAGE}")"
+  value="${DISK}"
+  if [[ -n "${DISK_AUTO}" ]]; then value="${suggestion}"; fi
+  ask_checked value disk_problem text "Festplatte" "Größe in GB für Welten, Sicherungen und Docker-Images. Vorschlag für ${STORAGE}: ${suggestion} GB${free:+ (dort frei: ${free} GB)} – höchstens ${DISK_SHARE_PERCENT} % vom freien Platz, damit Proxmox, Sicherungen und andere Container Luft haben; mindestens ${MIN_DISK_GB}, höchstens ${DEFAULT_DISK_GB}.\n\nVergrößern geht später jederzeit, verkleinern nicht."
+  DISK=$((10#${value}))
+  DISK_AUTO=""
   while read -r name; do bridge_items+=("${name}" "Netzwerk-Bridge"); done < <(bridges)
   if ((${#bridge_items[@]})); then
     BRIDGE="$(ask_menu "Netzwerk" "Über welche Netzwerk-Bridge geht der Container ins Heimnetz? (Fast immer: vmbr0)" "${BRIDGE}" "${bridge_items[@]}")" ||
@@ -624,13 +664,17 @@ resource_notes() {
   if ((HOST_CPUS > 0 && CORES > HOST_CPUS)); then
     printf 'Achtung – Kerne: Dein Proxmox hat nur %s Kerne.\n' "${HOST_CPUS}"
   fi
+  free="$(storage_free_gb "${STORAGE}")"
+  if [[ -n "${DISK_AUTO}" && -n "${free}" ]] && ((DISK != DEFAULT_DISK_GB)); then
+    printf 'Angepasst – Festplatte: %s GB statt %s GB – auf %s sind %s GB frei. Vorgeschlagen sind höchstens %s %% davon (mindestens %s GB), damit Proxmox, Sicherungen und andere Container Luft haben. Vergrößern geht später jederzeit.\n' \
+      "${DISK}" "${DEFAULT_DISK_GB}" "${STORAGE}" "${free}" "${DISK_SHARE_PERCENT}" "${MIN_DISK_GB}"
+  fi
   if ((DISK < MIN_DISK_GB)); then
     printf 'Achtung – Festplatte: Unter %s GB wird es mit Welten, Sicherungen und Docker-Images schnell eng.\n' "${MIN_DISK_GB}"
   fi
-  free="$(storage_free_gb "${STORAGE}")"
-  if [[ -n "${free}" ]] && ((free < DISK)); then
-    printf 'Achtung – Speicher: Auf %s sind nur noch %s GB frei, der Container darf bis zu %s GB groß werden. Läuft der Speicher voll, bleiben alle Container stehen – nimm weniger Festplatte oder räum auf.\n' \
-      "${STORAGE}" "${free}" "${DISK}"
+  if [[ -n "${free}" ]] && ((DISK * 100 > free * DISK_SHARE_PERCENT)); then
+    printf 'Achtung – Speicher: Auf %s sind nur noch %s GB frei, der Container darf bis zu %s GB groß werden – mehr als %s %% davon. Läuft der Speicher voll, bleiben alle Container stehen – nimm weniger Festplatte, einen anderen Speicher oder räum auf.\n' \
+      "${STORAGE}" "${free}" "${DISK}" "${DISK_SHARE_PERCENT}"
   fi
 }
 
@@ -639,7 +683,7 @@ summary_text() {
   notes="$(resource_notes)"
   summary
   if [[ -n "${notes}" ]]; then printf '\n%s\n' "${notes}"; fi
-  printf '\n%s' "„Anlegen“ nimmt diese Werte. „Erweitert“: Name, Kerne, RAM, Swap, Festplatte, Speicher, Netz, feste IP und Debian-Version selbst festlegen."
+  printf '\n%s' "„Anlegen“ nimmt diese Werte. „Erweitert“ (mit Tab hinüber, dann Enter): Name, Kerne, RAM, Swap, Speicher, Festplatte, Netz, feste IP und Debian-Version selbst festlegen."
 }
 
 if [[ -n "${ASKED}" ]]; then
