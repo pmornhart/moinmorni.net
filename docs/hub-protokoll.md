@@ -1,8 +1,8 @@
-# Hub-Protokoll (MoinMorni ↔ Netzwerk-Plugin)
+# Hub-Protokoll (morni.net ↔ Netzwerk-Plugin)
 
-Der **Hub** steckt im MoinMorni-Container (Port 8090, nur im Minecraft-Netz `moinmorni-mc`, nie nach außen). Das
+Der **Hub** steckt im Container `morninet` (Port 8090, nur im Minecraft-Netz `morninet-mc`, nie nach außen). Das
 **Netzwerk-Plugin** läuft auf dem Proxy (Velocity) und auf jedem Spielserver (Paper) und verbindet sich per
-WebSocket mit `ws://moinmorni:8090/hub`.
+WebSocket mit `ws://morninet:8090/hub`.
 
 Das Plugin ist bewusst dünn: Es meldet, was passiert (Spieler kommt, wechselt, schreibt), und führt aus, was der Hub
 sagt (Nachricht zeigen, rauswerfen, verbinden). Alle Regeln, Texte und Befehle leben im Hub – so lässt sich alles im
@@ -12,11 +12,13 @@ Panel einstellen, und Velocity und Paper verhalten sich gleich.
 
 - Jeder Server hat einen eigenen Schlüssel:
   `serverKey = hex(HMAC-SHA256(hubSecret, "server|" + kind + "|" + server))`, mit
-  `hubSecret = HMAC-SHA256(MM_SECRET, "moinmorni-hub")`.
-- MoinMorni schreibt ihn über den Motor in `plugins/moinmorni/hub.json` des Servers:
-  `{ "url": "ws://moinmorni:8090/hub", "server": "lobby", "kind": "backend", "key": "<hex>" }`.
+  `hubSecret = HMAC-SHA256(MM_SECRET, "morninet-hub")`.
+- morni.net schreibt ihn über den Motor in `plugins/morninet/hub.json` des Servers:
+  `{ "url": "ws://morninet:8090/hub", "server": "lobby", "kind": "backend", "key": "<hex>" }`.
 - Ein Server kann sich nicht als ein anderer ausgeben (anderer Name → anderer Schlüssel) und ein Spielserver nicht als
   Proxy (andere Art → anderer Schlüssel).
+- Seit der Umbenennung in morni.net (16.11.2026) gibt es neue Schlüssel: morni.net schreibt beim nächsten Start jedem
+  Server seine neue hub.json, der Server übernimmt sie bei seinem nächsten Neustart (sobald niemand drauf ist).
 - Der Hub nimmt Spieler-, Anmelde- und Befehls-Nachrichten (`online`, `login`, `connecting`, `switch`, `leave`,
   `locale`, `command`, `complete`) nur vom Proxy an. Spielserver dürfen nur für Spieler sprechen, die gerade bei ihnen
   sind (`chat`, `play`, `voice-group`, Ton); alles andere wird verworfen.
@@ -72,7 +74,7 @@ des Spielers.
 | `complete` (Anfrage)   | Proxy       | `uuid, command, args[]` → `{suggestions[]}`                                                                                                                                                                                                    |
 | `chat`                 | Spielserver | `uuid, text, tag?{text, colour}` – `tag`: Kürzel nach dem Rang (Clan in MorniCraft; 1–6 Buchstaben/Ziffern, `#rrggbb`)                                                                                                                         |
 | `mode-player`          | Spielserver | `mode, uuid, data{…}` – Zusammenfassung eines Spielers fürs Panel (nur vom Server des Modus; geprüft je Modus, bisher MorniCraft: `online, afk, homes[], clan, graves[]`), gespeichert in `mode_players`                                       |
-| `mode-settings-state`  | Spielserver | `mode, restart, changed` – Antwort auf `mode-settings`: muss der Modus für die neuen Werte neu starten (verglichen mit dem, was er beim Start gelesen hat)? Nur vom Server des Modus; MoinMorni startet ihn dann neu, sobald niemand drauf ist |
+| `mode-settings-state`  | Spielserver | `mode, restart, changed` – Antwort auf `mode-settings`: muss der Modus für die neuen Werte neu starten (verglichen mit dem, was er beim Start gelesen hat)? Nur vom Server des Modus; morni.net startet ihn dann neu, sobald niemand drauf ist |
 | `voice-group`          | Spielserver | `uuid, group` (UUID oder null) – Gruppe im Sprachchat gewechselt                                                                                                                                                                               |
 | `play`                 | Spielserver | `uuid, mode` – Figur in der Lobby angeklickt: Modus beitreten (geschlossen/bald/Wartung → Hinweis, schläft → wecken)                                                                                                                           |
 | _(binär)_ Audio        | Spielserver | Sprache aus einem Netzwerk-Kanal oder einer Party                                                                                                                                                                                              |
@@ -92,7 +94,7 @@ des Spielers.
 | `lobby`               | Spielserver            | `modes[{id, name{de,en}, state, access, max, players, hasServer, awake, icon}]` – für die Schilder der Lobby-Figuren; höchstens einmal pro Sekunde                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `jail`                | nur Lobby              | `cell{spawn, min, max}`, `players[{uuid, until, reason}]` – wer im Gefängnis sitzt; beim Verbinden und bei jeder Änderung                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `mornicraft-settings` | nur MorniCraft         | `config{…}` – Einstellungen aus Panel → MorniCraft (Schlüssel der config.yml von MorniCraft, dazu `network{rules-de, rules-en, address, panel-players, panel-punishments}`); beim Verbinden und bei jeder Änderung von MorniCraft, Webseite (Regeln) oder Netzwerk. Das Plugin schreibt sie nach `plugins/MorniCraft/network.json` und ruft `mornicraft reload`                                                                                                                                                                                            |
-| `mode-settings`       | nur Server eines Modus | `mode, plugin, values{pfad: wert}` – Einstellungen aus Panel → Einstellungen → Spielmodi (Katalog `packages/shared/src/mode-settings.ts`); beim Verbinden und bei jeder Änderung. Pfade nur `a-z 0-9 . _ -`, Zahl als Teil = Stelle in einer Liste. Das Plugin merkt sie in `plugins/moinmorni/mode-settings.json`, trägt sie in `plugins/<plugin>/config.yml` ein (Kommentare bleiben, nur bei Änderung) und beim nächsten Start schon vor dem Modus (`onLoad`). Schläft der Modus, schreibt MoinMorni die Datei über den Motor                           |
+| `mode-settings`       | nur Server eines Modus | `mode, plugin, values{pfad: wert}` – Einstellungen aus Panel → Einstellungen → Spielmodi (Katalog `packages/shared/src/mode-settings.ts`); beim Verbinden und bei jeder Änderung. Pfade nur `a-z 0-9 . _ -`, Zahl als Teil = Stelle in einer Liste. Das Plugin merkt sie in `plugins/morninet/mode-settings.json`, trägt sie in `plugins/<plugin>/config.yml` ein (Kommentare bleiben, nur bei Änderung) und beim nächsten Start schon vor dem Modus (`onLoad`). Schläft der Modus, schreibt morni.net die Datei über den Motor                            |
 | `voice`               | Spielserver            | `channels[{id, name}], muted[], parties[{id, name, members[]}], own[{id, name, locked}], ownGroups, distance` – Kanäle mit gleicher ID auf jedem Server; eigene Gruppen (`/voice gruppe`) – das Passwort kennt nur der Hub, abgeschlossene Gruppen bekommen auf dem Server ein zufälliges (beitreten über `/voice <name> <passwort>`); Ton geht nur an Server, auf denen gerade jemand aus der Gruppe ist; `ownGroups` aus = auch das Sprachchat-Menü legt keine Gruppen an; `distance` trägt das Plugin als `max_voice_distance` ein (gilt nach Neustart) |
 | `voice-join`          | Spielserver            | `uuid, group, force?` – Spieler in eine Gruppe setzen (Team ohne Passwort)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | _(binär)_ Audio       | Spielserver            | Sprache von anderen Servern zum Abspielen                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |

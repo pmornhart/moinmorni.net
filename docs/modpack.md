@@ -1,9 +1,9 @@
 # Modpack
 
-Das MoinMorni-Modpack macht Minecraft (Java **26.3**, Mod-Lader **Fabric**) schöner und flüssiger, bringt Zoom und
+Das morni.net-Modpack macht Minecraft (Java **26.3**, Mod-Lader **Fabric**) schöner und flüssiger, bringt Zoom und
 den Sprachchat des Netzwerks mit und – für das Bauteam – Bau-Werkzeuge. Es erscheint auf **Modrinth** im
-Modrinth-Format (`.mrpack`). Der Eintrag **MoinMorni → moinmorni.net** steht nach der Installation schon in der
-Serverliste.
+Modrinth-Format (`.mrpack`). Der Eintrag **morni.net** (Adresse `morni.net`) steht nach der Installation schon in
+der Serverliste.
 
 Das Pack enthält **keine Mod-Dateien**, sondern nur eine Liste mit Download-Adressen bei Modrinth und Prüfsummen
 (damit niemand unterwegs eine Datei austauschen kann). Jede Mod behält ihre eigene Lizenz.
@@ -35,7 +35,7 @@ Tastenbelegung → Zoomify.
 
 ```bash
 pnpm install
-pnpm --filter @moinmorni/modpack build
+pnpm --filter @morninet/modpack build
 ```
 
 Das Skript fragt Modrinth nach der neuesten Version jeder Mod aus `tools/modpack/src/mods.ts`, die es für Fabric und
@@ -46,7 +46,7 @@ die neueste stabile Version von <https://meta.fabricmc.net>. Ein Schlüssel ist 
 
 Ergebnis in `tools/modpack/dist/` (nicht im Repo):
 
-- `MoinMorni-26.3-<Jahr>.<Monat>.<Tag>.mrpack` – das Pack
+- `morni.net-26.3-<Jahr>.<Monat>.<Tag>.mrpack` – das Pack
 - `mods.md` – Übersicht mit Version, Lizenz und Zweck jeder Mod, dazu Hinweise (z. B. übersprungene Abhängigkeiten)
 - `release.json` – Angaben fürs Hochladen
 
@@ -54,14 +54,14 @@ Zweiter Bau am selben Tag: eigene Versionsnummer angeben, z. B. `… build --ver
 
 **Mod dazunehmen oder entfernen:** Eintrag in `tools/modpack/src/mods.ts` (Name aus der Modrinth-Adresse, Zweck in
 einfachen Worten, Pflicht oder optional, nur im Spiel oder auch auf Servern), dann neu bauen. Tests:
-`pnpm --filter @moinmorni/modpack test`.
+`pnpm --filter @morninet/modpack test`.
 
 ## Auf Modrinth veröffentlichen (Philip)
 
 Einmal vorbereiten:
 
-1. Auf <https://modrinth.com> anmelden → **Create a project** → Typ **Modpack**, Name „MoinMorni“, Adresse
-   (Slug) `moinmorni`. Beschreibung, Bild und Links (Webseite, Discord) eintragen.
+1. Auf <https://modrinth.com> anmelden → **Create a project** → Typ **Modpack**, Name „morni.net“, Adresse
+   (Slug) `morninet`. Beschreibung, Bild und Links (Webseite, Discord) eintragen.
 2. Einstellungen → **Personal access tokens** → neuen Schlüssel anlegen mit den Rechten **Read projects**,
    **Read versions** und **Create versions**. Den Schlüssel nur im Terminal benutzen – nie in eine Datei im Repo
    oder in einen Chat.
@@ -69,9 +69,9 @@ Einmal vorbereiten:
 Jede neue Version:
 
 ```bash
-pnpm --filter @moinmorni/modpack build
-pnpm --filter @moinmorni/modpack publish:modrinth --trocken   # zeigt nur, was hochgeladen würde
-MODRINTH_TOKEN=mrp_… pnpm --filter @moinmorni/modpack publish:modrinth
+pnpm --filter @morninet/modpack build
+pnpm --filter @morninet/modpack publish:modrinth --trocken   # zeigt nur, was hochgeladen würde
+MODRINTH_TOKEN=mrp_… pnpm --filter @morninet/modpack publish:modrinth
 ```
 
 - Ohne `MODRINTH_TOKEN` lädt das Skript nichts hoch und erklärt, was fehlt.
@@ -82,20 +82,20 @@ MODRINTH_TOKEN=mrp_… pnpm --filter @moinmorni/modpack publish:modrinth
 
 ## Installieren (Spieler)
 
-**Modrinth App** (<https://modrinth.com/app>): oben suchen nach „MoinMorni“ → **Installieren** → **Spielen**.
+**Modrinth App** (<https://modrinth.com/app>): oben suchen nach „morni.net“ → **Installieren** → **Spielen**.
 
-**Prism Launcher** (<https://prismlauncher.org>): **Instanz hinzufügen** → links **Modrinth** → „MoinMorni“ suchen →
+**Prism Launcher** (<https://prismlauncher.org>): **Instanz hinzufügen** → links **Modrinth** → „morni.net“ suchen →
 **OK**. Alternativ eine heruntergeladene `.mrpack`-Datei über **Importieren** öffnen.
 
 Optionale Mods (Shader, Bau-Werkzeuge, Tier-Modelle) werden je nach Launcher mit installiert oder abgefragt; in der
 Mod-Liste des Profils lassen sie sich jederzeit an- und ausschalten.
 
-Danach im Spiel: **Mehrspieler** → **MoinMorni** → **Beitreten**.
+Danach im Spiel: **Mehrspieler** → **morni.net** → **Beitreten**.
 
 - **Shader:** Optionen → Videoeinstellungen → **Shader-Pakete**. Shader-Pakete selbst sind nicht im Pack (eigene
   Lizenzen) – auf Modrinth gibt es viele unter „Shaders“. Sie brauchen einen kräftigen Rechner.
 - **Sprachchat:** Beim Betreten verbindet sich Simple Voice Chat von selbst. Taste **V** öffnet die Einstellungen
   (Mikrofon testen), **G** die Gruppen.
-- **Serverliste:** Der Eintrag „MoinMorni“ kommt aus dem Pack. Manche Launcher legen die Liste bei einem Update des
+- **Serverliste:** Der Eintrag „morni.net“ kommt aus dem Pack. Manche Launcher legen die Liste bei einem Update des
   Packs neu an; eigene Einträge können dann fehlen.
-- Bedrock (Handy, Konsole) braucht kein Modpack – dort geht es ohne Mods auf moinmorni.net.
+- Bedrock (Handy, Konsole) braucht kein Modpack – dort geht es ohne Mods auf morni.net.

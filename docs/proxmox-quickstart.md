@@ -1,6 +1,6 @@
-# MoinMorni installieren
+# morni.net installieren
 
-So kommt MoinMorni auf deinen Rechner – am einfachsten mit **einer Zeile auf deinem Proxmox**. Das Skript legt einen
+So kommt morni.net auf deinen Rechner – am einfachsten mit **einer Zeile auf deinem Proxmox**. Das Skript legt einen
 eigenen Container an, installiert darin alles und zeigt dir am Ende den Code für dein Owner-Konto.
 
 ## Was du brauchst
@@ -8,7 +8,7 @@ eigenen Container an, installiert darin alles und zeigt dir am Ende den Code fü
 - **Proxmox VE** (8 oder 9) mit Internet.
 - Platz für den Container – Standard: **32 GB RAM, 8 Kerne, 100 GB Festplatte** (leere Spielmodi schlafen und
   brauchen dann kaum etwas). Weniger geht auch, siehe unten.
-- Deine **Domain** (z. B. `moinmorni.net`) – DNS bei INWX, Verkehr über NetBird.
+- Deine **Domain** (z. B. `morni.net`) – DNS bei INWX, Verkehr über NetBird.
 - Optional: den **Token deines Discord-Bots** (geht auch später im Panel).
 - Optional: einen **NetBird-Setup-Key** (NetBird-Dashboard → _Setup Keys → Create Setup Key_), dann ist der
   Container gleich in deinem NetBird-Netz.
@@ -18,7 +18,7 @@ eigenen Container an, installiert darin alles und zeigt dir am Ende den Code fü
 Öffne in Proxmox den Host (z. B. `pve`) → **Shell** und füge diese Zeile ein:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/moinmorni.net/main/proxmox/moinmorni.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/morni.net/main/proxmox/morninet.sh)"
 ```
 
 Das Skript fragt nur vier Dinge:
@@ -26,7 +26,7 @@ Das Skript fragt nur vier Dinge:
 | Frage                  | Vorschlag              | Hinweis                                                            |
 | ---------------------- | ---------------------- | ------------------------------------------------------------------ |
 | Container-ID           | die nächste freie Zahl | jede Nummer gibt es in Proxmox nur einmal (Container und VMs)      |
-| Domain                 | `moinmorni.net`        | ohne `https://` und ohne `/`                                       |
+| Domain                 | `morni.net`            | ohne `https://` und ohne `/`                                       |
 | Token des Discord-Bots | leer                   | Eingabe bleibt unsichtbar; leer lassen = später im Panel eintragen |
 | NetBird einrichten?    | Nein                   | bei Ja: Setup-Key einfügen (bleibt auch unsichtbar)                |
 
@@ -43,14 +43,14 @@ Speicher und Netzwerk ändern. Vertippt? Das Skript sagt, was nicht passt, und f
    - er **startet mit dem Host** und nimmt die Zeitzone des Hosts;
    - **ohne Root-Passwort** – hinein kommst du nur über den Host mit `pct enter <ID>`.
 3. Auf dem Host werden die nötigen **Kernel-Module** geladen und dauerhaft eingetragen
-   (`/etc/modules-load.d/moinmorni.conf`: `tun` für NetBird, `overlay` für Docker, Firewall-Module für den
+   (`/etc/modules-load.d/morninet.conf`: `tun` für NetBird, `overlay` für Docker, Firewall-Module für den
    DDoS-Schutz). Ein Container teilt den Kernel des Hosts und kann sie nicht selbst laden.
-4. Im Container: **Docker** aus dem offiziellen Paket-Repo von Docker, dazu `git` und `curl`. MoinMorni landet
-   in `/opt/moinmorni`, zusammen mit dem **Motor** (MorniHosting, legt die Minecraft-Server an).
-5. `install.sh` läuft **ohne Rückfragen**: Die Einstellungen kommen in `/opt/moinmorni/.env` – mit zufälligen
-   Geheimnissen, **nur für root lesbar** –, dann starten Motor und MoinMorni. Das dauert beim ersten Mal ein paar
+4. Im Container: **Docker** aus dem offiziellen Paket-Repo von Docker, dazu `git` und `curl`. morni.net landet
+   in `/opt/morninet`, zusammen mit dem **Motor** (MorniHosting, legt die Minecraft-Server an).
+5. `install.sh` läuft **ohne Rückfragen**: Die Einstellungen kommen in `/opt/morninet/.env` – mit zufälligen
+   Geheimnissen, **nur für root lesbar** –, dann starten Motor und morni.net. Das dauert beim ersten Mal ein paar
    Minuten.
-6. Mit Setup-Key wird **NetBird** im Container installiert und verbunden. In NetBird heißt der Rechner `moinmorni`.
+6. Mit Setup-Key wird **NetBird** im Container installiert und verbunden. In NetBird heißt der Rechner `morninet`.
 7. Am Ende stehen die **Adressen** und dein **Einrichtungs-Code** da.
 
 **Dein Bot-Token** (und der NetBird-Key) wird nie angezeigt und steht nie in einer Befehlszeile, in der
@@ -67,13 +67,13 @@ Alle Antworten lassen sich vorher setzen – dann fragt das Skript gar nichts:
 | Variable                 | Standard                      | Bedeutung                                                |
 | ------------------------ | ----------------------------- | -------------------------------------------------------- |
 | `CTID`                   | nächste freie Nummer          | Container-ID                                             |
-| `MM_DOMAIN`              | `moinmorni.net`               | Domain                                                   |
+| `MM_DOMAIN`              | `morni.net`                   | Domain                                                   |
 | `MM_DISCORD_TOKEN_FILE`  | –                             | Datei, in der der Bot-Token steht                        |
 | `MM_DISCORD_TOKEN`       | –                             | `MM_DISCORD_TOKEN=` (leer) = kein Token, nicht fragen    |
 | `NETBIRD_SETUP_KEY_FILE` | –                             | Datei, in der der NetBird-Setup-Key steht                |
 | `NETBIRD_SETUP_KEY`      | –                             | `NETBIRD_SETUP_KEY=` (leer) = kein NetBird, nicht fragen |
-| `MM_BRANCH`              | `main`                        | welcher Stand von MoinMorni geladen wird                 |
-| `CT_HOSTNAME`            | `moinmorni`                   | Name des Containers (auch in NetBird)                    |
+| `MM_BRANCH`              | `main`                        | welcher Stand von morni.net geladen wird                 |
+| `CT_HOSTNAME`            | `morninet`                    | Name des Containers (auch in NetBird)                    |
 | `CORES`                  | `8`                           | CPU-Kerne                                                |
 | `RAM` / `SWAP`           | `32768` / `4096`              | Arbeitsspeicher und Auslagerung in MB                    |
 | `DISK`                   | `100`                         | Festplatte in GB                                         |
@@ -90,8 +90,8 @@ nano /root/bot-token && chmod 600 /root/bot-token
 ```
 
 ```bash
-CTID=120 MM_DOMAIN=moinmorni.net MM_DISCORD_TOKEN_FILE=/root/bot-token NETBIRD_SETUP_KEY= \
-  bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/moinmorni.net/main/proxmox/moinmorni.sh)"
+CTID=120 MM_DOMAIN=morni.net MM_DISCORD_TOKEN_FILE=/root/bot-token NETBIRD_SETUP_KEY= \
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/morni.net/main/proxmox/morninet.sh)"
 ```
 
 ```bash
@@ -105,7 +105,7 @@ gib den Einrichtungs-Code ein und leg dein Konto an – es wird automatisch **Ow
 nochmal anzeigen lassen (in der Shell des Hosts):
 
 ```bash
-pct exec <ID> -- docker exec moinmorni cat /data/setup-code
+pct exec <ID> -- docker exec morninet cat /data/setup-code
 ```
 
 Nach der Einrichtung gilt der Code nicht mehr, und niemand kann sich selbst registrieren – Team-Konten legst du im
@@ -115,7 +115,7 @@ Panel an.
 
 Lege in NetBird einen **HTTP-Dienst** für deine Domain an, Ziel der Container auf Port **8080**, mit
 **„Pass Host Header“** (sonst gehen Passkeys nicht). Hast du beim Einzeiler einen Setup-Key angegeben, ist der
-Container schon in NetBird und heißt dort `moinmorni`. Die Minecraft-Adressen richtet MoinMorni später selbst ein.
+Container schon in NetBird und heißt dort `morninet`. Die Minecraft-Adressen richtet morni.net später selbst ein.
 
 NetBird später nachholen: `pct enter <ID>`, dann
 `curl -fsSL https://pkgs.netbird.io/install.sh -o /tmp/netbird.sh && sh /tmp/netbird.sh` und `netbird up`
@@ -124,7 +124,7 @@ NetBird später nachholen: `pct enter <ID>`, dann
 ## Was von außen erreichbar ist
 
 Im Container ist nur die Webseite offen (Port 8080, HTTPS macht NetBird). Den Proxy für die Minecraft-Spieler legt
-MoinMorni selbst an. Der Motor, der Zugang zu Docker (nur über einen Socket-Proxy) und der Hub für die Plugins
+morni.net selbst an. Der Motor, der Zugang zu Docker (nur über einen Socket-Proxy) und der Hub für die Plugins
 bleiben im Container.
 
 ## Ohne Proxmox-Einzeiler
@@ -132,7 +132,7 @@ bleiben im Container.
 In einer VM oder einem selbst angelegten Container mit **Debian 12/13 oder Ubuntu 24.04** (als root):
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/moinmorni.net/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/pmornhart/morni.net/main/install.sh)"
 ```
 
 Beim selbst angelegten Container unter _Optionen → Features_ **„Nesting“ und „keyctl“** anhaken – sonst läuft
@@ -160,16 +160,33 @@ pct enter <ID>
 Im Container:
 
 ```bash
-cd /opt/moinmorni && docker compose ps
+cd /opt/morninet && docker compose ps
 ```
 
 ```bash
-cd /opt/moinmorni && docker compose logs -f moinmorni
+cd /opt/morninet && docker compose logs -f morninet
 ```
 
 ```bash
-docker exec moinmorni-motor node /app/server/dist/cli.js list-users
+docker exec morninet-motor node /app/server/dist/cli.js list-users
 ```
+
+## Umbenennung in morni.net (16.11.2026)
+
+Eine Installation, die noch unter dem früheren Namen läuft, zieht bei ihrem nächsten Update von selbst um (Knopf im
+Panel oder automatisch): Docker-Volumes (auf derselben Platte nur umbenannt – Welten und Datenbanken bleiben, wie sie
+sind), Container, systemd-Einheiten, der Ordner `/opt/morninet` und die Sicherungen unter `/var/backups/morninet`.
+Minecraft-Server laufen dabei weiter und kommen bei ihrem nächsten Neustart ins neue Netz. Klappt etwas nicht, liegt
+alles wieder am alten Platz und die alte Fassung läuft weiter.
+
+Was nicht im Container liegt, bleibt, wie es ist, und darf so bleiben:
+
+- der Name des Containers in Proxmox und in NetBird – umbenennen geht mit `pct set <ID> --hostname morninet`
+  (danach NetBird im Container neu verbinden),
+- die Datei mit den Kernel-Modulen unter `/etc/modules-load.d/` auf dem Host,
+- die Domain in `/opt/morninet/.env` (`MM_DOMAIN`): erst auf `morni.net` stellen, wenn DNS und NetBird für die neue
+  Domain stehen, dann `cd /opt/morninet && docker compose up -d`. Passkeys gehören zur Domain – nach dem Wechsel
+  meldet sich das Team einmal mit Passwort (und 2FA) an und legt seine Passkeys neu an.
 
 ## Fragen
 

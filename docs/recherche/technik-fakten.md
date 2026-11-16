@@ -27,7 +27,7 @@
 ## NetBird Reverse Proxy (Beta, v0.83.1)
 - HTTP (mit TLS), TCP, UDP, TLS; eigene Ports beim selbst betriebenen Proxy; TCP und UDP dürfen denselben Port teilen. UDP-Leerlauf 30 s (einstellbar). PROXY-Protokoll v2 möglich (Velocity `haproxy-protocol`). **V**
 - Weiterleitung **nach Port**, nicht nach Hostname (außer TLS/SNI) → ein TCP-Dienst 25565 → Velocity; Bedrock 19132 (TCP-Signaling + UDP) → Geyser; Voice UDP. **V**
-- Eigene Domain: `*.moinmorni.net` CNAME → Proxy, Prüfung über `validation.<domain>`. Hauptdomain als Dienst laut Forum möglich (**U**); DNS an der Hauptdomain: **A-Eintrag** auf die öffentliche IP des Proxys (INWX kann auch ALIAS, dann ohne DNSSEC). **V**
+- Eigene Domain: `*.morni.net` CNAME → Proxy, Prüfung über `validation.<domain>`. Hauptdomain als Dienst laut Forum möglich (**U**); DNS an der Hauptdomain: **A-Eintrag** auf die öffentliche IP des Proxys (INWX kann auch ALIAS, dann ohne DNSSEC). **V**
 
 ## Test- und Bildwerkzeuge
 - mineflayer 4.39.0 kann bis **26.1** → Test-Spieler verbinden als 26.1 über ViaBackwards zum 26.3-Netzwerk. **V**
