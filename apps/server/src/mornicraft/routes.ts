@@ -12,9 +12,14 @@ import {
   type ApplyLoginKit,
 } from '../applications/login.js';
 import type { Config } from '../config.js';
-import { notFound, unauthorized } from '../lib/errors.js';
+import { forbidden, notFound, unauthorized } from '../lib/errors.js';
 import type { PanelAuth } from '../panel/auth.js';
-import { answersSchema, minecraftNameSchema, type ApplicationService } from './applications.js';
+import {
+  answersSchema,
+  mayDecideMornicraft,
+  minecraftNameSchema,
+  type ApplicationService,
+} from './applications.js';
 
 /**
  * Bewerben auf der Webseite: erst mit Discord anmelden (OAuth2, nur „identify“ – wir sehen Name und ID, sonst
@@ -24,6 +29,12 @@ import { answersSchema, minecraftNameSchema, type ApplicationService } from './a
  */
 
 const STATE_BYTES = 16;
+/**
+ * Grenzen pro Besucher und Minute: Jede Rückkehr von Discord kostet zwei Anfragen bei Discord (mit dem Client-Secret),
+ * jede Bewerbung eine Zeile in der Datenbank und eine Nachricht im Team-Kanal – genug für Menschen, zu wenig zum Fluten.
+ */
+const LOGIN_LIMIT = { max: 20, timeWindow: '1 minute' } as const;
+const APPLY_LIMIT = { max: 10, timeWindow: '1 minute' } as const;
 /** Wohin es nach der Anmeldung mit Discord zurückgeht. */
 const PAGES = { mornicraft: '/mornicraft/bewerben', team: '/team/bewerben' } as const;
 type Target = keyof typeof PAGES;
@@ -83,29 +94,33 @@ export function registerApplyRoutes(app: Api, deps: ApplyRouteDeps): void {
     };
   });
 
-  app.get('/api/public/apply/login', { schema: { querystring: loginQuery } }, async (request, reply) => {
-    const appId = await deps.discordAppId();
-    const secret = deps.clientSecret();
-    const page = PAGES[request.query.ziel];
-    if (!secret || !appId) return reply.redirect(`${page}?fehler=discord_login_off`);
-    // Zufall + Ziel („…​.team“): das Ziel steckt im Cookie, nicht in der Adresse – niemand lenkt anders hin.
-    const state = `${crypto.randomBytes(STATE_BYTES).toString('hex')}${STATE_SEPARATOR}${request.query.ziel}`;
-    const url = new URL('https://discord.com/oauth2/authorize');
-    url.search = new URLSearchParams({
-      client_id: appId,
-      response_type: 'code',
-      scope: 'identify',
-      redirect_uri: redirectUri,
-      state,
-      prompt: 'none',
-    }).toString();
-    reply.header('set-cookie', cookie(STATE_COOKIE, state, STATE_SECONDS, request.headers.host ?? ''));
-    return reply.redirect(url.toString());
-  });
+  app.get(
+    '/api/public/apply/login',
+    { schema: { querystring: loginQuery }, config: { rateLimit: LOGIN_LIMIT } },
+    async (request, reply) => {
+      const appId = await deps.discordAppId();
+      const secret = deps.clientSecret();
+      const page = PAGES[request.query.ziel];
+      if (!secret || !appId) return reply.redirect(`${page}?fehler=discord_login_off`);
+      // Zufall + Ziel („…​.team“): das Ziel steckt im Cookie, nicht in der Adresse – niemand lenkt anders hin.
+      const state = `${crypto.randomBytes(STATE_BYTES).toString('hex')}${STATE_SEPARATOR}${request.query.ziel}`;
+      const url = new URL('https://discord.com/oauth2/authorize');
+      url.search = new URLSearchParams({
+        client_id: appId,
+        response_type: 'code',
+        scope: 'identify',
+        redirect_uri: redirectUri,
+        state,
+        prompt: 'none',
+      }).toString();
+      reply.header('set-cookie', cookie(STATE_COOKIE, state, STATE_SECONDS, request.headers.host ?? ''));
+      return reply.redirect(url.toString());
+    },
+  );
 
   app.get(
     '/api/public/apply/callback',
-    { schema: { querystring: callbackQuery } },
+    { schema: { querystring: callbackQuery }, config: { rateLimit: LOGIN_LIMIT } },
     async (request, reply) => {
       const expected = cookieOf(request.headers.cookie, STATE_COOKIE);
       const page = PAGES[targetOf(expected)];
@@ -146,18 +161,22 @@ export function registerApplyRoutes(app: Api, deps: ApplyRouteDeps): void {
     },
   );
 
-  app.post('/api/public/apply', { schema: { body: applyBody } }, async (request) => {
-    const login = kit.open(request.headers.cookie);
-    if (!login) throw unauthorized('apply_login_required');
-    const a = applications.apply({
-      minecraftName: request.body.minecraftName,
-      answers: request.body.answers,
-      discordId: login.id,
-      discordName: login.name,
-      via: 'website',
-    });
-    return { status: a.status, minecraftName: a.minecraftName, createdAt: a.createdAt };
-  });
+  app.post(
+    '/api/public/apply',
+    { schema: { body: applyBody }, config: { rateLimit: APPLY_LIMIT } },
+    async (request) => {
+      const login = kit.open(request.headers.cookie);
+      if (!login) throw unauthorized('apply_login_required');
+      const a = applications.apply({
+        minecraftName: request.body.minecraftName,
+        answers: request.body.answers,
+        discordId: login.id,
+        discordName: login.name,
+        via: 'website',
+      });
+      return { status: a.status, minecraftName: a.minecraftName, createdAt: a.createdAt };
+    },
+  );
 
   app.post('/api/public/apply/logout', async (request, reply) => {
     reply.header('set-cookie', cookie(LOGIN_COOKIE, '', 0, request.headers.host ?? ''));
@@ -177,13 +196,16 @@ export function registerApplyRoutes(app: Api, deps: ApplyRouteDeps): void {
     return applications.whitelist();
   });
 
+  // Eintragen und Austragen wie Bewerbungen entscheiden: nur, wer kicken darf (sonst ginge es an der Bewerbung vorbei).
   app.post('/api/panel/whitelist', { schema: { body: whitelistBody } }, async (request) => {
     const user = await deps.auth.require(request, 'players');
+    if (!mayDecideMornicraft(user.role)) throw forbidden('mornicraft_no_right');
     return applications.allow(request.body.name, user.username);
   });
 
   app.delete('/api/panel/whitelist/:id', { schema: { params: idParams } }, async (request) => {
-    await deps.auth.require(request, 'players');
+    const user = await deps.auth.require(request, 'players');
+    if (!mayDecideMornicraft(user.role)) throw forbidden('mornicraft_no_right');
     if (!applications.disallow(request.params.id)) throw notFound('whitelist_entry_unknown');
     return { ok: true };
   });

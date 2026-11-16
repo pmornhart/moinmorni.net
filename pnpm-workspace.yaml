@@ -2,6 +2,10 @@ packages:
   - apps/*
   - packages/*
   - tools/*
+overrides:
+  # drizzle-kit (nur Entwicklung) zieht über @esbuild-kit noch esbuild 0.18 mit bekannter Lücke (GHSA-67mh-4wv8-2f99) –
+  # wie im Motor (vendor/mornihosting/pnpm-workspace.yaml).
+  '@esbuild-kit/core-utils>esbuild': ^0.25.0
 onlyBuiltDependencies:
   - better-sqlite3
   - esbuild

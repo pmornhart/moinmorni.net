@@ -1801,6 +1801,7 @@
     }
   },
   "applicationsCard": {
+    "noRight": "Entscheiden darf, wer im Spiel kicken darf (Moderator und darüber) – wie mit den Knöpfen in Discord.",
     "title": "Bewerbungen",
     "text": "Wer auf MorniCraft möchte. Bewerben geht auf der Webseite (mit Discord-Anmeldung) und im Discord mit /bewerben. Eine Zusage setzt den Namen auf die Whitelist.",
     "open": "Bewerbungen offen",
@@ -1928,6 +1929,7 @@
     "toList": "Zu den Bewerbungen"
   },
   "whitelistCard": {
+    "noRight": "Eintragen und Austragen darf, wer im Spiel kicken darf (Moderator und darüber) – wie beim Annehmen von Bewerbungen.",
     "title": "Whitelist",
     "text": "Wer auf MorniCraft darf. Das Team kommt immer hinein und steht hier von selbst: alle, deren Rang „Kommt immer rein“ hat. Angenommene Bewerbungen landen hier auch von selbst; du kannst Namen auch direkt eintragen.",
     "count_one": "{{count}} Spieler",
@@ -2156,6 +2158,7 @@
     "punishment_none": "Da gibt es gerade nichts aufzuheben – vielleicht ist die Strafe schon abgelaufen.",
     "role_unknown": "Diesen Rang gibt es nicht (mehr). Lade die Seite neu.",
     "role_too_high": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher (VIP vergibt nur der Owner).",
+    "mornicraft_no_right": "Die Whitelist von MorniCraft pflegt und Bewerbungen dafür entscheidet, wer im Spiel kicken darf (Moderator und darüber) – im Panel genauso wie in Discord.",
     "rank_no_right": "Ränge vergeben darfst du nicht – dafür braucht deine Rolle das Recht „Ränge vergeben“.",
     "role_owner_only": "Owner und Admin darf nur der Owner ändern.",
     "role_duplicate": "Zwei Rollen haben dieselbe Kennung. Gib einer einen anderen Namen.",

@@ -1801,6 +1801,7 @@
     }
   },
   "applicationsCard": {
+    "noRight": "Deciding is for those who may kick in the game (moderator and above) – just like the buttons in Discord.",
     "title": "Applications",
     "text": "Who wants to join MorniCraft. People apply on the website (with Discord sign-in) and in Discord with /bewerben. Accepting puts the name on the whitelist.",
     "open": "Applications open",
@@ -1928,6 +1929,7 @@
     "toList": "To the applications"
   },
   "whitelistCard": {
+    "noRight": "Adding and removing names is for those who may kick in the game (moderator and above) – just like accepting applications.",
     "title": "Whitelist",
     "text": "Who may join MorniCraft. The team always gets in and shows up here by itself: everyone whose rank has “Always gets in”. Accepted applications land here by themselves too; you can also add names directly.",
     "count_one": "{{count}} player",
@@ -2156,6 +2158,7 @@
     "punishment_none": "There is nothing to lift right now – maybe the punishment has already run out.",
     "role_unknown": "This rank does not exist (any more). Reload the page.",
     "role_too_high": "You may not give this rank – it is as high as yours or higher (VIP is given by the owner only).",
+    "mornicraft_no_right": "The MorniCraft whitelist and its applications are handled by those who may kick in the game (moderator and above) – in the panel just like in Discord.",
     "rank_no_right": "You may not give ranks – your role needs the right “Give ranks”.",
     "role_owner_only": "Only the owner may change Owner and Admin.",
     "role_duplicate": "Two roles have the same ID. Give one of them another name.",
