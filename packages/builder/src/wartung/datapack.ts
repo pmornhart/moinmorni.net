@@ -45,7 +45,8 @@ export function wartungPack(): LobbyPack {
   const clean = [`kill @e[type=!player,x=0,y=64,z=0,distance=..${ENTITY_REACH}]`];
   const finish = [
     `kill @e[type=item,x=0,y=64,z=0,distance=..${ENTITY_REACH}]`,
-    `setworldspawn ${Math.floor(spawn.x)} ${spawn.y} ${Math.floor(spawn.z)} ${spawn.yaw}`,
+    // Ohne Blickrichtung: 26.x will dort zwei Werte, ältere einen – die Blickrichtung setzt das Plugin beim Ankommen.
+    `setworldspawn ${Math.floor(spawn.x)} ${spawn.y} ${Math.floor(spawn.z)}`,
     ...Object.entries(LOBBY_RULES).map(([rule, value]) => `gamerule ${rule} ${value}`),
     `time set ${MIDDAY}`,
     'weather clear',

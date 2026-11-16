@@ -364,7 +364,10 @@ export function createLobbyWorld(
         { parts: missing },
         `${name}: Teile der Welt ließen sich nicht laden (Fehler im Server-Protokoll: „Failed to load function“)`,
       );
-    await run(serverId, `minecraft:function ${ns}:finish`);
+    if ((await run(serverId, `minecraft:function ${ns}:finish`)).includes(UNKNOWN_FUNCTION))
+      log.error(
+        `${name}: Abschluss des Baus ließ sich nicht laden (Fehler im Server-Protokoll: „Failed to load function“)`,
+      );
     await pack.unload.reduce(async (prev, command) => {
       await prev;
       await run(serverId, `minecraft:${command}`);

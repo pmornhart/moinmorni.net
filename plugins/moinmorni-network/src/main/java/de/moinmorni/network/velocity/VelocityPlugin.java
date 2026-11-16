@@ -72,9 +72,6 @@ public final class VelocityPlugin {
     private static final String WARTUNG = Fallback.WARTUNG;
     /** Ohne Hub: so oft nachsehen, ob die Lobby wieder antwortet (dann die Wartenden zurück). */
     private static final long LOCAL_RETURN_SECONDS = 5;
-    private static final String LOCAL_ARRIVE =
-            "<gold>Die Lobby startet gerade neu</gold> <gray>– du wartest kurz in der Wartungs-Lobby.</gray>\n"
-            + "<gray>The lobby is restarting – you'll wait in the maintenance lobby for a moment.</gray>";
     private static final String LOCAL_BYE =
             "<gold><bold>Die Lobby startet gerade neu</bold></gold>\n\n<gray>Gleich wieder da – versuch es in ein paar Sekunden nochmal.</gray>\n"
             + "<gray>The lobby is restarting – back in a moment, try again in a few seconds.</gray>";
@@ -296,7 +293,7 @@ public final class VelocityPlugin {
         tried.add(from);
         Component reason = event.getServerKickReason().orElse(null);
         if (hub == null || !hub.ready()) {
-            redirect(event, Fallback.localOrder(maintenance(), wartungOn()), tried, LOCAL_ARRIVE, LOCAL_BYE, reason);
+            redirect(event, Fallback.localOrder(maintenance(), wartungOn()), tried, LOCAL_BYE, reason);
             return null;
         }
         JsonObject body = new JsonObject();
@@ -308,19 +305,18 @@ public final class VelocityPlugin {
         body.add("tried", list);
         CompletableFuture<Void> done = hub.request(body).handle((data, error) -> {
             if (error != null || data == null || !data.has("order")) {
-                redirect(event, Fallback.localOrder(maintenance(), wartungOn()), tried, LOCAL_ARRIVE, LOCAL_BYE, reason);
+                redirect(event, Fallback.localOrder(maintenance(), wartungOn()), tried, LOCAL_BYE, reason);
                 return null;
             }
             List<String> order = new ArrayList<>();
             data.getAsJsonArray("order").forEach(e -> order.add(e.getAsString()));
-            redirect(event, Fallback.onlyFallbacks(order), tried,
-                    HubClient.str(data, "message"), HubClient.str(data, "bye"), reason);
+            redirect(event, Fallback.onlyFallbacks(order), tried, HubClient.str(data, "bye"), reason);
             return null;
         });
         return EventTask.resumeWhenComplete(done);
     }
 
-    private void redirect(KickedFromServerEvent event, List<String> order, Set<String> tried, String arrive, String bye,
+    private void redirect(KickedFromServerEvent event, List<String> order, Set<String> tried, String bye,
                           Component reason) {
         Player p = event.getPlayer();
         Optional<String> next = Fallback.next(order, tried, name -> proxy.getServer(name).isPresent());
@@ -331,12 +327,9 @@ public final class VelocityPlugin {
         }
         RegisteredServer target = proxy.getServer(next.get()).orElseThrow();
         sending.put(p.getUniqueId(), target.getServerInfo().getName());
-        Component message;
-        if (WARTUNG.equals(next.get())) {
-            message = MM.deserialize(arrive == null ? LOCAL_ARRIVE : arrive);
-        } else {
-            message = reason == null ? Component.empty() : reason;
-        }
+        // In die Wartungs-Lobby ohne Nachricht vom Proxy: Beim Wechsel ginge sie verloren, die Wartungs-Lobby sagt
+        // beim Ankommen selbst, warum man dort ist. In die Lobby mit dem Grund des Rauswurfs (wie Velocity sonst).
+        Component message = WARTUNG.equals(next.get()) || reason == null ? Component.empty() : reason;
         event.setResult(KickedFromServerEvent.RedirectPlayer.create(target, message));
     }
 

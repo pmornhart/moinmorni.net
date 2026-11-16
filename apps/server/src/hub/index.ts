@@ -472,7 +472,7 @@ export function createHub(options: HubOptions): Hub {
     const m = fallbackSchema.parse(body);
     const uuid = normalUuid(m.uuid);
     const lang: Lang = presence.get(uuid)?.lang ?? defaultLang();
-    reply(conn, m.id, wartung.fallback(uuid, lang));
+    reply(conn, m.id, wartung.fallback(uuid, lang, m.tried));
   };
   /** Figur in der Lobby angeklickt: in den Modus (oder wecken, oder sagen, warum nicht). */
   const play = (conn: Connection, body: unknown): void => {

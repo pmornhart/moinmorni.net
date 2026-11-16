@@ -290,7 +290,35 @@ final class WartungLobby implements Listener {
                             : "Gleich geht’s weiter – probier solange den Sprung-Parcours!", NamedTextColor.WHITE),
                     Title.Times.times(FADE_IN, STAY, FADE_OUT)));
             showBar(p);
+            p.sendMessage(arrival(p, en));
         }, TICK);
+    }
+
+    /** Warum man hier ist – im Chat, sobald man wirklich da ist (beim Serverwechsel ginge eine Nachricht verloren). */
+    private Component arrival(Player p, boolean en) {
+        State s = state;
+        Component tag = Component.text("[", NamedTextColor.DARK_GRAY).append(Component.text("MoinMorni",
+                NamedTextColor.GREEN)).append(Component.text("] ", NamedTextColor.DARK_GRAY));
+        if (!hubReady.getAsBoolean()) {
+            return tag.append(Component.text(en ? "The network is restarting – you’ll wait here for a moment."
+                    : "Das Netzwerk startet gerade neu – du wartest kurz hier.", NamedTextColor.GOLD));
+        }
+        if (parked(p)) {
+            String until = s.until() == null ? "" : (en ? " (until approx. " + s.until() + ")" : " (bis ca. "
+                    + s.until() + " Uhr)");
+            return tag.append(Component.text(en ? "Maintenance" : "Wartungsarbeiten", NamedTextColor.GOLD))
+                    .append(Component.text(" – " + (s.message().isEmpty() ? "" : s.message()) + until,
+                            NamedTextColor.GRAY));
+        }
+        if (!s.lobby()) {
+            return tag.append(Component.text(en ? "The lobby is restarting" : "Die Lobby startet gerade neu",
+                    NamedTextColor.GOLD)).append(Component.text(en
+                    ? " – you’ll wait in the maintenance lobby. As soon as it’s back, you’ll return."
+                    : " – du wartest so lange in der Wartungs-Lobby. Sobald sie wieder da ist, geht’s zurück.",
+                    NamedTextColor.GRAY));
+        }
+        return tag.append(Component.text(en ? "Welcome to the maintenance lobby – the compass takes you back."
+                : "Willkommen in der Wartungs-Lobby – der Kompass bringt dich zurück.", NamedTextColor.GRAY));
     }
 
     @EventHandler

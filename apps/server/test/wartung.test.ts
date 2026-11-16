@@ -86,7 +86,6 @@ describe('Wartungs-Lobby im Hub', () => {
 
     const kicked = await proxy.request({ t: 'fallback', uuid: LENA, from: 'duels', tried: ['duels'] });
     expect(data(kicked)['order']).toEqual(['wartung', 'lobby']);
-    expect(String(data(kicked)['message'])).toContain('Lobby startet gerade neu');
     expect(String(data(kicked)['bye'])).toContain('Lobby startet gerade neu');
 
     // Lobby wieder da: sie zuerst, die Wartungs-Lobby als zweite Wahl.
@@ -94,6 +93,22 @@ describe('Wartungs-Lobby im Hub', () => {
     const later = await proxy.request({ t: 'fallback', uuid: LENA, from: 'duels', tried: ['duels'] });
     expect(data(later)['order']).toEqual(['lobby', 'wartung']);
     expect(data(await login(proxy, FINN, 'Finn'))).toMatchObject({ server: 'lobby' });
+  });
+
+  test('Lobby ging beim Proxy nicht (hängt, Plugin noch am Hub): erst die Wartungs-Lobby, bis sie neu verbindet', async () => {
+    const proxy = await plugin('proxy', 'proxy');
+    await plugin('wartung', 'backend');
+    const lobby = await plugin('lobby', 'backend');
+    expect(data(await login(proxy, LENA, 'Lena'))).toMatchObject({ server: 'lobby' });
+    const failed = await proxy.request({ t: 'fallback', uuid: LENA, from: 'lobby', tried: ['lobby'] });
+    expect(data(failed)['order']).toEqual(['wartung', 'lobby']);
+    // Für die Nächsten auch – und kein Countdown zurück in eine Lobby, die gerade nicht ging.
+    expect(data(await login(proxy, FINN, 'Finn'))).toMatchObject({ server: 'wartung' });
+    lobby.close();
+    await plugin('lobby', 'backend');
+    await pause(100);
+    const later = await proxy.request({ t: 'fallback', uuid: LENA, from: 'duels', tried: ['duels'] });
+    expect(data(later)['order']).toEqual(['lobby', 'wartung']);
   });
 
   test('Lobby kommt zurück: Countdown in der Wartungs-Lobby, dann alle zurück; wer freiwillig da ist, bleibt', async () => {
@@ -287,6 +302,8 @@ describe('Wartungs-Lobby im Netzwerk', () => {
     expect(files).toContain('mm_wartung_text');
     expect(files).toContain('light_weighted_pressure_plate');
     expect(files).toContain('heavy_weighted_pressure_plate');
+    // 26.x will bei setworldspawn mit Blickrichtung zwei Werte – ohne geht es überall (Fund im echten Server).
+    expect(files).toMatch(/\nsetworldspawn -?\d+ \d+ -?\d+\n/);
     expect(files).not.toMatch(/ chain[ [\]]/);
     expect(wartungProperties()['view-distance']).toBe('6');
   });

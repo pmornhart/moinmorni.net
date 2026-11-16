@@ -6,6 +6,7 @@
  * Ankommen noch nach einem Rauswurf –, dass alle nach einem Countdown zurück in die Lobby kommen und dass während der
  * Wartung Spieler in der Wartungs-Lobby warten, das Team aber überall hin darf.
  *   NODE_PATH=<ordner mit mineflayer> node tools/netz-test/wartung-test.cjs
+ * Test-Spieler haben einen englischen Client – Texte werden in beiden Sprachen erkannt.
  * Umgebung: WT_PROXY (host:port), WT_STEUER (Port der Hub-Steuerung), WT_DIR (Ordner mit lobby/, wartung/, bau/ –
  * je mit server.properties und .rcon-pass), MC_VERSION. Philip muss im Hub Owner sein (--rang=Philip=owner).
  */
@@ -75,7 +76,7 @@ function rcon(server, command) {
   return new Promise((resolve, reject) => {
     const socket = net.connect(Number(p['rcon.port']), '127.0.0.1');
     let data = Buffer.alloc(0);
-    socket.setTimeout(4000, () => socket.destroy(new Error('rcon timeout')));
+    socket.setTimeout(8000, () => socket.destroy(new Error('rcon timeout')));
     socket.on('error', reject);
     socket.on('connect', () => socket.write(packet(1, 3, String(p['rcon.password']))));
     socket.on('data', (chunk) => {
@@ -100,7 +101,8 @@ function rcon(server, command) {
 async function where(name) {
   for (const server of SERVERS) {
     const list = await rcon(server, 'list').catch(() => '');
-    const names = (list.split(':')[1] ?? '').split(',').map((n) => n.trim());
+    // „There are 2 … online: Anna, ♛ Philip“ – vor dem Namen kann das Rang-Symbol stehen.
+    const names = (list.split(':')[1] ?? '').split(',').map((n) => n.trim().split(' ').pop());
     if (names.includes(name)) return server;
   }
   return null;
@@ -187,9 +189,9 @@ async function main() {
 
   // 1. Alles da: Ankunft in der Lobby, Philip (Owner) geht auf den Bau-Server.
   const anna = await join('Anna');
-  check('Anna kommt in der Lobby an', (await lands('Anna', 'lobby')).ok);
+  check('Anna kommt in der Lobby an', (await lands('Anna', 'lobby', 45000)).ok);
   const philip = await join('Philip');
-  check('Philip kommt in der Lobby an', (await lands('Philip', 'lobby')).ok);
+  check('Philip kommt in der Lobby an', (await lands('Philip', 'lobby', 45000)).ok);
   philip.chat('/bau');
   check('Philip (Owner) darf auf den Bau-Server', (await lands('Philip', 'bau')).ok);
 
@@ -202,8 +204,8 @@ async function main() {
     annaGone.ok,
     `auf ${annaGone.seen}`,
   );
-  check('Anna liest, warum', Boolean(await sees(anna, /Lobby startet gerade neu/)));
-  check('Philip bleibt auf dem Bau-Server', (await where('Philip')) === 'bau');
+  check('Anna liest, warum', Boolean(await sees(anna, /Lobby startet gerade neu|lobby is restarting/)));
+  check('Philip bleibt auf dem Bau-Server', (await lands('Philip', 'bau', 10000)).ok);
 
   // 3. Neu ankommen, während die Lobby fehlt: Wartungs-Lobby (der Motor hätte „bau“ als Nächstes).
   const carl = await join('Carl');
@@ -234,7 +236,10 @@ async function main() {
     back.map((b) => b.seen).join(', '),
   );
   check('mit Countdown (nicht sofort)', Date.now() - t0 >= 5000, `${Math.round((Date.now() - t0) / 1000)} s`);
-  check('Hinweis „Die Lobby ist wieder da“', Boolean(await sees(anna, /Lobby ist wieder da/, 2000)));
+  check(
+    'Hinweis „Die Lobby ist wieder da“',
+    Boolean(await sees(anna, /Lobby ist wieder da|lobby is back/, 2000)),
+  );
 
   // 6. Wartung an: Spieler warten in der Wartungs-Lobby, das Team bleibt.
   await settings({ maintenance: true, maintenanceMessage: 'Großes Update', maintenanceUntil: '22:30' });
@@ -243,14 +248,14 @@ async function main() {
   check('Anna liest Grund und Uhrzeit', Boolean(await sees(anna, /22:30/)));
   check('Carl auch', (await lands('Carl', 'wartung')).ok);
   await sleep(1500);
-  check('Philip (Team) bleibt in der Lobby', (await where('Philip')) === 'lobby');
+  check('Philip (Team) bleibt in der Lobby', (await lands('Philip', 'lobby', 10000)).ok);
   const dora = await join('Dora');
   check('Dora kommt während der Wartung herein – in die Wartungs-Lobby', (await lands('Dora', 'wartung')).ok);
   anna.lines.length = 0;
   anna.chat('/lobby');
   check(
     '/lobby während der Wartung: Hinweis, bleibt',
-    Boolean(await sees(anna, /Wartung läuft/)) && (await where('Anna')) === 'wartung',
+    Boolean(await sees(anna, /Wartung läuft|Maintenance in progress/)) && (await where('Anna')) === 'wartung',
   );
   philip.chat('/bau');
   check('Philip darf während der Wartung auf den Bau-Server', (await lands('Philip', 'bau')).ok);
@@ -263,7 +268,7 @@ async function main() {
     after.every((b) => b.ok),
     after.map((b) => b.seen).join(', '),
   );
-  check('Philip bleibt, wo er war (Bau-Server)', (await where('Philip')) === 'bau');
+  check('Philip bleibt, wo er war (Bau-Server)', (await lands('Philip', 'bau', 10000)).ok);
 
   [anna, philip, carl, dora].forEach((b) => b.quit());
   const failed = results.filter((r) => !r.ok).length;

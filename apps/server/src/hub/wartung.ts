@@ -16,6 +16,11 @@ const SECOND_MS = 1000;
 const RETURN_MS = WARTUNG_RETURN_SECONDS * SECOND_MS;
 /** So lange gilt ein gerade verschickter Spieler als „unterwegs“ (kein zweites Verbinden). */
 const SENT_GRACE_MS = 15_000;
+/**
+ * Meldet der Proxy, dass die Lobby bei einem Spieler nicht ging, gilt sie so lange als weg – auch wenn ihr Plugin
+ * noch am Hub hängt (z. B. Server hängt). Verbindet sie sich neu, gilt sie gleich wieder.
+ */
+const LOBBY_FAILED_MS = 60_000;
 /** Alle so viele Millisekunden nachsehen, ob jemand zurück darf. */
 const TICK_MS = 1000;
 
@@ -31,8 +36,6 @@ export interface WartungDeps {
 export interface FallbackAnswer {
   /** Server in dieser Reihenfolge versuchen (der Proxy lässt aus, was schon gescheitert ist). */
   readonly order: readonly string[];
-  /** Nachricht beim Ankommen in der Wartungs-Lobby. */
-  readonly message: string;
   /** Text beim Trennen, wenn keiner geht. */
   readonly bye: string;
 }
@@ -51,7 +54,7 @@ export interface Wartung {
   /** Wohin ein neuer Spieler zuerst kommt. */
   readonly firstServer: (uuid: string) => string;
   /** Wohin nach einem Rauswurf oder einem gescheiterten Verbinden. */
-  readonly fallback: (uuid: string, lang: Lang) => FallbackAnswer;
+  readonly fallback: (uuid: string, lang: Lang, tried?: readonly string[]) => FallbackAnswer;
   /** Spieler wartet in der Wartungs-Lobby (geschickt, nicht freiwillig) – kommt automatisch zurück. */
   readonly waiting: (uuid: string) => void;
   readonly onSwitch: (uuid: string, server: string) => void;
@@ -97,10 +100,11 @@ export function createWartung(deps: WartungDeps): Wartung {
   /** Schon gesagt „mit /lobby zurück“ (ohne automatisch zurück). */
   const told = new Set<string>();
   const countdown: { at: number | null } = { at: null };
+  const lobbyFailed: { at: number } = { at: 0 };
   const timer: { id: ReturnType<typeof setInterval> | null } = { id: null };
   const last = { maintenance: settings().maintenance };
 
-  const lobbyUp = (): boolean => deps.connected(LOBBY);
+  const lobbyUp = (): boolean => deps.connected(LOBBY) && now() - lobbyFailed.at > LOBBY_FAILED_MS;
   const wartungUp = (): boolean => deps.connected(WARTUNG_SERVER);
   const parked = (uuid: string): boolean => settings().maintenance && !alwaysIn(ctx.players.roleOf(uuid));
   const open = (): boolean => settings().lobbyOn && wartungUp();
@@ -199,7 +203,12 @@ export function createWartung(deps: WartungDeps): Wartung {
       if (lobbyUp() || !open()) return LOBBY;
       return WARTUNG_SERVER;
     },
-    fallback: (uuid, lang) => {
+    fallback: (uuid, lang, tried = []) => {
+      // Die Lobby ging gerade bei jemandem nicht: nicht gleich wieder dorthin zurückschicken.
+      if (tried.includes(LOBBY) && lobbyUp()) {
+        lobbyFailed.at = now();
+        push();
+      }
       const isParked = parked(uuid);
       const s = settings();
       const order = ((): string[] => {
@@ -207,13 +216,10 @@ export function createWartung(deps: WartungDeps): Wartung {
         if (!s.lobbyOn) return [LOBBY];
         return lobbyUp() ? [LOBBY, WARTUNG_SERVER] : [WARTUNG_SERVER, LOBBY];
       })();
-      const message = isParked
-        ? text(lang, 'wartung.arrive_maintenance', { message: mm(s.message), until: untilText(lang) })
-        : text(lang, 'wartung.arrive_lobby');
       const bye = isParked
         ? text(lang, 'maintenance.screen', { message: mm(s.message), until: untilText(lang) })
         : text(lang, 'wartung.bye');
-      return { order, message, bye };
+      return { order, bye };
     },
     waiting: (uuid) => {
       waitingSet.add(uuid);
@@ -233,6 +239,7 @@ export function createWartung(deps: WartungDeps): Wartung {
     onOnline: () => ctx.presence.on(WARTUNG_SERVER).forEach((p) => waitingSet.add(p.uuid)),
     onServer: (server) => {
       if (server !== LOBBY && server !== WARTUNG_SERVER) return;
+      if (server === LOBBY && deps.connected(LOBBY)) lobbyFailed.at = 0;
       push();
       tick();
     },
