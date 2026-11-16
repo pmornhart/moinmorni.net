@@ -222,6 +222,47 @@ const TEXTS = {
     en: `${P}<red>You may not give this rank.`,
   },
   'lobby.going': { de: `${P}<gray>Ab in die Lobby!`, en: `${P}<gray>Off to the lobby!` },
+  // Mitten im Spiel (rejoin.ts): erst nachfragen, „Zurück ins Spiel“ anbieten. Bedrock kann im Chat nicht klicken.
+  'lobby.ask': {
+    de: `${P}<gold>Du bist mitten in <white>{mode}</white>.</gold> <gray>Wirklich zur Lobby?</gray> <click:run_command:'/lobby ja'><hover:show_text:'<gold>Runde verlassen und zur Lobby'><gold><bold>[Ja, zur Lobby]</bold></gold></hover></click> <click:run_command:'/lobby nein'><hover:show_text:'<green>Hierbleiben und weiterspielen'><green><bold>[Weiterspielen]</bold></green></hover></click> <dark_gray>·</dark_gray> <gray>Nochmal <yellow>/lobby</yellow> geht auch.`,
+    en: `${P}<gold>You're in the middle of <white>{mode}</white>.</gold> <gray>Really go to the lobby?</gray> <click:run_command:'/lobby yes'><hover:show_text:'<gold>Leave the round and go to the lobby'><gold><bold>[Yes, to the lobby]</bold></gold></hover></click> <click:run_command:'/lobby no'><hover:show_text:'<green>Stay and keep playing'><green><bold>[Keep playing]</bold></green></hover></click> <dark_gray>·</dark_gray> <gray>Typing <yellow>/lobby</yellow> again works too.`,
+  },
+  'lobby.ask_bedrock': {
+    de: `${P}<gold>Du bist mitten in <white>{mode}</white>.</gold> <gray>Wirklich zur Lobby? Wähl im Fenster – oder gib gleich nochmal <yellow>/lobby</yellow> ein.`,
+    en: `${P}<gold>You're in the middle of <white>{mode}</white>.</gold> <gray>Really go to the lobby? Choose in the window – or type <yellow>/lobby</yellow> again right away.`,
+  },
+  'lobby.stay': {
+    de: `${P}<green>Alles klar – viel Spaß beim Weiterspielen!`,
+    en: `${P}<green>Alright – have fun playing on!`,
+  },
+  'rejoin.offer': {
+    de: `${P}<gold>Du warst mitten in <white>{mode}</white> – dein Platz ist noch frei.</gold> <click:run_command:'/rueckkehr'><hover:show_text:'<green>Zurück in deine Runde'><green><bold>[Zurück ins Spiel]</bold></green></hover></click>`,
+    en: `${P}<gold>You were in the middle of <white>{mode}</white> – your spot is still free.</gold> <click:run_command:'/rejoin'><hover:show_text:'<green>Back to your round'><green><bold>[Back to the game]</bold></green></hover></click>`,
+  },
+  'rejoin.offer_bedrock': {
+    de: `${P}<gold>Du warst mitten in <white>{mode}</white> – dein Platz ist noch frei.</gold> <gray>Zurück ins Spiel: Gegenstand in der Mitte deiner Leiste benutzen oder <yellow>/rueckkehr</yellow> eingeben.`,
+    en: `${P}<gold>You were in the middle of <white>{mode}</white> – your spot is still free.</gold> <gray>Back to the game: use the item in the middle of your hotbar or type <yellow>/rejoin</yellow>.`,
+  },
+  'rejoin.going': {
+    de: `${P}<gray>Zurück nach <white>{mode}</white> …`,
+    en: `${P}<gray>Back to <white>{mode}</white> …`,
+  },
+  'rejoin.none': {
+    de: `${P}<gray>Gerade wartet keine Runde auf dich.`,
+    en: `${P}<gray>No round is waiting for you right now.`,
+  },
+  'rejoin.expired': {
+    de: `${P}<gray>Die Zeit ist um – in <white>{mode}</white> ist dein Platz nicht mehr frei.`,
+    en: `${P}<gray>Time's up – your spot in <white>{mode}</white> isn't held any more.`,
+  },
+  'rejoin.ended': {
+    de: `${P}<gray>Deine Runde in <white>{mode}</white> ist inzwischen vorbei.`,
+    en: `${P}<gray>Your round in <white>{mode}</white> is over by now.`,
+  },
+  'rejoin.gone': {
+    de: `${P}<gray><white>{mode}</white> ist gerade nicht erreichbar – deine Runde gibt es leider nicht mehr.`,
+    en: `${P}<gray><white>{mode}</white> can't be reached right now – your round is gone, sorry.`,
+  },
   'set.saved': {
     de: `${P}<green>Gespeichert:</green> <gray>{label} <dark_gray>→</dark_gray> <white>{value}`,
     en: `${P}<green>Saved:</green> <gray>{label} <dark_gray>→</dark_gray> <white>{value}`,
@@ -529,6 +570,50 @@ const TEXTS = {
     de: `${P}<red>Die Lobby ist gerade nicht da.`,
     en: `${P}<red>The lobby isn't available right now.`,
   },
+  // Neustart mit Countdown (network/restart-now.ts). {s} in den Leisten zählt das Netzwerk-Plugin selbst herunter.
+  'restart.update': {
+    de: `${P}<gold>Update eingespielt</gold> <gray>– <white>{server}</white> startet in <yellow>{seconds} Sekunden</yellow> neu. Du kommst vorher in die Lobby, gleich geht es weiter.`,
+    en: `${P}<gold>Update installed</gold> <gray>– <white>{server}</white> restarts in <yellow>{seconds} seconds</yellow>. You'll be moved to the lobby first – back in a moment.`,
+  },
+  'restart.release': {
+    de: `${P}<gold>Neue Fassung von {server}</gold> <gray>– der Server startet in <yellow>{seconds} Sekunden</yellow> neu. Du kommst vorher in die Lobby, gleich geht es weiter.`,
+    en: `${P}<gold>New version of {server}</gold> <gray>– the server restarts in <yellow>{seconds} seconds</yellow>. You'll be moved to the lobby first – back in a moment.`,
+  },
+  'restart.lobby': {
+    de: `${P}<gold>Update eingespielt</gold> <gray>– die Lobby startet in <yellow>{seconds} Sekunden</yellow> neu. Es geht gleich weiter: In etwa einer Minute kannst du wieder rein.`,
+    en: `${P}<gold>Update installed</gold> <gray>– the lobby restarts in <yellow>{seconds} seconds</yellow>. It goes on in a moment: you can join again in about a minute.`,
+  },
+  'restart.network': {
+    de: `${P}<gold>Update eingespielt</gold> <gray>– das Netzwerk startet in <yellow>{seconds} Sekunden</yellow> kurz neu. In etwa einer Minute geht es weiter – einfach wieder verbinden.`,
+    en: `${P}<gold>Update installed</gold> <gray>– the network restarts briefly in <yellow>{seconds} seconds</yellow>. It goes on in about a minute – just connect again.`,
+  },
+  'restart.soon': {
+    de: `${P}<gray>Noch <yellow>{seconds} Sekunden</yellow> bis zum Neustart.`,
+    en: `${P}<gray><yellow>{seconds} seconds</yellow> until the restart.`,
+  },
+  'restart.moved': {
+    de: `${P}<gray>Du bist in der Lobby, solange <white>{server}</white> neu startet – gleich ist der Modus wieder da.`,
+    en: `${P}<gray>You're in the lobby while <white>{server}</white> restarts – the mode is back in a moment.`,
+  },
+  'restart.bar.update': {
+    de: `<gold>Update eingespielt</gold> <gray>–</gray> <white>{server}</white> <gray>startet in</gray> <yellow>{s} s</yellow> <gray>neu</gray>`,
+    en: `<gold>Update installed</gold> <gray>–</gray> <white>{server}</white> <gray>restarts in</gray> <yellow>{s} s</yellow>`,
+  },
+  'restart.bar.release': {
+    de: `<gold>Neue Fassung</gold> <gray>–</gray> <white>{server}</white> <gray>startet in</gray> <yellow>{s} s</yellow> <gray>neu</gray>`,
+    en: `<gold>New version</gold> <gray>–</gray> <white>{server}</white> <gray>restarts in</gray> <yellow>{s} s</yellow>`,
+  },
+  'restart.kick.lobby': {
+    de: `<gold>Die Lobby startet neu</gold>\n\n<gray>Update eingespielt – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
+    en: `<gold>The lobby is restarting</gold>\n\n<gray>Update installed – you can join again in about a minute. See you soon!`,
+  },
+  'restart.kick.network': {
+    de: `<gold>Das Netzwerk startet kurz neu</gold>\n\n<gray>Update eingespielt – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
+    en: `<gold>The network is restarting briefly</gold>\n\n<gray>Update installed – you can join again in about a minute. See you soon!`,
+  },
+  'restart.name.lobby': { de: 'die Lobby', en: 'the lobby' },
+  'restart.name.bau': { de: 'der Bau-Server', en: 'the build server' },
+  'restart.name.proxy': { de: 'das Netzwerk', en: 'the network' },
 } as const satisfies Record<string, Record<Lang, string>>;
 
 export type TextKey = keyof typeof TEXTS;

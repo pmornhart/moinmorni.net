@@ -12,22 +12,26 @@ import { createDiscordCredentials } from './discord/credentials.js';
 import { createApplyLogin } from './applications/login.js';
 import { registerApplicationRoutes } from './applications/routes.js';
 import { createTeamApplications } from './applications/team.js';
+import { contentSecurityPolicy, inlineScriptHashes } from './lib/csp.js';
 import { createSecretBox } from './lib/secret-box.js';
 import { adoptInterimDatabase } from './lib/rename.js';
 import { createHub, type Hub } from './hub/index.js';
 import { AppError } from './lib/errors.js';
 import { createEventBus, type EventBus } from './lib/events.js';
+import { createGithubClient } from './lib/github.js';
 import { createMotorClient, MotorError, type FetchLike, type MotorClient } from './motor/client.js';
 import { startAlertRelay, type AlertRelay } from './motor/alerts.js';
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
 import { createPanelAuth } from './panel/auth.js';
-import { githubReleases } from './network/mode-releases.js';
+import { githubReleases, RELEASE_CHECK_MS } from './network/mode-releases.js';
 import {
   createProvisioner,
   LOBBY_MEMBER,
   PROXY_MEMBER,
   type NetworkProvisioner,
+  releaseModes,
 } from './network/provision.js';
+import { createRestartNow, firstStartAfterUpdate, planRestarts, type Target } from './network/restart-now.js';
 import { createMemberIds } from './network/members.js';
 import { createModeSettingsSync, type ModeSettingsSync } from './network/mode-settings.js';
 import { createRestartQueue } from './network/restart.js';
@@ -56,11 +60,14 @@ import { createStatusService } from './public/status.js';
 import { registerWwwRedirect } from './public/www.js';
 import { registerSetupRoutes } from './setup/routes.js';
 import { createSetupService, type SetupService } from './setup/service.js';
+import { MODE_JARS, MODE_REPOS } from '@moinmorni/shared';
 
 /** So lange darf ein Netzwerk-Server nach der Einrichtung brauchen, bis er am Hub hängt. */
 const HUB_GRACE_MS = 120_000;
-/** Neue Releases der Spielmodi: einmal pro Stunde nachsehen (aufgespielt wird, der Neustart wartet, bis leer). */
+/** Einmal pro Stunde prüft das Netzwerk alles (neue Releases der Spielmodi zusätzlich alle 10 Minuten, siehe unten). */
 const MODE_CHECK_MS = 3_600_000;
+/** Countdown vor einem Neustart, wenn im Panel nichts steht. */
+const DEFAULT_COUNTDOWN_SECONDS = 30;
 /** Weiterleiter im eigenen Netz: Docker, Heimnetz, NetBird (100.64.0.0/10). */
 const TRUSTED_HOPS = 'loopback,linklocal,uniquelocal,100.64.0.0/10';
 
@@ -96,8 +103,8 @@ export interface BuildOptions {
   readonly motorFetch?: FetchLike;
   /** Tests: eigener Weg zu Discord. */
   readonly discordFetch?: typeof fetch;
-  /** Tests: eigener Weg zu GitHub (Updates). */
-  readonly githubFetch?: typeof fetch;
+  /** Tests: eigener Weg zu GitHub (Updates, Releases der Spielmodi). */
+  readonly githubFetch?: FetchLike;
 }
 
 const HTTP_NOT_FOUND = 404;
@@ -105,6 +112,14 @@ const ANNOUNCE_DELAY_MS = 15_000;
 const HTTP_BAD_GATEWAY = 502;
 const HTTP_BAD_REQUEST = 400;
 const HTTP_SERVER_ERROR = 500;
+/** Antworten auf Fehler der Anfrage (Fastify und seine Plugins setzen `statusCode`), alles andere: invalid_request. */
+const CLIENT_ERRORS: Readonly<Record<number, string>> = {
+  404: 'not_found',
+  405: 'method_not_allowed',
+  413: 'too_large',
+  415: 'unsupported_media_type',
+  429: 'rate_limited',
+};
 const ASSETS = '/assets/';
 const API = '/api/';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
@@ -121,6 +136,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const events = createEventBus();
   const stores = createStores(handle.db, events);
   const motor = createMotorClient(config.motorUrl, config.motorToken, options.motorFetch);
+  // Ein Weg zu GitHub für Updates und Spielmodi: Git statt API, wo es geht, gemerkte Antworten, gemeinsame Bremse.
+  const github = createGithubClient({
+    api: config.githubApi,
+    web: config.githubWeb,
+    token: config.githubToken,
+    dir: path.join(config.dataDir, 'github'),
+    ...(options.githubFetch ? { fetchImpl: options.githubFetch } : {}),
+  });
   const app = Fastify({
     logger: options.logger ?? true,
     // Die echte Adresse eines Besuchers kommt vom Weiterleiter davor (NetBird, Docker) – nur ihm wird geglaubt, nie
@@ -131,7 +154,17 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     app.log.info('Datenbank unter dem Zwischen-Namen übernommen – das Netzwerk heißt wieder MoinMorni');
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
-  await app.register(helmet, { contentSecurityPolicy: false, referrerPolicy: { policy: 'same-origin' } });
+  const indexFile = path.join(config.webDir, 'index.html');
+  const hasWeb = fs.existsSync(indexFile);
+  // Skripte nur von der eigenen Seite (dazu das kleine Hell/Dunkel-Skript der index.html über seine Prüfsumme).
+  const scriptHashes = hasWeb ? inlineScriptHashes(fs.readFileSync(indexFile, 'utf8')) : [];
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: contentSecurityPolicy(config.domain, scriptHashes),
+    },
+    referrerPolicy: { policy: 'same-origin' },
+  });
   // Nur Routen mit eigener Grenze (Einrichtung, später Anmeldung im Hub) – der Rest bleibt frei.
   await app.register(rateLimit, { global: false });
   // www.<Domain> → https://<Domain> (vor allem anderen, auch vor der Webseite und der Weiterleitung zum Motor).
@@ -142,6 +175,11 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     if (err instanceof MotorError) return reply.code(HTTP_BAD_GATEWAY).send({ error: 'motor_unreachable' });
     if ((err as { validation?: unknown }).validation)
       return reply.code(HTTP_BAD_REQUEST).send({ error: 'invalid_request' });
+    // Fehler der Anfrage selbst (kaputtes JSON, falsche Art, zu groß, zu oft): so sagen, wie Fastify sie meint –
+    // nicht als Fehler 500 und ohne Eintrag im Fehlerprotokoll (sonst füllt jeder Unsinn von außen das Protokoll).
+    const status = (err as { statusCode?: unknown }).statusCode;
+    if (typeof status === 'number' && status >= HTTP_BAD_REQUEST && status < HTTP_SERVER_ERROR)
+      return reply.code(status).send({ error: CLIENT_ERRORS[status] ?? 'invalid_request' });
     request.log.error({ err }, 'request failed');
     return reply.code(HTTP_SERVER_ERROR).send({ error: 'internal' });
   });
@@ -179,12 +217,20 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const build = createBuildService(motor, stores);
   /** Gibt es erst nach Hub und Neustart-Warteschlange (weiter unten). */
   const modeSettingsRef: { prepare: ModeSettingsSync['prepare'] } = { prepare: () => Promise.resolve() };
+  const releases = githubReleases(app.log, github, {
+    // Jars zum Ausprobieren ohne Release: <Datenordner>/mode-jars/<Repo-Name>.jar
+    localDir: path.join(config.dataDir, 'mode-jars'),
+    stateFile: path.join(config.dataDir, 'github', 'releases.json'),
+    web: config.githubWeb,
+    ...(options.githubFetch ? { fetchImpl: options.githubFetch } : {}),
+  });
   const network = createProvisioner(config, motor, hub, app.log, {
     configureLobby: lobbyWorld.configure,
     configureBuild: build.configure,
     modes: () => stores.modes(),
-    // Jars zum Ausprobieren ohne Release: <Datenordner>/mode-jars/<Repo-Name>.jar
-    releases: githubReleases(app.log, path.join(config.dataDir, 'mode-jars')),
+    releases,
+    // Panel → Einstellungen → Updates: neue Spielmodi bekommen von selbst ihren Server.
+    addModes: () => stores.settings('updates')['addModes'] !== false,
     // Neue Modus-Server starten gleich mit den Einstellungen aus dem Panel.
     prepare: (servers) => modeSettingsRef.prepare(servers),
   });
@@ -223,13 +269,56 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     log: app.log,
   });
   modeSettingsRef.prepare = modeSettings.prepare;
+  // Nach einem Update (erster Start mit der neuen Fassung): Neues gleich mit Countdown statt „sobald niemand drauf ist“.
+  const freshUpdate = { pending: firstStartAfterUpdate(config.dataDir, config.version) };
+  const restartNow = createRestartNow({
+    motor,
+    hub: {
+      playersOn: (member) => hub.presence.on(member),
+      everyone: () => hub.presence.all(),
+      tell: hub.tell,
+      countdown: hub.countdown,
+      connect: hub.connect,
+      kick: hub.kick,
+    },
+    queue: restarts,
+    modes: () => stores.modes(),
+    countdown: () => Number(stores.settings('updates')['restartCountdown'] ?? DEFAULT_COUNTDOWN_SECONDS),
+    log: app.log,
+  });
+  /** Welche Fassung jeder Spielmodus gerade hat („duels@v0.1.2,…“) – aus dem Zwischenspeicher, ohne GitHub. */
+  const releaseTags = async (): Promise<string> => {
+    const found = await Promise.all(
+      releaseModes(stores.modes()).map(
+        async (m) =>
+          `${m.id}@${(await releases.latest(MODE_REPOS[m.id] ?? '', MODE_JARS[m.id]))?.tag ?? '-'}`,
+      ),
+    );
+    return found.join(',');
+  };
+  const releaseSeen: { tags: string | null } = { tags: null };
+  const releaseTimer: { current: NodeJS.Timeout | undefined } = { current: undefined };
   const hubCheck: { timer: NodeJS.Timeout | undefined } = { timer: undefined };
-  const provision = async (): Promise<void> => {
+  const provisionNow = async (): Promise<void> => {
     if (!config.autoNetwork) return;
     try {
       const result = await network.ensure();
       app.log.info(result, 'Netzwerk geprüft');
-      restarts.add(result.restart);
+      releaseSeen.tags = await releaseTags();
+      const settings = stores.settings('updates');
+      const fresh = freshUpdate.pending;
+      freshUpdate.pending = false;
+      const soon = fresh && settings['restartAfterUpdate'] !== false;
+      const plan = planRestarts({
+        fresh,
+        afterUpdate: soon,
+        modesNow: settings['modeUpdatesNow'] === true,
+        restart: result.restart,
+        modesInstalled: result.modesInstalled,
+      });
+      restarts.add(plan.later);
+      /** Weitere Neustarts (Speicher, Bild): nach einem Update gleich mit, sonst sobald niemand drauf ist. */
+      const extra: Target[] = [];
       // Einmal: Modi mit dem alten Speicher-Standard bekommen den neuen (laufende übernehmen ihn beim Neustart).
       const retuned = await retuneMemory(
         motor,
@@ -244,7 +333,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
         );
         return [];
       });
-      restarts.add(retuned);
+      extra.push(...retuned);
       // Bild in der Serverliste: das Wappen, solange der Proxy keins hat (Velocity liest es beim Neustart).
       const proxy = result.servers.find((s) => s.member === PROXY_MEMBER);
       if (proxy) {
@@ -252,18 +341,28 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
           app.log.warn({ err }, 'Netzwerk: Bild für die Serverliste ließ sich nicht aufspielen');
           return false;
         });
-        if (iconNew) restarts.add([proxy]);
+        if (iconNew) extra.push(proxy);
       }
+      if (!soon) restarts.add(extra);
+      const immediate = soon ? [...plan.now, ...extra] : plan.now;
       // Spielmodi, die gerade schlafen: Einstellungen aus dem Panel für den nächsten Start eintragen.
       void modeSettings.syncFiles();
-      // Wer zwei Minuten nach dem Start noch ohne Hub läuft (z. B. alter Schlüssel im Speicher), startet neu, sobald
-      // niemand drauf ist. Schlafende und gestoppte Server holen sich alles beim nächsten Start.
-      clearTimeout(hubCheck.timer);
-      hubCheck.timer = setTimeout(() => {
-        const connected = new Set([...hub.connectedServers(), ...(hub.proxyOnline() ? ['proxy'] : [])]);
-        restarts.add(result.servers.filter((s) => !connected.has(s.member)));
-      }, HUB_GRACE_MS);
-      hubCheck.timer.unref();
+      // Wer zwei Minuten nach dem Start (bzw. nach dem Neustart mit Countdown) noch ohne Hub läuft (z. B. alter
+      // Schlüssel im Speicher), startet neu, sobald niemand drauf ist. Schlafende Server holen sich alles beim Start.
+      const armHubCheck = (): void => {
+        clearTimeout(hubCheck.timer);
+        hubCheck.timer = setTimeout(() => {
+          const connected = new Set([...hub.connectedServers(), ...(hub.proxyOnline() ? ['proxy'] : [])]);
+          restarts.add(result.servers.filter((s) => !connected.has(s.member)));
+        }, HUB_GRACE_MS);
+        hubCheck.timer.unref();
+      };
+      if (immediate.length) {
+        void (async () => {
+          await restartNow.run(immediate, plan.why);
+          armHubCheck();
+        })();
+      } else armHubCheck();
       // Die Welt baut sich im Hintergrund (beim ersten Mal ein paar Minuten), die Webseite läuft schon.
       lobbyRef.id = result.lobbyServerId;
       syncTeam();
@@ -277,6 +376,31 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       );
     }
   };
+  /** Nie zweimal gleichzeitig (sonst entstünden Server doppelt) – wer kommt, während es läuft, wartet darauf. */
+  const provisionLock: { running: Promise<void> | null } = { running: null };
+  const provision = async (): Promise<void> => {
+    if (provisionLock.running) return provisionLock.running;
+    provisionLock.running = provisionNow();
+    try {
+      await provisionLock.running;
+    } finally {
+      provisionLock.running = null;
+    }
+  };
+  /** Alle 10 Minuten: gibt es eine neue Fassung eines Spielmodus (Git, keine API-Frage)? Nur dann die Einrichtung. */
+  const checkReleases = async (): Promise<void> => {
+    if (!config.autoNetwork || releaseSeen.tags === null || (await setup.required())) return;
+    if ((await releaseTags()) !== releaseSeen.tags) await provision();
+  };
+  // „Neue Spielmodi automatisch hinzufügen“ wieder an → gleich nachsehen, statt bis zur nächsten vollen Stunde.
+  const addModesRef = { on: stores.settings('updates')['addModes'] !== false };
+  events.on('settings.changed', ({ area, values }) => {
+    if (area !== 'updates') return;
+    const on = values['addModes'] !== false;
+    const turnedOn = on && !addModesRef.on;
+    addModesRef.on = on;
+    if (turnedOn && releaseSeen.tags !== null) void provision();
+  });
   events.on('setup.done', () => void provision());
   // Lobby (neu) gestartet und beim Hub angemeldet → Welt prüfen; ist sie aktuell, passiert nichts.
   events.on('server.connected', ({ server }) => {
@@ -309,7 +433,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   teamRef.syncAll = teamAccess.syncAll;
   registerDiscordRoutes(app, auth, bot, credentials);
   registerNewsRoutes(app, auth, handle.db, events);
-  const updates = createUpdateService(config, motor, stores, options.githubFetch);
+  const updates = createUpdateService(config, motor, stores, github);
   registerUpdateRoutes(app, auth, updates);
   // Whitelist im Panel: das Team (kommt über den Rang immer hinein) steht von selbst mit drauf.
   registerWhitelistTeamRoute(app, auth, handle.db, hub.players, applications);
@@ -359,7 +483,6 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   );
   await registerMotorProxy(app, config.motorUrl, { beforeStart: (id) => sleep.makeRoom(id) });
 
-  const hasWeb = fs.existsSync(path.join(config.webDir, 'index.html'));
   if (hasWeb) {
     await app.register(fastifyStatic, {
       root: config.webDir,
@@ -423,6 +546,19 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
         void setup.required().then((required) => (required ? undefined : provision()));
       }, MODE_CHECK_MS);
       modeCheck.unref();
+      releaseTimer.current = setInterval(() => {
+        void (async () => {
+          try {
+            await checkReleases();
+          } catch (err) {
+            app.log.warn(
+              { err },
+              'Spielmodi: Nachsehen nach neuen Fassungen ging nicht – in 10 Minuten wieder',
+            );
+          }
+        })();
+      }, RELEASE_CHECK_MS);
+      releaseTimer.current.unref();
     },
     close: async () => {
       relay.current?.stop();
@@ -431,6 +567,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       bot.stop();
       restarts.stop();
       clearTimeout(hubCheck.timer);
+      clearInterval(releaseTimer.current);
       await hub.close();
       await app.close();
       handle.close();

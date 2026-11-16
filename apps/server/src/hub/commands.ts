@@ -31,12 +31,18 @@ export interface Command {
   readonly right?: GameRight;
   /** Eigene Antwort, wenn das Recht fehlt (sonst die allgemeine). */
   readonly noRight?: TextKey;
+  /**
+   * Erste Wörter, die der Befehl selbst behandelt, obwohl es eine Einstellung mit demselben Befehl gibt
+   * (`/lobby ja` – sonst gehen Wörter nach /lobby an die Lobby-Einstellungen, siehe `mergeCommands`).
+   */
+  readonly own?: readonly string[];
   readonly run: (actor: Actor, args: readonly string[]) => void;
   readonly complete?: (actor: Actor, args: readonly string[]) => string[];
 }
 
-const LOBBY = 'lobby';
 const DURATIONS = ['30m', '1h', '1d', '7d', '30d', 'perm'];
+/** Zweites Wort nach dem Spieler (Dauer bzw. Rang): `<spieler> <dauer> <grund…>`, `<spieler> <rang>`. */
+const SECOND_WORD = 2;
 const NOT_PUNISHED = {
   ban: 'punish.not_banned',
   mute: 'punish.not_muted',
@@ -95,7 +101,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       const t = culprit(actor, args[0], kind);
       if (!t) return;
       const minutes = parseDuration(args[1]);
-      const reasonParts = minutes === undefined ? args.slice(1) : args.slice(2);
+      const reasonParts = minutes === undefined ? args.slice(1) : args.slice(SECOND_WORD);
       const reason = reasonParts.join(' ').trim() || text(t.lang, 'punish.no_reason');
       // Ohne Dauer: Bann und Stumm (auch im Sprachchat) für immer, Gefängnis zehn Minuten.
       const fallback = kind === 'jail' ? JAIL_DEFAULT_MINUTES : null;
@@ -116,7 +122,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
     args.length <= 1 ? onlineNames(args[0]) : [];
   const punishArgs = (_: Actor, args: readonly string[]): string[] => {
     if (args.length <= 1) return onlineNames(args[0]);
-    return args.length === 2 ? DURATIONS.filter((d) => d.startsWith(args[1] ?? '')) : [];
+    return args.length === SECOND_WORD ? DURATIONS.filter((d) => d.startsWith(args[1] ?? '')) : [];
   };
 
   const whisper = (actor: Actor, to: string | null, message: string): void => {
@@ -206,12 +212,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: (_, args) =>
         args.length <= 1 ? ['privat', 'öffentlich'].filter((w) => w.startsWith(args[0] ?? '')) : [],
     },
-    {
-      ...networkCommand('lobby'),
-      run: (actor) => {
-        say(actor, text(actor.lang, ctx.connect(actor.uuid, LOBBY) ? 'lobby.going' : 'lobby.missing'));
-      },
-    },
+    // /lobby (fragt mitten im Spiel nach) und /rueckkehr stehen in rejoin.ts.
     {
       ...networkCommand('bau'),
       noRight: 'build.no_right',
@@ -352,7 +353,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       },
       complete: (actor, args) => {
         if (args.length <= 1) return onlineNames(args[0]);
-        if (args.length > 2) return [];
+        if (args.length > SECOND_WORD) return [];
         const roles = ctx.stores.roles();
         return roles
           .filter((r) => mayAssign(roles, actor.role.id, r.id))

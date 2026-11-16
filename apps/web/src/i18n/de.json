@@ -698,7 +698,7 @@
         "team": "Team-Befehle"
       },
       "lines": {
-        "lobby": "Zurück in die Lobby – von überall.",
+        "lobby": "Zurück in die Lobby – von überall. Mitten in einer Runde fragen wir lieber noch einmal nach, ein zweites /lobby gilt als Ja.",
         "server": "Direkt in einen Spielmodus, z. B. /server duels.",
         "freunde": "Wer von deinen Freunden gerade online ist – und wo.",
         "freundeAdd": "Eine Freundschaftsanfrage schicken.",
@@ -735,7 +735,8 @@
         "ban": "Aus dem ganzen Netzwerk aussperren – auch im Discord.",
         "unban": "Den Bann aufheben.",
         "rang": "Einen Rang geben oder wegnehmen – nur Ränge unter dem eigenen.",
-        "bau": "Auf den Bau-Server."
+        "bau": "Auf den Bau-Server.",
+        "rueckkehr": "Verbindung mitten im Spiel weg? Solange dein Platz frei ist, bringt dich das zurück in deine Runde (geht auch mit dem Gegenstand in der Lobby)."
       }
     }
   },
@@ -1812,12 +1813,14 @@
     "behind_one": "{{count}} Änderung neuer als deine",
     "behind_other": "{{count}} Änderungen neuer als deine",
     "isNewest": "Das ist deine Fassung.",
+    "newer": "Neuer als deine – wie viel, sagt die Liste der Änderungen.",
     "notChecked": "Noch nicht nachgesehen",
     "motor": "Motor (MorniHosting)",
     "motorUnknown": "Ob es Neues gibt, ist gerade nicht bekannt.",
     "motorCurrent": "Auf dem neuesten Stand.",
     "motorBehind_one": "MorniHosting hat {{count}} neuere Änderung ({{latest}}). Sie kommt mit, wenn",
     "motorBehind_other": "MorniHosting hat {{count}} neuere Änderungen ({{latest}}). Sie kommen mit, wenn",
+    "motorNewer": "MorniHosting hat Neues ({{latest}}). Es kommt mit, wenn",
     "motorSetting": "„Motor immer auf den neuesten Stand“ an ist.",
     "unknown": "unbekannt",
     "dev": "Entwickler-Fassung",
@@ -1831,6 +1834,17 @@
     "checkFailedTitle": "GitHub ist gerade nicht erreichbar",
     "checkFailedText": "Wir konnten nicht nachsehen, ob es etwas Neues gibt. Meist liegt das an GitHub oder am Internet des Rechners – MoinMorni läuft ganz normal weiter. Versuch es in ein paar Minuten noch mal.",
     "checkFailedToast": "GitHub antwortet gerade nicht – versuch es später noch mal.",
+    "branchMissingToast": "Den Kanal „{{branch}}“ gibt es auf GitHub nicht.",
+    "branchMissingTitle": "Den Kanal „{{branch}}“ gibt es auf GitHub (noch) nicht",
+    "branchMissingText": "MoinMorni folgt diesem Zweig auf GitHub, findet ihn dort aber nicht – vielleicht wurde er zusammengeführt oder umbenannt. Den Kanal legt MM_UPDATE_BRANCH in der .env auf dem Rechner fest (sonst main). MoinMorni läuft ganz normal weiter.",
+    "pendingTitle": "Die Liste der Änderungen kommt gleich",
+    "pendingText": "Es gibt eine neue Fassung – nur die Liste, was sich geändert hat, hat GitHub gerade nicht geschickt. MoinMorni fragt in ein paar Minuten noch mal.",
+    "pendingCanStart": "Update starten geht trotzdem schon.",
+    "limitedTitle": "GitHub lässt uns gerade nicht öfter fragen – die Änderungsliste kommt um {{time}}",
+    "limitedText": "Ohne Anmeldung beantwortet GitHub nur 60 Fragen pro Stunde je Internet-Adresse, und die teilen sich alle Rechner bei dir. Ob es etwas Neues gibt, sieht MoinMorni trotzdem – dafür fragt es GitHub auf einem anderen Weg.",
+    "limitedKeyTip": "Tipp: Mit einem GitHub-Schlüssel, der nur lesen darf (MM_GITHUB_TOKEN in der .env), sind es 5000 Fragen pro Stunde. Wie das geht, steht in der Schnellstart-Anleitung, Teil 8 „Updates“.",
+    "keyRejectedTitle": "GitHub nimmt den Schlüssel aus der .env nicht an",
+    "keyRejectedText": "MM_GITHUB_TOKEN ist abgelaufen, gelöscht oder falsch kopiert. MoinMorni fragt so lange ohne ihn (60 Fragen pro Stunde). Neuen Schlüssel in die .env auf dem Rechner eintragen und MoinMorni neu starten – oder die Zeile löschen.",
     "foundToast": "Es gibt ein Update!",
     "currentToast": "Alles aktuell – nichts zu tun.",
     "startedToast": "Update gestartet. Hier kannst du zusehen.",
@@ -1901,6 +1915,7 @@
     }
   },
   "applicationsCard": {
+    "noRight": "Entscheiden darf, wer im Spiel kicken darf (Moderator und darüber) – wie mit den Knöpfen in Discord.",
     "title": "Bewerbungen",
     "text": "Wer auf MorniCraft möchte. Bewerben geht auf der Webseite (mit Discord-Anmeldung) und im Discord mit /bewerben. Eine Zusage setzt den Namen auf die Whitelist.",
     "open": "Bewerbungen offen",
@@ -2028,6 +2043,7 @@
     "toList": "Zu den Bewerbungen"
   },
   "whitelistCard": {
+    "noRight": "Eintragen und Austragen darf, wer im Spiel kicken darf (Moderator und darüber) – wie beim Annehmen von Bewerbungen.",
     "title": "Whitelist",
     "text": "Wer auf MorniCraft darf. Das Team kommt immer hinein und steht hier von selbst: alle, deren Rang „Kommt immer rein“ hat. Angenommene Bewerbungen landen hier auch von selbst; du kannst Namen auch direkt eintragen.",
     "count_one": "{{count}} Spieler",
@@ -2256,6 +2272,7 @@
     "punishment_none": "Da gibt es gerade nichts aufzuheben – vielleicht ist die Strafe schon abgelaufen.",
     "role_unknown": "Diesen Rang gibt es nicht (mehr). Lade die Seite neu.",
     "role_too_high": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher (VIP vergibt nur der Owner).",
+    "mornicraft_no_right": "Die Whitelist von MorniCraft pflegt und Bewerbungen dafür entscheidet, wer im Spiel kicken darf (Moderator und darüber) – im Panel genauso wie in Discord.",
     "rank_no_right": "Ränge vergeben darfst du nicht – dafür braucht deine Rolle das Recht „Ränge vergeben“.",
     "role_owner_only": "Owner und Admin darf nur der Owner ändern.",
     "role_duplicate": "Zwei Rollen haben dieselbe Kennung. Gib einer einen anderen Namen.",

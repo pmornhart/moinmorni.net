@@ -80,12 +80,15 @@ public final class VelocityPlugin {
     private final Map<UUID, Instant> bans = new ConcurrentHashMap<>();
     private volatile JsonObject network;
     private HubClient hub;
+    /** Leiste mit Countdown vor einem Neustart (Hub: „countdown“). */
+    private final Countdown countdown;
 
     @Inject
     public VelocityPlugin(ProxyServer proxy, @DataDirectory Path dataDir) {
         this.proxy = proxy;
         this.log = Logger.getLogger("MoinMorni");
         this.dataDir = dataDir.getParent().resolve(HUB_DIR);
+        this.countdown = new Countdown(proxy, this);
         // Vor allem anderen: Datenordner vom Zwischen-Namen zurückholen.
         DataFolder.adoptInterim(dataDir.getParent(), log);
     }
@@ -146,6 +149,7 @@ public final class VelocityPlugin {
 
     @Subscribe
     public void onShutdown(ProxyShutdownEvent event) {
+        countdown.hideAll();
         if (hub != null) {
             hub.stop();
         }
@@ -166,6 +170,8 @@ public final class VelocityPlugin {
             case "kick" -> player(m).ifPresent(p -> p.disconnect(MM.deserialize(HubClient.str(m, "text"))));
             case "connect" -> player(m).ifPresent(p -> proxy.getServer(HubClient.str(m, "server"))
                     .ifPresent(s -> p.createConnectionRequest(s).fireAndForget()));
+            case "countdown" -> player(m).ifPresent(p -> countdown.show(p, HubClient.str(m, "text"),
+                    m.has("seconds") ? m.get("seconds").getAsInt() : 0));
             default -> log.fine("Unbekannte Nachricht vom Hub: " + type);
         }
     }
@@ -329,6 +335,7 @@ public final class VelocityPlugin {
 
     @Subscribe
     public void onDisconnect(DisconnectEvent event) {
+        countdown.hide(event.getPlayer().getUniqueId());
         if (hub == null || event.getLoginStatus() != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) {
             return;
         }

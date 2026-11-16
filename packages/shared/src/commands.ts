@@ -53,6 +53,14 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
     lines: [line('lobby', '/lobby')],
   },
   {
+    name: 'rueckkehr',
+    aliases: ['rejoin'],
+    usage: { de: '/rueckkehr', en: '/rejoin' },
+    topic: 'travel',
+    where: 'hub',
+    lines: [line('rueckkehr', '/rueckkehr', '/rejoin')],
+  },
+  {
     name: 'server',
     aliases: [],
     usage: { de: '/server <modus>', en: '/server <mode>' },

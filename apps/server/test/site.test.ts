@@ -41,7 +41,8 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
     expect(list[0]?.title.en).toBe('Neu: Morni Party!');
     expect((await anon('/api/news/neu-morni-party')).json()).toMatchObject({
       category: 'update',
-      author: 'philip',
+      // Nie der Anmeldename fürs Panel (security.test.ts): ohne verbundenes Minecraft-Konto „MoinMorni-Team“.
+      author: 'MoinMorni-Team',
     });
     const second = (await call('POST', '/api/panel/news', { ...draft, publish: true })).json<{
       slug: string;
