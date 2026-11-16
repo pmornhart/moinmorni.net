@@ -144,7 +144,7 @@ new_world() {
   : >"${W}/state/used-ids"
   echo 100 >>"${W}/state/used-ids"
   echo 105 >"${W}/state/nextid"
-  printf 'system          debian-12-standard_12.12-1_amd64.tar.zst\nsystem          debian-13-standard_13.1-2_amd64.tar.zst\nsystem          ubuntu-24.04-standard_24.04-2_amd64.tar.zst\n' \
+  printf 'system          debian-12-standard_12.12-1_amd64.tar.zst\nsystem          debian-12-standard_12.12-1_arm64.tar.zst\nsystem          debian-13-standard_13.1-2_amd64.tar.zst\nsystem          debian-13-standard_13.1-2_arm64.tar.zst\nsystem          ubuntu-24.04-standard_24.04-2_amd64.tar.zst\n' \
     >"${W}/state/templates.available"
   : >"${W}/state/templates.local"
   # Der nachgebaute Proxmox-Rechner: Version, 16 Kerne, 64 GB RAM, 325 GB frei auf local-lvm, Bridges vmbr0 und vmbr1.
@@ -614,6 +614,7 @@ check "läuft durch (Exit 0)" test "${RC}" -eq 0
 check "fragt nichts" lacks "${W}/out.txt" "Unter welcher Nummer"
 check "Container 120 angelegt" created 120
 check "Debian 13 als Vorlage (geladen, weil noch nicht da)" has "${W}/log/argv.log" "pveam download local debian-13-standard_13.1-2_amd64.tar.zst"
+check "nimmt die Vorlage für die Bauart des Rechners (amd64), nie arm64" lacks "${W}/log/argv.log" "arm64"
 for want in "--memory 32768" "--cores 8" "--swap 4096" "--rootfs local-lvm:100" "--unprivileged 1" \
   "--features nesting=1,keyctl=1" "--onboot 1" "--hostname morninet" "--timezone host" "name=eth0,bridge=vmbr0,ip=dhcp"; do
   check "pct create ${want}" has "${W}/log/argv.log" "${want}"

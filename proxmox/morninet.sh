@@ -410,13 +410,16 @@ size_mb() {
   if (($1 % MB_PER_GB == 0)); then printf '%s GB' $(($1 / MB_PER_GB)); else printf '%s MB' "$1"; fi
 }
 
-# Neueste Debian-Vorlage einer Version – aus der Liste von Proxmox oder schon heruntergeladen.
+# Neueste Debian-Vorlage einer Version – aus der Liste von Proxmox oder schon heruntergeladen. Nur für die Bauart dieses
+# Rechners (amd64 oder arm64): Proxmox 9 listet beide, und „arm64“ sortiert hinter „amd64“ – ein ARM-Container startet
+# auf einem Intel/AMD-Rechner nicht („Failed to spawn container“).
+host_arch() { dpkg --print-architecture 2>/dev/null || echo amd64; }
 find_template() {
   {
     pveam available --section system 2>/dev/null || true
     pveam list "${TEMPLATE_STORAGE}" 2>/dev/null || true
-  } | awk -v want="debian-$1-standard_" '
-    { for (i = 1; i <= NF; i++) { name = $i; sub(/^.*vztmpl\//, "", name); if (index(name, want) == 1) print name } }
+  } | awk -v want="debian-$1-standard_" -v arch="_$(host_arch)." '
+    { for (i = 1; i <= NF; i++) { name = $i; sub(/^.*vztmpl\//, "", name); if (index(name, want) == 1 && index(name, arch) > 0) print name } }
   ' | sort -uV | tail -n 1
 }
 
