@@ -169,6 +169,16 @@ final class LobbyFeatures implements Listener {
         this.jailed = jailed;
     }
 
+    /** Macht diese Person gerade den Rundgang? (Die Lobbymusik spielt dann leiser.) */
+    boolean inTour(UUID id) {
+        return tours.containsKey(id);
+    }
+
+    /** Läuft diese Person gerade den Parkour? (Die Lobbymusik spielt dann leiser.) */
+    boolean inParkour(UUID id) {
+        return runs.containsKey(id);
+    }
+
     /** Fürs Einsperren: Rundgang und Parkour-Lauf beenden. */
     void stopActivities(Player p) {
         BukkitTask task = tours.remove(p.getUniqueId());

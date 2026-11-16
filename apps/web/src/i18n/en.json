@@ -723,6 +723,9 @@
         "rundgang": "A tour through the village (stop: /tour stop).",
         "parkour": "The leaderboard of the parkour spiral and your best time.",
         "parkourStart": "To the start of the parkour spiral.",
+        "musik": "Turn the lobby music off and on for you. A brass band plays on normal days, Bavarian music at Oktoberfest, carols in winter – with our lobby pack a real band, otherwise note blocks.",
+        "musikLauter": "Make the lobby music quieter or louder (also as a number from 0 to 100). The “Jukebox/Note Blocks” slider in Minecraft's settings works too.",
+        "musikWeiter": "Skip to the next piece.",
         "warn": "Warn someone – it shows in their punishment history.",
         "strafen": "See all punishments of a player.",
         "mute": "Mute in the chat, e.g. for 30m, 2h, 7d or perm.",
@@ -1287,7 +1290,7 @@
     },
     "settings": {
       "title": "Settings",
-      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – MoinMorni does that by itself as soon as nobody is playing. Under “Reachability” you connect NetBird: website and game right on the domain, and your home address stays hidden."
+      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – MoinMorni does that by itself as soon as nobody is playing. Under Lobby → Music you set up the lobby music (which pieces play in each season). Under “Reachability” you connect NetBird: website and game right on the domain, and your home address stays hidden."
     },
     "news": {
       "title": "News",

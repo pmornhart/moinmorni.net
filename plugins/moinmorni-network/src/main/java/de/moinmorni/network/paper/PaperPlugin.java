@@ -65,6 +65,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private LobbyJail jail;
     /** Tageszeit der Lobby (wie in echt) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyClock clock;
+    /** Lobbymusik – nur aktiv, wenn der Hub die Stücke schickt ({@code lobby-music}). */
+    private LobbyMusic music;
 
     /** Einstellungen des Spielmodus auf diesem Server (aus dem Panel) – trägt sie in seine config.yml ein. */
     private ModeSettings modes;
@@ -123,6 +125,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         clock = new LobbyClock(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
+        // Lobbymusik: im Parkour, beim Rundgang und im Gefängnis leiser.
+        music = new LobbyMusic(this, this::langOf,
+                id -> features.inParkour(id) || features.inTour(id) || jail.isJailed(id));
         // In der Lobby bauen (im Kreativmodus): wer das Recht „Lobby bearbeiten“ hat – oder OP ist.
         features.setEditors(p -> Rights.mayEditLobby(rankRights(p)));
         getServer().getScheduler().runTask(this, this::logModeAdmins);
@@ -224,6 +229,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                         HubClient.str(role, "colour"),
                         role.get("position").getAsInt(),
                         rightsOf(m)));
+                if (m.has("music") && m.get("music").isJsonObject()) {
+                    music.onProfile(uuid, m.getAsJsonObject("music"));
+                }
                 Bukkit.getScheduler().runTask(this, () -> {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p != null) {
@@ -249,6 +257,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 clock.onSettings(m);
             }
             case "jail" -> jail.onState(m);
+            case "lobby-music" -> music.onSettings(m);
             case "lobby-ask" -> leaveAsk.onAsk(m);
             case "lobby-ask-close" -> leaveAsk.onClose(m);
             case "rejoin-offer" -> returnOffer.onOffer(m);

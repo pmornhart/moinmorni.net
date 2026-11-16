@@ -1,5 +1,6 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the game needs them */
 import { z } from 'zod';
+import { LOBBY_MUSIC_SECTIONS } from './lobby-music.js';
 import { MODE_SETTING_AREAS } from './mode-settings.js';
 import { TEAM_APPLY_AREA } from './team-apply.js';
 import type { PanelArea } from './roles.js';
@@ -715,6 +716,7 @@ export const LOBBY_AREA: SettingArea = {
         },
       ],
     },
+    ...LOBBY_MUSIC_SECTIONS,
   ],
 };
 
