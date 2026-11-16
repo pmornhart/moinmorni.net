@@ -62,6 +62,9 @@ const NO_RIGHT_PAUSE_MS = 10 * MINUTE_MS;
 /** Gemerkt: wen der Bot im Sprachkanal stummgeschaltet hat (Schlüssel + UUID → Discord-ID). */
 const VOICE_MUTE_KEY = 'voicemute:';
 const HTTP_UNAUTHORIZED = 401;
+// Einladung für einen Klick-Befehl im Spiel: "https://discord.gg/moinmorni" ja, "https://x.y/'a'" und "http://…" nein.
+// https://regex101.com/?flavor=javascript&regex=%5Ehttps%3A%5C%2F%5C%2F%5B%5E%5Cs'%22%3C%3E%5D%2B%24&testString=https%3A%2F%2Fdiscord.gg%2Fmoinmorni
+const SAFE_LINK = /^https:\/\/[^\s'"<>]+$/;
 const NEWS_TEXT_MAX = 1500;
 const THREAD_NAME_MAX = 90;
 const SELF_CACHE_MS = 60_000;
@@ -546,14 +549,33 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       '',
     );
 
+  /**
+   * Einladung für den Chat im Spiel: die aus dem Panel (Webseite → Links), sonst die, die der Bot angelegt hat. Nur
+   * https-Links ohne Leerzeichen, Anführungszeichen und spitze Klammern – der Link landet in einem Klick-Befehl.
+   */
+  const gameInvite = (): string | null => {
+    const fromPanel = stores.settings('website')['discordInvite'];
+    const code = get('invite');
+    const link =
+      typeof fromPanel === 'string' && fromPanel.trim()
+        ? fromPanel.trim()
+        : code
+          ? `https://discord.gg/${code}`
+          : '';
+    return SAFE_LINK.test(link) ? link : null;
+  };
+
   const commands = (ctx: HubContext): Command[] => [
     {
       name: 'discord',
       aliases: ['dc', 'verbinden'],
       usage: { de: '/discord', en: '/discord' },
       run: (actor) => {
+        // Erst die Einladung (aus dem Panel, sonst die des Bots), dann – mit Bot – der Code zum Verbinden.
+        const invite = gameInvite();
+        if (invite) ctx.msg(actor.uuid, bt(actor.lang, 'inviteGame', { invite }));
         if (!client() || !guildId()) {
-          ctx.msg(actor.uuid, bt(actor.lang, 'noBotGame'));
+          if (!invite) ctx.msg(actor.uuid, bt(actor.lang, 'noBotGame'));
           return;
         }
         [...codes.entries()].filter(([, v]) => v.uuid === actor.uuid).forEach(([k]) => codes.delete(k));

@@ -309,7 +309,10 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await proxy.request({ t: 'login', uuid: LENA, name: 'Lena', locale: 'de_de', bedrock: false });
     proxy.send({ t: 'switch', uuid: LENA, server: 'lobby' });
     h.mm.hub.players.setRole(LENA, 'vip');
+    const invite = proxy.next('msg', (m) => String(m['text']).includes('Discord beitreten'));
     await proxy.request({ t: 'command', uuid: LENA, command: 'discord', args: [] });
+    // Erst die Einladung zum Anklicken (die der Bot beim Einrichten angelegt hat), dann der Code.
+    expect(String((await invite)['text'])).toContain("<click:open_url:'https://discord.gg/");
     const msg = await proxy.next('msg', (m) => String(m['text']).includes('/verbinden'));
     // Code in der Nachricht: "<bold>AB12CD</bold>" → "AB12CD"; "<bold>ab</bold>" nicht.
     // https://regex101.com/?flavor=javascript&regex=%3Cbold%3E(%5BA-Z0-9%5D%7B6%7D)%3C%5C%2Fbold%3E&testString=%3Cbold%3EAB12CD%3C%2Fbold%3E

@@ -176,6 +176,11 @@ export const T = {
     de: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <green>Dein Discord-Konto <white>{name}</white> ist verbunden.',
     en: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <green>Your Discord account <white>{name}</white> is linked.',
   },
+  // /discord im Spiel: Einladung zum Anklicken (öffnet den Link) und zum Kopieren, darunter der Code zum Verbinden.
+  inviteGame: {
+    de: "<dark_gray>[<blue>Discord</blue>]</dark_gray> <white><bold>MoinMorni auf Discord</bold></white> <gray>– News, Hilfe, Bewerbungen und Sprachkanäle.<newline><dark_gray>[<blue>Discord</blue>]</dark_gray> <click:open_url:'{invite}'><hover:show_text:'<gray>Klicken: Einladung öffnen<newline><white>{invite}'><aqua><bold>[ Discord beitreten ]</bold></aqua></hover></click> <click:copy_to_clipboard:'{invite}'><hover:show_text:'<gray>Klicken: Einladungs-Link kopieren'><gray>[Link kopieren]</gray></hover></click>",
+    en: "<dark_gray>[<blue>Discord</blue>]</dark_gray> <white><bold>MoinMorni on Discord</bold></white> <gray>– news, help, applications and voice channels.<newline><dark_gray>[<blue>Discord</blue>]</dark_gray> <click:open_url:'{invite}'><hover:show_text:'<gray>Click: open the invite<newline><white>{invite}'><aqua><bold>[ Join Discord ]</bold></aqua></hover></click> <click:copy_to_clipboard:'{invite}'><hover:show_text:'<gray>Click: copy the invite link'><gray>[Copy link]</gray></hover></click>",
+  },
   noBotGame: {
     de: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <gray>Unser Discord ist noch nicht eingerichtet.',
     en: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <gray>Our Discord is not set up yet.',
