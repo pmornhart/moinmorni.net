@@ -167,13 +167,19 @@ export const T = {
     en: '🔊 **{name}** may chat again ({by})',
   },
   until: { de: ' bis <t:{ts}:f>', en: ' until <t:{ts}:f>' },
+  // Klick auf den Befehl oder den Code kopiert ihn (Java); Bedrock zeigt den Text wie bisher.
   linkCodeGame: {
-    de: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <gray>Dein Code: <white><bold>{code}</bold></white> – schreib in unserem Discord <yellow>/verbinden {code}</yellow> (gilt 10 Minuten).',
-    en: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <gray>Your code: <white><bold>{code}</bold></white> – type <yellow>/verbinden {code}</yellow> in our Discord (valid for 10 minutes).',
+    de: "<dark_gray>[<blue>Discord</blue>]</dark_gray> <gray>Dein Code: <click:copy_to_clipboard:'{code}'><hover:show_text:'<gray>Klicken: nur den Code kopieren'><white><bold>{code}</bold></white></hover></click> – schreib in unserem Discord <click:copy_to_clipboard:'/verbinden {code}'><hover:show_text:'<gray>Klicken: Befehl kopieren, dann in Discord einfügen'><yellow><u>/verbinden {code}</u></yellow></hover></click> (gilt 10 Minuten). <click:copy_to_clipboard:'/verbinden {code}'><hover:show_text:'<gray>Befehl kopieren'><green>[Kopieren]</green></hover></click>",
+    en: "<dark_gray>[<blue>Discord</blue>]</dark_gray> <gray>Your code: <click:copy_to_clipboard:'{code}'><hover:show_text:'<gray>Click: copy just the code'><white><bold>{code}</bold></white></hover></click> – type <click:copy_to_clipboard:'/verbinden {code}'><hover:show_text:'<gray>Click: copy the command, then paste it in Discord'><yellow><u>/verbinden {code}</u></yellow></hover></click> in our Discord (valid for 10 minutes). <click:copy_to_clipboard:'/verbinden {code}'><hover:show_text:'<gray>Copy the command'><green>[Copy]</green></hover></click>",
   },
   linkDoneGame: {
     de: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <green>Dein Discord-Konto <white>{name}</white> ist verbunden.',
     en: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <green>Your Discord account <white>{name}</white> is linked.',
+  },
+  // /discord im Spiel: Einladung zum Anklicken (öffnet den Link) und zum Kopieren, darunter der Code zum Verbinden.
+  inviteGame: {
+    de: "<dark_gray>[<blue>Discord</blue>]</dark_gray> <white><bold>MoinMorni auf Discord</bold></white> <gray>– News, Hilfe, Bewerbungen und Sprachkanäle.<newline><dark_gray>[<blue>Discord</blue>]</dark_gray> <click:open_url:'{invite}'><hover:show_text:'<gray>Klicken: Einladung öffnen<newline><white>{invite}'><aqua><bold>[ Discord beitreten ]</bold></aqua></hover></click> <click:copy_to_clipboard:'{invite}'><hover:show_text:'<gray>Klicken: Einladungs-Link kopieren'><gray>[Link kopieren]</gray></hover></click>",
+    en: "<dark_gray>[<blue>Discord</blue>]</dark_gray> <white><bold>MoinMorni on Discord</bold></white> <gray>– news, help, applications and voice channels.<newline><dark_gray>[<blue>Discord</blue>]</dark_gray> <click:open_url:'{invite}'><hover:show_text:'<gray>Click: open the invite<newline><white>{invite}'><aqua><bold>[ Join Discord ]</bold></aqua></hover></click> <click:copy_to_clipboard:'{invite}'><hover:show_text:'<gray>Click: copy the invite link'><gray>[Copy link]</gray></hover></click>",
   },
   noBotGame: {
     de: '<dark_gray>[<blue>Discord</blue>]</dark_gray> <gray>Unser Discord ist noch nicht eingerichtet.',

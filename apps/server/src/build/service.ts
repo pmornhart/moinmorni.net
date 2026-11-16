@@ -53,6 +53,9 @@ export function buildProperties(): Record<string, string> {
     'generate-structures': 'false',
     'allow-nether': 'false',
     'spawn-protection': '0',
+    // Befehle über RCON (Bauten kopieren) nicht als „[Rcon: …]“ in den Chat des Teams.
+    'broadcast-rcon-to-ops': 'false',
+    'broadcast-console-to-ops': 'false',
     motd: 'MoinMorni Bau-Server',
   };
 }
