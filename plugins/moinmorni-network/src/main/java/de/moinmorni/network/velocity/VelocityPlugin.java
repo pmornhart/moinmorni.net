@@ -76,6 +76,9 @@ public final class VelocityPlugin {
     private static final String WARTUNG = Fallback.WARTUNG;
     /** Ohne Hub: so oft nachsehen, ob die Lobby wieder antwortet (dann die Wartenden zurück). */
     private static final long LOCAL_RETURN_SECONDS = 5;
+    private static final String LOST_SERVER =
+            "<gold>Hoppla – <white><server></white> ist gerade weg, du bist zurück im Dorf.</gold> "
+            + "<gray>(<server> went away for a moment – you're back in the village.)</gray>";
     private static final String LOCAL_BYE =
             "<gold><bold>Die Lobby startet gerade neu</bold></gold>\n\n<gray>Gleich wieder da – versuch es in ein paar Sekunden nochmal.</gray>\n"
             + "<gray>The lobby is restarting – back in a moment, try again in a few seconds.</gray>";
@@ -357,8 +360,25 @@ public final class VelocityPlugin {
         sending.put(p.getUniqueId(), target.getServerInfo().getName());
         // In die Wartungs-Lobby ohne Nachricht vom Proxy: Beim Wechsel ginge sie verloren, die Wartungs-Lobby sagt
         // beim Ankommen selbst, warum man dort ist. In die Lobby mit dem Grund des Rauswurfs (wie Velocity sonst).
-        Component message = WARTUNG.equals(next.get()) || reason == null ? Component.empty() : reason;
+        Component message = WARTUNG.equals(next.get()) ? Component.empty() : friendlyReason(reason, event);
         event.setResult(KickedFromServerEvent.RedirectPlayer.create(target, message));
+    }
+
+    /**
+     * Grund für den Wechsel in die Lobby. Bricht ein Spielserver weg (Absturz, Neustart), hat er keinen eigenen Grund –
+     * Velocity zeigte dann sein englisches „An internal server connection error occurred.“. Jetzt ein freundlicher
+     * Satz in Deutsch und Englisch; ein echter Grund des Servers (z. B. Rauswurf) bleibt.
+     */
+    static Component friendlyReason(Component reason, KickedFromServerEvent event) {
+        boolean ownWords = reason != null
+                && !(reason instanceof net.kyori.adventure.text.TranslatableComponent t && t.key().startsWith("velocity."))
+                && !net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                        .serialize(reason).isBlank();
+        if (ownWords) {
+            return reason;
+        }
+        String server = event == null ? "" : event.getServer().getServerInfo().getName();
+        return MM.deserialize(LOST_SERVER.replace("<server>", MM.escapeTags(server)));
     }
 
     /** Ohne Hub: Antwortet die Lobby wieder, kommen die Wartenden zurück (nicht während einer Wartung). */
