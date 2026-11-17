@@ -68,7 +68,7 @@ import org.joml.Vector3f;
  */
 final class LobbyJump implements Listener {
 
-    record Settings(boolean on, int harderFrom, int startX, int startY, int startZ, LobbyFeatures.View back,
+    record Settings(boolean on, int harderFrom, boolean item, int startX, int startY, int startZ, LobbyFeatures.View back,
                     LobbyFeatures.View board, List<JumpCourse.Box> lanes) {
     }
 
@@ -93,11 +93,17 @@ final class LobbyJump implements Listener {
         BukkitTask meltTask;
         /** Eigener Teleport (Start) – kein Grund, den Lauf zu beenden. */
         boolean moving;
+        /**
+         * Wohin es nach dem Lauf zurückgeht: dorthin, wo man losgelegt hat (Gegenstand, Kompass, /jnr); null = an den
+         * Startplatz (wer über den Smaragd kam – zurück auf den Smaragd hieße sofort der nächste Lauf).
+         */
+        final Location origin;
 
-        Run(int lane, JumpCourse course, int best) {
+        Run(int lane, JumpCourse course, int best, Location origin) {
             this.lane = lane;
             this.course = course;
             this.best = best;
+            this.origin = origin;
         }
     }
 
@@ -161,6 +167,8 @@ final class LobbyJump implements Listener {
     private final Predicate<UUID> busy;
     private final Path file;
     private Consumer<JsonObject> toHub = body -> { };
+    /** Lauf fängt an oder endet, Einstellungen ändern sich – die Lobby tauscht den Gegenstand in der Schnellleiste. */
+    private Consumer<Player> changed = p -> { };
     private volatile Settings settings;
     private boolean commandsRegistered;
 
@@ -199,6 +207,27 @@ final class LobbyJump implements Listener {
         }, BOARD_CHECK, BOARD_CHECK);
     }
 
+    void setChanged(Consumer<Player> changed) {
+        this.changed = changed;
+    }
+
+    /** Sind die Einstellungen schon da? */
+    boolean ready() {
+        return settings != null;
+    }
+
+    /** Darf man gerade loslegen (Panel-Schalter)? */
+    boolean open() {
+        Settings s = settings;
+        return s != null && s.on();
+    }
+
+    /** Gehört der Gegenstand „Jump and Run“ in die Schnellleiste (Panel-Schalter)? */
+    boolean itemOn() {
+        Settings s = settings;
+        return s != null && s.item();
+    }
+
     /** Läuft gerade ein Versuch? (Dann kein Doppelsprung.) */
     boolean running(UUID id) {
         return runs.containsKey(id);
@@ -224,6 +253,8 @@ final class LobbyJump implements Listener {
         JsonObject switches = m.getAsJsonObject("jumpAndRun");
         boolean on = switches != null && switches.get("on").getAsBoolean();
         int harderFrom = switches == null ? 1 : Math.max(1, switches.get("harderFrom").getAsInt());
+        // Ältere Hubs schicken den Schalter nicht – dann gibt es den Gegenstand (Standard).
+        boolean item = switches == null || !switches.has("item") || switches.get("item").getAsBoolean();
         JsonObject start = jump.getAsJsonObject("start");
         List<JumpCourse.Box> lanes = new ArrayList<>();
         for (JsonElement el : jump.getAsJsonArray("lanes")) {
@@ -231,7 +262,7 @@ final class LobbyJump implements Listener {
             lanes.add(new JumpCourse.Box(o.get("x1").getAsInt(), o.get("y1").getAsInt(), o.get("z1").getAsInt(),
                     o.get("x2").getAsInt(), o.get("y2").getAsInt(), o.get("z2").getAsInt()));
         }
-        Settings next = new Settings(on, harderFrom, start.get("x").getAsInt(), start.get("y").getAsInt(),
+        Settings next = new Settings(on, harderFrom, item, start.get("x").getAsInt(), start.get("y").getAsInt(),
                 start.get("z").getAsInt(), view(jump.getAsJsonObject("back")), view(jump.getAsJsonObject("board")),
                 List.copyOf(lanes));
         Bukkit.getScheduler().runTask(plugin, () -> apply(next));
@@ -261,6 +292,7 @@ final class LobbyJump implements Listener {
         if (!commandsRegistered) {
             registerCommands();
         }
+        Bukkit.getOnlinePlayers().forEach(changed);
     }
 
     // ---------- Start ----------
@@ -287,11 +319,17 @@ final class LobbyJump implements Listener {
             return;
         }
         lastEnd.put(p.getUniqueId(), System.currentTimeMillis());
-        Bukkit.getScheduler().runTask(plugin, () -> begin(p));
+        Bukkit.getScheduler().runTask(plugin, () -> begin(p, false));
     }
 
-    /** Ein neuer Versuch: eigene Bahn, Startblock, erster Block davor. */
-    void begin(Player p) {
+    /**
+     * Ein neuer Versuch: eigene Bahn, Startblock, erster Block davor. Man „spawnt in der Luft“: sofort oben auf dem
+     * Startblock, ohne Schwung, Blick zum nächsten Block.
+     *
+     * @param here true = vom Gegenstand, Kompass oder /jnr – nach dem Lauf zurück an diese Stelle; false = über den
+     *     Smaragd – zurück an den Startplatz
+     */
+    void begin(Player p, boolean here) {
         Settings s = settings;
         if (s == null || !p.isOnline() || runs.containsKey(p.getUniqueId())) {
             return;
@@ -310,7 +348,8 @@ final class LobbyJump implements Listener {
         int lane = freeLane();
         laneUse[lane]++;
         JumpCourse course = new JumpCourse(s.lanes().get(lane), ThreadLocalRandom.current().nextLong(), s.harderFrom());
-        Run run = new Run(lane, course, records.getInt("best." + p.getUniqueId() + ".score", 0));
+        Run run = new Run(lane, course, records.getInt("best." + p.getUniqueId() + ".score", 0),
+                here ? p.getLocation().clone() : null);
         run.current = course.start();
         run.next = course.next(0);
         runs.put(p.getUniqueId(), run);
@@ -321,6 +360,8 @@ final class LobbyJump implements Listener {
         p.setFlying(false);
         p.teleport(new Location(w, c.x() + 0.5, c.top(), c.z() + 0.5, yaw, (float) LOOK_DOWN));
         run.moving = false;
+        // Kein Schwung von vorher (Doppelsprung, Launchpad) – man steht still auf dem Startblock.
+        p.setVelocity(new org.bukkit.util.Vector());
         p.setFallDistance(0);
         show(p, run, run.current, 0);
         pop(p, run, run.next, 1);
@@ -332,7 +373,17 @@ final class LobbyJump implements Listener {
                 Title.Times.times(java.time.Duration.ofMillis(200), java.time.Duration.ofMillis(2000),
                         java.time.Duration.ofMillis(500))));
         p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.6f, 1.4f);
+        p.spawnParticle(Particle.CLOUD, p.getLocation().add(0, 0.2, 0), 12, 0.4, 0.1, 0.4, 0.02);
         bar(p, run);
+        changed.accept(p);
+    }
+
+    /** Vom Gegenstand „Lauf beenden“: wie /jnr stop. */
+    void stopByItem(Player p) {
+        Run run = runs.get(p.getUniqueId());
+        if (run != null) {
+            end(p, run, End.STOP);
+        }
     }
 
     private int freeLane() {
@@ -663,7 +714,11 @@ final class LobbyJump implements Listener {
         report(p, score);
         if (how == End.FALL || how == End.STOP) {
             Settings s = settings;
-            if (s != null && p.isOnline()) {
+            if (p.isOnline() && run.origin != null) {
+                p.teleport(run.origin);
+                p.setVelocity(new org.bukkit.util.Vector());
+                p.setFallDistance(0);
+            } else if (s != null && p.isOnline()) {
                 LobbyFeatures.View v = s.back();
                 p.teleport(new Location(Bukkit.getWorlds().get(0), v.x(), v.y(), v.z(), v.yaw(), v.pitch()));
                 p.setFallDistance(0);
@@ -671,6 +726,9 @@ final class LobbyJump implements Listener {
             if (p.isOnline()) {
                 tell(p, score, record, run.best, how == End.FALL);
             }
+        }
+        if (p.isOnline() && how != End.QUIT) {
+            changed.accept(p);
         }
     }
 
@@ -686,9 +744,9 @@ final class LobbyJump implements Listener {
         p.showTitle(Title.title(title, sub, Title.Times.times(java.time.Duration.ofMillis(200),
                 java.time.Duration.ofMillis(2500), java.time.Duration.ofMillis(600))));
         p.sendMessage(text(p, "Jump and Run: " + pointsDe + (record && score > 0 ? " – neuer Rekord!" : "")
-                        + " Nochmal? Tritt auf den Smaragd oder tippe /jnr.",
+                        + " Nochmal? Feder in der Schnellleiste, Smaragd am Startplatz oder /jnr.",
                 "Jump and run: " + pointsEn + (record && score > 0 ? " – new record!" : "")
-                        + " Again? Step on the emerald or type /jnr.", NamedTextColor.AQUA));
+                        + " Again? Feather in the hotbar, emerald at the start or /jnr.", NamedTextColor.AQUA));
         p.playSound(p.getLocation(), record && score > 0 ? Sound.UI_TOAST_CHALLENGE_COMPLETE : Sound.BLOCK_NOTE_BLOCK_BASS,
                 0.8f, 1f);
     }
@@ -887,6 +945,6 @@ final class LobbyJump implements Listener {
             bar(p, run);
             return;
         }
-        begin(p);
+        begin(p, true);
     }
 }

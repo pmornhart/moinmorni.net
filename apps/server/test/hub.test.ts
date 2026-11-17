@@ -561,12 +561,16 @@ describe('Hub', () => {
     await cmd(PHILIP, 'lobby', 'doppelsprung', 'staerke', '1,5');
     await cmd(PHILIP, 'lobby', 'doppelsprung', 'aus');
     await cmd(PHILIP, 'lobby', 'jumpandrun', 'schwerer', '20');
+    await cmd(PHILIP, 'lobby', 'jumpandrun', 'gegenstand', 'aus');
     expect(stores.settings('lobby')).toMatchObject({
       doubleJump: false,
       doubleJumpStrength: 1.5,
       jumpHarderFrom: 20,
       jumpAndRun: true,
+      jumpItem: false,
     });
+    await cmd(PHILIP, 'lobby', 'jumpandrun', 'gegenstand', 'an');
+    expect(stores.settings('lobby')['jumpItem']).toBe(true);
     await cmd(PHILIP, 'lobby', 'doppelsprung', 'staerke', '3');
     await said(PHILIP, 'passt nicht');
     expect(stores.settings('lobby')['doubleJumpStrength']).toBe(1.5);
@@ -847,7 +851,7 @@ describe('Hub', () => {
     expect(first).toMatchObject({
       welcome: { title: 'Servus in MoinMorni!' },
       season: 'none',
-      jumpAndRun: { on: true, harderFrom: 10 },
+      jumpAndRun: { on: true, harderFrom: 10, item: true },
       doubleJump: { on: true, strength: 1 },
     });
     const features = first['features'] as {
@@ -864,8 +868,11 @@ describe('Hub', () => {
     stores.patchSettings('lobby', { doubleJump: false, doubleJumpStrength: 1.5, jumpHarderFrom: 25 }, 'test');
     expect(await lobby.next('lobby-settings')).toMatchObject({
       doubleJump: { on: false, strength: 1.5 },
-      jumpAndRun: { on: true, harderFrom: 25 },
+      jumpAndRun: { on: true, harderFrom: 25, item: true },
     });
+    // Gegenstand in der Schnellleiste aus dem Panel aus – die Lobby bekommt es sofort.
+    stores.patchSettings('lobby', { jumpItem: false }, 'test');
+    expect(await lobby.next('lobby-settings')).toMatchObject({ jumpAndRun: { on: true, item: false } });
     expect(duels.received.some((m) => m.t === 'lobby-settings')).toBe(false);
   });
 

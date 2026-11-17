@@ -88,7 +88,15 @@ final class LobbyFeatures implements Listener {
     private static final String ITEM_KEY = "lobby_item";
     private static final String MENU = "menu";
     private static final String TOUR_ITEM = "tour";
+    /** Feder „Jump and Run“ – im Lauf „Lauf beenden“, bei geschlossenem Jump and Run grau. */
+    static final String JUMP_ITEM = "jumpandrun";
+    /** Eintrag im Kompass-Menü (keine Modus-Kennung beginnt mit #). */
+    private static final String MENU_JUMP = "#jumpandrun";
     private static final int MENU_SLOT = 0;
+    /** Gleich neben dem Kompass (Platz 4 hat das Angebot „Zurück ins Spiel“, Platz 8 das Buch). */
+    static final int JUMP_SLOT = 1;
+    /** Ein Rechtsklick gilt nur einmal (Java schickt bei manchen Klicks zwei Ereignisse). */
+    private static final long ITEM_PAUSE_MS = 400;
     private static final int TOUR_SLOT = 8;
     /** Kompass-Menü: Rand oben und unten, je Reihe bis zu sieben Modi in der Mitte (Spalten 1 … 7). */
     private static final int MENU_COLUMNS = 9;
@@ -121,6 +129,7 @@ final class LobbyFeatures implements Listener {
     private int barSecond;
 
     private final Map<UUID, Long> padUsed = new HashMap<>();
+    private final Map<UUID, Long> itemUsed = new HashMap<>();
     private final Map<UUID, BukkitTask> tours = new HashMap<>();
     private final Set<UUID> seen = ConcurrentHashMap.newKeySet();
     /** Jump and Run hoch über dem Dorf und Doppelsprung überall. */
@@ -142,6 +151,7 @@ final class LobbyFeatures implements Listener {
         this.doubleJump = new LobbyDoubleJump(plugin,
                 p -> jailed.test(p.getUniqueId()) || tours.containsKey(p.getUniqueId()),
                 p -> jump.running(p.getUniqueId()), langOf, dataDir);
+        this.jump.setChanged(this::equipJump);
     }
 
     /** Wer in der Lobby fliegen darf (Rang-Recht „In der Lobby fliegen“, ab VIP). */
@@ -341,6 +351,7 @@ final class LobbyFeatures implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
         padUsed.remove(id);
+        itemUsed.remove(id);
         BukkitTask tour = tours.remove(id);
         if (tour != null) {
             tour.cancel();
@@ -375,6 +386,73 @@ final class LobbyFeatures implements Listener {
         p.getInventory().setItem(TOUR_SLOT, item(Material.WRITABLE_BOOK, TOUR_ITEM,
                 text(p, "Rundgang", "Tour", NamedTextColor.AQUA),
                 text(p, "Rechtsklick: kurze Führung durchs Dorf", "Right-click: a short tour of the village", NamedTextColor.GRAY)));
+        equipJump(p);
+    }
+
+    /** Was der Gegenstand „Jump and Run“ gerade ist. */
+    enum JumpLook { NONE, START, STOP, CLOSED }
+
+    /** Rein (ohne Server, getestet): Panel-Schalter und Lauf → Aussehen des Gegenstands. */
+    static JumpLook jumpLook(boolean ready, boolean itemOn, boolean open, boolean running) {
+        if (running) {
+            return JumpLook.STOP;
+        }
+        if (!ready || !itemOn) {
+            return JumpLook.NONE;
+        }
+        return open ? JumpLook.START : JumpLook.CLOSED;
+    }
+
+    /** Nur den Platz des Jump-and-Run-Gegenstands neu belegen (Lauf fängt an/endet, Panel ändert sich). */
+    private void equipJump(Player p) {
+        if (!active() || !p.isOnline() || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR
+                || jailed.test(p.getUniqueId())) {
+            return;
+        }
+        JumpLook look = jumpLook(jump.ready(), jump.itemOn(), jump.open(), jump.running(p.getUniqueId()));
+        ItemStack stack = switch (look) {
+            case NONE -> null;
+            case START -> item(Material.FEATHER, JUMP_ITEM,
+                    text(p, "Jump and Run", "Jump and run", NamedTextColor.GOLD).decorate(TextDecoration.BOLD),
+                    text(p, "Rechtsklick: sofort hoch über dem Dorf loslegen", "Right-click: start high above the village",
+                            NamedTextColor.GRAY));
+            case STOP -> item(Material.BARRIER, JUMP_ITEM,
+                    text(p, "Lauf beenden", "End run", NamedTextColor.RED).decorate(TextDecoration.BOLD),
+                    text(p, "Rechtsklick: zurück dorthin, wo du losgelegt hast", "Right-click: back to where you started",
+                            NamedTextColor.GRAY));
+            case CLOSED -> item(Material.GRAY_DYE, JUMP_ITEM,
+                    text(p, "Jump and Run – geschlossen", "Jump and run – closed", NamedTextColor.GRAY),
+                    text(p, "Das Team hat es gerade ausgeschaltet", "The team has switched it off for now",
+                            NamedTextColor.DARK_GRAY));
+        };
+        ItemStack before = p.getInventory().getItem(JUMP_SLOT);
+        // Nur unseren Platz anfassen – liegt dort etwas anderes (sollte nicht vorkommen), bleibt es.
+        if (before != null && !before.getType().isAir() && !JUMP_ITEM.equals(lobbyItem(before))) {
+            return;
+        }
+        p.getInventory().setItem(JUMP_SLOT, stack);
+    }
+
+    /** Gegenstand oder Kompass-Menü: Lauf starten bzw. beenden. */
+    private void useJump(Player p) {
+        long now = System.currentTimeMillis();
+        Long last = itemUsed.get(p.getUniqueId());
+        if (last != null && now - last < ITEM_PAUSE_MS) {
+            return;
+        }
+        itemUsed.put(p.getUniqueId(), now);
+        // Erst im nächsten Tick: Ein Teleport mitten im Klick auf einen Block ließ den echten Client sofort fallen
+        // (der Server verarbeitete danach noch Bewegungen von unten) – mit dem Befehl /jnr geschah das nie.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!p.isOnline()) {
+                return;
+            }
+            if (jump.running(p.getUniqueId())) {
+                jump.stopByItem(p);
+            } else {
+                jump.begin(p, true);
+            }
+        });
     }
 
     private ItemStack item(Material material, String id, Component name, Component lore) {
@@ -423,6 +501,12 @@ final class LobbyFeatures implements Listener {
             holder.ids.put(slot, modes.get(i).id());
             inv.setItem(slot, modeItem(p, modes.get(i)));
         }
+        // Unten in der Mitte des Rahmens: Jump and Run (sofort hoch über dem Dorf).
+        if (jump.ready()) {
+            int slot = inv.getSize() - MENU_COLUMNS / 2 - 1;
+            holder.ids.put(slot, MENU_JUMP);
+            inv.setItem(slot, jumpMenuItem(p));
+        }
         // Freie Plätze: grüne und graue Scheiben als Rahmen (ohne Namen, ohne Wirkung).
         ItemStack frame = pane(Material.GREEN_STAINED_GLASS_PANE);
         ItemStack inside = pane(Material.GRAY_STAINED_GLASS_PANE);
@@ -434,6 +518,24 @@ final class LobbyFeatures implements Listener {
             }
         }
         p.openInventory(inv);
+    }
+
+    private ItemStack jumpMenuItem(Player p) {
+        boolean open = jump.open();
+        ItemStack stack = new ItemStack(open ? Material.FEATHER : Material.GRAY_DYE);
+        ItemMeta meta = stack.getItemMeta();
+        meta.displayName(text(p, "Jump and Run", "Jump and run", open ? NamedTextColor.GOLD : NamedTextColor.GRAY)
+                .decorate(TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false));
+        List<Component> lore = new ArrayList<>();
+        lore.add(text(p, "Hoch über dem Dorf von Block zu Block", "High above the village, from block to block",
+                NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.empty());
+        lore.add((open ? text(p, "▶ Klick: sofort loslegen", "▶ Click to start right away", NamedTextColor.YELLOW)
+                : text(p, "Gerade geschlossen", "Closed right now", NamedTextColor.RED)).decoration(TextDecoration.ITALIC, false));
+        meta.lore(lore);
+        meta.addItemFlags(ItemFlag.values());
+        stack.setItemMeta(meta);
+        return stack;
     }
 
     private static ItemStack pane(Material material) {
@@ -505,7 +607,10 @@ final class LobbyFeatures implements Listener {
         if (event.getInventory().getHolder() instanceof MenuHolder holder) {
             event.setCancelled(true);
             String id = holder.ids.get(event.getRawSlot());
-            if (id != null) {
+            if (MENU_JUMP.equals(id)) {
+                p.closeInventory();
+                useJump(p);
+            } else if (id != null) {
                 p.closeInventory();
                 npcs.play(p, id);
             }
@@ -558,6 +663,13 @@ final class LobbyFeatures implements Listener {
         if (TOUR_ITEM.equals(id)) {
             event.setCancelled(true);
             startTour(p);
+            return;
+        }
+        if (JUMP_ITEM.equals(id)) {
+            event.setCancelled(true);
+            if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                useJump(p);
+            }
             return;
         }
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && block != null && !allowedUse(block.getType())

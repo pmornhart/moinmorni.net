@@ -627,6 +627,26 @@
   `~/mm-cache/bilder-weihnachtstor/`). Offen: Wiesn, Ostern und Halloween hängen ihr Schild am Eingangsbogen
   (`gateSign` in `saison-kit.ts`) weiter unter den Balken – dort überlappt die Begrüßung genauso.
 
+- 17.11. abends: **Jump and Run aus dem Inventar, Start in der Luft** (Philip: „Jump and Run soll im Inventar
+  aktivierbar sein und man spawnt in der Luft“; Branch `claude/jnr-inventar`): In der Schnellleiste der Lobby liegt
+  neben dem Kompass (Platz 1) eine **Feder „Jump and Run“** – Rechtsklick (Bedrock: antippen) und man steht sofort hoch
+  über dem Dorf auf dem ersten Block der eigenen Bahn, ohne Schwung von vorher, Blick zum nächsten Block, kein
+  Fallschaden, Doppelsprung/Fliegen aus wie bisher. Im Lauf wird sie zur Barriere **„Lauf beenden“** (wie `/jnr stop`),
+  danach wieder Feder; Jump and Run im Panel aus → grauer Farbstoff „geschlossen“ mit Hinweis beim Klick; Gefängnis und
+  Rundgang wie bisher gesperrt (Rundgang: freundliche Absage). Dazu ein Eintrag **„Jump and Run“ unten in der Mitte des
+  Kompass-Menüs**. Zurück nach Sturz oder Beenden: an die Stelle, von der man losgelegt hat (Feder, Menü, `/jnr`); wer
+  über den Smaragd kam, wie bisher an den Startplatz (sonst sofort der nächste Lauf). Panel Lobby → Jump and Run →
+  „Gegenstand in der Schnellleiste“ (an), `/lobby jumpandrun gegenstand an|aus`; Hilfe-Seite, Befehls-Texte,
+  `docs/lobby.md`. **Fund mit dem echten Client 26.3:** startete der Lauf direkt im Klick auf einen Block, fiel der
+  Spieler sofort („Gefallen! 0 Punkte“) – mit Test-Spielern und `/jnr` nie; jetzt startet der Gegenstand einen Tick
+  später (danach steht der echte Client still oben). Tests: 84 JUnit (5 neu, `LobbyJumpItemTest`), 293 Server- (Hub:
+  Schalter im Panel und im Spiel, `item` in `lobby-settings`), 129 shared, Typen, Prettier. Echt: Paper 26.1.2 +
+  Netzwerk-Plugin + Test-Hub, Lobby mit dem echten Selbstbau (85 Teile, 68 s), `lobby-test` **51/51** (neu 17: Feder
+  auf Platz 1, Rechtsklick → oben auf dem Smaragd, steht still, „Lauf beenden“ → zurück an die Stelle davor, Eintrag im
+  Kompass-Menü → oben, `/jnr stop` → zurück, Panel: Gegenstand aus/an, Jump and Run aus → grau + Absage, an → Feder).
+  Bilder mit echtem Client 26.3 nur lokal (Schnellleiste mit Feder am Startplatz, Start in der Luft mit „Lauf
+  beenden“, Kompass-Menü mit Eintrag). Nicht echt geprüft: Bedrock (Antippen über Geyser).
+
 ## Offen
 
 - **Kleidung (17.11.):** Philip: Go für Angelkönig 0.2.1 und diesen Branch zusammen. Nicht echt geprüft: über

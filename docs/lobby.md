@@ -344,6 +344,14 @@ Lobby-Server (bei jeder Änderung neu).
   `/jnr top`, `/jnr stop`; Werte gehen als Statistik „lobby“ an den Hub (`jump_best`, `jump_runs`, `jumps` – Profil
   und Bestenliste der Webseite). `/parkour` leitet um. Ein Teleport, Kreativ-/Zuschauermodus, Gefängnis oder Rundgang
   beenden den Lauf. Die alte `parkour.yml` bleibt liegen (Zeiten passen nicht zu Punkten).
+  **Aus der Schnellleiste:** Platz 1 neben dem Kompass hält eine Feder „Jump and Run“ (Panel Lobby → Jump and Run →
+  „Gegenstand in der Schnellleiste“, Standard an, auch `/lobby jumpandrun gegenstand an|aus`); Rechtsklick (Bedrock:
+  antippen) startet sofort, im Lauf wird sie zur Barriere „Lauf beenden“, bei ausgeschaltetem Jump and Run ein grauer
+  Farbstoff „geschlossen“. Dazu ein Eintrag unten in der Mitte des Kompass-Menüs. Wer so (oder mit `/jnr`) startet,
+  „spawnt in der Luft“: sofort oben auf dem Startblock, ohne Schwung von vorher, Blick zum nächsten Block – und landet
+  nach Sturz oder „Lauf beenden“ wieder genau dort, wo er losgelegt hat; wer über den Smaragd kam, am Startplatz
+  (zurück auf den Smaragd hieße sofort der nächste Lauf). Der Start vom Gegenstand läuft einen Tick später – ein
+  Teleport mitten im Klick auf einen Block ließ den echten Client sonst gleich wieder fallen.
 - **Doppelsprung** (`LobbyDoubleJump.java`): der klassische Lobby-Doppelsprung – springen, in der Luft noch einmal die
   Sprungtaste, und ein kräftiger Schub wirft einen in Blickrichtung in hohem Bogen davon (Blickrichtung × 1,6 × Stärke,
   nach oben 0,6 + 0,4 × Stärke Blöcke pro Tick; Stärke im Panel 0,5–2, Standard 1 ≈ 15 Blöcke weit, 7 hoch, bei 2 gut
