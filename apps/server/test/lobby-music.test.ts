@@ -9,7 +9,7 @@ import { openDatabase } from '../src/db/index.js';
 import { createHub, type Hub } from '../src/hub/index.js';
 import { createEventBus } from '../src/lib/events.js';
 import { lobbyMusicBody, musicDir, musicFiles } from '../src/lobby/music.js';
-import { lobbyPackInfo } from '../src/lobby/packs.js';
+import { netzPackInfo } from '../src/packs/netz.js';
 import { createStores, type Stores } from '../src/panel/stores.js';
 import { connectPlugin, type FakePlugin, type Msg } from './fake-plugin.js';
 
@@ -71,13 +71,14 @@ describe('Lobbymusik: Noten, Panel und Klangdateien', () => {
     SLOW,
   );
 
-  test('das Lobby-Paket enthält sounds.json und alle Klangdateien', () => {
-    const zip = lobbyPackInfo().bytes;
+  test('das Netzwerk-Paket enthält sounds.json und alle Klangdateien', () => {
+    const zip = netzPackInfo().bytes;
     const names = zip.toString('latin1');
     expect(names).toContain('assets/moinmorni/sounds.json');
     LOBBY_SONGS.forEach((s) => expect(names).toContain(`assets/moinmorni/sounds/lobby/musik/${s.id}.ogg`));
-    // Die Möbel sind noch drin.
-    expect(names).toContain('assets/minecraft/blockstates/');
+    // Die Möbel sind noch drin – als Gegenstände, nie als Blockzustände (das Paket gilt auf allen Servern).
+    expect(names).toContain('assets/moinmorni/models/block/moebel/stuhl.json');
+    expect(names).not.toContain('assets/minecraft/blockstates/');
   });
 
   test(

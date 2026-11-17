@@ -73,16 +73,63 @@ export function kugelModel(farbe: KugelFarbe): Record<string, unknown> {
   };
 }
 
-/** Modelle (Name → JSON) und Blockzustände (Block → JSON) für das Lobby-Paket. */
+/** `custom_model_data`-Text einer Kugel (`moinmorni:kugel`): nur damit wird der Trockenbeton rund. */
+export const KUGEL_KEY = 'moinmorni:kugel';
+
+/**
+ * Modelle (Name → JSON) und Gegenstände (Trockenbeton-Gegenstand → JSON) für das Netzwerk-Paket. Rund wird nur ein
+ * Trockenbeton-Gegenstand mit unserem Namen (`KUGEL_KEY`) – in Item-Anzeigen der Lobby. Gebauter Trockenbeton und
+ * Trockenbeton im Inventar sehen auf jedem Server aus wie immer.
+ */
 export function schmuckModels(ns: string): {
   readonly models: Readonly<Record<string, Record<string, unknown>>>;
-  readonly blockstates: Readonly<Record<string, unknown>>;
+  readonly items: Readonly<Record<string, Record<string, unknown>>>;
 } {
   const farben = Object.keys(KUGELN) as KugelFarbe[];
   return {
     models: Object.fromEntries(farben.map((f) => [`kugel_${f}`, kugelModel(f)])),
-    blockstates: Object.fromEntries(
-      farben.map((f) => [KUGELN[f], { variants: { '': { model: `${ns}:block/schmuck/kugel_${f}` } } }]),
+    items: Object.fromEntries(
+      farben.map((f) => [
+        KUGELN[f],
+        {
+          model: {
+            type: 'minecraft:select',
+            property: 'minecraft:custom_model_data',
+            index: 0,
+            cases: [
+              {
+                when: KUGEL_KEY,
+                model: { type: 'minecraft:model', model: `${ns}:block/schmuck/kugel_${f}` },
+              },
+            ],
+            fallback: { type: 'minecraft:model', model: `minecraft:block/${KUGELN[f]}` },
+          },
+        },
+      ]),
     ),
   };
+}
+
+/**
+ * Kugeln (und Ostereier) bauen die Saison-Pläne als Block-Anzeigen aus Trockenbeton – so prüft die Bauplan-Prüfung
+ * sie wie alle Deko. Beim Bauen (`lobby/datapack.ts`) wird daraus eine Item-Anzeige desselben Trockenbetons mit
+ * unserem Namen (`KUGEL_KEY`): mit Paket rund, ohne Paket der Würfel wie vorher. Item-Anzeigen zeichnen das Modell um
+ * die Mitte – die Verschiebung der Block-Anzeige (halbe Größe, mitgedreht) fällt darum weg; Drehung und Größe bleiben.
+ * Andere Befehle bleiben, wie sie sind.
+ *
+ * Passt: "summon block_display 1 2 3 {…,block_state:{Name:'minecraft:red_concrete_powder',id:'minecraft:red_concrete_powder'},transformation:{left_rotation:[…],right_rotation:[0f,0f,0f,1f],translation:[…],scale:[…]}…}"
+ * https://regex101.com/?flavor=javascript&regex=%5Esummon%20block_display%20(%5CS%2B%20%5CS%2B%20%5CS%2B)%20%5C%7B(.*)block_state%3A%5C%7BName%3A'minecraft%3A(%5Ba-z_%5D%2Bconcrete_powder)'%5B%5E%7D%5D*%5C%7D%2C(.*)translation%3A%5C%5B%5B%5E%5C%5D%5D*%5C%5D(.*)%24
+ */
+const KUGEL_BLOCK_DISPLAY =
+  /^summon block_display (\S+ \S+ \S+) \{(.*)block_state:\{Name:'minecraft:([a-z_]+concrete_powder)'[^}]*\},(.*)translation:\[[^\]]*\](.*)$/;
+const KUGEL_BLOCKS: ReadonlySet<string> = new Set(Object.values(KUGELN));
+
+export function kugelAsItem(command: string): string {
+  const m = KUGEL_BLOCK_DISPLAY.exec(command);
+  if (!m || !KUGEL_BLOCKS.has(m[3] ?? '')) return command;
+  const [, at, before, block, middle, after] = m;
+  return (
+    `summon item_display ${at} {${before}item:{id:'minecraft:${block}',count:1,components:{'minecraft:custom_model_data':{strings:['${KUGEL_KEY}']}}},` +
+    `item_display:'none',${middle}translation:[0f,0f,0f]${after}`
+  );
 }

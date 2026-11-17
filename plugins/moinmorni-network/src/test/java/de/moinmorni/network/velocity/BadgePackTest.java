@@ -84,4 +84,22 @@ class BadgePackTest {
         assertEquals(0, BadgePack.retryDelaySeconds(4));
         assertEquals(0, BadgePack.retryDelaySeconds(0));
     }
+
+    @Test
+    void networkPackGoesToEveryJavaClientAndOldServerPacksAreBlocked() {
+        // Das Netzwerk-Paket: jeder Java-Client (auch vor 1.20.3), nie Bedrock.
+        assertTrue(BadgePack.java(JAVA));
+        assertFalse(BadgePack.java(BEDROCK));
+        assertEquals(BadgePack.Step.SEND, BadgePack.plan(ON, null, BadgePack.java(JAVA), false));
+        assertEquals(BadgePack.Step.NOTHING, BadgePack.plan(ON, null, BadgePack.java(BEDROCK), false));
+        // Einmal geschickt: beim nächsten Wechsel nichts Neues (gleiche SHA-1).
+        assertEquals(BadgePack.Step.NOTHING,
+                BadgePack.plan(ON, new BadgePack.Sent(SHA1, false, 0), true, false));
+        // Frühere Server-Pakete (Möbel, Fische) und alles von unserer Webseite lässt der Proxy nicht durch.
+        assertTrue(BadgePack.oldServerPack(UUID.fromString("6d6f696e-6d6f-726e-692d-6d6f6562656c"), "https://x/y.zip"));
+        assertTrue(BadgePack.oldServerPack(UUID.fromString("6d6f696e-6d6f-726e-692d-616e67656c6b"), null));
+        assertTrue(BadgePack.oldServerPack(UUID.randomUUID(), "https://moinmorni.net/api/public/packs/lobby.zip"));
+        assertFalse(BadgePack.oldServerPack(UUID.randomUUID(), "https://example.org/pack.zip"));
+        assertFalse(BadgePack.oldServerPack(BadgePack.NETZ_ID, "https://example.org/pack.zip"));
+    }
 }

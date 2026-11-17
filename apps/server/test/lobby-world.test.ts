@@ -5,8 +5,8 @@ import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, describe, expect, test } from 'vitest';
 import { MOEBEL_PACK_ID } from '@moinmorni/builder';
 import { INTERIM_LOBBY_PACKS } from '../src/lib/rename.js';
-import { lobbyPackInfo, lobbyPackUrl } from '../src/lobby/packs.js';
-import { createLobbyWorld, lobbyProperties, patchProperties } from '../src/lobby/world.js';
+import { netzPackInfo, netzPackUrl } from '../src/packs/netz.js';
+import { createLobbyWorld, lobbyProperties, patchProperties, withoutOwnPack } from '../src/lobby/world.js';
 import { MotorError, type MotorClient } from '../src/motor/client.js';
 import { createProvisioner } from '../src/network/provision.js';
 import { createHarness, type Harness } from './harness.js';
@@ -256,19 +256,43 @@ describe('Lobby baut sich selbst', () => {
     expect(errors).toEqual([{ parts: ['part/001'] }]);
   });
 
-  test('Möbel-Paket: mit Domain bietet die Lobby es an (feste Kennung, Pflicht per Schalter), die Webseite liefert es', async () => {
-    const offer = { url: lobbyPackUrl('moinmorni.net'), sha1: lobbyPackInfo().sha1, required: true };
-    const props = lobbyProperties(offer);
-    expect(props['resource-pack']).toBe('https://moinmorni.net/api/public/packs/lobby.zip');
-    expect(props['resource-pack-sha1']).toMatch(/^[0-9a-f]{40}$/); // eslint-disable-line ts-patterns/require-regex-example -- SHA-1 hex: "da39a3ee5e6b4b0d3255bfef95601890afd80709" yes, "abc" no
-    expect(props['resource-pack-id']).toBe(MOEBEL_PACK_ID);
-    expect(props['require-resource-pack']).toBe('true');
-    expect(lobbyProperties({ ...offer, url: null })['resource-pack']).toBe('');
+  test('Netzwerk-Paket: die Lobby bietet kein eigenes Paket mehr an, ihr altes kommt aus der server.properties', async () => {
+    const props = lobbyProperties();
+    expect(props['resource-pack']).toBe('');
+    expect(props['resource-pack-id']).toBe('');
+    expect(props['require-resource-pack']).toBe('false');
+    const old = [
+      'motd=x',
+      'resource-pack=https\\://moinmorni.net/api/public/packs/lobby.zip',
+      'resource-pack-sha1=0123456789abcdef0123456789abcdef01234567',
+      `resource-pack-id=${MOEBEL_PACK_ID}`,
+      'require-resource-pack=true',
+      '',
+    ].join('\n');
+    const cleaned = withoutOwnPack(old);
+    expect(cleaned.changed).toBe(true);
+    expect(cleaned.text).toContain('resource-pack=\n');
+    expect(cleaned.text).toContain('require-resource-pack=false');
+    expect(cleaned.text).toContain('motd=x');
+    // Ein fremdes, von Hand eingetragenes Paket bleibt.
+    const foreign = 'resource-pack=https\\://example.org/pack.zip\nresource-pack-id=1234\n';
+    expect(withoutOwnPack(foreign).changed).toBe(false);
 
     const h = await harness();
-    const res = await h.mm.app.inject({ method: 'GET', url: '/api/public/packs/lobby.zip' });
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toBe('application/zip');
-    expect(crypto.createHash('sha1').update(res.rawPayload).digest('hex')).toBe(offer.sha1);
+    const { sha1 } = netzPackInfo();
+    // Alte Adressen (in noch nicht aufgeräumten server.properties) liefern das Netzwerk-Paket.
+    for (const url of [
+      '/api/public/packs/netz.zip',
+      '/api/public/packs/lobby.zip',
+      '/api/public/packs/angelkoenig.zip',
+    ]) {
+      const res = await h.mm.app.inject({ method: 'GET', url });
+      expect(res.statusCode, url).toBe(200);
+      expect(res.headers['content-type']).toBe('application/zip');
+      expect(crypto.createHash('sha1').update(res.rawPayload).digest('hex')).toBe(sha1);
+    }
+    expect(netzPackUrl('moinmorni.net', sha1)).toBe(
+      `https://moinmorni.net/api/public/packs/netz.zip?v=${sha1}`,
+    );
   });
 });

@@ -18,6 +18,7 @@ import { modes, roles, settingValues } from '../db/schema.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import type { EventBus } from '../lib/events.js';
 import { upgradeRoleTemplate } from './role-template.js';
+import { mergePackRequired } from './pack-required.js';
 
 /**
  * Speicher für Rollen-Vorlage, Einstellungen (nach Katalog) und Modi. Beim ersten Start kommen die Vorlagen
@@ -134,6 +135,7 @@ export function createStores(db: Db, events: EventBus): Stores {
   addNewModes(db);
   updateOldSmp(db);
   refreshOldTexts(db);
+  mergePackRequired(db);
 
   const allRoles = (): Role[] =>
     db

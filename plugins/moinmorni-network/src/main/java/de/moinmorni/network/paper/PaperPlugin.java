@@ -45,7 +45,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
      */
     private record Profile(String name, String lang, String roleId, String symbol, String colour, int position,
                            java.util.Set<String> rights, String badge, boolean streaming,
-                           java.util.Set<String> hides) {
+                           java.util.Set<String> hides, boolean pack) {
     }
 
     /** Name dieses Servers im Netzwerk (aus hub.json), z. B. „lobby“ oder „bau“. */
@@ -264,7 +264,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                         rightsOf(m),
                         HubClient.str(role, "badge"),
                         streamingOf(m),
-                        streamerPartsOf(m)));
+                        streamerPartsOf(m),
+                        m.has("pack") && m.get("pack").isJsonPrimitive() && m.get("pack").getAsBoolean()));
                 if (m.has("music") && m.get("music").isJsonObject()) {
                     music.onProfile(uuid, m.getAsJsonObject("music"));
                 }
@@ -523,6 +524,11 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
 
     /** Metadaten für Spielmodi wie MorniCraft: an = Teile mit Komma („ip,coords,msg,live“), aus = nicht da. */
     private static final String STREAMER = "moinmorni:streamer";
+    /**
+     * Hat der Spieler das Netzwerk-Paket geladen (Boolean)? Der Proxy weiß es, der Hub schickt es im Profil. Spielmodi
+     * lesen es hier (Angelkönig zeigt Hüte und Kleidung je Betrachter in der passenden Fassung).
+     */
+    static final String PACK = "moinmorni:paket";
     private static final String LIVE_MARK = "L";
     private static final int LIVE_ID_CHARS = 8;
     private static final String LIVE_SUFFIX = " ● LIVE";
@@ -698,6 +704,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         }
         p.removeMetadata(STREAMER, this);
         p.removeMetadata(RankPrefix.META, this);
+        p.removeMetadata(PACK, this);
     }
 
     /** Aus dem Team; das eigene Team eines Streamers geht danach ganz weg. */
@@ -719,6 +726,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         applyRights(p, profile);
         streamerMeta(p, profile);
         badgeMeta(p, profile);
+        p.setMetadata(PACK, new org.bukkit.metadata.FixedMetadataValue(this, profile.pack()));
         if (morniCraft()) {
             // MorniCraft zeigt den Rang des Netzwerks selbst (mit Clan-Kürzel, auf den Leisten jedes Spielers).
             return;

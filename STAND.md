@@ -663,8 +663,48 @@
   Kompass-Menü → oben, `/jnr stop` → zurück, Panel: Gegenstand aus/an, Jump and Run aus → grau + Absage, an → Feder).
   Bilder mit echtem Client 26.3 nur lokal (Schnellleiste mit Feder am Startplatz, Start in der Luft mit „Lauf
   beenden“, Kompass-Menü mit Eintrag). Nicht echt geprüft: Bedrock (Antippen über Geyser).
+- 17.11. abends: **Ein Paket fürs ganze Netzwerk** (Philip: „nicht immer, wenn man zwischen den Servern wechselt,
+  Resource Packs laden – einfach schnips und es geht“; Branch `claude/ein-paket`): Statt Lobby-Paket (Möbel, Brunnen,
+  Trachten, Kugeln, Musik; server.properties der Lobby, Proxy nahm es beim Wechsel ab) und Angelkönig-Paket (Fische,
+  Kleidung) gibt es das **Netzwerk-Paket** (`packages/builder/src/netzpaket.ts`, `apps/server/src/packs/netz.ts`,
+  `/api/public/packs/netz.zip`, feste Kennung `…6e65747a7061`, 14,6 MB) – dazu weiter das kleine Abzeichen-Paket (hängt
+  an den Rollen, eine neue Rolle lädt nur das kleine neu). **Der Proxy bietet beide einmal beim ersten Server an und
+  nimmt sie nie ab** (Hub-Nachrichten `netzpaket`/`netzpaket-send`, Regeln wie die Abzeichen in `BadgePack.java`, an
+  jeden Java-Client, nach Fehlern drei neue Versuche); **kein Spielserver bietet mehr ein eigenes an** – MoinMorni räumt
+  die alten Einträge aus der server.properties (nur unsere Kennung/Adresse), Angelkönig bekommt `paket.json`
+  `{"netz": true}`, und ein noch nicht aufgeräumter Server kommt am Proxy nicht durch (`ServerResourcePackSendEvent`).
+  **Möbel-Frage:** Das Lobby-Paket gab Mangrove-Treppen/-Stufen, Birken-Stufen, braunen Kerzen, Trockenbeton,
+  Tuffziegel-Mauern und Endstäben ein neues Aussehen – überall gültig wären in MorniSMP/MorniCraft gebaute
+  Mangrove-Treppen Stühle und Endstäbe unsichtbar gewesen. Jetzt **ändert das Paket keinen einzigen Blockzustand**
+  (Test): Die Bauten setzen weiter die Platzhalter (Tests und Bauplan-Prüfung unverändert), beim Bauen der Lobby werden
+  sie zu Item-Anzeigen mit `custom_model_data` (`moinmorni:moebel/stuhl` …, Drehung wie früher, Tag `mm_moebel`) über
+  einem unsichtbaren `barrier` (Krüge: nichts; Brunnen-Fontäne: Licht) – `packages/builder/src/lobby/moebel.ts`;
+  Kugeln und Ostereier werden zu Item-Anzeigen mit `moinmorni:kugel` (`kugelAsItem`); die Gegenstands-Dateien wählen
+  nur bei unserem Namen etwas anderes (Rückfall genau wie Minecraft, gegen den 26.3-Client geprüft). Ohne Paket zeigt
+  die Anzeige die gewohnte Stufe. Möbel-Modelle ohne mitgemalten Boden. **Pflicht:** ein Schalter für beide Pakete,
+  Netzwerk → Ressourcenpaket (`/netzwerk paket an|aus`, ersetzt „Möbel-Paket verpflichtend“ und „Abzeichen-Paket
+  verpflichtend“; war einer an, ist der neue einmal an – `panel/pack-required.ts`). `/paket` (`/pack`) schickt das
+  Paket noch einmal. Profil mit `pack` → Metadaten `moinmorni:paket` am Spieler; **Angelkönig 0.2.2** (Branch
+  `claude/netzpaket` im Angelkönig-Repo) bietet dann nichts an und liest daraus, wer es hat (Kleidung je Betrachter).
+  Docs: `docs/lobby.md` („Ein Paket fürs ganze Netzwerk“), `docs/hub-protokoll.md`, Hilfe „Rang-Abzeichen“. Tests:
+  138 Baukasten- (neu `netzpaket.test.ts`: gleiche Bytes, keine Blockzustände, Rückfall, Zusammenlegen, Lobby ohne
+  Platzhalter-Blöcke, Kugeln als Item-Anzeigen), 129 shared-, 297 Server- (neu `hub-netzpaket.test.ts` 4, Aufräumen der
+  server.properties, Provisioner mit Angelkönig), 80 JUnit, Angelkönig 61, Typen, Prettier. Echt: Velocity 4.3.1 +
+  Lobby (alte server.properties mit Möbel-Paket, echter Selbstbau 73 s) + Duels + Angelkönig 0.2.2 (alte
+  server.properties mit Fisch-Paket) + Test-Hub, `tools/netz-test/netzpaket-test.cjs` **17/17** – beim Betreten genau
+  je ein Angebot (Netz + Abzeichen), kein altes; Wechsel Lobby → Duels → Angelkönig → Lobby → Angelkönig: kein neues
+  Angebot, nichts abgenommen; Angelkönig weiß „Paket da“/„nicht da“ und zieht nach `/paket` nach; ablehnen → Hinweis,
+  Pflicht → freundlich hinaus. Echter Client 26.3: genau **ein** Neuladen beim Betreten (beide Pakete zusammen),
+  danach vier Serverwechsel ohne Neuladen; Biertische, Bierbänke, Steinkrüge und Stühle (beide Richtungen geprüft) als
+  Anzeigen richtig gedreht; Bilder nur lokal. Nicht echt geprüft: Bedrock (Geyser zeigt Item-Anzeigen ohne
+  Erweiterung nicht – Bedrock sieht die Möbel nicht mehr, vorher Holzstufen; Kollision bleibt), Client vor 1.20.3,
+  Kugeln/Eier im echten Client, Brunnen-Ersatz ohne Paket.
 
 ## Offen
+
+- **Ein Paket (17.11.):** Philip: Go für `claude/ein-paket` und Angelkönig 0.2.2 (`claude/netzpaket`). Bedrock sieht
+  die Möbel der Lobby nicht mehr (Item-Anzeigen) – falls das stört: Bedrock-Spielern die Platzhalter-Blöcke per
+  `sendBlockChange` schicken (nicht gebaut). Die Kerzen am Weihnachtsmarkt (Saison-Blöcke) sind jetzt einfache Kerzen.
 
 - **Kleidung (17.11.):** Philip: Go für Angelkönig 0.2.1 und diesen Branch zusammen. Nicht echt geprüft: über
   Velocity (Paket-Angebot beim Verbinden durch den Proxy, Abnehmen außerhalb), Bedrock (sieht Leder). Neues Stück →

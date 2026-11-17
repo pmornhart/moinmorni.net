@@ -6,6 +6,8 @@
  * Gleicher Bauplan = gleiche `version`; ändert sich der Plan, baut der Server neu.
  */
 import crypto from 'node:crypto';
+import { toLobbyDisplays } from './moebel.js';
+import { kugelAsItem } from '../schmuck.js';
 import { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG } from '../village.js';
 import { biomeCommands } from '../shapes.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
@@ -169,7 +171,15 @@ export function lobbyPack(): LobbyPack {
     LOBBY_BIOME,
   );
   // Anzeige-Wesen ohne Hitbox (F3+B), siehe deko.ts
-  const body = [...clearCommands(cx, cz), ...biome, ...canvas.commands().map(withoutHitbox).map(summonOnce)];
+  // Möbel und Brunnen-Ersatz als Item-Anzeigen (moebel.ts); der Bauplan selbst behält die Platzhalter.
+  const moebel = toLobbyDisplays(canvas);
+  const body = [
+    ...clearCommands(cx, cz),
+    ...biome,
+    ...canvas.commands().map(withoutHitbox).map(summonOnce),
+    ...moebel.commands,
+  ];
+  moebel.restore();
   const parts = Array.from({ length: Math.ceil(body.length / PART_SIZE) }, (_, i) =>
     body.slice(i * PART_SIZE, (i + 1) * PART_SIZE),
   );
@@ -244,6 +254,13 @@ export function lobbyPack(): LobbyPack {
   });
   const seasonSteps = seasonStepsFor(
     Object.fromEntries(built.map(({ season, on, off }) => [season, { on: on.length, off: off.length }])),
+  );
+  // Christbaumkugeln und Ostereier: aus Block-Anzeigen werden Item-Anzeigen mit unserem Namen (schmuck.ts).
+  const asItems = (text: string): string => text.split('\n').map(kugelAsItem).join('\n');
+  [files, seasonFiles].forEach((map) =>
+    Object.keys(map).forEach((k) => {
+      map[k] = asItems(map[k] ?? '');
+    }),
   );
   const hash = crypto.createHash('sha256');
   Object.keys(files)

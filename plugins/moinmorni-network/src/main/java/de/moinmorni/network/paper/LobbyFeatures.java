@@ -383,7 +383,7 @@ final class LobbyFeatures implements Listener {
         p.getInventory().setItem(MENU_SLOT, item(Material.COMPASS, MENU,
                 text(p, "Spielmodi", "Game modes", NamedTextColor.GOLD),
                 text(p, "Rechtsklick: alle Modi auf einen Blick", "Right-click: all modes at a glance", NamedTextColor.GRAY)));
-        p.getInventory().setItem(TOUR_SLOT, item(Material.WRITABLE_BOOK, TOUR_ITEM,
+        p.getInventory().setItem(TOUR_SLOT, item(Material.BOOK, TOUR_ITEM,
                 text(p, "Rundgang", "Tour", NamedTextColor.AQUA),
                 text(p, "Rechtsklick: kurze Führung durchs Dorf", "Right-click: a short tour of the village", NamedTextColor.GRAY)));
         equipJump(p);

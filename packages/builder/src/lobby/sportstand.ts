@@ -165,7 +165,7 @@ function boatHouse(c: Canvas): void {
   [1, 5].forEach((u) => f.set(u, 1, 0, 'barrel[facing=up]'));
   f.set(1, 2, 0, 'melon');
   f.set(5, 2, 0, 'cake');
-  [2, 4].forEach((u) => f.set(u, 1, 0, 'birch_slab[type=top]'));
+  [2, 4].forEach((u) => f.set(u, 1, 0, 'spruce_slab[type=top]'));
   f.set(4, 2, 0, 'potted_cornflower');
   // Ruderboot hinten an der Wand: Bug und Heck aus Treppen, dazwischen der Rumpf, eine Ruderbank
   f.set(1, 1, 3, 'oak_stairs[facing=east]');
