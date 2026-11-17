@@ -12,6 +12,7 @@ import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
+import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.PlayerSettingsChangedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
@@ -329,6 +330,23 @@ public final class VelocityPlugin {
         if (!inLobby && hasPack) {
             p.removeResourcePacks(LOBBY_PACK);
         }
+    }
+
+    /**
+     * Hat jemand das Lobby-Paket geladen (oder abgelehnt, oder wurde es wieder abgenommen)? Der Lobby-Server erfährt
+     * das nicht selbst – Minecraft lädt es schon vor dem Betreten –, der Hub gibt es mit dem Profil weiter: Mit Paket
+     * spielt die Lobbymusik als Klangdatei der Kapelle, ohne mit Notenblöcken.
+     */
+    @Subscribe
+    public void onPackStatus(PlayerResourcePackStatusEvent event) {
+        if (hub == null || !LOBBY_PACK.equals(event.getPackId()) || event.getStatus().isIntermediate()) {
+            return;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "pack");
+        body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
+        body.addProperty("loaded", event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFUL);
+        hub.send(body);
     }
 
     @Subscribe

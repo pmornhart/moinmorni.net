@@ -31,6 +31,8 @@ import { createSettingCommands, mergeCommands } from './setting-commands.js';
 import { createSocial } from './social.js';
 import { createModeStats, statsSchema, type ModeStatsService } from './stats.js';
 import { createStreamerCommand, createStreamers } from './streamer.js';
+import { createMusic } from './music.js';
+import { lobbyMusicBody } from '../lobby/music.js';
 import { createVoice } from './voice.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
@@ -50,6 +52,7 @@ const PROXY_ONLY: ReadonlySet<string> = new Set([
   'locale',
   'command',
   'complete',
+  'pack',
 ]);
 const MINUTE_MS = 60_000;
 const NAME_MAX = 16;
@@ -233,6 +236,8 @@ export function createHub(options: HubOptions): Hub {
     if (stored === 'de' || stored === 'en') return stored;
     return langOfLocale(locale ?? known?.clientLocale, defaultLang());
   };
+  // Erst nach dem Kontext angelegt (createMusic braucht ihn) – das Profil fragt über diesen Verweis.
+  const musicRef: { profileOf: (uuid: string) => unknown } = { profileOf: () => undefined };
   const profile = (uuid: string): Body | null => {
     const p = presence.get(uuid);
     if (!p) return null;
@@ -253,6 +258,8 @@ export function createHub(options: HubOptions): Hub {
       rights: role.game,
       /** Streamer-Modus: an/aus und was verdeckt wird (das Plugin verdeckt beim Empfänger, zeigt ● LIVE). */
       streamer: streamers.active(p.uuid),
+      /** Lobbymusik: an/aus, eigene Lautstärke, Lobby-Paket geladen, „weiter“ (hub/music.ts). */
+      music: musicRef.profileOf(p.uuid),
     };
   };
   const sendProfile = (uuid: string): void => {
@@ -318,6 +325,8 @@ export function createHub(options: HubOptions): Hub {
       .map((p) => ({ uuid: p.playerUuid, until: p.expiresAt, reason: p.reason })),
   });
   const voiceRef: { broadcast: () => void } = { broadcast: () => undefined };
+  const music = createMusic(ctx, db);
+  musicRef.profileOf = music.profileOf;
   const moderation = createModeration(ctx, (change) => {
     if (change.kind === 'jail') {
       toBackend(LOBBY_SERVER, jailState());
@@ -360,6 +369,7 @@ export function createHub(options: HubOptions): Hub {
         ...voice.commands,
         ...rejoin.commands,
         createStreamerCommand(ctx, streamers, { now, changed: sendProfile }),
+        ...music.commands,
         ...(options.extraCommands?.(ctx) ?? []),
       ],
       createSettingCommands(ctx),
@@ -547,6 +557,7 @@ export function createHub(options: HubOptions): Hub {
     rejoin.left(uuid, presence.get(uuid)?.server ?? null);
     if (presence.get(uuid)) social.left(normalUuid(uuid));
     voice.onGroup(normalUuid(uuid), null);
+    music.left(uuid);
     const gone = presence.leave(uuid);
     if (gone) players.addMinutes(gone.uuid, Math.round((now() - gone.since) / MINUTE_MS));
   };
@@ -737,6 +748,7 @@ export function createHub(options: HubOptions): Hub {
       chat.handle(normalUuid(m.uuid), m.text, now(), m.tag);
     },
     ...rejoin.handlers,
+    pack: music.onPack,
   };
 
   const transport = createTransport(hubSecret, log, {
@@ -762,6 +774,7 @@ export function createHub(options: HubOptions): Hub {
       conn.send(lobbyState());
       if (conn.server === LOBBY_SERVER) {
         conn.send(lobbySettings());
+        conn.send(lobbyMusicBody(stores));
         conn.send(jailState());
       }
       if (conn.server === morniCraftServer(stores)) conn.send(morniCraft());
@@ -820,7 +833,10 @@ export function createHub(options: HubOptions): Hub {
       conns.backends.forEach((c) => c.send(config));
       presence.all().forEach((p) => sendProfile(p.uuid));
     }
-    if (area === 'lobby') toBackend(LOBBY_SERVER, lobbySettings());
+    if (area === 'lobby') {
+      toBackend(LOBBY_SERVER, lobbySettings());
+      toBackend(LOBBY_SERVER, lobbyMusicBody(stores));
+    }
     if (area === 'voice') voice.broadcast();
     // Einstellungen eines Spielmodus → an seinen Server (schläft er, trägt MoinMorni sie vor dem Aufwachen ein).
     const modeServer = serverOfModeArea(stores, area);

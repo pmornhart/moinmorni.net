@@ -741,6 +741,9 @@
         "rundgang": "Ein Rundgang durchs Dorf (beenden: /rundgang stop).",
         "parkour": "Die Bestenliste der Parkour-Spirale und deine Bestzeit.",
         "parkourStart": "An den Start der Parkour-Spirale.",
+        "musik": "Lobbymusik für dich aus- und wieder anschalten. Im Alltag spielt Blasmusik, zur Wiesn bayerische Musik, im Winter Weihnachtslieder – mit unserem Lobby-Paket eine echte Kapelle, sonst Notenblöcke.",
+        "musikLauter": "Lobbymusik leiser oder lauter stellen (auch als Zahl von 0 bis 100). Der Regler „Plattenspieler/Notenblöcke“ in den Minecraft-Einstellungen wirkt auch.",
+        "musikWeiter": "Gleich das nächste Stück.",
         "warn": "Jemanden verwarnen – steht in seinem Strafen-Verlauf.",
         "strafen": "Alle Strafen eines Spielers ansehen.",
         "mute": "Im Chat stummschalten, z. B. für 30m, 2h, 7d oder perm.",
@@ -1317,7 +1320,7 @@
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter Lobby → Musik stellst du die Lobbymusik ein (je Saison, welche Stücke laufen). Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
     },
     "news": {
       "title": "News",

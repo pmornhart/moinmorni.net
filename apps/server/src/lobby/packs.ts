@@ -1,10 +1,11 @@
 import crypto from 'node:crypto';
-import { furniturePack } from '@moinmorni/builder';
+import { furniturePack, musicPackEntries } from '@moinmorni/builder';
 import type { Api } from '../app.js';
+import { musicFiles } from './music.js';
 
 /**
  * Ressourcenpaket der Lobby: eigene Möbel (Stühle, Eckbank, Tische, Bierbank, Steinkrüge – `packages/builder/src/
- * furniture.ts`). Der Lobby-Server bietet es jedem Java-Spieler beim Betreten an (Adresse, SHA-1 und feste Kennung in
+ * furniture.ts`), Trachten, Prunkbrunnen und die Lobbymusik (Klangdateien aus `apps/server/musik/`). Der Lobby-Server bietet es jedem Java-Spieler beim Betreten an (Adresse, SHA-1 und feste Kennung in
  * seiner server.properties); wer ablehnt oder auf Bedrock spielt, sieht einfache Holzstufen.
  */
 
@@ -20,7 +21,7 @@ const cache: { pack: PackInfo | null } = { pack: null };
 /** Gleiche Möbel = gleiche Bytes = gleiche SHA-1 (Minecraft lädt nur bei neuer SHA-1 neu). */
 export function lobbyPackInfo(): PackInfo {
   if (cache.pack) return cache.pack;
-  const bytes = furniturePack();
+  const bytes = furniturePack(musicPackEntries(musicFiles()));
   cache.pack = { bytes, sha1: crypto.createHash('sha1').update(bytes).digest('hex') };
   return cache.pack;
 }
