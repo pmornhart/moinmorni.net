@@ -21,6 +21,7 @@ import {
   type GameRight,
   type Mode,
   type Role,
+  type SportMode,
 } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
@@ -224,6 +225,11 @@ export interface Hub {
   readonly stats: ModeStatsService;
   /** Was die Modus-Server zuletzt über sich gemeldet haben (Runde läuft, wartet …). */
   readonly modeStates: () => Record<string, ModeRun>;
+  /**
+   * Welcher Sport-Modus gerade dran ist (Wintersport oder Sommerspiele) – die eine Entscheidung für Lobby-Stand,
+   * Kompass, Webseite (`/api/status`) und Discord: fest im Panel oder wer gerade Saison hat.
+   */
+  readonly sport: () => SportMode;
   /** Spielmodi, die für neue Einstellungen auf einen Neustart warten (Kennungen wie "duels"). */
   readonly modeRestarts: () => string[];
   /** Server, auf denen gerade ein Platz freigehalten wird (Verbindung mitten im Spiel weg) – sie schlafen nicht. */
@@ -618,7 +624,7 @@ export function createHub(options: HubOptions): Hub {
     sport: sportOfStand(),
   });
   /** Sport-Stand: fest eingestellt (Panel → Lobby) oder wer gerade Saison hat (Meldung der Modi, sonst Kalender). */
-  const sportOfStand = (): string => {
+  const sportOfStand = (): SportMode => {
     const raw = stores.settings('lobby')['sportStand'];
     const choice = SPORT_STAND_CHOICES.find((c) => c === raw) ?? 'auto';
     const of = (id: string) => {
@@ -1048,6 +1054,7 @@ export function createHub(options: HubOptions): Hub {
     connectedServers: () => [...conns.backends.keys()],
     stats,
     modeStates: () => Object.fromEntries(modeRuns),
+    sport: () => sportOfStand(),
     modeRestarts: () => [...restartPending.keys()],
     heldServers: rejoin.heldServers,
     wartung: {

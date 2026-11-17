@@ -18,14 +18,21 @@ import {
 import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
-import type { ModeStatus } from '@moinmorni/shared';
+import { sportReplacedBy, type ModeStatus } from '@moinmorni/shared';
 import { useCopy } from '~/components/controls';
 import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { findMode, useModeBoards, useModeTop, useSite } from '~/lib/site';
 import { PlayerFace } from '~/components/player-face';
-import { modeJoinable, modeLook, useNetworkStatus, type ModeLook } from '~/lib/status';
+import {
+  modeJoinable,
+  modeLook,
+  shownModes,
+  useModeLook,
+  useNetworkStatus,
+  type ModeLook,
+} from '~/lib/status';
 import { useLanguage, usePick } from '~/lib/text';
 import { modeArt } from './art';
 import { guideSyntax, MODE_GUIDES } from './mode-guides';
@@ -107,7 +114,8 @@ export function Step({
 export function ModesListPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const status = useNetworkStatus();
-  const modes = status.data?.modes ?? [];
+  // Winter Games and Summer Games share one place: only the one that is on right now.
+  const modes = shownModes(status.data);
   const address = status.data?.javaAddress ?? FALLBACK_ADDRESS;
   return (
     <>
@@ -159,6 +167,48 @@ export function ModesListPage(): ReactElement {
   );
 }
 
+/**
+ * Winter Games and Summer Games share one place in the network: out of its season a sports mode is replaced by the
+ * other one. Its page stays (statistics!) with a friendly note when it comes back and a link to the one that is on.
+ */
+function ReplacedHint({
+  mode,
+  onArt = false,
+}: {
+  readonly mode: ModeStatus;
+  readonly onArt?: boolean;
+}): ReactElement | null {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  const status = useNetworkStatus();
+  const look = useModeLook(mode);
+  const other = status.data?.modes.find((m) => m.id === sportReplacedBy(mode.id, status.data?.sport));
+  if (!other || (look !== 'backInWinter' && look !== 'backInSummer')) return null;
+  const Icon = look === 'backInWinter' ? Snowflake : Sun;
+  const names = { name: pick(mode.name), other: pick(other.name) };
+  return (
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[8px] border-2 px-4 py-3 text-[15px]',
+        onArt
+          ? 'max-w-[620px] border-white/25 bg-black/35 text-white backdrop-blur-sm'
+          : 'border-blue/25 bg-blue-soft text-blue',
+      )}
+    >
+      <p className="flex min-w-0 flex-1 basis-[260px] items-start gap-2.5">
+        <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <span>{t(`site.mode.replaced.${look}`, names)}</span>
+      </p>
+      <GameButton asChild size="sm" tone="gold">
+        <Link to={`/spielmodi/${other.id}`}>
+          {other.id === 'wintersport' ? <Snowflake /> : <Sun />}
+          {t('site.mode.replaced.link', names)}
+        </Link>
+      </GameButton>
+    </div>
+  );
+}
+
 function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
@@ -167,7 +217,7 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
   const address = status.data?.javaAddress ?? FALLBACK_ADDRESS;
   const invite = site.data?.discordInvite;
   const command = `/server ${mode.server ?? mode.id}`;
-  const look = modeLook(mode);
+  const look = useModeLook(mode);
   const applies = mode.id === APPLY_MODE;
   return (
     <Panel id={HOW_ID} className="grid scroll-mt-28 content-start gap-6 border-gold/40 p-6 sm:p-7">
@@ -185,7 +235,7 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
           {t(`site.mode.notNow.${mode.state}`)}
         </p>
       )}
-      <ol className="grid gap-5">
+      <ol className={cn('grid gap-5', (look === 'backInWinter' || look === 'backInSummer') && 'hidden')}>
         <Step n={1} title={t('site.mode.step1')}>
           <CopyChip value={address} />
         </Step>
@@ -196,6 +246,7 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
           <CopyChip value={command} />
         </Step>
       </ol>
+      <ReplacedHint mode={mode} />
       {look === 'pause' ? (
         <p className="flex items-start gap-2.5 rounded-[6px] border-2 border-gold/35 bg-gold-soft px-4 py-3 text-[15px] text-gold-strong">
           <Sun className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -244,9 +295,10 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
 function LivePanel({ mode }: { readonly mode: ModeStatus }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
-  const look = modeLook(mode);
+  const look = useModeLook(mode);
   const art = modeArt(mode.id);
-  const joinable = modeJoinable(mode);
+  // Replaced by the other sports mode right now: no live numbers (nobody is there until its season).
+  const joinable = modeJoinable(mode) && look !== 'backInWinter' && look !== 'backInSummer';
   return (
     <Panel className="grid content-start overflow-hidden">
       <div className="mm-mode-bg relative h-56 overflow-hidden lg:hidden" style={modeStyle(mode.id)}>
@@ -294,8 +346,16 @@ function LivePanel({ mode }: { readonly mode: ModeStatus }): ReactElement {
 /** Below the description: open, asleep, closed … – a mode only for invited players says so (MorniCraft). */
 function LookLine({ mode, look }: { readonly mode: ModeStatus; readonly look: ModeLook }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  const status = useNetworkStatus();
   const invite = mode.access === 'whitelist' && (look === 'open' || look === 'asleep');
-  if (!invite) return <p className="text-[15px] text-muted-foreground">{t(`site.modeLookText.${look}`)}</p>;
+  const other = status.data?.modes.find((m) => m.id === sportReplacedBy(mode.id, status.data?.sport));
+  if (!invite)
+    return (
+      <p className="text-[15px] text-muted-foreground">
+        {t(`site.modeLookText.${look}`, { other: other ? pick(other.name) : '' })}
+      </p>
+    );
   const applies = mode.id === APPLY_MODE;
   return (
     <p className="text-[15px] text-muted-foreground">
@@ -418,6 +478,7 @@ function ModeGuidePanel({ mode }: { readonly mode: ModeStatus }): ReactElement |
 function OtherModes({ modes }: { readonly modes: readonly ModeStatus[] }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
+  const sport = useNetworkStatus().data?.sport;
   return (
     <section className="relative bg-background-alt" aria-labelledby="other-modes">
       <PixelEdge className="text-background-alt" />
@@ -434,7 +495,7 @@ function OtherModes({ modes }: { readonly modes: readonly ModeStatus[] }): React
                 style={modeStyle(m.id)}
               >
                 <span className="mm-mode-bg relative h-[88px] overflow-hidden">
-                  <ModeFigure id={m.id} look={modeLook(m)} className="bottom-[-30%] h-[150%]" />
+                  <ModeFigure id={m.id} look={modeLook(m, sport)} className="bottom-[-30%] h-[150%]" />
                 </span>
                 <span className="grid content-center gap-1.5 px-4 py-3">
                   <span className="truncate font-pixel text-[1.3rem] font-bold leading-none group-hover:text-primary">
@@ -495,7 +556,8 @@ export function ModePage(): ReactElement {
     );
   }
   const art = modeArt(mode.id);
-  const others = modes.filter((m) => m.id !== mode.id);
+  // Winter Games and Summer Games share one place: the other modes as everywhere – only the sports mode that is on.
+  const others = shownModes(status.data).filter((m) => m.id !== mode.id);
   const joinable = modeJoinable(mode);
   const scrollToHow = (): void => document.getElementById(HOW_ID)?.scrollIntoView({ behavior: 'smooth' });
   return (
@@ -511,12 +573,13 @@ export function ModePage(): ReactElement {
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <ModeStateChip mode={mode} onArt />
           {mode.access === 'whitelist' ? <WhitelistChip onArt /> : null}
-          {joinable ? (
+          {joinable && !sportReplacedBy(mode.id, status.data?.sport) ? (
             <Chip tone="glass" icon={Users}>
               {t('mode.players', { players: mode.players, max: mode.maxPlayers })}
             </Chip>
           ) : null}
         </div>
+        <ReplacedHint mode={mode} onArt />
         <div className="flex flex-wrap gap-3 pt-2">
           <GameButton size="lg" tone={joinable ? 'gold' : 'stone'} onClick={scrollToHow}>
             <LogIn />

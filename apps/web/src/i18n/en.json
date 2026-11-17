@@ -145,7 +145,9 @@
       "maintenance": "Maintenance",
       "soon": "Soon",
       "pause": "Summer break",
-      "winterPause": "Winter break"
+      "winterPause": "Winter break",
+      "backInWinter": "Back in winter",
+      "backInSummer": "Back in summer"
     },
     "modeHint": {
       "on": "Open",
@@ -162,7 +164,9 @@
       "pause": "Summer break right now – competitions run from 1 December to 31 March. You can still visit the village.",
       "winterPause": "Winter break right now – competitions run from 1 April to 30 November. You can still visit the village by the lake.",
       "invite": "Invite only – you need a spot on the whitelist. Ask on Discord.",
-      "inviteApply": "Invite only – apply for a spot on the whitelist."
+      "inviteApply": "Invite only – apply for a spot on the whitelist.",
+      "backInWinter": "Back in winter. On now: {{other}}.",
+      "backInSummer": "Back in summer. On now: {{other}}."
     },
     "mode": {
       "eyebrow": "Game mode",
@@ -192,7 +196,12 @@
       "topTitle": "Leaderboard · {{value}}",
       "topAll": "See all",
       "pauseText": "Summer break: no competitions until winter. The ice rink, chairlift and toboggan run in the village are still open – feel free to drop by.",
-      "winterPauseText": "Winter break: no competitions until spring. The village by the mountain lake with beer garden, maypole and courses is still open – feel free to drop by. In winter, Winter Games are on."
+      "winterPauseText": "Winter break: no competitions until spring. The village by the mountain lake with beer garden, maypole and courses is still open – feel free to drop by. In winter, Winter Games are on.",
+      "replaced": {
+        "backInWinter": "{{name}} and {{other}} share one place in the network. {{name}} is back in winter – your stats and leaderboards stay here. On now: {{other}}.",
+        "backInSummer": "{{name}} and {{other}} share one place in the network. {{name}} is back in summer – your stats and leaderboards stay here. On now: {{other}}.",
+        "link": "On now: {{other}}"
+      }
     },
     "stats": {
       "eyebrow": "Leaderboards",
@@ -580,8 +589,7 @@
         "short": "All modes at a glance – and how to get there",
         "intro": "You reach every game mode from the lobby: the figures at the village market around the maypole and at the castle market in front of the castle stairs take you there with one click. The compass in your hotbar is even quicker.",
         "sleep": "The game modes run around the clock – you get in right away. If a mode does sleep, it wakes up as soon as you arrive – that takes about half a minute.",
-        "pause": "Winter Games take a summer break: competitions run only in winter (1 December to 31 March) – the village with ice rink, lift and toboggan run stays open.",
-        "winterPause": "Summer Games take a winter break: competitions run from 1 April to 30 November – the village by the lake stays open. That way one of the two sports modes is always in season, and the one that is open stands at the castle market.",
+        "sport": "Winter Games and Summer Games share one place: in winter (1 December to 31 March) it is Winter Games, otherwise Summer Games. At the sports stand by the castle market, in the compass, here on the website and in Discord you always see the one that is on – the other one's page with its leaderboards stays reachable.",
         "more": "More",
         "all": "All game modes"
       },
@@ -1176,7 +1184,9 @@
     "noServer": "No server assigned yet",
     "save": "Save",
     "saved": "“{{name}}” saved.",
-    "moved": "Order saved."
+    "moved": "Order saved.",
+    "sportNow": "At the sports stand now",
+    "sportReplaced": "Replaced by {{name}} right now"
   },
   "roles": {
     "title": "Roles",

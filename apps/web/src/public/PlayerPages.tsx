@@ -25,6 +25,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { sportReplacedBy } from '@moinmorni/shared';
 import { PlayerFace } from '~/components/player-face';
 import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
@@ -347,7 +348,11 @@ function ModeBoards(): ReactElement | null {
   const [params] = useSearchParams();
   const [chosenMode, setChosenMode] = useState<string | null>(params.get(MODE_PARAM));
   const [chosenKey, setChosenKey] = useState<string | null>(null);
-  const list: readonly ModeBoard[] = boards.data ?? [];
+  const all: readonly ModeBoard[] = boards.data ?? [];
+  // Winter Games and Summer Games share one place: only the one that is on gets a tab – the other's leaderboard stays
+  // reachable by link (its mode page links here with ?modus=…), then it gets its tab too.
+  const sport = status.data?.sport;
+  const list = all.filter((b) => !sportReplacedBy(b.mode, sport) || b.mode === chosenMode);
   const board = list.find((b) => b.mode === chosenMode) ?? list[0];
   const key = board?.keys.find((k) => k.key === chosenKey) ?? board?.keys[0];
   const top = useModeTop(board?.mode ?? '', key?.key ?? '', key?.order ?? 'desc');

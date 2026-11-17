@@ -18,7 +18,7 @@ import { textOn } from '~/components/role-visuals';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import type { PublicRole } from '~/lib/site';
-import { modeLook, type ModeLook } from '~/lib/status';
+import { useModeLook, type ModeLook } from '~/lib/status';
 import { usePick } from '~/lib/text';
 
 /* The website's game-style building blocks. Colours that a host page might override are utilities. */
@@ -201,6 +201,8 @@ const LOOK_TONE: Readonly<Record<ModeLook, ChipTone>> = {
   asleep: 'blue',
   pause: 'gold',
   winterPause: 'blue',
+  backInWinter: 'blue',
+  backInSummer: 'gold',
   closed: 'neutral',
   maintenance: 'warning',
   soon: 'gold',
@@ -212,6 +214,8 @@ const LOOK_TONE_ON_ART: Readonly<Record<ModeLook, ChipTone>> = {
   asleep: 'glass',
   pause: 'glass',
   winterPause: 'glass',
+  backInWinter: 'glass',
+  backInSummer: 'glass',
   closed: 'glass',
   maintenance: 'glass',
   soon: 'glass',
@@ -222,6 +226,8 @@ const LOOK_ICON: Readonly<Record<ModeLook, LucideIcon | undefined>> = {
   asleep: Moon,
   pause: Sun,
   winterPause: Snowflake,
+  backInWinter: Snowflake,
+  backInSummer: Sun,
   closed: Lock,
   maintenance: Wrench,
   soon: Hourglass,
@@ -238,7 +244,7 @@ export function ModeStateChip({
   readonly className?: string;
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
-  const look = modeLook(mode);
+  const look = useModeLook(mode);
   const tone = (onArt ? LOOK_TONE_ON_ART : LOOK_TONE)[look];
   return (
     <Chip tone={tone} icon={LOOK_ICON[look]} pulse={look === 'open'} className={className}>

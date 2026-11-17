@@ -76,7 +76,7 @@ export function createStatusService(
   config: Config,
   motor: MotorClient,
   stores: Stores,
-  hub: Pick<Hub, 'presence' | 'proxyOnline' | 'modeStates'>,
+  hub: Pick<Hub, 'presence' | 'proxyOnline' | 'modeStates' | 'sport'>,
   srv: SrvLookup = systemSrv,
 ): StatusService {
   const cache: { at: number; value: NetworkStatus | null } = { at: 0, value: null };
@@ -176,6 +176,8 @@ export function createStatusService(
       bedrockAddress: play.bedrock,
       bedrockPort: shownBedrockPort(stores, play.bedrockPort),
       modes: stores.modes().map((m) => modeStatus(m, network, counts, hub.modeStates())),
+      // Wintersport oder Sommerspiele – wie am Sport-Stand der Lobby (eine Entscheidung im Hub)
+      sport: hub.sport(),
       updatedAt: new Date().toISOString(),
     };
   };

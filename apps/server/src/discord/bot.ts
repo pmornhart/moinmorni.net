@@ -167,6 +167,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     ranksTimer: NodeJS.Timeout | null;
     /** Zuletzt gesehen: darf der Server Rollen-Symbole haben (Boost-Stufe 2)? */
     roleIcons: boolean | null;
+    /** Zuletzt gesehen: welcher Sport-Modus dran ist – wechselt er, kommt die Liste der Spielmodi neu. */
+    sport: string | null;
   } = {
     client: null,
     token: null,
@@ -177,6 +179,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     unhook: null,
     ranksTimer: null,
     roleIcons: null,
+    sport: null,
   };
 
   // ---------- Verbindung (Token aus .env oder Panel) ----------
@@ -320,7 +323,11 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const key = 'msg:status';
     const known = store.entry(key);
     if (!client() || !channel) return;
-    const body = statusMessage(await deps.status.status());
+    const status = await deps.status.status();
+    // Wintersport ↔ Sommerspiele gewechselt: Liste im Kanal „Spielmodi“ zeigt nur den, der gerade dran ist.
+    if (live.sport !== null && live.sport !== status.sport) refresh('modes');
+    live.sport = status.sport;
+    const body = statusMessage(status);
     if (known) {
       try {
         await rest('PATCH', `/channels/${channel}/messages/${known.id}`, body);

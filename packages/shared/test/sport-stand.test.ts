@@ -1,6 +1,14 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- months */
 import { describe, expect, test } from 'vitest';
-import { inSeason, modePause, monthIn, sportModeByMonth, sportStand } from '../src/index.js';
+import {
+  inSeason,
+  modePause,
+  modesNow,
+  monthIn,
+  sportModeByMonth,
+  sportReplacedBy,
+  sportStand,
+} from '../src/index.js';
 
 /** Wintersport und Sommerspiele teilen sich einen Stand am Schlossmarkt: es steht dort, wer gerade Saison hat. */
 describe('Sport-Stand', () => {
@@ -50,5 +58,18 @@ describe('Sport-Stand', () => {
   test('Monat in der Zeitzone des Netzwerks (Silvester in Berlin ist schon Januar)', () => {
     expect(monthIn('Europe/Berlin', Date.UTC(2026, 11, 31, 23, 30))).toBe(1);
     expect(monthIn('UTC', Date.UTC(2026, 11, 31, 23, 30))).toBe(12);
+  });
+
+  test('ein Platz für beide: der andere Sport-Modus ist ersetzt, alle anderen Modi bleiben', () => {
+    expect(sportReplacedBy('wintersport', 'sommerspiele')).toBe('sommerspiele');
+    expect(sportReplacedBy('sommerspiele', 'wintersport')).toBe('wintersport');
+    expect(sportReplacedBy('sommerspiele', 'sommerspiele')).toBeNull();
+    expect(sportReplacedBy('duels', 'sommerspiele')).toBeNull();
+    // Nichts bekannt (ältere Antwort ohne `sport`): alle zeigen
+    expect(sportReplacedBy('wintersport', undefined)).toBeNull();
+    const all = [{ id: 'duels' }, { id: 'wintersport' }, { id: 'angelkoenig' }, { id: 'sommerspiele' }];
+    expect(modesNow(all, 'sommerspiele').map((m) => m.id)).toEqual(['duels', 'angelkoenig', 'sommerspiele']);
+    expect(modesNow(all, 'wintersport').map((m) => m.id)).toEqual(['duels', 'wintersport', 'angelkoenig']);
+    expect(modesNow(all, null)).toHaveLength(all.length);
   });
 });

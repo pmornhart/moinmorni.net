@@ -1,6 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- tests compare against literal expected values */
 import { describe, expect, test } from 'vitest';
 import {
+  DEFAULT_MODES,
   DEFAULT_ROLES,
   TEAM_POSITIONS,
   teamPositionsOf,
@@ -11,6 +12,7 @@ import type { Config } from '../src/config.js';
 import { parseImage } from '../src/discord/images.js';
 import { invitePermissions, permNames, PERM } from '../src/discord/layout.js';
 import { LOGO_DATA_URI } from '../src/discord/logo.js';
+import { modesMessages, statusMessage, type BoardContext } from '../src/discord/messages.js';
 import { positionChanges, roleOrder } from '../src/discord/role-order.js';
 import { createSecretBox } from '../src/lib/secret-box.js';
 import type { MotorClient } from '../src/motor/client.js';
@@ -145,6 +147,7 @@ describe('Adresse für Spieler aus dem Motor', () => {
     presence: { counts: () => ({}), all: () => [] },
     proxyOnline: () => false,
     modeStates: () => ({}),
+    sport: () => 'sommerspiele',
   };
   const motor = (detail: object | null): MotorClient =>
     ({
@@ -201,5 +204,56 @@ describe('Adresse für Spieler aus dem Motor', () => {
       bedrockPort: 19132,
     });
     expect((await status(null)).javaAddress).toBe('moinmorni.net');
+  });
+});
+
+describe('Discord: Wintersport und Sommerspiele sind ein Platz', () => {
+  const modes = DEFAULT_MODES.map((m) => ({
+    id: m.id,
+    name: m.name,
+    description: m.description,
+    state: m.state,
+    access: m.access,
+    players: 0,
+    maxPlayers: m.maxPlayers,
+    awake: true,
+    server: m.server,
+    phase: null,
+  }));
+  const status = (sport: 'wintersport' | 'sommerspiele') => ({
+    online: true,
+    players: 0,
+    maxPlayers: 100,
+    javaAddress: 'moinmorni.net',
+    bedrockAddress: 'moinmorni.net',
+    bedrockPort: 19132,
+    modes,
+    sport,
+    updatedAt: new Date(0).toISOString(),
+  });
+  const names = (body: { embeds?: ReadonlyArray<{ fields?: ReadonlyArray<{ name: string }> }> }) =>
+    (body.embeds?.[0]?.fields ?? []).map((f) => f.name).join(' ');
+
+  test('Status-Nachricht: nur der Sport-Modus, der gerade dran ist', () => {
+    const summer = names(statusMessage(status('sommerspiele')) as never);
+    expect(summer).toContain('Sommerspiele');
+    expect(summer).not.toContain('Wintersport');
+    const winter = names(statusMessage(status('wintersport')) as never);
+    expect(winter).toContain('Wintersport');
+    expect(winter).not.toContain('Sommerspiele');
+  });
+
+  test('Kanal „Spielmodi“: der andere Sport-Modus fehlt', () => {
+    const ctx = {
+      domain: 'moinmorni.net',
+      status: status('sommerspiele'),
+      channel: () => null,
+      modes: DEFAULT_MODES,
+    } as unknown as BoardContext;
+    const titles = modesMessages(ctx)
+      .flatMap((b) => ((b as { embeds?: Array<{ title?: string }> }).embeds ?? []).map((e) => e.title))
+      .join(' ');
+    expect(titles).toContain('Sommerspiele');
+    expect(titles).not.toContain('Wintersport');
   });
 });

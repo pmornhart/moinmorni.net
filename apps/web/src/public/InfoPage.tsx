@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
-import { useNetworkStatus } from '~/lib/status';
+import { shownModes, useNetworkStatus } from '~/lib/status';
 import { GROUP_IMAGE, modeArt, type Scene } from './art';
 import { GameButton, Panel } from './kit';
 import { PageHero } from './page-hero';
@@ -58,7 +58,8 @@ export function InfoPage({
 /** The figures of all game modes there are right now (the group picture only shows the first seven). */
 function LostFigures(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
-  const modes = useNetworkStatus().data?.modes ?? [];
+  // Winter Games and Summer Games share one place: only the one that is on.
+  const modes = shownModes(useNetworkStatus().data);
   const figures = modes.map((m) => modeArt(m.id).figure).filter((f): f is string => Boolean(f));
   if (!figures.length) {
     return (

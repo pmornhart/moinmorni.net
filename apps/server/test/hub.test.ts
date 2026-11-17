@@ -815,6 +815,32 @@ describe('Hub', () => {
     expect(await lobby.next('lobby', (m) => m['sport'] === 'sommerspiele')).toBeTruthy();
   });
 
+  test('Sport-Modus: eine Entscheidung für Lobby-Stand, Webseite und Discord (Kalender, Server, Panel)', () => {
+    const july = Date.parse('2026-07-15T12:00:00Z');
+    const january = Date.parse('2027-01-15T12:00:00Z');
+    // Beide haben einen Server, keiner meldet etwas: der Kalender
+    clock.now = july;
+    expect(hub.sport()).toBe('sommerspiele');
+    clock.now = january;
+    expect(hub.sport()).toBe('wintersport');
+    // Nur einer hat einen Server: der – auch außerhalb seiner Saison
+    stores.patchMode('sommerspiele', { server: null }, 'test');
+    clock.now = july;
+    expect(hub.sport()).toBe('wintersport');
+    stores.patchMode('sommerspiele', { server: 'sommerspiele' }, 'test');
+    stores.patchMode('wintersport', { server: null }, 'test');
+    clock.now = january;
+    expect(hub.sport()).toBe('sommerspiele');
+    stores.patchMode('wintersport', { server: 'wintersport' }, 'test');
+    // Im Panel fest eingestellt: der, egal welcher Monat
+    stores.patchSettings('lobby', { sportStand: 'wintersport' }, 'test');
+    clock.now = july;
+    expect(hub.sport()).toBe('wintersport');
+    stores.patchSettings('lobby', { sportStand: 'sommerspiele' }, 'test');
+    clock.now = january;
+    expect(hub.sport()).toBe('sommerspiele');
+  });
+
   test('Lobby-Einstellungen: nur die Lobby bekommt sie, Änderungen im Panel kommen sofort an', async () => {
     const { lobby, duels } = await network();
     const first = await lobby.next('lobby-settings');

@@ -484,6 +484,25 @@
   Stand (von Hand) → beim Start repariert. Bilder mit echtem Client 26.3, beide Formen tags und nachts, je vorn,
   schräg, nah und weit, nur lokal.
 
+- 17.11. abends: **Wintersport und Sommerspiele sind ein Platz** (Philip: „dann soll es vom Sommerspiel ersetzt
+  werden, deswegen gibt es beide“; Branch `claude/sport-tausch`): Außerhalb seiner Saison steht ein Sport-Modus nicht
+  mehr mit „☀ Sommerpause“/„❄ Winterpause“ da, sondern ist überall durch den anderen ersetzt. **Eine Entscheidung:**
+  `hub.sport()` (dieselbe wie am Sport-Stand der Lobby – Panel fest, sonst wer offen ist, wer einen Server hat, sonst
+  der Kalender), `/api/status` liefert sie als `sport` mit; `sportReplacedBy`/`modesNow` in `@moinmorni/shared`.
+  **Webseite** (`shownModes`): Startseite (Figuren-Reihe, Modus-Karten, „Spielmodi offen“ zählt nur den aktuellen),
+  Spielmodi, Hilfe → Spielmodi (ein Absatz „teilen sich einen Platz“ statt der zwei Pause-Absätze), Befehle-Seite
+  (Sprungleiste; `/befehle/wintersport` geht weiter per Link), Bestenlisten (Reiter nur der aktuelle, `?modus=` öffnet
+  auch den anderen), Nicht-gefunden-Seite, „Weitere Spielmodi“. Die Seite des anderen bleibt erreichbar: Chip „Im
+  Winter/Sommer wieder da“ und Hinweis mit Link „Jetzt: …“ (im Kopf und bei „So kommst du hin“), Werte, Profile und
+  Bestenlisten bleiben. **Discord:** Status-Nachricht und Kanal „Spielmodi“ nur der aktuelle; wechselt er, wird der
+  Kanal neu geschrieben. **Panel** verwaltet weiter beide, Modi zeigt „Gerade am Sport-Stand“ bzw. „Gerade ersetzt
+  durch …“. **Lobby:** nichts zu ändern – am Stand steht immer, wer `hub.sport()` sagt; eine Pause-Anzeige kann es dort
+  nur noch geben, wenn der Stand im Panel fest steht (Absicht) oder der andere gar keinen Server hat. Wintersport-
+  Einstellung `saison` unverändert. Demo rechnet `sport` wie der Hub. Doku `docs/lobby.md`. Tests: 123 shared (neu
+  `sportReplacedBy`/`modesNow`), Server neu: `hub.sport()` Juli/Januar/nur einer mit Server/Panel fest, `/api/status`
+  mit `sport`, Discord-Status und -Spielmodi nur der aktuelle; Typen, Prettier, Web- und Demo-Bau. Bilder (Playwright
+  gegen den echten Server mit Motor, Computer + Handy) nur im Scratchpad `sport-tausch-bilder/`.
+
 ## Offen
 
 - **Sommerspiele (17.11.):** bekommt seinen Server erst, wenn `pmornhart/morni-sommerspiele` ein Release hat (heute
