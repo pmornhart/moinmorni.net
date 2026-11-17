@@ -98,6 +98,8 @@ const MOVE_SETTLE_MS = 3000;
 const POLL_MS = 3000;
 /** Länger als drei Minuten wartet MoinMorni nicht auf einen Server – dann ist der nächste dran. */
 const SETTLE_MAX_MS = 180_000;
+/** So viele Spielmodi starten zugleich neu (Speicher: ein Neustart gibt erst frei, dann nimmt er). */
+const PARALLEL_MODES = 3;
 /**
  * So lange wartet der Neustart höchstens darauf, dass Proxy und Server nach dem Start von MoinMorni wieder am Hub hängen.
  * Nach einem Update startet MoinMorni selbst neu; die Spielserver melden sich erst nach Sekunden bis einer Minute – ohne
@@ -349,11 +351,30 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
       }).length > 0;
     const moved = items.map((i) => moveOut(i.target)).some(Boolean);
     if (moved) await pause(MOVE_SETTLE_MS);
-    await items.reduce(async (prev, i) => {
+    // Immer ein paar zugleich (PARALLEL_MODES) – einer nach dem anderen dauerte bei 15 Servern eine Viertelstunde, und
+    // im Panel stand lange nur „wartet“ (Philip: „dann passiert nichts“).
+    const batches = Array.from({ length: Math.ceil(items.length / PARALLEL_MODES) }, (_, n) =>
+      items.slice(n * PARALLEL_MODES, (n + 1) * PARALLEL_MODES),
+    );
+    await batches.reduce(async (prev, batch) => {
       await prev;
-      // Wer während des Wartens auf den vorigen Server doch wieder hineinging, kommt vorher noch einmal in die Lobby.
-      if (moveOut(i.target)) await pause(MOVE_SETTLE_MS);
-      await restartAndSettle(i);
+      // Wer während des Wartens auf die vorigen Server doch wieder hineinging, kommt vorher noch einmal in die Lobby.
+      if (batch.map((i) => moveOut(i.target)).some(Boolean)) await pause(MOVE_SETTLE_MS);
+      const started = await batch.reduce<Promise<Array<{ item: Item; before: string | null; ok: boolean }>>>(
+        async (acc, item) => {
+          const done = await acc;
+          step([item], 'restarting');
+          const before = (await liveOf(item.target.serverId)).startedAt;
+          return [...done, { item, before, ok: await restartOnly(item.target) }];
+        },
+        Promise.resolve([]),
+      );
+      await Promise.all(
+        started.map(async ({ item, before, ok }) => {
+          const fine = ok && (await settle(item.target.serverId, false, 0, before));
+          step([item], fine ? 'done' : 'failed');
+        }),
+      );
     }, Promise.resolve());
   };
 

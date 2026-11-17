@@ -277,7 +277,9 @@ describe('Gleich neu starten (nach einem Update)', () => {
       'restart id-lobby',
       'restart id-proxy',
     ]);
-    expect(motor.log.indexOf('running id-duels')).toBeLessThan(motor.log.indexOf('restart id-party'));
+    // Drei zugleich: Duels, Party und Bau-Server; Wolkenkampf erst, wenn die drei wieder laufen.
+    expect(motor.log.indexOf('running id-duels')).toBeLessThan(motor.log.indexOf('restart id-wolken'));
+    expect(motor.log.indexOf('running id-bau')).toBeLessThan(motor.log.indexOf('restart id-wolken'));
     expect(motor.log.indexOf('running id-wolken')).toBeLessThan(motor.log.indexOf('restart id-lobby'));
     // Der Proxy erst, wenn die Lobby wieder läuft – nie beide zugleich.
     expect(motor.log.indexOf('running id-lobby')).toBeLessThan(motor.log.indexOf('restart id-proxy'));
@@ -454,7 +456,7 @@ describe('Gleich neu starten (nach einem Update)', () => {
       countdown: () => COUNTDOWN_SECONDS,
       log: quiet,
       pause: async () => {
-        // Anna geht zurück in Morni Party, sobald Duels neu startet.
+        // Anna geht zurück in Morni Party, sobald Duels neu startet (Party kommt erst mit der zweiten Dreiergruppe).
         if (log.includes('restart id-duels') && !log.includes('back')) {
           log.push('back');
           const anna = players[0];
@@ -462,7 +464,7 @@ describe('Gleich neu starten (nach einem Update)', () => {
         }
       },
     });
-    await restartNow.run([duels, party], 'update');
+    await restartNow.run([duels, bau, waitingInQueue, party], 'update');
     const restartParty = log.indexOf('restart id-party');
     const movedAgain = log.lastIndexOf('connect anna lobby');
     expect(log.indexOf('back')).toBeLessThan(movedAgain);

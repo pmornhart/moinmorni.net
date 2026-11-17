@@ -2751,10 +2751,10 @@
       "skipped": "läuft nicht"
     },
     "countdown": "Spieler sehen vorher einen Countdown von {{seconds}} Sekunden (im Chat und als Leiste oben) und kommen aus den Spielmodi kurz in die Lobby. Die Zeit stellst du unter Einstellungen → Updates ein.",
-    "order": "Reihenfolge: erst die Spielmodi und der Bau-Server, einer nach dem anderen – dann die Lobby (ihre Spieler warten so lange in der Wartungs-Lobby), ganz zuletzt der Proxy. Schlafende und ausgeschaltete Server werden nicht geweckt.",
+    "order": "Reihenfolge: erst die Spielmodi und der Bau-Server, immer drei zugleich – dann die Lobby (ihre Spieler warten so lange in der Wartungs-Lobby), ganz zuletzt der Proxy (nur wenn gewählt). Ausgeschaltete Server werden gestartet, schlafende nicht geweckt.",
     "proxyWarn": "Mit dem Proxy startet das ganze Netzwerk kurz neu: Alle Spieler fliegen nach dem Countdown raus und verbinden sich in etwa einer Minute wieder.",
     "wartung": "Die Wartungs-Lobby startet nie mit – dort warten die Spieler der Lobby, solange sie neu startet, und kommen danach von selbst zurück.",
-    "busy": "Gerade läuft ein Neustart. Was du jetzt noch wählst, kommt gleich danach dran.",
+    "busy": "Gerade läuft ein Neustart – {{done}} von {{total}} fertig, immer drei Server zugleich. Was du jetzt noch wählst, kommt gleich danach dran.",
     "confirm_one": "{{count}} Server neu starten",
     "confirm_other": "{{count}} Server neu starten",
     "sending": "Wird gestartet …",

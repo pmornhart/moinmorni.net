@@ -27,6 +27,7 @@ import { usePick } from '~/lib/text';
 
 const RESTART_KEY = ['panel', 'servers', 'restart'] as const;
 /** Ask for the progress this often while the dialog is open (faster while a round runs). */
+const FINISHED_STEPS: readonly string[] = ['done', 'failed', 'skipped'];
 const POLL_IDLE_MS = 10_000;
 const POLL_BUSY_MS = 2_000;
 
@@ -128,7 +129,10 @@ function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement 
             className="mt-0.5 size-4 shrink-0 animate-spin text-gold [animation-duration:2.4s]"
             aria-hidden
           />
-          {t('restartDialog.busy')}
+          {t('restartDialog.busy', {
+            done: (progress.servers ?? []).filter((x) => FINISHED_STEPS.includes(x.step)).length,
+            total: (progress.servers ?? []).length,
+          })}
         </p>
       ) : null}
       <label
