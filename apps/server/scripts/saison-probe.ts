@@ -24,6 +24,13 @@ const GROUND = 64;
 const PROGRESS_EVERY = 10_000;
 const PASSED = 'Test passed';
 const SHOW = 5;
+/** Eigenes Biom der Saison (setzt das Lobby-Plugin, siehe LobbyWinter.java) – Winter prüft winter-probe.ts. */
+const BIOMES: Readonly<Partial<Record<string, string>>> = {
+  easter: 'cherry_grove',
+  halloween: 'pale_garden',
+};
+const BIOME_TRIES = 30;
+const BIOME_WAIT_MS = 2000;
 /**
  * Anzahl aus der Antwort von `execute if entity`: "Test passed. Count: 1366" → 1366.
  * https://regex101.com/?flavor=javascript&regex=count%3A%20(%5Cd%2B)&flags=i&testString=Test%20passed.%20Count%3A%201366
@@ -117,6 +124,17 @@ async function main(): Promise<void> {
     on ? count >= plan.displays.length : count === 0,
     `${count} (Plan: ${plan.displays.length})`,
   );
+  const biome = BIOMES[season];
+  if (biome) {
+    const isBiome = async (): Promise<boolean> =>
+      (await rcon.command(`execute if biome 0 ${GROUND + 6} 0 minecraft:${biome}`)).startsWith(PASSED);
+    const settled = async (left: number): Promise<boolean> => {
+      if ((await isBiome()) === on || left <= 0) return (await isBiome()) === on;
+      await new Promise((r) => setTimeout(r, BIOME_WAIT_MS));
+      return settled(left - 1);
+    };
+    check(on ? `Biom ${biome}` : `Biom nicht mehr ${biome}`, await settled(BIOME_TRIES));
+  }
   const flag = await rcon.command(`execute if data storage moinmorni:season {${season}:1b}`);
   check(on ? 'Merker gesetzt' : 'Merker weg', flag.startsWith(PASSED) === on, flag);
   await forceloadCommands(0, 0, 'remove', AREA).reduce(async (prev, cmd) => {
