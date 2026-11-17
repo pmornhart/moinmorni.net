@@ -108,7 +108,8 @@ def set_hud(display, on, gui=3):
     if shown != on:
         before, red_before, bar_before = grey_fraction(display, gui), red_fraction(display, gui), bar_fraction(display, gui)
         subprocess.run(['xdotool', 'key', 'F1'], env=dict(os.environ, DISPLAY=display), check=False)
-        time.sleep(1.2)
+        # Unter Last zeichnet der Client manchmal nur ein Bild pro Sekunde – sonst prüft das Bild den alten Stand
+        time.sleep(float(os.environ.get('MM_HUD_WAIT', 3.0)))
         after, red_after, bar_after = grey_fraction(display, gui), red_fraction(display, gui), bar_fraction(display, gui)
         if max(red_before, red_after) > 0.05:  # Herzen auf einem der Bilder: daran entscheiden
             wrong = (red_after > 0.05) != on
