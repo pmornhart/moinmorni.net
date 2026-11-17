@@ -22,12 +22,20 @@ const FRONT_Z = -31;
 const SLOTS: readonly number[] = [-20, 20, -30, 30, -40, 40];
 /** Nordrand des Vorplatzes: dahinter steigt der Schlossberg an (Stützmauer mit Hecke). */
 const WALL_Z = -39;
+/** Stützmauer am Nordrand: ihre Pfeiler an der Straße bleiben stehen, die Schlosstreppe schließt an sie an. */
+export const MARKET_WALL_Z = WALL_Z;
 const PLAZA = { x1: -50, x2: 50, z1: -38, z2: -23 };
 /** Prachtstraße x −5 … 5 (bleibt frei, steigt zum Schloss an); daneben stehen Mauerpfeiler und Bogen. */
 const STREET = 5;
+/** Marktbogen über der Straße (vorne am Markt, zum Dorfplatz hin). */
+export const MARKET_ARCH_Z = -24;
 const ARCH_POST = STREET + 1;
 
-/** Der sechste Stand gehört keinem Modus: Blumen und Kräuter aus dem Schlossgarten. */
+/**
+ * Der sechste Stand gehört keinem Modus: Blumen und Kräuter aus dem Schlossgarten. Neben der Blumenfrau liegen nur
+ * flache Sachen auf der Theke – Kräuter (Moos) und Kerzen (Töpfe dort verdeckten von der Seite ihr Gesicht, Blüten
+ * wachsen nicht auf einem Fass), Töpfe nur außen.
+ */
 const FLOWER_STAND: Mode = {
   id: 'blumen',
   name: 'Blumen & Kräuter',
@@ -36,7 +44,7 @@ const FLOWER_STAND: Mode = {
   status: 'Grüß Gott!',
   skin: 'blumenfrau',
   icon: 'poppy',
-  goods: ['potted_red_tulip', 'potted_cornflower', 'potted_allium', 'potted_oxeye_daisy'],
+  goods: ['potted_red_tulip', 'moss_carpet', 'pink_candle[candles=3,lit=false]', 'potted_oxeye_daisy'],
 };
 
 /** Wo der Stand eines Modus steht (Mitte der Vorderkante), für Bilder, Rundgang und Tests. */
@@ -87,6 +95,7 @@ const CRATES = [
 
 export function buildSchlossmarkt(c: Canvas, height: (x: number, z: number) => number): void {
   const rnd = random(1611);
+  c.place('Schlossmarkt', PLAZA.x1, GROUND + 1, PLAZA.z1, PLAZA.x2, PLAZA.z2);
   levelPlaza(c, height);
   retainingWall(c, height, rnd);
 
@@ -116,19 +125,17 @@ export function buildSchlossmarkt(c: Canvas, height: (x: number, z: number) => n
   marketFolk(c);
 }
 
-/** Wo der Schlossberg schon über den Vorplatz wächst, das Gras wegnehmen (die Pflaster bleiben, die Straße auch). */
+/** Wo der Schlossberg schon über den Vorplatz wächst, das Gras wegnehmen (die Pflaster bleiben). */
 function levelPlaza(c: Canvas, height: (x: number, z: number) => number): void {
-  range(PLAZA.x1, PLAZA.x2)
-    .filter((x) => Math.abs(x) > STREET)
-    .forEach((x) =>
-      range(PLAZA.z1, PLAZA.z2).forEach((z) => {
-        const top = Math.round(height(x, z)) - GROUND;
-        range(GROUND + 1, GROUND + top + 2).forEach((y) => {
-          const b = c.get(x, y, z);
-          if (b && TERRAIN.test(b)) c.set(x, y, z, 'air');
-        });
-      }),
-    );
+  range(PLAZA.x1, PLAZA.x2).forEach((x) =>
+    range(PLAZA.z1, PLAZA.z2).forEach((z) => {
+      const top = Math.round(height(x, z)) - GROUND;
+      range(GROUND + 1, GROUND + top + 2).forEach((y) => {
+        const b = c.get(x, y, z);
+        if (b && TERRAIN.test(b)) c.set(x, y, z, 'air');
+      });
+    }),
+  );
 }
 
 /** Stützmauer mit Hecke am Nordrand: so hoch wie der Hang dahinter, an der Straße mit Pfeilern. */
@@ -192,9 +199,12 @@ function marketCart(c: Canvas, x: number, z: number, side: number, rnd: () => nu
   c.set(x - side, GROUND + 1, z + 1, 'oak_fence');
 }
 
-/** Marktbogen über der Prachtstraße: Pfosten, Balken, Wimpel in den Farben der Stände, Schild „Schlossmarkt“. */
+/**
+ * Marktbogen über der Prachtstraße am Eingang vom Dorfplatz: Pfosten, Balken, Wimpel in den Farben der Stände, Schild
+ * „Schlossmarkt“. Er steht vorne am Markt, damit er das Prunkportal am Fuß der Schlosstreppe nicht verdeckt.
+ */
 function marketArch(c: Canvas): void {
-  const z = -28;
+  const z = MARKET_ARCH_Z;
   const top = GROUND + 7;
   [-ARCH_POST, ARCH_POST].forEach((x) => {
     range(GROUND + 1, top - 1).forEach((y) => c.set(x, y, z, 'stripped_dark_oak_log[axis=y]'));

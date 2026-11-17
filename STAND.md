@@ -353,6 +353,34 @@
   wieder Ostern **4/4**, keine Saison → `kill -9` 5 s danach → Ostern aus **4/4**, Winter aus **5/5**, wieder Ostern
   **4/4**. Bilder vorher/nachher mit Client 26.3 und Lobby-Paket, Tag und Nacht, nur lokal.
 
+- 17.11.: **Prunkaufgang zum Schloss** (Philip: „richtig schön, edel, wow – jetzt ist hier richtig Party angesagt“,
+  „Treppen am Festsaal und vom Schlossmarkt zum Schloss“; Branch `claude/lobby-treppen`, `docs/lobby.md`): Statt der
+  Rampe aus ganzen Blöcken führt die **Schlosstreppe** (`packages/builder/src/lobby/schlosstreppe.ts`) vom Schlossmarkt
+  hinauf – vier Läufe, 26 Stufen aus weißem Marmor, drei Podeste mit Goldborte, roter Läufer, Marmorwangen mit
+  Blütenhecke, Pfosten mit Laternen, Goldkugeln, Kübel und Fahnenmasten (`fahnen.ts`: Fahnen, Wappen). Unten das
+  **Prunkportal** (Säulenpaare, Rundbogen mit Kronleuchter, Inschrift „♛ Zum Schloss ♛“, Wappen vorn und hinten, Banner,
+  Fahnen, nachts angestrahlt), der **rote Teppich** vom Dorfplatz durch Marktbogen, Portal, über Stufen und Vorplatz bis
+  vor den Prunkbrunnen; oben der **Schlossvorplatz** (heller Stein, Stern im Teppich, Beete, Linden, Fahnenallee,
+  Lichterketten aus Ketten mit eisernen Knäufen und Laternen), am **Schlosstor** Fahnen, Laternen und ein Kronleuchter.
+  Im Schloss Freitreppen vor Festsaal, Bibliothek und Rittersaal und die zweiläufige **Prunktreppe** zur Galerie
+  (Vorgänger-Helfer). Philips Fundstellen: das schwebende Brett zwischen den Ständen weg (jetzt ein Tischchen mit Krug vom Spawn-Helfer), kein Blumentopf
+  mehr vor einem Gesicht am Markt (Test), die Erdwand bei x −8, z −37 weg (Test `lobby-eingang.test.ts` sucht jede
+  sichtbare Erde am Rand von Markt, Treppe und Vorplatz; dabei ein Erdhügel hinter der Stützmauer gefunden – `range`
+  zählt auch rückwärts). Marktbogen nach vorn (z −24), damit er das Portal nicht verdeckt. Prüfung „zu Fuß erreichbar“
+  (`lobby/walk.ts`, Vorgänger): jeder Ort ohne Sprung. **Bauplan-Prüfung**: Schloss und Schlosstreppe ohne Funde –
+  behoben: Rüstungsständer im Eckturm des Rittersaals, Erde mit Hohlraum hinter der Schlossterrasse (Zinnenlücken
+  graben nicht mehr in den Hang), schwebende Geländerstäbe der Prunktreppe (jetzt auf einer Marmorwange), Laternen
+  unter waagerechten Ketten (wären beim nächsten Block-Update gefallen; jetzt unter eisernen Knäufen), die alte
+  Freitreppe des Schlosses lag unsichtbar unter dem Vorplatz (`frontStairs: false`), Kübel, Waren der Blumenfrau, Topf
+  auf dem Komposter am Dorfplatz; `pruefung-offen.ts` ist leer. Tests: 83 Baukasten, 261 Server,
+  Typen, Prettier. Echt mit Paper 26.1.2: echter Selbstbau der Lobby (85 Teile, 100 s, keine Ladefehler),
+  `lobby-test` **34/34**, `schlossmarkt-test` **31/31**, `treppen-test` **17/17** (Teil A: alle Treppen nur mit der
+  Vorwärts-Taste, kein Sprung; Teil B mit Pathfinder – Anzeige-Objekte des Prunkbrunnens zählen jetzt als passierbar,
+  am Heckenende, im Türrahmen und am Goldpfosten Zwischenziele, weil Pathfinder dort schräg die Ecke schneidet; die
+  Kapellentüren öffnet der Test-Spieler selbst). Echter Client 26.3 mit
+  Lobby-Paket: Bilder tags und nachts (Markt → Portal, Treppe hinauf, Vorplatz, Tor, Torweg, von oben, Festsaal,
+  Prunktreppe, Fundstellen), nur lokal.
+
 - 17.11.: **Halloween als schaurig-schöne Nacht** (Branch `claude/winter-wunderland`,
   `packages/builder/src/lobby/halloween.ts`): **Riesenkürbis statt Maibaum** (Herzstück: runder Kürbis gut zehn
   Blöcke hoch, geschnitztes Gesicht nach Süden und Norden mit Pilzlicht dahinter – nachts leuchtet es –, Stiel mit
@@ -370,7 +398,7 @@
 
 ## Offen
 
-- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit Wiesn, Ostern und Halloween auch ihre Blöcke).
+- **Bauplan-Prüfung:** keine offenen Funde mehr (`packages/builder/test/pruefung-offen.ts` leer) – Schloss, Schlosstreppe, Schlossmarkt und alle Saisons samt ihrer Blöcke (17.11.).
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
 - MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).
 - **Philip testet.** Morni Party: Burg Weißenstein + Minispiel-Kulissen (Helfer), danach Go fürs Release. MoinMorni selbst (`main`) und MorniHosting-PR #117 brauchen noch ein eigenes Go, danach Submodul wieder auf MorniHosting `main`.
@@ -391,5 +419,10 @@
 - **Lobbymusik (Philip):** Hörproben anhören (`apps/server/musik/*.ogg`). Stücke tauschen oder neu: Noten in `packages/builder/src/musik/lieder/`, Name/Herkunft in `packages/shared/src/lobby-music.ts`, dann `npx tsx tools/lobby-musik/src/render.ts` (braucht fluidsynth, ffmpeg, fluid-soundfont-gm). „Kommet, ihr Hirten“ fehlt bewusst – die Vorlage hatte zweistimmige Akkorde, aus denen die Melodie nicht sicher herauszulesen war. Nicht echt geprüft: Klang im echten Java-Client (Sandbox-Speicher), Bedrock (Notenblöcke über Geyser), echte Spieler mit echten Ohren.
 - **Wartungs-Lobby (17.11.):** Die `try`-Liste in der velocity.toml schreibt weiter der Motor (alle Mitglieder) – das Netzwerk-Plugin übergeht sie; ohne geladenes Netzwerk-Plugin (Proxy nicht eingerichtet) würde Velocity sie wieder durchlaufen. Sauberer wäre in MorniHosting ein Feld „Ausweich-Server“ je Netzwerk (`try` = Lobby, Wartung) – nicht gebaut.
 - **Was ist neu (17.11.):** Die Änderungen sind die Commit-Texte – auch in der englischen Ansicht deutsch, manchmal technisch (sie stehen ohnehin öffentlich auf GitHub). Eine Installation zeigt die Liste erst nach dem ersten Update mit dieser Fassung (vorher nur die Nummer); von Hand gebaut (`docker compose build` ohne install.sh/update.sh) ebenso nur die Nummer. Nicht echt geprüft: Docker-Bau mit der Datei im Image (der update-test baut mit nachgebautem Docker).
+- **Prunkaufgang (17.11.):** Nicht echt geprüft: Bedrock (Läufer, Knäufe, Fahnen über Geyser), echte Spieler auf der
+  Treppe. Gesehen beim Test: Wer den Kompass der Lobby in der Hand hält, öffnet mit einem Rechtsklick auf eine Tür das
+  Menü statt der Tür (`LobbyFeatures.onInteract`) – vielleicht Türen dort durchlassen. Unsichtbares Licht steht im
+  Festsaal auf Kopfhöhe der Galerie (`schloss.ts`, Licht unter der Decke) – im Spiel ohne Kollision, mineflayer hält es
+  für fest.
 - **Webseite (17.11.):** Wer am Proxy nur Java 1.17+ will, bräuchte im Motor (MorniHosting) `block-versions` für ViaVersion – heute kommen 1.10–1.16 auch hinein, 1.7–1.9 scheitern erst am Spielserver. Die Spieler-Liste von „Was ist neu“ filtert nach Wörtern – sehr technische Commit-Texte ohne diese Wörter rutschen durch; besser wären eigene Spieler-Zeilen in den Commits.
 - Bausteine siehe Fortschrittsseite (`docs/fortschritt/index.html`, Artefakt https://claude.ai/artifact/FDBGtjXT6fgaY85Z1AvTsR).

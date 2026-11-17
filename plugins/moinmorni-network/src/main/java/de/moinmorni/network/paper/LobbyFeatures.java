@@ -510,6 +510,17 @@ final class LobbyFeatures implements Listener {
 
     // ---------- Gegenstände benutzen, Launchpads, Schutz ----------
 
+
+    /** Blöcke, die ein Rechtsklick mit der Hand öffnet (Türen, Tore, Falltüren außer Eisen). */
+    static boolean opensByHand(Block block) {
+        if (block == null) {
+            return false;
+        }
+        String name = block.getType().name();
+        return !name.startsWith("IRON_")
+                && (name.endsWith("_DOOR") || name.endsWith("_FENCE_GATE") || name.endsWith("_TRAPDOOR"));
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void onInteract(PlayerInteractEvent event) {
         if (!active()) {
@@ -527,6 +538,10 @@ final class LobbyFeatures implements Listener {
             return;
         }
         String id = lobbyItem(event.getItem());
+        // Rechtsklick auf eine Tür, ein Tor oder eine Falltür öffnet sie – auch mit Kompass oder Rundgang in der Hand.
+        if (id != null && event.getAction() == Action.RIGHT_CLICK_BLOCK && opensByHand(block)) {
+            return;
+        }
         if (MENU.equals(id)) {
             event.setCancelled(true);
             openMenu(p);

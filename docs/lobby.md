@@ -18,7 +18,9 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   mit Hecke und Laternenpfeilern zum Schlossberg (der Hang wächst nicht mehr über den Vorplatz), Lager hinter den
   Ständen (Fässer, Heu, Holzstoß), Laternen und Blumen zwischen den Ständen, Brotzeit-Garnituren davor,
   Marktkarren unter Linden an beiden Enden, Blumenbeete zum Dorfplatz, Leute beim Schauen und Bummeln. Die
-  Launchpads und ihre Flugbahn bleiben frei (Test `lobby-market.test.ts`).
+  Launchpads und ihre Flugbahn bleiben frei (Test `lobby-market.test.ts`). Zwischen den Ständen steht nichts mehr
+  in Kopfhöhe der Figuren (vorher ein schwebendes Brett und ein Topf auf dem Fass): vorne die Laterne, ein Blumenbeet
+  im Pflaster, hinten ein Fass; neben den Figuren stehen keine Blumentöpfe auf der Theke (Test).
 - **Neue Figuren** bekommen eigene Trachten (`PENDING_CAST` in `cast.ts`: Ballonfahrerin, Dorfgendarm,
   Skilehrerin, Flieger, Fischer, Blumenfrau). Bis sie bei MineSkin signiert sind
   (`tsx tools/lobby-entwuerfe/src/sign-skins.ts`), trägt jede die Tracht einer passenden bestehenden Figur
@@ -50,8 +52,66 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   - der **Startplatz** einer laufenden Figur muss im Bau frei sein (Test in
     `packages/builder/test/lobby-market.test.ts` – vorher stand eine in einer Bierbank am Schlossmarkt, eine in der
     Brunnenmauer im Oberdorf, beide kamen nie los).
-- Schloss auf dem Hügel, Prachtstraße (am Hangfuß auf einem gemauerten Damm), Obstgarten, Felder, Teich,
-  Alpengipfel ringsum.
+- **Prunkaufgang zum Schloss** (`schlosstreppe.ts`, Philip: „richtig schön, edel, wow – jetzt ist hier richtig Party
+  angesagt“): Der **rote Teppich** beginnt am Rand des Dorfplatzes, läuft mit goldener Borte durch den Marktbogen,
+  über die Stufen (Läufer aus rotem Netherziegel – Teppich liegt auf Treppen nicht), über den Vorplatz und durchs
+  Schlosstor bis vor den Prunkbrunnen im Ehrenhof (Test: ohne Lücke).
+  - **Prunkportal** am Fuß der Treppe: je Seite ein Pfeiler mit zwei Quarzsäulen und goldenen Kapitellen, dazwischen
+    eine Nische mit Banner (links Smaragd/Gold, rechts Weiß-Blau) und Blumentopf, Rundbogen aus Marmor mit
+    Schlussstein und Kronleuchter, Gebälk mit der Inschrift „♛ Zum Schloss ♛“, darüber die Attika mit dem Wappen
+    (Smaragd, Gold, Weiß-Blau, Krone; hinten zur Treppe hin noch einmal), Fahnen auf den Pfeilern, Laternen an den
+    Ecken, Blumenkübel davor und in den Ecken zur Stützmauer. Nachts angestrahlt (unsichtbares Licht vor der Front).
+    Der Marktbogen steht dafür vorne am Markt (z −24, zum Dorfplatz hin) – vorher stand er vier Blöcke vor dem Portal
+    und verdeckte es.
+  - **Schlosstreppe**: vier Läufe mit 26 Stufen aus weißem Marmor und drei Podesten (Marmor, Quarzziegel-Rand,
+    goldene Borte neben dem Teppich), dem Schlossberg nachgeführt. Wangen aus Marmor, als Geländer eine Blütenhecke,
+    alle drei Stufen ein Quarzpfosten mit Laterne, an den Enden der Podeste Goldkugeln mit Laternen und Blumenkübel,
+    neben jedem Podest zwei **Fahnenmasten** (Smaragd links, Weiß-Blau rechts), Blumen am Hang, Licht über den Stufen.
+  - **Schlossvorplatz** in hellem Stein (Diorit, glatter Stein), Teppich mit Goldborte und einem Stern aus Gold und
+    Smaragd darin, Blumenbeete, am Kopf der Treppe zwei hohe Fahnen, am Rand eine **Fahnenallee**, zwischen den ersten
+    beiden Paaren **Lichterketten** über den Platz (Ketten zwischen eisernen Knäufen, darunter goldene und blaue
+    Laternen im Wechsel – weiß-blau; so hoch, dass der Blick aufs Schlosstor frei bleibt), Laternen am Mittelweg, zwei Linden, helle Brüstung (Dioritmauer), wo der
+    Platz über dem Hang liegt.
+  - **Schlosstor**: zwei Torpfeiler mit Pilastern, Fahnenmasten auf den Pfeilern, Laternen an den Ecken, Rundbogen,
+    offene Torflügel, **Kronleuchter** im Torweg, darüber die Attika mit dem Wappen und Banner; nachts angestrahlt.
+  - Fahnenmasten sind aus Blasseichen-Zaun (Endstäbe sind dem Prunkbrunnen vorbehalten – das Möbel-Paket blendet sie
+    aus), jede Fahne bekommt unsichtbares Licht (`fahnen.ts`: `flagpole`, `banner`, Wappen).
+  - Die Launchpads bleiben zusätzlich – ihre Flugbahn ist frei (Portal, Fahnen und Pfosten stehen außerhalb, Test mit
+    Luftreibung wie im Spiel, ganzer Körper), gelandet wird auf der Treppe.
+  - **Keine nackte Erde** am Rand von Schlossmarkt, Treppe und Vorplatz (Philip sah bei x −8, z −37 eine Erdwand
+    neben der alten Rampe; Test `lobby-eingang.test.ts` sucht jede sichtbare Erde neben Gebautem). Behoben dabei: ein
+    Erdhügel hinter dem niedrigen Teil der Stützmauer (`range` zählt auch rückwärts).
+- **Schloss** auf dem Hügel: Vor Festsaal, Bibliothek und Rittersaal führt je eine **Freitreppe** mit Podest, Wangen,
+  Laternen und Blumen zur Tür (die Säle liegen zwei Blöcke über dem Hof; vorher kam man nicht hinein, und vor jeder
+  Tür stand ein Pilaster). Im Festsaal die **Prunktreppe** zur Galerie: zweiläufig links und rechts der Rotunde,
+  Marmor mit rotem Läufer, schmiedeeisernes Geländer, Goldpfosten mit Laternen, Teppich unten und oben.
+- Obstgarten, Felder, Teich, Alpengipfel ringsum.
+
+## Zu Fuß erreichbar (Prüfung ohne Server)
+
+`packages/builder/src/lobby/walk.ts` wertet den fertigen Bauplan aus: Wo kann man stehen (fester Boden, 1,8 Blöcke
+frei), wohin kommt man vom Ankunftspunkt aus zu Fuß? Regeln wie im Spiel: höchstens 1 Block hinauf (über 0,6 nur mit
+Sprung, mit Platz über dem Kopf), Stufen und Treppen mit ihrer echten Höhe (Treppen von vorne und von der Seite in zwei
+halben Stufen, von hinten nur mit Sprung), Zäune und Mauern sind zu hoch, Türen, Tore und Falltüren gehen auf,
+Leitern klettert man, hinunter geht es beliebig. Die Bauten melden ihre Räume und Plätze (`Canvas.place` – Häuser je
+Stockwerk, Säle, Galerie, Stände, Gärten, Plätze, Podeste …).
+
+- Bericht: `npx tsx tools/lobby-entwuerfe/src/zu-fuss.ts` – jeder Ort mit „zu Fuß“ bzw. Zahl der Sprünge, dazu jeder
+  zusammenhängende Boden, den man nicht erreicht (Deko wie Dächer, Baumkronen, Markisen, Möbel-Oberseiten, Hänge und
+  Hohlräume unter dem Gelände zusammengefasst).
+- Test `packages/builder/test/lobby-walk.test.ts`: jeder Ort ist zu Fuß erreichbar **ohne einen einzigen Sprung**,
+  kein anderer Boden bleibt unerreichbar, und die gewollten Ausnahmen bleiben zu (`ON_PURPOSE`: die
+  Arrestzelle). Kommt etwas Neues dazu, das man nicht erreicht, schlägt er an.
+- Echt: `tools/netz-test/treppen-test.cjs` (Test-Spieler, Paper 26.1.2) läuft die Treppen nur mit der Vorwärts-Taste
+  hinauf (an einer ganzen Blockstufe bliebe er stehen) und findet mit Pathfinder ohne Launchpads vom Ankunftspunkt
+  ins Schloss.
+
+Anfangs fand die Prüfung: Festsaal, Galerie, Bibliothek und Rittersaal unerreichbar (Türen zwei Blöcke über dem Hof),
+den Hof nur mit 26 Sprüngen über die Prachtstraße (Rampe aus ganzen Blöcken), die oberste Stufe der alten
+Galerie-Treppe fehlte, die Gartenzäune der Dorfstraße liefen durch acht Häuser (hintere Hälfte des Erdgeschosses und
+alle oberen Stockwerke unerreichbar), sieben Gärten waren rundum zu. Die Bastei hinter dem Schloss liegt unter dem
+Berghang (Hohlraum, kein Platz).
+
 - **Saftig und hell** (16.11., Philip: „Wir sind in Bayern für schön saftigen Boden bekannt“): Die Lobby setzt beim
   Bau das Biom **Wald** (`LOBBY_BIOME` in `datapack.ts`, `fillbiome` über die ganze Fläche) – Gras, Blätter und Wiesen
   werden saftig grün, egal welches Biom die Welt dort erzeugt hatte (bei Philip „bewaldete Tafelberge“ mit fahlem,
@@ -198,7 +258,8 @@ Lobby-Server (bei jeder Änderung neu).
   jemand spielt, glänzt das Symbol, geschlossene Modi sind grau. Klick = beitreten bzw. wecken.
 - **Rundgang:** Buch in der Leiste oder `/rundgang`; neue Spieler bekommen ihn einmal automatisch (Schalter im Panel),
   acht Stationen im Zuschauer-Modus, `/rundgang stop` bricht ab.
-- **Launchpads:** zwei Smaragd-Platten am Vorplatz schießen schräg zur Mitte die Schlosstreppe hinauf.
+- **Launchpads:** zwei Smaragd-Platten am Vorplatz schießen schräg zur Mitte die Schlosstreppe hinauf (zu Fuß geht
+  es über die Stufen).
 - **Jump and Run** (statt der Parkour-Spirale, `LobbyJump.java`, Weg in `JumpCourse.java`): Startplatz im Nordwesten
   neben dem Schlossmarkt (runder Platz, Smaragd in der Mitte, Tafel mit Dach, weiß-blaue Fahnen, Laternen, ein Bogen
   schwebender Blöcke in den Himmel). Auf den Smaragd treten oder `/jnr` (`/jumpandrun`): Man steht hoch über dem Dorf

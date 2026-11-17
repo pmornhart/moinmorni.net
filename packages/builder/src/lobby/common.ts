@@ -140,7 +140,8 @@ export const MODES: readonly Mode[] = [
     icon: 'hay_block',
     tint: '#7fd35a',
     holds: { hand: 'spyglass' },
-    goods: ['hay_block', 'potted_fern', 'pumpkin', 'decorated_pot'],
+    // Der Topf steht außen (neben der Figur verdeckte er von der Seite ihr Gesicht)
+    goods: ['potted_fern', 'hay_block', 'pumpkin', 'decorated_pot'],
   },
   {
     id: 'wintersport',

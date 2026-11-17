@@ -18,9 +18,11 @@ import { discAt, path, stairs, STEP, type Facing } from '../shapes.js';
 import { npc } from '../village.js';
 import { LAUNCHPADS } from './features.js';
 import { buildJail } from './jail.js';
-import { buildJumpStart } from './jumpandrun.js';
+import { buildJumpStart, JUMP_AND_RUN } from './jumpandrun.js';
 import { fence, field, forest, houseAt, lampPost, MODES, mountains, ramp, stallAt } from './common.js';
 import { buildSchlossmarkt, RING_MODES } from './schlossmarkt.js';
+import { buildSchlosstreppe } from './schlosstreppe.js';
+import { FOUNTAIN_BASIN } from './walk.js';
 
 export const LOBBY = { cx: 0, cz: 0, name: 'Dorfplatz am Schlossberg' };
 
@@ -124,6 +126,11 @@ export const LOBBY_VIEWS = [
   '23-schlossmarkt-ost 9 67.5 -22 @ 36 66 -32',
   '24-marktbogen 0.5 66.6 -19 @ 0.5 70 -28',
   '25-stand-neu 26 66.8 -25 @ 20 66.6 -33',
+  '26-schlosstreppe 0.5 70 -12 @ 0.5 80 -60',
+  '27-schlossvorplatz 0.5 98 -93 @ 0.5 75 -40',
+  '28-schlosstor 0.5 92.5 -70 @ 0.5 98 -96',
+  '29-prunktreppe 0.5 95.5 -130.5 @ 0.5 99 -142',
+  '30-bibliothek-tuer -18.5 92.6 -111.5 @ -30 94 -111.5',
 ];
 
 /** Gäste im Biergarten: [Tisch-x, Tisch-z, Platz, Seite (1 = Süden), Skin, in der Hand]. */
@@ -154,7 +161,8 @@ const WALKERS: readonly (readonly [number, number, Facing, string, string, boole
   [-92, 6, 'west', 'gast5', 'gasse'],
   [80, -33, 'south', 'gast2', 'oberdorf'],
   [44, 8, 'north', 'kellnerin', 'biergarten'],
-  [2, -27, 'north', 'gast3', 'prachtstrasse'],
+  // neben dem roten Teppich (auf Teppich laufen die Dorfleute nicht – er hat eine dünne Kollision)
+  [4, -27, 'north', 'gast3', 'prachtstrasse'],
 ];
 
 const SHORE: readonly (readonly [number, number])[] = [
@@ -239,19 +247,14 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     if (Math.abs(lx) > 5) lampPost(c, lx, GROUND, lz);
   });
   c.tagged('maibaum', () => maypole(c, 0, GROUND, 0, 30));
+  c.place('Dorfplatz', -21, GROUND + 1, -21, 21, 21);
 
-  // Prachtstraße zum Schloss (Achse x = 0), Portale links und rechts. Wo sie am Hangfuß über dem Vorplatz liegt,
-  // steht sie auf einem gemauerten Damm (vorher Erde mit Hohlräumen darunter – von der Seite sah man nackte Erde).
+  // Prachtstraße vom Dorfplatz zum Schlossmarkt (Achse x = 0); weiter hinauf geht es über die Schlosstreppe
   range(-5, 5).forEach((x) =>
-    range(-82, -22).forEach((z) => {
-      const top = Math.max(GROUND, Math.round(height(x, z)));
-      if (top > GROUND + 1) range(GROUND + 1, top - 1).forEach((y) => c.set(x, y, z, 'stone_bricks'));
-      c.set(x, top, z, Math.abs(x) === 5 ? 'polished_andesite' : pick(rnd, PAVING));
-    }),
+    range(-30, -22).forEach((z) =>
+      c.set(x, GROUND, z, Math.abs(x) === 5 ? 'polished_andesite' : pick(rnd, PAVING)),
+    ),
   );
-  range(-80, -24)
-    .filter((z) => z % 8 === 0)
-    .forEach((z) => [-6, 6].forEach((x) => lampPost(c, x, Math.max(GROUND, Math.round(height(x, z))), z)));
   range(-50, 50).forEach((x) => range(-38, -23).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));
   // Weg vom Platz zur Handwerkergasse
   range(-47, -22).forEach((x) => range(3, 11).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));
@@ -271,14 +274,11 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
         [17, 17],
         [18, 17],
         [17, 18],
-      ].forEach(([a, b]) =>
-        c.set(
-          sx * a!,
-          GROUND + 1,
-          sz * b!,
-          pick(rnd, ['barrel[facing=up]', 'barrel[facing=up]', 'composter[level=8]']),
-        ),
-      );
+      ].forEach(([a, b]) => {
+        const crate = pick(rnd, ['barrel[facing=up]', 'barrel[facing=up]', 'composter[level=8]']);
+        // Auf dem Fass an der Ecke steht ein Blumentopf – der braucht eine flache Fläche (kein Komposter)
+        c.set(sx * a!, GROUND + 1, sz * b!, a === 17 && b === 17 ? 'barrel[facing=up]' : crate);
+      });
       c.set(
         sx * 17,
         GROUND + 2,
@@ -290,6 +290,8 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
 
   // Schlossmarkt: alle weiteren Modi in einer Marktzeile auf dem Vorplatz vor der Schlosstreppe
   c.tagged('schlossmarkt', () => buildSchlossmarkt(c, height));
+  // Schlosstreppe hinauf zum Schloss, oben der Schlossvorplatz vor dem Tor
+  c.tagged('schlosstreppe', () => buildSchlosstreppe(c, height));
 
   // Dorfstraße nach Süden: Läden und Wohnhäuser (alle begehbar), Kapelle am Ende
   range(-3, 3).forEach((x) =>
@@ -345,6 +347,7 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
   // Laternen an der Dorfstraße, je zwischen zwei Häusern (nachts war es dort bisher dunkel)
   [41, 59, 77, 95].forEach((z) => lampPost(c, -4, GROUND, z));
   [47, 65, 83, 101].forEach((z) => lampPost(c, 4, GROUND, z));
+  c.place('Dorfstraße', -2, GROUND + 1, 22, 2, 104);
   c.tagged('kapelle', () => chapel(c, -4, GROUND, 108, 'north'));
   houseAt(c, -30, GROUND, 30, 'north', 11, 11, 3, rnd, 'dark_oak', { interior: 'rathaus', sign: 'Rathaus' });
   houseAt(c, 30, GROUND, 30, 'north', 9, 10, 2, rnd, 'dark_oak', { interior: 'info', sign: 'Gäste-Info' });
@@ -419,11 +422,17 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
       ),
     );
   });
+  c.place('Handwerkergasse', LANE.x1, GROUND + 1, LANE.z1 + 1, LANE.x2, LANE.z2 - 1);
   discAt(c, LANE.x1 + 2, GROUND, 7, 9, () => pick(rnd, PAVING));
 
   // Oberdorf: Platz mit Brunnen und Linde, vier Häuser rundherum, Weg zum Vorplatz
   discAt(c, UPPER.x, GROUND, UPPER.z, 10, () => pick(rnd, PAVING));
-  VILLAGE_FOUNTAINS.forEach(([x, z]) => c.tagged(`brunnen ${x},${z}`, () => dorfbrunnen(c, x, GROUND, z)));
+  c.place('Oberdorf', UPPER.x - 7, GROUND + 1, UPPER.z - 7, UPPER.x + 7, UPPER.z + 7);
+  VILLAGE_FOUNTAINS.forEach(([x, z]) => {
+    c.tagged(`brunnen ${x},${z}`, () => dorfbrunnen(c, x, GROUND, z));
+    // Wasserbecken rund um die Säule: zu Fuß gewollt nicht (Prüfung „zu Fuß erreichbar“, `ON_PURPOSE`)
+    c.place(FOUNTAIN_BASIN, x - 1, GROUND + 1, z - 1, x + 1, z + 1);
+  });
   dorflinde(c, rnd);
   houseAt(c, UPPER.x - 8, GROUND, UPPER.z - 11, 'south', 11, 10, 3, rnd, 'dark_oak', {
     interior: 'wohnhaus',
@@ -490,7 +499,16 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
 
   // Schloss auf dem Hügel, Freitreppe nach Süden
   c.tagged('schloss', () =>
-    castle(c, { x: 0, y: GROUND + HILL.height, z: -96, front: 'south', wallDrop: 14, rnd }),
+    castle(c, {
+      x: 0,
+      y: GROUND + HILL.height,
+      z: -96,
+      front: 'south',
+      wallDrop: 14,
+      rnd,
+      // vor dem Tor liegt der Schlossvorplatz (schlosstreppe.ts)
+      frontStairs: false,
+    }),
   );
   LAUNCHPADS.forEach((l) => c.tagged('launchpad', () => launchpad(c, l.x, l.y, l.z)));
   // Gefängnis: Arrestzelle im Rathauskeller (das Lobby-Plugin hält Eingesperrte dort)
@@ -498,6 +516,8 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
 
   // Jump and Run im Nordwesten: Startplatz mit Smaragd und Tafel – die Blöcke zeigt das Lobby-Plugin hoch oben
   buildJumpStart(c);
+  const jump = JUMP_AND_RUN.start;
+  c.place('Jump and Run: Startfeld', jump.x, jump.y + 1, jump.z, jump.x, jump.z);
 
   const pathBlocks = ROAD;
   path(
@@ -536,6 +556,8 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
 
   const castleArea = (x: number, z: number): boolean => Math.abs(x) < 42 && z < -78 && z > -168;
   const laneArea = (x: number, z: number): boolean => x < -40 && x > LANE.x1 - 14 && z > -12 && z < 26;
+  // Um die Kapelle keine Bäume (sie wuchsen sonst durch Schiff und Dach)
+  const chapelArea = (x: number, z: number): boolean => x > -18 && x < 4 && z > 96 && z < 128;
   forest(
     c,
     -215,
@@ -546,7 +568,7 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     (x, z, h) => {
       const d = Math.hypot(x, z);
       const onHill = Math.hypot(x - HILL.x, z - HILL.z) < HILL.top + 6;
-      return h < 150 && !onHill && !castleArea(x, z) && !laneArea(x, z) && d > 112;
+      return h < 150 && !onHill && !castleArea(x, z) && !laneArea(x, z) && !chapelArea(x, z) && d > 112;
     },
     101,
     rnd,
