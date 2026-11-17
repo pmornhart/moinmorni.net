@@ -6,7 +6,8 @@
  * Panel), kein Schaden.
  *   NODE_PATH=~/mm-cache/node/node_modules node lobby-test.cjs <host> <port> <rcon-host:port> <rcon-passwort-datei>
  * Optional: MM_LOBBY_DIR (Server-Ordner: Rekord-Datei), MM_HUB_DB (hub.db: Statistik „lobby“), MM_STEUER
- * (Steuerung von scripts/hub-dev.ts, z. B. http://127.0.0.1:28891: Doppelsprung im Panel aus/an).
+ * (Steuerung von scripts/hub-dev.ts, z. B. http://127.0.0.1:28891: Doppelsprung im Panel aus/an), MM_VIP (Name eines
+ * zweiten Test-Spielers, den der Hub als VIP kennt – hub-dev.ts --rang=<Name>=vip: Fliegen ab VIP, /fly).
  */
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
@@ -24,6 +25,11 @@ const SPAWN = { x: 0.5, y: 65, z: 27.5 };
 const rcon = (...cmds) => execFileSync('python3', [RCON_PY, RCON, PASS, ...cmds], { encoding: 'utf8' });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const results = [];
+const waitFor = async (ok, ms) => {
+  const end = Date.now() + ms;
+  while (!ok() && Date.now() < end) await wait(100);
+  return ok();
+};
 const check = (name, ok, detail = '') => {
   results.push({ name, ok });
   console.log(`${ok ? '✓' : '✗'} ${name}${detail ? ` – ${detail}` : ''}`);
@@ -48,6 +54,8 @@ const plain = (m) => {
   ); // eslint-disable-line -- collects text parts: '{"text":"Hi"}' → '"text":"Hi"'
 };
 
+let bot0;
+let chats0;
 async function main() {
   const bot = mineflayer.createBot({
     host: HOST,
@@ -67,6 +75,8 @@ async function main() {
   bot.once('login', () => bot.setSettings({ locale: 'de_DE' }));
   const titles = [];
   const chats = [];
+  bot0 = bot;
+  chats0 = chats;
   const bars = [];
   const actionbars = [];
   bot.on('title', (t) => titles.push(plain(t)));
@@ -170,11 +180,6 @@ async function main() {
   const particles = [];
   bot._client.on('world_particles', (p) => particles.push(p));
   const allowFlying = () => abilities.length > 0 && (abilities[abilities.length - 1] & 0x04) !== 0;
-  const waitFor = async (ok, ms) => {
-    const end = Date.now() + ms;
-    while (!ok() && Date.now() < end) await wait(100);
-    return ok();
-  };
   /** Was der Test-Spieler an einer Stelle sieht: Oberkante und Mitte der Fläche (aus den Formen des Blocks). */
   const surface = (b) => {
     const shapes = b.shapes.length ? b.shapes : [[0, 0, 0, 1, 1, 1]];
@@ -366,6 +371,9 @@ async function main() {
     String(abilities.slice(-2)),
   );
   const y0 = bot.entity.position.y;
+  const p0 = bot.entity.position.clone();
+  // Blick nach Süden zum Eingang (im Norden steht die Tafel), waagrecht: der Schub geht in Blickrichtung.
+  await bot.look(Math.PI, 0, true);
   particles.length = 0;
   bot.setControlState('jump', true);
   await wait(150);
@@ -377,18 +385,25 @@ async function main() {
   realVelocity = true;
   bot._client.write('abilities', { flags: 0x02 });
   let peak = y0;
-  const until = Date.now() + 1500;
-  while (Date.now() < until) {
+  const until = Date.now() + 3000;
+  while (Date.now() < until && !(Date.now() > until - 2500 && bot.entity.onGround)) {
     peak = Math.max(peak, bot.entity.position.y);
     await wait(50);
   }
   realVelocity = false;
-  const boost = pushes.slice(pushMark).find((p) => p.velocity.y > 0.5);
+  const boost = pushes.slice(pushMark).find((p) => p.velocity.y > 0.8);
+  const far = Math.hypot(bot.entity.position.x - p0.x, bot.entity.position.z - p0.z);
   check(
-    'Doppelsprung: zweiter Schwung nach vorn und oben',
-    Boolean(boost) && peak - y0 > 2.2,
-    `Schwung ${boost ? JSON.stringify(boost.velocity) : '–'}, höchstens ${(peak - y0).toFixed(2)} über dem Boden`,
+    'Doppelsprung: klassischer Schub in Blickrichtung (vorn ≥ 1,2, oben ≥ 0,9 Blöcke/Tick)',
+    Boolean(boost) && Math.hypot(boost.velocity.x, boost.velocity.z) >= 1.2 && peak - y0 > 4,
+    `Schub ${boost ? JSON.stringify(boost.velocity) : '–'}, höchstens ${(peak - y0).toFixed(2)} über dem Boden`,
   );
+  check(
+    'Doppelsprung: weit nach vorn (Süden) geflogen',
+    far > 8 && bot.entity.position.z > p0.z + 6,
+    `${far.toFixed(1)} Blöcke weit, z ${p0.z.toFixed(1)} → ${bot.entity.position.z.toFixed(1)}`,
+  );
+  console.log(`  Doppelsprung: ${far.toFixed(1)} Blöcke weit, ${(peak - y0).toFixed(1)} hoch`);
   check('Doppelsprung: Funken', particles.length > 0, `${particles.length} Partikel-Pakete`);
   check(
     'Doppelsprung: in der Luft kein zweiter (Fliegen erst nach der Landung wieder erlaubt)',
@@ -406,6 +421,9 @@ async function main() {
     check('Panel: Doppelsprung an → wieder erlaubt', await waitFor(allowFlying, 4000));
   }
 
+  // ---------- Fliegen ab VIP (MM_VIP = Name, den der Hub als VIP kennt: hub-dev.ts --rang=<Name>=vip) ----------
+  if (process.env.MM_VIP) await vipFlight(process.env.MM_VIP);
+
   // Kein Schaden in der Lobby
   rcon(`damage ${NAME} 6`);
   await wait(800);
@@ -415,6 +433,105 @@ async function main() {
   console.log(`\n${ok}/${results.length} bestanden`);
   bot.quit();
   process.exit(ok === results.length ? 0 : 1);
+}
+
+/** Ein VIP fliegt statt doppelt zu springen; /fly wechselt; im Jump and Run nicht. */
+async function vipFlight(name) {
+  const vip = mineflayer.createBot({
+    host: HOST,
+    port: Number(PORT),
+    username: name,
+    version: '26.1',
+    auth: 'offline',
+  });
+  vip._client.on('add_resource_pack', (data) => {
+    if (vip._client.state !== 'configuration') return;
+    vip._client.write('resource_pack_receive', { uuid: data.uuid, result: 3 });
+    vip._client.write('resource_pack_receive', { uuid: data.uuid, result: 0 });
+  });
+  vip.once('login', () => vip.setSettings({ locale: 'de_DE' }));
+  const flags = [];
+  const pushes = [];
+  const said = [];
+  vip._client.on('abilities', (p) => flags.push(p.flags));
+  vip._client.on('entity_velocity', (p) => p.entityId === vip.entity?.id && pushes.push(p));
+  vip.on('messagestr', (m) => said.push(m));
+  await new Promise((r) => vip.once('spawn', r));
+  const mayFly = () => flags.length > 0 && (flags.at(-1) & 0x04) !== 0;
+  const flying = () => /:\s*1b\s*$/.test(rcon(`data get entity ${name} abilities.flying`).trim());
+  await wait(2500);
+  check('VIP: in der Lobby ist Fliegen erlaubt', await waitFor(mayFly, 5000), String(flags.slice(-2)));
+  // Zweimal Leertaste = „Fliegen an“: kein Schub, er fliegt wirklich.
+  const pushMark = pushes.length;
+  vip._client.write('abilities', { flags: 0x02 });
+  await wait(1200);
+  check(
+    'VIP: zweimal Leertaste → fliegt (kein Doppelsprung-Schub)',
+    flying() && !pushes.slice(pushMark).some((p) => p.velocity.y > 0.8) && mayFly(),
+    rcon(`data get entity ${name} abilities.flying`).trim(),
+  );
+  vip._client.write('abilities', { flags: 0x00 });
+  await wait(800);
+  check('VIP: noch einmal → landet (Fliegen aus)', !flying());
+  vip.chat('/fly aus');
+  check(
+    'VIP: /fly aus → Doppelsprung',
+    await waitFor(() => said.some((m) => m.includes('Doppelsprung an')), 4000),
+  );
+  const flyFile =
+    process.env.MM_LOBBY_DIR && path.join(process.env.MM_LOBBY_DIR, 'plugins/moinmorni/lobby-fly.txt');
+  await wait(500);
+  check(
+    'VIP: Wahl „Doppelsprung“ gemerkt (lobby-fly.txt)',
+    !flyFile || (fs.existsSync(flyFile) && fs.readFileSync(flyFile, 'utf8').includes('16ffd946')),
+  );
+  await waitFor(() => vip.entity.onGround, 3000);
+  vip.setControlState('jump', true);
+  await wait(150);
+  vip.setControlState('jump', false);
+  await wait(150);
+  const mark2 = pushes.length;
+  vip._client.write('abilities', { flags: 0x02 });
+  await wait(1200);
+  check(
+    'VIP: mit /fly aus gibt es den Schub statt des Fliegens',
+    pushes.slice(mark2).some((p) => p.velocity.y > 0.8) && !flying(),
+    String(pushes.slice(mark2).map((p) => p.velocity.y)),
+  );
+  await waitFor(() => vip.entity.onGround, 4000);
+  vip.chat('/fliegen');
+  check(
+    'VIP: /fliegen → wieder fliegen',
+    await waitFor(() => said.some((m) => m.includes('Fliegen an')), 4000),
+  );
+  await wait(500);
+  const remembered = flyFile ? fs.readFileSync(flyFile, 'utf8') : '';
+  check(
+    'VIP: Wahl „Fliegen“ gemerkt (wieder leer)',
+    !flyFile || remembered.trim() === '',
+    JSON.stringify(remembered),
+  );
+  await waitFor(mayFly, 3000);
+  vip._client.write('abilities', { flags: 0x02 });
+  await wait(800);
+  vip.chat('/jnr');
+  await wait(2500);
+  check(
+    'VIP: Jump and Run → Fliegen aus und nicht erlaubt',
+    !flying() && !mayFly(),
+    `${rcon(`data get entity ${name} abilities.flying`).trim()} ${flags.slice(-2)}`,
+  );
+  vip.chat('/jnr stop');
+  await wait(1500);
+  check('VIP: nach dem Lauf wieder Fliegen erlaubt', await waitFor(mayFly, 4000));
+  // Spieler ohne Recht: /fly erklärt es freundlich
+  bot0.chat('/fly');
+  check(
+    'Spieler ohne Recht: /fly sagt „ab VIP“',
+    await waitFor(() => chats0.some((m) => m.includes('ab VIP')), 4000),
+    chats0.slice(-1).join(''),
+  );
+  vip.quit();
 }
 
 main().catch((err) => {

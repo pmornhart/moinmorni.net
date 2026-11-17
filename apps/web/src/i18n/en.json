@@ -614,9 +614,10 @@
         "jump4": "If you fall, you are out and land back at the start. Your record is on the board at the start (top 10), on your profile and in the statistics.",
         "top": "Leaderboard in the chat:",
         "doubleTitle": "Double jump",
-        "double1": "Jump – and press the jump key once more in mid-air. With sparks, you get a little further forwards and upwards.",
+        "double1": "Jump – and press the jump key once more in mid-air. A strong boost launches you in a high arc wherever you are looking. As soon as you land you can go again: a few jumps take you right across the village – and sometimes onto a roof. Look up for a high jump, straight ahead for a long one.",
         "double2": "On phones and consoles (Bedrock) it works the same: jump twice in quick succession.",
-        "doubleNot": "There is no double jump in the jump and run, in jail or during the tour."
+        "fly": "From VIP up you can fly in the lobby: press space twice to take off and to land, like in creative mode. Prefer the double jump? Switch with",
+        "doubleNot": "There is no double jump or flying in the jump and run, in jail or during the tour."
       },
       "commands": {
         "title": "Commands",
@@ -1023,6 +1024,7 @@
         "jnr": "Start the jump and run: high above the village, block after block appears – every jump scores a point (or step on the emerald at the start; /parkour works too).",
         "jnrTop": "The jump and run leaderboard and your record.",
         "jnrStop": "End the run and go back to the start.",
+        "fly": "From VIP up: switch between flying in the lobby (press space twice to take off, like in creative mode) and the double jump – remembered for next time.",
         "musik": "Turn the lobby music off and on for you. A brass band plays on normal days, Bavarian music at Oktoberfest, carols in winter – with our lobby pack a real band, otherwise note blocks.",
         "musikLauter": "Make the lobby music quieter or louder (also as a number from 0 to 100). The “Jukebox/Note Blocks” slider in Minecraft's settings works too.",
         "musikWeiter": "Skip to the next piece.",
@@ -1244,6 +1246,7 @@
       "reserved-slot": "A slot even when full",
       "bigger-party": "Bigger party",
       "lobby-extras": "Lobby extras",
+      "lobby-fly": "Fly in the lobby",
       "chat-colour": "Colour in chat",
       "maintenance-join": "Always gets in",
       "ranks": "Give ranks",
@@ -1343,6 +1346,7 @@
       "reserved-slot": "May join even when the network is full.",
       "bigger-party": "A bigger party with more friends.",
       "lobby-extras": "Extras in the lobby, e.g. particles or hats.",
+      "lobby-fly": "Flies in the lobby instead of double jumping (press space twice). /fly switches between flying and double jump.",
       "chat-colour": "Colours in their own chat text.",
       "maintenance-join": "Gets in during maintenance too, and into invite-only modes (MorniCraft) without the whitelist – shows up on that list by itself.",
       "ranks": "Give others ranks in the game (only below their own).",

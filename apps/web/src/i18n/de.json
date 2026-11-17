@@ -614,9 +614,10 @@
         "jump4": "Wer fällt, ist raus und landet wieder am Startplatz. Dein Rekord steht auf der Tafel am Start (Top 10), in deinem Profil und in den Statistiken.",
         "top": "Bestenliste im Chat:",
         "doubleTitle": "Doppelsprung",
-        "double1": "Spring – und drück in der Luft noch einmal die Sprungtaste. Mit Funken geht es ein Stück weiter nach vorn und oben.",
+        "double1": "Spring – und drück in der Luft noch einmal die Sprungtaste. Ein kräftiger Schub wirft dich in Blickrichtung in hohem Bogen davon. Kaum gelandet, geht es gleich wieder: So hüpfst du in wenigen Sprüngen quer durchs Dorf – und landest auch mal auf einem Dach. Schau nach oben für einen hohen, nach vorn für einen weiten Sprung.",
         "double2": "Auf dem Handy und der Konsole (Bedrock) genauso: zweimal kurz hintereinander springen.",
-        "doubleNot": "Im Jump and Run, im Gefängnis und beim Rundgang gibt es keinen Doppelsprung."
+        "fly": "Ab VIP fliegst du in der Lobby: zweimal Leertaste hebt ab und landet wieder, wie im Kreativmodus. Lieber doppelt springen? Umschalten mit",
+        "doubleNot": "Im Jump and Run, im Gefängnis und beim Rundgang gibt es weder Doppelsprung noch Fliegen."
       },
       "commands": {
         "title": "Befehle",
@@ -1023,6 +1024,7 @@
         "jnr": "Jump and Run starten: hoch über dem Dorf erscheint Block für Block – jeder Sprung ein Punkt (oder auf den Smaragd am Startplatz treten; /parkour geht auch).",
         "jnrTop": "Die Bestenliste des Jump and Run und dein Rekord.",
         "jnrStop": "Den Lauf beenden und zurück an den Startplatz.",
+        "fly": "Ab VIP: in der Lobby zwischen Fliegen (zweimal Leertaste hebt ab, wie im Kreativmodus) und Doppelsprung wechseln – gemerkt für das nächste Mal (/fliegen geht auch).",
         "musik": "Lobbymusik für dich aus- und wieder anschalten. Im Alltag spielt Blasmusik, zur Wiesn bayerische Musik, im Winter Weihnachtslieder – mit unserem Lobby-Paket eine echte Kapelle, sonst Notenblöcke.",
         "musikLauter": "Lobbymusik leiser oder lauter stellen (auch als Zahl von 0 bis 100). Der Regler „Plattenspieler/Notenblöcke“ in den Minecraft-Einstellungen wirkt auch.",
         "musikWeiter": "Gleich das nächste Stück.",
@@ -1244,6 +1246,7 @@
       "reserved-slot": "Platz, auch wenn voll",
       "bigger-party": "Größere Party",
       "lobby-extras": "Extras in der Lobby",
+      "lobby-fly": "In der Lobby fliegen",
       "chat-colour": "Farbe im Chat",
       "maintenance-join": "Kommt immer rein",
       "ranks": "Ränge vergeben",
@@ -1343,6 +1346,7 @@
       "reserved-slot": "Darf auch bei vollem Netzwerk rein.",
       "bigger-party": "Größere Party mit mehr Freunden.",
       "lobby-extras": "Extras in der Lobby, z. B. Partikel oder Hüte.",
+      "lobby-fly": "Fliegt in der Lobby statt des Doppelsprungs (zweimal Leertaste). Mit /fly wechselt man zwischen Fliegen und Doppelsprung.",
       "chat-colour": "Farben im eigenen Chat-Text.",
       "maintenance-join": "Kommt auch während der Wartung rein und in Modi nur auf Einladung (MorniCraft) ohne Whitelist – steht dort von selbst auf der Liste.",
       "ranks": "Anderen im Spiel Ränge geben (nur unter dem eigenen).",

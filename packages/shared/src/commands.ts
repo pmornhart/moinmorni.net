@@ -226,6 +226,15 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
     where: 'lobby',
     lines: [line('jnr', '/jnr'), line('jnrTop', '/jnr top'), line('jnrStop', '/jnr stop')],
   },
+  {
+    name: 'fly',
+    aliases: ['fliegen'],
+    right: 'lobby-fly',
+    usage: { de: '/fly [an|aus]', en: '/fly [on|off]' },
+    topic: 'lobby',
+    where: 'lobby',
+    lines: [line('fly', '/fly', '/fly', 'lobby-fly')],
+  },
   // ---------- Team ----------
   {
     name: 'warn',

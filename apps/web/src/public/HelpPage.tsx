@@ -368,7 +368,15 @@ function LobbyFunBody(): ReactElement {
           </p>
         </SubCard>
         <SubCard icon={Sparkles} title={t('site.help.lobbyFun.doubleTitle')}>
-          <Steps items={[t('site.help.lobbyFun.double1'), t('site.help.lobbyFun.double2')]} />
+          <Steps
+            items={[
+              t('site.help.lobbyFun.double1'),
+              t('site.help.lobbyFun.double2'),
+              <>
+                {t('site.help.lobbyFun.fly')} <Cmd>/fly</Cmd>
+              </>,
+            ]}
+          />
           <p className="text-[14px] text-muted-foreground">{t('site.help.lobbyFun.doubleNot')}</p>
         </SubCard>
       </div>

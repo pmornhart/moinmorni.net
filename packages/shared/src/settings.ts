@@ -888,8 +888,8 @@ export const LOBBY_AREA: SettingArea = {
       id: 'doublejump',
       title: t('Doppelsprung', 'Double jump'),
       text: t(
-        'In der Luft noch einmal springen (zweimal Leertaste) gibt einen zweiten Schwung nach vorn und oben – mit Funken. Nicht im Jump and Run, nicht im Gefängnis und nicht beim Rundgang.',
-        'Jump again in mid-air (press space twice) for a second boost forwards and upwards – with sparks. Not in the jump and run, not in jail and not during the tour.',
+        'Der klassische Lobby-Doppelsprung: springen, in der Luft noch einmal die Sprungtaste – ein kräftiger Schub wirft dich in Blickrichtung in hohem Bogen davon, mit Funken. Nach der Landung geht es sofort wieder, so hüpft man quer durchs Dorf und auf Dächer. Kein Fallschaden. Ab VIP (Recht „In der Lobby fliegen“) fliegt man stattdessen – /fly wechselt. Nicht im Jump and Run, nicht im Gefängnis und nicht beim Rundgang.',
+        'The classic lobby double jump: jump, press the jump key once more in mid-air – a strong boost launches you in a high arc wherever you are looking, with sparks. You can go again right after landing, so you can hop across the village and onto roofs. No fall damage. From VIP up (right “Fly in the lobby”) you fly instead – /fly switches. Not in the jump and run, not in jail and not during the tour.',
       ),
       settings: [
         {
@@ -912,8 +912,8 @@ export const LOBBY_AREA: SettingArea = {
           step: 0.1,
           label: t('Stärke', 'Strength'),
           help: t(
-            '1 = etwa 5 Blöcke weit und 3 hoch. 2 = doppelt so weit und gut 6 hoch, 0,5 = ein kleiner Hüpfer.',
-            '1 = about 5 blocks far and 3 high. 2 = twice as far and over 6 high, 0.5 = a little hop.',
+            '1 = klassisch, etwa 15 Blöcke weit und 7 hoch. 2 = gut doppelt so weit und 12 hoch, 0,5 = halb so weit und 5 hoch. Wer nach oben schaut, fliegt höher und kürzer.',
+            '1 = classic, about 15 blocks far and 7 high. 2 = more than twice as far and 12 high, 0.5 = half as far and 5 high. Looking up gives a higher, shorter jump.',
           ),
           command: '/lobby doppelsprung staerke <zahl>',
         },

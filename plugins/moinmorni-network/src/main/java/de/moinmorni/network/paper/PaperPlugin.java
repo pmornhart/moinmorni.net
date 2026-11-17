@@ -151,6 +151,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 id -> features.inJumpRun(id) || features.inTour(id) || jail.isJailed(id));
         // In der Lobby bauen (im Kreativmodus): wer das Recht „Lobby bearbeiten“ hat – oder OP ist.
         features.setEditors(p -> Rights.mayEditLobby(rankRights(p)));
+        features.setFlyers(p -> rankRights(p).contains(Rights.LOBBY_FLY));
         getServer().getScheduler().runTask(this, this::logModeAdmins);
         jail.start();
         features.start();

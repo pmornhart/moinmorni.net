@@ -141,7 +141,12 @@ final class LobbyFeatures implements Listener {
         this.jump = new LobbyJump(plugin, langOf, id -> jailed.test(id) || tours.containsKey(id), dataDir);
         this.doubleJump = new LobbyDoubleJump(plugin,
                 p -> jailed.test(p.getUniqueId()) || tours.containsKey(p.getUniqueId()),
-                p -> jump.running(p.getUniqueId()));
+                p -> jump.running(p.getUniqueId()), langOf, dataDir);
+    }
+
+    /** Wer in der Lobby fliegen darf (Rang-Recht „In der Lobby fliegen“, ab VIP). */
+    void setFlyers(java.util.function.Predicate<Player> flyers) {
+        doubleJump.setFlyers(flyers);
     }
 
     /** Werte des Jump and Run an den Hub (Statistik „lobby“). */
