@@ -560,6 +560,19 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    /**
+     * Schlüssel des Rang-Abzeichens an den Spieler hängen – Spielmodi, die Tab-Liste und Namen über dem Kopf selbst
+     * malen (MorniCraft), zeigen den Rang damit genauso als Übersetzung. Abzeichen aus = nicht da.
+     */
+    private void badgeMeta(Player p, Profile profile) {
+        String value = RankPrefix.metaValue(profile.badge());
+        if (value == null) {
+            p.removeMetadata(RankPrefix.META, this);
+        } else {
+            p.setMetadata(RankPrefix.META, new org.bukkit.metadata.FixedMetadataValue(this, value));
+        }
+    }
+
     /** Rang-Rechte eines Spielers (leer, solange der Hub noch kein Profil geschickt hat). */
     private java.util.Set<String> rankRights(Player p) {
         Profile profile = profiles.get(p.getUniqueId());
@@ -683,6 +696,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             leaveTeam(team, p.getName());
         }
         p.removeMetadata(STREAMER, this);
+        p.removeMetadata(RankPrefix.META, this);
     }
 
     /** Aus dem Team; das eigene Team eines Streamers geht danach ganz weg. */
@@ -703,6 +717,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         }
         applyRights(p, profile);
         streamerMeta(p, profile);
+        badgeMeta(p, profile);
         if (morniCraft()) {
             // MorniCraft zeigt den Rang des Netzwerks selbst (mit Clan-Kürzel, auf den Leisten jedes Spielers).
             return;

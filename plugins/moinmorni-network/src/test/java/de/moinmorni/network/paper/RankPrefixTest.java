@@ -79,4 +79,13 @@ class RankPrefixTest {
         assertEquals("⛓ Gefängnis", PlainTextComponentSerializer.plainText().serialize(args.get(1).asComponent()));
         assertEquals(TextColor.fromHexString("#555555"), args.get(0).asComponent().color());
     }
+
+    @Test
+    void modesThatPaintThemselvesGetTheKeyAsMetadata() {
+        // MorniCraft liest genau diesen Namen (de.mornihosting.mornicraft.Network.BADGE).
+        assertEquals("moinmorni:badge", RankPrefix.META);
+        assertEquals("♛ ", RankPrefix.metaValue("♛ "));
+        assertEquals("", RankPrefix.metaValue(""));
+        assertEquals(null, RankPrefix.metaValue(null));
+    }
 }
