@@ -52,4 +52,25 @@ describe('Status für Webseite und Discord', () => {
     expect(modePause(mode('wintersport'))).toBe('summer');
     expect(modePause(mode('wolkenkampf'))).toBe('closed');
   });
+
+  test('Bedrock-Port: automatisch aus dem Motor, von Hand 19132 (Verteiler von MorniHosting) überall', async () => {
+    const stores = createStores(openDatabase(':memory:').db, createEventBus());
+    const motor = {
+      request: (_method: string, path: string) => Promise.resolve(path === '/api/networks' ? [] : undefined),
+    } as unknown as MotorClient;
+    const hub = {
+      presence: { counts: () => ({}), all: () => [] } as never,
+      proxyOnline: () => false,
+      modeStates: () => ({}),
+    } as never;
+    const automatic = 19134;
+    const config = { domain: 'moinmorni.net', bedrockPort: automatic } as unknown as Config;
+    expect((await createStatusService(config, motor, stores, hub).status()).bedrockPort).toBe(automatic);
+
+    stores.patchSettings('reach', { bedrockPort: BEDROCK_PORT }, 'test');
+    expect((await createStatusService(config, motor, stores, hub).status()).bedrockPort).toBe(BEDROCK_PORT);
+
+    stores.patchSettings('reach', { bedrockPort: 0 }, 'test');
+    expect((await createStatusService(config, motor, stores, hub).status()).bedrockPort).toBe(automatic);
+  });
 });
