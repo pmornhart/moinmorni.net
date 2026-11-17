@@ -10,10 +10,11 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useId, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DISCORD_RIGHTS, GAME_RIGHTS, PANEL_AREAS, type Role } from '@moinmorni/shared';
 import { FieldBlock } from '~/components/controls';
+import { useFold } from '~/components/fold-card';
 import { Button, Card, Input, Pill, Switch } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -127,27 +128,40 @@ function RightsGroup({
   const selected: readonly string[] = role[group.key];
   const toggle = (right: string, on: boolean): void =>
     onChange(on ? [...selected, right] : selected.filter((r) => r !== right));
+  const [open, setOpen] = useFold(`role:${role.id}:${group.key}`, false);
+  const listId = useId();
   return (
-    <fieldset className="grid gap-3 rounded-[14px] border border-border p-4" disabled={locked}>
+    <fieldset className="grid gap-3 rounded-[14px] border border-border p-4">
       <legend className="sr-only">{t(`roles.${group.key}`)}</legend>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="flex items-center gap-2 font-semibold">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={listId}
+          title={open ? t('fold.close') : t('fold.open')}
+          onClick={() => setOpen(!open)}
+          className="-m-1 flex cursor-pointer items-center gap-2 rounded-[10px] p-1 text-left font-semibold hover:bg-muted/60"
+        >
+          <ChevronDown
+            className={cn('size-4 text-muted-foreground transition-transform', !open && '-rotate-90')}
+            aria-hidden
+          />
           <Icon className="size-4 text-gold" aria-hidden />
           {t(`roles.${group.key}`)}
           <span className="text-xs font-medium text-muted-foreground">
             {t('roles.countOf', { count: selected.length, total: group.all.length })}
           </span>
-        </p>
+        </button>
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => onChange([...group.all])}>
+          <Button variant="ghost" size="sm" disabled={locked} onClick={() => onChange([...group.all])}>
             {t('roles.selectAll')}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onChange([])}>
+          <Button variant="ghost" size="sm" disabled={locked} onClick={() => onChange([])}>
             {t('roles.selectNone')}
           </Button>
         </div>
       </div>
-      <div className="grid gap-1 sm:grid-cols-2">
+      <div id={listId} hidden={!open} className="grid gap-1 sm:grid-cols-2">
         {group.all.map((right) => {
           const id = `role-${role.id}-${group.key}-${right}`;
           const on = selected.includes(right);
@@ -165,6 +179,7 @@ function RightsGroup({
                 id={id}
                 type="checkbox"
                 checked={on}
+                disabled={locked}
                 onChange={(e) => toggle(right, e.target.checked)}
                 className="mt-0.5 size-4 shrink-0 cursor-pointer accent-[var(--primary)]"
               />

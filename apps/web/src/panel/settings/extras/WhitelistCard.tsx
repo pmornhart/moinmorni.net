@@ -209,6 +209,8 @@ export function WhitelistCard(): ReactElement {
   const loaded = list.isSuccess && (team.isSuccess || team.isError);
   return (
     <ExtraCard
+      fold="extra:mornicraft-whitelist"
+      foldOpen={false}
       id="whitelist"
       icon={ListChecks}
       title={t('whitelistCard.title')}

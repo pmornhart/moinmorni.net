@@ -4,6 +4,7 @@ import {
   Bird,
   BrickWall,
   Castle,
+  ChevronDown,
   ClipboardList,
   Cloud,
   Compass,
@@ -44,10 +45,21 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { lazy, Suspense, useState, type ReactElement } from 'react';
+import {
+  Children,
+  isValidElement,
+  lazy,
+  Suspense,
+  useEffect,
+  useId,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet, ScrollRestoration } from 'react-router';
+import { NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router';
 import { Lozenge, Wordmark } from '~/components/brand';
+import { useFold } from '~/components/fold-card';
 import { LanguageSwitch, ThemeToggle } from '~/components/controls';
 import { MinecraftHead } from '~/components/minecraft-head';
 import { VersionPill } from '~/components/whats-new';
@@ -108,9 +120,6 @@ const MODE_PANEL = 'modes';
 /** Settings area with the update card ("Was ist neu" links there when an update is ready). */
 const UPDATES_PAGE = '/einstellungen/updates';
 
-/** Areas listed under "Verwaltung". */
-const MANAGE_AREAS = ['players', 'punishments', 'roles', 'discord', 'servers'] as const;
-
 const ITEM =
   'group relative flex items-center gap-3 rounded-[11px] px-3 py-2.5 text-[14.5px] font-semibold text-band-muted transition-colors hover:bg-white/[0.06] hover:text-band-foreground';
 const ACTIVE =
@@ -154,11 +163,78 @@ function Item({
   );
 }
 
-function Group({ label }: { readonly label: string }): ReactElement {
+/** Which menu group a settings area belongs to (areas not named here go to "Netzwerk & Lobby"). */
+const AREA_GROUP: Readonly<Record<string, MenuGroup>> = {
+  badges: 'team',
+  'team-apply': 'team',
+  website: 'content',
+  reach: 'system',
+  updates: 'system',
+};
+
+type MenuGroup = 'players' | 'team' | 'network' | 'modes' | 'content' | 'system';
+
+function groupOf({ area }: SettingsEntry): MenuGroup {
+  return area.panel === MODE_PANEL ? 'modes' : (AREA_GROUP[area.id] ?? 'network');
+}
+
+/**
+ * A menu group that folds open and closed (remembered per group). It opens by itself when one of its pages is shown.
+ */
+function Group({
+  id,
+  label,
+  tour,
+  children,
+}: {
+  readonly id: MenuGroup;
+  readonly label: string;
+  readonly tour?: string;
+  readonly children: ReactNode;
+}): ReactElement | null {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const [open, setOpen] = useFold(`nav:${id}`, true);
+  const listId = useId();
+  const items = Children.toArray(children);
+  const { pathname } = useLocation();
+  const active = items.some(
+    (item) =>
+      isValidElement<{ to?: string }>(item) &&
+      item.props.to !== undefined &&
+      pathname.startsWith(item.props.to),
+  );
+  // Open when one of its pages is reached (only then – closing it again by hand stays possible).
+  useEffect(() => {
+    if (active) setOpen(true);
+  }, [pathname]);
+  if (!items.length) return null;
   return (
-    <p className="px-3 pb-1 pt-4 text-[11px] font-bold uppercase tracking-[0.16em] text-band-muted/70">
-      {label}
-    </p>
+    <div className="grid gap-0.5 rounded-[12px]" data-tour={tour} data-fold={`nav:${id}`} data-open={open}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={listId}
+        title={t('shell.toggleGroup', { name: label })}
+        onClick={() => setOpen(!open)}
+        className="group mt-3 flex cursor-pointer items-center justify-between rounded-[9px] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-band-muted/70 transition-colors hover:text-band-foreground"
+      >
+        {label}
+        <ChevronDown
+          className={cn('size-3.5 transition-transform duration-200', open ? 'rotate-0' : '-rotate-90')}
+          aria-hidden
+        />
+      </button>
+      <div
+        id={listId}
+        inert={!open}
+        className={cn(
+          'grid transition-[grid-template-rows,opacity,visibility] duration-200 ease-out',
+          open ? 'visible grid-rows-[1fr] opacity-100' : 'invisible grid-rows-[0fr] opacity-0',
+        )}
+      >
+        <div className="grid min-h-0 gap-0.5 overflow-hidden">{items}</div>
+      </div>
+    </div>
   );
 }
 
@@ -172,16 +248,18 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
   const can = (area: (typeof me.areas)[number]): boolean => me.areas.includes(area);
   const openApplications = usePendingCount(can('players'));
   const areas = settings.data ?? [];
-  const modeAreas = areas.filter(({ area }) => area.panel === MODE_PANEL);
-  const settingsLink = ({ area }: SettingsEntry): ReactElement => (
-    <Item
-      key={area.id}
-      to={`/einstellungen/${area.id}`}
-      icon={areaIcon(area.icon)}
-      label={pick(area.title)}
-      onNavigate={onNavigate}
-    />
-  );
+  const settingsOf = (group: MenuGroup): ReactElement[] =>
+    areas
+      .filter((entry) => groupOf(entry) === group)
+      .map(({ area }) => (
+        <Item
+          key={area.id}
+          to={`/einstellungen/${area.id}`}
+          icon={areaIcon(area.icon)}
+          label={pick(area.title)}
+          onNavigate={onNavigate}
+        />
+      ));
   return (
     <div className="flex min-h-full flex-col gap-1 px-3.5 py-5">
       <div className="px-2 pb-4">
@@ -201,79 +279,84 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
         {can('modes') ? (
           <Item to="/modi" icon={Gamepad2} label={t('shell.modes')} tour="modes" onNavigate={onNavigate} />
         ) : null}
-        {areas.length ? (
-          <div className="grid gap-0.5 rounded-[12px]" data-tour="settings">
-            <Group label={t('shell.settings')} />
-            {areas.filter(({ area }) => area.panel !== MODE_PANEL).map(settingsLink)}
-            {modeAreas.length ? <Group label={t('shell.modeSettings')} /> : null}
-            {modeAreas.map(settingsLink)}
-          </div>
-        ) : null}
-        {can('content') ? (
-          <>
-            <Group label={t('shell.content')} />
+        <Group id="players" label={t('shell.groupPlayers')}>
+          {can('players') ? (
+            <Item
+              to="/spieler"
+              icon={UsersRound}
+              label={t('shell.players')}
+              tour="players"
+              onNavigate={onNavigate}
+            />
+          ) : null}
+          {can('players') ? (
+            <Item
+              to="/bewerbungen"
+              icon={ClipboardList}
+              label={t('shell.applications')}
+              tour="applications"
+              badge={openApplications}
+              onNavigate={onNavigate}
+            />
+          ) : null}
+          {can('punishments') ? (
+            <Item
+              to="/strafen"
+              icon={Gavel}
+              label={t('shell.punishments')}
+              tour="punishments"
+              onNavigate={onNavigate}
+            />
+          ) : null}
+        </Group>
+        <Group id="team" label={t('shell.groupTeam')}>
+          {can('roles') ? (
+            <Item
+              to="/rollen"
+              icon={ShieldHalf}
+              label={t('shell.roles')}
+              tour="roles"
+              onNavigate={onNavigate}
+            />
+          ) : null}
+          {can('roles') ? (
+            <Item to="/team" icon={UserCog} label={t('shell.team')} tour="team" onNavigate={onNavigate} />
+          ) : null}
+          {settingsOf('team')}
+        </Group>
+        <Group id="network" label={t('shell.groupNetwork')} tour="settings">
+          {settingsOf('network')}
+          {can('servers') ? (
+            <Item
+              to="/server"
+              icon={Server}
+              label={t('shell.servers')}
+              tour="servers"
+              onNavigate={onNavigate}
+            />
+          ) : null}
+        </Group>
+        <Group id="modes" label={t('shell.modeSettings')}>
+          {settingsOf('modes')}
+        </Group>
+        <Group id="content" label={t('shell.groupContent')}>
+          {can('content') ? (
             <Item to="/news" icon={Newspaper} label={t('shell.news')} tour="news" onNavigate={onNavigate} />
-          </>
-        ) : null}
-        {MANAGE_AREAS.some(can) ? <Group label={t('shell.manage')} /> : null}
-        {can('players') ? (
-          <Item
-            to="/spieler"
-            icon={UsersRound}
-            label={t('shell.players')}
-            tour="players"
-            onNavigate={onNavigate}
-          />
-        ) : null}
-        {can('players') ? (
-          <Item
-            to="/bewerbungen"
-            icon={ClipboardList}
-            label={t('shell.applications')}
-            tour="applications"
-            badge={openApplications}
-            onNavigate={onNavigate}
-          />
-        ) : null}
-        {can('punishments') ? (
-          <Item
-            to="/strafen"
-            icon={Gavel}
-            label={t('shell.punishments')}
-            tour="punishments"
-            onNavigate={onNavigate}
-          />
-        ) : null}
-        {can('roles') ? (
-          <Item
-            to="/rollen"
-            icon={ShieldHalf}
-            label={t('shell.roles')}
-            tour="roles"
-            onNavigate={onNavigate}
-          />
-        ) : null}
-        {can('roles') ? (
-          <Item to="/team" icon={UserCog} label={t('shell.team')} tour="team" onNavigate={onNavigate} />
-        ) : null}
-        {can('discord') ? (
-          <Item
-            to="/discord"
-            icon={MessagesSquare}
-            label={t('shell.discord')}
-            tour="discord"
-            onNavigate={onNavigate}
-          />
-        ) : null}
-        {can('servers') ? (
-          <Item
-            to="/server"
-            icon={Server}
-            label={t('shell.servers')}
-            tour="servers"
-            onNavigate={onNavigate}
-          />
-        ) : null}
+          ) : null}
+          {settingsOf('content')}
+          {can('discord') ? (
+            <Item
+              to="/discord"
+              icon={MessagesSquare}
+              label={t('shell.discord')}
+              tour="discord"
+              onNavigate={onNavigate}
+            />
+          ) : null}
+        </Group>
+        <Group id="system" label={t('shell.groupSystem')}>
+          {settingsOf('system')}
+        </Group>
       </nav>
       <div className="mt-auto grid gap-3 pt-6">
         <div className="grid gap-3 rounded-[14px] border border-band-line bg-white/[0.04] p-3">

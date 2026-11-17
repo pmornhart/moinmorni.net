@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router';
 import { toast } from 'sonner';
 import type { SettingDef, SettingSection } from '@moinmorni/shared';
+import { FoldCard, openFold, revealFold } from '~/components/fold-card';
 import { Button, Card, Kbd, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -26,6 +27,12 @@ const SECTION_ANCHOR = 'section-';
 /** From this many sections an area gets a row of jump links on top (game modes with long lists). */
 const SECTION_INDEX_FROM = 6;
 const OWNER = 'owner';
+/** Time a section needs to fold open before the page scrolls to a setting inside it. */
+const FOLD_OPEN_MS = 240;
+
+function foldIdOf(areaId: string, sectionId: string): string {
+  return `settings:${areaId}:${sectionId}`;
+}
 
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
@@ -104,26 +111,39 @@ function SettingRow({
 }
 
 function SectionCard({
+  areaId,
   section,
+  defaultOpen,
   draft,
   saved,
   onChange,
 }: {
+  readonly areaId: string;
   readonly section: SettingSection;
+  readonly defaultOpen: boolean;
   readonly draft: Readonly<Record<string, unknown>>;
   readonly saved: Readonly<Record<string, unknown>>;
   readonly onChange: (key: string, value: unknown) => void;
 }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
+  const changed = section.settings.filter((def) => !same(draft[def.key], saved[def.key])).length;
   return (
-    <Card
-      id={`${SECTION_ANCHOR}${section.id}`}
-      className="grid scroll-mt-28 gap-1 px-5 pt-5 pb-1 sm:px-7 sm:pt-6"
+    <FoldCard
+      id={foldIdOf(areaId, section.id)}
+      anchor={`${SECTION_ANCHOR}${section.id}`}
+      title={pick(section.title)}
+      text={section.text ? pick(section.text) : undefined}
+      defaultOpen={defaultOpen}
+      summary={
+        changed ? (
+          <span className="font-semibold text-gold">{t('fold.changed', { count: changed })}</span>
+        ) : (
+          t('fold.settings', { count: section.settings.length })
+        )
+      }
+      bodyClassName="pb-1 pt-1"
     >
-      <div className="grid gap-1 border-b border-border pb-4">
-        <h2 className="font-display text-xl font-semibold">{pick(section.title)}</h2>
-        {section.text ? <p className="text-sm text-muted-foreground">{pick(section.text)}</p> : null}
-      </div>
       <div className="grid divide-y divide-border">
         {section.settings.map((def) => (
           <SettingRow
@@ -135,7 +155,7 @@ function SectionCard({
           />
         ))}
       </div>
-    </Card>
+    </FoldCard>
   );
 }
 
@@ -185,10 +205,12 @@ function AreaForm({ entry }: { readonly entry: SettingsEntry }): ReactElement {
   return (
     <>
       <div className="grid gap-[22px]">
-        {area.sections.map((section) => (
+        {area.sections.map((section, index) => (
           <SectionCard
             key={section.id}
+            areaId={area.id}
             section={section}
+            defaultOpen={index === 0 || area.sections.length < SECTION_INDEX_FROM}
             draft={draft}
             saved={values}
             onChange={(key, value) => setDraft((d) => ({ ...d, [key]: value }))}
@@ -227,7 +249,13 @@ function AreaForm({ entry }: { readonly entry: SettingsEntry }): ReactElement {
  * Long areas (Morni Party, MorniSMP, Versteckerl …): one chip per section that scrolls to its card. On the phone the
  * row scrolls sideways instead of wrapping into many lines.
  */
-function SectionIndex({ sections }: { readonly sections: readonly SettingSection[] }): ReactElement | null {
+function SectionIndex({
+  areaId,
+  sections,
+}: {
+  readonly areaId: string;
+  readonly sections: readonly SettingSection[];
+}): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
   if (sections.length < SECTION_INDEX_FROM) return null;
@@ -241,11 +269,12 @@ function SectionIndex({ sections }: { readonly sections: readonly SettingSection
           key={section.id}
           variant="secondary"
           size="sm"
-          onClick={() =>
+          onClick={() => {
+            openFold(foldIdOf(areaId, section.id));
             document
               .getElementById(`${SECTION_ANCHOR}${section.id}`)
-              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
         >
           {pick(section.title)}
         </Button>
@@ -261,11 +290,18 @@ function useJumpToSetting(ready: boolean): void {
     if (!ready || !hash.startsWith(SETTING_ANCHOR)) return undefined;
     const row = document.getElementById(hash.slice(1));
     if (!row) return undefined;
-    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    row.classList.add('mm-flash');
-    document.getElementById(fieldId(hash.slice(SETTING_ANCHOR.length)))?.focus({ preventScroll: true });
-    const timer = window.setTimeout(() => row.classList.remove('mm-flash'), FLASH_MS);
-    return () => window.clearTimeout(timer);
+    revealFold(row);
+    // Wait for a closed section to open before scrolling there.
+    const show = window.setTimeout(() => {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.add('mm-flash');
+      document.getElementById(fieldId(hash.slice(SETTING_ANCHOR.length)))?.focus({ preventScroll: true });
+    }, FOLD_OPEN_MS);
+    const timer = window.setTimeout(() => row.classList.remove('mm-flash'), FOLD_OPEN_MS + FLASH_MS);
+    return () => {
+      window.clearTimeout(show);
+      window.clearTimeout(timer);
+    };
   }, [hash, ready]);
 }
 
@@ -293,7 +329,7 @@ export function SettingsPage(): ReactElement {
             text={pick(entry.area.text)}
           />
           <AreaExtras key={`extras-${entry.area.id}`} entry={entry} />
-          <SectionIndex sections={entry.area.sections} />
+          <SectionIndex areaId={entry.area.id} sections={entry.area.sections} />
           <AreaForm key={entry.area.id} entry={entry} />
         </>
       ) : null}

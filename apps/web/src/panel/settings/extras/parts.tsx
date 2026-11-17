@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactElement, ReactNode } from 'react';
+import { FoldCard } from '~/components/fold-card';
 import { Card } from '~/components/ui';
 import { cn } from '~/lib/cn';
 
@@ -12,6 +13,8 @@ export function ExtraCard({
   children,
   className,
   id,
+  fold,
+  foldOpen = true,
 }: {
   readonly icon: LucideIcon;
   readonly title: string;
@@ -21,7 +24,34 @@ export function ExtraCard({
   readonly children: ReactNode;
   readonly className?: string;
   readonly id?: string;
+  /** Makes the card fold open and closed (remembered under this key); `aside` is then the summary when closed. */
+  readonly fold?: string;
+  readonly foldOpen?: boolean;
 }): ReactElement {
+  if (fold) {
+    return (
+      <FoldCard
+        id={fold}
+        anchor={id}
+        icon={Icon}
+        title={title}
+        summary={aside}
+        defaultOpen={foldOpen}
+        className={className}
+        bodyClassName="grid min-w-0 gap-5"
+      >
+        {text || aside ? (
+          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+            {text ? (
+              <p className="max-w-[72ch] text-sm leading-relaxed text-muted-foreground text-pretty">{text}</p>
+            ) : null}
+            {aside ? <div className="flex min-w-0 flex-wrap items-center gap-2">{aside}</div> : null}
+          </div>
+        ) : null}
+        {children}
+      </FoldCard>
+    );
+  }
   return (
     <Card id={id} className={cn('grid min-w-0 gap-5 p-5 sm:p-7', className)}>
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-border pb-4">

@@ -281,7 +281,7 @@ export function BuildCard(): ReactElement {
   const errorText = useErrorText();
   const build = useBuildQuery();
   return (
-    <ExtraCard icon={Boxes} title={t('buildCard.title')} text={t('buildCard.text')}>
+    <ExtraCard fold="extra:build" icon={Boxes} title={t('buildCard.title')} text={t('buildCard.text')}>
       {build.isPending ? (
         <div className="grid gap-2">
           {SKELETON_ROWS.map((row) => (
