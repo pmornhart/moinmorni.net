@@ -165,24 +165,44 @@ export function registerRestartRoutes(
       const byMember = new Map(known.map((e) => [e.view.member, e]));
       if (wanted.some((m) => !byMember.has(m))) throw badRequest('restart_unknown_server');
       const picked = wanted.map((m) => byMember.get(m)!);
+      // Läuft: geordnet mit Countdown neu. Ist aus (abgestürzt, gestoppt – nicht schlafend): gleich starten, damit
+      // „alle neu starten“ wirklich alle hochbringt. Startet gerade schon (z. B. einzeln neu gestartet) oder schläft:
+      // nichts tun – der Server kommt ohnehin frisch hoch; das blockiert die anderen nie.
       const running = picked.filter((e) => e.view.state === 'running');
-      const skipped = picked.filter((e) => e.view.state !== 'running').map((e) => e.view.member);
-      if (!running.length) throw badRequest('restart_nothing_running');
+      const stopped = picked.filter((e) => e.view.state === 'stopped');
+      const skipped = picked
+        .filter((e) => e.view.state === 'starting' || e.view.state === 'sleeping')
+        .map((e) => e.view.member);
       const queued = deps.restartNow.busy();
       const targets: Target[] = running.map((e) => ({ serverId: e.serverId, member: e.view.member }));
+      const booted = (
+        await Promise.all(
+          stopped.map(async (e) => {
+            try {
+              await motor.request('POST', `/api/servers/${encodeURIComponent(e.serverId)}/actions/start`);
+              return e.view.member;
+            } catch (err) {
+              deps.log.warn({ err, server: e.view.member }, 'Panel: Server ließ sich nicht starten');
+              skipped.push(e.view.member);
+              return null;
+            }
+          }),
+        )
+      ).filter((m): m is string => m !== null);
       request.log.info(
-        { servers: targets.map((t) => t.member), skipped, queued, by: user.username },
+        { servers: targets.map((t) => t.member), booted, skipped, queued, by: user.username },
         'Panel: Server werden von Hand neu gestartet',
       );
       // Nicht abwarten: Countdown und Neustarts dauern Minuten; das Panel fragt den Stand ab.
-      void (async (): Promise<void> => {
-        try {
-          await deps.restartNow.run(targets, 'manual');
-        } catch (err) {
-          deps.log.warn({ err }, 'Panel: Neustart von Hand ging nicht ganz durch');
-        }
-      })();
-      return { started: targets.map((t) => t.member), skipped, queued };
+      if (targets.length)
+        void (async (): Promise<void> => {
+          try {
+            await deps.restartNow.run(targets, 'manual');
+          } catch (err) {
+            deps.log.warn({ err }, 'Panel: Neustart von Hand ging nicht ganz durch');
+          }
+        })();
+      return { started: [...targets.map((t) => t.member), ...booted], skipped, queued };
     },
   );
 }

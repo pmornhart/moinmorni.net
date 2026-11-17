@@ -151,6 +151,8 @@ describe('Wartungs-Lobby im Hub', () => {
     expect((await proxy.next('connect', (m) => m['uuid'] === LENA))['server']).toBe('wartung');
     proxy.send({ t: 'switch', uuid: LENA, server: 'wartung' });
     await wartung.next('profile', (m) => m['uuid'] === LENA);
+    // Der Neustart nach einem Update wartet darauf, bevor er die Wartungs-Lobby neu startet.
+    expect(hub.wartung.returning()).toBe(1);
     // Die Lobby hängt noch kurz am Hub – kein Countdown zurück, bevor sie neu gestartet ist.
     await pause(TICK_WAIT_MS);
     expect(wartung.received.some((m) => m.t === 'wartung' && typeof m['returnIn'] === 'number')).toBe(false);
@@ -158,11 +160,15 @@ describe('Wartungs-Lobby im Hub', () => {
 
     // Neu gestartet: wieder am Hub → Countdown → zurück in die Lobby.
     lobby.close();
-    await plugin('lobby', 'backend');
+    const lobby2 = await plugin('lobby', 'backend');
     await wartung.next('wartung', (m) => m['returnIn'] === WARTUNG_RETURN_SECONDS);
     clock.now += WARTUNG_RETURN_SECONDS * SECOND_MS;
     const back = await proxy.next('connect', (m) => m['uuid'] === LENA && m['server'] === 'lobby');
     expect(back['server']).toBe('lobby');
+    expect(hub.wartung.returning()).toBe(1); // unterwegs, bis der Proxy den Wechsel meldet
+    proxy.send({ t: 'switch', uuid: LENA, server: 'lobby' });
+    await lobby2.next('profile', (m) => m['uuid'] === LENA);
+    expect(hub.wartung.returning()).toBe(0);
 
     // Wartungs-Lobby ausgeschaltet: niemand wird dorthin geschickt.
     stores.patchSettings('network', { maintenanceLobby: false }, 'test');

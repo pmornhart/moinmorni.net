@@ -644,6 +644,28 @@
   gegen den echten Motor: Liste ohne Wartungs-Lobby, Ablehnung, 401/403, Neustart mit Fortschritt), 129 shared, Typen,
   Prettier, Web-Bau. Bilder (Playwright gegen echten Server + Motor, Computer + Handy, hell/dunkel, englisch) nur im
   Scratchpad `neustart-bilder/`. Nicht echt mit Minecraft-Servern geprüft.
+- 17.11. abends: **Wartungs-Lobby zuletzt, Proxy nur wenn nötig** (Philip nach einem Update: „es muss immer der
+  Wartungsserver gehen – erst werden alle anderen geupdatet und dann der Wartungsserver“; er bekam im Spiel
+  „Verbindungsaufbau fehlgeschlagen / Verbindung getrennt“; Branch `claude/wartung-zuletzt`). **Ursache:** Das
+  Netzwerk-Plugin ist eine Jar für Proxy und Spielserver – fast jedes Update ändert Paper-Teile (Lobby, Jump and Run …),
+  darum stand der Proxy nach jedem Update auf der Neustart-Liste, und Lobby, Wartungs-Lobby und Proxy starteten
+  zusammen: alle wurden getrennt (mit Nachricht, die ein Reconnect-Mod sofort mit einem gescheiterten Neuverbinden auf
+  den gerade startenden Proxy überdeckt – das ist der Bildschirm). Motor und MorniHosting starten keine Container von
+  selbst neu (geprüft: `reconcile` übernimmt laufende Container, Jars werden per Umbenennen ersetzt) – kein Fix dort.
+  **Neu:** Reihenfolge immer Spielmodi + Bau-Server (nacheinander) → Lobby (Spieler warten in der Wartungs-Lobby) →
+  erst wenn die Lobby wieder am Hub hängt und die Wartenden zurück sind (`hub.wartung.returning()`, höchstens 2 Min.):
+  Wartungs-Lobby → ganz zuletzt der Proxy (Countdown für alle, freundlicher Abschied); nie Lobby und Wartungs-Lobby
+  gleichzeitig weg; gilt auch für den Knopf „Server neu starten“. **Proxy nur, wenn nötig:** Fingerabdruck der Teile,
+  die Velocity lädt (`network/plugin-parts.ts`, liest nur das ZIP-Inhaltsverzeichnis; ohne Paper-Teile, Modus-API,
+  plugin.yml, Maven-Angaben), gemerkt in `plugins/moinmorni/proxy-parts.sha256` (fehlt er, liest MoinMorni die Jar auf
+  dem Proxy) – gleich → Jar liegt schon da, gilt beim nächsten Neustart, kein Neustart deswegen. Panel-Text der
+  Reihenfolge angepasst, `docs/lobby.md`. Tests: 305 Server- (neu `plugin-parts.test.ts` 3, Provisioner mit echtem Motor
+  „nur Paper-Teile → Proxy nicht“, `restart-now.test.ts` neu/umgebaut: Wartungs-Lobby nach der Lobby, Wartende hängen
+  → nach 2 Min. trotzdem, Proxy zuletzt; Hub `returning`), Typen, Prettier. Echt: Velocity 4.3.1 + Lobby + Duels +
+  Wartungs-Lobby (Paper 26.1.2, Netzwerk-Plugin aus dem Branch) + Test-Hub (`hub-dev.ts` jetzt mit `connected`/`wartung`),
+  `tools/netz-test/wartung-zuletzt-test.cjs` **16/16** – Duels zuerst, beide Spieler warten in der Wartungs-Lobby,
+  kommen von selbst zurück, erst dann startet die Wartungs-Lobby, nie beide weg, niemand getrennt, jeder Server einmal.
+  Nicht echt geprüft: Proxy-Neustart mit echten Spielern über NetBird, echtes Update mit Docker.
 - 17.11. abends: **Jump and Run aus dem Inventar, Start in der Luft** (Philip: „Jump and Run soll im Inventar
   aktivierbar sein und man spawnt in der Luft“; Branch `claude/jnr-inventar`): In der Schnellleiste der Lobby liegt
   neben dem Kompass (Platz 1) eine **Feder „Jump and Run“** – Rechtsklick (Bedrock: antippen) und man steht sofort hoch
@@ -699,6 +721,30 @@
   Anzeigen richtig gedreht; Bilder nur lokal. Nicht echt geprüft: Bedrock (Geyser zeigt Item-Anzeigen ohne
   Erweiterung nicht – Bedrock sieht die Möbel nicht mehr, vorher Holzstufen; Kollision bleibt), Client vor 1.20.3,
   Kugeln/Eier im echten Client, Brunnen-Ersatz ohne Paket.
+
+- 17.11. abends: **Stände wie das Weihnachtstor + Ostern im selben Stil** (Philip: „an den Ständen bitte das gleiche wie
+  bei dem Eingang“, „und hier auch“ – Marktbogen „Schlossmarkt“ –, „bei Ostern das gleiche wie bei Weihnachten, nur mehr
+  im Osterstyle“; Branch `claude/weihnachtsstaende`): Die Bausteine des Weihnachtstors liegen jetzt in
+  `packages/builder/src/lobby/girlanden.ts` mit einem **Stil** (`WEIHNACHT`: Tannengrün, rote Schleifen, Kugeln,
+  Tannenzapfen; `OSTERN`: Kirsch- und Azaleenblüten mit Grün, Pastell-Schleifen, Ostereier, Weidenkätzchen) – das
+  Weihnachtstor bleibt byte-gleich. `standschmuck.ts`: **jeder Marktstand** (Dorf- und Schlossmarkt) bekommt dicken
+  Strang an der Markisenkante, Seitenstränge, wo kein Nachbarstand dicht daneben steht, zwei Bögen mit Schleifen und
+  Kugel/Ei, Lichter, Zapfen/Kätzchen, umwundene Vorderpfosten (unter den Laternen; was in Tischchen, Zaun oder Theke
+  stäke oder danach nicht mehr hielte, fällt weg – geprüft mit der Bauplan-Prüfung selbst); Name des Stands und
+  Schild über der Figur bleiben frei. **Glühwein-/Lebkuchenbude** und Osterbuden ebenso. **Marktbogen:** Strang oben auf
+  dem Balken (vorn und hinten, über den Wimpeln), Bögen mit Schleifen nur zwischen den Wimpeln über der Schrift,
+  umwundene Pfosten. **Ostern:** Eingangsbogen = `geschmuecktesTor` mit Thema `OSTER_TOR` (Birke, Blütenkrone, Schild
+  „✿ Frohe Ostern! ✿ / Happy Easter!“ oben auf dem Balken, großes Osterei, Osterbäumchen im Kübel, Kränze), dazu alle
+  Stände, Buden und Marktbogen. **Wiesn/Halloween:** Gruß nicht mehr unter dem Balken (überlappte die Begrüßung) – Wiesn
+  oben im Giebel, Halloween oben auf dem Balken (Kürbisse rücken zur Seite). Kugeln/Eier sind Block-Anzeigen aus
+  Trockenbeton und werden beim Bau wie alle anderen zu Item-Anzeigen mit `moinmorni:kugel` (Netzwerk-Paket,
+  zusammengeführt mit `claude/ein-paket`). Sport-Stand bewusst ohne Schmuck (wechselt per Plugin zwischen Skihütte und
+  Bootshaus, auch außerhalb der Saison). Winter-Anzeigen jetzt 5288 (vorher 2890), Testgrenze 6500. Tests: 138
+  Baukasten-Tests, `lobby-world` 5/5, Typen, Prettier; Bauplan-Prüfung **alle Saisons 0 Funde**. Echt: Paper 26.1.2 +
+  Netzwerk-Plugin (aus diesem Branch) + Test-Hub, echter Selbstbau: Winter-Probe an **5/5** (5288 Wesen), keine Saison
+  → aus **5/5**, wieder Winter **5/5**, Ostern an **4/4**, keine Saison → Ostern aus **4/4**, `lobby-test` **42/42**.
+  Bilder mit Client 26.3 + Netzwerk-Paket vorher/nachher, Tag und Nacht, aus Philips Blickwinkeln (Stand x −1/z 10,
+  Marktbogen x −4/z −19, Osterbogen x 1/z 27) und Schlossmarkt, dazu Wiesn/Halloween-Eingang (nur lokal).
 
 ## Offen
 

@@ -17,6 +17,7 @@ import {
   type Mode,
 } from '@moinmorni/shared';
 import type { ReleaseSource } from './mode-releases.js';
+import { proxyFingerprint } from './plugin-parts.js';
 
 /**
  * Das Netzwerk richtet sich selbst ein: Proxy (Velocity mit Bedrock, allen Versionen und Voice-Chat) und Lobby
@@ -33,6 +34,11 @@ export const WARTUNG_MEMBER = WARTUNG_SERVER;
 const PLUGIN_DIR = 'plugins';
 const HUB_FILE = 'plugins/moinmorni/hub.json';
 const STAMP_FILE = 'plugins/moinmorni/plugin.sha256';
+/**
+ * Proxy: Fingerabdruck der Teile des Netzwerk-Plugins, die Velocity lädt (network/plugin-parts.ts). Nur wenn er sich
+ * ändert, startet der Proxy wegen einer neuen Jar neu – sonst liegt sie schon da und gilt beim nächsten Neustart.
+ */
+const PROXY_PARTS_FILE = 'plugins/moinmorni/proxy-parts.sha256';
 const PROXY_MEMORY_MB = 1024;
 export const LOBBY_MEMORY_MB = 3072;
 const PROXY_PORT = 25565;
@@ -213,11 +219,31 @@ export function createProvisioner(
    * hub.json und Plugin auf einen Server. `plugin` = Plugin neu, `hub` = Zugang zum Hub geändert (z. B. neuer
    * Schlüssel nach einem Update) – beides wirkt erst nach einem Neustart.
    */
+  /**
+   * Fingerabdruck der Velocity-Teile der Jar, die gerade auf dem Proxy liegt (gemerkt oder aus der Jar selbst);
+   * null = unbekannt (dann lieber neu starten).
+   */
+  const installedProxyParts = async (serverId: string, jarName: string): Promise<string | null> => {
+    const remembered = (await readFile(serverId, PROXY_PARTS_FILE))?.trim();
+    if (remembered) return remembered;
+    try {
+      return proxyFingerprint(await motor.download(serverId, `${PLUGIN_DIR}/${jarName}`));
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Plugin und Hub-Schlüssel aufspielen. `restart` = der Server muss dafür neu starten. Beim Proxy nur, wenn sich die
+   * Teile geändert haben, die Velocity lädt – sonst startete er bei fast jedem Update (Lobby, Paper-Teile) mit allen
+   * Spielern neu (Philip: „ganz zuletzt, nur wenn wirklich nötig, der Proxy“). Die Jar wird per Umbenennen ersetzt,
+   * der laufende Proxy liest weiter seine alte.
+   */
   const equip = async (
     serverId: string,
     member: string,
     kind: 'proxy' | 'backend',
-  ): Promise<{ plugin: boolean; hub: boolean }> => {
+  ): Promise<{ plugin: boolean; hub: boolean; restart: boolean }> => {
     const hubJson = `${JSON.stringify(
       { url: config.hubUrl, server: member, kind, key: hub.keyFor(member, kind) },
       null,
@@ -228,17 +254,27 @@ export function createProvisioner(
     const jar = plugin();
     if (!jar) {
       log.warn({ file: config.pluginFile }, 'Netzwerk-Plugin fehlt im Image – Server laufen ohne Hub');
-      return { plugin: false, hub: hubChanged };
+      return { plugin: false, hub: hubChanged, restart: hubChanged };
     }
     const jarName = path.basename(config.pluginFile);
-    if ((await readFile(serverId, STAMP_FILE))?.trim() === jar.sha && (await hasPluginJar(serverId, jarName)))
-      return { plugin: false, hub: hubChanged };
+    const hasJar = await hasPluginJar(serverId, jarName);
+    if ((await readFile(serverId, STAMP_FILE))?.trim() === jar.sha && hasJar)
+      return { plugin: false, hub: hubChanged, restart: hubChanged };
+    const parts = kind === 'proxy' ? proxyFingerprint(jar.bytes) : null;
+    const partsBefore = kind === 'proxy' && hasJar ? await installedProxyParts(serverId, jarName) : null;
     await motor.upload(serverId, PLUGIN_DIR, jarName, jar.bytes);
     // Rückbenennung: die Jar unter dem Zwischen-Namen muss weg, sonst laufen nach dem Neustart zwei Netzwerk-Plugins.
     if (jarName !== INTERIM_NETWORK_JAR)
       await removeServerFiles(motor, serverId, [`${PLUGIN_DIR}/${INTERIM_NETWORK_JAR}`]);
     await writeFile(serverId, STAMP_FILE, `${jar.sha}\n`);
-    return { plugin: true, hub: hubChanged };
+    if (kind !== 'proxy') return { plugin: true, hub: hubChanged, restart: true };
+    if (parts) await writeFile(serverId, PROXY_PARTS_FILE, `${parts}\n`);
+    const same = parts !== null && parts === partsBefore;
+    if (same)
+      log.info(
+        'Netzwerk-Plugin: für den Proxy nichts Neues – er startet deswegen nicht neu (gilt beim nächsten Mal)',
+      );
+    return { plugin: true, hub: hubChanged, restart: hubChanged || !same };
   };
 
   /**
@@ -364,7 +400,7 @@ export function createProvisioner(
         ...fresh.members.map((m) => ({ serverId: m.serverId, member: m.name, kind: 'backend' as const })),
       ];
       const equipped = await targets.reduce<
-        Promise<Array<{ member: string; plugin: boolean; hub: boolean }>>
+        Promise<Array<{ member: string; plugin: boolean; hub: boolean; restart: boolean }>>
       >(
         async (acc, t) => [
           ...(await acc),
@@ -420,7 +456,7 @@ export function createProvisioner(
         }, Promise.resolve([]));
       const stale = new Set([
         ...modesChanged,
-        ...equipped.filter((e) => e.plugin || e.hub).map((e) => e.member),
+        ...equipped.filter((e) => e.restart).map((e) => e.member),
         ...modesInstalled,
         ...(lobbyChanged ? [LOBBY_MEMBER] : []),
         ...(buildChanged ? [BUILD_MEMBER] : []),

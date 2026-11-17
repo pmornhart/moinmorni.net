@@ -243,7 +243,8 @@ describe('Winter-Wunderland', () => {
       const renamed = ['chain', 'grass'];
       expect(changed.filter(([, , , b]) => renamed.includes(baseName(b)))).toEqual([]);
       expect(plan.displays.length).toBeGreaterThan(1500);
-      expect(plan.displays.length).toBeLessThan(3000);
+      // Seit die Stände wie das Weihnachtstor geschmückt sind (dicker Strang, Bögen, umwundene Pfosten) gut 5000
+      expect(plan.displays.length).toBeLessThan(6500);
       const wrong = plan.displays.filter((d) => {
         const block = DISPLAY_BLOCK.exec(d)?.[1];
         const shown = d.startsWith('summon block_display')

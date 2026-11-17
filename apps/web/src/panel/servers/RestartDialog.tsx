@@ -27,6 +27,7 @@ import { usePick } from '~/lib/text';
 
 const RESTART_KEY = ['panel', 'servers', 'restart'] as const;
 /** Ask for the progress this often while the dialog is open (faster while a round runs). */
+const FINISHED_STEPS: readonly string[] = ['done', 'failed', 'skipped'];
 const POLL_IDLE_MS = 10_000;
 const POLL_BUSY_MS = 2_000;
 
@@ -83,7 +84,12 @@ function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement 
   /** null = untouched: all running servers are ticked. */
   const [chosen, setChosen] = useState<ReadonlySet<string> | null>(null);
   const servers = useMemo(() => query.data?.servers ?? [], [query.data]);
-  const running = useMemo(() => servers.filter((s) => s.state === 'running').map((s) => s.member), [servers]);
+  /** Neu startbar: läuft (geordnet mit Countdown) oder ist aus (wird gestartet). Startet gerade / schläft: kommt
+   * ohnehin frisch hoch und blockiert die anderen nicht. */
+  const running = useMemo(
+    () => servers.filter((s) => s.state === 'running' || s.state === 'stopped').map((s) => s.member),
+    [servers],
+  );
   const picked = chosen ?? new Set(running);
   const allPicked = running.length > 0 && running.every((m) => picked.has(m));
   const progress = query.data?.progress;
@@ -123,7 +129,10 @@ function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement 
             className="mt-0.5 size-4 shrink-0 animate-spin text-gold [animation-duration:2.4s]"
             aria-hidden
           />
-          {t('restartDialog.busy')}
+          {t('restartDialog.busy', {
+            done: (progress.servers ?? []).filter((x) => FINISHED_STEPS.includes(x.step)).length,
+            total: (progress.servers ?? []).length,
+          })}
         </p>
       ) : null}
       <label
@@ -146,7 +155,7 @@ function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement 
       <ul className="grid max-h-[46dvh] gap-1 overflow-y-auto pr-1">
         {servers.map((server, index) => {
           const id = `${baseId}-${server.member}`;
-          const can = server.state === 'running';
+          const can = server.state === 'running' || server.state === 'stopped';
           const step = stepOf.get(server.member);
           return (
             <li key={server.member}>
