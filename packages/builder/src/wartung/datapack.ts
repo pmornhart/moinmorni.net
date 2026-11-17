@@ -3,6 +3,7 @@
  * „wartung“ und ruft die Funktionen nacheinander auf (`prepare` → `clean` → `part/000` … → `finish`). Gleicher Plan =
  * gleiche `version`; ändert sich der Plan, baut der Server neu.
  */
+import { newDekoModels } from '../lobby/buendel.js';
 import crypto from 'node:crypto';
 import { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG } from '../lobby-tags.js';
 import {
@@ -106,6 +107,7 @@ export function wartungPack(): LobbyPack {
     seasonSteps: { none: [], wiesn: [], winter: [], easter: [], halloween: [] },
     seasonLoad: [],
     seasonUnload: [],
+    deko: newDekoModels(),
     namespace: WARTUNG_NAMESPACE,
     packDir: WARTUNG_PACK_DIR,
     edge: EDGE,
