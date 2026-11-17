@@ -1,4 +1,7 @@
-"""Trailer: Baumeister – Bauwettbewerb: Bauhütte, Themen-Wahl, Bauen im Zeitraffer auf mehreren Parzellen, Bauen in der
+"""Stand 17.11.: alle Einstellungen gedreht (lokal ~/mm-cache/trailer/baumeister/), Schnitt noch offen
+(`MM_CUT_STEPS=1 python3 make.py baumeister cut` und `fertig`).
+
+Trailer: Baumeister – Bauwettbewerb: Bauhütte, Themen-Wahl, Bauen im Zeitraffer auf mehreren Parzellen, Bauen in der
 Ich-Sicht, Werkzeugkiste, fertige Bauten, Bewertung mit Sternen, Siegerehrung mit Podest und Meisterbrief.
 
 Gedreht auf einem eigenen Test-Server (tools/trailer/server.sh baumeister 28900 …: Paper 26.1.2, Morni Baumeister

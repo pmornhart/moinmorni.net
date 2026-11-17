@@ -8,6 +8,7 @@ keine fremden Melodien.
 
 Stile: spawn duels gipfelsturm bollwerk burgverlies party mirni mornicraft wolkenkampf versteckerl adlerflug
        wintersport angelkoenig maibaumklau dorfkrimi baumeister
+       sommerspiele
 Schreibt neben der WAV-Datei eine JSON mit den Zeitpunkten der Takte (für den Schnitt im Takt).
 """
 import json, os, random, subprocess, sys, tempfile
@@ -92,6 +93,9 @@ STYLES = {
     # Baumeister: fröhliche Baustelle – Marimba und Glockenspiel, treibender Bass, Hämmern auf Holzblöcken, Klatschen.
     'baumeister':  dict(tempo=128, key=7, minor=False, form='IAB AE', lead=12, lead2=9, bass=33, comp=24, pad=48,
                         groove='drive', drums='werk', vel=96),
+    # Sommerspiele: sportlicher Sommertag am See – Trompete und Marimba, treibender Bass, Rock-Schlagzeug mit Fanfare.
+    'sommerspiele': dict(tempo=126, key=0, minor=False, form='IAB AE', lead=56, lead2=12, bass=33, comp=25, pad=48,
+                         groove='drive', drums='rock', vel=100),
 }
 
 
