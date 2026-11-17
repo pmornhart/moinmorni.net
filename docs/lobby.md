@@ -212,7 +212,13 @@ Lobby-Server (bei jeder Änderung neu).
   doppelt (`Name` bis 26.2, `id` ab 26.3 – sonst zeigt 26.3 nur Luft). **Alle Anzeige-Wesen der Lobby haben keine
   Hitbox** (F3+B zeigt dort keine Rahmen und Pfeile): sie tragen `"Bukkit.invisible":1b` – Minecraft lässt unsichtbare
   Wesen beim Hitbox-Zeichnen aus, zeichnet Anzeigen aber trotzdem (`withoutHitbox` in `lobby/deko.ts`; Schilder des
-  Plugins ebenso).
+  Plugins ebenso). **Die Deko sucht sich ihren Platz** (`lobby/halt.ts`) mit den Regeln der Bauplan-Prüfung
+  (`pruefung.ts`): Ketten rücken mit beiden Enden an die nächste Wand, Markise oder den Maibaum (sonst hängen sie
+  nicht), Eier, Kürbisse und Spinnweben rücken auf den nächsten freien Fleck am Boden bzw. an der Wand, Kugeln an die
+  Zweige des Christbaums, Sterne und Schlitten herab, bis sie aufliegen, Schneeplatten, die in einem Turm stecken
+  würden, werden geteilt. Lebkuchenherzen und Kürbisse hängen an den Ständen, wo sie heute stehen. Test: jede Saison
+  ohne Funde (`test/lobby-pruefung.test.ts`; die Prüfung rechnet gedrehte Anzeigen und Treppen genau, kleine Teile
+  dicht beieinander sind ein Modell, keine Kette).
 - **Winter-Wunderland** (Saison „Winter“, `lobby/winter.ts`, `christbaum.ts`, `weihnachtsmarkt.ts`,
   `winter-figuren.ts`): Schnee auf allem (Wiesen mit Verwehungen, Schneewall neben Wegen und Plätzen, sechs
   Schneehaufen, dünne begehbare Schicht auf Wegen, dicker Schnee auf den Markisen, Schneeplatten auf den Dächern,

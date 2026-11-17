@@ -28,6 +28,8 @@ import {
   type ModelPart,
   type Vec,
 } from './deko.js';
+import type { World } from '../pruefung.js';
+import { settle, settleDown } from './halt.js';
 import { esel, josef, krippeMitKind, maria, ochse, schaf, stern } from './winter-figuren.js';
 import { clearPlants, HALF, tags, type View } from './winter-base.js';
 
@@ -210,18 +212,20 @@ function schlossmarktKetten(): string[] {
 }
 
 /** Marktbogen des Schlossmarkts: Girlande mit Lichtern vorne und hinten am Balken, Stern obendrauf. */
-function marktbogen(): string[] {
+function marktbogen(world: World): string[] {
   const top = GROUND + 7;
   const z = -28;
   const parts: ModelPart[] = [
     ...garland([-7, top + 0.9, z + 1.12], [8, top + 0.9, z + 1.12], 0.34, STALL_LIGHTS),
     ...garland([-7, top + 0.9, z - 0.12], [8, top + 0.9, z - 0.12], 0.34, STALL_LIGHTS),
-    ...stern(1.5).map((p) => ({
-      ...p,
-      at: [p.at[0] + HALF, p.at[1] + top + 2.3, p.at[2] + z + HALF] as Vec,
-    })),
   ];
-  return placeModel(tags('bogen'), [0, 0, 0], 0, parts);
+  // Stern: von oben herab, bis er auf dem Bogen steht
+  const star = (at: Vec): string[] => placeModel(tags('bogen'), at, 0, stern(1.5));
+  const above: Vec = [HALF, top + 2.3, z + HALF];
+  return [
+    ...placeModel(tags('bogen'), [0, 0, 0], 0, parts),
+    ...(settleDown(world, above, star, above[1] + 1, top) ?? star(above)),
+  ];
 }
 
 // ---------- Glühwein- und Lebkuchenbude ----------
@@ -363,13 +367,32 @@ function budeDeko(f: Frame, b: Bude): string[] {
 }
 
 /** Schild „Weihnachtsmarkt“ zwischen den Buden, an einer Lichterkette über dem Weg. */
-function eingang(): string[] {
-  // unter den Dachecken der beiden Buden, die zum Platz zeigen
-  const a: Vec = [-9.3, GROUND + 5.9, 19.3];
-  const b: Vec = [10.3, GROUND + 5.9, 19.3];
+/** Eingangsbogen von der Ankunft her: zwei Pfosten und ein Balken quer über den Platz. */
+export const EINGANG = { x1: -6, x2: 7, z: 19, height: 5 } as const;
+
+/** Eingangsbogen (Blöcke in `w`) mit Girlande, Lichtern und dem Schild „Weihnachtsmarkt“ darunter. */
+function eingang(w: Canvas): string[] {
+  const { x1, x2, z, height } = EINGANG;
+  const beam = GROUND + height;
+  [x1, x2].forEach((x) => range(GROUND + 1, beam - 1).forEach((y) => w.set(x, y, z, 'spruce_log')));
+  range(x1, x2).forEach((x) => w.set(x, beam, z, 'stripped_spruce_log[axis=x]'));
+  // Lichterkette unter dem Balken (zum Platz hin) von Pfosten zu Pfosten, Girlande oben an der Vorderseite
+  const chains = lightChain(
+    'eingang',
+    [x1 + 1.05, beam - 0.12, z - 0.08],
+    [x2 - 0.05, beam - 0.12, z - 0.08],
+    0.55,
+    CHAIN_LIGHTS,
+  );
+  const green = placeModel(
+    tags('eingang'),
+    [0, 0, 0],
+    0,
+    garland([x1 + 0.05, beam + 0.82, z + 1.15], [x2 + 0.95, beam + 0.82, z + 1.15], 0.3, STALL_LIGHTS),
+  );
   const sign = textSign(
     tags('eingang'),
-    [0.5, GROUND + 3.35, 19.35],
+    [HALF, beam - 0.75, z + 1.08],
     0,
     [
       { text: '✦ Weihnachtsmarkt ✦\\n', color: 'gold', bold: true },
@@ -377,14 +400,7 @@ function eingang(): string[] {
     ],
     1.25,
   );
-  return [
-    ...lightChain('eingang', a, b, 1.3, CHAIN_LIGHTS),
-    ...lightChain('eingang', [a[0], a[1] - 0.45, a[2]], [b[0], b[1] - 0.45, b[2]], 1.5, [
-      'glowstone',
-      'ochre_froglight',
-    ]),
-    sign,
-  ];
+  return [...chains, ...green, sign];
 }
 
 // ---------- Krippe ----------
@@ -434,16 +450,21 @@ function krippe(w: Canvas, v: View): string[] {
     material: 'spruce',
     gable: 'spruce_planks',
   });
-  return krippeFiguren(f);
+  return krippeFiguren(f, (x, y, z) => v.now(x, y, z));
 }
 
-function krippeFiguren(f: Frame): string[] {
+/** So weit darf eine Figur der Krippe rücken, damit sie nicht in der Stallwand steckt. */
+const FIGUR_SPIELRAUM = 0.6;
+
+function krippeFiguren(f: Frame, world: World): string[] {
   const at = (u: number, dv: number): Vec => pointAt(f, u, 1, dv);
   const facing = (from: Vec, to: Vec): number => Math.atan2(to[0] - from[0], to[2] - from[2]);
   const crib = at(3.5, 1.4);
   const front = yawOf(f.front);
-  const figure = (kind: string, pos: Vec, yaw: number, parts: readonly ModelPart[]): string[] =>
-    placeModel(tags(kind), pos, yaw, parts);
+  const figure = (kind: string, pos: Vec, yaw: number, parts: readonly ModelPart[]): string[] => {
+    const make = (p: Vec): string[] => placeModel(tags(kind), p, yaw, parts);
+    return settle(world, pos, make, FIGUR_SPIELRAUM, 0.05) ?? make(pos);
+  };
   const mary = at(2.35, 1.2);
   const joseph = at(4.75, 1.3);
   const ox = at(1.45, 2.35);
@@ -472,13 +493,15 @@ export function weihnachtsmarkt(w: Canvas, v: View): string[] {
   MARKT_ECKEN.forEach(([x, z]) => w.set(x, GROUND + 2, z, 'lantern'));
   const buden = BUDEN.flatMap((b) => bude(w, v, b));
   const stall = krippe(w, v);
+  const gate = eingang(w);
+  const world: World = (x, y, z) => v.now(x, y, z);
   return [
     ...STALLS.flatMap(stallDeco),
     ...ringKetten(),
     ...schlossmarktKetten(),
-    ...marktbogen(),
+    ...marktbogen(world),
     ...buden,
-    ...eingang(),
+    ...gate,
     ...stall,
   ];
 }

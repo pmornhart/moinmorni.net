@@ -26,7 +26,9 @@ import { roofsOf, type RoofSpec } from '../shapes.js';
 import { BAUM_RADIUS, christbaum, CHRISTBAUM } from './christbaum.js';
 import { LAUNCHPADS, LOBBY_SPAWN_VIEW } from './features.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
+import { displayStuck, type World } from '../pruefung.js';
 import { aroundX, aroundY, aroundZ, blockDisplay, placeModel, type Vec } from './deko.js';
+import { settleDown } from './halt.js';
 import { BUDEN, budeArea, krippeArea, weihnachtsmarkt } from './weihnachtsmarkt.js';
 import { grosserSchlitten, rodel, schneemann } from './winter-figuren.js';
 import {
@@ -444,7 +446,23 @@ function roofSide(v: View, g: RoofGeo, side: Side): string[] {
     else acc.push({ i0: row.i, i1: row.i, segs: row.segs });
     return acc;
   }, []);
-  return groups.flatMap((gr) => gr.segs.map(([aS, aE]) => sheet(g, side, gr.i0, gr.i1, aS, aE)));
+  // Steckt eine Platte in etwas (Turm, Wand, Kamin am Dach), wird sie geteilt – bis zu einzelnen Feldern, die frei
+  // liegen; was dann noch steckt, bleibt ohne Schnee.
+  const world: World = (x, y, z) => v.now(x, y, z);
+  const fit = (i0: number, i1: number, aS: number, aE: number): string[] => {
+    const cmd = sheet(g, side, i0, i1, aS, aE);
+    if (displayStuck(world, cmd) === null) return [cmd];
+    if (aS < aE) {
+      const m = Math.floor((aS + aE) / 2);
+      return [...fit(i0, i1, aS, m), ...fit(i0, i1, m + 1, aE)];
+    }
+    if (i0 < i1) {
+      const m = Math.floor((i0 + i1) / 2);
+      return [...fit(i0, m, aS, aE), ...fit(m + 1, i1, aS, aE)];
+    }
+    return [];
+  };
+  return groups.flatMap((gr) => gr.segs.flatMap(([aS, aE]) => fit(gr.i0, gr.i1, aS, aE)));
 }
 
 /** Holzdächer (Häuser, Kapelle) bekommen Eiszapfen und Lichter, die Kupferdächer des Schlosses nur Schnee. */
@@ -580,7 +598,12 @@ function fenceCaps(base: Canvas, w: Canvas, v: View): string[] {
 
 // ---------- Schneemänner, Schlitten ----------
 
-function figures(): string[] {
+/** Schlitten und Rodel: von etwas über dem Boden herab, bis die Kufen aufliegen (im Schnee). */
+function aufDemBoden(world: World, at: Vec, make: (at: Vec) => string[]): string[] {
+  return settleDown(world, at, make, at[1] + 0.3, at[1] - 0.4) ?? make(at);
+}
+
+function figures(world: World): string[] {
   const snowmen = SCHNEEMAENNER.flatMap(([x, z, tx, tz]) =>
     placeModel(
       tags('schneemann'),
@@ -590,13 +613,14 @@ function figures(): string[] {
     ),
   );
   const sleds = RODEL.flatMap(([x, z, yaw, gifts]) =>
-    placeModel(tags('schlitten'), [x, BASE + 0.12, z], yaw, rodel(gifts)),
+    aufDemBoden(world, [x, BASE + 0.12, z], (at) => placeModel(tags('schlitten'), at, yaw, rodel(gifts))),
   );
-  const big = placeModel(
-    tags('schlitten'),
-    [SCHLITTEN.x, BASE + 0.05, SCHLITTEN.z],
-    SCHLITTEN.yaw,
-    grosserSchlitten(),
+  // Teile nach Lage sortiert: aufeinanderfolgende kleine Teile liegen dicht beieinander (ein Modell, keine Kette)
+  const sleigh = [...grosserSchlitten()].sort(
+    (p, q) => p.at[0] - q.at[0] || p.at[2] - q.at[2] || p.at[1] - q.at[1],
+  );
+  const big = aufDemBoden(world, [SCHLITTEN.x, BASE + 0.05, SCHLITTEN.z], (at) =>
+    placeModel(tags('schlitten'), at, SCHLITTEN.yaw, sleigh),
   );
   return [...snowmen, ...sleds, ...big];
 }
@@ -680,7 +704,13 @@ export function winterPlan(base: Canvas): WinterPlan {
   schneehaufen(w, v);
   snowCover(base, w, v);
   highMeadows(base, w);
-  const displays = [...roofs(base, w, v), ...fenceCaps(base, w, v), ...tree, ...markt, ...figures()];
+  const displays = [
+    ...roofs(base, w, v),
+    ...fenceCaps(base, w, v),
+    ...tree,
+    ...markt,
+    ...figures((x, y, z) => v.now(x, y, z)),
+  ];
   const blocks = new Canvas();
   const restore = new Canvas();
   w.find(() => true).forEach(([x, y, z, b]) => {

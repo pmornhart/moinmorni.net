@@ -182,8 +182,8 @@ describe('Winter-Wunderland', () => {
           );
         });
       expect(wrong.slice(0, 5)).toEqual([]);
-      // Ankunft: Kies der Gasse mit einer Schicht (ohne Höhe – man läuft wie vorher).
-      expect(before(0, GROUND, 27)).toBe('gravel');
+      // Ankunft: Weg (Erdpfad oder Kies) mit einer Schicht (ohne Höhe – man läuft wie vorher).
+      expect(['gravel', 'dirt_path']).toContain(baseName(before(0, GROUND, 27)));
       expect(plan.blocks.get(0, BASE, 27)).toBe('snow[layers=1]');
       // Neben den Wegen ein Schneewall (mehr Schichten als auf der Wiese daneben), aber noch ohne Sprung begehbar.
       const banks = snow.filter(([, , , b]) => ['snow[layers=3]', 'snow[layers=4]'].includes(b));

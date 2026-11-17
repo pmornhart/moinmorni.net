@@ -13,8 +13,11 @@ import { maypole } from '../bavaria.js';
 import { Canvas } from '../canvas.js';
 import { GROUND } from '../nature.js';
 import { disc, range } from '../range.js';
+import { fitConnections } from '../verbindungen.js';
+import type { World } from '../pruefung.js';
 import { KUGELN } from '../schmuck.js';
 import { aroundX, aroundY, blockDisplay, multiply, placeModel, type Vec } from './deko.js';
+import { settleDown, stands } from './halt.js';
 import { present, stern } from './winter-figuren.js';
 import { BASE, HALF, clearPlants, tags, type View } from './winter-base.js';
 
@@ -61,6 +64,8 @@ const layerRadius = (t: Tier, j: number): number => Math.max(MIN_LAYER, t.r - j 
 export function maibaumBlocks(): Array<readonly [number, number, number, string]> {
   const scratch = new Canvas();
   maypole(scratch, CHRISTBAUM.x, GROUND, CHRISTBAUM.z, MAIBAUM_HOEHE);
+  // wie im fertigen Bauplan: Zäune mit ihren echten Verbindungen
+  fitConnections(scratch);
   return scratch.find(() => true).filter(([, y]) => y > GROUND);
 }
 
@@ -91,12 +96,13 @@ export function christbaum(w: Canvas, v: View): string[] {
   range(BASE, spitze - 1).forEach((y) => w.set(cx, y, cz, 'spruce_log'));
   kerzen(w);
   licht(w);
-  return [
-    ...kugeln(),
-    ...lichterkette(),
-    ...placeModel(tags('stern'), sternMitte(), 0, stern(2.8)),
-    ...geschenke(),
-  ];
+  const world: World = (x, y, z) => v.now(x, y, z);
+  // Stern: von oben herab, bis er auf der Spitze aufliegt
+  const top = sternMitte();
+  const sternAuf =
+    settleDown(world, top, (at) => placeModel(tags('stern'), at, 0, stern(2.8)), top[1] + 1, top[1] - 2) ??
+    placeModel(tags('stern'), top, 0, stern(2.8));
+  return [...kugeln(world), ...lichterkette(), ...sternAuf, ...geschenke()];
 }
 
 /** Mitte des Sterns auf der Spitze. */
@@ -149,7 +155,24 @@ function kugel(at: Vec, size: number, i: number): string {
 }
 
 /** Kugeln: unter jedem Stufenrand (hängend) und eine zweite Reihe auf halber Höhe der Stufe. */
-function kugeln(): string[] {
+/** Kugel ein Stück weiter innen ansetzen und nach außen schieben, bis sie frei an den Zweigen hängt. */
+const KUGEL_SEARCH = { from: -1, to: 1.5, step: 0.05 } as const;
+
+/**
+ * Kugel in Richtung `a` auf Höhe `y`, Abstand ungefähr `r`: der kleinste Abstand, bei dem sie in keinem Zweig steckt
+ * und doch an einem anliegt (so wie die Bauplan-Prüfung es sieht). Null, wenn es so eine Stelle nicht gibt.
+ */
+function anDenZweigen(w: World, a: number, y: number, r: number, size: number, i: number): string | null {
+  const { x: cx, z: cz } = CHRISTBAUM;
+  const count = Math.round((KUGEL_SEARCH.to - KUGEL_SEARCH.from) / KUGEL_SEARCH.step);
+  const found = range(0, count)
+    .map((j) => r + KUGEL_SEARCH.from + j * KUGEL_SEARCH.step)
+    .map((d) => kugel([cx + HALF + Math.cos(a) * d, y, cz + HALF + Math.sin(a) * d], size, i))
+    .find((cmd) => stands(w, [cmd]));
+  return found ?? null;
+}
+
+function kugeln(w: World): string[] {
   const { x: cx, z: cz } = CHRISTBAUM;
   return TIERS.flatMap((t, k) => {
     const size = 0.62 - k * 0.04;
@@ -157,26 +180,15 @@ function kugeln(): string[] {
     // Unter der untersten Stufe nicht: die Kugeln lägen dort fast auf dem Pflaster (da liegen die Geschenke).
     const hanging = (k === 0 ? [] : range(0, under - 1)).map((i) => {
       const a = ((i + (k % 2) * HALF) / under) * Math.PI * 2;
-      const r = t.r - 0.35;
-      return kugel(
-        [cx + HALF + Math.cos(a) * r, BASE + t.h - 1 - size / 2 - 0.08, cz + HALF + Math.sin(a) * r],
-        size,
-        i + k,
-      );
+      return anDenZweigen(w, a, BASE + t.h - 1 - size / 2 - 0.08, t.r - 0.35, size, i + k);
     });
     const mid = layerRadius(t, 2);
     const upper = Math.max(4, Math.round((2 * Math.PI * mid) / 2.4));
     const between = range(0, upper - 1).map((i) => {
       const a = ((i + HALF + (k % 2) * HALF) / upper) * Math.PI * 2;
-      // oben, wo die Lage nur noch 3 × 3 Zweige hat, reichen deren Ecken weiter hinaus
-      const r = mid + (mid <= MIN_LAYER ? 0.95 : 0.62);
-      return kugel(
-        [cx + HALF + Math.cos(a) * r, BASE + t.h + 2.35, cz + HALF + Math.sin(a) * r],
-        size * 0.85,
-        i + k + 3,
-      );
+      return anDenZweigen(w, a, BASE + t.h + 2.35, mid + 0.62, size * 0.85, i + k + 3);
     });
-    return [...hanging, ...between];
+    return [...hanging, ...between].filter((cmd): cmd is string => cmd !== null);
   });
 }
 

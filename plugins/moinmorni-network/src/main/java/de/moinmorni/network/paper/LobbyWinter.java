@@ -63,6 +63,10 @@ final class LobbyWinter implements Listener {
     private static final double FLAKE_SPREAD = 7;
     private static final double FLAKE_HEIGHT = 1.5;
     private static final double FLAKE_ABOVE = 4;
+    /** Alle 30 s nachsehen, ob ein Neubau der Lobby das Biom zurückgesetzt hat. */
+    private static final long RECHECK_TICKS = 600L;
+    /** Dort wird nachgesehen: Mitte des Dorfplatzes, über dem Pflaster. */
+    private static final int PROBE_Y = 70;
 
     private final JavaPlugin plugin;
     private final Path dir;
@@ -72,6 +76,7 @@ final class LobbyWinter implements Listener {
     private boolean busy;
     private boolean pending;
     private BukkitTask flakes;
+    private BukkitTask recheck;
 
     LobbyWinter(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -81,11 +86,15 @@ final class LobbyWinter implements Listener {
     void start() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
         flakes = Bukkit.getScheduler().runTaskTimer(plugin, this::snowflakes, FLAKE_TICKS, FLAKE_TICKS);
+        recheck = Bukkit.getScheduler().runTaskTimer(plugin, this::recheck, RECHECK_TICKS, RECHECK_TICKS);
     }
 
     void stop() {
         if (flakes != null) {
             flakes.cancel();
+        }
+        if (recheck != null) {
+            recheck.cancel();
         }
         World world = lobbyWorld();
         if (world != null) {
@@ -129,6 +138,29 @@ final class LobbyWinter implements Listener {
             p.setPlayerWeather(WeatherType.CLEAR);
             p.resetPlayerWeather();
         }
+    }
+
+    /**
+     * Ein Neubau der Lobby setzt im Datenpaket das Biom des Dorfs (fillbiome) – im Winter danach wieder kalt machen.
+     * Gemerkt bleibt, was vor dem Winter war (die Datei der Biome bleibt), nur nicht geladene Stücke werden nicht
+     * geprüft.
+     */
+    private void recheck() {
+        World world = lobbyWorld();
+        if (!winter() || busy || world == null || !Files.exists(dir.resolve(DONE)) || !world.isChunkLoaded(0, 0)) {
+            return;
+        }
+        if (world.getBiome(0, PROBE_Y, 0) == COLD) {
+            return;
+        }
+        plugin.getLogger().info("Winter: Die Lobby wurde neu gebaut – das Biom wird wieder kalt.");
+        try {
+            Files.deleteIfExists(dir.resolve(DONE));
+        } catch (IOException ex) {
+            plugin.getLogger().warning("Winter: Merker ließ sich nicht löschen – " + ex.getMessage());
+            return;
+        }
+        configure(season);
     }
 
     private void snowflakes() {
