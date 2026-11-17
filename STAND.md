@@ -336,6 +336,23 @@
   **3/3**, Winter aus **5/5**, wieder Wiesn **3/3**. Bilder vorher/nachher mit Client 26.3, Tag und Nacht, nur lokal.
 - 17.11.: **Funde vom Durchklicken der echten Webseite behoben** (Branch `claude/webseite-funde`): **Werte der Modi mit Namen** – jeder Wert, den die zwölf Modi melden (aus den Modus-Repos gelesen, Liste `MODE_STAT_KEYS` in `packages/shared/src/stat-keys.ts` samt den Namens-Regeln, die die Webseite nutzt), hat auf Deutsch und Englisch einen Namen (Burgverlies „Abstiege“, „Räume geschafft“, „Beste Punktzahl“; Bollwerk „Mitspieler gerettet“; Party-Spielarten „Edelweiß-Jagd“, „Minispiel-Marathon“ … über `site.players.courses`, je Modus `coursesIn`); Test `stat-names.test.ts` verlangt für jeden einen Text. **Kopfzeile** auf Seiten ohne Titelbild (unbekannter Modus/News/Spieler, Laden) gleich fest (`useHeroUnderHeader` in `parts.tsx`, Heroes melden sich an). **Startseite**: „Spielmodi offen“ zählt Sommerpause/geschlossen nicht mit (`modeOpenNow`), Hinweis nennt die geschlossenen; „/ 12“ kleiner (bricht am Handy nicht mehr um), Podest mit so vielen Spalten wie Spieler, lange Namen und Galerie-Unterschriften umbrechen statt abgeschnitten. **MorniCraft** offen + Whitelist: „Nur auf Einladung – bewirb dich“ mit Link. **„Was ist neu“**: Webseite nur Stichpunkte für Spieler (`playerText` in `system/changes.ts`: ohne Dateien, Pfade, Variablen, Testzahlen, Branches, Versionsnummern von Programmen und Team-Themen wie Panel, Proxmox, NetBird; Klammern mit Technik fallen weg), Panel holt die ausführliche Liste über `GET /api/panel/changelog` (Team-Anmeldung); öffentlich „neue Version bereit“ nur mit neuer MoinMorni-Nummer (nicht, wenn nur der Motor neuer ist); Versions-Pille auch auf der Anmeldeseite des Panels. **Befehle-Seite**: Sprungleiste bricht ab Tablet um und klebt unter der kleinen Kopfzeile. **Englische Befehlswörter**: `/streamer on|off|coords|messages` (der Hub kannte sie schon), Modus-Befehle mit englischen Platzhaltern bzw. Wörtern, die der Modus auch englisch versteht (`/clan create <name> [tag]`, Duels `accept|deny`, `casual|ranked`, MorniSMP `all`, MorniCraft `remove`). **Server**: HEAD wie GET, unbekannte Pfade bekommen die Webseite mit Status 404, `robots.txt` (ohne `/panel`, `/api/`), `sitemap.xml` (öffentliche Seiten + Modi, mit der Domain), `/favicon.ico` → `/favicon.svg` (`public/crawl.ts`). Seite „Nicht gefunden“ zeigt die Figuren aller Modi; Adlerflug „So wird gespielt“ mit Strecke des Tages, Steinadler und `/adlerflug tag`. Java-Versionen: Webseite bleibt bei „ab 1.17“ – „1.7.2–26.3“ in der Serverliste ist Velocitys eigener Protokollbereich, ViaBackwards am Proxy lässt erst ab 1.10 hinein, 1.17+ ist die zugesagte Spanne. Tests: 113 shared (6 neu), 271 Server (neu: Spieler-Liste, Panel-Route, Motor-only-Update, HEAD/404, robots/sitemap/favicon), Typen, Prettier, Web- und Demo-Bau. Bilder (Playwright gegen echten Server + Motor, Computer + Handy, hell/dunkel, de/en) nur im Scratchpad `webseite-funde-bilder/`.
 
+- 17.11.: **Ostern als Frühlingsfest** (Philip: „das mit dem Winterwunderland auch für alle anderen Events“; Branch
+  `claude/winter-wunderland`, `packages/builder/src/lobby/ostern.ts`): **Osterbrunnen um den Maibaum** (Herzstück:
+  Kalkstein-Brunnen mit Wasser, acht Bögen aus Tannengrün zur Osterkrone, über 100 Ostereier, Bänder, Blumentöpfe),
+  **Eierbaum** (blühender Kirschbaum voller Eier auf der Westwiese, Tulpenkreis), **Osterhase** aus Wolle neben der
+  Ankunft (Korb, bemaltes Riesen-Ei, „Frohe Ostern!“), **Frühling überall** (gut 23 000 Laubblätter im Dorf blühen als
+  Kirsch- oder Azaleenblüte, je Krone, rund 5 000 Frühlingsblumen in Flecken auf den Wiesen), Ostermarkt am Eingang,
+  Eingangsbogen mit Blütengirlande und Eiern, Pastell-Wimpel, Eier in den Vorgärten, Hasen. Eier = runde Kugeln aus
+  dem Lobby-Paket in fünf neuen Farben, in die Höhe gezogen. **Saison-Welt im Plugin** (`LobbyWinter.java`): Biom je
+  Saison – Winter verschneit, Ostern Kirschblütenhain (helles Grün), Halloween blasser Garten (grauer Nebel) –, aus
+  einer gemerkten Kopie zurück; Teilchen je Saison (Flocken, Blüten, Asche); Wechsel Winter → Ostern stellt das Biom
+  direkt um. Bauplan-Prüfung Ostern **0 Funde** (Anzeigen und Blöcke). Tests: 94 Baukasten- (neu: Brunnen dicht,
+  Bögen und Eier, nur Laubbäume blühen, Blumen nur auf Gras und nie vor Figuren, Eierbaum und Hase auf freier
+  Wiese), 65 JUnit, Lobby-Server-Tests, Typen. Echt (Paper 26.1.2 mit Netzwerk-Plugin und Test-Hub, echter
+  Selbstbau): Ostern an **4/4** (mit Biom), `lobby-test` **30/30**, Winter → Ostern weg **4/4**, Winter an **5/5**,
+  wieder Ostern **4/4**, keine Saison → `kill -9` 5 s danach → Ostern aus **4/4**, Winter aus **5/5**, wieder Ostern
+  **4/4**. Bilder vorher/nachher mit Client 26.3 und Lobby-Paket, Tag und Nacht, nur lokal.
+
 - 17.11.: **Prunkaufgang zum Schloss** (Philip: „richtig schön, edel, wow – jetzt ist hier richtig Party angesagt“,
   „Treppen am Festsaal und vom Schlossmarkt zum Schloss“; Branch `claude/lobby-treppen`, `docs/lobby.md`): Statt der
   Rampe aus ganzen Blöcken führt die **Schlosstreppe** (`packages/builder/src/lobby/schlosstreppe.ts`) vom Schlossmarkt
@@ -366,7 +383,7 @@
 
 ## Offen
 
-- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit der Wiesn auch ihre Blöcke).
+- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit der Wiesn auch ihre Blöcke; Ostern ebenso).
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
 - MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).
 - **Philip testet.** Morni Party: Burg Weißenstein + Minispiel-Kulissen (Helfer), danach Go fürs Release. MoinMorni selbst (`main`) und MorniHosting-PR #117 brauchen noch ein eigenes Go, danach Submodul wieder auf MorniHosting `main`.

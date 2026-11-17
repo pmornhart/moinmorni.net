@@ -1,6 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- Modell-Maße in 1/16 Block (Minecraft-Modellkoordinaten) */
 /**
- * Christbaumkugeln der Winter-Lobby als eigenes kleines Modell im Lobby-Paket.
+ * Christbaumkugeln der Winter-Lobby und Ostereier als eigenes kleines Modell im Lobby-Paket (ein Ei ist eine in die Höhe
+ * gezogene Kugel).
  *
  * Die Kugeln sind Block-Anzeigen (ohne Hitbox) aus Trockenbeton-Blöcken, die es in der Lobby sonst nirgends gibt.
  * Ohne Paket (oder auf Bedrock) sieht man einen schräg gestellten Würfel in der Farbe – wie ein Edelstein. Mit dem
@@ -18,6 +19,12 @@ export const KUGELN = {
   gold: 'yellow_concrete_powder',
   silber: 'light_gray_concrete_powder',
   blau: 'blue_concrete_powder',
+  // Ostereier: dieselbe runde Form, in die Höhe gezogen (Anzeige höher als breit)
+  rosa: 'pink_concrete_powder',
+  gruen: 'lime_concrete_powder',
+  hellblau: 'light_blue_concrete_powder',
+  lila: 'magenta_concrete_powder',
+  orange: 'orange_concrete_powder',
 } as const;
 export type KugelFarbe = keyof typeof KUGELN;
 
@@ -27,6 +34,11 @@ const TEXTUR: Readonly<Record<KugelFarbe, string>> = {
   gold: 'minecraft:block/gold_block',
   silber: 'minecraft:block/iron_block',
   blau: 'minecraft:block/blue_concrete',
+  rosa: 'minecraft:block/pink_concrete',
+  gruen: 'minecraft:block/lime_concrete',
+  hellblau: 'minecraft:block/light_blue_concrete',
+  lila: 'minecraft:block/magenta_concrete',
+  orange: 'minecraft:block/orange_concrete',
 };
 
 const MIDDLE = 8;

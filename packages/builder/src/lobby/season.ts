@@ -3,18 +3,18 @@
  * Saison-Deko der Lobby (Panel: Lobby → Saison-Deko): Wiesn, Winter, Ostern, Halloween. Die Deko sind Anzeige-Wesen
  * (block_display/text_display) mit dem Tag `mm_season` + `mm_season_<name>` – Umschalten = alte weg, neue hin; das
  * Lobby-Plugin räumt Deko einer anderen Saison weg, sobald sie geladen wird.
- * Wiesn und Winter setzen dazu Blöcke (`wiesn.ts`, `winter.ts`: Karussell, Riesenrad, Schnee, Christbaum …); jede
- * andere Saison stellt sie über `<saison>/off_…` genau wieder her (datapack.ts).
+ * Wiesn, Winter und Ostern setzen dazu Blöcke (`wiesn.ts`, `winter.ts`, `ostern.ts`: Karussell, Riesenrad, Schnee,
+ * Christbaum, Osterbrunnen, Blüten …); jede andere Saison stellt sie über `<saison>/off_…` genau wieder her (datapack.ts).
  */
 import type { Canvas } from '../canvas.js';
 import { GROUND } from '../nature.js';
-import { random } from '../noise.js';
 import { worldOf, type World } from '../pruefung.js';
 import { buildLobby } from './dorfplatz.js';
 import { blockDisplay, multiply, type Quat, type Vec } from './deko.js';
-import { anchorEnd, settle, stands } from './halt.js';
+import { anchorEnd, settle } from './halt.js';
 import { pointAt, stallFrame, STALLS as MARKT_STAENDE } from './weihnachtsmarkt.js';
 import type { SeasonPlan } from './saison-plan.js';
+import { osternPlan } from './ostern.js';
 import { wiesnPlan } from './wiesn.js';
 import { winterPlan, type WinterPlan } from './winter.js';
 
@@ -131,23 +131,7 @@ const DOORS: readonly Vec[] = [32, 50, 68, 86].flatMap((z) => [
   [9.5, GROUND + 1, z + 6 + HALF] as Vec,
 ]);
 
-const EASTER: readonly string[] = [
-  'pink_wool',
-  'yellow_wool',
-  'light_blue_wool',
-  'lime_wool',
-  'magenta_wool',
-];
 const HALLOWEEN: readonly string[] = ['orange_wool', 'purple_wool', 'black_wool'];
-const EGG_COLOURS: readonly string[] = [
-  'pink_concrete',
-  'yellow_concrete',
-  'light_blue_concrete',
-  'lime_concrete',
-  'magenta_concrete',
-  'orange_concrete',
-  'cyan_concrete',
-];
 
 /**
  * Winter-Wunderland: alles aus dem Winter-Plan (Dächer, Baum, Stände, Lichterketten vom Maibaum …). Die Ketten quer
@@ -156,54 +140,6 @@ const EGG_COLOURS: readonly string[] = [
  */
 function winter(plan: WinterPlan): string[] {
   return [...plan.displays, ...plan.moves];
-}
-
-/** Versuche je Osterei, eine freie Stelle im Garten zu finden. */
-const EGG_TRIES = 20;
-
-function easter(w: World): string[] {
-  const s: Season = 'easter';
-  const rnd = random(2026);
-  const gardens: readonly (readonly [number, number, number, number])[] = [
-    [-24, 26, -16, 92],
-    [16, 31, 24, 98],
-    [-62, 1, -54, 3],
-    [-98, 11, -90, 13],
-  ];
-  // Eier im Gras der Vorgärten: nicht in Zäunen, Mauern oder Büschen (sonst ein Stück weiter)
-  const eggs = gardens.flatMap(([x1, z1, x2, z2]) =>
-    Array.from({ length: 8 }, () => {
-      const colour = EGG_COLOURS[Math.floor(rnd() * EGG_COLOURS.length)] ?? 'pink_concrete';
-      const spots = Array.from({ length: EGG_TRIES }, () => [x1 + rnd() * (x2 - x1), z1 + rnd() * (z2 - z1)]);
-      return spots
-        .map(([x = 0, z = 0]) => [display(s, [x, GROUND + 1.2, z], colour, { scale: [0.3, 0.42, 0.3] })])
-        .find((egg) => stands(w, egg))?.[0];
-    }).filter((egg): egg is string => egg !== undefined),
-  );
-  // Großes Osterei am Dorfplatz, auf einem freien Fleck neben dem Maibaum
-  const bigEgg =
-    settle(
-      w,
-      [-8.5, GROUND + 2, -8.5],
-      ([x, y, z]) => [
-        display(s, [x, y, z], 'light_blue_concrete', { scale: [1.2, 1.7, 1.2] }),
-        display(s, [x, y + 0.1, z], 'yellow_concrete', { scale: [1.25, 0.3, 1.25] }),
-        display(s, [x, y - 0.4, z], 'pink_concrete', { scale: [1.25, 0.2, 1.25] }),
-      ],
-      6,
-      0.5,
-    ) ?? [];
-  const bunnies = [
-    [-20, 40],
-    [-20, 58],
-    [20, 46],
-    [20, 80],
-    [-60, 6],
-  ].map(
-    ([x, z]) =>
-      `summon rabbit ${(x ?? 0) + HALF} ${GROUND + 1} ${(z ?? 0) + HALF} {${tags(s)},PersistenceRequired:1b,Invulnerable:1b,RabbitType:${Math.floor(rnd() * 5)}}`,
-  );
-  return [...chains(w, s, EASTER), ...eggs, ...bigEgg, ...bunnies];
 }
 
 function halloween(w: World): string[] {
@@ -248,6 +184,7 @@ function halloween(w: World): string[] {
 const BUILT: Readonly<Partial<Record<Season, (base: Canvas) => SeasonPlan>>> = {
   wiesn: wiesnPlan,
   winter: winterPlan,
+  easter: osternPlan,
 };
 
 /** Bauplan einer Saison mit Bauten – null, wenn sie nur Anzeigen hat (oder keine Saison). */
@@ -272,7 +209,10 @@ const PLANS: Readonly<Record<Season, (lobby: () => Canvas) => string[]>> = {
     return [...plan.displays, ...plan.moves];
   },
   winter: (lobby) => winter(winterPlan(lobby())),
-  easter: (lobby) => easter(worldOf(lobby())),
+  easter: (lobby) => {
+    const plan = osternPlan(lobby());
+    return [...plan.displays, ...plan.moves];
+  },
   halloween: (lobby) => halloween(worldOf(lobby())),
 };
 
