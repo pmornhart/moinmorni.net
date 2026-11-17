@@ -220,6 +220,9 @@ public final class VelocityPlugin {
             case "netzpaket-send" -> player(m).ifPresent(p -> offerNetz(p, true));
             case "countdown" -> player(m).ifPresent(p -> countdown.show(p, HubClient.str(m, "text"),
                     m.has("seconds") ? m.get("seconds").getAsInt() : 0));
+            case "title" -> player(m).ifPresent(p -> p.showTitle(Countdown.title(
+                    MM.deserialize(HubClient.str(m, "title") == null ? "" : HubClient.str(m, "title")),
+                    MM.deserialize(HubClient.str(m, "subtitle") == null ? "" : HubClient.str(m, "subtitle")))));
             default -> log.fine("Unbekannte Nachricht vom Hub: " + type);
         }
     }

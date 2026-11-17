@@ -65,7 +65,12 @@ final class WartungLobby implements Listener {
 
     /** Was der Hub zuletzt gemeldet hat. */
     private record State(boolean lobby, boolean maintenance, String message, String until, boolean returnAuto,
-                         long returnAt, Location spawn) {
+                         long returnAt, Location spawn, int restartDone, int restartTotal) {
+
+        /** Läuft gerade ein Wartungs-Neustart (alle Server starten neu)? */
+        boolean restarting() {
+            return restartTotal > 0;
+        }
     }
 
     private static final String ITEM_KEY = "wartung_item";
@@ -108,7 +113,7 @@ final class WartungLobby implements Listener {
     private final Map<UUID, Long> runs = new ConcurrentHashMap<>();
     private final Map<UUID, Long> best = new ConcurrentHashMap<>();
     private final Map<UUID, Long> clicked = new ConcurrentHashMap<>();
-    private volatile State state = new State(false, false, "", null, true, 0, null);
+    private volatile State state = new State(false, false, "", null, true, 0, null, 0, 0);
     private volatile Consumer toLobby;
     private String shownText = "";
 
@@ -159,9 +164,19 @@ final class WartungLobby implements Listener {
                     spawn.get("y").getAsDouble(), spawn.get("z").getAsDouble(), spawn.get("yaw").getAsFloat(),
                     spawn.get("pitch").getAsFloat());
             state = new State(bool(m, "lobby"), bool(m, "maintenance"), str(m, "message"), HubClient.str(m, "until"),
-                    !m.has("returnAuto") || m.get("returnAuto").getAsBoolean(), returnAt, at);
+                    !m.has("returnAuto") || m.get("returnAuto").getAsBoolean(), returnAt, at,
+                    restartPart(m, "done"), restartPart(m, "total"));
             tick();
         });
+    }
+
+    /** Wartungs-Neustart: „restart“ = {done, total} oder null. */
+    private static int restartPart(JsonObject m, String key) {
+        if (!m.has("restart") || !m.get("restart").isJsonObject()) {
+            return 0;
+        }
+        JsonObject r = m.getAsJsonObject("restart");
+        return r.has(key) ? r.get(key).getAsInt() : 0;
     }
 
     private static boolean bool(JsonObject m, String key) {
@@ -211,6 +226,12 @@ final class WartungLobby implements Listener {
             text = Component.text(en ? "⚙ The network is restarting – back in a moment"
                     : "⚙ Das Netzwerk startet gerade neu – gleich geht’s weiter", NamedTextColor.YELLOW);
             colour = BossBar.Color.YELLOW;
+        } else if (s.restarting()) {
+            text = Component.text(en ? "⚙ Servers are restarting – " + s.restartDone() + " of " + s.restartTotal()
+                    + " done" : "⚙ Server starten neu – " + s.restartDone() + " von " + s.restartTotal() + " fertig",
+                    NamedTextColor.GOLD);
+            colour = BossBar.Color.YELLOW;
+            progress = Math.min(FULL, s.restartDone() / (float) s.restartTotal());
         } else if (s.returnAt() > 0 && left > 0) {
             text = Component.text(en ? "✔ The lobby is back – returning in " + left + " s"
                     : "✔ Die Lobby ist wieder da – zurück in " + left + " s", NamedTextColor.GREEN);
@@ -245,7 +266,10 @@ final class WartungLobby implements Listener {
     private void updateBoard() {
         State s = state;
         String text;
-        if (s.maintenance()) {
+        if (s.restarting()) {
+            text = "Alle Server starten neu – " + s.restartDone() + " von " + s.restartTotal() + " fertig\n"
+                    + "All servers are restarting – " + s.restartDone() + " of " + s.restartTotal() + " done";
+        } else if (s.maintenance()) {
             String until = s.until() == null ? "" : "\n⏰ bis ca. " + s.until() + " Uhr · until approx. " + s.until();
             text = (s.message().isEmpty() ? "Wartungsarbeiten" : s.message()) + until;
         } else if (!s.lobby() || !hubReady.getAsBoolean()) {

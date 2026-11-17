@@ -79,6 +79,14 @@ export interface Wartung {
   readonly state: () => Body;
   /** Einmal nachsehen, ob jemand zurück darf (läuft sonst jede Sekunde). */
   readonly tick: () => void;
+  /**
+   * Wartungs-Neustart (hub/wartung-plan.ts): solange an, wartet jeder in der Wartungs-Lobby – auch das Team –, und
+   * niemand kommt zurück, bevor alle Server wieder laufen.
+   */
+  readonly hold: (on: boolean) => void;
+  readonly holding: () => boolean;
+  /** Stand des Wartungs-Neustarts für Leiste und Aushang („5 von 16 fertig“); null = keiner läuft. */
+  readonly restartProgress: (progress: { readonly done: number; readonly total: number } | null) => void;
   readonly start: () => void;
   readonly stop: () => void;
 }
@@ -113,10 +121,15 @@ export function createWartung(deps: WartungDeps): Wartung {
   const lobbyFailed: { at: number } = { at: 0 };
   const timer: { id: ReturnType<typeof setInterval> | null } = { id: null };
   const last = { maintenance: settings().maintenance };
+  const restart: { held: boolean; progress: { readonly done: number; readonly total: number } | null } = {
+    held: false,
+    progress: null,
+  };
 
   const lobbyUp = (): boolean => deps.connected(LOBBY) && now() - lobbyFailed.at > LOBBY_FAILED_MS;
   const wartungUp = (): boolean => deps.connected(WARTUNG_SERVER);
-  const parked = (uuid: string): boolean => settings().maintenance && !alwaysIn(ctx.players.roleOf(uuid));
+  const parked = (uuid: string): boolean =>
+    restart.held || (settings().maintenance && !alwaysIn(ctx.players.roleOf(uuid)));
   const open = (): boolean => settings().lobbyOn && wartungUp();
   const untilText = (lang: Lang): string => {
     const until = settings().until;
@@ -135,6 +148,9 @@ export function createWartung(deps: WartungDeps): Wartung {
       returnAuto: s.returnAuto,
       returnIn: countdown.at === null ? null : Math.max(0, Math.ceil((countdown.at - now()) / SECOND_MS)),
       points: WARTUNG_POINTS,
+      // Wartungs-Neustart: alle warten hier, die Leiste zeigt, wie weit die Server sind (ältere Plugins überhören es).
+      hold: restart.held,
+      restart: restart.progress,
     };
   };
   const push = (): void => deps.toWartung(state());
@@ -275,6 +291,19 @@ export function createWartung(deps: WartungDeps): Wartung {
     },
     state,
     tick,
+    hold: (on) => {
+      if (restart.held === on) return;
+      restart.held = on;
+      if (!on) restart.progress = null;
+      push();
+      tick();
+    },
+    holding: () => restart.held,
+    restartProgress: (progress) => {
+      const same = progress?.done === restart.progress?.done && progress?.total === restart.progress?.total;
+      restart.progress = progress;
+      if (!same) push();
+    },
     start: () => {
       timer.id = setInterval(tick, TICK_MS);
       timer.id.unref();

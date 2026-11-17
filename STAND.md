@@ -590,7 +590,7 @@
   **Paket jetzt von Angelkönig selbst** (Fund im echten Test): beim Paket aus der server.properties erfährt ein Plugin
   nicht, wer es geladen hat (`getResourcePackStatus()` sagt immer „geladen“), ein zweites Anbieten im Spiel lädt alles
   noch einmal. Angelkönig 0.2.1 bietet das Paket darum beim Verbinden selbst an und legt `plugins/MorniAngelkoenig/
-  paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, feste Kennung `ANGEL_PACK_ID` – der
+paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, feste Kennung `ANGEL_PACK_ID` – der
   Proxy nimmt es weiter außerhalb ab) und nimmt unser Paket aus der server.properties (`offerAngelPack`, einmal
   Neustart); ältere Angelkönig-Fassungen bekommen es wie bisher. **Je Betrachter**: Angelkönig zeigt die neuen Modelle
   nur, wer das Paket hat; wer nicht, sieht die gewohnte Lederkleidung (sonst flacher Helm vor der Stirn bzw. gar
@@ -600,10 +600,10 @@
   (3 neu), 132 Baukasten (4 neu), 292 Server (6 neu in `angel-kleidung.test.ts`: Modelle gültig, Hüte sitzen auf dem
   Kopf über der zweiten Skin-Ebene, Krone 12 Bilder, Körper-Muster 64 × 32 je Schicht, Rückfall Minecraft,
   Webseiten-Bilder = Paket; Provisioner-Test um `paket.json` erweitert), Typen, Web- und Demo-Bau. Echt: Paper 26.1.2
-  + zwei Test-Spieler **11/11** (Anna mit Paket, Bert ohne: jeder sieht den anderen in seiner Fassung), Paper 26.3 +
-  echter Client 26.3 mit Paket: alle vier Hüte auf dem Kopf von vorn und hinten, Weste, Jacke, Hosen, Stiefel am
-  Körper, Kleiderschrank mit 3D-Bildern; ohne Paket Lederkleidung und Goldhelm (Bilder nur lokal
-  `/home/user/mm-cache/bilder-kleidung/`, Übersicht der Zeichnungen im Scratchpad `kleidung-bilder/`).
+  - zwei Test-Spieler **11/11** (Anna mit Paket, Bert ohne: jeder sieht den anderen in seiner Fassung), Paper 26.3 +
+    echter Client 26.3 mit Paket: alle vier Hüte auf dem Kopf von vorn und hinten, Weste, Jacke, Hosen, Stiefel am
+    Körper, Kleiderschrank mit 3D-Bildern; ohne Paket Lederkleidung und Goldhelm (Bilder nur lokal
+    `/home/user/mm-cache/bilder-kleidung/`, Übersicht der Zeichnungen im Scratchpad `kleidung-bilder/`).
 - 17.11. abends: **Weihnachtstor + Wegweiser** (Philip: „des etwas schöner mit dem Tannen-Zeugs entlang des Tores“,
   Wegweiser am Schlossmarkt „sehr irreführend“; Branch `claude/weihnachtstor`): **Weihnachtstor** (Eingangsbogen des
   Weihnachtsmarkts von der Ankunft her, `packages/builder/src/lobby/weihnachtstor.ts`): dicke Tannengirlande vorne und
@@ -635,7 +635,7 @@
   verbinden; danach Stand je Server (wartet, Countdown, startet neu, fertig, klemmt, läuft nicht). Schlafende und
   ausgeschaltete Server sind nicht anwählbar und werden nicht geweckt. Die **Wartungs-Lobby erscheint nicht** und wird
   auch über die API abgelehnt (`restart_wartung`). Backend `panel/restart-routes.ts` (`GET`/`POST
-  /api/panel/servers/restart`) über die geordnete Neustart-Logik (`network/restart-now.ts`, neuer Grund `manual`: eigene
+/api/panel/servers/restart`) über die geordnete Neustart-Logik (`network/restart-now.ts`, neuer Grund `manual`: eigene
   Texte de/en „Neustart durchs Team …“ in Chat und Leiste, Modi nacheinander, Lobby zuletzt – ihre Spieler warten in der
   Wartungs-Lobby –, Lobby + Proxy zusammen, Wartungs-Lobby nie, kein Warten auf den Hub, keine Warteschlange; läuft
   schon eine Runde, kommt das Neue gleich danach dran). Nebenbei: ein Neustart, der zwischen zwei Nachfragen fertig
@@ -775,6 +775,7 @@
     gemeldete Modi (`proxy-lauschen.ts`, `modus-melden.ts`), die hier nicht liefen (keine Änderung an Figuren/Menü).
     Keine Bilder (Philip). Größter offener Hebel siehe Offen.
 - 17.11. abends: **Konten verbinden – Team überall gleich** (Philip: „Minecraft schöner mit dem Panel verbinden … wenn ich im Panel-Team bin, auch in Minecraft und Discord im Team“; Branch `claude/konten-verbinden`): Panel → Mein Konto → **Verbindungen** (`panel/account/ConnectionsCard.tsx`) statt der Motor-Karte: Minecraft mit Kopf, Discord mit Avatar, Status ✓/„noch nicht im Spiel bestätigt“, Trennen. **Minecraft nur mit Beweis**: Panel zeigt einen Code (6 Zeichen, `crypto`, 10 Min., einmalig, je Konto und Art einer), im Spiel `/verbinden <code>` (`/link`; ohne Code wie `/discord`) – die UUID kommt aus der Verbindung des Spielers, nicht aus einem Namen; 5 falsche Codes in 10 Min. → Pause; wer im Spiel beweist, gewinnt (eine UUID nur bei einem Konto). Verbinden per Name im Motor ist gesperrt (`/api/account/minecraft` in der Sperrliste der Weiterleitung) – damit ist die offene Lücke aus der Sicherheitsprüfung zu; alte Motor-Verknüpfungen gelten weiter, das Panel zeigt sie als „noch nicht im Spiel bestätigt“, getrennte kommen nicht wieder. **Discord** über denselben Code beim Bot (`/verbinden code:<code>`, kein neuer OAuth-Weg). Gespeichert ohne Migration in `setting_values` (`_konten`, `panel/account-links.ts`). **Team überall gleich**: neues Ereignis `team.changed` – beim Verbinden, Trennen, Rollenwechsel im Panel (vorher zog der Rang im Spiel erst beim nächsten Profil nach), Sperren/Entsperren (gespiegelt aus dem Motor, gesperrte Konten zählen in `roleOf` nicht) und Entfernen zieht der Hub den Rang sofort nach (Profil, Abzeichen, Rechte) und Discord die Rolle (`syncDiscord`: auch Team-Konten ohne Minecraft bekommen ihre Rolle + „Verbunden“; mit Spieler zählt der höhere Rang). Von Hand vergebene Spieler-Ränge bleiben. Team-Liste zeigt je Konto Minecraft ✓/unbestätigt und Discord ✓. Tests: `test/konten.test.ts` 3 (Code-Ablauf, einmalig, falsch, zu oft, ohne Anmeldung, fremde UUID, Beweis gewinnt, Motor-Weg gesperrt, Discord-Code, Rollenwechsel/Sperre/Trennen/Entfernen gegen das nachgebaute Discord), alle Server-Tests 313/313, 129 shared, Typen, Web-Bau. Nicht echt mit Minecraft/Velocity geprüft (der Befehl läuft über den Hub wie alle Netzwerk-Befehle), keine Bilder (Philip: keine Bilder mehr).
+- 17.11. abends: **Wartung neu als eine Sache + Wartungs-Neustart** (Philip: „/wartung-restart 10min Update“, „Arbeite den Wartungsmodus neu“, „Restart schöner, auch mit Wartung im Panel“; Branch `claude/wartung-restart`): ein Befehl `/wartung` (englisch `/maintenance`) – `an [zeit] [grund]` (ohne Zeit sofort, mit Zeit angekündigt), `aus`, `neustart [zeit] [grund] [--proxy]` (Kurzform `/wartung-restart`), `status`, `abbrechen`; `text`, `bis`, `lobby`, `zurueck` wie bisher aus dem Katalog (englisch `until`, `return`, `message`), Tab-Vorschläge, Recht wie bisher (Einstellungen ändern). **Ankündigung** (`hub/wartung-plan.ts`): großer Titel (neue Hub-Nachricht `title`), Chat und Leiste oben, die als Uhr herunterzählt (`{t}`, bis 6 h, `velocity/Countdown.java`), auch für Neuankömmlinge, Erinnerungen (60/30/15/10/5/2/1 Min., 30/10/5…1 s), Absagen mit Titel. **Wartungs-Neustart**: bei Ablauf Wartung an, jeder (auch das Team) in die Wartungs-Lobby (`Wartung.hold`), alle Server außer ihr neu über `restart-now.ts` (Spielmodi je drei, dann Lobby; Proxy nur mit `--proxy`), Leiste und Aushang der Wartungs-Lobby zeigen „Server starten neu – 5 von 16 fertig“ (`wartung.restart`), danach Wartung aus (nur wenn der Neustart sie eingeschaltet hat) und alle kommen von selbst zurück; nach 30 Min. trotzdem, mit Hinweis ans Team und ins Discord-Team-Log. **Panel**: Einstellungen → Netzwerk → Karte „Wartung jetzt“ (Stand, laufender Countdown, Fortschritt, Abbrechen, Wartung aus, Wartung bzw. Wartungs-Neustart mit Zeit, Grund, Proxy), Fenster „Server neu starten“ mit Wahl „Normaler Neustart“/„Wartungs-Neustart“, Fortschrittsbalken „x von y fertig“, laufender Server hervorgehoben; API `/api/panel/wartung` (Bereich Einstellungen). Befehle-Seite, Rundgang, Hilfe-Text im Katalog, `docs/hub-protokoll.md`, `docs/lobby.md`. Tests: 316 Server- (6 neu `wartung-plan.test.ts`: Zeiten, Ankündigung mit Titel/Leiste/Neuen/Erinnerung, Abbrechen, `/maintenance on|until`, Neustart mit Team in der Wartungs-Lobby und Wartung aus, `--proxy`, Wartung war schon an), 129 shared, 86 JUnit (`CountdownTest` mit Uhr), Typen. Nicht echt mit Minecraft geprüft (Rechner knapp, Philip: keine Bilder) – Titel und Leiste im echten Client offen.
 
 ## Offen
 

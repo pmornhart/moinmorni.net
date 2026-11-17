@@ -229,8 +229,8 @@ export const NETWORK_AREA: SettingArea = {
           default: false,
           label: t('Wartung für das ganze Netzwerk', 'Maintenance for the whole network'),
           help: t(
-            'Spieler ohne „Kommt immer rein“ kommen in die Wartungs-Lobby (wer gerade online ist, auch); das Team kommt wie immer überall hin. Einzelne Modi setzt du unter „Modi“ in Wartung.',
-            'Players without “Always gets in” go to the maintenance lobby (those online right now too); the team still goes everywhere. Single modes are set to maintenance under “Modes”.',
+            'Spieler ohne „Kommt immer rein“ kommen in die Wartungs-Lobby (wer gerade online ist, auch); das Team kommt wie immer überall hin. Ankündigen mit Countdown und Wartungs-Neustart gehen in der Karte „Wartung jetzt“ oben bzw. mit /wartung an 10m Grund und /wartung neustart 10m Grund. Einzelne Modi setzt du unter „Modi“ in Wartung.',
+            'Players without “Always gets in” go to the maintenance lobby (those online right now too); the team still goes everywhere. Announcing with a countdown and the maintenance restart are in the “Maintenance now” card above, or /maintenance on 10m reason and /maintenance restart 10m reason. Single modes are set to maintenance under “Modes”.',
           ),
           command: '/wartung an|aus',
         },

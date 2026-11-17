@@ -1053,7 +1053,11 @@
         "unban": "Den Bann aufheben.",
         "rang": "Einen Rang geben oder wegnehmen – nur Ränge unter dem eigenen.",
         "bau": "Auf den Bau-Server.",
-        "rueckkehr": "Verbindung mitten im Spiel weg? Solange dein Platz frei ist, bringt dich das zurück in deine Runde (geht auch mit dem Gegenstand in der Lobby)."
+        "rueckkehr": "Verbindung mitten im Spiel weg? Solange dein Platz frei ist, bringt dich das zurück in deine Runde (geht auch mit dem Gegenstand in der Lobby).",
+        "wartungAn": "Wartung einschalten – ohne Zeit sofort, mit Zeit (30s, 10m, 1h) angekündigt: großer Titel, Chat und Countdown-Leiste für alle.",
+        "wartungAus": "Wartung beenden (sagt auch eine angekündigte ab) – alle kommen zurück in die Lobby.",
+        "wartungNeustart": "Wartungs-Neustart: alle warten in der Wartungs-Lobby, alle Server starten neu, danach geht’s von selbst zurück. Mit --proxy auch der Proxy. Kurz: /wartung-restart 10m Update.",
+        "wartungStatus": "Was gerade läuft bzw. eine Ankündigung absagen."
       }
     }
   },
@@ -1621,7 +1625,7 @@
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter Lobby → Musik stellst du die Lobbymusik ein (je Saison, welche Stücke laufen). Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt. Unter „Netzwerk“ stellst du die Wartung ein: Wer nicht hinein darf – oder nicht in die Lobby kann, weil sie neu startet –, wartet in der Wartungs-Lobby und kommt danach von selbst zurück."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter Lobby → Musik stellst du die Lobbymusik ein (je Saison, welche Stücke laufen). Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt. Unter „Netzwerk“ stellst du die Wartung ein: Wer nicht hinein darf – oder nicht in die Lobby kann, weil sie neu startet –, wartet in der Wartungs-Lobby und kommt danach von selbst zurück. Oben bei „Netzwerk“ kündigst du eine Wartung an oder startest einen Wartungs-Neustart (alle in die Wartungs-Lobby, alle Server neu) – mit Zeit und Grund; die Spieler sehen einen großen Titel und eine Leiste, die herunterzählt. Dasselbe geht im Fenster „Server neu starten“ und mit /wartung im Spiel."
     },
     "news": {
       "title": "News",
@@ -2683,7 +2687,12 @@
     "player_protected": "Strafen gehen nur an niedrigere Ränge: Diese Person hat den gleichen oder einen höheren Rang als du (den Owner bestraft niemand).",
     "restart_wartung": "Die Wartungs-Lobby startet nicht von Hand neu – dort warten die Spieler, solange die Lobby neu startet.",
     "restart_unknown_server": "Diesen Server gibt es im Netzwerk nicht (mehr). Lade die Liste neu.",
-    "restart_nothing_running": "Keiner der gewählten Server läuft gerade – es gibt nichts neu zu starten."
+    "restart_nothing_running": "Keiner der gewählten Server läuft gerade – es gibt nichts neu zu starten.",
+    "wartung_busy": "Es ist schon etwas angekündigt oder ein Neustart läuft.",
+    "wartung_no_restart": "Neu starten geht gerade nicht.",
+    "wartung_already_on": "Die Wartung ist schon an.",
+    "wartung_nothing": "Es ist nichts angekündigt.",
+    "wartung_restarting": "Der Wartungs-Neustart läuft – danach geht die Wartung von selbst aus."
   },
   "modeSettings": {
     "title": "Gilt nach dem nächsten Neustart des Modus",
@@ -2767,7 +2776,47 @@
     "started_other": "Neustart läuft – {{count}} Server sind dran.",
     "queued_one": "Es lief schon ein Neustart – {{count}} Server kommt gleich danach dran.",
     "queued_other": "Es lief schon ein Neustart – {{count}} Server kommen gleich danach dran.",
-    "close": "Schließen"
+    "close": "Schließen",
+    "mode": {
+      "normal": "Normaler Neustart",
+      "wartung": "Wartungs-Neustart"
+    },
+    "wartungMode": "Alle Spieler – auch das Team – warten in der Wartungs-Lobby, alle Server außer ihr starten neu (Spielmodi je drei zugleich, dann die Lobby). Sind alle wieder da, geht die Wartung aus und alle kommen von selbst zurück. Vorher sehen alle einen großen Titel, den Grund im Chat und eine Leiste, die herunterzählt."
+  },
+  "wartung": {
+    "title": "Wartung jetzt",
+    "text": "Sofort oder angekündigt – mit großem Titel und Countdown-Leiste im Spiel.",
+    "isOn": "Wartung an",
+    "isOff": "Wartung aus",
+    "kind": {
+      "on": "Wartung",
+      "restart": "Wartungs-Neustart"
+    },
+    "when": "Wann",
+    "now": "Sofort",
+    "in": "in {{time}}",
+    "reason": "Grund (sehen alle im Titel und im Chat)",
+    "reasonPlaceholder": "z. B. Großes Update",
+    "proxy": "Proxy auch neu starten.",
+    "proxyText": "Dann fliegen alle zum Schluss kurz raus und verbinden sich in etwa einer Minute wieder.",
+    "onExplain": "Bei Ablauf geht die Wartung an: Spieler ohne „Kommt immer rein“ warten in der Wartungs-Lobby, das Team kommt überall hin. Beenden mit „Wartung aus“.",
+    "restartExplain": "Bei Ablauf wartet jeder in der Wartungs-Lobby, alle Server starten neu; danach geht die Wartung von selbst aus.",
+    "noRestart": "Neu starten geht gerade nicht – MoinMorni erreicht die Server nicht.",
+    "goNow": "Wartung jetzt einschalten",
+    "goAnnounce": "Wartung ankündigen",
+    "goRestart": "Wartungs-Neustart starten",
+    "sentNow": "Erledigt.",
+    "sentAnnounced": "Angekündigt – alle Spieler sehen jetzt den Countdown.",
+    "announced": "{{what}} in",
+    "reasonShown": "Grund: {{reason}}",
+    "by": "Angekündigt von {{by}}",
+    "cancel": "Absagen",
+    "cancelled": "Abgesagt.",
+    "restarting": "Wartungs-Neustart läuft – {{done}} von {{total}} Servern fertig",
+    "restartingText": "Alle warten in der Wartungs-Lobby und kommen von selbst zurück, sobald alles wieder läuft.",
+    "off": "Wartung aus",
+    "offDone": "Wartung ist aus – alle kommen zurück in die Lobby.",
+    "ingame": "Im Spiel: /wartung an [zeit] [grund], /wartung aus, /wartung neustart [zeit] [grund], /wartung status, /wartung abbrechen."
   },
   "connections": {
     "title": "Verbindungen",

@@ -114,7 +114,7 @@ function parseValue(p: Pattern, args: readonly string[], current: unknown): unkn
 }
 
 /** Darf diese Person den Bereich ändern? Wie im Panel – plus das Spiel-Recht „admin“ für alles. */
-const mayChange = (actor: Actor, area: SettingArea): boolean =>
+export const mayChange = (actor: Actor, area: SettingArea): boolean =>
   actor.role.panel.includes(area.panel) || actor.role.game.includes('admin' satisfies GameRight);
 /** Manche Einstellungen ändert nur der Owner (z. B. die Admin-Stelle öffnen). */
 const mayChangeSetting = (actor: Actor, p: Pattern): boolean =>
@@ -215,10 +215,20 @@ export function mergeCommands(base: readonly Command[], settings: readonly Comma
     if (!s) return c;
     const mine = (args: readonly string[]): boolean =>
       !args.length || (c.own?.includes(args[0]?.toLowerCase() ?? '') ?? false);
+    const own = c.complete;
     return {
       ...c,
       run: (actor, args) => (mine(args) ? c.run(actor, args) : s.run(actor, args)),
-      complete: s.complete,
+      // Kann das Original selbst vorschlagen (z. B. /wartung an|neustart …): erstes Wort von beiden, danach je nachdem.
+      complete: own
+        ? (actor, args): string[] => {
+            if (args.length <= 1)
+              return [...new Set([...own(actor, args), ...(s.complete?.(actor, args) ?? [])])];
+            return c.own?.includes(args[0]?.toLowerCase() ?? '')
+              ? own(actor, args)
+              : (s.complete?.(actor, args) ?? []);
+          }
+        : s.complete,
     };
   });
   return [...merged, ...settings.filter((s) => !base.some((c) => c.name === s.name))];
