@@ -20,6 +20,8 @@ services:
       MM_DISCORD_CLIENT_SECRET: ${MM_DISCORD_CLIENT_SECRET:-}
       # Branch, dem die Updates im Panel folgen (install.sh/update.sh tragen den installierten ein).
       MM_UPDATE_BRANCH: ${MM_UPDATE_BRANCH:-main}
+      # Freiwillig: GitHub-Schlüssel nur zum Lesen (mehr API-Fragen pro Stunde für die Liste der Änderungen).
+      MM_GITHUB_TOKEN: ${MM_GITHUB_TOKEN:-}
       MM_DATA_DIR: /data
       MM_MOTOR_URL: http://motor:8080
       TZ: ${TZ:-Europe/Berlin}

@@ -112,11 +112,13 @@ export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat 
       const symbol = role.symbol ? `<${role.colour}>${mm(role.symbol)}</${role.colour}> ` : '';
       // Nach dem Rang, vor dem Namen: "♛ [MC] Philip".
       const own = tag ? `<${tag.colour}>[${mm(tag.text)}]</${tag.colour}> ` : '';
+      // Streamer-Modus: alle sehen „● LIVE“ vor dem Namen (wie in MorniCraft).
+      const live = ctx.streamer(uuid).includes('live') ? '<red>● LIVE</red> ' : '';
       const line = (lang: Lang): string => {
         const server = s.showServer
           ? `<dark_gray>[</dark_gray><gray>${mm(serverName(sender.server ?? '', lang))}</gray><dark_gray>]</dark_gray> `
           : '';
-        return `${server}${symbol}${own}<${role.colour}>${mm(sender.name)}</${role.colour}> <dark_gray>»</dark_gray> <white>${clean}`;
+        return `${server}${live}${symbol}${own}<${role.colour}>${mm(sender.name)}</${role.colour}> <dark_gray>»</dark_gray> <white>${clean}`;
       };
       ctx.chat(s.global || shout ? 'all' : sender.server, { de: line('de'), en: line('en') });
     },

@@ -57,6 +57,11 @@ export interface Wartung {
   readonly fallback: (uuid: string, lang: Lang, tried?: readonly string[]) => FallbackAnswer;
   /** Spieler wartet in der Wartungs-Lobby (geschickt, nicht freiwillig) – kommt automatisch zurück. */
   readonly waiting: (uuid: string) => void;
+  /**
+   * Die Lobby startet gleich neu (nach einem Update): Spieler in die Wartungs-Lobby, sie warten dort und kommen von
+   * selbst zurück, sobald die Lobby wieder am Hub hängt. false = geht nicht (Wartungs-Lobby aus, nicht da, Proxy weg).
+   */
+  readonly park: (uuid: string) => boolean;
   readonly onSwitch: (uuid: string, server: string) => void;
   readonly onLeave: (uuid: string) => void;
   /** Nach dem (Wieder-)Verbinden des Proxys: wer in der Wartungs-Lobby ist, wartet. */
@@ -224,6 +229,15 @@ export function createWartung(deps: WartungDeps): Wartung {
     waiting: (uuid) => {
       waitingSet.add(uuid);
       told.delete(uuid);
+    },
+    park: (uuid) => {
+      if (!open()) return false;
+      // Die Lobby hängt noch kurz am Hub – nicht schon vor ihrem Neustart wieder zurückschicken.
+      lobbyFailed.at = now();
+      waitingSet.add(uuid);
+      told.delete(uuid);
+      cancel();
+      return ctx.connect(uuid, WARTUNG_SERVER);
     },
     onSwitch: (uuid, server) => {
       if (server === WARTUNG_SERVER) return;

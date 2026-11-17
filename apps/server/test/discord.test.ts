@@ -42,6 +42,8 @@ interface Status {
   credentials: { token: { set: boolean; source: string | null } };
 }
 
+/** Viele Schritte nacheinander mit dem nachgebauten Discord – unter Last (alle Testdateien parallel) brauchen sie länger. */
+const SLOW_TEST_MS = 90_000;
 describe('Discord-Bot (nachgebautes Discord)', () => {
   let h: Harness;
   let dc: FakeDiscord;
@@ -309,7 +311,10 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     await proxy.request({ t: 'login', uuid: LENA, name: 'Lena', locale: 'de_de', bedrock: false });
     proxy.send({ t: 'switch', uuid: LENA, server: 'lobby' });
     h.mm.hub.players.setRole(LENA, 'vip');
+    const invite = proxy.next('msg', (m) => String(m['text']).includes('Discord beitreten'));
     await proxy.request({ t: 'command', uuid: LENA, command: 'discord', args: [] });
+    // Erst die Einladung zum Anklicken (die der Bot beim Einrichten angelegt hat), dann der Code.
+    expect(String((await invite)['text'])).toContain("<click:open_url:'https://discord.gg/");
     const msg = await proxy.next('msg', (m) => String(m['text']).includes('/verbinden'));
     // Code in der Nachricht: "<bold>AB12CD</bold>" → "AB12CD"; "<bold>ab</bold>" nicht.
     // https://regex101.com/?flavor=javascript&regex=%3Cbold%3E(%5BA-Z0-9%5D%7B6%7D)%3C%5C%2Fbold%3E&testString=%3Cbold%3EAB12CD%3C%2Fbold%3E
@@ -333,132 +338,138 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
     expect(mem?.roles).not.toContain(roleByName('★ VIP')?.id);
   });
 
-  test('Strafen gelten auch in Discord: Timeout, Stumm-Rolle, Gefängnis nur mit Gefängnis-Rolle, Bann, Strafen-Log', async () => {
-    const punishLog = () => JSON.stringify(messagesIn('⚖・strafen-log'));
-    await call('POST', '/api/panel/punishments', {
-      player: 'Lena',
-      kind: 'mute',
-      minutes: 30,
-      reason: 'Spam',
-    });
-    await until(() => Boolean(dc.guild.members.get(LENA_DC)?.communication_disabled_until));
-    await call('DELETE', `/api/panel/punishments/${LENA}/mute`);
-    await until(() => dc.guild.members.get(LENA_DC)?.communication_disabled_until === null);
-
-    await call('POST', '/api/panel/punishments', {
-      player: 'Lena',
-      kind: 'mute',
-      minutes: null,
-      reason: 'Dauerspam',
-    });
-    await until(() =>
-      Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(roleByName('🔇 Stumm')?.id ?? '-')),
-    );
-    await call('DELETE', `/api/panel/punishments/${LENA}/mute`);
-    await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(roleByName('🔇 Stumm')?.id ?? '-'));
-
-    // Gefängnis: nur noch „⛓ Gefängnis“ (Rang-Rollen weg, sonst sähe sie deren Kanäle), danach alles zurück.
-    const jailRole = roleByName('⛓ Gefängnis')?.id ?? '-';
-    const mediaRole = roleByName('▶ Media')?.id ?? '-';
-    await call('POST', '/api/panel/punishments', {
-      player: 'Lena',
-      kind: 'jail',
-      minutes: 15,
-      reason: 'Beleidigung',
-    });
-    await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(jailRole)));
-    expect(dc.guild.members.get(LENA_DC)?.roles).toEqual([jailRole]);
-    await call('DELETE', `/api/panel/punishments/${LENA}/jail`);
-    await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(jailRole));
-    await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(mediaRole)));
-
-    await call('POST', '/api/panel/punishments', {
-      player: 'Lena',
-      kind: 'ban',
-      minutes: 60,
-      reason: 'Hacks',
-    });
-    await until(() => dc.guild.bans.has(LENA_DC));
-    await call('DELETE', `/api/panel/punishments/${LENA}/ban`);
-    await until(() => !dc.guild.bans.has(LENA_DC));
-    await until(() => punishLog().includes('entbannt'));
-    expect(punishLog()).toContain('Hacks');
-    expect(punishLog()).toContain('Gefängnis');
-    expect(punishLog()).toContain('Beleidigung');
-    dc.guild.members.set(LENA_DC, { roles: [], communication_disabled_until: null });
-  });
-
-  test('Sprachchat-Stumm: im Discord-Sprachkanal stumm, auch beim späteren Betreten; ohne Recht nur im Spiel', async () => {
-    const OK = 200;
-    const MINUTES = 30;
-    const SHORT = 10;
-    const SECOND_LIFT = 2;
-    const log = (): string => JSON.stringify(messagesIn('⚖・strafen-log'));
-    const times = (part: string): number => log().split(part).length - 1;
-    const dorf = channelByName('Dorfplatz')?.id ?? '-';
-    // Nach dem Bann im Test davor ist Lena wieder auf dem Server – diesmal im Sprachkanal Dorfplatz.
-    dc.guild.members.set(LENA_DC, {
-      roles: [],
-      communication_disabled_until: null,
-      channel_id: dorf,
-      mute: false,
-    });
-    const lena = () => dc.guild.members.get(LENA_DC);
-    const sits = (channel: string | null) => {
-      Object.assign(lena() ?? {}, { channel_id: channel });
-    };
-    // Was Discord dem Bot schickt, wenn jemand einen Sprachkanal betritt.
-    const enters = () =>
-      h.mm.bot.handle({
-        t: 'VOICE_STATE_UPDATE',
-        d: { guild_id: dc.guild.id, user_id: LENA_DC, channel_id: dorf, mute: lena()?.mute === true },
+  test(
+    'Strafen gelten auch in Discord: Timeout, Stumm-Rolle, Gefängnis nur mit Gefängnis-Rolle, Bann, Strafen-Log',
+    async () => {
+      const punishLog = () => JSON.stringify(messagesIn('⚖・strafen-log'));
+      await call('POST', '/api/panel/punishments', {
+        player: 'Lena',
+        kind: 'mute',
+        minutes: 30,
+        reason: 'Spam',
       });
-    const voice = (reason: string, minutes: number | null) =>
-      call('POST', '/api/panel/punishments', { player: 'Lena', kind: 'voice', minutes, reason });
-    const lift = () => call('DELETE', `/api/panel/punishments/${LENA}/voice`);
+      await until(() => Boolean(dc.guild.members.get(LENA_DC)?.communication_disabled_until));
+      await call('DELETE', `/api/panel/punishments/${LENA}/mute`);
+      await until(() => dc.guild.members.get(LENA_DC)?.communication_disabled_until === null);
 
-    // Sitzt im Sprachkanal: dort gleich stumm, Team-Log; Aufheben gibt sie wieder frei.
-    expect((await voice('Schreien', MINUTES)).statusCode).toBe(OK);
-    await until(() => lena()?.mute === true);
-    await until(() => log().includes('Schreien'));
-    expect(log()).toContain('im Sprachchat stumm');
-    await lift();
-    await until(() => lena()?.mute === false);
-    await until(() => times('wieder sprechen') === 1);
-    // Ist die Zeit um (hier: ohne Nachricht beendet), hebt das regelmäßige Aufräumen die Stummschaltung auf.
-    await voice('Abgelaufen', MINUTES);
-    await until(() => lena()?.mute === true);
-    h.mm.hub.punish.revoke(LENA, 'voice', 'test');
-    await h.mm.bot.cleanup();
-    expect(lena()?.mute).toBe(false);
+      await call('POST', '/api/panel/punishments', {
+        player: 'Lena',
+        kind: 'mute',
+        minutes: null,
+        reason: 'Dauerspam',
+      });
+      await until(() =>
+        Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(roleByName('🔇 Stumm')?.id ?? '-')),
+      );
+      await call('DELETE', `/api/panel/punishments/${LENA}/mute`);
+      await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(roleByName('🔇 Stumm')?.id ?? '-'));
 
-    // Nicht im Sprachkanal: kein Fehler – stumm, sobald sie einen betritt.
-    sits(null);
-    await voice('Dauerlärm', null);
-    await until(() => log().includes('Dauerlärm'));
-    expect(lena()?.mute).toBe(false);
-    sits(dorf);
-    await enters();
-    expect(lena()?.mute).toBe(true);
-    // Aufgehoben, während sie weg ist: beim nächsten Betreten wieder frei.
-    sits(null);
-    await lift();
-    await until(() => times('wieder sprechen') === SECOND_LIFT);
-    expect(lena()?.mute).toBe(true);
-    sits(dorf);
-    await enters();
-    expect(lena()?.mute).toBe(false);
+      // Gefängnis: nur noch „⛓ Gefängnis“ (Rang-Rollen weg, sonst sähe sie deren Kanäle), danach alles zurück.
+      const jailRole = roleByName('⛓ Gefängnis')?.id ?? '-';
+      const mediaRole = roleByName('▶ Media')?.id ?? '-';
+      await call('POST', '/api/panel/punishments', {
+        player: 'Lena',
+        kind: 'jail',
+        minutes: 15,
+        reason: 'Beleidigung',
+      });
+      // Rolle dazu und Rang-Rollen weg sind zwei Schritte – unter Last kann dazwischen eine Weile vergehen.
+      await until(() => JSON.stringify(dc.guild.members.get(LENA_DC)?.roles) === JSON.stringify([jailRole]));
+      await call('DELETE', `/api/panel/punishments/${LENA}/jail`);
+      await until(() => !dc.guild.members.get(LENA_DC)?.roles.includes(jailRole));
+      await until(() => Boolean(dc.guild.members.get(LENA_DC)?.roles.includes(mediaRole)));
 
-    // Ohne das Recht „Mitglieder stummschalten“: gilt nur im Spiel, Hinweis im Team-Log, kein Fehler.
-    dc.permissions.muteMembers = false;
-    expect((await voice('Ohne Recht', SHORT)).statusCode).toBe(OK);
-    await until(() => log().includes('Ohne Recht'));
-    expect(log()).toContain('Mitglieder stummschalten');
-    expect(lena()?.mute).toBe(false);
-    expect(h.mm.hub.punish.active(LENA, 'voice')).toBeTruthy();
-    dc.permissions.muteMembers = true;
-    await lift();
-  });
+      await call('POST', '/api/panel/punishments', {
+        player: 'Lena',
+        kind: 'ban',
+        minutes: 60,
+        reason: 'Hacks',
+      });
+      await until(() => dc.guild.bans.has(LENA_DC));
+      await call('DELETE', `/api/panel/punishments/${LENA}/ban`);
+      await until(() => !dc.guild.bans.has(LENA_DC));
+      await until(() => punishLog().includes('entbannt'));
+      await until(() => ['Hacks', 'Gefängnis', 'Beleidigung'].every((part) => punishLog().includes(part)));
+      dc.guild.members.set(LENA_DC, { roles: [], communication_disabled_until: null });
+    },
+    SLOW_TEST_MS,
+  );
+
+  test(
+    'Sprachchat-Stumm: im Discord-Sprachkanal stumm, auch beim späteren Betreten; ohne Recht nur im Spiel',
+    async () => {
+      const OK = 200;
+      const MINUTES = 30;
+      const SHORT = 10;
+      const SECOND_LIFT = 2;
+      const log = (): string => JSON.stringify(messagesIn('⚖・strafen-log'));
+      const times = (part: string): number => log().split(part).length - 1;
+      const dorf = channelByName('Dorfplatz')?.id ?? '-';
+      // Nach dem Bann im Test davor ist Lena wieder auf dem Server – diesmal im Sprachkanal Dorfplatz.
+      dc.guild.members.set(LENA_DC, {
+        roles: [],
+        communication_disabled_until: null,
+        channel_id: dorf,
+        mute: false,
+      });
+      const lena = () => dc.guild.members.get(LENA_DC);
+      const sits = (channel: string | null) => {
+        Object.assign(lena() ?? {}, { channel_id: channel });
+      };
+      // Was Discord dem Bot schickt, wenn jemand einen Sprachkanal betritt.
+      const enters = () =>
+        h.mm.bot.handle({
+          t: 'VOICE_STATE_UPDATE',
+          d: { guild_id: dc.guild.id, user_id: LENA_DC, channel_id: dorf, mute: lena()?.mute === true },
+        });
+      const voice = (reason: string, minutes: number | null) =>
+        call('POST', '/api/panel/punishments', { player: 'Lena', kind: 'voice', minutes, reason });
+      const lift = () => call('DELETE', `/api/panel/punishments/${LENA}/voice`);
+
+      // Sitzt im Sprachkanal: dort gleich stumm, Team-Log; Aufheben gibt sie wieder frei.
+      expect((await voice('Schreien', MINUTES)).statusCode).toBe(OK);
+      await until(() => lena()?.mute === true);
+      await until(() => log().includes('Schreien'));
+      expect(log()).toContain('im Sprachchat stumm');
+      await lift();
+      await until(() => lena()?.mute === false);
+      await until(() => times('wieder sprechen') === 1);
+      // Ist die Zeit um (hier: ohne Nachricht beendet), hebt das regelmäßige Aufräumen die Stummschaltung auf.
+      await voice('Abgelaufen', MINUTES);
+      await until(() => lena()?.mute === true);
+      h.mm.hub.punish.revoke(LENA, 'voice', 'test');
+      await h.mm.bot.cleanup();
+      await until(() => lena()?.mute === false);
+
+      // Nicht im Sprachkanal: kein Fehler – stumm, sobald sie einen betritt.
+      sits(null);
+      await voice('Dauerlärm', null);
+      await until(() => log().includes('Dauerlärm'));
+      expect(lena()?.mute).toBe(false);
+      sits(dorf);
+      await enters();
+      await until(() => lena()?.mute === true);
+      // Aufgehoben, während sie weg ist: beim nächsten Betreten wieder frei.
+      sits(null);
+      await lift();
+      await until(() => times('wieder sprechen') === SECOND_LIFT);
+      expect(lena()?.mute).toBe(true);
+      sits(dorf);
+      await enters();
+      await until(() => lena()?.mute === false);
+
+      // Ohne das Recht „Mitglieder stummschalten“: gilt nur im Spiel, Hinweis im Team-Log, kein Fehler.
+      dc.permissions.muteMembers = false;
+      expect((await voice('Ohne Recht', SHORT)).statusCode).toBe(OK);
+      await until(() => log().includes('Ohne Recht'));
+      expect(log()).toContain('Mitglieder stummschalten');
+      expect(lena()?.mute).toBe(false);
+      expect(h.mm.hub.punish.active(LENA, 'voice')).toBeTruthy();
+      dc.permissions.muteMembers = true;
+      await lift();
+    },
+    SLOW_TEST_MS,
+  );
 
   test('MorniCraft-Bewerbung: Auswahl bei /bewerben, Formular, Eingang, Annehmen per Knopf, Webseite mit Discord-Anmeldung, Whitelist', async () => {
     const PHILIP_UUID = '11111111-1111-1111-1111-111111111111';

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SERVER_MAX_PLAYERS } from '@moinmorni/shared';
 import { patchProperties } from '../lobby/world.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { MotorError, type MotorClient } from '../motor/client.js';
@@ -53,6 +54,11 @@ export function buildProperties(): Record<string, string> {
     'generate-structures': 'false',
     'allow-nether': 'false',
     'spawn-protection': '0',
+    // Befehle über RCON (Bauten kopieren) nicht als „[Rcon: …]“ in den Chat des Teams.
+    'broadcast-rcon-to-ops': 'false',
+    'broadcast-console-to-ops': 'false',
+    // Nach Zahl weisen nur Proxy und Hub ab – nicht Minecraft mit seinen 20 (siehe SERVER_MAX_PLAYERS).
+    'max-players': String(SERVER_MAX_PLAYERS),
     motd: 'MoinMorni Bau-Server',
   };
 }

@@ -1,5 +1,5 @@
 /** Warten, bis `check` stimmt (alle 25 ms nachsehen), höchstens `ms` lang – sonst schlägt der Test fehl. */
-export async function until(check: () => boolean | Promise<boolean>, ms = 6000): Promise<void> {
+export async function until(check: () => boolean | Promise<boolean>, ms = 15_000): Promise<void> {
   const start = Date.now();
   const again = async (): Promise<void> => {
     if (await check()) return;

@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import de.moinmorni.network.common.DataFolder;
 import de.moinmorni.network.common.HubClient;
 import de.moinmorni.network.common.HubConfig;
+import de.moinmorni.network.common.StreamerMask;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,9 +39,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private static final String TEAM_PREFIX = "mm";
     private static final int TEAM_NAME_MAX = 16;
 
-    /** Was der Hub über einen Spieler sagt (Rang, Sprache). */
+    /** Was der Hub über einen Spieler sagt (Rang, Sprache, Streamer-Modus). */
     private record Profile(String name, String lang, String roleId, String symbol, String colour, int position,
-                           java.util.Set<String> rights) {
+                           java.util.Set<String> rights, boolean streaming, java.util.Set<String> hides) {
     }
 
     /** Name dieses Servers im Netzwerk (aus hub.json), z. B. „lobby“ oder „bau“. */
@@ -54,6 +55,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             + "<gray>The rank needs the right “Creative mode” in the panel.</gray>";
 
     private final Map<UUID, Profile> profiles = new ConcurrentHashMap<>();
+    /** Streamer-Modus: IP-Adressen und eigene Adressen für Streamer als „•••“ (Adressen schickt der Hub). */
+    private final StreamerMask streamerMask = new StreamerMask();
     private HubClient hub;
     /** Sprachchat-Brücke, nur mit Simple Voice Chat (sonst null). */
     private Object voice;
@@ -68,9 +71,20 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     /** Wartungs-Lobby (Leiste, Aushang, Sprung-Parcours, Schutz) – nur auf dem Server „wartung“. */
     private WartungLobby wartung;
     private static final String WARTUNG_SERVER = "wartung";
+    /** Lobbymusik – nur aktiv, wenn der Hub die Stücke schickt ({@code lobby-music}). */
+    private LobbyMusic music;
 
     /** Einstellungen des Spielmodus auf diesem Server (aus dem Panel) – trägt sie in seine config.yml ein. */
     private ModeSettings modes;
+
+    /** Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni). */
+    private ModeApi modeApi;
+    /** „Wirklich zur Lobby?“ mitten im Spiel. */
+    private LeaveAsk leaveAsk;
+    /** „Zurück ins Spiel“ – nur in der Lobby aktiv (nur sie bekommt Angebote vom Hub). */
+    private ReturnOffer returnOffer;
+    /** Wer gerade spielt, alle 30 s noch einmal an den Hub (nach einem Neustart des Hubs kennt er es sonst nicht). */
+    private static final long PLAYING_RESEND_TICKS = 600;
 
     /**
      * Vor allen anderen Plugins: Datenordner vom Zwischen-Namen zurückholen, dann gemerkte Einstellungen des Modus
@@ -101,10 +115,15 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, this::morniCraftPlayers, SUMMARY_TICKS, SUMMARY_TICKS);
         // Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni) – auch ohne Hub, dann läuft der Modus allein.
-        getServer().getServicesManager().register(de.moinmorni.api.MoinMorni.class,
-                new ModeApi(hub, serverName, this::langOfUuid, this::rankOf,
-                        uuid -> Optional.ofNullable(profiles.get(uuid)).map(Profile::rights).orElse(null)),
+        leaveAsk = new LeaveAsk(this, this::langOf, this::answerLobby);
+        leaveAsk.start();
+        modeApi = new ModeApi(hub, serverName, this::langOfUuid, this::rankOf,
+                uuid -> Optional.ofNullable(profiles.get(uuid)).map(Profile::rights).orElse(null),
+                p -> leaveAsk.open(p, null));
+        getServer().getServicesManager().register(de.moinmorni.api.MoinMorni.class, modeApi,
                 this, org.bukkit.plugin.ServicePriority.Normal);
+        getServer().getScheduler().runTaskTimerAsynchronously(this, modeApi::resendPlaying,
+                PLAYING_RESEND_TICKS, PLAYING_RESEND_TICKS);
         lobby = new LobbyNpcs(this, hub, this::langOf);
         lobby.start();
         features = new LobbyFeatures(this, lobby, this::langOf);
@@ -112,6 +131,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         clock = new LobbyClock(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
+        // Lobbymusik: im Parkour, beim Rundgang und im Gefängnis leiser.
+        music = new LobbyMusic(this, this::langOf,
+                id -> features.inParkour(id) || features.inTour(id) || jail.isJailed(id));
         // In der Lobby bauen (im Kreativmodus): wer das Recht „Lobby bearbeiten“ hat – oder OP ist.
         features.setEditors(p -> Rights.mayEditLobby(rankRights(p)));
         getServer().getScheduler().runTask(this, this::logModeAdmins);
@@ -121,6 +143,11 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 () -> hub != null && hub.ready());
         wartung.onLobbyRequest(this::toLobby);
         wartung.start();
+        returnOffer = new ReturnOffer(this, hub, this::langOf);
+        returnOffer.setJail(jail::isJailed);
+        returnOffer.start();
+        // Ruhezustand: ist der Server eine Weile leer, gründlich aufräumen und Arbeitsspeicher zurückgeben.
+        new IdleTidy(this).start();
         // Erst verbinden, wenn alles steht – die ersten Nachrichten des Hubs gehen sonst ins Leere.
         if (hub != null) {
             try {
@@ -213,7 +240,12 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                         HubClient.str(role, "symbol"),
                         HubClient.str(role, "colour"),
                         role.get("position").getAsInt(),
-                        rightsOf(m)));
+                        rightsOf(m),
+                        streamingOf(m),
+                        streamerPartsOf(m)));
+                if (m.has("music") && m.get("music").isJsonObject()) {
+                    music.onProfile(uuid, m.getAsJsonObject("music"));
+                }
                 Bukkit.getScheduler().runTask(this, () -> {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p != null) {
@@ -228,7 +260,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 Component en = MM.deserialize(HubClient.str(text, "en"));
                 Bukkit.getScheduler().runTask(this, () -> {
                     for (Player p : Bukkit.getOnlinePlayers()) {
-                        p.sendMessage("en".equals(langOf(p)) ? en : de);
+                        p.sendMessage(forViewer(p, "en".equals(langOf(p)) ? en : de));
                     }
                     Bukkit.getConsoleSender().sendMessage(de);
                 });
@@ -240,6 +272,11 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             }
             case "jail" -> jail.onState(m);
             case "wartung" -> wartung.onState(m);
+            case "lobby-music" -> music.onSettings(m);
+            case "lobby-ask" -> leaveAsk.onAsk(m);
+            case "lobby-ask-close" -> leaveAsk.onClose(m);
+            case "rejoin-offer" -> returnOffer.onOffer(m);
+            case "rejoin-off" -> returnOffer.onOff(m);
             case "mornicraft-settings" -> morniCraftSettings(m);
             case "mode-settings" -> modeSettings(m);
             case "voice" -> {
@@ -255,11 +292,25 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             case "msg" -> Bukkit.getScheduler().runTask(this, () -> {
                 Player p = Bukkit.getPlayer(UUID.fromString(HubClient.str(m, "uuid")));
                 if (p != null) {
-                    p.sendMessage(MM.deserialize(HubClient.str(m, "text")));
+                    Component text = MM.deserialize(HubClient.str(m, "text"));
+                    boolean mask = m.has("mask") && m.get("mask").getAsBoolean();
+                    p.sendMessage(mask ? streamerMask.apply(text) : forViewer(p, text));
                 }
             });
+            case "streamer-config" -> streamerMask.hosts(m.getAsJsonArray("hosts"));
             default -> {
             }
+        }
+    }
+
+    /** Antwort aus dem Fenster „Wirklich zur Lobby?“ – an den Hub; ohne Hub geht „Ja“ wie toLobby. */
+    private void answerLobby(Player p, boolean yes) {
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "lobby-answer");
+        body.addProperty("uuid", p.getUniqueId().toString());
+        body.addProperty("yes", yes);
+        if ((hub == null || !hub.send(body)) && yes) {
+            modeApi.toLobby(p);
         }
     }
 
@@ -441,6 +492,48 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         return rights;
     }
 
+    // ---------- Streamer-Modus ----------
+
+    /** Metadaten für Spielmodi wie MorniCraft: an = Teile mit Komma („ip,coords,msg,live“), aus = nicht da. */
+    private static final String STREAMER = "moinmorni:streamer";
+    private static final String LIVE_MARK = "L";
+    private static final int LIVE_ID_CHARS = 8;
+    private static final String LIVE_SUFFIX = " ● LIVE";
+
+    private static boolean streamingOf(JsonObject m) {
+        JsonObject s = m.has("streamer") && m.get("streamer").isJsonObject() ? m.getAsJsonObject("streamer") : null;
+        return s != null && s.has("on") && s.get("on").getAsBoolean();
+    }
+
+    private static java.util.Set<String> streamerPartsOf(JsonObject m) {
+        java.util.Set<String> parts = new java.util.LinkedHashSet<>();
+        JsonObject s = m.has("streamer") && m.get("streamer").isJsonObject() ? m.getAsJsonObject("streamer") : null;
+        if (s != null && s.has("parts") && s.get("parts").isJsonArray()) {
+            s.getAsJsonArray("parts").forEach(e -> parts.add(e.getAsString()));
+        }
+        return parts;
+    }
+
+    /** Verdeckt dieser Spieler gerade diesen Teil (ip, coords, msg, live)? */
+    private boolean hides(Player p, String part) {
+        Profile profile = profiles.get(p.getUniqueId());
+        return profile != null && profile.streaming() && profile.hides().contains(part);
+    }
+
+    /** Text, wie ihn dieser Spieler sehen darf (Streamer: IP-Adressen und eigene Adressen als „•••“). */
+    private Component forViewer(Player p, Component text) {
+        return hides(p, "ip") ? streamerMask.apply(text) : text;
+    }
+
+    /** Zustand an den Spieler hängen – Spielmodi (MorniCraft) lesen ihn dort. */
+    private void streamerMeta(Player p, Profile profile) {
+        if (profile.streaming()) {
+            p.setMetadata(STREAMER, new org.bukkit.metadata.FixedMetadataValue(this, String.join(",", profile.hides())));
+        } else {
+            p.removeMetadata(STREAMER, this);
+        }
+    }
+
     /** Rang-Rechte eines Spielers (leer, solange der Hub noch kein Profil geschickt hat). */
     private java.util.Set<String> rankRights(Player p) {
         Profile profile = profiles.get(p.getUniqueId());
@@ -535,17 +628,44 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         p.sendMessage(MM.deserialize("en".equals(langOf(p)) ? NO_CREATIVE_EN : NO_CREATIVE_DE));
     }
 
+    /**
+     * Der Spielmodus-Umschalter (F3+F4) läuft an {@link #onCommand} vorbei: Paper erlaubt ihn mit dem Recht für
+     * /gamemode. Kreativ darüber nur mit „Kreativmodus“ oder „Alles“ (oder als OP) – wie beim Befehl.
+     */
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onGameModeSwitcher(org.bukkit.event.player.PlayerGameModeChangeEvent event) {
+        Player p = event.getPlayer();
+        boolean toCreative = event.getNewGameMode() == org.bukkit.GameMode.CREATIVE;
+        if (p.isOp() || !Rights.blocksSwitcher(event.getCause().name(), toCreative, rankRights(p))) {
+            return;
+        }
+        event.setCancelled(true);
+        p.sendMessage(MM.deserialize("en".equals(langOf(p)) ? NO_CREATIVE_EN : NO_CREATIVE_DE));
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Player p = event.getPlayer();
         profiles.remove(p.getUniqueId());
+        modeApi.forget(p.getUniqueId());
         org.bukkit.permissions.PermissionAttachment attachment = attachments.remove(p.getUniqueId());
         if (attachment != null) {
             p.removeAttachment(attachment);
         }
         Team team = Bukkit.getScoreboardManager().getMainScoreboard().getEntryTeam(p.getName());
         if (team != null && team.getName().startsWith(TEAM_PREFIX)) {
-            team.removeEntry(p.getName());
+            leaveTeam(team, p.getName());
+        }
+        p.removeMetadata(STREAMER, this);
+    }
+
+    /** Aus dem Team; das eigene Team eines Streamers geht danach ganz weg. */
+    private static void leaveTeam(Team team, String entry) {
+        team.removeEntry(entry);
+        boolean own = team.getName().length() > TEAM_PREFIX.length() + 2
+                && team.getName().startsWith(LIVE_MARK, TEAM_PREFIX.length() + 2);
+        if (own && team.getEntries().isEmpty()) {
+            team.unregister();
         }
     }
 
@@ -556,6 +676,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             return;
         }
         applyRights(p, profile);
+        streamerMeta(p, profile);
         if (morniCraft()) {
             // MorniCraft zeigt den Rang des Netzwerks selbst (mit Clan-Kürzel, auf den Leisten jedes Spielers).
             return;
@@ -564,23 +685,32 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         Component prefix = profile.symbol() == null || profile.symbol().isEmpty()
                 ? Component.empty()
                 : Component.text(profile.symbol() + " ", colour);
-        p.playerListName(prefix.append(Component.text(p.getName(), colour)));
+        // Streamer-Modus: die anderen sehen „● LIVE“ hinter dem Namen (wie in MorniCraft).
+        boolean live = hides(p, "live");
+        Component suffix = live ? Component.text(LIVE_SUFFIX, net.kyori.adventure.text.format.NamedTextColor.RED)
+                : Component.empty();
+        p.playerListName(prefix.append(Component.text(p.getName(), colour)).append(suffix));
 
         Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
-        // Teams sortieren die Tab-Liste nach Namen: mm00owner vor mm06player.
-        String name = String.format("%s%02d%s", TEAM_PREFIX, profile.position(), profile.roleId());
+        // Teams sortieren die Tab-Liste nach Namen: mm00owner vor mm06player; Streamer ein eigenes daneben
+        // („mm06L1a2b3c4d“), damit nur ihr Name „● LIVE“ bekommt.
+        String name = live
+                ? String.format("%s%02d%s%s", TEAM_PREFIX, profile.position(), LIVE_MARK,
+                        p.getUniqueId().toString().substring(0, LIVE_ID_CHARS))
+                : String.format("%s%02d%s", TEAM_PREFIX, profile.position(), profile.roleId());
         String teamName = name.length() > TEAM_NAME_MAX ? name.substring(0, TEAM_NAME_MAX) : name;
         Team team = board.getTeam(teamName);
         if (team == null) {
             team = board.registerNewTeam(teamName);
         }
         team.prefix(prefix);
+        team.suffix(suffix);
         if (colour != null) {
             team.color(net.kyori.adventure.text.format.NamedTextColor.nearestTo(colour));
         }
         Team old = board.getEntryTeam(p.getName());
         if (old != null && old != team && old.getName().startsWith(TEAM_PREFIX)) {
-            old.removeEntry(p.getName());
+            leaveTeam(old, p.getName());
         }
         team.addEntry(p.getName());
     }

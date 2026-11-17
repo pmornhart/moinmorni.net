@@ -1,4 +1,4 @@
-import { PUNISHMENT_RIGHTS } from '@moinmorni/shared';
+import { mayLiftFor, mayPunishPlayer, punishersOf, PUNISHMENT_RIGHTS, type Role } from '@moinmorni/shared';
 import type { HubContext } from './context.js';
 import type { Punishment } from './punish.js';
 import { normalUuid } from './players.js';
@@ -41,6 +41,18 @@ export interface Moderation {
   /** false = es gab nichts aufzuheben. */
   readonly lift: (t: Target, kind: LiftKind, by: string) => boolean;
   readonly untilText: (lang: Lang, iso: string | null) => string;
+  /**
+   * Strafen nur nach unten: null = `actor` darf `t` so bestrafen (oder die Strafe aufheben); sonst die Meldung, wer es
+   * darf („Mia ist Admin – das darf nur der Owner.“). Ob der Rang die Strafe überhaupt kennt (`mayPunish`), prüft der
+   * Aufrufer vorher.
+   */
+  readonly refusal: (
+    actor: Pick<Role, 'id' | 'position'>,
+    t: Target,
+    kind: ModKind,
+    lang: Lang,
+    lifting?: boolean,
+  ) => string | null;
 }
 
 const TEAM_KEY = {
@@ -69,6 +81,12 @@ const FREE_KEY: Readonly<Partial<Record<LiftKind, TextKey>>> = {
   jail: 'unjail.you',
   voice: 'voice.unmuted_you',
 };
+/** Hinweis „nur höhere Ränge“ – nach der Zahl derer, die es dürfen: niemand, einer, mehrere. */
+const PROTECTED_KEY: readonly TextKey[] = [
+  'punish.protected_nobody',
+  'punish.protected_one',
+  'punish.protected_many',
+];
 /** Gefängnis ohne Dauer: zehn Minuten (für immer nur ausdrücklich, z. B. „perm“). */
 export const JAIL_DEFAULT_MINUTES = 10;
 const LOBBY = 'lobby';
@@ -91,8 +109,29 @@ export function createModeration(ctx: HubContext, onChange: (change: ModChange) 
       ? text(lang, 'punish.until', { date: dateText(lang, iso, ctx.timeZone) })
       : text(lang, 'punish.forever');
 
+  /** „Owner“, „Owner und Admin“, „Owner, Admin und Moderator“ – in Rangfarbe. */
+  const roleList = (lang: Lang, roles: readonly Role[]): string => {
+    const names = roles.map((r) => `<${r.colour}>${mm(r.name[lang])}</${r.colour}>`);
+    const last = names.pop() ?? '';
+    return names.length ? `${names.join(', ')}${text(lang, 'punish.and')}${last}` : last;
+  };
+
   return {
     untilText,
+    refusal: (actor, t, kind, lang, lifting = false) => {
+      const rank = ctx.players.roleOf(t.uuid);
+      if ((lifting ? mayLiftFor : mayPunishPlayer)(actor, rank)) return null;
+      const who = punishersOf(ctx.stores.roles(), rank, kind);
+      return text(
+        lang,
+        PROTECTED_KEY[Math.min(who.length, PROTECTED_KEY.length - 1)] ?? 'punish.protected_many',
+        {
+          name: mm(t.name),
+          rank: `<${rank.colour}>${mm(rank.name[lang])}</${rank.colour}>`,
+          who: roleList(lang, who),
+        },
+      );
+    },
     target: (nameOrUuid) => {
       if (!nameOrUuid) return null;
       const byUuid = UUID.test(nameOrUuid);

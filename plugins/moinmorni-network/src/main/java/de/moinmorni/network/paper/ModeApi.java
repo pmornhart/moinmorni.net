@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import org.bukkit.entity.Player;
 
@@ -24,14 +27,19 @@ final class ModeApi implements MoinMorni {
     private final Function<UUID, String> lang;
     private final Function<UUID, Rank> rank;
     private final Function<UUID, java.util.Set<String>> rights;
+    /** Ohne Hub: das Fenster „Wirklich zur Lobby?“ hier auf dem Server zeigen. */
+    private final Consumer<Player> askHere;
+    /** Wer gerade eine Runde spielt (meldet der Modus) – der Hub fragt dann vor /lobby nach. */
+    private final Set<UUID> playingNow = ConcurrentHashMap.newKeySet();
 
     ModeApi(HubClient hub, String server, Function<UUID, String> lang, Function<UUID, Rank> rank,
-            Function<UUID, java.util.Set<String>> rights) {
+            Function<UUID, java.util.Set<String>> rights, Consumer<Player> askHere) {
         this.hub = hub;
         this.server = server;
         this.lang = lang;
         this.rank = rank;
         this.rights = rights;
+        this.askHere = askHere;
     }
 
     @Override
@@ -137,6 +145,68 @@ final class ModeApi implements MoinMorni {
         JsonObject body = new JsonObject();
         body.addProperty("t", "to-lobby");
         body.addProperty("uuid", player.getUniqueId().toString());
+        hub.send(body);
+    }
+
+    /** Fragt der Hub nach (spielt er gerade?), kommt das Fenster vom Hub; ohne Hub fragt dieser Server selbst. */
+    @Override
+    public void askToLobby(Player player) {
+        if (online()) {
+            JsonObject body = new JsonObject();
+            body.addProperty("t", "ask-lobby");
+            body.addProperty("uuid", player.getUniqueId().toString());
+            hub.send(body);
+        } else if (playingNow.contains(player.getUniqueId())) {
+            askHere.accept(player);
+        } else {
+            toLobby(player);
+        }
+    }
+
+    @Override
+    public void playing(Player player, boolean playing) {
+        UUID id = player.getUniqueId();
+        if (playing) {
+            playingNow.add(id);
+        } else {
+            playingNow.remove(id);
+        }
+        sendPlaying(id, playing);
+    }
+
+    @Override
+    public void holdSlot(UUID player, int seconds) {
+        if (!online()) {
+            return;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "hold-slot");
+        body.addProperty("uuid", player.toString());
+        body.addProperty("seconds", Math.max(0, seconds));
+        hub.send(body);
+    }
+
+    /** Spieler hat den Server verlassen: Der Stand gilt nicht mehr (der Hub vergisst ihn beim Wechsel selbst). */
+    void forget(UUID player) {
+        playingNow.remove(player);
+    }
+
+    /**
+     * Alle, die gerade spielen, noch einmal melden – nach einem Neustart des Hubs kennt er den Stand sonst nicht
+     * (läuft regelmäßig; der Hub nimmt es nur für Spieler an, die gerade auf diesem Server sind).
+     */
+    void resendPlaying() {
+        playingNow.forEach(id -> sendPlaying(id, true));
+    }
+
+    private void sendPlaying(UUID player, boolean playing) {
+        if (!online()) {
+            return;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "playing");
+        body.addProperty("uuid", player.toString());
+        body.addProperty("playing", playing);
         hub.send(body);
     }
 }

@@ -14,6 +14,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
+import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.PlayerSettingsChangedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
@@ -31,6 +32,7 @@ import com.velocitypowered.api.proxy.server.ServerPing;
 import de.moinmorni.network.common.DataFolder;
 import de.moinmorni.network.common.HubClient;
 import de.moinmorni.network.common.HubConfig;
+import de.moinmorni.network.common.StreamerMask;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -98,13 +100,18 @@ public final class VelocityPlugin {
     /** Server, die bei diesem Spieler gerade gescheitert sind (bis er wieder irgendwo ist). */
     private final Map<UUID, Set<String>> failed = new ConcurrentHashMap<>();
     private volatile JsonObject network;
+    /** Streamer-Modus: was der Hub an Streamer schickt, mit „•••“ statt IP-Adressen und eigenen Adressen. */
+    private final StreamerMask streamerMask = new StreamerMask();
     private HubClient hub;
+    /** Leiste mit Countdown vor einem Neustart (Hub: „countdown“). */
+    private final Countdown countdown;
 
     @Inject
     public VelocityPlugin(ProxyServer proxy, @DataDirectory Path dataDir) {
         this.proxy = proxy;
         this.log = Logger.getLogger("MoinMorni");
         this.dataDir = dataDir.getParent().resolve(HUB_DIR);
+        this.countdown = new Countdown(proxy, this);
         // Vor allem anderen: Datenordner vom Zwischen-Namen zurückholen.
         DataFolder.adoptInterim(dataDir.getParent(), log);
     }
@@ -167,6 +174,7 @@ public final class VelocityPlugin {
 
     @Subscribe
     public void onShutdown(ProxyShutdownEvent event) {
+        countdown.hideAll();
         if (hub != null) {
             hub.stop();
         }
@@ -183,12 +191,21 @@ public final class VelocityPlugin {
             case "welcome" -> registerCommands(m.getAsJsonArray("commands"));
             case "network" -> network = m;
             case "bans" -> updateBans(m.getAsJsonArray("list"));
-            case "msg" -> player(m).ifPresent(p -> p.sendMessage(MM.deserialize(HubClient.str(m, "text"))));
+            case "msg" -> player(m).ifPresent(p -> p.sendMessage(message(m)));
+            case "streamer-config" -> streamerMask.hosts(m.getAsJsonArray("hosts"));
             case "kick" -> player(m).ifPresent(p -> p.disconnect(MM.deserialize(HubClient.str(m, "text"))));
             case "connect" -> player(m).ifPresent(p -> proxy.getServer(HubClient.str(m, "server"))
                     .ifPresent(s -> p.createConnectionRequest(s).fireAndForget()));
+            case "countdown" -> player(m).ifPresent(p -> countdown.show(p, HubClient.str(m, "text"),
+                    m.has("seconds") ? m.get("seconds").getAsInt() : 0));
             default -> log.fine("Unbekannte Nachricht vom Hub: " + type);
         }
+    }
+
+    /** Nachricht vom Hub; an Streamer (Feld „mask“) mit verdeckten Adressen. */
+    private Component message(JsonObject m) {
+        Component text = MM.deserialize(HubClient.str(m, "text"));
+        return m.has("mask") && m.get("mask").getAsBoolean() ? streamerMask.apply(text) : text;
     }
 
     private Optional<Player> player(JsonObject m) {
@@ -448,6 +465,23 @@ public final class VelocityPlugin {
         }
     }
 
+    /**
+     * Hat jemand das Lobby-Paket geladen (oder abgelehnt, oder wurde es wieder abgenommen)? Der Lobby-Server erfährt
+     * das nicht selbst – Minecraft lädt es schon vor dem Betreten –, der Hub gibt es mit dem Profil weiter: Mit Paket
+     * spielt die Lobbymusik als Klangdatei der Kapelle, ohne mit Notenblöcken.
+     */
+    @Subscribe
+    public void onPackStatus(PlayerResourcePackStatusEvent event) {
+        if (hub == null || !LOBBY_PACK.equals(event.getPackId()) || event.getStatus().isIntermediate()) {
+            return;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "pack");
+        body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
+        body.addProperty("loaded", event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFUL);
+        hub.send(body);
+    }
+
     @Subscribe
     public void onSettings(PlayerSettingsChangedEvent event) {
         if (hub == null) {
@@ -466,6 +500,7 @@ public final class VelocityPlugin {
         firstServer.remove(gone);
         sending.remove(gone);
         failed.remove(gone);
+        countdown.hide(gone);
         if (hub == null || event.getLoginStatus() != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) {
             return;
         }

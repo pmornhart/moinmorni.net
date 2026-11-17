@@ -40,6 +40,8 @@ final class Rights {
     /** Was „Kreativ“ bei /gamemode heißen kann (auch die alten Kürzel, falls ein Plugin sie noch annimmt). */
     private static final Set<String> CREATIVE_WORDS = Set.of("creative", "c", "1");
     private static final String PERMISSION_SEPARATOR = ";";
+    /** Ursache „Spielmodus-Umschalter“ (F3+F4) in PlayerGameModeChangeEvent. */
+    private static final String SWITCHER = "GAMEMODE_SWITCHER";
 
     /** Rang-Recht → Minecraft-Befehle. */
     static final Map<String, List<String>> COMMANDS = Map.of(
@@ -108,6 +110,16 @@ final class Rights {
     /** Darf in der Lobby bauen (im Kreativmodus): Recht „Lobby bearbeiten“ oder „Alles“. */
     static boolean mayEditLobby(Set<String> rights) {
         return rights.contains(LOBBY_EDIT) || rights.contains(EVERYTHING);
+    }
+
+    /**
+     * Wechsel über den Spielmodus-Umschalter (F3+F4): Paper lässt ihn schon mit dem Recht für /gamemode zu – also auch mit
+     * „Zuschauen“ oder „Spielmodus wechseln“ –, und dabei läuft kein Befehl, den {@link #asksCreative} sehen könnte.
+     * In den Kreativmodus darf er nur mit eigenem Recht. {@code cause} = Name der Ursache des Wechsels (als Text, damit
+     * es auch auf Paper-Fassungen ohne diese Ursache läuft).
+     */
+    static boolean blocksSwitcher(String cause, boolean toCreative, Set<String> rights) {
+        return SWITCHER.equals(cause) && toCreative && !mayCreative(rights);
     }
 
     /** Will diese Zeile in den Kreativmodus (/gamemode creative …, auch /minecraft:gamemode)? */

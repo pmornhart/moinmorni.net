@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { WARTUNG_GENERATOR, WARTUNG_NAMESPACE, WARTUNG_POINTS, wartungPack } from '@moinmorni/builder';
-import { WARTUNG_RETURN_SECONDS } from '@moinmorni/shared';
+import { SERVER_MAX_PLAYERS, WARTUNG_RETURN_SECONDS } from '@moinmorni/shared';
 import { openDatabase } from '../src/db/index.js';
 import { createHub, type Hub } from '../src/hub/index.js';
 import { createEventBus } from '../src/lib/events.js';
@@ -135,6 +135,39 @@ describe('Wartungs-Lobby im Hub', () => {
     expect(back['server']).toBe('lobby');
     await pause(TICK_WAIT_MS);
     expect(proxy.received.some((m) => m.t === 'connect' && m['uuid'] === PHILIP)).toBe(false);
+  });
+
+  test('Lobby startet nach einem Update neu: ihre Spieler warten in der Wartungs-Lobby, danach von selbst zurück', async () => {
+    const proxy = await plugin('proxy', 'proxy');
+    const wartung = await plugin('wartung', 'backend');
+    const lobby = await plugin('lobby', 'backend');
+    await login(proxy, LENA, 'Lena');
+    proxy.send({ t: 'switch', uuid: LENA, server: 'lobby' });
+    await lobby.next('profile', (m) => m['uuid'] === LENA);
+    expect(hub.wartung.open()).toBe(true);
+    expect(hub.wartung.parked(LENA)).toBe(false);
+
+    expect(hub.wartung.park(LENA)).toBe(true);
+    expect((await proxy.next('connect', (m) => m['uuid'] === LENA))['server']).toBe('wartung');
+    proxy.send({ t: 'switch', uuid: LENA, server: 'wartung' });
+    await wartung.next('profile', (m) => m['uuid'] === LENA);
+    // Die Lobby hängt noch kurz am Hub – kein Countdown zurück, bevor sie neu gestartet ist.
+    await pause(TICK_WAIT_MS);
+    expect(wartung.received.some((m) => m.t === 'wartung' && typeof m['returnIn'] === 'number')).toBe(false);
+    expect(proxy.received.filter((m) => m.t === 'connect' && m['uuid'] === LENA)).toHaveLength(1);
+
+    // Neu gestartet: wieder am Hub → Countdown → zurück in die Lobby.
+    lobby.close();
+    await plugin('lobby', 'backend');
+    await wartung.next('wartung', (m) => m['returnIn'] === WARTUNG_RETURN_SECONDS);
+    clock.now += WARTUNG_RETURN_SECONDS * SECOND_MS;
+    const back = await proxy.next('connect', (m) => m['uuid'] === LENA && m['server'] === 'lobby');
+    expect(back['server']).toBe('lobby');
+
+    // Wartungs-Lobby ausgeschaltet: niemand wird dorthin geschickt.
+    stores.patchSettings('network', { maintenanceLobby: false }, 'test');
+    expect(hub.wartung.open()).toBe(false);
+    expect(hub.wartung.park(LENA)).toBe(false);
   });
 
   test('Wartung an: Spieler in die Wartungs-Lobby (mit Grund und Uhrzeit), Team bleibt; aus → zurück', async () => {
@@ -279,7 +312,7 @@ describe('Wartungs-Lobby im Netzwerk', () => {
     // Minecraft (hier der Motor) schreibt „:“ als „\:“.
     const plain = props.content.replaceAll('\\:', ':');
     expect(plain).toContain('level-type=minecraft:flat');
-    expect(plain).toContain('max-players=500');
+    expect(plain).toContain(`max-players=${SERVER_MAX_PLAYERS}`);
     expect(plain).toContain(JSON.stringify(WARTUNG_GENERATOR));
     expect(await world.configure(id)).toBe(false);
 

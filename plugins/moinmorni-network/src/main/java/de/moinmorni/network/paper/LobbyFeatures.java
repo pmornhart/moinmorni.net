@@ -169,6 +169,16 @@ final class LobbyFeatures implements Listener {
         this.jailed = jailed;
     }
 
+    /** Macht diese Person gerade den Rundgang? (Die Lobbymusik spielt dann leiser.) */
+    boolean inTour(UUID id) {
+        return tours.containsKey(id);
+    }
+
+    /** Läuft diese Person gerade den Parkour? (Die Lobbymusik spielt dann leiser.) */
+    boolean inParkour(UUID id) {
+        return runs.containsKey(id);
+    }
+
     /** Fürs Einsperren: Rundgang und Parkour-Lauf beenden. */
     void stopActivities(Player p) {
         BukkitTask task = tours.remove(p.getUniqueId());
@@ -179,20 +189,24 @@ final class LobbyFeatures implements Listener {
         p.hideBossBar(bar);
     }
 
-    /** Nach dem Gefängnis: zurück auf den Dorfplatz, Kompass und Buch wieder in die Hand. */
-    void welcomeBack(Player p) {
+    /**
+     * Nach dem Gefängnis: zurück auf den Dorfplatz, Kompass und Buch wieder in die Hand. false = die Lobby-Einstellungen
+     * sind noch nicht da (dann bringt das Gefängnis selbst den Spieler an den Spawn der Welt).
+     */
+    boolean welcomeBack(Player p) {
         if (!p.isOnline()) {
-            return;
+            return true;
         }
         p.setGameMode(GameMode.ADVENTURE);
         if (!active()) {
-            return;
+            return false;
         }
         toSpawn(p);
         equip(p);
         if (!settings.announcements().isEmpty()) {
             p.showBossBar(bar);
         }
+        return true;
     }
 
     void start() {

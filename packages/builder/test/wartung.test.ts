@@ -10,6 +10,9 @@ import {
 } from '../src/index.js';
 import { GROUND } from '../src/nature.js';
 
+/** Das Datenpaket zweimal zu bauen dauert auf einem ausgelasteten Rechner länger als die üblichen 5 s. */
+const SLOW = 60_000;
+
 /** Bauplan der Wartungs-Lobby (ohne Server prüfbar). */
 describe('Wartungs-Lobby', () => {
   const { canvas } = buildWartung();
@@ -49,14 +52,18 @@ describe('Wartungs-Lobby', () => {
     expect(WARTUNG_BORDER / 2).toBeGreaterThan(60);
   });
 
-  it('Datenpaket: Aushang de/en, gleiche Version bei gleichem Plan, nur Blocknamen von 26.x', () => {
-    const pack = wartungPack();
-    const text = Object.values(pack.files).join('\n');
-    expect(text).toContain('Wartungsarbeiten');
-    expect(text).toContain('Maintenance – back in a moment!');
-    expect(text).not.toMatch(/[ :]chain[ [\]]/);
-    expect(text).not.toMatch(/ grass[ [\]]/);
-    expect(wartungPack().version).toBe(pack.version);
-    expect(pack.namespace).toBe('moinmorni_wartung');
-  });
+  it(
+    'Datenpaket: Aushang de/en, gleiche Version bei gleichem Plan, nur Blocknamen von 26.x',
+    () => {
+      const pack = wartungPack();
+      const text = Object.values(pack.files).join('\n');
+      expect(text).toContain('Wartungsarbeiten');
+      expect(text).toContain('Maintenance – back in a moment!');
+      expect(text).not.toMatch(/[ :]chain[ [\]]/);
+      expect(text).not.toMatch(/ grass[ [\]]/);
+      expect(wartungPack().version).toBe(pack.version);
+      expect(pack.namespace).toBe('moinmorni_wartung');
+    },
+    SLOW,
+  );
 });

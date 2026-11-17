@@ -20,3 +20,4 @@ export * from './lobby/schlossmarkt.js';
 export * from './lobby/season.js';
 export * from './wartung/werkstatt.js';
 export * from './wartung/datapack.js';
+export * from './musik/index.js';

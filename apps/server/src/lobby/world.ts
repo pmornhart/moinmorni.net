@@ -11,6 +11,7 @@ import {
   type LobbyPack,
   type Season,
 } from '@moinmorni/builder';
+import { SERVER_MAX_PLAYERS } from '@moinmorni/shared';
 import { INTERIM_LOBBY_PACKS } from '../lib/rename.js';
 import { MotorError, type MotorClient } from '../motor/client.js';
 import { readServerFile, removeServerFiles, writeServerFile } from '../motor/files.js';
@@ -193,7 +194,7 @@ export interface PackOffer {
 }
 
 const PACK_PROMPT = {
-  text: 'Echte Möbel in der Lobby: Stühle, Eckbänke, Bierbänke und Steinkrüge – dafür unser kleines Paket. / Real furniture in the lobby – needs our small pack.',
+  text: 'Echte Möbel und Blasmusik in der Lobby – dafür unser Paket. / Real furniture and a brass band in the lobby – needs our pack.',
   color: 'gold',
 };
 
@@ -229,11 +230,17 @@ export function lobbyProperties(offer?: PackOffer): Record<string, string> {
     'spawn-protection': '0',
     'allow-nether': 'false',
     'generate-structures': 'false',
+    // Der Selbstbau schickt viele Befehle über RCON – ohne das stünde bei jedem Team-Mitglied mit OP
+    // „[Rcon: 16 Chunks … werden nun dauerhaft geladen]“ im Chat.
+    'broadcast-rcon-to-ops': 'false',
+    'broadcast-console-to-ops': 'false',
+    // Nach Zahl weisen nur Proxy und Hub ab – nicht Minecraft mit seinen 20 (siehe SERVER_MAX_PLAYERS).
+    'max-players': String(SERVER_MAX_PLAYERS),
     ...pack,
   };
 }
 
-function readProperty(text: string, key: string): string | null {
+export function readProperty(text: string, key: string): string | null {
   return (
     text
       .split('\n')

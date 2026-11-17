@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { WARTUNG_GENERATOR, wartungPack } from '@moinmorni/builder';
+import { SERVER_MAX_PLAYERS } from '@moinmorni/shared';
 import type { MotorClient } from '../motor/client.js';
 import { createLobbyWorld, type LobbyWorld, type LobbyWorldOptions } from './world.js';
 
@@ -10,8 +11,6 @@ import { createLobbyWorld, type LobbyWorld, type LobbyWorldOptions } from './wor
  * einem Neustart der Lobby kommt das ganze Netzwerk her.
  */
 
-/** So viele dürfen gleichzeitig warten (Paper prüft das auch hinter dem Proxy). */
-const MAX_PLAYERS = 500;
 const VIEW_DISTANCE = 6;
 const SIMULATION_DISTANCE = 4;
 
@@ -30,7 +29,8 @@ export function wartungProperties(): Record<string, string> {
     'enforce-whitelist': 'false',
     'level-type': 'minecraft:flat',
     'generator-settings': JSON.stringify(WARTUNG_GENERATOR),
-    'max-players': String(MAX_PLAYERS),
+    // Alle dürfen warten – nach Zahl weisen nur Proxy und Hub ab (siehe SERVER_MAX_PLAYERS).
+    'max-players': String(SERVER_MAX_PLAYERS),
     'view-distance': String(VIEW_DISTANCE),
     'simulation-distance': String(SIMULATION_DISTANCE),
     motd: 'MoinMorni – Wartungs-Lobby',

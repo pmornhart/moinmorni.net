@@ -1,5 +1,13 @@
-# Duels auf morni.net – Einstellungen
-# Nach Änderungen den Server neu starten (oder /duels neuladen für Zeiten, Wertung und Suppe).
+# MoinMorni Duels – Einstellungen
+# Nach Änderungen den Server neu starten (oder /duels neuladen für Zeiten, Wertung, Suppe und Rückkehr).
+
+# Verbindung mitten im Kampf weg (Spiel abgestürzt, Internet weg)? So viele Sekunden bleibt der Platz frei. So lange
+# ist der Kampf angehalten: beide stehen eingefroren, die Zeit läuft nicht weiter (im 2 gegen 2 kämpft das Team weiter,
+# solange noch jemand von ihm da ist). Wer rechtzeitig zurückkommt – im Netzwerk über „Zurück ins Spiel“ in der
+# Lobby –, steht genau wieder dort, mit demselben Leben und derselben Ausrüstung; nach 3-2-1 geht es weiter. Wer nicht
+# kommt, hat verloren. 30 reicht für einen Verbindungsabbruch und meist auch für einen Neustart von Minecraft; länger
+# müsste der Gegner zu lange eingefroren warten. 0 = aus (Verbindung weg = sofort verloren).
+rueckkehr-sekunden: 30
 
 # Eigene, leere Welt für Wartehalle und Arenen. Das Plugin legt sie an und baut alles selbst.
 welt: duels
