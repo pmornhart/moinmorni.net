@@ -9,15 +9,19 @@ import crypto from 'node:crypto';
 import { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG } from '../village.js';
 import { biomeCommands } from '../shapes.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
-import { SEASONS, seasonCommands } from './season.js';
+import { SEASONS, seasonCommands, type Season } from './season.js';
+import { winterPlan } from './winter.js';
+import { withoutHitbox } from './deko.js';
 
 export const LOBBY_NAMESPACE = 'moinmorni_lobby';
 export const LOBBY_PACK_DIR = 'moinmorni-lobby';
 /** Kleines Paket, das immer an bleibt: je Saison eine Funktion (Deko an/aus), läuft nur auf Abruf. */
 export const SEASON_NAMESPACE = 'moinmorni_season';
 export const SEASON_PACK_DIR = 'moinmorni-lobby-season';
-/** Bereich der Deko um die Mitte (Dorf, Gassen, Oberdorf). */
-export const SEASON_RADIUS = 120;
+/** Bereich der Deko um die Mitte: der Winter legt Schnee bis an die Berge (so weit wie der Bau). */
+export const SEASON_RADIUS = 216;
+/** Merker in der Welt: Liegt gerade Winter-Schnee? Dann räumt jede andere Saison ihn zuerst weg. */
+export const SEASON_STORAGE = 'moinmorni:season';
 /** So viele Befehle pro Funktion (ein Aufruf läuft in einem Tick; Minecraft erlaubt bis 65 536). */
 const PART_SIZE = 3000;
 const CHUNK = 16;
@@ -49,6 +53,11 @@ export interface LobbyPack {
   readonly unload: readonly string[];
   /** Saison-Paket (eigener Ordner, bleibt an): Pfade → Inhalt. */
   readonly seasonFiles: Readonly<Record<string, string>>;
+  /**
+   * Befehle je Saison, einzeln nacheinander (wie die Bau-Stücke): Winter = Merker setzen, Schnee und Bauten in
+   * Stücken, dann die Deko; jede andere Saison = ihre Deko, dann – falls Winter lag – die alten Blöcke zurück.
+   */
+  readonly seasonSteps: Readonly<Record<Season, readonly string[]>>;
   /** Stücke des Deko-Bereichs festhalten bzw. loslassen (für das Umschalten der Saison). */
   readonly seasonLoad: readonly string[];
   readonly seasonUnload: readonly string[];
@@ -159,7 +168,8 @@ export function lobbyPack(): LobbyPack {
     cz + RADIUS,
     LOBBY_BIOME,
   );
-  const body = [...clearCommands(cx, cz), ...biome, ...canvas.commands().map(summonOnce)];
+  // Anzeige-Wesen ohne Hitbox (F3+B), siehe deko.ts
+  const body = [...clearCommands(cx, cz), ...biome, ...canvas.commands().map(withoutHitbox).map(summonOnce)];
   const parts = Array.from({ length: Math.ceil(body.length / PART_SIZE) }, (_, i) =>
     body.slice(i * PART_SIZE, (i + 1) * PART_SIZE),
   );
@@ -194,15 +204,26 @@ export function lobbyPack(): LobbyPack {
     [fn('finish')]: `${finish.join('\n')}\n`,
     ...Object.fromEntries(parts.map((p, i) => [fn(partName(i)), `${p.join('\n')}\n`])),
   };
+  const winter = winterPlan(canvas);
+  const chunks = (list: readonly string[]): string[][] =>
+    Array.from({ length: Math.ceil(list.length / PART_SIZE) }, (_, i) =>
+      list.slice(i * PART_SIZE, (i + 1) * PART_SIZE),
+    );
+  const winterOn = chunks(winter.on);
+  const winterOff = chunks(winter.off);
+  const seasonFn = (name: string): string => `data/${SEASON_NAMESPACE}/function/${name}.mcfunction`;
   const seasonFiles: Record<string, string> = {
     'pack.mcmeta': `${JSON.stringify({ ...meta, pack: { ...meta.pack, description: 'MoinMorni – Saison-Deko der Lobby' } }, null, 2)}\n`,
     ...Object.fromEntries(
       SEASONS.map((season) => [
-        `data/${SEASON_NAMESPACE}/function/${season}.mcfunction`,
-        `${seasonCommands(season).join('\n')}\n`,
+        seasonFn(season),
+        `${seasonCommands(season, canvas).map(withoutHitbox).join('\n')}\n`,
       ]),
     ),
+    ...Object.fromEntries(winterOn.map((p, i) => [seasonFn(winterPart('on', i)), `${p.join('\n')}\n`])),
+    ...Object.fromEntries(winterOff.map((p, i) => [seasonFn(winterPart('off', i)), `${p.join('\n')}\n`])),
   };
+  const seasonSteps = seasonStepsFor(winterOn.length, winterOff.length);
   const hash = crypto.createHash('sha256');
   Object.keys(files)
     .sort()
@@ -225,6 +246,7 @@ export function lobbyPack(): LobbyPack {
     load: forceloadCommands(cx, cz, 'add', RADIUS, LOAD_SPAN),
     unload: forceloadCommands(cx, cz, 'remove'),
     seasonFiles,
+    seasonSteps,
     seasonLoad: forceloadCommands(cx, cz, 'add', SEASON_RADIUS, LOAD_SPAN),
     seasonUnload: forceloadCommands(cx, cz, 'remove', SEASON_RADIUS),
   };
@@ -234,4 +256,52 @@ export function lobbyPack(): LobbyPack {
 /** Name der Bau-Funktion Nummer i, z. B. `part/007`. */
 export function partName(i: number): string {
   return `part/${String(i).padStart(PART_DIGITS, '0')}`;
+}
+
+/** Name eines Winter-Stücks, z. B. `winter/on_003` (Schnee setzen) oder `winter/off_000` (alte Blöcke zurück). */
+export function winterPart(way: 'on' | 'off', i: number): string {
+  return `winter/${way}_${String(i).padStart(PART_DIGITS, '0')}`;
+}
+
+/**
+ * Welt sofort und vollständig speichern (Blöcke und Merker). Ohne `flush` schreibt Minecraft die Stücke nach und nach –
+ * stürzt der Server kurz danach ab, passen Merker und Blöcke nicht mehr zusammen (im echten Test mit `kill -9`
+ * gesehen: Merker weg, aber Schnee in einem Teil der Lobby).
+ */
+export const SAVE_NOW = 'save-all flush';
+
+/**
+ * Schritte je Saison bei `onParts` Stücken „Winter an“ und `offParts` Stücken „Winter weg“: Winter = Merker setzen
+ * (gleich gespeichert), Stücke, Deko, speichern; jede andere Saison = ihre Deko, die alten Blöcke zurück (nur wenn
+ * Winter lag), speichern, erst dann Merker weg und noch einmal speichern. So liegt der Merker nach einem Absturz
+ * immer, solange noch Schnee liegen könnte.
+ */
+export function seasonStepsFor(onParts: number, offParts: number): Record<Season, readonly string[]> {
+  const fnCall = (name: string): string => `function ${SEASON_NAMESPACE}:${name}`;
+  const winterLies = `execute if data storage ${SEASON_STORAGE} {winter:1b} run`;
+  const parts = (n: number): number[] => Array.from({ length: n }, (_, i) => i);
+  const stepsOf = (season: Season): string[] =>
+    season === 'winter'
+      ? [
+          // Merker zuerst: bricht das Setzen ab, räumt die nächste Saison trotzdem alles weg.
+          `data modify storage ${SEASON_STORAGE} winter set value 1b`,
+          SAVE_NOW,
+          ...parts(onParts).map((i) => fnCall(winterPart('on', i))),
+          fnCall('winter'),
+          SAVE_NOW,
+        ]
+      : [
+          fnCall(season),
+          ...parts(offParts).map((i) => `${winterLies} ${fnCall(winterPart('off', i))}`),
+          SAVE_NOW,
+          `data remove storage ${SEASON_STORAGE} winter`,
+          SAVE_NOW,
+        ];
+  return {
+    none: stepsOf('none'),
+    wiesn: stepsOf('wiesn'),
+    winter: stepsOf('winter'),
+    easter: stepsOf('easter'),
+    halloween: stepsOf('halloween'),
+  };
 }

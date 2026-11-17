@@ -792,6 +792,8 @@ final class LobbyJump implements Listener {
             d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(),
                     new Vector3f(BOARD_SCALE, BOARD_SCALE, BOARD_SCALE), new AxisAngle4f()));
             d.text(text);
+            // Keine Hitbox mit F3+B (Anzeige bleibt sichtbar), wie bei der Deko aus dem Datenpaket
+            d.setInvisible(true);
         });
     }
 

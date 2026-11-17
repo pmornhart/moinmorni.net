@@ -16,8 +16,14 @@ class LobbyNpcsTest {
     private static final TextColor ORANGE = TextColor.color(0xFF9A2E);
 
     private static LobbyNpcs.ModeInfo mode(String state, String access, int players, boolean awake, String phase) {
+        return pausing(state, access, players, awake, phase, null);
+    }
+
+    /** {@code pause} sagt der Hub: „summer“ nur bei Saison-Modi (Wintersport), sonst „closed“. */
+    private static LobbyNpcs.ModeInfo pausing(String state, String access, int players, boolean awake, String phase,
+                                              String pause) {
         return new LobbyNpcs.ModeInfo("bollwerk", "Bollwerk", "Bulwark", state, access, players, true, awake, "shield",
-                phase);
+                phase, pause);
     }
 
     private static String plain(Component c) {
@@ -51,8 +57,15 @@ class LobbyNpcsTest {
         LobbyNpcs.LabelText invite = LobbyNpcs.labelText(mode("on", "whitelist", 2, true, null), "b", "de", ORANGE);
         assertEquals("Nur auf Einladung", plain(invite.hint()));
         assertEquals(NamedTextColor.LIGHT_PURPLE, invite.hint().color());
-        LobbyNpcs.LabelText pause = LobbyNpcs.labelText(mode("on", "everyone", 0, true, "closed"), "b", "de", ORANGE);
-        assertTrue(plain(pause.hint()).contains("Dorf anschauen"));
+        LobbyNpcs.LabelText summer = LobbyNpcs.labelText(pausing("on", "everyone", 0, true, "closed", "summer"), "b",
+                "de", ORANGE);
+        assertEquals("☀ Sommerpause", plain(summer.state()));
+        assertTrue(plain(summer.hint()).contains("Dorf anschauen"));
+        // Andere Modi melden „closed“ z. B. beim Beenden: gerade zu, keine Sommerpause
+        LobbyNpcs.LabelText closed = LobbyNpcs.labelText(pausing("on", "everyone", 0, true, "closed", "closed"), "b",
+                "de", ORANGE);
+        assertEquals("● Gerade geschlossen", plain(closed.state()));
+        assertEquals("Gleich wieder offen", plain(closed.hint()));
     }
 
     @Test

@@ -51,15 +51,19 @@ Stühle mit Herz-Lehne, Eckbänke, Wirtstische, Hocker, Bierbänke, Biertische u
 (`packages/builder/src/furniture.ts`). Sie hängen an Blöcken, die es in der Lobby **nur als Möbel** gibt – das Paket
 gibt ihnen ein neues Aussehen, Kollision und Sitzhöhe bleiben echt:
 
-| Block                                | Möbel                  |
-| ------------------------------------ | ---------------------- |
-| Mangroven-Treppe unten, gerade/innen | Eckbank (mit Rückwand) |
-| Mangroven-Treppe sonst               | Stuhl                  |
-| Mangroven-Stufe oben / unten         | Wirtstisch / Hocker    |
-| Birken-Stufe oben / unten            | Biertisch / Bierbank   |
-| braune Kerze (1–4, aus)              | 1–4 Steinkrüge         |
+| Block                                                             | Möbel                                            |
+| ----------------------------------------------------------------- | ------------------------------------------------ |
+| Mangroven-Treppe unten, gerade/innen                              | Eckbank (mit Rückwand)                           |
+| Mangroven-Treppe sonst                                            | Stuhl                                            |
+| Mangroven-Stufe oben / unten                                      | Wirtstisch / Hocker                              |
+| Birken-Stufe oben / unten                                         | Biertisch / Bierbank                             |
+| braune Kerze (1–4, aus)                                           | 1–4 Steinkrüge                                   |
+| Trockenbeton rot / gelb / hellgrau / blau (nur als Block-Anzeige) | runde Christbaumkugel rot / gold / silber / blau |
 
-**Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen und keine braunen Kerzen für anderes verbauen.**
+**Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen, keine braunen Kerzen und keinen Trockenbeton für
+anderes verbauen** (Test in `winter.test.ts`). Die Kugeln (`packages/builder/src/schmuck.ts`) sind übereinander gestapelte
+Scheiben aus je vier gedrehten Quadraten – von allen Seiten rund; ohne Paket sieht man einen schräg gestellten Würfel in
+der Farbe.
 Die Modelle nutzen nur Minecrafts eigene Texturen (es liegen keine Mojang-Dateien im Paket). Weil Minecraft die Fläche
 unter Treppen/Stufen weglässt, malen die Modelle ein Stück Boden (Dielen bzw. Kies) mit; `fitFurniture` setzt vor einer
 Wand eine Eckbank statt eines Stuhls und Kies unter jede Bierbank (Tests in `packages/builder/test/`).
@@ -205,7 +209,33 @@ Lobby-Server (bei jeder Änderung neu).
 - **Schutz:** kein Abbauen/Setzen, kein Schaden, kein Hunger, nichts fallen lassen; aus der Welt gefallen → Dorfplatz.
 - **Saison-Deko:** Wiesn, Winter, Ostern, Halloween oder keine (`packages/builder/src/lobby/season.ts`, eigenes
   Datenpaket `moinmorni-lobby-season`). Wechsel im Panel setzt die Deko sofort neu. Anzeige-Blöcke tragen den Block
-  doppelt (`Name` bis 26.2, `id` ab 26.3 – sonst zeigt 26.3 nur Luft).
+  doppelt (`Name` bis 26.2, `id` ab 26.3 – sonst zeigt 26.3 nur Luft). **Alle Anzeige-Wesen der Lobby haben keine
+  Hitbox** (F3+B zeigt dort keine Rahmen und Pfeile): sie tragen `"Bukkit.invisible":1b` – Minecraft lässt unsichtbare
+  Wesen beim Hitbox-Zeichnen aus, zeichnet Anzeigen aber trotzdem (`withoutHitbox` in `lobby/deko.ts`; Schilder des
+  Plugins ebenso). **Die Deko sucht sich ihren Platz** (`lobby/halt.ts`) mit den Regeln der Bauplan-Prüfung
+  (`pruefung.ts`): Ketten rücken mit beiden Enden an die nächste Wand, Markise oder den Maibaum (sonst hängen sie
+  nicht), Eier, Kürbisse und Spinnweben rücken auf den nächsten freien Fleck am Boden bzw. an der Wand, Kugeln an die
+  Zweige des Christbaums, Sterne und Schlitten herab, bis sie aufliegen, Schneeplatten, die in einem Turm stecken
+  würden, werden geteilt. Lebkuchenherzen und Kürbisse hängen an den Ständen, wo sie heute stehen. Test: jede Saison
+  ohne Funde (`test/lobby-pruefung.test.ts`; die Prüfung rechnet gedrehte Anzeigen und Treppen genau, kleine Teile
+  dicht beieinander sind ein Modell, keine Kette).
+- **Winter-Wunderland** (Saison „Winter“, `lobby/winter.ts`, `christbaum.ts`, `weihnachtsmarkt.ts`,
+  `winter-figuren.ts`): Schnee auf allem (Wiesen mit Verwehungen, Schneewall neben Wegen und Plätzen, sechs
+  Schneehaufen, dünne begehbare Schicht auf Wegen, dicker Schnee auf den Markisen, Schneeplatten auf den Dächern,
+  Eiszapfen, Schneekappen auf Zäunen, Gras an den Bergen wird Schnee, Teich friert zu), kaltes Biom (Plugin
+  `LobbyWinter.java` merkt sich jedes Biom und stellt es danach wieder her), klares Wetter mit leichtem Flocken-Gestöber
+  (kein echter Schneefall – der macht den Himmel grau). **Statt des Maibaums ein riesiger Christbaum** (acht Stufen,
+  gut 36 Blöcke, hängende Zweige, echte Kerzen, 177 Kugeln in Rot, Gold, Silber, Blau, warme Lichterkette direkt auf
+  den Zweigen jeder Stufe, großer Stern, Geschenke, unsichtbares Licht ringsum); Dorfleute, die um den Maibaum liefen, gehen ein Stück nach
+  außen und laufen nicht unter tief hängende Zweige. **Weihnachtsmarkt:** jede Bude am Dorfmarkt und am Schlossmarkt mit
+  Tannengirlande und Lichtern vorne und an den Seiten, Eiszapfen und warmem Licht; Lichterketten im Ring von Bude zu Bude
+  und am Schlossmarkt bis zum Marktbogen (Girlande, Stern); Glühwein- und Lebkuchenbude am Eingang von der Ankunft her
+  (Kessel überm Feuer, Krüge, Plätzchen, Lebkuchenherzen), dazwischen das Schild „Weihnachtsmarkt“; Krippe auf der Wiese
+  westlich (Stall, Maria, Josef, Kind in der Krippe, Ochs, Esel, Schafe, Stern), Eisbahn, großer Pferdeschlitten mit
+  Geschenken, Rodel, drei Schneemänner, verschneite Fichten rund ums Dorf; Laternen statt Kürbis an den Marktecken. Die
+  Figuren der Spielmodi bleiben, wie sie sind. Jede geänderte Stelle steht mit ihrem alten Block im Plan – jede andere
+  Saison stellt sie genau wieder her (auch den Maibaum), Merker `moinmorni:season` in der Welt.
+  Probe in einer echten Lobby: `apps/server/scripts/winter-probe.ts <ordner> <rcon> <passwort-datei> an|aus`.
 - **Dorfleute:** wie viele herumlaufen, stellt das Panel ein.
 
 ## Lobbymusik (`LobbyMusic.java`, Noten in `packages/builder/src/musik/`)

@@ -40,7 +40,7 @@ export interface Fund {
 }
 
 /** Eine Stelle in der Welt: was dort steht. */
-type World = (x: number, y: number, z: number) => string;
+export type World = (x: number, y: number, z: number) => string;
 type Side = Facing | 'up' | 'down';
 
 const HORIZONTAL: readonly Facing[] = ['north', 'east', 'south', 'west'];
@@ -758,15 +758,113 @@ interface Box3 {
   readonly max: readonly [number, number, number];
 }
 
-function displayBox(s: Summon): Box3 {
-  const [sx = 1, sy = 1, sz = 1] = numbers(SCALE.exec(s.nbt)?.[1]);
+/** Drehmatrix aus dem Quaternion einer Anzeige (Zeilen = Weltachsen). */
+function rotationOf(s: Summon): number[][] {
   const [qx = 0, qy = 0, qz = 0, qw = 1] = numbers(ROTATION.exec(s.nbt)?.[1]);
-  // Drehmatrix aus dem Quaternion: halbe Ausdehnung je Weltachse = Summe der gedrehten Achsen.
-  const r = [
+  return [
     [1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy - qz * qw), 2 * (qx * qz + qy * qw)],
     [2 * (qx * qy + qz * qw), 1 - 2 * (qx * qx + qz * qz), 2 * (qy * qz - qx * qw)],
     [2 * (qx * qz - qy * qw), 2 * (qy * qz + qx * qw), 1 - 2 * (qx * qx + qy * qy)],
   ];
+}
+
+type Vec3 = readonly [number, number, number];
+
+/** Gedrehter Quader einer Anzeige: Mitte, ihre drei Achsen in der Welt und die halbe Ausdehnung je Achse. */
+interface Obb {
+  readonly c: Vec3;
+  readonly axes: readonly Vec3[];
+  readonly half: Vec3;
+}
+
+function displayObb(s: Summon): Obb {
+  const [sx = 1, sy = 1, sz = 1] = numbers(SCALE.exec(s.nbt)?.[1]);
+  const r = rotationOf(s);
+  const column = (j: number): Vec3 => [r[0]?.[j] ?? 0, r[1]?.[j] ?? 0, r[2]?.[j] ?? 0];
+  return { c: [s.x, s.y, s.z], axes: [column(0), column(1), column(2)], half: [sx / 2, sy / 2, sz / 2] };
+}
+
+const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a: Vec3, b: Vec3): Vec3 => [
+  a[1] * b[2] - a[2] * b[1],
+  a[2] * b[0] - a[0] * b[2],
+  a[0] * b[1] - a[1] * b[0],
+];
+const WORLD_AXES: readonly Vec3[] = [
+  [1, 0, 0],
+  [0, 1, 0],
+  [0, 0, 1],
+];
+/** Kürzere Achsen (Kreuzprodukt fast paralleler Achsen) trennen nichts. */
+const TINY = 1e-9;
+
+/**
+ * Schneidet der gedrehte Quader den achsparallelen Quader min…max? Trennachsen-Test: getrennt sind sie genau dann,
+ * wenn es unter den 3 + 3 Flächenachsen und ihren 9 Kreuzprodukten eine Achse gibt, auf der sich ihre Schatten nicht
+ * überlappen.
+ */
+function obbHitsBox(o: Obb, min: Vec3, max: Vec3): boolean {
+  const center: Vec3 = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2];
+  const half: Vec3 = [(max[0] - min[0]) / 2, (max[1] - min[1]) / 2, (max[2] - min[2]) / 2];
+  const t: Vec3 = [o.c[0] - center[0], o.c[1] - center[1], o.c[2] - center[2]];
+  const axes = [
+    ...WORLD_AXES,
+    ...o.axes,
+    ...WORLD_AXES.flatMap((a) => o.axes.map((b) => cross(a, b))),
+  ].filter((a) => dot(a, a) > TINY);
+  return axes.every((a) => {
+    const box = half[0] * Math.abs(a[0]) + half[1] * Math.abs(a[1]) + half[2] * Math.abs(a[2]);
+    const own = o.axes.reduce((sum, axis, j) => sum + (o.half[j] ?? 0) * Math.abs(dot(axis, a)), 0);
+    return Math.abs(dot(t, a)) < box + own;
+  });
+}
+
+/** Halbe Zelle: Höhe einer Stufe, Tiefe der Rückwand einer Treppe. */
+const HALF_CELL = 0.5;
+/** Rückwand einer Treppe (in Richtung `facing`) in der Zelle: x/z von … bis. */
+const STAIR_BACK: Readonly<Record<string, readonly [number, number, number, number]>> = {
+  north: [0, 1, 0, HALF_CELL],
+  south: [0, 1, HALF_CELL, 1],
+  west: [0, HALF_CELL, 0, 1],
+  east: [HALF_CELL, 1, 0, 1],
+};
+
+/** Feste Quader eines Blocks in seiner Zelle (0 … 1): Stufen und Treppen genau, alles andere die ganze Zelle. */
+function blockBoxes(block: string): Array<readonly [Vec3, Vec3]> {
+  const { name: n, props: p } = stateOf(block);
+  const lower: readonly [Vec3, Vec3] = [
+    [0, 0, 0],
+    [1, HALF_CELL, 1],
+  ];
+  const upper: readonly [Vec3, Vec3] = [
+    [0, HALF_CELL, 0],
+    [1, 1, 1],
+  ];
+  if (n.endsWith('_slab') && p['type'] !== 'double') return [p['type'] === 'top' ? upper : lower];
+  if (n.endsWith('_stairs')) {
+    const top = p['half'] === 'top';
+    const [x1, x2, z1, z2] = STAIR_BACK[p['facing'] ?? ''] ?? [0, 1, 0, 1];
+    const [y1, y2] = top ? [0, HALF_CELL] : [HALF_CELL, 1];
+    return [
+      top ? upper : lower,
+      [
+        [x1, y1, z1],
+        [x2, y2, z2],
+      ],
+    ];
+  }
+  return [
+    [
+      [0, 0, 0],
+      [1, 1, 1],
+    ],
+  ];
+}
+
+function displayBox(s: Summon): Box3 {
+  const [sx = 1, sy = 1, sz = 1] = numbers(SCALE.exec(s.nbt)?.[1]);
+  // Halbe Ausdehnung je Weltachse = Summe der gedrehten Achsen.
+  const r = rotationOf(s);
   const half = r.map(
     (row) =>
       (Math.abs(row[0] ?? 0) * sx) / 2 + (Math.abs(row[1] ?? 0) * sy) / 2 + (Math.abs(row[2] ?? 0) * sz) / 2,
@@ -783,13 +881,18 @@ function distanceToCell(px: number, py: number, pz: number, x: number, y: number
 
 /** Gibt es in `reach` um den Punkt einen festen Block? */
 function blockNear(ctx: Ctx, px: number, py: number, pz: number, reach: number): boolean {
+  return nearStructure(ctx.w, px, py, pz, reach);
+}
+
+/** Gibt es in `reach` um den Punkt einen festen Bau-Block? (Zum Aufhängen von Ketten und Schildern.) */
+export function nearStructure(w: World, px: number, py: number, pz: number, reach: number): boolean {
   const r = Math.ceil(reach) + 1;
   const span = Array.from({ length: 2 * r + 1 }, (_, i) => i - r);
   return span.some((dx) =>
     span.some((dy) =>
       span.some((dz) => {
         const [x, y, z] = [Math.floor(px) + dx, Math.floor(py) + dy, Math.floor(pz) + dz];
-        return isStructure(ctx.w(x, y, z)) && distanceToCell(px, py, pz, x, y, z) <= reach;
+        return isStructure(w(x, y, z)) && distanceToCell(px, py, pz, x, y, z) <= reach;
       }),
     ),
   );
@@ -843,8 +946,64 @@ const CHAIN_REACH = 0.6;
 const CHAIN_GAP = 1.5;
 /** So weit darf eine Anzeige in einen Block hineinragen, ohne dass es auffällt. */
 const INSIDE = 0.1;
+/**
+ * Eine Kette ist lang (mindestens 2 Blöcke) und ihre Teile hängen in Abständen (Wimpel, Lichter: etwa ein Block) –
+ * kleine Teile dicht an dicht oder auf engem Raum sind ein Modell (Figur, Schlitten, Stern) und halten wie die übrigen
+ * Anzeigen.
+ */
+const CHAIN_SPAN = 2;
+const CHAIN_STEP = 0.6;
 /** Abstand, ab dem Anzeigen sich nicht mehr berühren. */
 const TOUCH = 0.08;
+
+/**
+ * Erster Bau-Block, in den eine Anzeige deutlich hineinragt (mehr als ein Hauch in jeder Richtung) – gedreht genau
+ * gerechnet, Stufen und Treppen mit ihrer echten Form (eine Schneeplatte auf den Kanten eines Treppendachs steckt nicht
+ * darin).
+ */
+function stuckIn(w: World, s: Summon, b: Box3): string | null {
+  const cells = (i: 0 | 1 | 2): number[] => {
+    const lo = Math.floor((b.min[i] ?? 0) + INSIDE);
+    const hi = Math.floor((b.max[i] ?? 0) - INSIDE);
+    return lo > hi ? [] : Array.from({ length: hi - lo + 1 }, (_, k) => lo + k);
+  };
+  const obb = displayObb(s);
+  const hits = ([x, y, z]: readonly [number, number, number]): boolean =>
+    isStructure(w(x, y, z)) &&
+    blockBoxes(w(x, y, z)).some(([lo, hi]) =>
+      obbHitsBox(
+        obb,
+        [x + lo[0] + INSIDE, y + lo[1] + INSIDE, z + lo[2] + INSIDE],
+        [x + hi[0] - INSIDE, y + hi[1] - INSIDE, z + hi[2] - INSIDE],
+      ),
+    );
+  const hit = cells(0)
+    .flatMap((x) => cells(1).flatMap((y) => cells(2).map((z) => [x, y, z] as const)))
+    .find(hits);
+  return hit ? `${w(...hit)} bei ${hit.join(' ')}` : null;
+}
+
+/** Berührt der Umriss einer Anzeige einen Bau-Block (Boden, Wand, Dach)? */
+function touchesBlock(w: World, b: Box3): boolean {
+  const xs = [Math.floor(b.min[0] - TOUCH), Math.floor(b.max[0] + TOUCH)];
+  const ys = [Math.floor(b.min[1] - TOUCH), Math.floor(b.max[1] + TOUCH)];
+  const zs = [Math.floor(b.min[2] - TOUCH), Math.floor(b.max[2] + TOUCH)];
+  const span = (a: number[]): number[] =>
+    Array.from({ length: (a[1] ?? 0) - (a[0] ?? 0) + 1 }, (_, i) => (a[0] ?? 0) + i);
+  return span(xs).some((x) => span(ys).some((y) => span(zs).some((z) => isStructure(w(x, y, z)))));
+}
+
+/** Zum Aufstellen von Deko: steckt die Anzeige (summon-Befehl) in einem Bau-Block? Dann welcher, sonst null. */
+export function displayStuck(w: World, cmd: string): string | null {
+  const s = parseSummon(cmd);
+  return s ? stuckIn(w, s, displayBox(s)) : null;
+}
+
+/** Zum Aufstellen von Deko: berührt die Anzeige (summon-Befehl) einen Bau-Block? */
+export function displayTouches(w: World, cmd: string): boolean {
+  const s = parseSummon(cmd);
+  return s ? touchesBlock(w, displayBox(s)) : false;
+}
 
 /** Saison-Deko (Block-Anzeigen, Schriften, Tiere): nicht in Blöcken, nichts in der Luft, Ketten mit Halt. */
 export function checkDecorations(c: Canvas, commands: readonly string[], world?: World): Fund[] {
@@ -861,7 +1020,29 @@ export function checkDecorations(c: Canvas, commands: readonly string[], world?:
     else list.push([s]);
     return list;
   }, []);
-  runs.forEach((run) => {
+  /** Wie weit die Teile einer Folge auseinander reichen (Diagonale ihres Umrisses). */
+  const span = (run: readonly Summon[]): number => {
+    const extent = (get: (s: Summon) => number): number =>
+      Math.max(...run.map(get)) - Math.min(...run.map(get));
+    return Math.hypot(
+      extent((s) => s.x),
+      extent((s) => s.y),
+      extent((s) => s.z),
+    );
+  };
+  /** Mittlerer Abstand zweier aufeinanderfolgender Teile. */
+  const step = (run: readonly Summon[]): number =>
+    run
+      .slice(1)
+      .reduce(
+        (sum, s, i) =>
+          sum + Math.hypot(s.x - (run[i]?.x ?? 0), s.y - (run[i]?.y ?? 0), s.z - (run[i]?.z ?? 0)),
+        0,
+      ) / Math.max(1, run.length - 1);
+  const isChain = (run: readonly Summon[]): boolean => span(run) >= CHAIN_SPAN && step(run) >= CHAIN_STEP;
+  const chains = runs.filter(isChain);
+  const models = new Set(runs.filter((run) => !isChain(run)).flat());
+  chains.forEach((run) => {
     const ends = [run[0], run[run.length - 1]].filter((s): s is Summon => s !== undefined);
     ends.forEach((s) => {
       const hy = s.y + hookOf(s);
@@ -877,34 +1058,15 @@ export function checkDecorations(c: Canvas, commands: readonly string[], world?:
         );
     });
   });
-  // Übrige Anzeigen: berühren den Boden, eine Wand oder eine andere Anzeige, die schon hält.
-  const solids = displays.filter((s) => !isChainPiece(s));
+  // Übrige Anzeigen (auch kleine Teile eines Modells): berühren den Boden, eine Wand oder eine andere Anzeige, die
+  // schon hält.
+  const solids = displays.filter((s) => !isChainPiece(s) || models.has(s));
   const boxes = solids.map(displayBox);
-  /** Erster Bau-Block, in den die Anzeige deutlich hineinragt (mehr als ein Hauch in jeder Richtung). */
-  const inBlock = (b: Box3): string | null => {
-    const cells = (i: 0 | 1 | 2): number[] => {
-      const lo = Math.floor((b.min[i] ?? 0) + INSIDE);
-      const hi = Math.floor((b.max[i] ?? 0) - INSIDE);
-      return lo > hi ? [] : Array.from({ length: hi - lo + 1 }, (_, k) => lo + k);
-    };
-    const hit = cells(0)
-      .flatMap((x) => cells(1).flatMap((y) => cells(2).map((z) => [x, y, z] as const)))
-      .find(([x, y, z]) => isStructure(w(x, y, z)));
-    return hit ? `${w(...hit)} bei ${hit.join(' ')}` : null;
-  };
-  const touchesBlock = (b: Box3): boolean => {
-    const xs = [Math.floor(b.min[0] - TOUCH), Math.floor(b.max[0] + TOUCH)];
-    const ys = [Math.floor(b.min[1] - TOUCH), Math.floor(b.max[1] + TOUCH)];
-    const zs = [Math.floor(b.min[2] - TOUCH), Math.floor(b.max[2] + TOUCH)];
-    const span = (a: number[]): number[] =>
-      Array.from({ length: (a[1] ?? 0) - (a[0] ?? 0) + 1 }, (_, i) => (a[0] ?? 0) + i);
-    return span(xs).some((x) => span(ys).some((y) => span(zs).some((z) => isStructure(w(x, y, z)))));
-  };
   const touch = (a: Box3, b: Box3): boolean =>
     [0, 1, 2].every(
       (i) => (a.min[i] ?? 0) <= (b.max[i] ?? 0) + TOUCH && (b.min[i] ?? 0) <= (a.max[i] ?? 0) + TOUCH,
     );
-  const held = new Set(boxes.map((b, i) => (touchesBlock(b) ? i : -1)).filter((i) => i >= 0));
+  const held = new Set(boxes.map((b, i) => (touchesBlock(w, b) ? i : -1)).filter((i) => i >= 0));
   const grow = (): boolean => {
     const before = held.size;
     boxes.forEach((b, i) => {
@@ -916,7 +1078,7 @@ export function checkDecorations(c: Canvas, commands: readonly string[], world?:
   solids.forEach((s, i) => {
     const b = boxes[i];
     if (!b) return;
-    const inside = inBlock(b);
+    const inside = stuckIn(w, s, b);
     if (inside) report(ctx, 'deko', cellOf(s.x), cellOf(s.y), cellOf(s.z), where(s), `steckt in ${inside}`);
     else if (!held.has(i))
       report(ctx, 'deko', cellOf(s.x), cellOf(s.y), cellOf(s.z), where(s), 'schwebt in der Luft');

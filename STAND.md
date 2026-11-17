@@ -253,9 +253,38 @@
   - **Webseite:** Duels-Seite mit vier Tipps (Kampfarten in Gruppen, Wertung je Kampfart, Bester aus 3/5, Party-Kämpfe) und den Befehlen `/duel <name> [kampfart] [1|3|5]`, `/partykampf`, `/kit`, `/top [kampfart]`; Befehle-Seite zusätzlich annehmen/ablehnen, `/warteschlange`, `/spectate`, `/verlassen`, `/stats` und fürs Team `/duels neuladen|neubauen` (Recht „Spielmodi verwalten“). MorniSMP-Seite mit Börse und kostbaren Erzen, `/shop`, `/boerse`, `/wert`, `/verkaufen hand|alles`. **Werte je Kampfart/Strecke lesbar** (`stat-format.ts`): „Siege Brücke“, „Kämpfe Sumo“, „Beste Wertung UHC“ (`elo_<kampfart>` kommt als Bestwert, darum „beste“), eigene Wörter je Modus (`site.players.statsIn.<modus>`: in Duels heißt `games` „Kämpfe“, weil „Runden“ dort Bester aus 3/5 meint), Namen für `draws`, `ranked_*`, `streak_best`, `rounds_won`, `hits_boxen`, `goals_*`, `party_*`. **Profil:** Werte einzelner Kampfarten, Spielarten oder Strecken stehen als kleine Tabelle unter den allgemeinen (`stat-groups.tsx`; Kampfart-Spalte bleibt am Handy stehen, ab drei Spalten über die ganze Breite) – vorher wären es bis zu 100 einzelne Kacheln gewesen; gilt genauso für Adlerflug, Gipfelsturm, Party. **Bestenlisten:** dafür eine Auswahl „Kampfart“/„Strecke“ plus Wert statt je ein Knopf. Hauptwert der Duels-Bestenliste bleibt „Siege“ (es gibt keine Gesamt-Wertung mehr, nur je Kampfart). Beschreibung von Duels neu; bestehende Installationen bekommen sie einmal, wenn dort noch der alte Standard-Text steht (`refreshOldTexts` in `panel/stores.ts`). Demo: Duels-Werte wie echt (ohne das erfundene `rating`), Profil von Finn2015 mit Kampfarten, News „Duels: 20 Kampfarten“.
   - Tests: 107 in @moinmorni/shared (neu: 20 Kampfarten in drei Gruppen, Brücke ohne Runden, Grenzen; MorniSMP-Faktoren und Börse, kein `haendler.preisliste`), 262 Server-Tests (neu: Migration der Duels-Beschreibung; Hub: `/duelsconfig sumo runden 3`, `sumo tiefe 3,5`, `bruecke aus`, `labyrinth ziel aus`, `uhc runden 6` abgelehnt, `/smpconfig faktor erze 2,5`, `boerse aus` – je nur an den richtigen Modus; die bekannte Meldung beim Abbau von `mode-rest.test.ts` kam einmal), Typen, Prettier, Web- und Demo-Bau. Bilder (Playwright gegen den echten Server mit Motor, Computer + Handy, hell/dunkel, de/en; nur Scratchpad `duels-katalog-bilder/`): Panel Duels (Sprungleiste, Klassisch, Spaß, Party, Suche „Brücke“), Panel MorniSMP Börse und Preise je Abteilung, Duels-Seite, Profil mit Kampfarten-Tabelle, Bestenliste „Beste Wertung Sumo“, Befehle-Seite, MorniSMP-Seite, Demo-Profil. Nicht echt mit Minecraft geprüft (Weg über Hub und Netzwerk-Plugin wie bei allen Katalog-Werten).
 
+- 17.11.: **Winter-Wunderland** (Philip, Saison „Winter“ der Lobby, Branch `claude/winter-wunderland`): viel mehr
+  Schnee (Verwehungen, Schneewall neben Wegen und Plätzen, sechs Schneehaufen, dicker Schnee auf den Markisen,
+  Schneeplatten auf den Dächern, Eiszapfen, Schneekappen auf Zäunen, Gras an den Bergen wird Schnee, Teich friert zu);
+  **statt des Maibaums ein riesiger Christbaum** an derselben Stelle (`packages/builder/src/lobby/christbaum.ts`: acht
+  Stufen, gut 36 Blöcke, hängende Zweige, echte Kerzen, 175 Kugeln, warme Lichterkette auf den Zweigen jeder Stufe,
+  großer Stern, Geschenke, Licht ringsum) – der alte Christbaum im Markt ist weg, der Maibaum kommt mit jeder anderen
+  Saison genau zurück; **Weihnachtsmarkt** (`weihnachtsmarkt.ts`): Tannengirlanden mit Lichtern und Eiszapfen an jeder
+  Bude (Dorf- und Schlossmarkt), Lichterketten von Bude zu Bude und zum Marktbogen (Girlande, Stern), Glühwein- und
+  Lebkuchenbude, **Eingangsbogen** von der Ankunft her mit Girlande, Lichtern und Schild „Weihnachtsmarkt“, Krippe
+  (Stall, Maria, Josef, Kind, Ochs, Esel, Schafe, Stern) auf der Wiese westlich, Pferdeschlitten, Rodel, Schneemänner,
+  Eisbahn, Laternen statt Kürbis; die Figuren der Modi bleiben. **Schmuck ohne Hitbox:** alle Anzeige-Wesen der Lobby
+  tragen `"Bukkit.invisible":1b` (Minecraft lässt unsichtbare Wesen beim Zeichnen der F3+B-Rahmen aus, Anzeigen zeichnet
+  es trotzdem), auch die Schilder der Figuren und die Tafel des Jump and Run; Kugeln mit Lobby-Paket als runde Modelle
+  (`schmuck.ts`), ohne Paket schräge Würfel. **Hell:** klares Wetter mit leichtem Flocken-Gestöber, Licht an Baum,
+  Buden und Krippe. Dorfleute laufen nicht unter tief hängende Zweige. „Sommerpause“ nur bei Wintersport (`modePause`).
+  **Saisonwechsel sicher:** „save-all flush“ zwischen Schnee und Merker „Winter liegt“ (vorher: `kill -9` kurz nach dem
+  Wechsel → Merker weg, aber Schnee in einem Teil der Lobby); baut sich die Lobby im Winter neu (eigenes Biom seit dem
+  Spawn-Umbau), macht das Plugin das Biom wieder kalt und merkt sich die neuen Biome für den Rückweg. **Bauplan-Prüfung:
+  alle Saisons ohne Funde** – die Deko sucht sich ihren Platz (`lobby/halt.ts`: Ketten an Wand/Markise/Maibaum, Eier,
+  Kürbisse, Spinnweben auf freien Boden bzw. an die Wand, Kugeln an die Zweige, Sterne und Schlitten herab), Wiesn-Herzen
+  und Halloween-Kürbisse an den heutigen Ständen; die Prüfung rechnet gedrehte Anzeigen und Treppen genau und sieht
+  kleine Teile dicht beieinander als Modell (`pruefung.ts`, zwei neue Tests), `pruefung-offen.ts` ohne Saison-Funde.
+  Tests: 79 Baukasten- (12 Dateien), 106 shared-, 263 Server-Tests, 61 JUnit, Typen, Prettier. Echt (Paper 26.1.2 +
+  Netzwerk-Plugin + Test-Hub, echter Selbstbau): keine Saison → `kill -9` 5 s nach dem Wechsel → Probe aus: 63 503
+  Stellen zurück, Maibaum da, 0 Winter-Wesen, Merker weg; Winter → Probe an **5/5** (63 503 Stellen, 2 242 Wesen,
+  Biom); `lobby-test` **30/30** in beiden Saisons; Neubau mitten im Winter → Biom wieder kalt, Probe **5/5**; dann keine
+  Saison → **5/5** (Biome wie vorher) → wieder Winter **5/5**. Bilder mit echtem Client 26.3 und Lobby-Paket, Tag,
+  Nacht und F3+B (Kugeln ohne Rahmen), nur lokal.
+
 ## Offen
 
-- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse), Saison-Dekos in `season.ts` (Ketten-Enden in der Luft, Winter-Christbaum im Stand am Dorfplatz, Ostern/Halloween-Deko in Blöcken bzw. schwebend).
+- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.).
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
 - MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).
 - **Philip testet.** Morni Party: Burg Weißenstein + Minispiel-Kulissen (Helfer), danach Go fürs Release. MoinMorni selbst (`main`) und MorniHosting-PR #117 brauchen noch ein eigenes Go, danach Submodul wieder auf MorniHosting `main`.

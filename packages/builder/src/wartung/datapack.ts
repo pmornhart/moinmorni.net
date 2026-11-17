@@ -102,6 +102,8 @@ export function wartungPack(): LobbyPack {
     load: forceloadCommands(0, 0, 'add', WARTUNG_RADIUS, LOAD_SPAN),
     unload: forceloadCommands(0, 0, 'remove', WARTUNG_RADIUS),
     seasonFiles: {},
+    // Die Wartungs-Lobby hat keine Saison-Deko.
+    seasonSteps: { none: [], wiesn: [], winter: [], easter: [], halloween: [] },
     seasonLoad: [],
     seasonUnload: [],
     namespace: WARTUNG_NAMESPACE,

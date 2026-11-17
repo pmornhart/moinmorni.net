@@ -5,10 +5,11 @@
  */
 import type { Canvas } from '../canvas.js';
 import { GROUND } from '../nature.js';
-import { checkDecorations, checkPlan, type Fund } from '../pruefung.js';
+import { checkDecorations, checkPlan, worldOf, type Fund, type World } from '../pruefung.js';
 import { buildLobby } from './dorfplatz.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
 import { SEASONS, seasonCommands, type Season } from './season.js';
+import { winterPlan } from './winter.js';
 
 /** Wo man in der Lobby herumläuft: das Dorf mit den Wiesen ringsum und der Schlossberg samt Schloss. */
 const WALK = { radius: 125, castle: { x: 45, z1: -170, z2: -80 }, top: GROUND + 40 } as const;
@@ -32,11 +33,25 @@ export interface LobbyCheck {
   readonly seasons: Readonly<Record<Season, readonly Fund[]>>;
 }
 
+/**
+ * Die Welt, in der die Deko einer Saison steht: der Winter setzt auch Blöcke (Schnee, Christbaum statt Maibaum,
+ * Buden, Krippe) – seine Anzeigen hängen und stehen daran.
+ */
+function seasonWorld(canvas: Canvas, season: Season): World {
+  const base = worldOf(canvas);
+  if (season !== 'winter') return base;
+  const blocks = winterPlan(canvas).blocks;
+  return (x, y, z) => blocks.get(x, y, z) ?? base(x, y, z);
+}
+
 /** Prüft einen fertigen Bauplan der Lobby samt aller Saison-Dekos. */
 export function checkLobbyCanvas(canvas: Canvas): LobbyCheck {
   const plan = checkPlan(canvas, { floatingAllowed: jumpHint, walkArea });
   const seasons = SEASONS.reduce(
-    (all, s) => ({ ...all, [s]: checkDecorations(canvas, seasonCommands(s)) }),
+    (all, s) => ({
+      ...all,
+      [s]: checkDecorations(canvas, seasonCommands(s, canvas), seasonWorld(canvas, s)),
+    }),
     {} as Partial<Record<Season, readonly Fund[]>>,
   ) as Readonly<Record<Season, readonly Fund[]>>;
   return { plan, seasons };

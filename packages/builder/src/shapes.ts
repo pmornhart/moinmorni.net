@@ -141,8 +141,17 @@ export interface RoofSpec {
   readonly eaves?: number;
 }
 
+/** Alle Satteldächer je Bauplan – die Winter-Deko legt Schnee darauf (`lobby/winter.ts`). */
+const ROOFS = new WeakMap<Canvas, RoofSpec[]>();
+
+/** Satteldächer, die auf diesem Bauplan gebaut wurden (in Reihenfolge). */
+export function roofsOf(c: Canvas): readonly RoofSpec[] {
+  return ROOFS.get(c) ?? [];
+}
+
 /** Satteldach aus Treppen, mit Überstand, geschlossenem Giebel und Firstreihe aus Stufen. */
 export function gableRoof(c: Canvas, spec: RoofSpec): void {
+  ROOFS.set(c, [...roofsOf(c), spec]);
   const ov = spec.overhang ?? 1;
   const ev = spec.eaves ?? 1;
   const alongX = spec.along === 'x';
