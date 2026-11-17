@@ -58,6 +58,7 @@ import { registerPanelRoutes } from './panel/routes.js';
 import { registerModeRestRoutes } from './panel/mode-rest-routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
+import { ANGEL_MODE, offerAngelPack, registerAngelPackRoutes } from './angelkoenig/pack.js';
 import { badgePackOf, badgePackUrl, registerBadgeRoutes } from './badges/pack.js';
 import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { createWartungWorld } from './lobby/wartung.js';
@@ -251,7 +252,12 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     configureLobby: lobbyWorld.configure,
     configureBuild: build.configure,
     configureWartung: wartungWorld.configure,
-    configureMode: (serverId) => openPlayerCap(motor, serverId),
+    configureMode: async (serverId, member) => {
+      const cap = await openPlayerCap(motor, serverId);
+      // Angelkönig bietet sein Fisch-Paket an (eigene Zeichnungen, `angelkoenig/pack.ts`).
+      const pack = member === ANGEL_MODE ? await offerAngelPack(motor, serverId, config.domain) : false;
+      return cap || pack;
+    },
     modes: () => stores.modes(),
     releases,
     // Panel → Einstellungen → Updates: neue Spielmodi bekommen von selbst ihren Server.
@@ -474,6 +480,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
   registerPackRoutes(app);
+  registerAngelPackRoutes(app);
   registerBadgeRoutes(app, () => stores.roles());
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
   registerModeRestRoutes(app, auth, stores, motor, createMemberIds(motor), restarts);

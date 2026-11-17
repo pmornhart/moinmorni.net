@@ -101,9 +101,10 @@ export interface ProvisionOptions {
   readonly configureWartung?: (serverId: string) => Promise<boolean>;
   /**
    * Stellt den Server eines Spielmodus ein (Höchstzahl hinter dem Proxy, `player-cap.ts`) – neue vor dem ersten Start,
-   * bestehende bei jedem Lauf (danach steht es drin, nichts ändert sich mehr); true = geändert.
+   * bestehende bei jedem Lauf (danach steht es drin, nichts ändert sich mehr); true = geändert. `member` ist der Name
+   * des Servers im Netzwerk (z. B. „angelkoenig“ – der bekommt zusätzlich sein Fisch-Paket).
    */
-  readonly configureMode?: (serverId: string) => Promise<boolean>;
+  readonly configureMode?: (serverId: string, member: string) => Promise<boolean>;
   /** WorldEdit auf den Bau-Server laden (Tests: nein – kein Internet). */
   readonly buildContent?: boolean;
   /** Spielmodi (aus dem Panel); mit `releases` bekommt jeder Modus mit Repo seinen eigenen Server. */
@@ -413,7 +414,7 @@ export function createProvisioner(
         .filter((m) => !ownSettings.includes(m.name))
         .reduce<Promise<string[]>>(async (acc, m) => {
           const done = await acc;
-          return options.configureMode && (await options.configureMode(m.serverId))
+          return options.configureMode && (await options.configureMode(m.serverId, m.name))
             ? [...done, m.name]
             : done;
         }, Promise.resolve([]));

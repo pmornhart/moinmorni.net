@@ -35,3 +35,5 @@ export * from './lobby/pruefen.js';
 export * from './wartung/werkstatt.js';
 export * from './wartung/datapack.js';
 export * from './musik/index.js';
+export * from './fische/paket.js';
+export { allFishArt, fishArt, FISH_ART_IDS, type FishArt } from './fische/arten.js';
