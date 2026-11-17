@@ -853,8 +853,8 @@ export const LOBBY_AREA: SettingArea = {
       id: 'jumpandrun',
       title: t('Jump and Run', 'Jump and run'),
       text: t(
-        'Am Startplatz im Nordwesten auf den Smaragd treten (oder /jnr): Hoch über dem Dorf erscheint Block für Block – nur für dich. Jeder Sprung ein Punkt, wer fällt, ist raus. Rekord je Spieler, Top 10 auf der Tafel am Start und auf der Webseite.',
-        'Step on the emerald at the start in the north-west (or /jnr): high above the village, block after block appears – only for you. Every jump scores a point, falling ends the run. Record per player, top 10 on the board at the start and on the website.',
+        'Feder in der Schnellleiste, Kompass-Menü, /jnr oder der Smaragd am Startplatz im Nordwesten: Man steht sofort hoch über dem Dorf auf dem ersten Block, dann erscheint Block für Block – nur für dich. Jeder Sprung ein Punkt, wer fällt, ist raus. Rekord je Spieler, Top 10 auf der Tafel am Start und auf der Webseite.',
+        'Feather in the hotbar, compass menu, /jnr or the emerald at the start in the north-west: you stand high above the village on the first block right away, then block after block appears – only for you. Every jump scores a point, falling ends the run. Record per player, top 10 on the board at the start and on the website.',
       ),
       settings: [
         {
@@ -881,6 +881,17 @@ export const LOBBY_AREA: SettingArea = {
             'Until then only easy jumps you can make without sprinting. After that, one level harder every 15 points: further, higher, slabs, fences and walls, ice that melts quickly and slime to bounce on.',
           ),
           command: '/lobby jumpandrun schwerer <punkte>',
+        },
+        {
+          key: 'jumpItem',
+          type: 'boolean',
+          default: true,
+          label: t('Gegenstand in der Schnellleiste', 'Item in the hotbar'),
+          help: t(
+            'An: In der Schnellleiste liegt eine Feder „Jump and Run“ – Rechtsklick (Bedrock: antippen) und man steht sofort hoch oben auf dem ersten Block. Während des Laufs wird sie zu „Lauf beenden“. Aus: nur Smaragd am Startplatz, Kompass-Menü und /jnr.',
+            'On: a feather “Jump and run” sits in the hotbar – right-click (Bedrock: tap) and you are standing high up on the first block right away. During a run it turns into “End run”. Off: only the emerald at the start, the compass menu and /jnr.',
+          ),
+          command: '/lobby jumpandrun gegenstand an|aus',
         },
       ],
     },

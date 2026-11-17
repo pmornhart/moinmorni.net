@@ -2,7 +2,8 @@
  * Test der Lobby-Funktionen mit einem echten Test-Spieler (mineflayer, Paper 26.1.2 – darauf darf er sich bewegen):
  * Ankunft am Platz, Begrüßung, Ankündigungs-Leiste, Kompass + Buch, Menü, Rundgang, Launchpad, Jump and Run (Start
  * am Smaragd, Blöcke nur für den Läufer, Sprünge mit Positions-Teleport des Test-Spielers selbst, Stufe, Sturz, Rekord,
- * Tafel, Bestenliste, /parkour leitet um), Doppelsprung (Fliegen erlaubt, Schwung, nicht im Jump and Run, Schalter im
+ * Tafel, Bestenliste, /parkour leitet um; Feder „Jump and Run“ in der Schnellleiste und im Kompass-Menü: Start in der
+ * Luft, „Lauf beenden“, zurück an die Stelle davor, Panel-Schalter), Doppelsprung (Fliegen erlaubt, Schwung, nicht im Jump and Run, Schalter im
  * Panel), kein Schaden.
  *   NODE_PATH=~/mm-cache/node/node_modules node lobby-test.cjs <host> <port> <rcon-host:port> <rcon-passwort-datei>
  * Optional: MM_LOBBY_DIR (Server-Ordner: Rekord-Datei), MM_HUB_DB (hub.db: Statistik „lobby“), MM_STEUER
@@ -364,6 +365,9 @@ async function main() {
   await waitFor(() => bot.entity.position.y < 80, 4000);
   await wait(800);
 
+  // ---------- Jump and Run aus der Schnellleiste (Feder) und dem Kompass-Menü ----------
+  await jumpItem(bot, chats, titles);
+
   // ---------- Doppelsprung ----------
   check(
     'Nach dem Lauf: Doppelsprung wieder möglich',
@@ -433,6 +437,124 @@ async function main() {
   console.log(`\n${ok}/${results.length} bestanden`);
   bot.quit();
   process.exit(ok === results.length ? 0 : 1);
+}
+
+/**
+ * Feder „Jump and Run“ in der Schnellleiste (Platz 1, neben dem Kompass): Rechtsklick → sofort oben auf dem ersten
+ * Block („spawnt in der Luft“), Feder wird „Lauf beenden“, damit zurück an die Stelle, von der man losgelegt hat.
+ * Dazu der Eintrag im Kompass-Menü und – mit MM_STEUER – die Panel-Schalter.
+ */
+async function jumpItem(bot, chats, titles) {
+  const slot1 = () => bot.inventory.slots[37];
+  const named = (item) => plain(item?.customName ?? item?.displayName ?? '');
+  rcon(`tp ${NAME} ${SPAWN.x} ${SPAWN.y} ${SPAWN.z} 0 0`);
+  await wait(1500);
+  check(
+    'Feder „Jump and Run“ in der Schnellleiste neben dem Kompass',
+    slot1()?.name === 'feather' && named(slot1()).includes('Jump and Run'),
+    `${slot1()?.name} ${named(slot1())}`,
+  );
+  const origin = bot.entity.position.clone();
+  bot.setQuickBarSlot(1);
+  await wait(300);
+  titles.length = 0;
+  bot.activateItem();
+  await waitFor(() => bot.entity.position.y > 140, 5000);
+  const top = bot.entity.position.clone();
+  check('Feder: Rechtsklick → sofort hoch oben in der eigenen Bahn', top.y > 140, JSON.stringify(top));
+  await wait(1200);
+  const under = bot.blockAt(bot.entity.position.offset(0, -0.5, 0).floored());
+  check('…steht auf dem ersten Block (Smaragd, nur bei ihm)', under?.name === 'emerald_block', under?.name);
+  check(
+    '…steht still (kein Schwung von vorher, kein Fallen)',
+    Math.abs(bot.entity.position.y - top.y) < 0.2,
+    `${top.y.toFixed(2)} → ${bot.entity.position.y.toFixed(2)}`,
+  );
+  check(
+    '…Titel „Jump and Run“',
+    titles.some((t) => t.includes('Jump and Run')),
+    titles.slice(-1).join(''),
+  );
+  check(
+    'Im Lauf heißt die Feder „Lauf beenden“',
+    await waitFor(() => slot1()?.name === 'barrier', 3000),
+    `${slot1()?.name} ${named(slot1())}`,
+  );
+  bot.activateItem();
+  await waitFor(() => bot.entity.position.y < 100, 5000);
+  await wait(600);
+  check(
+    '„Lauf beenden“ → zurück dorthin, wo man losgelegt hat',
+    near(bot.entity.position, origin.x, origin.y, origin.z, 1.2),
+    JSON.stringify(bot.entity.position),
+  );
+  check(
+    '…und die Feder ist wieder da',
+    await waitFor(() => slot1()?.name === 'feather', 3000),
+    slot1()?.name,
+  );
+
+  // Kompass-Menü: Eintrag „Jump and Run“ unten in der Mitte
+  await wait(600);
+  bot.setQuickBarSlot(0);
+  const opened = new Promise((r) => {
+    bot.once('windowOpen', r);
+    setTimeout(() => r(null), 4000);
+  });
+  bot.activateItem();
+  const win = await opened;
+  const entry = win
+    ? win.slots.findIndex(
+        (i, n) => n < win.inventoryStart && i?.name === 'feather' && named(i).includes('Jump'),
+      )
+    : -1;
+  check('Kompass-Menü: Eintrag „Jump and Run“', entry >= 0, String(entry));
+  if (entry >= 0) {
+    await bot.clickWindow(entry, 0, 0).catch(() => {});
+    await waitFor(() => bot.entity.position.y > 140, 5000);
+    check(
+      'Kompass-Menü: Klick → hoch oben in der Bahn',
+      bot.entity.position.y > 140,
+      JSON.stringify(bot.entity.position),
+    );
+    bot.chat('/jnr stop');
+    await waitFor(() => bot.entity.position.y < 100, 5000);
+    await wait(600);
+    check(
+      '/jnr stop nach Start im Menü → zurück an die Stelle davor',
+      near(bot.entity.position, origin.x, origin.y, origin.z, 1.2),
+      JSON.stringify(bot.entity.position),
+    );
+  } else if (win) {
+    bot.closeWindow(win);
+  }
+
+  if (process.env.MM_STEUER) {
+    const set = (values) =>
+      fetch(process.env.MM_STEUER, { method: 'POST', body: JSON.stringify({ area: 'lobby', values }) });
+    await set({ jumpItem: false });
+    check('Panel: Gegenstand aus → Feder weg', await waitFor(() => !slot1(), 4000), slot1()?.name);
+    await set({ jumpItem: true });
+    check('Panel: Gegenstand an → Feder wieder da', await waitFor(() => slot1()?.name === 'feather', 4000));
+    await set({ jumpAndRun: false });
+    check(
+      'Panel: Jump and Run aus → Gegenstand grau',
+      await waitFor(() => slot1()?.name === 'gray_dye', 4000),
+    );
+    chats.length = 0;
+    bot.setQuickBarSlot(1);
+    await wait(500);
+    bot.activateItem();
+    await wait(1200);
+    check(
+      '…Klick darauf startet nicht, sagt freundlich warum',
+      bot.entity.position.y < 100 && chats.some((c) => c.includes('geschlossen')),
+      chats.slice(-1).join(''),
+    );
+    await set({ jumpAndRun: true });
+    check('Panel: Jump and Run an → Feder', await waitFor(() => slot1()?.name === 'feather', 4000));
+  }
+  bot.setQuickBarSlot(0);
 }
 
 /** Ein VIP fliegt statt doppelt zu springen; /fly wechselt; im Jump and Run nicht. */

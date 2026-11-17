@@ -648,7 +648,12 @@ export function createHub(options: HubOptions): Hub {
       announcementSeconds: Number(l['announcementSeconds']),
       season: String(l['season'] ?? 'none'),
       launchpads: l['launchpads'] === true,
-      jumpAndRun: { on: l['jumpAndRun'] === true, harderFrom: Number(l['jumpHarderFrom']) },
+      jumpAndRun: {
+        on: l['jumpAndRun'] === true,
+        harderFrom: Number(l['jumpHarderFrom']),
+        // Ältere Einstellungen ohne den Schalter: Gegenstand an (Standard).
+        item: l['jumpItem'] !== false,
+      },
       doubleJump: { on: l['doubleJump'] === true, strength: Number(l['doubleJumpStrength']) },
       walkers: Number(l['walkers']),
       // Tageszeit: „real“ = Sonne und Mond wie heute in Bayern (Zeitzone des Netzwerks, Ort München)
