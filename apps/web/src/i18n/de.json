@@ -289,8 +289,40 @@
         "jump_best": "Jump and Run – Rekord",
         "jump_runs": "Jump-and-Run-Läufe",
         "jumps": "Sprünge",
+        "golden_eagles": "Steinadler-Medaillen",
+        "bonus_rings": "Bonus-Ringe",
         "timeOf": "Bestzeit {{course}}",
-        "finishesOf": "Ziele {{course}}"
+        "finishesOf": "Ziele {{course}}",
+        "draws": "Unentschieden",
+        "ranked_games": "Gewertete Kämpfe",
+        "ranked_wins": "Gewertete Siege",
+        "streak_best": "Längste Siegesserie",
+        "rounds_won": "Gewonnene Runden (Bester aus 3/5)",
+        "hits_boxen": "Treffer beim Boxen",
+        "goals_bruecke": "Tore auf der Brücke",
+        "goals_labyrinth": "Zuerst am Labyrinth-Ziel",
+        "party_games": "Party-Kämpfe",
+        "party_wins": "Siege in Party-Kämpfen",
+        "elo": "Beste Wertung",
+        "gamesOf": "Runden {{what}}",
+        "winsOf": "Siege {{what}}",
+        "lossesOf": "Niederlagen {{what}}",
+        "drawsOf": "Unentschieden {{what}}",
+        "eloOf": "Beste Wertung {{what}}",
+        "subjectHead": "Strecke"
+      },
+      "statsIn": {
+        "duels": {
+          "games": "Kämpfe",
+          "gamesOf": "Kämpfe {{what}}",
+          "subjectHead": "Kampfart"
+        },
+        "party": {
+          "subjectHead": "Spielart"
+        },
+        "wintersport": {
+          "subjectHead": "Disziplin"
+        }
       },
       "courses": {
         "almrundflug": "Almrundflug",
@@ -299,6 +331,9 @@
         "gletscherspalte": "Gletscherspalte",
         "stollenflug": "Stollenflug",
         "gipfelkreuz": "Gipfelkreuz",
+        "tagesflug": "Strecke des Tages",
+        "hoellenschlund": "Höllenschlund",
+        "felsenlabyrinth": "Felsenlabyrinth",
         "slalom": "Riesenslalom",
         "biathlon": "Biathlon",
         "bob": "Bobbahn",
@@ -589,13 +624,23 @@
         }
       },
       "duels": {
-        "tip1": "Such dir eine Kampfart aus: Klassisch mit Pilzsuppe, Modern oder mit Fähigkeiten.",
-        "tip2": "Spiel locker oder gewertet – gewertete Kämpfe zählen für die Rangliste.",
-        "tip3": "Mit Freunden: Fordere sie direkt heraus oder geht als Party ins 2 gegen 2.",
+        "tip1": "20 Kampfarten in drei Gruppen: Klassisch (Pilzsuppe, keine Abklingzeit beim Schlagen), Modern (Axt und Schild, Tränke, UHC, Bau-Kampf …) und Spaß (Sumo, Boxen, Spleef, Labyrinth, Brücke).",
+        "tip2": "Spiel locker oder gewertet – jede Kampfart hat ihre eigene Wertung und Rangliste.",
+        "tip3": "Bester aus 3 oder 5: Manche Kämpfe gehen über mehrere Runden – wer zuerst die Mehrheit gewinnt, siegt.",
+        "tip4": "Mit Freunden: Fordert euch mit /duel heraus oder kämpft als Party – Party gegen Party, jeder gegen jeden oder in zwei Teams.",
         "cmd": {
-          "duel": "Jemanden herausfordern.",
+          "duel": "Jemanden herausfordern – auf Wunsch gleich mit Kampfart und Runden (Bester aus 3 oder 5).",
+          "partykampf": "Als Party-Leitung: jeder gegen jeden in eurer Party, mit „teams“ in zwei Teams.",
           "kit": "Eigene Anordnung im Kit-Editor.",
-          "top": "Die besten Kämpfer."
+          "top": "Die besten Kämpfer – auch je Kampfart, z. B. /top sumo.",
+          "annehmen": "Herausforderung annehmen (oder im Chat anklicken).",
+          "ablehnen": "Herausforderung ablehnen.",
+          "warteschlange": "Gegner suchen, z. B. /warteschlange brücke gewertet 1v1; /warteschlange verlassen.",
+          "spectate": "Einem Kampf zuschauen (auch /zuschauen).",
+          "verlassen": "Warteschlange, Kampf (zählt als Niederlage) oder Zuschauen verlassen.",
+          "stats": "Deine Statistik – oder die von jemand anderem.",
+          "neuladen": "Einstellungen und Kampfarten neu laden (das Panel macht es von selbst).",
+          "neubauen": "Turnierhof und Arenen neu bauen."
         }
       },
       "party": {
@@ -641,12 +686,17 @@
       "mirni": {
         "tip1": "Du startest in der schwebenden Marktstadt – durch die drei Reisetore geht es in Oberwelt, Nether und End.",
         "tip2": "Handle mit allen: Auktionshaus, Aufträge, eigene Ladenkisten und Marktstände zum Mieten.",
-        "tip3": "Sichere dein Grundstück – Taler gibt es nur im Spiel, nichts für echtes Geld.",
+        "tip3": "Erze sind kostbar: Ein Diamant bringt bei Händlerin Vroni ein Vielfaches von Alltagsware. An der Börse siehst du die Kurse – verkaufen alle viel, zahlt sie weniger, mit der Zeit erholt sich der Kurs.",
+        "tip4": "Sichere dein Grundstück – Taler gibt es nur im Spiel, nichts für echtes Geld.",
         "cmd": {
           "rtp": "Zufälliger sicherer Ort zum Loslegen.",
           "ah": "Auktionshaus.",
+          "shop": "Händlerhaus mit Händlerin Vroni: kaufen und verkaufen.",
+          "boerse": "Die Börse: Kurse jeder Ware, was steigt und fällt, Verlauf über 24 Stunden und 7 Tage.",
           "gs": "Den Chunk unter dir sichern.",
-          "geld": "Dein Kontostand."
+          "geld": "Dein Kontostand.",
+          "wert": "Was das in deiner Hand wert ist – bei Vroni und unter Spielern; mit „alles“ dein ganzes Inventar.",
+          "verkaufen": "Ankauf: Sachen hineinlegen. „hand“ verkauft sofort, was du hältst (erst an Aufträge, die mehr zahlen), „alles“ dein Inventar mit Übersicht."
         }
       },
       "wolkenkampf": {

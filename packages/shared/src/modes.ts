@@ -86,8 +86,8 @@ export const DEFAULT_MODES: readonly Mode[] = [
     id: 'duels',
     name: t('Duels', 'Duels'),
     description: t(
-      '1 gegen 1 und 2 gegen 2: Klassisch mit Suppe, Modern oder mit Fähigkeiten. Gewertet oder locker.',
-      '1v1 and 2v2: classic with soup, modern or with abilities. Ranked or casual.',
+      '20 Kampfarten von Klassisch mit Suppe bis Sumo, Spleef und Brücke. 1 gegen 1, 2 gegen 2 und Party-Kämpfe, gewertet oder locker.',
+      '20 fighting styles from classic with soup to Sumo, Spleef and Bridge. 1v1, 2v2 and party fights, ranked or casual.',
     ),
     state: 'on',
     access: 'everyone',

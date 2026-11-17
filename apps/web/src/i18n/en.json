@@ -289,8 +289,40 @@
         "jump_best": "Jump and run – record",
         "jump_runs": "Jump and run attempts",
         "jumps": "Jumps",
+        "golden_eagles": "Golden eagle medals",
+        "bonus_rings": "Bonus rings",
         "timeOf": "Best time {{course}}",
-        "finishesOf": "Finishes {{course}}"
+        "finishesOf": "Finishes {{course}}",
+        "draws": "Draws",
+        "ranked_games": "Ranked fights",
+        "ranked_wins": "Ranked wins",
+        "streak_best": "Longest win streak",
+        "rounds_won": "Rounds won (best of 3/5)",
+        "hits_boxen": "Boxing hits",
+        "goals_bruecke": "Bridge goals",
+        "goals_labyrinth": "First to the maze goal",
+        "party_games": "Party fights",
+        "party_wins": "Party fight wins",
+        "elo": "Best rating",
+        "gamesOf": "Games {{what}}",
+        "winsOf": "Wins {{what}}",
+        "lossesOf": "Losses {{what}}",
+        "drawsOf": "Draws {{what}}",
+        "eloOf": "Best rating {{what}}",
+        "subjectHead": "Course"
+      },
+      "statsIn": {
+        "duels": {
+          "games": "Fights",
+          "gamesOf": "Fights {{what}}",
+          "subjectHead": "Style"
+        },
+        "party": {
+          "subjectHead": "Game type"
+        },
+        "wintersport": {
+          "subjectHead": "Event"
+        }
       },
       "courses": {
         "almrundflug": "Alpine Loop",
@@ -299,6 +331,9 @@
         "gletscherspalte": "Glacier Crevasse",
         "stollenflug": "Tunnel Flight",
         "gipfelkreuz": "Summit Cross",
+        "tagesflug": "Course of the Day",
+        "hoellenschlund": "Hell’s Gorge",
+        "felsenlabyrinth": "Rock Labyrinth",
         "slalom": "Giant Slalom",
         "biathlon": "Biathlon",
         "bob": "Bobsleigh",
@@ -589,13 +624,23 @@
         }
       },
       "duels": {
-        "tip1": "Pick a fighting style: classic with mushroom soup, modern or with abilities.",
-        "tip2": "Play casual or ranked – ranked fights count for the leaderboard.",
-        "tip3": "With friends: challenge them directly or go 2v2 as a party.",
+        "tip1": "20 fighting styles in three groups: Classic (mushroom soup, no attack cooldown), Modern (axe & shield, potions, UHC, build fight …) and Fun (Sumo, Boxing, Spleef, Maze, Bridge).",
+        "tip2": "Play casual or ranked – every style has its own rating and leaderboard.",
+        "tip3": "Best of 3 or 5: some fights go over several rounds – whoever wins the majority first takes it.",
+        "tip4": "With friends: challenge each other with /duel or fight as a party – party against party, everyone for themselves or in two teams.",
         "cmd": {
-          "duel": "Challenge someone.",
+          "duel": "Challenge someone – if you like, right away with a style and rounds (best of 3 or 5).",
+          "partykampf": "As party leader: everyone for themselves in your party, with “teams” in two teams.",
           "kit": "Your own layout in the kit editor.",
-          "top": "The best fighters."
+          "top": "The best fighters – also per style, e.g. /top sumo.",
+          "annehmen": "Accept a challenge (or click it in the chat; also /duel accept).",
+          "ablehnen": "Decline a challenge (also /duel deny).",
+          "warteschlange": "Look for an opponent, e.g. /queue bridge ranked 1v1; /warteschlange verlassen leaves.",
+          "spectate": "Watch a fight (also /zuschauen).",
+          "verlassen": "Leave the queue, a fight (counts as a loss) or watching.",
+          "stats": "Your statistics – or someone else's.",
+          "neuladen": "Reload settings and fighting styles (the panel does it by itself).",
+          "neubauen": "Rebuild the tournament yard and the arenas."
         }
       },
       "party": {
@@ -641,12 +686,17 @@
       "mirni": {
         "tip1": "You start in the floating market town – the three travel gates lead to the overworld, Nether and End.",
         "tip2": "Trade with everyone: auction house, orders, your own shop chests and market stalls to rent.",
-        "tip3": "Claim your land – coins only exist in the game, nothing for real money.",
+        "tip3": "Ores are precious: a diamond fetches many times an everyday item from Vroni the merchant. The exchange shows the rates – if everyone sells a lot, she pays less, and over time the rate recovers.",
+        "tip4": "Claim your land – coins only exist in the game, nothing for real money.",
         "cmd": {
           "rtp": "A random safe spot to start.",
           "ah": "Auction house.",
+          "shop": "Merchant house with Vroni the merchant: buy and sell.",
+          "boerse": "The exchange: the rate of every ware, what rises and falls, history over 24 hours and 7 days.",
           "gs": "Claim the chunk you stand in.",
-          "geld": "Your balance."
+          "geld": "Your balance.",
+          "wert": "What the item in your hand is worth – at Vroni’s and between players; with “alles” your whole inventory.",
+          "verkaufen": "Buyback: put things in. “hand” sells what you hold right away (first to orders that pay more), “alles” your inventory with an overview."
         }
       },
       "wolkenkampf": {
