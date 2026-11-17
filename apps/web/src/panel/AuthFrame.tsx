@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crest, Lozenge, Ridge, Wordmark } from '~/components/brand';
 import { LanguageSwitch, ThemeToggle } from '~/components/controls';
+import { VersionPill } from '~/components/whats-new';
 import { MM_NAMESPACE } from '~/i18n';
 
 /**
@@ -44,6 +45,8 @@ export function AuthFrame({ children }: { readonly children: ReactNode }): React
             <ArrowLeft className="size-4" aria-hidden />
             {t('login.home')}
           </a>
+          {/* The installed version, like on every panel page and the website (before signing in: the players' list). */}
+          <VersionPill look="panel" />
           <div className="flex items-center gap-1.5">
             <LanguageSwitch tone="plain" />
             <ThemeToggle />

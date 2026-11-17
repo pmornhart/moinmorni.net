@@ -63,7 +63,8 @@
     "notFound": {
       "title": "Diese Seite gibt es nicht",
       "text": "Vielleicht hat sich ein Tippfehler eingeschlichen. Von der Startseite aus findest du alles.",
-      "figures": "Die sieben Figuren der Spielmodi"
+      "figures": "Die {{count}} Figuren der Spielmodi",
+      "figuresSome": "Figuren der Spielmodi"
     }
   },
   "site": {
@@ -157,7 +158,9 @@
       "closed": "Gerade geschlossen.",
       "maintenance": "Gerade in Wartung – bald wieder da.",
       "soon": "Kommt bald – wir bauen noch daran.",
-      "pause": "Gerade Sommerpause – Wettkämpfe gibt es vom 1. Dezember bis 31. März. Das Dorf kannst du trotzdem besuchen."
+      "pause": "Gerade Sommerpause – Wettkämpfe gibt es vom 1. Dezember bis 31. März. Das Dorf kannst du trotzdem besuchen.",
+      "invite": "Nur auf Einladung – du brauchst einen Platz auf der Whitelist. Frag im Discord nach.",
+      "inviteApply": "Nur auf Einladung – bewirb dich um einen Platz auf der Whitelist."
     },
     "mode": {
       "eyebrow": "Spielmodus",
@@ -205,6 +208,8 @@
       "homeTitle": "MoinMorni in Zahlen",
       "modesOpen": "Spielmodi offen",
       "modesOpenHint": "Rund um die Uhr offen – du kommst sofort hinein.",
+      "modesShutHint": "Gerade zu: {{names}}. Alle anderen sind rund um die Uhr offen.",
+      "modesShutMany": "{{count}} Spielmodi haben gerade zu – alle anderen sind rund um die Uhr offen.",
       "modeBoards": "Bestenlisten der Spielmodi",
       "modeBoardsText": "Wer ist in den Modi ganz vorne? Wähl einen Modus und einen Wert.",
       "modeBoardsModes": "Spielmodus",
@@ -309,7 +314,19 @@
         "lossesOf": "Niederlagen {{what}}",
         "drawsOf": "Unentschieden {{what}}",
         "eloOf": "Beste Wertung {{what}}",
-        "subjectHead": "Strecke"
+        "subjectHead": "Strecke",
+        "runs": "Durchgänge",
+        "rooms": "Räume",
+        "best_score": "Beste Punktzahl",
+        "revives": "Wiederbelebungen",
+        "minigames_won": "Minispiele gewonnen",
+        "summits": "Am Gipfel angekommen",
+        "earned": "Punkte aufs Guthaben",
+        "bonus": "Bonuspunkte",
+        "helps": "Hilfen gekauft",
+        "unlocks": "Im Laden gekauft",
+        "spent": "Im Laden ausgegeben",
+        "days": "Tage mit Strecke des Tages"
       },
       "statsIn": {
         "duels": {
@@ -318,10 +335,50 @@
           "subjectHead": "Kampfart"
         },
         "party": {
-          "subjectHead": "Spielart"
+          "subjectHead": "Spielart",
+          "games": "Partien",
+          "gamesOf": "Partien {{what}}",
+          "edelweiss": "Edelweiß gesammelt",
+          "edelweiss_best": "Meiste Edelweiß in einer Partie",
+          "marathon_points_best": "Beste Punktzahl im Minispiel-Marathon",
+          "huette_lives_best": "Meiste Leben im Hüttenaufstieg",
+          "turnier_matches_best": "Meiste Siege in einem Gipfel-Turnier",
+          "tatzelwurm_stars_best": "Beste Sterne gegen den Tatzelwurm"
         },
         "wintersport": {
-          "subjectHead": "Disziplin"
+          "subjectHead": "Disziplin",
+          "wins": "Gesamtsiege",
+          "best_points": "Meiste Punkte in einem Wettkampf"
+        },
+        "burgverlies": {
+          "runs": "Abstiege",
+          "wins": "Geschaffte Abstiege",
+          "rooms": "Räume geschafft",
+          "bosses": "Kerkermeister besiegt",
+          "best_score": "Beste Punktzahl",
+          "best_time_ms": "Schnellster Sieg"
+        },
+        "bollwerk": {
+          "kills": "Gegner besiegt",
+          "waves": "Wellen abgewehrt",
+          "revives": "Mitspieler gerettet",
+          "best_wave": "Beste Welle"
+        },
+        "versteckerl": {
+          "best_points": "Beste Runde (Punkte)",
+          "best_streak": "Längste Siegesserie",
+          "helps": "Hilfen aus der Kramerkiste",
+          "unlocks": "Im Kramerladen gekauft",
+          "spent": "Im Kramerladen ausgegeben"
+        },
+        "adlerflug": {
+          "finishes": "Flüge im Ziel"
+        },
+        "wolkenkampf": {
+          "deaths": "Ausgeschieden"
+        },
+        "mirni": {
+          "balance": "Taler auf dem Konto"
         }
       },
       "courses": {
@@ -343,7 +400,21 @@
         "felsgrat": "Felsgrat",
         "seilbahn": "Seilbahn-Masten",
         "eishoehle": "Eishöhle",
-        "wetterturm": "Wetterturm"
+        "wetterturm": "Wetterturm",
+        "gipfelrennen": "Gipfelrennen",
+        "edelweiss_jagd": "Edelweiß-Jagd",
+        "marathon": "Minispiel-Marathon",
+        "seilschaft": "Seilschaft",
+        "schnell": "Schnelle Partie",
+        "bergduell": "Bergduell",
+        "huette": "Hüttenaufstieg",
+        "turnier": "Gipfel-Turnier",
+        "tatzelwurm": "Der Tatzelwurm"
+      },
+      "coursesIn": {
+        "gipfelsturm": {
+          "gipfelkreuz": "Gipfelkreuz-Sprint"
+        }
       }
     },
     "team": {
@@ -734,12 +805,14 @@
       "adlerflug": {
         "tip1": "Im Adlerhorst wählst du eine Strecke, läufst die Schanze hinunter – die Flügel gehen von selbst auf.",
         "tip2": "Mit der Maus lenken: nach unten wirst du schneller, nach oben steigst du. Fliege der Reihe nach durch alle Ringe.",
-        "tip3": "Aufwinde heben dich an, Schub-Ringe geben Schwung – Bronze, Silber, Gold oder sogar Adler?",
+        "tip3": "Aufwinde heben dich an, Schub-Ringe geben Schwung, Bonus-Ringe schenken Zeit – Bronze, Silber, Gold, Adler oder sogar Steinadler, die Medaille der besten Flieger?",
+        "tip4": "Jeden Tag gibt es eine neue Strecke des Tages: Richtung, Wind, Tageszeit und Wetter wechseln, mit eigener Tages-Bestenliste.",
         "cmd": {
           "adlerflug": "Strecke wählen.",
           "ring": "Zurück zum letzten Ring.",
           "woche": "Strecke der Woche.",
-          "uebung": "Übungsmodus."
+          "uebung": "Übungsmodus.",
+          "tag": "Strecke des Tages."
         }
       },
       "angelkoenig": {
