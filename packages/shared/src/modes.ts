@@ -278,6 +278,20 @@ export const DEFAULT_MODES: readonly Mode[] = [
     sleepWhenEmpty: false,
     server: 'baumeister',
   },
+  {
+    id: 'sommerspiele',
+    name: t('Sommerspiele', 'Summer Games'),
+    description: t(
+      'Almlauf, Bogenschießen, Ruderregatta und Seifenkistenrennen im Dorf am Bergsee – um Gold, Silber und Bronze. Für 2–12, von April bis November.',
+      'Alpine run, archery, rowing regatta and soapbox race in the village by the mountain lake – for gold, silver and bronze. For 2–12, April to November.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 15,
+    maxPlayers: 36,
+    sleepWhenEmpty: false,
+    server: 'sommerspiele',
+  },
 ];
 
 /**
@@ -301,6 +315,7 @@ export const MODE_REPOS: Readonly<Record<string, string>> = {
   maibaumklau: 'pmornhart/morni-maibaumklau',
   dorfkrimi: 'pmornhart/morni-dorfkrimi',
   baumeister: 'pmornhart/morni-baumeister',
+  sommerspiele: 'pmornhart/morni-sommerspiele',
 };
 
 /**
@@ -325,14 +340,16 @@ export const MODE_JARS: Readonly<Record<string, string>> = {
   maibaumklau: 'Morni-Maibaumklau.jar',
   dorfkrimi: 'Morni-Dorfkrimi.jar',
   baumeister: 'Morni-Baumeister.jar',
+  sommerspiele: 'Morni-Sommerspiele.jar',
 };
 
 /**
  * Arbeitsspeicher der Modus-Server in MB, wo der Standard (1,5 GB) nicht reicht: MorniSMP und MorniCraft haben große
  * Welten, Morni Party baut große Spielbretter; die drei Modi vom 17.11. (Maibaumklau, Dorfkrimi, Baumeister) haben
- * kleine Welten und bekommen 1 GB, damit weiter alle Server zugleich in einen Container mit 32 GB passen:
- * Proxy 1 + Lobby 3 + Wartungs-Lobby 0,75 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + neun Modi je 1,5 +
- * drei Modi je 1 = 30,75 GB. Im Leerlauf (Ruhezustand) braucht ein leerer Modus nur etwa 0,7–0,9 GB; reicht der
+ * kleine Welten und bekommen 1 GB. Wintersport und Sommerspiele teilen sich das Jahr (einer hat immer Pause, sein Dorf
+ * ist dann nur zum Anschauen offen) und bekommen je 1 GB – so passen weiter alle Server zugleich in einen Container
+ * mit 32 GB: Proxy 1 + Lobby 3 + Wartungs-Lobby 0,75 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + acht Modi je
+ * 1,5 + fünf Modi je 1 = 31,25 GB (dazu 0,75 GB Reserve des Motors). Im Leerlauf (Ruhezustand) braucht ein leerer Modus nur etwa 0,7–0,9 GB; reicht der
  * Speicher beim Start trotzdem nicht, schlafen leere Modi zuerst (`sleep.makeRoom`). Im Panel je Server änderbar.
  */
 export const MODE_MEMORY_MB: Readonly<Record<string, number>> = {
@@ -342,6 +359,8 @@ export const MODE_MEMORY_MB: Readonly<Record<string, number>> = {
   maibaumklau: 1024,
   dorfkrimi: 1024,
   baumeister: 1024,
+  wintersport: 1024,
+  sommerspiele: 1024,
 };
 
 /** Was Webseite, Lobby und Discord über einen Modus zeigen. */
@@ -367,19 +386,94 @@ export interface ModeStatus {
 
 /** Zustand, den ein Modus meldet, wenn er gerade zu hat (Wintersport außerhalb der Saison, ein Modus beim Beenden). */
 export const MODE_PHASE_PAUSE = 'closed';
-/** Modi, deren „zu“ eine Saison-Pause ist: Wintersport außerhalb des Winters – „Sommerpause“, das Dorf bleibt offen. */
-export const MODE_SEASON_BREAK: ReadonlySet<string> = new Set(['wintersport']);
+/** Saison-Pause eines Modus: Sommerpause (Wintersport) oder Winterpause (Sommerspiele). */
+export type ModeSeasonBreak = 'summer' | 'winter';
+/** Wie ein Modus gerade zu hat: Saison-Pause oder schlicht geschlossen (`closed`). */
+export type ModePause = ModeSeasonBreak | 'closed';
 
 /**
- * Hat ein Modus gerade zu? `summer` = Sommerpause (nur Saison-Modi wie Wintersport), `closed` = gerade geschlossen
- * (andere Modi, z. B. während der Server beendet wird), null = nein. Gilt nur, solange sein Server wach ist – ein
- * schlafender Modus ist nicht geschlossen, er wacht auf, sobald jemand kommt.
+ * Modi, deren „zu“ eine Saison-Pause ist – das Dorf bleibt zum Anschauen offen: Wintersport hat außerhalb des Winters
+ * Sommerpause, Sommerspiele haben außerhalb des Sommers Winterpause.
+ */
+export const MODE_SEASON_BREAKS: Readonly<Record<string, ModeSeasonBreak>> = {
+  wintersport: 'summer',
+  sommerspiele: 'winter',
+};
+/** Die Modi mit Saison-Pause (wie `MODE_SEASON_BREAKS`). */
+export const MODE_SEASON_BREAK: ReadonlySet<string> = new Set(Object.keys(MODE_SEASON_BREAKS));
+
+/**
+ * Saison der beiden Sport-Modi (Monate, jeweils ganz): Wintersport vom 1. Dezember bis 31. März, Sommerspiele vom
+ * 1. April bis 30. November – so ist immer genau einer offen. So steht es in der mitgelieferten config.yml der Modi;
+ * was der Modus selbst meldet (`closed`), geht vor.
+ */
+export const SPORT_SEASONS = {
+  wintersport: { from: 12, to: 3 },
+  sommerspiele: { from: 4, to: 11 },
+} as const;
+export type SportMode = keyof typeof SPORT_SEASONS;
+export const SPORT_MODES: readonly SportMode[] = ['wintersport', 'sommerspiele'];
+
+/** Liegt der Monat (1–12) in der Saison von … bis … (auch über den Jahreswechsel)? */
+export function inSeason(month: number, from: number, to: number): boolean {
+  return from <= to ? month >= from && month <= to : month >= from || month <= to;
+}
+
+/** Welcher Sport-Modus hat nach dem Kalender gerade Saison (Monat 1–12)? */
+export function sportModeByMonth(month: number): SportMode {
+  const { from, to } = SPORT_SEASONS.wintersport;
+  return inSeason(month, from, to) ? 'wintersport' : 'sommerspiele';
+}
+
+/** Wer am Sport-Stand steht: von selbst (Saison) oder fest eine Seite (Panel → Lobby, für Tests und Events). */
+export const SPORT_STAND_CHOICES = ['auto', 'wintersport', 'sommerspiele'] as const;
+export type SportStandChoice = (typeof SPORT_STAND_CHOICES)[number];
+
+/** Was der Sport-Stand über einen der beiden Modi wissen muss. */
+export interface SportStandMode {
+  /** Hat er einen Server (sonst kommt er erst noch, z. B. ohne Release)? */
+  readonly hasServer: boolean;
+  /** Saison-Pause, wie `modePause` sie sagt (null = offen oder nichts gemeldet). */
+  readonly pause: ModePause | null;
+}
+
+/**
+ * Wer steht am gemeinsamen Sport-Stand am Schlossmarkt? Fest eingestellt geht vor; sonst der, der gerade offen ist –
+ * hat genau einer der beiden Saison-Pause, steht der andere da; hat nur einer schon einen Server, der. Sonst (beide
+ * offen, z. B. Wintersport mit „das ganze Jahr“, oder noch nichts gemeldet) entscheidet der Kalender (`SPORT_SEASONS`).
+ */
+export function sportStand(
+  choice: SportStandChoice,
+  modes: Readonly<Record<SportMode, SportStandMode | undefined>>,
+  month: number,
+): SportMode {
+  if (choice !== 'auto') return choice;
+  const winter = modes.wintersport;
+  const summer = modes.sommerspiele;
+  const breaks = (m: SportStandMode | undefined): boolean => m?.pause === 'summer' || m?.pause === 'winter';
+  if (breaks(winter) && !breaks(summer) && summer?.hasServer) return 'sommerspiele';
+  if (breaks(summer) && !breaks(winter) && winter?.hasServer) return 'wintersport';
+  if (winter?.hasServer && !summer?.hasServer) return 'wintersport';
+  if (summer?.hasServer && !winter?.hasServer) return 'sommerspiele';
+  return sportModeByMonth(month);
+}
+
+/** Monat (1–12) eines Zeitpunkts in einer Zeitzone (z. B. „Europe/Berlin“). */
+export function monthIn(timeZone: string, at: number): number {
+  const month = new Intl.DateTimeFormat('en-US', { timeZone, month: 'numeric' }).format(new Date(at));
+  return Number(month);
+}
+
+/**
+ * Hat ein Modus gerade zu? `summer` = Sommerpause (Wintersport), `winter` = Winterpause (Sommerspiele), `closed` =
+ * gerade geschlossen (andere Modi, z. B. während der Server beendet wird), null = nein. Gilt nur, solange sein Server
+ * wach ist – ein schlafender Modus ist nicht geschlossen, er wacht auf, sobald jemand kommt.
  */
 export function modePause(
   mode: Pick<ModeStatus, 'id' | 'state' | 'server' | 'awake' | 'phase'>,
-): 'summer' | 'closed' | null {
+): ModePause | null {
   if (mode.state !== 'on' || !mode.server || !mode.awake || mode.phase !== MODE_PHASE_PAUSE) return null;
-  return MODE_SEASON_BREAK.has(mode.id) ? 'summer' : 'closed';
+  return MODE_SEASON_BREAKS[mode.id] ?? 'closed';
 }
 
 /**
@@ -396,6 +490,7 @@ export const MODE_HEADLINE_STATS: Readonly<Record<string, string>> = {
   maibaumklau: 'captures',
   dorfkrimi: 'wins',
   baumeister: 'wins',
+  sommerspiele: 'gold',
 };
 
 export interface NetworkStatus {

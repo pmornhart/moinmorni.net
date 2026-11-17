@@ -35,6 +35,7 @@ const FIGURE_FILTER: Readonly<Record<ModeLook, string>> = {
   open: '',
   asleep: 'saturate-[0.85]',
   pause: 'saturate-[0.75]',
+  winterPause: 'saturate-[0.75]',
   closed: 'grayscale-[0.7] opacity-80',
   maintenance: 'grayscale-[0.35]',
   soon: 'brightness-0 opacity-75',

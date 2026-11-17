@@ -222,28 +222,60 @@ Seit dem 17.11. trägt jede Modus-Figur ein **Kostüm, das zu ihrem Spielmodus p
 (= Farbe des Modus) und am Gegenstand. Gezeichnet in `packages/builder/src/figuren.ts` (`MODE_FIGURES`, ein Kostüm
 malt über die Grundkleidung – `costume` im Outfit; Dorfleute sind unverändert):
 
-| Figur       | Kostüm                                                                 | 3D im Paket                              | Hält (`holds`, `lobby/common.ts`) |
-| ----------- | ---------------------------------------------------------------------- | ---------------------------------------- | --------------------------------- |
-| MorniCraft  | Abenteurerin: grüner Reiseumhang mit Spange, Tasche am Riemen, Stiefel | Hut mit breiter Krempe und Feder         | Diamant-Spitzhacke, Elytra        |
-| Duels       | Kämpfer: roter Wappenrock mit gekreuzten Schwertern, Kettenhemd        | Stirnband mit Enden, Schulterstücke      | Eisenschwert, Schild rot-weiß     |
-| Morni Party | Spielleiterin: Konfetti-Weste, Fliege, Ringelstrümpfe, Rock            | Federhut (drei bunte Federn), Rock       | Kuchen, Feuerwerksrakete          |
-| Gipfelsturm | Kletterer: Klettergurt, Seil über der Brust, Kletterschuhe             | Helm mit Stirnlampe, Seilrolle           | Eispickel                         |
-| Burgverlies | violetter Umhang, Amulett, Schlüsselbund                               | Kapuze, langer Umhang                    | Laterne                           |
-| Bollwerk    | Stadtwache: orangefarbener Wappenrock mit Turm, gesteppte Ärmel        | Eisenhut mit Federbusch                  | Armbrust, Schild mit Mauerwerk    |
-| MorniSMP    | Kaufmann: grauer Gehrock, Smaragd-Weste, Uhrkette, Geldbeutel          | Zylinder                                 | Smaragd, Bündel                   |
-| Wolkenkampf | Ballonfahrerin: Lederjacke mit Fellkragen, türkiser Schal              | Melone mit Fliegerbrille, Schal, Zöpfe   | Bogen                             |
-| Versteckerl | Dorfgendarm: Uniform, Schnauzbart, Bandelier, Trillerpfeife            | Pickelhaube                              | Fernrohr                          |
-| Wintersport | Skifahrerin: Rennanzug mit Startnummer, Skischuhe, rote Handschuhe     | Bommelmütze mit Skibrille, Ski am Rücken | Schneeball                        |
-| Adlerflug   | Flieger: Overall, weißer Schal, Stulpen, gefaltete Schwingen gemalt    | Fliegerhaube, große Adlerschwingen       | Feder                             |
-| Angelkönig  | Fischer: Anglerweste mit Ködern, Karohemd, Wathose                     | Fischerhut mit kleiner Krone             | Angel, Kabeljau                   |
-| Maibaumklau | Maibaum-Bursch: grün-weiße Schärpe, Seil, Weste, Lederhose             | Federhut mit Maibaum-Kranz und Bändern   | Axt, Leine                        |
-| Dorfkrimi   | Kommissar: Lodenmantel, rotes Halstuch, Notizbuch in der Brusttasche   | Jägerhut mit Gamsbart                    | Pinsel, Notizbuch                 |
-| Baumeister  | Baumeisterin: schwarze Kluft mit Perlmuttknöpfen, Zollstock, Gürtel    | Zimmermannshut mit breiter Krempe        | Ziegel, Schaufel                  |
+| Figur        | Kostüm                                                                 | 3D im Paket                              | Hält (`holds`, `lobby/common.ts`) |
+| ------------ | ---------------------------------------------------------------------- | ---------------------------------------- | --------------------------------- |
+| MorniCraft   | Abenteurerin: grüner Reiseumhang mit Spange, Tasche am Riemen, Stiefel | Hut mit breiter Krempe und Feder         | Diamant-Spitzhacke, Elytra        |
+| Duels        | Kämpfer: roter Wappenrock mit gekreuzten Schwertern, Kettenhemd        | Stirnband mit Enden, Schulterstücke      | Eisenschwert, Schild rot-weiß     |
+| Morni Party  | Spielleiterin: Konfetti-Weste, Fliege, Ringelstrümpfe, Rock            | Federhut (drei bunte Federn), Rock       | Kuchen, Feuerwerksrakete          |
+| Gipfelsturm  | Kletterer: Klettergurt, Seil über der Brust, Kletterschuhe             | Helm mit Stirnlampe, Seilrolle           | Eispickel                         |
+| Burgverlies  | violetter Umhang, Amulett, Schlüsselbund                               | Kapuze, langer Umhang                    | Laterne                           |
+| Bollwerk     | Stadtwache: orangefarbener Wappenrock mit Turm, gesteppte Ärmel        | Eisenhut mit Federbusch                  | Armbrust, Schild mit Mauerwerk    |
+| MorniSMP     | Kaufmann: grauer Gehrock, Smaragd-Weste, Uhrkette, Geldbeutel          | Zylinder                                 | Smaragd, Bündel                   |
+| Wolkenkampf  | Ballonfahrerin: Lederjacke mit Fellkragen, türkiser Schal              | Melone mit Fliegerbrille, Schal, Zöpfe   | Bogen                             |
+| Versteckerl  | Dorfgendarm: Uniform, Schnauzbart, Bandelier, Trillerpfeife            | Pickelhaube                              | Fernrohr                          |
+| Wintersport  | Skifahrerin: Rennanzug mit Startnummer, Skischuhe, rote Handschuhe     | Bommelmütze mit Skibrille, Ski am Rücken | Schneeball                        |
+| Adlerflug    | Flieger: Overall, weißer Schal, Stulpen, gefaltete Schwingen gemalt    | Fliegerhaube, große Adlerschwingen       | Feder                             |
+| Angelkönig   | Fischer: Anglerweste mit Ködern, Karohemd, Wathose                     | Fischerhut mit kleiner Krone             | Angel, Kabeljau                   |
+| Maibaumklau  | Maibaum-Bursch: grün-weiße Schärpe, Seil, Weste, Lederhose             | Federhut mit Maibaum-Kranz und Bändern   | Axt, Leine                        |
+| Dorfkrimi    | Kommissar: Lodenmantel, rotes Halstuch, Notizbuch in der Brusttasche   | Jägerhut mit Gamsbart                    | Pinsel, Notizbuch                 |
+| Baumeister   | Baumeisterin: schwarze Kluft mit Perlmuttknöpfen, Zollstock, Gürtel    | Zimmermannshut mit breiter Krempe        | Ziegel, Schaufel                  |
+| Sommerspiele | Ruderin: Ringeltrikot weiß-limette, kurze Hose, Medaille, Zöpfe        | Kreissäge (flacher Strohhut), Paddel     | Paddel (3D), Sonnenblume          |
 
 Ohne Paket und auf Bedrock trägt der Skin alles allein (Hüte, Umhänge, Seile, Schals sind gemalt). Ein Gegenstand mit
 Komponenten (z. B. ein Schild mit Muster) steht als `name{komponenten}` in `holds` (`itemSnbtOf` in `village.ts`).
 Brezn-Stand Brot, Blumenfrau Mohn. Test: jede Modus-Figur hat eine eigene Kopfbedeckung und ihr Kostüm
 (`trachten.test.ts`); Schulterstücke liegen oben auf den Armen, nicht darin.
+
+## Sport-Stand (Wintersport ↔ Sommerspiele, `sportstand.ts`, `LobbySportStand.java`)
+
+Wintersport (1. Dezember – 31. März) und die Sommerspiele (1. April – 30. November) teilen sich am Schlossmarkt einen
+Stand (der Platz von Wintersport, x −26). Es steht dort immer, wer gerade offen ist:
+
+- **Winter:** verschneite **Skihütte** – dunkles Fichtenholz, Stufendach mit dickem Schnee und zwei Reihen Überstand,
+  Eiszapfen, Laternen darunter, drei Paar Ski am Eckpfosten, Startnummern-Banner (7 und 12), Bank mit Fell, Theke mit
+  Schnee und blauem Eis, Ofen; davor die Skifahrerin.
+- **Sommer:** helles **Bootshaus am Bergsee** – Birkenholz, Satteldach aus dunkler Eiche bis über den Steg, Ruderboot an
+  der Rückwand, gekreuzte Paddel, Rettungsring, Bogenscheibe auf dem Strohballen, gelb-weißer Sonnenschirm,
+  Blumenkästen, Wimpelkette, Vereinsfahne; davor die Ruderin.
+
+**Wer dasteht**, entscheidet der Hub (`sportStand` in `@moinmorni/shared`, Feld `sport` der Nachricht `lobby`): Panel →
+Lobby → Saison-Deko → „Sport-Stand am Schlossmarkt“ fest auf eine Seite (für Tests und Feste, `/lobby sportstand
+auto|winter|sommer`) geht vor; sonst steht da, wer **keine** Saison-Pause meldet (Wintersport `closed` = Sommerpause,
+Sommerspiele `closed` = Winterpause); hat nur einer schon einen Server, der; sonst (beide offen – Wintersport steht
+in seiner config.yml ab Werk auf „das ganze Jahr“ – oder nichts gemeldet) der Kalender in der Zeitzone des Netzwerks.
+Der Hub schickt den Stand stündlich noch einmal (Monatswechsel). Im **Kompass** steht nur der Modus am Stand; der
+andere fehlt dort (er ist zu, und eine zweite Sport-Figur gibt es im Dorf nicht) – über `/server` geht er trotzdem.
+
+**Umbau** (wie die Saisons, `saison-plan.ts`): Im Bauplan steht die Skihütte ohne Figur. Das Saison-Datenpaket hat
+`sport/sommerspiele_on` (Bootshaus-Blöcke) und `sport/sommerspiele_off` (genau die alten Blöcke an genau den
+geänderten Stellen) sowie `sport/wintersport` und `sport/sommerspiele` (räumt alle Wesen `mm_sport` am Stand ab, setzt
+Figur, Schild und Deko mit `mm_sport_<modus>`). Ein Merker-Block unter dem Boden (x −26, y 62, z −33: Packeis =
+Skihütte, Sandstein = Bootshaus) sagt, was steht. Das Lobby-Plugin hält die zwei Stücke des Stands geladen, prüft alle
+5 Sekunden und bei jeder Hub-Meldung: Merker ≠ gewünscht → Umbau-Funktion (eine Funktion läuft in einem Tick – ein
+Absturz trifft nie einen halben Stand); fehlt die Figur des richtigen Modus oder stehen Wesen des anderen herum →
+Figur-Funktion. Saison-Deko (Schnee, Girlanden, Herzen, Kürbisse) lässt den Stand in Ruhe (`inSportZone`): beide Looks
+bringen ihren eigenen Schmuck mit. Ein Neubau der Lobby setzt die Skihütte; das Plugin baut gleich danach um, wenn
+Sommer ist. Bauplan-Prüfung für beide Looks samt Figur und Deko ohne Funde.
 
 ## Im Netzwerk-Plugin (`LobbyNpcs.java`)
 

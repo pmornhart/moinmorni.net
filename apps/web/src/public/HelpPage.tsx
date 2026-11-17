@@ -16,6 +16,7 @@ import {
   Monitor,
   Rocket,
   Smartphone,
+  Snowflake,
   Sparkles,
   Sun,
   Terminal,
@@ -481,6 +482,10 @@ function ModesBody(): ReactElement {
       <p className="flex items-start gap-2.5 text-[15px] text-muted-foreground">
         <Sun className="mt-1 size-4 shrink-0 text-gold" aria-hidden />
         {t('site.help.modes.pause')}
+      </p>
+      <p className="flex items-start gap-2.5 text-[15px] text-muted-foreground">
+        <Snowflake className="mt-1 size-4 shrink-0 text-blue" aria-hidden />
+        {t('site.help.modes.winterPause')}
       </p>
       <GameButton asChild tone="stone" className="justify-self-start">
         <Link to="/spielmodi">

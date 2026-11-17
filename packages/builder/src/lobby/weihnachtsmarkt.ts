@@ -18,6 +18,7 @@ import { pairs, range } from '../range.js';
 import { gableRoof, STEP, type Facing } from '../shapes.js';
 import { MARKET } from './dorfplatz.js';
 import { MARKET_ARCH_Z, SCHLOSSMARKT } from './schlossmarkt.js';
+import { SPORT_HOST } from './sportstand.js';
 import {
   aroundX,
   aroundY,
@@ -43,11 +44,21 @@ export interface Stall {
   readonly ring: boolean;
 }
 
-/** Alle Stände: Dorfmarkt um den Maibaum bzw. Christbaum und Schlossmarkt (Mitte der Vorderkante, Blickrichtung). */
+/**
+ * Alle Stände: Dorfmarkt um den Maibaum bzw. Christbaum und Schlossmarkt (Mitte der Vorderkante, Blickrichtung). Der
+ * Sport-Stand (Skihütte bzw. Bootshaus, `sportstand.ts`) bringt seinen eigenen Schmuck mit und fehlt hier.
+ */
 export const STALLS: readonly Stall[] = [
   ...MARKET.map(([x, z, front]) => ({ x, z, front, ring: true })),
-  ...SCHLOSSMARKT.map((s) => ({ x: s.x, z: s.z, front: 'south' as Facing, ring: false })),
+  ...SCHLOSSMARKT.filter((s) => s.mode !== SPORT_HOST).map((s) => ({
+    x: s.x,
+    z: s.z,
+    front: 'south' as Facing,
+    ring: false,
+  })),
 ];
+/** Abstand zweier benachbarter Stände am Schlossmarkt (dazwischen hängt eine Kette, über eine Lücke nicht). */
+const NEIGHBOUR_GAP = 8;
 
 const SCRATCH = new Canvas();
 /** Bau-Rahmen eines Stands wie in `stallAt` (common.ts): Ursprung drei Blöcke links der Mitte. */
@@ -205,7 +216,7 @@ function schlossmarktKetten(): string[] {
       ...(first ? lightChain('kette', arch, inner(first), 0.9, CHAIN_LIGHTS) : []),
       ...stalls.slice(1).flatMap((s, i) => {
         const prev = stalls[i];
-        if (!prev) return [];
+        if (!prev || Math.abs(Math.abs(s.x) - Math.abs(prev.x)) > NEIGHBOUR_GAP) return [];
         // Seit acht Ständen (17.11.) stoßen die Markisen fast aneinander – dort hängt keine Kette.
         const [a, b] = [outer(prev), inner(s)];
         if (Math.hypot(b[0] - a[0], b[2] - a[2]) < MIN_CHAIN) return [];

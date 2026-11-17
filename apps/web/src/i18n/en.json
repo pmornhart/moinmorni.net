@@ -144,7 +144,8 @@
       "closed": "Closed",
       "maintenance": "Maintenance",
       "soon": "Soon",
-      "pause": "Summer break"
+      "pause": "Summer break",
+      "winterPause": "Winter break"
     },
     "modeHint": {
       "on": "Open",
@@ -159,6 +160,7 @@
       "maintenance": "Under maintenance – back soon.",
       "soon": "Coming soon – still being built.",
       "pause": "Summer break right now – competitions run from 1 December to 31 March. You can still visit the village.",
+      "winterPause": "Winter break right now – competitions run from 1 April to 30 November. You can still visit the village by the lake.",
       "invite": "Invite only – you need a spot on the whitelist. Ask on Discord.",
       "inviteApply": "Invite only – apply for a spot on the whitelist."
     },
@@ -189,7 +191,8 @@
       "about": "About {{name}}",
       "topTitle": "Leaderboard · {{value}}",
       "topAll": "See all",
-      "pauseText": "Summer break: no competitions until winter. The ice rink, chairlift and toboggan run in the village are still open – feel free to drop by."
+      "pauseText": "Summer break: no competitions until winter. The ice rink, chairlift and toboggan run in the village are still open – feel free to drop by.",
+      "winterPauseText": "Winter break: no competitions until spring. The village by the mountain lake with beer garden, maypole and courses is still open – feel free to drop by. In winter, Winter Games are on."
     },
     "stats": {
       "eyebrow": "Leaderboards",
@@ -405,6 +408,15 @@
           "blocks": "Blocks placed",
           "best_score": "Best rating (stars)",
           "best_points": "Most stars in a round"
+        },
+        "sommerspiele": {
+          "subjectHead": "Event",
+          "wins": "Overall wins",
+          "best_points": "Most points in one competition",
+          "bogen_rings": "Rings in archery",
+          "bogen_centres": "Bullseyes",
+          "bogen_best": "Most rings in archery",
+          "kiste_crashes": "Soapbox derailments"
         }
       },
       "courses": {
@@ -435,7 +447,10 @@
         "bergduell": "Mountain Duel",
         "huette": "Hut Climb",
         "turnier": "Summit Cup",
-        "tatzelwurm": "The Tatzelwurm"
+        "tatzelwurm": "The Tatzelwurm",
+        "almlauf": "Alpine run",
+        "regatta": "Rowing regatta",
+        "seifenkiste": "Soapbox race"
       },
       "coursesIn": {
         "gipfelsturm": {
@@ -565,7 +580,8 @@
         "short": "All modes at a glance – and how to get there",
         "intro": "You reach every game mode from the lobby: the figures at the village market around the maypole and at the castle market in front of the castle stairs take you there with one click. The compass in your hotbar is even quicker.",
         "sleep": "The game modes run around the clock – you get in right away. If a mode does sleep, it wakes up as soon as you arrive – that takes about half a minute.",
-        "pause": "Winter Games can take a summer break: then there are competitions only in winter (1 December to 31 March) – the village with ice rink, lift and toboggan run stays open.",
+        "pause": "Winter Games take a summer break: competitions run only in winter (1 December to 31 March) – the village with ice rink, lift and toboggan run stays open.",
+        "winterPause": "Summer Games take a winter break: competitions run from 1 April to 30 November – the village by the lake stays open. That way one of the two sports modes is always in season, and the one that is open stands at the castle market.",
         "more": "More",
         "all": "All game modes"
       },
@@ -902,6 +918,21 @@
           "stats": "Your stats – or someone else’s.",
           "top": "The best master builders.",
           "admin": "State of the rounds (team)."
+        }
+      },
+      "sommerspiele": {
+        "tip1": "In the summer village by the mountain lake you vote: the whole competition of four events or just one.",
+        "tip2": "Alpine run over hay bales, a brook and the cow pasture, archery with wind at 20, 35 and 50 blocks, rowing regatta through buoy gates – parties row in pairs.",
+        "tip3": "Soapbox race in a minecart: S brakes, and anyone who takes a bend too fast derails. At the junction the steep track tempts you.",
+        "tip4": "Gold, silver and bronze are handed out at the podium. Open from April to November – in winter it is Winter Games’ season.",
+        "cmd": {
+          "abstimmen": "Choose the competition or an event.",
+          "bereit": "Say you are ready.",
+          "top": "Medals and best results – also per event.",
+          "zuschauen": "Watch the running competition.",
+          "verlassen": "Leave the competition or stop watching.",
+          "stats": "Your medals – or someone else’s.",
+          "admin": "State of the competition (team)."
         }
       }
     },

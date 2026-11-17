@@ -44,6 +44,8 @@ export const ADLERFLUG_COURSES = [
 const ADLERFLUG_DAILY = 'tagesflug';
 /** Disziplinen von Wintersport (`time_<disziplin>_ms`). */
 export const WINTERSPORT_DISCIPLINES = ['slalom', 'biathlon', 'bob'] as const;
+/** Disziplinen der Sommerspiele mit Bestzeit (`time_<disziplin>_ms`; Bogenschießen zählt Ringe: `bogen_best`). */
+export const SOMMERSPIELE_DISCIPLINES = ['almlauf', 'regatta', 'seifenkiste'] as const;
 /** Spielarten von Baumeister (`games_<spielart>`). */
 export const BAUMEISTER_GAME_TYPES = ['klassisch', 'schnell', 'paare'] as const;
 
@@ -174,6 +176,21 @@ export const MODE_STAT_KEYS: Readonly<Record<string, readonly string[]>> = {
     'best_score',
     'best_points',
     ...each(BAUMEISTER_GAME_TYPES, 'games'),
+  ],
+  sommerspiele: [
+    'events',
+    'wins',
+    'races',
+    'points',
+    'gold',
+    'silver',
+    'bronze',
+    'bogen_rings',
+    'bogen_centres',
+    'kiste_crashes',
+    'best_points',
+    'bogen_best',
+    ...timesOf(SOMMERSPIELE_DISCIPLINES),
   ],
 };
 

@@ -1,4 +1,5 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- positions in the lobby as the build has them */
+import { SPORT_LOOKS } from '../src/lobby/sportstand.js';
 import { describe, expect, it } from 'vitest';
 import { GROUND } from '../src/nature.js';
 import { pairs, range } from '../src/range.js';
@@ -22,8 +23,16 @@ describe('Dorfmarkt und Schlossmarkt', () => {
     .map((m) => ({ mode: m[4]!, x: Number(m[1]), y: Number(m[2]), z: Number(m[3]) }));
 
   it('jeder Modus hat genau eine Figur zum Anklicken – die ersten sieben am Maibaum, die übrigen am Schlossmarkt', () => {
-    expect(figures.map((f) => f.mode).sort()).toEqual(MODES.map((m) => m.id).sort());
-    MODES.forEach((mode, i) => {
+    // Wintersport und Sommerspiele stehen am Sport-Stand – ihre Figur setzt das Lobby-Plugin je nach Saison
+    // (`sportstand.ts`), sie ist nicht im Bauplan.
+    const sport: readonly string[] = SPORT_LOOKS;
+    expect(figures.map((f) => f.mode).sort()).toEqual(
+      MODES.map((m) => m.id)
+        .filter((id) => !sport.includes(id))
+        .sort(),
+    );
+    SPORT_LOOKS.forEach((look) => expect(modeIcon(look), look).not.toBe('compass'));
+    MODES.filter((m) => !sport.includes(m.id)).forEach((mode, i) => {
       const f = figures.find((x) => x.mode === mode.id)!;
       const near = Math.hypot(f.x, f.z);
       if (i < RING_MODES) expect(near, mode.id).toBeLessThan(20);

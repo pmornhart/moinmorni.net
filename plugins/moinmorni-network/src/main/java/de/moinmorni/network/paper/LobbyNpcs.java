@@ -66,6 +66,8 @@ import org.joml.Vector3f;
 final class LobbyNpcs implements Listener {
 
     private static final String NPC_TAG = "mm_npc";
+    /** Wesen am Sport-Stand (`mm_sport_<modus>`), siehe {@link LobbySportStand}. */
+    private static final String SPORT_TAG = "mm_sport";
     private static final String MODE_TAG = "mm_mode_";
     private static final String MODE_NPC_TAG = "mm_mode_npc";
     private static final String WORLD_LABEL_TAG = "mm_mode_label";
@@ -149,6 +151,16 @@ final class LobbyNpcs implements Listener {
                     boolean hasServer, boolean awake, String icon, String phase, String pause) {
         boolean summerBreak() {
             return "on".equals(state) && hasServer && "summer".equals(pause);
+        }
+
+        /** Winterpause (Sommerspiele außerhalb der Saison – das Dorf am Bergsee ist trotzdem offen). */
+        boolean winterBreak() {
+            return "on".equals(state) && hasServer && "winter".equals(pause);
+        }
+
+        /** Saison-Pause, ob Sommer oder Winter: hinein darf man trotzdem, zum Anschauen. */
+        boolean seasonBreak() {
+            return summerBreak() || winterBreak();
         }
 
         boolean closedNow() {
@@ -243,6 +255,10 @@ final class LobbyNpcs implements Listener {
     private volatile int walkerLimit = Integer.MAX_VALUE;
     /** Reihenfolge der Modi wie im Panel. */
     private volatile List<String> order = List.of();
+    /** Wer gerade am Sport-Stand steht (vom Hub); der andere Sport-Modus fehlt im Kompass. */
+    private volatile String sport;
+    /** Die beiden Modi, die sich den Sport-Stand teilen. */
+    static final java.util.Set<String> SPORT_MODES = java.util.Set.of("wintersport", "sommerspiele");
 
     LobbyNpcs(JavaPlugin plugin, HubClient hub, Function<Player, String> langOf) {
         this.plugin = plugin;
@@ -281,6 +297,12 @@ final class LobbyNpcs implements Listener {
         modes.clear();
         modes.putAll(fresh);
         order = list.asList().stream().map(el -> HubClient.str(el.getAsJsonObject(), "id")).toList();
+        String next = HubClient.str(m, "sport");
+        if (next != null && !next.isEmpty() && !next.equals(sport)) {
+            sport = next;
+            Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getWorlds().forEach(w -> w.getEntities().stream()
+                    .filter(e -> e.getScoreboardTags().contains(SPORT_TAG)).forEach(this::adopt)));
+        }
         Bukkit.getScheduler().runTask(plugin, this::refreshLabels);
     }
 
@@ -328,6 +350,8 @@ final class LobbyNpcs implements Listener {
             state = Component.text(en ? "⚒ Maintenance" : "⚒ Wartung", NamedTextColor.GOLD);
         } else if (m.summerBreak()) {
             state = Component.text(en ? "☀ Summer break" : "☀ Sommerpause", NamedTextColor.YELLOW);
+        } else if (m.winterBreak()) {
+            state = Component.text(en ? "❄ Winter break" : "❄ Winterpause", NamedTextColor.AQUA);
         } else if (m.closedNow()) {
             state = Component.text(en ? "● Closed right now" : "● Gerade geschlossen", NamedTextColor.GOLD);
         } else if (!m.awake()) {
@@ -335,7 +359,7 @@ final class LobbyNpcs implements Listener {
         } else {
             state = Component.text("● " + m.players() + playing(m.players(), en), NamedTextColor.GREEN);
         }
-        if (m.summerBreak()) {
+        if (m.seasonBreak()) {
             hint = Component.text(en ? "Right-click to look around" : "Rechtsklick: Dorf anschauen", HINT_GREY);
         } else if (m.closedNow()) {
             hint = Component.text(en ? "Back in a moment" : "Gleich wieder offen", HINT_GREY);
@@ -383,6 +407,10 @@ final class LobbyNpcs implements Listener {
     }
 
     private static boolean fromLobbyBuild(java.util.Set<String> tags) {
+        // Der Sport-Stand setzt seine Figur selbst (ohne Bau-Version) – sie gehört nicht zu einem älteren Bau
+        if (tags.contains(SPORT_TAG)) {
+            return false;
+        }
         return tags.contains(LOBBY_TAG) || OLD_LOBBY_TAGS.stream().anyMatch(tags::contains);
     }
 
@@ -394,6 +422,13 @@ final class LobbyNpcs implements Listener {
 
     private void adopt(Entity e) {
         var tags = e.getScoreboardTags();
+        // Sport-Stand: Wesen des anderen Modus (Figur, Schild, Deko) weg
+        String atStand = sport;
+        if (atStand != null && tags.contains(SPORT_TAG) && !tags.contains(SPORT_TAG + "_" + atStand)) {
+            e.getPassengers().forEach(Entity::remove);
+            e.remove();
+            return;
+        }
         String current = season;
         if (current != null && tags.contains("mm_season") && !tags.contains("mm_season_" + current)) {
             e.remove();
@@ -516,7 +551,8 @@ final class LobbyNpcs implements Listener {
     public void onAdd(EntityAddToWorldEvent event) {
         Entity e = event.getEntity();
         var tags = e.getScoreboardTags();
-        if (!fromLobbyBuild(tags) && !tags.contains(WORLD_LABEL_TAG) && !tags.contains("mm_season")) {
+        if (!fromLobbyBuild(tags) && !tags.contains(WORLD_LABEL_TAG) && !tags.contains("mm_season")
+                && !tags.contains(SPORT_TAG)) {
             return;
         }
         Bukkit.getScheduler().runTask(plugin, () -> {
@@ -613,9 +649,17 @@ final class LobbyNpcs implements Listener {
         });
     }
 
-    /** Modi mit Zahlen in der Reihenfolge des Panels (für das Kompass-Menü). */
+    /** Modi mit Zahlen in der Reihenfolge des Panels (für das Kompass-Menü) – vom Sport-Stand nur, wer dort steht. */
     List<ModeInfo> orderedModes() {
-        return order.stream().map(modes::get).filter(java.util.Objects::nonNull).toList();
+        return compassModes(order.stream().map(modes::get).filter(java.util.Objects::nonNull).toList(), sport);
+    }
+
+    /** Kompass: von Wintersport und Sommerspielen nur, wer am Sport-Stand steht (ohne Angabe beide). */
+    static List<ModeInfo> compassModes(List<ModeInfo> all, String sport) {
+        if (sport == null || sport.isEmpty()) {
+            return all;
+        }
+        return all.stream().filter(m -> !SPORT_MODES.contains(m.id()) || sport.equals(m.id())).toList();
     }
 
 

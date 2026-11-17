@@ -228,7 +228,24 @@ export const MODES: readonly Mode[] = [
     holds: { hand: 'brick', offhand: 'iron_shovel' },
     goods: ['bricks', 'scaffolding', 'crafting_table', 'potted_oak_sapling'],
   },
+  {
+    // Teilt sich den Sport-Stand am Schlossmarkt mit Wintersport (`sportstand.ts`): im Sommer steht hier die Ruderin
+    // vor dem Bootshaus, im Winter die Skifahrerin vor der Skihütte. Das Paddel hält sie in 3D (Lobby-Paket).
+    id: 'sommerspiele',
+    name: 'Sommerspiele',
+    colour: 'lime',
+    line: '● 5 spielen',
+    status: 'Rechtsklick: Mitspielen',
+    skin: 'sommerspiele',
+    icon: 'sunflower',
+    tint: '#c8e04a',
+    holds: { offhand: 'sunflower' },
+    goods: ['potted_cornflower', 'melon', 'cake', 'potted_poppy'],
+  },
 ];
+
+/** Modi, die sich einen Stand teilen: der zweite steht am Stand des ersten, je nach Saison (`sportstand.ts`). */
+export const SHARED_STAND: Readonly<Record<string, string>> = { sommerspiele: 'wintersport' };
 
 /** 0 innerhalb von `from`, 1 ab `to`, weich dazwischen. */
 export function ramp(d: number, from: number, to: number): number {

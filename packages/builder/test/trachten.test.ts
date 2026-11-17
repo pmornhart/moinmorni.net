@@ -107,7 +107,9 @@ describe('Trachten in 3D', () => {
             const between = e.from[0]! >= 3.85 && e.to[0]! <= 12.15;
             // Schulterstücke liegen oben auf den Armen (über der zweiten Ebene bei 24,25), neben dem Kopf
             const onTop = e.from[1]! >= 24.3 && (e.to[0]! <= 3.45 || e.from[0]! >= 12.55);
-            expect(behind || between || onTop, `${name} ${JSON.stringify(e)}`).toBe(true);
+            // Außen neben dem Arm (das Paddel der Ruderin, die Hand hält es)
+            const beside = e.to[0]! <= -0.25 || e.from[0]! >= 16.25;
+            expect(behind || between || onTop || beside, `${name} ${JSON.stringify(e)}`).toBe(true);
           }),
       );
   });
@@ -122,6 +124,7 @@ describe('Trachten in 3D', () => {
     expect(bodyParts(MODE_FIGURES.adlerflug)).toEqual(expect.arrayContaining(['fluegel', 'schal']));
     expect(bodyParts(MODE_FIGURES.wintersport)).toContain('skier');
     expect(bodyParts(MODE_FIGURES.duels)).toContain('schulter');
+    expect(bodyParts(MODE_FIGURES.sommerspiele)).toEqual(expect.arrayContaining(['paddel', 'zoepfe']));
     expect(bodyParts(MODE_FIGURES.wolkenkampf)).toEqual(expect.arrayContaining(['schal', 'zoepfe']));
   });
 });

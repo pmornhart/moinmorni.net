@@ -144,7 +144,8 @@
       "closed": "Geschlossen",
       "maintenance": "Wartung",
       "soon": "Bald",
-      "pause": "Sommerpause"
+      "pause": "Sommerpause",
+      "winterPause": "Winterpause"
     },
     "modeHint": {
       "on": "Offen",
@@ -159,6 +160,7 @@
       "maintenance": "Gerade in Wartung – bald wieder da.",
       "soon": "Kommt bald – wir bauen noch daran.",
       "pause": "Gerade Sommerpause – Wettkämpfe gibt es vom 1. Dezember bis 31. März. Das Dorf kannst du trotzdem besuchen.",
+      "winterPause": "Gerade Winterpause – Wettkämpfe gibt es vom 1. April bis 30. November. Das Dorf am Bergsee kannst du trotzdem besuchen.",
       "invite": "Nur auf Einladung – du brauchst einen Platz auf der Whitelist. Frag im Discord nach.",
       "inviteApply": "Nur auf Einladung – bewirb dich um einen Platz auf der Whitelist."
     },
@@ -189,7 +191,8 @@
       "about": "Über {{name}}",
       "topTitle": "Bestenliste · {{value}}",
       "topAll": "Alle ansehen",
-      "pauseText": "Sommerpause: Bis zum Winter gibt es keine Wettkämpfe. Eisfläche, Sessellift und Rodelbahn im Dorf sind trotzdem offen – schau gern vorbei."
+      "pauseText": "Sommerpause: Bis zum Winter gibt es keine Wettkämpfe. Eisfläche, Sessellift und Rodelbahn im Dorf sind trotzdem offen – schau gern vorbei.",
+      "winterPauseText": "Winterpause: Bis zum Frühling gibt es keine Wettkämpfe. Das Dorf am Bergsee mit Biergarten, Maibaum und Strecken ist trotzdem offen – schau gern vorbei. Im Winter wartet Wintersport."
     },
     "stats": {
       "eyebrow": "Ranglisten",
@@ -405,6 +408,15 @@
           "blocks": "Blöcke gesetzt",
           "best_score": "Beste Wertung (Sterne)",
           "best_points": "Meiste Sterne in einer Runde"
+        },
+        "sommerspiele": {
+          "subjectHead": "Disziplin",
+          "wins": "Gesamtsiege",
+          "best_points": "Meiste Punkte in einem Wettkampf",
+          "bogen_rings": "Ringe beim Bogenschießen",
+          "bogen_centres": "Treffer in die Mitte",
+          "bogen_best": "Meiste Ringe beim Bogenschießen",
+          "kiste_crashes": "Entgleist mit der Seifenkiste"
         }
       },
       "courses": {
@@ -435,7 +447,10 @@
         "bergduell": "Bergduell",
         "huette": "Hüttenaufstieg",
         "turnier": "Gipfel-Turnier",
-        "tatzelwurm": "Der Tatzelwurm"
+        "tatzelwurm": "Der Tatzelwurm",
+        "almlauf": "Almlauf",
+        "regatta": "Ruderregatta",
+        "seifenkiste": "Seifenkistenrennen"
       },
       "coursesIn": {
         "gipfelsturm": {
@@ -565,7 +580,8 @@
         "short": "Alle Modi auf einen Blick – und wie du hinkommst",
         "intro": "Alle Spielmodi erreichst du aus der Lobby: Die Figuren am Dorfmarkt um den Maibaum und am Schlossmarkt vor der Schlosstreppe bringen dich mit einem Klick hin. Mit dem Kompass in deiner Leiste geht es noch schneller.",
         "sleep": "Die Spielmodi laufen rund um die Uhr – du kommst sofort hinein. Schläft ein Modus doch einmal, wacht er auf, sobald du kommst – das dauert etwa eine halbe Minute.",
-        "pause": "Wintersport kann eine Sommerpause machen: Dann gibt es nur im Winter (1. Dezember bis 31. März) Wettkämpfe – das Dorf mit Eisfläche, Lift und Rodelbahn bleibt offen.",
+        "pause": "Wintersport macht eine Sommerpause: Wettkämpfe gibt es nur im Winter (1. Dezember bis 31. März) – das Dorf mit Eisfläche, Lift und Rodelbahn bleibt offen.",
+        "winterPause": "Die Sommerspiele machen eine Winterpause: Wettkämpfe gibt es vom 1. April bis 30. November – das Dorf am Bergsee bleibt offen. So hat immer einer der beiden Sport-Modi Saison, und am Schlossmarkt steht der, der gerade offen ist.",
         "more": "Mehr",
         "all": "Alle Spielmodi"
       },
@@ -902,6 +918,21 @@
           "stats": "Deine Statistik – oder die von jemand anderem.",
           "top": "Die besten Baumeister.",
           "admin": "Stand der Runden (Team)."
+        }
+      },
+      "sommerspiele": {
+        "tip1": "Im Sommerdorf am Bergsee stimmt ihr ab: der ganze Wettkampf aus vier Disziplinen oder nur eine.",
+        "tip2": "Almlauf über Heuballen, Bach und Kuhweide, Bogenschießen mit Wind auf 20, 35 und 50 Blöcke, Ruderregatta durch Bojen-Tore – Partys rudern zu zweit.",
+        "tip3": "Seifenkistenrennen in der Lore: S bremst, wer zu schnell in die Kurve fährt, entgleist. An der Weiche lockt das Steilstück.",
+        "tip4": "Gold, Silber und Bronze gibt es am Treppchen. Offen von April bis November – im Winter hat Wintersport Saison.",
+        "cmd": {
+          "abstimmen": "Wettkampf oder Disziplin wählen.",
+          "bereit": "Bereit melden.",
+          "top": "Medaillen und Bestwerte – auch je Disziplin.",
+          "zuschauen": "Dem laufenden Wettkampf zuschauen.",
+          "verlassen": "Wettkampf oder Zuschauen verlassen.",
+          "stats": "Deine Medaillen – oder die von jemand anderem.",
+          "admin": "Stand des Wettkampfs (Team)."
         }
       }
     },

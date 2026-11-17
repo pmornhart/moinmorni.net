@@ -16,9 +16,14 @@ import {
  * 4) – mit allen Modi passte das nicht mehr gleichzeitig in den Container. Ältere Installationen bekommen die neuen Werte einmal, aber nur
  * Server, die noch genau den alten Standard haben (im Panel nie geändert). Laufende Server übernehmen ihn beim
  * nächsten Neustart (den stellt das Netzwerk an, sobald niemand drauf ist).
+ * Zweiter Schritt (17.11., Sommerspiele dazu): Wintersport teilt sich das Jahr mit den Sommerspielen und bekommt 1 GB
+ * statt 1,5 – wieder nur, wo noch der alte Standard steht.
  */
 
 const MARKER = 'memory-plan-2';
+const MARKER_SPORT = 'memory-plan-3';
+/** Zweiter Schritt: Modus → alter Standard (der neue steht in `MODE_MEMORY_MB`). */
+const OLD_SPORT_MB: Readonly<Record<string, number>> = { wintersport: 1536 };
 const OLD_DEFAULT_MB = 3072;
 const OLD_MODE_MB: Readonly<Record<string, number>> = { mirni: 8192, mornicraft: 6144 };
 const OLD_BUILD_MB = 3072;
@@ -50,15 +55,22 @@ export async function retuneMemory(
   log: FastifyBaseLogger,
 ): Promise<Member[]> {
   const marker = path.join(dataDir, MARKER);
-  if (fs.existsSync(marker)) return [];
+  const markerSport = path.join(dataDir, MARKER_SPORT);
+  const first = !fs.existsSync(marker);
+  const second = !fs.existsSync(markerSport);
+  if (!first && !second) return [];
   const list = await motor.request<Array<{ readonly id: string; readonly memoryMb: number }>>(
     'GET',
     '/api/servers',
   );
   const memoryOf = new Map(list.map((s) => [s.id, s.memoryMb]));
   const changes = members.flatMap((m) => {
-    const p = plan(m.member, modes);
-    return p && p.old !== p.now && memoryOf.get(m.serverId) === p.old ? [{ ...m, memoryMb: p.now }] : [];
+    const p = first ? plan(m.member, modes) : undefined;
+    if (p && p.old !== p.now && memoryOf.get(m.serverId) === p.old) return [{ ...m, memoryMb: p.now }];
+    const mode = second ? modes.find((md) => md.server === m.member) : undefined;
+    const old = mode ? OLD_SPORT_MB[mode.id] : undefined;
+    const now = mode ? (MODE_MEMORY_MB[mode.id] ?? MODE_DEFAULT_MEMORY_MB) : undefined;
+    return old && now && old !== now && memoryOf.get(m.serverId) === old ? [{ ...m, memoryMb: now }] : [];
   });
   await changes.reduce(async (prev, c) => {
     await prev;
@@ -68,6 +80,8 @@ export async function retuneMemory(
       'Netzwerk: Arbeitsspeicher an den neuen Standard angepasst',
     );
   }, Promise.resolve());
-  fs.writeFileSync(marker, `${new Date().toISOString()}\n`);
+  const stamp = `${new Date().toISOString()}\n`;
+  if (first) fs.writeFileSync(marker, stamp);
+  if (second) fs.writeFileSync(markerSport, stamp);
   return changes.map(({ serverId, member }) => ({ serverId, member }));
 }

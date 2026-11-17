@@ -29,6 +29,7 @@ import { JUMP_AND_RUN } from './jumpandrun.js';
 import { displayStuck, type World } from '../pruefung.js';
 import { aroundX, aroundY, aroundZ, blockDisplay, placeModel, type Vec } from './deko.js';
 import { settleDown } from './halt.js';
+import { inSportZone } from './sportstand.js';
 import { BUDEN, budeArea, krippeArea, weihnachtsmarkt } from './weihnachtsmarkt.js';
 import { grosserSchlitten, rodel, schneemann } from './winter-figuren.js';
 import {
@@ -714,6 +715,8 @@ export function winterPlan(base: Canvas): WinterPlan {
   const blocks = new Canvas();
   const restore = new Canvas();
   w.find(() => true).forEach(([x, y, z, b]) => {
+    // Der Sport-Stand bringt als Skihütte seinen eigenen Schnee mit (`sportstand.ts`)
+    if (inSportZone(x, y, z)) return;
     const old = v.before(x, y, z);
     if (old === b) return;
     blocks.set(x, y, z, b);

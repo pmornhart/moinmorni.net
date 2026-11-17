@@ -333,6 +333,12 @@ function MODE_HATS(): Record<string, readonly Part[]> {
       p([LO + 0.4, HI + 2.6, LO + 0.4], [HI - 0.4, HI + 3.2, HI - 0.4], 'filz', 0),
       p([X0 - 0.2, BRIM + 0.6, X0 - 0.2], [X1 + 0.2, BRIM + 1.8, X1 + 0.2], 'band', 1),
     ],
+    // Kreissäge: flacher Strohhut, gerade breite Krempe, niedriger flacher Kopf, breites Band (Farbe 1)
+    boater: [
+      p([LO - 3.2, BRIM, LO - 3.2], [HI + 3.2, BRIM + 0.5, HI + 3.2], 'stroh'),
+      p([X0, BRIM + 0.5, X0], [X1, HI + 1.6, X1], 'stroh'),
+      p([X0 - 0.2, BRIM + 0.5, X0 - 0.2], [X1 + 0.2, BRIM + 2.3, X1 + 0.2], 'band', 1),
+    ],
     // Fischerhut: Krempe nach unten, Band (Farbe 1), oben eine kleine goldene Krone
     bucket: [
       p([LO - 2.6, BRIM - 1.2, LO - 2.6], [HI + 2.6, BRIM - 0.4, HI + 2.6], 'filz', 0),
@@ -454,6 +460,16 @@ const SCHULTER: readonly Part[] = [
   p([13.0, 25.4, 6.0], [16.3, 26.0, 10.0], 'metall', 0),
 ];
 
+/**
+ * Ruder-Paddel: aufrecht rechts neben der Figur (außerhalb des Arms), die Hand hält den Schaft; oben das breite Blatt
+ * in der Vereinsfarbe (Farbe 1), Schaft in Farbe 0.
+ */
+const PADDEL: readonly Part[] = [
+  p([-1.3, 1.0, 7.6], [-0.5, 25.0, 8.4], 'ski', 0),
+  p([-1.5, 11.6, 7.4], [-0.3, 12.8, 8.6], 'ski', 0), // Griffwulst in der Hand
+  p([-2.7, 25.0, 7.75], [0.7, 32.0, 8.25], 'ski', 1),
+];
+
 const BODY_PARTS = {
   rock: ROCK,
   schuerze: SCHUERZE,
@@ -465,6 +481,7 @@ const BODY_PARTS = {
   fluegel: FLUEGEL,
   skier: SKIER,
   schulter: SCHULTER,
+  paddel: PADDEL,
 };
 export type BodyPart = keyof typeof BODY_PARTS;
 const BODY_ORDER: readonly BodyPart[] = [
@@ -478,6 +495,7 @@ const BODY_ORDER: readonly BodyPart[] = [
   'fluegel',
   'skier',
   'schulter',
+  'paddel',
 ];
 /** Wie viele Farben jedes Körperteil braucht (sie liegen hintereinander in `custom_model_data`). */
 const BODY_COLOURS: Readonly<Record<BodyPart, number>> = {
@@ -491,6 +509,7 @@ const BODY_COLOURS: Readonly<Record<BodyPart, number>> = {
   fluegel: 2,
   skier: 1,
   schulter: 1,
+  paddel: 2,
 };
 /** Deckfedern der Adlerschwingen (heller als die Schwungfedern). */
 const WING_TIPS = 0xc89a62;
@@ -533,6 +552,7 @@ export function bodyParts(o: Outfit): BodyPart[] {
       fluegel: o.gear?.wings !== undefined,
       skier: o.gear?.skis !== undefined,
       schulter: o.gear?.pauldrons !== undefined,
+      paddel: o.gear?.paddle !== undefined,
     };
     return has[part];
   });
@@ -569,6 +589,7 @@ export function trachtItems(o: Outfit, seated = false): TrachtItems {
     fluegel: [o.gear?.wings ?? 0, WING_TIPS],
     skier: [o.gear?.skis ?? 0],
     schulter: [o.gear?.pauldrons ?? 0],
+    paddel: [o.gear?.paddle ?? 0, o.hat?.accent ?? 0],
   };
   const body =
     parts.length === 0

@@ -446,7 +446,49 @@
   Test-Server noch mit `allow-flight=false` lief – die Lobby setzt es erst für den nächsten Start). Bilder mit Client
   26.3 nur lokal.
 
+- 17.11. abends: **Sommerspiele + Sport-Stand am Schlossmarkt** (Branch `claude/sport-stand`): **Sommerspiele** (Summer
+  Games, Repo `pmornhart/morni-sommerspiele`, `Morni-Sommerspiele.jar`) ganz wie die anderen Modi im Netzwerk:
+  `DEFAULT_MODES`, `MODE_REPOS`, `MODE_JARS`, Hauptwert der Bestenliste `gold`, Speicher 1 GB – dafür Wintersport
+  1,5 → 1 GB (beide haben nie gleichzeitig Saison; bestehende Installationen einmal, nur wo noch der alte Standard
+  steht, Marker `memory-plan-3`), alle 19 Server samt Wartungs-Lobby 31,25 GB. Statistik de/en (Disziplinen Almlauf,
+  Regatta, Seifenkiste als Tabelle im Profil), Einstellungs-Katalog `/sommerconfig` mit allen Schlüsseln der config.yml
+  außer `welt` (Dorf/Saison, Wettkampf, Almlauf, Bogen, Regatta, Seifenkiste, „Zurück ins Spiel“; Kopie der config.yml
+  in `packages/shared/test/mode-configs/`), Webseite (Modus-Seite mit „So wird gespielt“ und Befehlen, Befehle-Seite,
+  Hilfe, Sonnenblume im Kompass und Panel, Demo mit Werten und News). **Saisons:** Wintersport Dezember–März,
+  Sommerspiele April–November (`SPORT_SEASONS`); außerhalb melden beide `closed` – Wintersport „☀ Sommerpause“,
+  Sommerspiele neu „❄ Winterpause“ auf Schild, im Kompass und auf der Webseite (`modePause` liefert jetzt
+  `summer|winter|closed`); die Startseite zählt einen geschlossenen Modus nicht als offen.
+  **Ein Stand für beide** (`packages/builder/src/lobby/sportstand.ts`): Im Winter eine verschneite **Skihütte**
+  (Dachüberstand mit Schnee, Eiszapfen, Skiständer mit Ski, Startnummern-Banner, Laternen, Bank mit Fell) mit der
+  Skifahrerin, im Sommer ein **Bootshaus** (Ruderboote, Paddel, Rettungsring, Zielscheibe, Sonnenschirm, Blumenkästen,
+  Wimpelkette) mit der neuen **Ruderin** (Kostüm-Stil: Strohhut mit lindgrünem Band, Ringeltrikot, Medaille, Paddel auf
+  dem Rücken, Zöpfe; Skin über MineSkin signiert). Wer dort steht, sagt der Hub (`sport` in der Nachricht `lobby`):
+  fest im Panel (Lobby → „Sport-Stand“, `/lobby sportstand auto|winter|sommer`) oder von selbst – der Modus, der offen
+  ist; melden beide gleich, entscheidet der Monat (Zeitzone des Netzwerks, stündlich neu). Das Lobby-Plugin baut selbst
+  um (`LobbySportStand.java`): Merker-Block unter dem Boden (Packeis bzw. Sandstein), Umbau als je eine Funktion im
+  Saison-Datenpaket (ein Tick, genau die geänderten Blöcke samt Rückweg), Figur/Schild/Deko getrennt (Tags
+  `mm_sport_<modus>`), Stand bleibt geladen, nach dem Start und nach jedem Neubau einmal ganz gesetzt, während eines
+  Neubaus nichts. Saison-Dekos (Winter, Wiesn, Ostern, Halloween) lassen den Stand aus, der Weihnachtsmarkt hängt nur
+  zwischen Nachbarn Ketten. **Kompass:** nur der Modus, der gerade am Stand steht (15 Einträge) – der andere ist über
+  `/server` und die Webseite erreichbar, hat aber außerhalb seiner Saison ohnehin geschlossen. Bauplan-Prüfung in
+  beiden Formen ohne Funde. Webseite: `figur-sommerspiele.webp` und `gruppe.webp` (jetzt alle sechzehn) aus dem echten
+  Client 26.3, freigestellt wie die anderen. Tests: 122 shared/Katalog- (neu `sport-stand.test.ts`), 124 Baukasten-
+  (neu `sportstand.test.ts`), 273 Server-, 69 JUnit (4 neu, `LobbySportStandTest`), Typen, Prettier, Web- und Demo-Bau.
+  Echt (Paper 26.1.2 + Netzwerk-Plugin + Test-Hub, Ersatz-Modi und -Proxy, echter Selbstbau 97 s):
+  `tools/netz-test/sportstand-test.cjs` **36/36** – von selbst Sommer (Wintersport meldet Sommerpause), im Panel fest
+  Wintersport (Schild mit Sommerpause), von selbst Winter (Sommerspiele melden Winterpause), wieder Sommer; je alle 328
+  Blöcke, Merker, genau eine Figur hinter der Theke, keine Deko des anderen Stands, Schild, Kompass, Klick → Proxy;
+  `schlossmarkt-test` **37/37** (sechzehn Modi, fünfzehn Figuren), `lobby-test` **32/32**. Absturz: `kill -9` gleich
+  nach einem Wechsel → Welt einheitlich im alten Stand (328/328), Plugin baut danach um (328/328); halb gesetzter
+  Stand (von Hand) → beim Start repariert. Bilder mit echtem Client 26.3, beide Formen tags und nachts, je vorn,
+  schräg, nah und weit, nur lokal.
+
 ## Offen
+
+- **Sommerspiele (17.11.):** bekommt seinen Server erst, wenn `pmornhart/morni-sommerspiele` ein Release hat (heute
+  Branch `claude/erster-stand`, Philips Go). Wintersport steht in seiner config.yml auf `saison: immer` und meldet so
+  nie `closed` – der Stand entscheidet dann nach dem Monat; für „Sommerpause“ auf Schild und Webseite im Panel unter
+  Wintersport die Saison einschalten. Sport-Stand nicht mit echten Spielern und nicht mit Bedrock geprüft.
 
 - **Neue Modi (17.11. abends):** Maibaumklau, Dorfkrimi und Baumeister bekommen ihren Server erst, wenn ihr Repo ein Release hat (heute nur Branch `claude/erster-stand`, Philips Go). Die Figuren-Bilder der Webseite zeigen die drei neuen Kostüme; im Spiel nicht mit echten Spielern ausprobiert.
 - **Bauplan-Prüfung:** keine offenen Funde mehr (`packages/builder/test/pruefung-offen.ts` leer) – Schloss, Schlosstreppe, Schlossmarkt und alle Saisons samt ihrer Blöcke (17.11.).

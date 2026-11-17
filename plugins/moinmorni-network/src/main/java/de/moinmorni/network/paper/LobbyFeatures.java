@@ -454,6 +454,9 @@ final class LobbyFeatures implements Listener {
         } else if (m.summerBreak()) {
             state = Component.text(english ? "Summer break – the village is open to look around"
                     : "Sommerpause – das Dorf ist zum Anschauen offen", NamedTextColor.YELLOW);
+        } else if (m.winterBreak()) {
+            state = Component.text(english ? "Winter break – the village is open to look around"
+                    : "Winterpause – das Dorf ist zum Anschauen offen", NamedTextColor.AQUA);
         } else if (m.closedNow()) {
             state = Component.text(english ? "Closed right now – back in a moment" : "Gerade geschlossen – gleich wieder offen",
                     NamedTextColor.GOLD);
@@ -477,7 +480,7 @@ final class LobbyFeatures implements Listener {
         }
         if (open) {
             lore.add(Component.empty());
-            lore.add(Component.text(m.summerBreak() ? (english ? "▶ Click to look around" : "▶ Klick: Dorf anschauen")
+            lore.add(Component.text(m.seasonBreak() ? (english ? "▶ Click to look around" : "▶ Klick: Dorf anschauen")
                             : english ? "▶ Click to play" : "▶ Klick: Mitspielen", NamedTextColor.YELLOW)
                     .decoration(TextDecoration.ITALIC, false));
         }

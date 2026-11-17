@@ -11,6 +11,7 @@ import { biomeCommands } from '../shapes.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
 import { SEASONS, seasonCommands, seasonPlans, type Season } from './season.js';
 import { withoutHitbox } from './deko.js';
+import { SPORT_LOOKS, SPORT_STAND, sportPlan, sportShowCommands } from './sportstand.js';
 
 export const LOBBY_NAMESPACE = 'moinmorni_lobby';
 export const LOBBY_PACK_DIR = 'moinmorni-lobby';
@@ -229,6 +230,18 @@ export function lobbyPack(): LobbyPack {
       ]),
     ),
   };
+  // Sport-Stand (Skihütte ↔ Bootshaus): Umbau in einer Funktion je Richtung (ein Tick), Figur und Deko je Modus.
+  // Das Lobby-Plugin ruft sie selbst auf, wenn der Stand wechseln soll (`LobbySportStand.java`).
+  const sport = sportPlan(canvas);
+  const one = (list: readonly string[]): string => `${list.join('\n')}\n`;
+  seasonFiles[seasonFn(SPORT_STAND.functions.on)] = one(sport.on);
+  seasonFiles[seasonFn(SPORT_STAND.functions.off)] = one(sport.off);
+  SPORT_LOOKS.forEach((look) => {
+    seasonFiles[seasonFn(SPORT_STAND.functions.show[look])] = one(
+      // Ohne summonOnce: vorher räumt die Funktion alle Wesen des Stands ab, und manche Teile liegen dicht beieinander
+      sportShowCommands(look).map(withoutHitbox),
+    );
+  });
   const seasonSteps = seasonStepsFor(
     Object.fromEntries(built.map(({ season, on, off }) => [season, { on: on.length, off: off.length }])),
   );

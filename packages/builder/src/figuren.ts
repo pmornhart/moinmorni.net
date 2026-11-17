@@ -20,6 +20,7 @@
  * | Maibaumklau | Bursch: Hut mit Maibaum-Kranz, grün-weiße Schärpe, Seil, Axt           |
  * | Dorfkrimi   | Kommissar: Jägerhut mit Gamsbart, Lodenmantel, rotes Halstuch, Pinsel  |
  * | Baumeister  | Baumeisterin: Zimmermannshut, schwarze Kluft, Zollstock, Ziegel        |
+ * | Sommerspiele| Ruderin: Kreissäge (Strohhut), Ringeltrikot, Paddel, Medaille, Sonnenblume |
  *
  * Ohne Lobby-Paket (und auf Bedrock) trägt der Skin alles allein: Hüte, Umhänge, Schals und Seile sind gemalt (zweite
  * Ebene), das Paket gibt nur dazu, was absteht (`trachten.ts`).
@@ -718,6 +719,49 @@ const baumeister: Outfit = {
   },
 };
 
+const LIME = 0xc8e04a;
+const LIME_DARK = 0x7a9a1a;
+const JERSEY_NAVY = 0x22345a;
+const sommerspiele: Outfit = {
+  skin: SKIN.tan,
+  hair: HAIR.blond,
+  hairStyle: 'braids',
+  eyes: EYES.blue,
+  hat: { kind: 'boater', colour: 0xe8d28a, accent: LIME },
+  top: { colour: WHITE, sleeves: 'short', accent: 0xffffff },
+  belt: 0x5a3a1e,
+  bottom: { kind: 'trousers', colour: JERSEY_NAVY },
+  shoes: 0xf2efe6,
+  gear: { paddle: 0xb07a46 },
+  costume: {
+    base: layers((part, face, x, y) => {
+      if (!vertical(face)) return undefined;
+      // Ringeltrikot: weiß und limettengrün quer gestreift, Kragen und Ärmelsaum dunkelblau
+      if (part === 'body' && y < 9) {
+        if (y === 0) return cloth(JERSEY_NAVY);
+        return cloth(y % 2 === 1 ? LIME : WHITE);
+      }
+      if (isArm(part) && y < 4) return cloth(y === 3 ? JERSEY_NAVY : y % 2 === 1 ? LIME : WHITE);
+      // Kurze Hose bis übers Knie, darunter braune Beine, weiße Söckchen und Turnschuhe
+      if (isLeg(part) && y >= 5 && y < 10) return y === 9 ? 0xf2efe6 : SKIN.tan;
+      if (isLeg(part) && y === 4) return cloth(shade(JERSEY_NAVY, 0.8));
+      return undefined;
+    }),
+    overlay: layers(beltOver(0x5a3a1e, GOLD), (part, face, x, y) => {
+      // Medaille am Band
+      if (part === 'body' && face === 'front') {
+        if (y < 3 && (x === 2 + y || x === 5 - y)) return cloth(LIME_DARK);
+        if (y === 3 && (x === 3 || x === 4)) return GOLD;
+        if (y === 4 && (x === 3 || x === 4)) return GOLD_DARK;
+      }
+      // Paddel über dem Rücken gemalt (ohne Paket und auf Bedrock)
+      if (part === 'body' && face === 'back' && x === 6 - Math.floor(y / 2) && y < 11)
+        return y < 3 ? LIME : 0xb07a46;
+      return undefined;
+    }),
+  },
+};
+
 /** Die Modus-Figuren (Kennung des Modus → Kostüm). */
 export const MODE_FIGURES = {
   mornicraft,
@@ -735,4 +779,5 @@ export const MODE_FIGURES = {
   maibaumklau,
   dorfkrimi,
   baumeister,
+  sommerspiele,
 } as const satisfies Readonly<Record<string, Outfit>>;

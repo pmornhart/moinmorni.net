@@ -245,6 +245,7 @@ export const PENDING_CAST: Readonly<Record<string, Outfit>> = {
   maibaumklau: MODE_FIGURES.maibaumklau,
   dorfkrimi: MODE_FIGURES.dorfkrimi,
   baumeister: MODE_FIGURES.baumeister,
+  sommerspiele: MODE_FIGURES.sommerspiele,
   blumenfrau: dirndl({
     skin: SKIN.fair,
     hair: HAIR.auburn,
@@ -267,6 +268,7 @@ export const STAND_IN: Readonly<Record<string, string>> = {
   maibaumklau: 'gast3',
   dorfkrimi: 'gast1',
   baumeister: 'schreiner',
+  sommerspiele: 'madl',
   blumenfrau: 'gast8',
 };
 
@@ -325,6 +327,8 @@ const SEED_ORDER: readonly string[] = [
   'maibaumklau',
   'dorfkrimi',
   'baumeister',
+  // 17.11. abends: Sommerspiele (Ruderin am Sport-Stand)
+  'sommerspiele',
 ];
 
 /** Skin-Bild einer Figur (immer dasselbe Bild für dieselbe Tracht). */

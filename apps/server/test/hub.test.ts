@@ -791,6 +791,28 @@ describe('Hub', () => {
     winter.send({ t: 'mode-state', mode: 'wintersport', state: 'closed', players: 0 });
     const summer = await lobby.next('lobby', (m) => row(m, 'wintersport')?.pause === 'summer');
     expect(row(summer, 'wintersport')).toMatchObject({ awake: true, phase: 'closed' });
+    // Sport-Stand: Wintersport hat Sommerpause → am Schlossmarkt stehen die Sommerspiele.
+    expect(summer['sport']).toBe('sommerspiele');
+
+    // Sommerspiele mit „closed“: Winterpause, ein Klick bringt trotzdem ins Dorf; Wintersport wieder offen → er steht da.
+    const sommer = await plugin('sommerspiele', 'backend');
+    sommer.send({ t: 'mode-state', mode: 'sommerspiele', state: 'closed', players: 0 });
+    winter.send({ t: 'mode-state', mode: 'wintersport', state: 'waiting', players: 0 });
+    const winterTime = await lobby.next(
+      'lobby',
+      (m) => row(m, 'sommerspiele')?.pause === 'winter' && row(m, 'wintersport')?.pause === null,
+    );
+    expect(winterTime['sport']).toBe('wintersport');
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'sommerspiele' });
+    await said('Winterpause');
+    expect(
+      await proxy.next('connect', (m) => m['uuid'] === PHILIP && m['server'] === 'sommerspiele'),
+    ).toBeTruthy();
+
+    // Fest eingestellt (Panel → Lobby, für Tests und Feste) geht vor – die Lobby bekommt es gleich.
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'lobby', args: ['sportstand', 'sommer'] });
+    expect(stores.settings('lobby')['sportStand']).toBe('sommerspiele');
+    expect(await lobby.next('lobby', (m) => m['sport'] === 'sommerspiele')).toBeTruthy();
   });
 
   test('Lobby-Einstellungen: nur die Lobby bekommt sie, Änderungen im Panel kommen sofort an', async () => {
@@ -1064,6 +1086,36 @@ describe('Hub', () => {
           .filter((m) => m.t === 'mode-settings')
           .every((m) => m['mode'] === ['maibaumklau', 'dorfkrimi', 'baumeister'][i]),
       ),
+    ).toBe(true);
+    // Sommerspiele (17.11.): Saison-Monate und Kommandos auf Deutsch, nur an den eigenen Server.
+    const sommer = await plugin('sommerspiele', 'backend');
+    expect(await sommer.next('mode-settings')).toMatchObject({
+      mode: 'sommerspiele',
+      plugin: 'MorniSommerspiele',
+      values: {
+        saison: 'sommer',
+        'saison-von': 4,
+        'saison-bis': 11,
+        'bogen.wind': 2,
+        'seifenkiste.weiche': true,
+      },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'sommerconfig',
+      args: ['saison', 'von', '5'],
+    });
+    expect(await sommer.next('mode-settings')).toMatchObject({ values: { 'saison-von': 5 } });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'sommerconfig',
+      args: ['bogen', 'wind', '4'],
+    });
+    expect(stores.settings('sommerspiele')['wind']).toBe(2);
+    expect(
+      builder.received.filter((m) => m.t === 'mode-settings').every((m) => m['mode'] === 'baumeister'),
     ).toBe(true);
     // Panel: nur Duels bekommt die neuen Werte.
     stores.patchSettings('duels', { timeLimit: 300, soupHeal: 6.5 }, 'test');

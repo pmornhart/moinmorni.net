@@ -9,6 +9,7 @@ import {
   MessagesSquare,
   Moon,
   MousePointerClick,
+  Snowflake,
   Sun,
   Terminal,
   Users,
@@ -199,6 +200,12 @@ function HowToGetThere({ mode }: { readonly mode: ModeStatus }): ReactElement {
         <p className="flex items-start gap-2.5 rounded-[6px] border-2 border-gold/35 bg-gold-soft px-4 py-3 text-[15px] text-gold-strong">
           <Sun className="mt-0.5 size-4 shrink-0" aria-hidden />
           {t('site.mode.pauseText')}
+        </p>
+      ) : null}
+      {look === 'winterPause' ? (
+        <p className="flex items-start gap-2.5 rounded-[6px] border-2 border-blue/25 bg-blue-soft px-4 py-3 text-[15px] text-blue">
+          <Snowflake className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {t('site.mode.winterPauseText')}
         </p>
       ) : null}
       {look === 'asleep' ? (

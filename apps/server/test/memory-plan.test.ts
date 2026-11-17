@@ -13,6 +13,8 @@ import { BUILD_MEMORY_MB, LOBBY_MEMORY_MB, MODE_DEFAULT_MEMORY_MB } from '../src
 
 /** Der Proxy (Velocity) bekommt 1 GB, wie in provision.ts. */
 const PROXY_MB = 1024;
+/** Die Wartungs-Lobby bekommt 768 MB (provision.ts). */
+const WARTUNG_MB = 768;
 
 const quiet = { info: () => undefined, warn: () => undefined } as unknown as FastifyBaseLogger;
 
@@ -26,6 +28,7 @@ describe('Arbeitsspeicher der Netzwerk-Server', () => {
       ['b1', 3072],
       ['l1', 4096],
       ['p1', 2560],
+      ['w1', 1536],
     ]);
     const patches: string[] = [];
     const motor = {
@@ -47,9 +50,17 @@ describe('Arbeitsspeicher der Netzwerk-Server', () => {
       { serverId: 'b1', member: 'bau' },
       { serverId: 'l1', member: 'lobby' },
       { serverId: 'p1', member: 'party' },
+      { serverId: 'w1', member: 'wintersport' },
     ];
     const changed = await retuneMemory(motor, dir, members, DEFAULT_MODES, quiet);
-    expect(changed.map((c) => c.member).sort()).toEqual(['bau', 'duels', 'lobby', 'mornicraft', 'smp']);
+    expect(changed.map((c) => c.member).sort()).toEqual([
+      'bau',
+      'duels',
+      'lobby',
+      'mornicraft',
+      'smp',
+      'wintersport',
+    ]);
     expect(Object.fromEntries(memory)).toEqual({
       d1: 1536,
       s1: 3072,
@@ -57,12 +68,42 @@ describe('Arbeitsspeicher der Netzwerk-Server', () => {
       b1: 1536,
       l1: 3072,
       p1: 2560,
+      w1: 1024,
     });
     // Nur einmal: wer später im Panel wieder 3 GB einstellt, behält sie.
     memory.set('d1', 3072);
     expect(await retuneMemory(motor, dir, members, DEFAULT_MODES, quiet)).toEqual([]);
     expect(memory.get('d1')).toBe(3072);
-    expect(patches).toHaveLength(5);
+    expect(patches).toHaveLength(6);
+  });
+
+  test('Sommerspiele dazu: Wintersport einmal von 1,5 auf 1 GB – auch wo der erste Schritt schon lief', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-mem-'));
+    fs.writeFileSync(path.join(dir, 'memory-plan-2'), 'früher\n');
+    const memory = new Map([
+      ['w1', 1536],
+      ['d1', 1536],
+      ['a1', 2048],
+    ]);
+    const motor = {
+      request: (method: string, url: string, body?: { memoryMb: number }) => {
+        if (method === 'GET' && url === '/api/servers')
+          return Promise.resolve([...memory].map(([id, memoryMb]) => ({ id, memoryMb })));
+        if (method === 'PATCH' && body) memory.set(url.split('/').pop() ?? '', body.memoryMb);
+        return Promise.resolve(undefined);
+      },
+    } as unknown as MotorClient;
+    const members = [
+      { serverId: 'w1', member: 'wintersport' },
+      { serverId: 'd1', member: 'duels' },
+      { serverId: 'a1', member: 'adlerflug' },
+    ];
+    expect((await retuneMemory(motor, dir, members, DEFAULT_MODES, quiet)).map((c) => c.member)).toEqual([
+      'wintersport',
+    ]);
+    expect(Object.fromEntries(memory)).toEqual({ w1: 1024, d1: 1536, a1: 2048 });
+    memory.set('w1', 1536);
+    expect(await retuneMemory(motor, dir, members, DEFAULT_MODES, quiet)).toEqual([]);
   });
 
   test('Start im Panel: vorher wird Platz geschaffen, Stoppen und andere Wege nicht', async () => {
@@ -105,9 +146,10 @@ describe('Arbeitsspeicher der Netzwerk-Server', () => {
       LOBBY_MEMORY_MB +
       BUILD_MEMORY_MB +
       modes.reduce((acc, m) => acc + (MODE_MEMORY_MB[m.id] ?? MODE_DEFAULT_MEMORY_MB), 0);
-    expect(modes.length).toBeGreaterThanOrEqual(15);
-    // Seit 15 Modi (17.11.) bleibt neben den Höchstwerten nur noch gut 1 GB Luft für das, was Java neben dem Heap
-    // braucht – im Leerlauf geben die Modi aber den Großteil zurück (Ruhezustand), und sonst schläft ein leerer Modus.
-    expect(sum + reserve + 1024).toBeLessThanOrEqual(total);
+    expect(modes.length).toBeGreaterThanOrEqual(16);
+    // Seit 16 Modi (17.11., Sommerspiele) bleiben neben den Höchstwerten (dazu die Wartungs-Lobby mit 768 MB) gut
+    // 0,75 GB Luft für das, was Java neben dem Heap braucht – im Leerlauf geben die Modi aber den Großteil zurück
+    // (Ruhezustand), und Wintersport bzw. die Sommerspiele haben je ein halbes Jahr Pause.
+    expect(sum + WARTUNG_MB + reserve).toBeLessThanOrEqual(total);
   });
 });
