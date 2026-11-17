@@ -12,6 +12,8 @@ import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
+import com.velocitypowered.api.event.player.KickedFromServerEvent;
+import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.PlayerSettingsChangedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,6 +55,8 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 /**
  * Der Proxy-Teil: meldet dem Hub, wer kommt, wechselt und geht, lässt den Hub über die Anmeldung entscheiden
  * (Bann, Wartung, voll), zeigt MOTD und Spielerzahl aus dem Panel und reicht Netzwerk-Befehle an den Hub weiter.
+ * Wer ankommt oder von einem Server fliegt, landet in der Lobby, sonst in der Wartungs-Lobby – nie geht es weiter
+ * durch die {@code try}-Liste (Bau-Server, Spielmodi), siehe {@link Fallback}.
  */
 @Plugin(
         id = "moinmorni",
@@ -65,7 +70,15 @@ public final class VelocityPlugin {
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
     private static final String HUB_DIR = "moinmorni";
-    private static final String LOBBY = "lobby";
+    private static final String LOBBY = Fallback.LOBBY;
+    private static final String WARTUNG = Fallback.WARTUNG;
+    /** Ohne Hub: so oft nachsehen, ob die Lobby wieder antwortet (dann die Wartenden zurück). */
+    private static final long LOCAL_RETURN_SECONDS = 5;
+    private static final String LOCAL_BYE =
+            "<gold><bold>Die Lobby startet gerade neu</bold></gold>\n\n<gray>Gleich wieder da – versuch es in ein paar Sekunden nochmal.</gray>\n"
+            + "<gray>The lobby is restarting – back in a moment, try again in a few seconds.</gray>";
+    private static final String LOCAL_BACK =
+            "<green>Die Lobby ist wieder da!</green> <gray>/ The lobby is back!</gray>";
     /** Kennung des Möbel-Pakets der Lobby (gleich wie MOEBEL_PACK_ID in packages/builder/src/furniture.ts). */
     private static final UUID LOBBY_PACK = UUID.fromString("6d6f696e-6d6f-726e-692d-6d6f6562656c");
     /** So lange nach dem Start bekommt die eigene Jar notfalls ihre Datei zurück (siehe retireInterimPlugin). */
@@ -80,6 +93,12 @@ public final class VelocityPlugin {
     private final List<String> commands = new ArrayList<>();
     /** Banns aus der letzten Liste des Hubs: gelten auch, wenn der Hub kurz weg ist. */
     private final Map<UUID, Instant> bans = new ConcurrentHashMap<>();
+    /** Erster Server je Spieler, wie der Hub ihn bei der Anmeldung sagt (Lobby oder Wartungs-Lobby). */
+    private final Map<UUID, String> firstServer = new ConcurrentHashMap<>();
+    /** Wohin der Proxy einen Spieler gerade schickt (Ankunft, Rauswurf) – der Hub erfährt es beim Verbinden. */
+    private final Map<UUID, String> sending = new ConcurrentHashMap<>();
+    /** Server, die bei diesem Spieler gerade gescheitert sind (bis er wieder irgendwo ist). */
+    private final Map<UUID, Set<String>> failed = new ConcurrentHashMap<>();
     private volatile JsonObject network;
     /** Streamer-Modus: was der Hub an Streamer schickt, mit „•••“ statt IP-Adressen und eigenen Adressen. */
     private final StreamerMask streamerMask = new StreamerMask();
@@ -111,6 +130,8 @@ public final class VelocityPlugin {
         } catch (Exception e) {
             log.warning("MoinMorni ist nicht eingerichtet (" + e.getMessage() + ") – der Proxy läuft ohne Netzwerk-Funktionen.");
         }
+        proxy.getScheduler().buildTask(this, this::returnWithoutHub)
+                .repeat(LOCAL_RETURN_SECONDS, TimeUnit.SECONDS).schedule();
         interim.ifPresent(this::retireInterimPlugin);
     }
 
@@ -232,9 +253,14 @@ public final class VelocityPlugin {
             if (until != null && until.isAfter(Instant.now())) {
                 event.setResult(ResultedEvent.ComponentResult.denied(MM.deserialize(
                         "<red><bold>Du bist gebannt</bold></red>\n\n<gray>You are banned.")));
-            } else if (network != null && network.has("maintenance") && network.get("maintenance").getAsBoolean()) {
-                // Ohne Hub weiß der Proxy nicht, wer zum Team gehört – bei Wartung bleibt die Tür dann ganz zu.
-                event.setResult(ResultedEvent.ComponentResult.denied(MM.deserialize(HUB_AWAY)));
+            } else if (maintenance()) {
+                // Ohne Hub weiß der Proxy nicht, wer zum Team gehört – bei Wartung geht es nur in die Wartungs-Lobby
+                // (ohne sie bleibt die Tür ganz zu).
+                if (wartungOn() && proxy.getServer(WARTUNG).isPresent()) {
+                    firstServer.put(p.getUniqueId(), WARTUNG);
+                } else {
+                    event.setResult(ResultedEvent.ComponentResult.denied(MM.deserialize(HUB_AWAY)));
+                }
             }
             return null;
         }
@@ -247,15 +273,113 @@ public final class VelocityPlugin {
         CompletableFuture<Void> done = hub.request(body).handle((data, error) -> {
             if (error == null && data.has("allow") && !data.get("allow").getAsBoolean()) {
                 event.setResult(ResultedEvent.ComponentResult.denied(MM.deserialize(HubClient.str(data, "message"))));
+            } else if (error == null && HubClient.str(data, "server") != null) {
+                firstServer.put(p.getUniqueId(), HubClient.str(data, "server"));
             }
             return null;
         });
         return EventTask.resumeWhenComplete(done);
     }
 
-    /** Ohne Hub: in die Lobby ja, woandershin nein (wer gerade erst kommt, landet in der Lobby). */
+    /** Erster Server: was der Hub sagt (Lobby, oder die Wartungs-Lobby, wenn die Lobby fehlt oder Wartung ist). */
+    @Subscribe(order = PostOrder.LATE)
+    public void onChooseInitial(PlayerChooseInitialServerEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
+        String wanted = firstServer.remove(id);
+        String name = wanted != null && Fallback.openWithoutHub(wanted) ? wanted : LOBBY;
+        Optional<RegisteredServer> server = proxy.getServer(name).or(() -> proxy.getServer(LOBBY));
+        server.ifPresent(s -> {
+            event.setInitialServer(s);
+            sending.put(id, s.getServerInfo().getName());
+        });
+    }
+
+    /**
+     * Rauswurf von einem Server oder Verbinden gescheitert: nur Lobby oder Wartungs-Lobby (der Hub sagt, in welcher
+     * Reihenfolge und mit welcher Nachricht), sonst freundlich trennen. Scheitert ein Wechsel, während der Spieler noch
+     * auf einem Server ist, bleibt er einfach dort (das macht Velocity selbst).
+     */
+    @Subscribe(order = PostOrder.LAST)
+    public EventTask onKicked(KickedFromServerEvent event) {
+        Player p = event.getPlayer();
+        if (event.kickedDuringServerConnect() || !p.isActive()) {
+            return null;
+        }
+        String from = event.getServer().getServerInfo().getName();
+        Set<String> tried = failed.computeIfAbsent(p.getUniqueId(), k -> ConcurrentHashMap.newKeySet());
+        tried.add(from);
+        Component reason = event.getServerKickReason().orElse(null);
+        if (hub == null || !hub.ready()) {
+            redirect(event, Fallback.localOrder(maintenance(), wartungOn()), tried, LOCAL_BYE, reason);
+            return null;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "fallback");
+        body.addProperty("uuid", p.getUniqueId().toString());
+        body.addProperty("from", from);
+        JsonArray list = new JsonArray();
+        tried.forEach(list::add);
+        body.add("tried", list);
+        CompletableFuture<Void> done = hub.request(body).handle((data, error) -> {
+            if (error != null || data == null || !data.has("order")) {
+                redirect(event, Fallback.localOrder(maintenance(), wartungOn()), tried, LOCAL_BYE, reason);
+                return null;
+            }
+            List<String> order = new ArrayList<>();
+            data.getAsJsonArray("order").forEach(e -> order.add(e.getAsString()));
+            redirect(event, Fallback.onlyFallbacks(order), tried, HubClient.str(data, "bye"), reason);
+            return null;
+        });
+        return EventTask.resumeWhenComplete(done);
+    }
+
+    private void redirect(KickedFromServerEvent event, List<String> order, Set<String> tried, String bye,
+                          Component reason) {
+        Player p = event.getPlayer();
+        Optional<String> next = Fallback.next(order, tried, name -> proxy.getServer(name).isPresent());
+        if (next.isEmpty()) {
+            Component text = MM.deserialize(bye == null ? LOCAL_BYE : bye);
+            event.setResult(KickedFromServerEvent.DisconnectPlayer.create(text));
+            return;
+        }
+        RegisteredServer target = proxy.getServer(next.get()).orElseThrow();
+        sending.put(p.getUniqueId(), target.getServerInfo().getName());
+        // In die Wartungs-Lobby ohne Nachricht vom Proxy: Beim Wechsel ginge sie verloren, die Wartungs-Lobby sagt
+        // beim Ankommen selbst, warum man dort ist. In die Lobby mit dem Grund des Rauswurfs (wie Velocity sonst).
+        Component message = WARTUNG.equals(next.get()) || reason == null ? Component.empty() : reason;
+        event.setResult(KickedFromServerEvent.RedirectPlayer.create(target, message));
+    }
+
+    /** Ohne Hub: Antwortet die Lobby wieder, kommen die Wartenden zurück (nicht während einer Wartung). */
+    private void returnWithoutHub() {
+        if (hub == null || hub.ready() || maintenance()) {
+            return;
+        }
+        Optional<RegisteredServer> wartung = proxy.getServer(WARTUNG);
+        Optional<RegisteredServer> lobby = proxy.getServer(LOBBY);
+        if (wartung.isEmpty() || lobby.isEmpty() || wartung.get().getPlayersConnected().isEmpty()) {
+            return;
+        }
+        lobby.get().ping().thenAccept(ping -> wartung.get().getPlayersConnected().forEach(p -> {
+            p.sendMessage(MM.deserialize(LOCAL_BACK));
+            p.createConnectionRequest(lobby.get()).fireAndForget();
+        }));
+    }
+
+    private boolean maintenance() {
+        JsonObject net = network;
+        return net != null && net.has("maintenance") && net.get("maintenance").getAsBoolean();
+    }
+
+    /** Wartungs-Lobby eingeschaltet? (Ohne Angabe vom Hub: ja.) */
+    private boolean wartungOn() {
+        JsonObject net = network;
+        return net == null || !net.has("wartung") || net.get("wartung").getAsBoolean();
+    }
+
+    /** Ohne Hub: in die Lobby und die Wartungs-Lobby ja, woandershin nein (wer gerade erst kommt, landet in der Lobby). */
     private void closedWithoutHub(ServerPreConnectEvent event, RegisteredServer target) {
-        if (target.getServerInfo().getName().equals(LOBBY)) {
+        if (Fallback.openWithoutHub(target.getServerInfo().getName())) {
             return;
         }
         Optional<RegisteredServer> lobby = proxy.getServer(LOBBY);
@@ -269,7 +393,8 @@ public final class VelocityPlugin {
 
     /**
      * Vor jedem Serverwechsel: Ist der Modus offen und wach? Schläft er, weckt ihn der Hub und der Spieler kommt
-     * danach von selbst hinein. Wer gerade erst ins Netzwerk kommt, wartet so lange in der Lobby.
+     * danach von selbst hinein. Wer gerade erst ins Netzwerk kommt, wartet so lange in der Lobby (bzw. bei Wartung in
+     * der Wartungs-Lobby, wenn der Hub es sagt).
      */
     @Subscribe
     public EventTask onPreConnect(ServerPreConnectEvent event) {
@@ -277,15 +402,20 @@ public final class VelocityPlugin {
         if (hub == null || target.isEmpty()) {
             return null;
         }
+        String name = target.get().getServerInfo().getName();
+        boolean sent = name.equals(sending.remove(event.getPlayer().getUniqueId()));
         if (!hub.ready()) {
-            // Ohne Hub kann niemand prüfen, wer in Bau-Server, Einladungs-Modi oder Wartung darf: nur die Lobby ist offen.
+            // Ohne Hub kann niemand prüfen, wer in Bau-Server, Einladungs-Modi oder Wartung darf: nur Lobby und
+            // Wartungs-Lobby sind offen.
             closedWithoutHub(event, target.get());
             return null;
         }
         JsonObject body = new JsonObject();
         body.addProperty("t", "connecting");
         body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
-        body.addProperty("server", target.get().getServerInfo().getName());
+        body.addProperty("server", name);
+        // Der Proxy schickt ihn hin (Ankunft oder Rauswurf) – in der Wartungs-Lobby wartet er dann und kommt zurück.
+        body.addProperty("fallback", sent);
         CompletableFuture<Void> done = hub.request(body).handle((data, error) -> {
             if (error != null) {
                 closedWithoutHub(event, target.get());
@@ -294,9 +424,11 @@ public final class VelocityPlugin {
             if (!data.has("allow") || data.get("allow").getAsBoolean()) {
                 return null;
             }
-            Optional<RegisteredServer> lobby = proxy.getServer(LOBBY);
-            boolean firstServer = event.getPreviousServer() == null;
-            if (firstServer && lobby.isPresent() && !lobby.get().equals(target.get())) {
+            String redirect = HubClient.str(data, "redirect");
+            Optional<RegisteredServer> lobby = redirect != null && Fallback.openWithoutHub(redirect)
+                    ? proxy.getServer(redirect) : proxy.getServer(LOBBY);
+            boolean first = event.getPreviousServer() == null;
+            if (first && lobby.isPresent() && !lobby.get().equals(target.get())) {
                 event.setResult(ServerPreConnectEvent.ServerResult.allowed(lobby.get()));
             } else {
                 event.setResult(ServerPreConnectEvent.ServerResult.denied());
@@ -325,6 +457,7 @@ public final class VelocityPlugin {
     @Subscribe
     public void onSwitched(ServerPostConnectEvent event) {
         Player p = event.getPlayer();
+        failed.remove(p.getUniqueId());
         boolean inLobby = p.getCurrentServer().map(s -> LOBBY.equals(s.getServerInfo().getName())).orElse(true);
         boolean hasPack = p.getAppliedResourcePacks().stream().anyMatch(i -> LOBBY_PACK.equals(i.getId()));
         if (!inLobby && hasPack) {
@@ -363,7 +496,11 @@ public final class VelocityPlugin {
 
     @Subscribe
     public void onDisconnect(DisconnectEvent event) {
-        countdown.hide(event.getPlayer().getUniqueId());
+        UUID gone = event.getPlayer().getUniqueId();
+        firstServer.remove(gone);
+        sending.remove(gone);
+        failed.remove(gone);
+        countdown.hide(gone);
         if (hub == null || event.getLoginStatus() != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) {
             return;
         }

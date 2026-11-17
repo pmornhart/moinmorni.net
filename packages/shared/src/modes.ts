@@ -282,8 +282,8 @@ export const MODE_JARS: Readonly<Record<string, string>> = {
 /**
  * Arbeitsspeicher der Modus-Server in MB, wo der Standard (1,5 GB) nicht reicht: MorniSMP und MorniCraft haben große
  * Welten, Morni Party baut große Spielbretter. So laufen alle Server zugleich in einem Container mit 32 GB:
- * Proxy 1 + Lobby 3 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + neun Modi je 1,5 = 27 GB, dazu Luft für Java
- * selbst. Im Panel je Server änderbar.
+ * Proxy 1 + Lobby 3 + Wartungs-Lobby 0,75 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + neun Modi je 1,5 =
+ * 27,75 GB, dazu Luft für Java selbst. Im Panel je Server änderbar.
  */
 export const MODE_MEMORY_MB: Readonly<Record<string, number>> = {
   mirni: 3072,
@@ -319,6 +319,8 @@ export const MODE_PHASE_PAUSE = 'closed';
  * Zeiten (…_ms) zählen kleiner = besser.
  */
 export const MODE_HEADLINE_STATS: Readonly<Record<string, string>> = {
+  // Kein Spielmodus, aber mit Statistik: das Jump and Run der Lobby.
+  lobby: 'jump_best',
   versteckerl: 'points',
   wintersport: 'gold',
   adlerflug: 'finishes',

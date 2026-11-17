@@ -52,6 +52,11 @@ export interface LobbyPack {
   /** Stücke des Deko-Bereichs festhalten bzw. loslassen (für das Umschalten der Saison). */
   readonly seasonLoad: readonly string[];
   readonly seasonUnload: readonly string[];
+  /** Andere Welten mit demselben Selbstbau (Wartungs-Lobby): eigener Namensraum und Ordner der Funktionen. */
+  readonly namespace?: string;
+  readonly packDir?: string;
+  /** Prüfpunkte für „alles geladen?“ so weit draußen (Standard: die Lobby). */
+  readonly edge?: number;
 }
 
 /** forceload-Befehle in Stücken (Minecraft erlaubt höchstens 256 Chunks pro Befehl). */
@@ -106,7 +111,7 @@ const BIOME_FROM = 48;
 const BIOME_TO = 303;
 
 /** Spielregeln der Lobby (Namen ab Minecraft 1.21.11, mit Paper 26.3 geprüft). */
-const LOBBY_RULES: Readonly<Record<string, string>> = {
+export const LOBBY_RULES: Readonly<Record<string, string>> = {
   advance_time: 'false',
   advance_weather: 'false',
   spawn_mobs: 'false',

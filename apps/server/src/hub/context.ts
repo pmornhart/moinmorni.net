@@ -19,6 +19,8 @@ export interface HubContext {
   readonly kick: (uuid: string, text: string) => void;
   /** false = Server nicht im Netzwerk. */
   readonly connect: (uuid: string, server: string) => boolean;
+  /** Wartung des Netzwerks: Hinweis, wenn dieser Spieler gerade nur in der Wartungs-Lobby sein darf (sonst null). */
+  readonly held: (uuid: string, lang: Lang) => string | null;
   /**
    * Wie über eine Figur: erst prüfen (Rechte, Wartung, Whitelist) und schlafende Server wecken, dann verbinden.
    * true = gleich verbunden (sonst Hinweis an den Spieler, oder er kommt nach dem Aufwachen von selbst hinein).

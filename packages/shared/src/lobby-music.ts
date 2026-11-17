@@ -169,10 +169,10 @@ export const LOBBY_MUSIC_SECTIONS: readonly SettingSection[] = [
         min: 0,
         max: 100,
         unit: t('%', '%'),
-        label: t('Gedämpft (Parkour, Rundgang, Gefängnis)', 'Muffled (parkour, tour, jail)'),
+        label: t('Gedämpft (Jump and Run, Rundgang, Gefängnis)', 'Muffled (jump and run, tour, jail)'),
         help: t(
-          'So laut (Anteil der Lautstärke) klingt die Musik, während jemand den Parkour läuft, den Rundgang macht oder im Gefängnis sitzt – dann spielen leise Notenblöcke weiter (0 = still).',
-          'How loud (share of the volume) the music is while someone runs the parkour, takes the tour or sits in jail – soft note blocks keep playing then (0 = silent).',
+          'So laut (Anteil der Lautstärke) klingt die Musik, während jemand im Jump and Run springt, den Rundgang macht oder im Gefängnis sitzt – dann spielen leise Notenblöcke weiter (0 = still).',
+          'How loud (share of the volume) the music is while someone is in the jump and run, takes the tour or sits in jail – soft note blocks keep playing then (0 = silent).',
         ),
         command: '/lobby musik gedaempft <prozent>',
       },

@@ -152,6 +152,12 @@ export function createRejoin({ ctx, send, connected, log, now }: RejoinOptions):
 
   const goLobby = (uuid: string, lang: Lang, from: string | null): void => {
     asked.delete(uuid);
+    // Wartung: wer nicht immer hinein darf, bleibt in der Wartungs-Lobby.
+    const held = ctx.held(uuid, lang);
+    if (held) {
+      ctx.msg(uuid, held);
+      return;
+    }
     if (from && from !== LOBBY) onPurpose.set(uuid, { server: from, at: now() });
     ctx.msg(uuid, text(lang, ctx.connect(uuid, LOBBY) ? 'lobby.going' : 'lobby.missing'));
   };

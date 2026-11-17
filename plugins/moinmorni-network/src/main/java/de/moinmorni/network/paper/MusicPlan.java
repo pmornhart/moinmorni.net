@@ -113,7 +113,7 @@ final class MusicPlan {
         return s != null && s.on() && !s.songs().isEmpty() && p.on() && p.volume() > 0;
     }
 
-    /** Lautstärke 0–1: Panel × eigener Wunsch × gedämpft (Parkour, Rundgang, Gefängnis). */
+    /** Lautstärke 0–1: Panel × eigener Wunsch × gedämpft (Jump and Run, Rundgang, Gefängnis). */
     static float volume(Settings s, Pref p, boolean damped) {
         double v = s.volume() / PERCENT * p.volume() / PERCENT * (damped ? s.quiet() / PERCENT : 1);
         return (float) Math.max(0, Math.min(1, v));
