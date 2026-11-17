@@ -51,6 +51,7 @@ describe('Status für Webseite und Discord', () => {
     expect(mode('wintersport')).toMatchObject({ awake: true, phase: 'closed' });
     expect(modePause(mode('wintersport'))).toBe('summer');
     expect(modePause(mode('wolkenkampf'))).toBe('closed');
+    expect(modePause({ ...mode('wintersport'), id: 'sommerspiele' })).toBe('winter');
   });
 
   test('Bedrock-Port: automatisch aus dem Motor, von Hand 19132 (Verteiler von MorniHosting) überall', async () => {

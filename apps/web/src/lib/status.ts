@@ -1,5 +1,11 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { modePause, type ModeState, type ModeStatus, type NetworkStatus } from '@moinmorni/shared';
+import {
+  modePause,
+  type ModePause,
+  type ModeState,
+  type ModeStatus,
+  type NetworkStatus,
+} from '@moinmorni/shared';
 import { mmApi } from './mm-api';
 
 const MS_PER_SECOND = 1000;
@@ -26,10 +32,11 @@ export const MODE_STATE_TONE: Readonly<Record<ModeState, 'success' | 'neutral' |
 
 /**
  * How the website names a mode's state: open modes that are not running are "asleep" (they wake on arrival); "pause"
- * = summer break of a seasonal mode (Winter Games outside winter) – you can still go and look around; a running mode
- * that says it is closed (e.g. while its server stops) is "closed".
+ * = summer break of a seasonal mode (Winter Games outside winter), "winterPause" = winter break (Summer Games outside
+ * summer) – you can still go and look around; a running mode that says it is closed (e.g. while its server stops) is
+ * "closed".
  */
-export type ModeLook = 'open' | 'asleep' | 'pause' | 'closed' | 'maintenance' | 'soon';
+export type ModeLook = 'open' | 'asleep' | 'pause' | 'winterPause' | 'closed' | 'maintenance' | 'soon';
 
 const LOOK_OF_STATE: Readonly<Record<ModeState, ModeLook>> = {
   on: 'open',
@@ -43,13 +50,18 @@ export const MODE_LOOK_TONE: Readonly<Record<ModeLook, 'success' | 'neutral' | '
     open: 'success',
     asleep: 'blue',
     pause: 'gold',
+    winterPause: 'blue',
     closed: 'neutral',
     maintenance: 'warning',
     soon: 'gold',
   };
 
-/** What `modePause` says, as a look: summer break or closed right now. */
-const LOOK_OF_PAUSE: Readonly<Record<'summer' | 'closed', ModeLook>> = { summer: 'pause', closed: 'closed' };
+/** What `modePause` says, as a look: summer break, winter break or closed right now. */
+const LOOK_OF_PAUSE: Readonly<Record<ModePause, ModeLook>> = {
+  summer: 'pause',
+  winter: 'winterPause',
+  closed: 'closed',
+};
 
 export function modeLook(mode: ModeStatus): ModeLook {
   const pause = modePause(mode);
@@ -64,7 +76,8 @@ export function modeJoinable(mode: ModeStatus): boolean {
 }
 
 /**
- * Open right now for playing: switched on and not on a break (Winter Games in summer, a mode that says it is closed).
+ * Open right now for playing: switched on and not on a break (Winter Games in summer, Summer Games in winter, a mode
+ * that says it is closed).
  * A sleeping mode counts – it wakes up as soon as someone comes.
  */
 export function modeOpenNow(mode: ModeStatus): boolean {

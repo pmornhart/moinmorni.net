@@ -1,7 +1,7 @@
 /**
  * Test des Schlossmarkts mit einem echten Test-Spieler (mineflayer, Paper 26.1.2) nach einem Neubau der Lobby:
  * Jeder der fünfzehn Modi hat genau eine Figur, die neuen stehen am Schlossmarkt, ihr Schild zeigt Live-Zustände
- * (Wintersport „Sommerpause“, wenn er das meldet), ein Klick auf eine neue Figur schickt dem Hub `play` und der
+ * (am Sport-Stand die Sommerspiele, wenn Wintersport Sommerpause meldet), ein Klick auf eine neue Figur schickt dem Hub `play` und der
  * antwortet („Ab nach Versteckerl …“), das Kompass-Menü zeigt fünfzehn Modi in mittigen Reihen.
  * Ohne Velocity spielt `apps/server/scripts/proxy-lauschen.ts` den Proxy (meldet den Test-Spieler als „in der Lobby“
  * und schreibt mit, was der Hub dem Proxy schickt) – dessen Ausgabe liest der Test (PROXY_LOG).
@@ -42,12 +42,15 @@ const MODES = [
   'maibaumklau',
   'dorfkrimi',
   'baumeister',
+  'sommerspiele',
 ];
+/** Wintersport und Sommerspiele teilen sich den Sport-Stand – es steht dort nur, wer gerade offen ist. */
+const SPORT = ['wintersport', 'sommerspiele'];
 /** Die neuen Modi stehen am Schlossmarkt (x der Standmitte, Figur bei z −32). */
 const MARKET = {
   wolkenkampf: -18,
   versteckerl: 18,
-  wintersport: -26,
+  sommerspiele: -26,
   adlerflug: 26,
   angelkoenig: -34,
   maibaumklau: 34,
@@ -133,12 +136,17 @@ async function main() {
   rcon(`tp ${NAME} 0.5 65 -22.5 180 0`);
   await wait(4000);
   // Figuren: jede genau einmal
-  MODES.forEach((id) => {
+  MODES.filter((id) => !SPORT.includes(id)).forEach((id) => {
     const n = count(rcon(`execute if entity @e[type=minecraft:mannequin,tag=mm_mode_${id}]`));
     check(`Figur ${id}`, n === 1, `${n}×`);
   });
+  // Wintersport meldet Sommerpause → am Sport-Stand die Sommerspiele (Wintersport fehlt)
+  const sport = SPORT.map((id) =>
+    count(rcon(`execute if entity @e[type=minecraft:mannequin,tag=mm_mode_${id}]`)),
+  );
+  check('Sport-Stand: Sommerspiele statt Wintersport', sport[0] === 0 && sport[1] === 1, sport.join('/'));
   const all = count(rcon('execute if entity @e[type=minecraft:mannequin,tag=mm_mode_npc]'));
-  check('genau fünfzehn Modus-Figuren', all === MODES.length, `${all}`);
+  check('genau fünfzehn Modus-Figuren (eine am Sport-Stand)', all === MODES.length - 1, `${all}`);
   Object.entries(MARKET).forEach(([id, x]) => {
     const n = count(
       rcon(
@@ -150,7 +158,7 @@ async function main() {
   const blume = count(rcon('execute if entity @e[type=minecraft:mannequin,tag=mm_skin_blumenfrau]'));
   check('Blumenfrau am Marktkarren (alle Stände besetzt)', blume === 1);
 
-  // Schild über der Wintersport-Figur (Live vom Lobby-Plugin): Sommerpause, wenn der Modus das meldet.
+  // Schild über der Figur am Sport-Stand (Live vom Lobby-Plugin): die Sommerspiele sind offen.
   rcon(`tp ${NAME} -25.5 65 -27.5 180 0`);
   await wait(2500);
   const labels = Object.values(bot.entities).filter(
@@ -160,12 +168,8 @@ async function main() {
     .flatMap((e) => e.metadata.filter((m) => m && (typeof m === 'object' || typeof m === 'string')))
     .map(plainText)
     .join(' ');
-  check(
-    'Schild Wintersport: Sommerpause',
-    /Sommerpause|Summer break/.test(signs),
-    signs.match(/Sommerpause[^"]*/)?.[0] ?? '',
-  );
-  check('Schild Wintersport: Klick zum Anschauen', /Dorf anschauen|look around/.test(signs));
+  check('Schild Sport-Stand: Sommerspiele', /Sommerspiele/.test(signs));
+  check('Schild Sport-Stand: keine Pause', !/Sommerpause|Winterpause|Summer break|Winter break/.test(signs));
 
   // Klick auf die Versteckerl-Figur → Hub antwortet
   rcon(`tp ${NAME} 18.5 65 -28.5 180 0`);
@@ -185,11 +189,11 @@ async function main() {
   const answer = proxySaid(before);
   check('Klick: Hub antwortet mit Versteckerl', /Versteckerl/.test(answer), answer.slice(0, 200));
 
-  // Klick auf Wintersport im Sommer: freundlicher Hinweis
+  // Klick auf die Ruderin am Sport-Stand
   rcon(`tp ${NAME} -25.5 65 -28.5 180 0`);
   await wait(2500);
   const winter = figureAt(bot, -25.5, -31.5);
-  check('Wintersport-Figur in Reichweite', Boolean(winter));
+  check('Sommerspiele-Figur in Reichweite', Boolean(winter));
   const before2 = proxyLines();
   if (winter) {
     await bot.lookAt(winter.position.offset(0, 1.6, 0), true);
@@ -197,7 +201,11 @@ async function main() {
   }
   await wait(3000);
   const answer2 = proxySaid(before2);
-  check('Klick auf Wintersport: Sommerpause-Hinweis', /Sommerpause|summer break/.test(answer2), answer2);
+  check(
+    'Klick auf die Sommerspiele: ab ins Dorf am Bergsee',
+    /Sommerspiele/.test(answer2),
+    answer2.slice(0, 200),
+  );
 
   if (MIRNI_HUB) await mirniClosed(bot);
 
@@ -226,9 +234,16 @@ async function main() {
       check('Reihen mittig', JSON.stringify(modeSlots.map((s) => s.i)) === JSON.stringify(rows));
       check(
         'Symbole der neuen Modi',
-        ['white_wool', 'hay_block', 'elytra', 'fishing_rod', 'iron_axe', 'brush', 'bricks'].every((n) =>
-          modeSlots.some((s) => s.name === n),
-        ),
+        [
+          'white_wool',
+          'hay_block',
+          'elytra',
+          'fishing_rod',
+          'iron_axe',
+          'brush',
+          'bricks',
+          'sunflower',
+        ].every((n) => modeSlots.some((s) => s.name === n)),
       );
       bot.closeWindow(win);
     }

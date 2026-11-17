@@ -242,6 +242,27 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
     ],
     team: [{ key: 'admin', syntax: '/baumeisteradmin status', right: 'modes-admin' }],
   },
+  sommerspiele: {
+    tips: 4,
+    commands: [
+      {
+        key: 'abstimmen',
+        syntax: {
+          de: '/abstimmen [wettkampf|almlauf|bogen|regatta|seifenkiste]',
+          en: '/vote [wettkampf|almlauf|bogen|regatta|seifenkiste]',
+        },
+      },
+      { key: 'bereit', syntax: { de: '/bereit', en: '/ready' } },
+      { key: 'top', syntax: { de: '/top [disziplin]', en: '/top [event]' } },
+    ],
+    more: [
+      { key: 'zuschauen', syntax: { de: '/zuschauen', en: '/spectate' } },
+      { key: 'verlassen', syntax: { de: '/verlassen', en: '/leave' } },
+      { key: 'stats', syntax: '/stats [name]' },
+    ],
+    // `moinmorni.sommerspiele.admin` comes with the game right "manage game modes" (Rights.java).
+    team: [{ key: 'admin', syntax: '/sommeradmin status', right: 'modes-admin' }],
+  },
 };
 
 /** The spelling of a mode command in the reader's language. */

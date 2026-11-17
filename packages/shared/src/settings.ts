@@ -760,6 +760,22 @@ export const LOBBY_AREA: SettingArea = {
           ),
           command: '/lobby saison <keine|wiesn|winter|ostern|halloween>',
         },
+        {
+          key: 'sportStand',
+          type: 'select',
+          default: 'auto',
+          options: [
+            { value: 'auto', label: t('Wer gerade Saison hat', 'Whoever is in season') },
+            { value: 'wintersport', label: t('Immer Wintersport', 'Always Winter Games') },
+            { value: 'sommerspiele', label: t('Immer Sommerspiele', 'Always Summer Games') },
+          ],
+          label: t('Sport-Stand am Schlossmarkt', 'Sports stand at the castle market'),
+          help: t(
+            'Wintersport und Sommerspiele teilen sich einen Stand: verschneite Skihütte im Winter, Bootshaus im Sommer – mit der passenden Figur. Von selbst steht dort, wer gerade offen ist; fest eine Seite für Tests und Feste. Nur der Modus am Stand steht im Kompass.',
+            'Winter Games and Summer Games share one stand: a snowy ski hut in winter, a boathouse in summer – with the matching figure. By itself it shows whoever is open; pick one side for tests and events. Only the mode at the stand is in the compass.',
+          ),
+          command: '/lobby sportstand <auto|winter|sommer>',
+        },
       ],
     },
     {

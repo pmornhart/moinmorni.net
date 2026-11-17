@@ -502,6 +502,10 @@ const TEXTS = {
     de: `${P}<yellow>☀ <white>{mode}</white> hat gerade Sommerpause – Wettkämpfe gibt es erst wieder im Winter. Schau dich trotzdem im Dorf um!`,
     en: `${P}<yellow>☀ <white>{mode}</white> is on its summer break – competitions start again in winter. Have a look around the village anyway!`,
   },
+  'mode.winterPause': {
+    de: `${P}<aqua>❄ <white>{mode}</white> haben gerade Winterpause – Wettkämpfe gibt es erst wieder ab April. Schau dich trotzdem im Dorf am Bergsee um!`,
+    en: `${P}<aqua>❄ <white>{mode}</white> are on their winter break – competitions start again in April. Have a look around the village by the lake anyway!`,
+  },
   'mode.joining': {
     de: `${P}<gray>Ab nach <white>{mode}</white> …`,
     en: `${P}<gray>Off to <white>{mode}</white> …`,

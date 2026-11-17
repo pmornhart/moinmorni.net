@@ -5,6 +5,7 @@
  */
 import { Canvas } from '../canvas.js';
 import type { View } from './winter-base.js';
+import { inSportZone } from './sportstand.js';
 
 export interface SeasonPlan {
   /** Blöcke der Saison setzen (`fill … strict`). */
@@ -31,6 +32,8 @@ export function seasonPlanOf(
   const blocks = new Canvas();
   const restore = new Canvas();
   w.find(() => true).forEach(([x, y, z, b]) => {
+    // Den Sport-Stand baut nur er selbst um (Skihütte bzw. Bootshaus bringen ihren eigenen Schmuck mit)
+    if (inSportZone(x, y, z)) return;
     const old = v.before(x, y, z);
     if (old === b) return;
     // Herkunft (Baum, Gelände …) bleibt – die Bauplan-Prüfung erkennt daran, was wohin wachsen darf

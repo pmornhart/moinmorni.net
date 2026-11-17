@@ -73,6 +73,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     /** Tageszeit der Lobby (wie in echt) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyClock clock;
     private LobbyWinter winter;
+    private LobbySportStand sportStand;
 
     /** Wartungs-Lobby (Leiste, Aushang, Sprung-Parcours, Schutz) – nur auf dem Server „wartung“. */
     private WartungLobby wartung;
@@ -136,6 +137,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         jail = new LobbyJail(this, features, this::langOf);
         clock = new LobbyClock(this);
         winter = new LobbyWinter(this);
+        sportStand = new LobbySportStand(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
         // Jump and Run meldet Rekord und Läufe ans Netzwerk (Statistik „lobby“).
@@ -153,6 +155,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         jail.start();
         features.start();
         winter.start();
+        sportStand.start();
         wartung = new WartungLobby(this, WARTUNG_SERVER.equals(serverName), this::langOf, this::rankRights,
                 () -> hub != null && hub.ready());
         wartung.onLobbyRequest(this::toLobby);
@@ -283,9 +286,13 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                     Bukkit.getConsoleSender().sendMessage(de);
                 });
             }
-            case "lobby" -> lobby.onModes(m);
+            case "lobby" -> {
+                lobby.onModes(m);
+                sportStand.onModes(m);
+            }
             case "lobby-settings" -> {
                 features.onSettings(m);
+                sportStand.onSettings(m);
                 clock.onSettings(m);
                 winter.onSettings(m);
             }

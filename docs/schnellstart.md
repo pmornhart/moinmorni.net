@@ -54,8 +54,8 @@ sparsames Gerät lohnt sich.
 
 **Wie viel Arbeitsspeicher wofür?** Der Container für MoinMorni bekommt als Standard **32 GB RAM, 8 Kerne und 100 GB
 Festplatte**. **Alle Server sind immer online**, Spieler kommen sofort hinein: Proxy 1 GB, Lobby 3 GB, Bau-Server
-1,5 GB, MorniSMP und MorniCraft je 3 GB, Morni Party 2 GB, Maibaumklau, Dorfkrimi und Baumeister je 1 GB, die übrigen Spielmodi je 1,5 GB – zusammen 30 GB, das passt
-in 32 GB. Das sind Höchstwerte: Ist in einem Modus niemand, hält Minecraft dort die Welt an und Java gibt den
+1,5 GB, MorniSMP und MorniCraft je 3 GB, Morni Party 2 GB, Maibaumklau, Dorfkrimi und Baumeister je 1 GB, Wintersport und Sommerspiele (sie teilen sich das Jahr)
+je 1 GB, die übrigen Spielmodi je 1,5 GB, die Wartungs-Lobby 0,75 GB – zusammen 31,25 GB, das passt in 32 GB. Das sind Höchstwerte: Ist in einem Modus niemand, hält Minecraft dort die Welt an und Java gibt den
 Arbeitsspeicher zurück – ein leerer 1,5-GB-Modus braucht dann etwa 0,7 GB statt 1,4 GB. Im Panel unter Modi lässt sich
 je Modus unter „Wenn niemand drin ist“ auch „Schlafen“ wählen: dann geht er ganz aus und wacht in etwa einer halben Minute auf – oder „Wach bleiben“, dann behält er seinen ganzen Arbeitsspeicher.
 
@@ -647,23 +647,24 @@ Ein paar Dinge gehen nur im GitHub-Konto `pmornhart`:
 2. **Die Modus-Repos** brauchen je eine fertige Version (ein Release). Die baut GitHub von selbst, sobald ein Modus nach
    deinem Go auf `main` landet. Alle Repos bleiben öffentlich – MoinMorni holt die Versionen ohne Anmeldung.
 
-   | Modus       | Repo                          |
-   | ----------- | ----------------------------- |
-   | MorniCraft  | `pmornhart/MorniCraft`        |
-   | Duels       | `pmornhart/MoinMorni-Duels`   |
-   | Morni Party | `pmornhart/Morni-Party`       |
-   | Gipfelsturm | `pmornhart/Morni-Gipfelsturm` |
-   | Burgverlies | `pmornhart/Morni-Burgverlies` |
-   | Bollwerk    | `pmornhart/Morni-Bollwek`     |
-   | MorniSMP    | `pmornhart/Morni-SMP`         |
-   | Wolkenkampf | `pmornhart/morni-wolkenkampf` |
-   | Versteckerl | `pmornhart/Morni-Versteckerl` |
-   | Wintersport | `pmornhart/morni-wintersport` |
-   | Adlerflug   | `pmornhart/morni-adlerflug`   |
-   | Angelkönig  | `pmornhart/morni-angelkoenig` |
-   | Maibaumklau | `pmornhart/morni-maibaumklau` |
-   | Dorfkrimi   | `pmornhart/morni-dorfkrimi`   |
-   | Baumeister  | `pmornhart/morni-baumeister`  |
+   | Modus        | Repo                           |
+   | ------------ | ------------------------------ |
+   | MorniCraft   | `pmornhart/MorniCraft`         |
+   | Duels        | `pmornhart/MoinMorni-Duels`    |
+   | Morni Party  | `pmornhart/Morni-Party`        |
+   | Gipfelsturm  | `pmornhart/Morni-Gipfelsturm`  |
+   | Burgverlies  | `pmornhart/Morni-Burgverlies`  |
+   | Bollwerk     | `pmornhart/Morni-Bollwek`      |
+   | MorniSMP     | `pmornhart/Morni-SMP`          |
+   | Wolkenkampf  | `pmornhart/morni-wolkenkampf`  |
+   | Versteckerl  | `pmornhart/Morni-Versteckerl`  |
+   | Wintersport  | `pmornhart/morni-wintersport`  |
+   | Adlerflug    | `pmornhart/morni-adlerflug`    |
+   | Angelkönig   | `pmornhart/morni-angelkoenig`  |
+   | Maibaumklau  | `pmornhart/morni-maibaumklau`  |
+   | Dorfkrimi    | `pmornhart/morni-dorfkrimi`    |
+   | Baumeister   | `pmornhart/morni-baumeister`   |
+   | Sommerspiele | `pmornhart/morni-sommerspiele` |
 
 **Geklappt, wenn** diese Adresse im Browser ein Skript zeigt (statt „404: Not Found“) und unter **Releases** der
 Modus-Repos jeweils eine Version mit einer `.jar`-Datei steht:

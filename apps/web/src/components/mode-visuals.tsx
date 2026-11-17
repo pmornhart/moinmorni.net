@@ -13,6 +13,7 @@ import {
   Snowflake,
   Sparkles,
   Sprout,
+  Sun,
   Swords,
   TreePine,
   type LucideIcon,
@@ -37,6 +38,7 @@ const MODE_ICONS: Readonly<Record<string, LucideIcon>> = {
   maibaumklau: TreePine,
   dorfkrimi: Search,
   baumeister: BrickWall,
+  sommerspiele: Sun,
 };
 
 const TINTS = ['bg-accent text-primary', 'bg-gold-soft text-gold', 'bg-blue-soft text-blue'] as const;

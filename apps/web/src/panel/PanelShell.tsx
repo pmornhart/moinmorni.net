@@ -34,6 +34,7 @@ import {
   ShieldHalf,
   Snowflake,
   Store,
+  Sun,
   Swords,
   TreePine,
   UserCog,
@@ -88,6 +89,7 @@ const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
   TreePine,
   Search,
   BrickWall,
+  Sun,
   Network,
 };
 

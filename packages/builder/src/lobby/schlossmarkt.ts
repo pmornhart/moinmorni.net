@@ -11,10 +11,16 @@ import { GROUND, roundTree } from '../nature.js';
 import { pick, random } from '../noise.js';
 import { pairs, range } from '../range.js';
 import { npc, signText } from '../village.js';
-import { lampPost, MODES, stallAt, type Mode } from './common.js';
+import { lampPost, MODES, SHARED_STAND, stallAt, type Mode } from './common.js';
+import { buildSportStand, SPORT_HOST } from './sportstand.js';
 
 /** So viele Modi stehen am Dorfmarkt um den Maibaum; alle weiteren kommen auf den Schlossmarkt. */
 export const RING_MODES = 7;
+/**
+ * Modi mit eigenem Stand: Wer sich einen Stand teilt (die Sommerspiele mit Wintersport, `sportstand.ts`), bekommt
+ * keinen eigenen.
+ */
+const STAND_MODES: readonly Mode[] = MODES.filter((m) => !SHARED_STAND[m.id]);
 
 /** Vorderkante der Stände (sie schauen nach Süden, zum Dorfplatz). */
 const FRONT_Z = -31;
@@ -63,7 +69,7 @@ export interface MarketSlot {
 
 /** Die Stände des Schlossmarkts in Reihenfolge (Modi ab dem achten, dann die Blumenfrau). */
 export const SCHLOSSMARKT: readonly MarketSlot[] = SLOTS.map((x, i) => ({
-  mode: (MODES[RING_MODES + i] ?? FLOWER_STAND).id,
+  mode: (STAND_MODES[RING_MODES + i] ?? FLOWER_STAND).id,
   x,
   z: FRONT_Z,
 }));
@@ -107,8 +113,10 @@ export function buildSchlossmarkt(c: Canvas, height: (x: number, z: number) => n
   retainingWall(c, height, rnd);
 
   SCHLOSSMARKT.forEach((slot, i) => {
-    const mode = MODES[RING_MODES + i];
-    if (mode) stallAt(c, slot.x, GROUND, slot.z, 'south', mode);
+    const mode = STAND_MODES[RING_MODES + i];
+    // Der Sport-Stand: im Bauplan die Skihütte (Wintersport) – das Lobby-Plugin baut je nach Saison zum Bootshaus um
+    if (mode?.id === SPORT_HOST) buildSportStand(c, slot.x, slot.z);
+    else if (mode) stallAt(c, slot.x, GROUND, slot.z, 'south', mode);
     else stallAt(c, slot.x, GROUND, slot.z, 'south', FLOWER_STAND, ['mm_village', 'mm_market']);
     storeBehind(c, slot.x, rnd);
   });
@@ -246,7 +254,7 @@ function marketArch(c: Canvas): void {
   });
   range(-ARCH_POST - 1, ARCH_POST + 1).forEach((x) => c.set(x, top, z, 'dark_oak_log[axis=x]'));
   [-ARCH_POST - 1, ARCH_POST + 1].forEach((x) => c.set(x, top + 1, z, 'lantern'));
-  const colours = [...MODES.slice(RING_MODES).map((m) => m.colour), FLOWER_STAND.colour];
+  const colours = [...STAND_MODES.slice(RING_MODES).map((m) => m.colour), FLOWER_STAND.colour];
   const pennants = [-5, -4, -3, 3, 4, 5];
   pennants.forEach((x, i) => {
     const colour = colours[i % colours.length] ?? 'white';
@@ -276,8 +284,8 @@ function signpost(c: Canvas): void {
     [
       { text: '↑ Schlossmarkt\n', color: 'gold', bold: true },
       {
-        text: MODES.slice(RING_MODES)
-          .map((m) => m.name)
+        text: STAND_MODES.slice(RING_MODES)
+          .map((m) => (m.id === SPORT_HOST ? 'Wintersport/Sommerspiele' : m.name))
           .join(' · '),
         color: 'white',
       },

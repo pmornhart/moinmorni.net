@@ -6,6 +6,7 @@ import { fitConnections } from '../src/verbindungen.js';
 import { roundTree } from '../src/nature.js';
 import { checkLobby } from '../src/lobby/pruefen.js';
 import { SEASONS } from '../src/lobby/season.js';
+import { SPORT_LOOKS } from '../src/lobby/sportstand.js';
 import { OFFEN_BAUPLAN, OFFEN_SAISON } from './pruefung-offen.js';
 
 const key = (f: Fund): string => `${f.art} ${f.x} ${f.y} ${f.z} ${f.text}`;
@@ -178,7 +179,7 @@ describe('Saison-Deko: gedrehte Anzeigen, Treppen und kleine Modelle', () => {
 });
 
 describe('Bauplan-Prüfung der ganzen Lobby', () => {
-  const { plan: found, seasons } = checkLobby();
+  const { plan: found, seasons, sport } = checkLobby();
 
   it('Bauplan: keine neuen Funde (nur bekannte in Teilen, an denen gerade andere arbeiten)', () => {
     const known = new Set(OFFEN_BAUPLAN);
@@ -188,5 +189,9 @@ describe('Bauplan-Prüfung der ganzen Lobby', () => {
   it.each(SEASONS)('Saison-Deko „%s“: keine neuen Funde', (season) => {
     const known = new Set(OFFEN_SAISON[season] ?? []);
     expect(seasons[season].filter((f) => !known.has(key(f))).map(key)).toEqual([]);
+  });
+
+  it.each(SPORT_LOOKS)('Sport-Stand „%s“ (Blöcke, Figur, Deko): keine Funde', (look) => {
+    expect(sport[look].map(key)).toEqual([]);
   });
 }, 300_000);

@@ -5642,6 +5642,366 @@ export const BAUMEISTER_AREA: SettingArea = {
   ],
 };
 
+// ---------------------------------------------------------------- Sommerspiele
+
+const sommer = settingsFor('sommerconfig');
+const MONTH: Unit = { unit: t('Monat (1–12)', 'month (1–12)'), arg: 'monat' };
+
+export const SOMMERSPIELE_AREA: SettingArea = {
+  id: 'sommerspiele',
+  title: t('Sommerspiele', 'Summer Games'),
+  text: t(
+    'Almlauf, Bogenschießen, Ruderregatta und Seifenkiste: Saison, Licht im Dorf am Bergsee, Zeiten und Regeln der Disziplinen.',
+    'Alpine run, archery, rowing regatta and soapbox race: season, light in the lakeside village, times and rules of the events.',
+  ),
+  icon: 'Sun',
+  panel: 'modes',
+  mode: { id: 'sommerspiele', plugin: 'MorniSommerspiele' },
+  sections: [
+    rejoinSection(
+      sommer,
+      90,
+      t(
+        'So viele Sekunden bleiben Disziplin, Lauf und Wertung frei. Zurück sitzt man gleich wieder im Boot bzw. in der Lore, läuft mit seinen Kontrollpunkten weiter oder steht an seiner Matte; die Uhr läuft weiter. 0 = aus.',
+        'Discipline, run and score stay reserved for this many seconds. Back in time you sit in the boat or the cart again, run on with your checkpoints or stand at your mat; the clock keeps running. 0 = off.',
+      ),
+    ),
+    {
+      id: 'village',
+      title: t('Sommerdorf', 'Summer village'),
+      settings: [
+        sommer.choice({
+          key: 'season',
+          at: 'saison',
+          value: 'sommer',
+          options: [
+            {
+              value: 'sommer',
+              label: t('Nur in der Saison (Monate unten)', 'Only in season (months below)'),
+            },
+            { value: 'immer', label: t('Das ganze Jahr', 'All year') },
+          ],
+          cmd: 'saison',
+          label: t('Saison', 'Season'),
+          help: t(
+            'Außerhalb der Saison bleibt das Dorf zum Anschauen offen, Wettkämpfe gibt es keine. Lobby und Webseite zeigen dann „Winterpause“, am Schlossmarkt steht Wintersport.',
+            'Outside the season the village stays open to look around, but there are no competitions. Lobby and website then show “winter break”, and Winter Games stands at the castle market.',
+          ),
+        }),
+        sommer.number({
+          key: 'seasonFrom',
+          at: 'saison-von',
+          value: 4,
+          min: 1,
+          max: 12,
+          ...MONTH,
+          cmd: 'saison von',
+          label: t('Saison ab Monat', 'Season from month'),
+          help: t(
+            'Ab dem 1. dieses Monats (4 = April). Gegenstück zu Wintersport (1. Dezember bis 31. März).',
+            'From the 1st of this month (4 = April). The counterpart to Winter Games (1 December to 31 March).',
+          ),
+        }),
+        sommer.number({
+          key: 'seasonTo',
+          at: 'saison-bis',
+          value: 11,
+          min: 1,
+          max: 12,
+          ...MONTH,
+          cmd: 'saison bis',
+          label: t('Saison bis Monat', 'Season until month'),
+          help: t(
+            'Bis zum Ende dieses Monats (11 = November). Mai bis September: 5 und 9.',
+            'Until the end of this month (11 = November). May to September: 5 and 9.',
+          ),
+        }),
+        sommer.choice({
+          key: 'daytime',
+          at: 'tageszeit',
+          value: 'tag',
+          options: [
+            { value: 'tag', label: t('Tag (Mittag, hell)', 'Day (noon, bright)') },
+            { value: 'abend', label: t('Abend (Laternen leuchten)', 'Evening (lanterns glowing)') },
+          ],
+          cmd: 'tageszeit',
+          label: t('Licht', 'Light'),
+          help: t('Es bleibt immer bei dieser Tageszeit.', 'It always stays at this time of day.'),
+        }),
+        sommer.flag({
+          key: 'pollen',
+          at: 'bluetenstaub',
+          value: true,
+          cmd: 'bluetenstaub',
+          label: t('Schwebender Blütenstaub', 'Floating pollen'),
+          help: t(
+            'Blütenstaub um jeden Spieler – nur zum Anschauen.',
+            'Pollen around every player – just for the looks.',
+          ),
+        }),
+        sommer.number({
+          key: 'countdown',
+          at: 'dorf.countdown-sekunden',
+          value: 30,
+          min: 3,
+          max: 300,
+          ...SECONDS,
+          cmd: 'countdown',
+          label: t('Countdown vor dem Wettkampf', 'Countdown before the competition'),
+          help: t(
+            'Sagen alle „bereit“, geht es nach 5 Sekunden los.',
+            'If everyone says “ready”, it starts after 5 seconds.',
+          ),
+        }),
+        sommer.number({
+          key: 'minPlayers',
+          at: 'dorf.mindestens-spieler',
+          value: 2,
+          min: 1,
+          max: 12,
+          ...PLAYERS,
+          cmd: 'mindestens',
+          label: t('Countdown startet von selbst ab', 'Countdown starts by itself from'),
+          help: t(
+            'Vorher beginnt er, sobald jemand „bereit“ sagt.',
+            'Before that it starts as soon as someone says “ready”.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'competition',
+      title: t('Wettkampf', 'Competition'),
+      settings: [
+        sommer.number({
+          key: 'maxPlayers',
+          at: 'wettkampf.hoechstens-spieler',
+          value: 12,
+          min: 1,
+          max: 12,
+          ...PLAYERS,
+          cmd: 'hoechstens',
+          label: t('Höchstens in einem Wettkampf', 'At most in one competition'),
+          help: t('Partys bleiben zusammen.', 'Parties stay together.'),
+        }),
+        sommer.number({
+          key: 'pauseSeconds',
+          at: 'wettkampf.pause-sekunden',
+          value: 8,
+          min: 2,
+          max: 120,
+          ...SECONDS,
+          cmd: 'pause',
+          label: t('Pause zwischen den Disziplinen', 'Break between the events'),
+          help: t(
+            'Zeit für den Zwischenstand im Medaillenspiegel.',
+            'Time for the interim standings in the medal table.',
+          ),
+        }),
+        sommer.number({
+          key: 'ceremonySeconds',
+          at: 'wettkampf.siegerehrung-sekunden',
+          value: 12,
+          min: 3,
+          max: 120,
+          ...SECONDS,
+          cmd: 'siegerehrung',
+          label: t('Siegerehrung', 'Award ceremony'),
+          help: t(
+            'So lange dauert die Siegerehrung am Treppchen, danach geht es zurück ins Dorf.',
+            'The award ceremony at the podium lasts this long, then it is back to the village.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'almlauf',
+      title: t('Almlauf', 'Alpine run'),
+      settings: [
+        sommer.number({
+          key: 'almLaps',
+          at: 'almlauf.runden',
+          value: 1,
+          min: 1,
+          max: 5,
+          unit: t('Runden', 'laps'),
+          arg: 'runden',
+          cmd: 'almlauf runden',
+          label: t('Runden', 'Laps'),
+          help: t('So oft geht es über den Hindernis-Rundkurs.', 'This many laps of the obstacle course.'),
+        }),
+        sommer.number({
+          key: 'almLimit',
+          at: 'almlauf.zeitlimit-sekunden',
+          value: 240,
+          min: 30,
+          max: 1800,
+          ...SECONDS,
+          cmd: 'almlauf zeitlimit',
+          label: t('Zeitlimit', 'Time limit'),
+          help: t(
+            'Wer bis dahin nicht im Ziel ist, scheidet aus (240 = 4 Minuten).',
+            'Whoever is not at the finish by then drops out (240 = 4 minutes).',
+          ),
+        }),
+        sommer.number({
+          key: 'almSpeed',
+          at: 'almlauf.tempo',
+          value: 1,
+          min: 0,
+          max: 3,
+          unit: t('Stufe', 'level'),
+          arg: 'stufe',
+          cmd: 'almlauf tempo',
+          label: t('Schnelligkeit beim Laufen', 'Running speed'),
+          help: t(
+            '0 = normal, 1 = wie Schnelligkeit I, höchstens 3.',
+            '0 = normal, 1 = like Speed I, at most 3.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'bogen',
+      title: t('Bogenschießen', 'Archery'),
+      settings: [
+        sommer.number({
+          key: 'arrows',
+          at: 'bogen.pfeile',
+          value: 5,
+          min: 1,
+          max: 10,
+          unit: t('Pfeile', 'arrows'),
+          arg: 'zahl',
+          cmd: 'bogen pfeile',
+          label: t('Pfeile je Durchgang', 'Arrows per round'),
+          help: t(
+            'Drei Durchgänge: Scheibe in 20, 35 und 50 Blöcken.',
+            'Three rounds: target at 20, 35 and 50 blocks.',
+          ),
+        }),
+        sommer.number({
+          key: 'bowSeconds',
+          at: 'bogen.zeit-sekunden',
+          value: 45,
+          min: 10,
+          max: 300,
+          ...SECONDS,
+          cmd: 'bogen zeit',
+          label: t('Zeit je Durchgang', 'Time per round'),
+          help: t('So lange hat man für seine Pfeile.', 'This is how long you have for your arrows.'),
+        }),
+        sommer.number({
+          key: 'wind',
+          at: 'bogen.wind',
+          value: 2,
+          min: 0,
+          max: 3,
+          unit: t('Stärke', 'strength'),
+          arg: 'staerke',
+          cmd: 'bogen wind',
+          label: t('Stärkster Wind', 'Strongest wind'),
+          help: t(
+            '0 = immer windstill, 3 = kräftig. Je Durchgang weht er zufällig bis zu dieser Stärke.',
+            '0 = always calm, 3 = strong. Each round it blows at random up to this strength.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'regatta',
+      title: t('Ruderregatta', 'Rowing regatta'),
+      settings: [
+        sommer.flag({
+          key: 'pairs',
+          at: 'regatta.zweier',
+          value: true,
+          cmd: 'regatta zweier',
+          label: t('Zweier für Partys', 'Pairs for parties'),
+          help: t(
+            'Partys rudern zu zweit in einem Boot (der Erste lenkt). Aus: jeder rudert allein.',
+            'Parties row two to a boat (the first one steers). Off: everyone rows alone.',
+          ),
+        }),
+        sommer.number({
+          key: 'regattaPenalty',
+          at: 'regatta.strafe-sekunden',
+          value: 4,
+          min: 0,
+          max: 60,
+          ...SECONDS,
+          cmd: 'regatta strafe',
+          label: t('Strafe für ein verpasstes Tor', 'Penalty for a missed gate'),
+          help: t(
+            'Kommt für jedes verpasste Bojen-Tor zur Zeit dazu.',
+            'Added to the time for every missed buoy gate.',
+          ),
+        }),
+        sommer.number({
+          key: 'regattaLimit',
+          at: 'regatta.zeitlimit-sekunden',
+          value: 150,
+          min: 20,
+          max: 600,
+          ...SECONDS,
+          cmd: 'regatta zeitlimit',
+          label: t('Zeitlimit', 'Time limit'),
+          help: t(
+            'Wer bis dahin nicht im Ziel ist, scheidet aus.',
+            'Whoever is not at the finish by then drops out.',
+          ),
+        }),
+        sommer.number({
+          key: 'current',
+          at: 'regatta.stroemung',
+          value: 2,
+          min: 0,
+          max: 3,
+          unit: t('Stärke', 'strength'),
+          arg: 'staerke',
+          cmd: 'regatta stroemung',
+          label: t('Strömungen', 'Currents'),
+          help: t(
+            'So stark treiben die Strömungen das Boot zur Seite (0 = keine, 3 = kräftig).',
+            'How strongly the currents push the boat sideways (0 = none, 3 = strong).',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'seifenkiste',
+      title: t('Seifenkistenrennen', 'Soapbox race'),
+      settings: [
+        sommer.number({
+          key: 'kisteLimit',
+          at: 'seifenkiste.zeitlimit-sekunden',
+          value: 120,
+          min: 20,
+          max: 600,
+          ...SECONDS,
+          cmd: 'seifenkiste zeitlimit',
+          label: t('Zeitlimit', 'Time limit'),
+          help: t(
+            'Wer bis dahin nicht im Ziel ist, scheidet aus.',
+            'Whoever is not at the finish by then drops out.',
+          ),
+        }),
+        sommer.flag({
+          key: 'fork',
+          at: 'seifenkiste.weiche',
+          value: true,
+          cmd: 'seifenkiste weiche',
+          label: t('Weiche mit Steilstück', 'Junction with steep track'),
+          help: t(
+            'An der Weiche geht es rechts in die Kehren oder geradeaus das Steilstück hinab. Aus: alle fahren die Kehren.',
+            'At the junction you take the bends to the right or the steep track straight down. Off: everyone takes the bends.',
+          ),
+        }),
+      ],
+    },
+  ],
+};
+
 /** Alle Spielmodi mit Einstellungen, in der Reihenfolge der Lobby. */
 export const MODE_SETTING_AREAS: readonly SettingArea[] = [
   DUELS_AREA,
@@ -5658,4 +6018,5 @@ export const MODE_SETTING_AREAS: readonly SettingArea[] = [
   MAIBAUMKLAU_AREA,
   DORFKRIMI_AREA,
   BAUMEISTER_AREA,
+  SOMMERSPIELE_AREA,
 ];

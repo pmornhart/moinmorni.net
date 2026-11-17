@@ -10,6 +10,7 @@ import { checkDecorations, checkPlan, worldOf, type Fund, type World } from '../
 import { buildLobby } from './dorfplatz.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
 import { SEASONS, seasonCommands, seasonPlan, type Season } from './season.js';
+import { SPORT_LOOKS, sportEntities, sportPlan, type SportLook } from './sportstand.js';
 
 /** Wo man in der Lobby herumläuft: das Dorf mit den Wiesen ringsum und der Schlossberg samt Schloss. */
 const WALK = { radius: 125, castle: { x: 45, z1: -170, z2: -80 }, top: GROUND + 40 } as const;
@@ -31,6 +32,8 @@ export interface LobbyCheck {
   readonly plan: readonly Fund[];
   /** Funde je Saison-Deko. */
   readonly seasons: Readonly<Record<Season, readonly Fund[]>>;
+  /** Funde je Look des Sport-Stands (Skihütte bzw. Bootshaus samt Figur und Deko). */
+  readonly sport: Readonly<Record<SportLook, readonly Fund[]>>;
 }
 
 /**
@@ -80,7 +83,25 @@ export function checkLobbyCanvas(canvas: Canvas): LobbyCheck {
     }),
     {} as Partial<Record<Season, readonly Fund[]>>,
   ) as Readonly<Record<Season, readonly Fund[]>>;
-  return { plan, seasons };
+  // Sport-Stand: Skihütte steht im Bauplan, das Bootshaus kommt darüber; je Look Figur, Schild und Deko
+  const summer = sportPlan(canvas);
+  const sport = SPORT_LOOKS.reduce(
+    (all, look) => {
+      const world = look === 'sommerspiele' ? withSeason(canvas, summer.blocks) : canvas;
+      const withFigure = new Canvas();
+      world.each((x, y, z, b) => {
+        const origin = world.originAt(x, y, z);
+        if (origin) withFigure.tagged(origin, () => withFigure.set(x, y, z, b));
+        else withFigure.set(x, y, z, b);
+      });
+      const entities = sportEntities(look);
+      withFigure.extra.push(...entities.filter((e) => e.includes('mannequin')));
+      const blocks = checkPlan(withFigure, opts).filter((f) => !known.has(fundKey(f)));
+      return { ...all, [look]: [...blocks, ...checkDecorations(world, entities, worldOf(world))] };
+    },
+    {} as Partial<Record<SportLook, readonly Fund[]>>,
+  ) as Readonly<Record<SportLook, readonly Fund[]>>;
+  return { plan, seasons, sport };
 }
 
 /** Baut die Lobby und prüft sie. */

@@ -40,6 +40,7 @@ const IMAGES = {
   figureMaibaumklau: '/bilder/figur-maibaumklau.webp',
   figureDorfkrimi: '/bilder/figur-dorfkrimi.webp',
   figureBaumeister: '/bilder/figur-baumeister.webp',
+  figureSommerspiele: '/bilder/figur-sommerspiele.webp',
   schlossmarktDay: '/bilder/schlossmarkt-tag.webp',
   schlossmarktNight: '/bilder/schlossmarkt-nacht.webp',
   schlossmarktStandDay: '/bilder/schlossmarkt-stand-tag.webp',
@@ -116,6 +117,8 @@ const MODE_ART: Readonly<Record<string, ModeArt>> = {
   maibaumklau: { figure: IMAGES.figureMaibaumklau, a: '#d9944e', b: '#5a2e0e', scene: 'schlossmarkt-stand' },
   dorfkrimi: { figure: IMAGES.figureDorfkrimi, a: '#c7b8ff', b: '#241d4a', scene: 'schlossmarkt' },
   baumeister: { figure: IMAGES.figureBaumeister, a: '#ff8a5c', b: '#6b2410', scene: 'schlossmarkt-stand' },
+  // Teilt sich den Sport-Stand am Schlossmarkt mit Wintersport (es steht dort, wer gerade Saison hat)
+  sommerspiele: { figure: IMAGES.figureSommerspiele, a: '#c8e04a', b: '#2f4a12', scene: 'schlossmarkt' },
 };
 
 /** Modes Philip adds later have no figure yet: emerald and the market. */

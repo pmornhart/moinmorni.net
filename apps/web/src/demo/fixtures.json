@@ -276,6 +276,24 @@
         "awake": true,
         "server": "baumeister",
         "phase": "running"
+      },
+      {
+        "id": "sommerspiele",
+        "name": {
+          "de": "Sommerspiele",
+          "en": "Summer Games"
+        },
+        "description": {
+          "de": "Almlauf, Bogenschießen, Ruderregatta und Seifenkistenrennen im Dorf am Bergsee – um Gold, Silber und Bronze. Für 2–12, von April bis November.",
+          "en": "Alpine run, archery, rowing regatta and soapbox race in the village by the mountain lake – for gold, silver and bronze. For 2–12, April to November."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 5,
+        "maxPlayers": 36,
+        "awake": true,
+        "server": "sommerspiele",
+        "phase": "running"
       }
     ]
   },
@@ -323,6 +341,21 @@
       "body": {
         "de": "Unser Netzwerk hat die Tore geöffnet! Du startest im Alpendorf: Am Dorfmarkt rund um den Maibaum stehen die Figuren der Spielmodi – sprich eine an, und schon bist du im Spiel.\nDuels, Morni Party und Gipfelsturm sind von Anfang an dabei. MorniCraft ist unser Freunde-Survival für alle auf der Whitelist – bewerben kannst du dich hier auf der Webseite.\nDu spielst mit der Java Edition ab Version 1.17 oder mit Bedrock auf Handy, Konsole und Windows. Die Adresse ist moinmorni.net. Wir sehen uns im Biergarten!",
         "en": "Our network has opened its gates! You start in the alpine village: around the maypole at the village market stand the figures of the game modes – talk to one and you are in the game.\nDuels, Morni Party and Summit Rush are there from day one. MorniCraft is our friends’ survival for everyone on the whitelist – you can apply right here on the website.\nPlay with Java Edition from version 1.17 or with Bedrock on phone, console and Windows. The address is moinmorni.net. See you in the beer garden!"
+      }
+    },
+    {
+      "slug": "sommerspiele",
+      "category": "update",
+      "pinned": false,
+      "daysAgo": 0,
+      "author": "Morni",
+      "title": {
+        "de": "Sommerspiele am Bergsee",
+        "en": "Summer Games by the mountain lake"
+      },
+      "body": {
+        "de": "Neu am Schlossmarkt: die Sommerspiele mit Almlauf, Bogenschießen, Ruderregatta und Seifenkistenrennen – um Gold, Silber und Bronze. Sie haben von April bis November Saison, Wintersport von Dezember bis März.\nWintersport und Sommerspiele teilen sich einen Stand: Im Winter steht dort eine verschneite Skihütte mit der Skifahrerin, im Sommer ein Bootshaus mit der Ruderin. Klick einfach die Figur an, die gerade dasteht.",
+        "en": "New at the castle market: Summer Games with alpine run, archery, rowing regatta and soapbox race – for gold, silver and bronze. They are in season from April to November, Winter Games from December to March.\nWinter Games and Summer Games share one stand: in winter a snowy ski hut with the skier stands there, in summer a boathouse with the rower. Just click the figure that is there right now."
       }
     },
     {
@@ -645,6 +678,23 @@
           "games_paare": 2,
           "best_score": 480,
           "best_points": 64
+        },
+        "sommerspiele": {
+          "events": 12,
+          "wins": 5,
+          "races": 48,
+          "points": 402,
+          "gold": 7,
+          "silver": 4,
+          "bronze": 3,
+          "bogen_rings": 1310,
+          "bogen_centres": 61,
+          "kiste_crashes": 9,
+          "best_points": 38,
+          "bogen_best": 96,
+          "time_almlauf_ms": 152000,
+          "time_regatta_ms": 171000,
+          "time_seifenkiste_ms": 98000
         }
       }
     },
@@ -713,6 +763,23 @@
           "games_paare": 5,
           "best_score": 404,
           "best_points": 35
+        },
+        "sommerspiele": {
+          "events": 7,
+          "wins": 2,
+          "races": 27,
+          "points": 215,
+          "gold": 3,
+          "silver": 3,
+          "bronze": 2,
+          "bogen_rings": 702,
+          "bogen_centres": 30,
+          "kiste_crashes": 5,
+          "best_points": 20,
+          "bogen_best": 84,
+          "time_almlauf_ms": 161500,
+          "time_regatta_ms": 186200,
+          "time_seifenkiste_ms": 104300
         }
       }
     },
@@ -974,6 +1041,23 @@
           "games_paare": 5,
           "best_score": 490,
           "best_points": 47
+        },
+        "sommerspiele": {
+          "events": 4,
+          "wins": 1,
+          "races": 15,
+          "points": 118,
+          "gold": 1,
+          "silver": 2,
+          "bronze": 1,
+          "bogen_rings": 388,
+          "bogen_centres": 14,
+          "kiste_crashes": 6,
+          "best_points": 12,
+          "bogen_best": 77,
+          "time_almlauf_ms": 175900,
+          "time_regatta_ms": 201400,
+          "time_seifenkiste_ms": 111800
         }
       }
     },

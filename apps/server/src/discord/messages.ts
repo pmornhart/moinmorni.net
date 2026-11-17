@@ -65,6 +65,7 @@ const MODE_COLOURS: Readonly<Record<string, string>> = {
   maibaumklau: '#d9944e',
   dorfkrimi: '#c7b8ff',
   baumeister: '#ff8a5c',
+  sommerspiele: '#c8e04a',
 };
 
 const MODE_ICON: Readonly<Record<Mode['state'], string>> = {

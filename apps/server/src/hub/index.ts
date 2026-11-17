@@ -1,11 +1,23 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
-import { JAIL, JUMP_AND_RUN, LAUNCHPADS, LOBBY_SPAWN_VIEW, TOUR, modeIcon } from '@moinmorni/builder';
+import {
+  JAIL,
+  JUMP_AND_RUN,
+  LAUNCHPADS,
+  LOBBY_SPAWN_VIEW,
+  SPORT_STAND,
+  TOUR,
+  modeIcon,
+} from '@moinmorni/builder';
 import {
   alwaysIn,
   areaById,
   modePause,
+  monthIn,
+  SPORT_STAND_CHOICES,
+  sportStand,
   WARTUNG_SERVER,
+  type ModePause,
   type GameRight,
   type Mode,
   type Role,
@@ -157,6 +169,8 @@ const CLOCK_LONGITUDE = 11.575;
 const BUILD_SERVER = 'bau';
 /** So oft bekommt die Lobby den Stand des Gefängnisses auch ohne Änderung. */
 const JAIL_RESEND_MS = 60_000;
+/** Stündlich schickt der Hub der Lobby den Stand noch einmal – so wechselt der Sport-Stand auch zum Monatsanfang. */
+const SPORT_CHECK_MS = 3_600_000;
 /** So lange darf ein Modus zum Aufwachen brauchen, dann gibt es eine Meldung. */
 const WAKE_TIMEOUT_MS = 180_000;
 
@@ -564,6 +578,7 @@ export function createHub(options: HubOptions): Hub {
     if (admit(uuid, mode.server, p.lang) !== 'go') return;
     if (mode.access === 'whitelist') ctx.msg(uuid, text(p.lang, 'mode.invite_only', { mode: name }));
     if (pause === 'summer') ctx.msg(uuid, text(p.lang, 'mode.pause', { mode: name }));
+    if (pause === 'winter') ctx.msg(uuid, text(p.lang, 'mode.winterPause', { mode: name }));
     ctx.msg(uuid, text(p.lang, 'mode.joining', { mode: name }));
     ctx.connect(uuid, mode.server);
   };
@@ -571,8 +586,8 @@ export function createHub(options: HubOptions): Hub {
   /** Was der Modus gerade meldet – nur solange sein Server verbunden ist (schlafend meldet er nichts). */
   const phaseOf = (md: Mode): string | null =>
     md.server !== null && conns.backends.has(md.server) ? (modeRuns.get(md.id)?.state ?? null) : null;
-  /** Sommerpause (Wintersport außerhalb der Saison), gerade geschlossen oder offen. */
-  const pauseOf = (md: Mode): 'summer' | 'closed' | null =>
+  /** Sommer-/Winterpause (Wintersport bzw. Sommerspiele außerhalb der Saison), gerade geschlossen oder offen. */
+  const pauseOf = (md: Mode): ModePause | null =>
     modePause({
       id: md.id,
       state: md.state,
@@ -599,7 +614,23 @@ export function createHub(options: HubOptions): Hub {
         pause: pauseOf(md),
         icon: modeIcon(md.id),
       })),
+    // Wer am Sport-Stand am Schlossmarkt steht (Wintersport oder Sommerspiele) – nur der kommt in den Kompass.
+    sport: sportOfStand(),
   });
+  /** Sport-Stand: fest eingestellt (Panel → Lobby) oder wer gerade Saison hat (Meldung der Modi, sonst Kalender). */
+  const sportOfStand = (): string => {
+    const raw = stores.settings('lobby')['sportStand'];
+    const choice = SPORT_STAND_CHOICES.find((c) => c === raw) ?? 'auto';
+    const of = (id: string) => {
+      const md = stores.modes().find((m) => m.id === id);
+      return md ? { hasServer: md.server !== null && md.state !== 'off', pause: pauseOf(md) } : undefined;
+    };
+    return sportStand(
+      choice,
+      { wintersport: of('wintersport'), sommerspiele: of('sommerspiele') },
+      monthIn(options.timeZone, now()),
+    );
+  };
   /** Lobby-Einstellungen aus dem Panel + die festen Punkte der Lobby (Ankunft, Launchpads, Jump and Run, Rundgang). */
   const lobbySettings = (): Body => {
     const l = stores.settings('lobby');
@@ -617,7 +648,14 @@ export function createHub(options: HubOptions): Hub {
       // Tageszeit: „real“ = Sonne und Mond wie heute in Bayern (Zeitzone des Netzwerks, Ort München)
       daytime: String(l['daytime'] ?? 'real'),
       clock: { timeZone: options.timeZone, latitude: CLOCK_LATITUDE, longitude: CLOCK_LONGITUDE },
-      features: { spawn: LOBBY_SPAWN_VIEW, launchpads: LAUNCHPADS, jump: JUMP_AND_RUN, tour: TOUR },
+      features: {
+        spawn: LOBBY_SPAWN_VIEW,
+        launchpads: LAUNCHPADS,
+        jump: JUMP_AND_RUN,
+        tour: TOUR,
+        // Sport-Stand (Wintersport/Sommerspiele): Merker, Mitte, Funktionen – das Lobby-Plugin baut selbst um
+        sport: SPORT_STAND,
+      },
     };
   };
   /** Einstellungen für den MorniCraft-Server (Panel → Einstellungen → MorniCraft, Regeln der Webseite). */
@@ -629,6 +667,8 @@ export function createHub(options: HubOptions): Hub {
   // trotzdem jeder heraus (das Lobby-Plugin setzt Freie, die noch in der Zelle stehen, an den Dorfplatz).
   const jailTimer = setInterval(() => toBackend(LOBBY_SERVER, jailState()), JAIL_RESEND_MS);
   jailTimer.unref();
+  const sportTimer = setInterval(() => lobbySoon(), SPORT_CHECK_MS);
+  sportTimer.unref();
   const lobbySoon = (): void => {
     if (lobbyTimer || closed) return;
     lobbyTimer = setTimeout(() => {
@@ -955,6 +995,8 @@ export function createHub(options: HubOptions): Hub {
     }
     if (area === 'lobby') {
       toBackend(LOBBY_SERVER, lobbySettings());
+      // Sport-Stand fest auf eine Seite gestellt (oder wieder von selbst): die Lobby baut gleich um.
+      lobbySoon();
       toBackend(LOBBY_SERVER, lobbyMusicBody(stores));
     }
     if (area === 'voice') voice.broadcast();
@@ -985,6 +1027,7 @@ export function createHub(options: HubOptions): Hub {
       // Sonst feuert die verzögerte Lobby-Meldung noch nach dem Schließen (Datenbank schon zu).
       closed = true;
       clearInterval(jailTimer);
+      clearInterval(sportTimer);
       if (lobbyTimer) clearTimeout(lobbyTimer);
       lobbyTimer = null;
       await transport.close();
