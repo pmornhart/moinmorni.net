@@ -1,3 +1,4 @@
+import { networkCommand } from '@moinmorni/shared';
 import crypto from 'node:crypto';
 import type { Command, Actor } from './commands.js';
 import type { HubContext } from './context.js';
@@ -201,9 +202,7 @@ export function createVoice(
 
   const commands: Command[] = [
     {
-      name: 'voice',
-      aliases: ['sprachchat', 'vc'],
-      usage: { de: '/voice [kanal|raus|zu <spieler>]', en: '/voice [channel|leave|join <player>]' },
+      ...networkCommand('voice'),
       run: (actor, args) => {
         const word = args[0]?.toLowerCase() ?? '';
         const list = channels();

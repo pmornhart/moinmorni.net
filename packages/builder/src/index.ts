@@ -19,3 +19,4 @@ export * from './lobby/jail.js';
 export * from './lobby/jumpandrun.js';
 export * from './lobby/schlossmarkt.js';
 export * from './lobby/season.js';
+export * from './musik/index.js';

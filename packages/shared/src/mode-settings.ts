@@ -1265,6 +1265,14 @@ export const GIPFELSTURM_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'gipfelsturm', plugin: 'Gipfelsturm' },
   sections: [
+    rejoinSection(
+      gipfel,
+      90,
+      t(
+        'So viele Sekunden bleibt ein Lauf nach einem Verbindungsabbruch offen. Wer rechtzeitig zurückkommt, macht am letzten Kontrollpunkt weiter (die Uhr ist weitergelaufen), ohne Kontrollpunkt am Start; ein Party-Rennen wartet. 0 = aus.',
+        'A run stays open for this many seconds after a lost connection. Whoever comes back in time continues at the last checkpoint (the clock kept running), without one at the start; a party race waits. 0 = off.',
+      ),
+    ),
     {
       id: 'runs',
       title: t('Läufe', 'Runs'),
@@ -2985,6 +2993,14 @@ export const VERSTECKERL_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'versteckerl', plugin: 'MorniVersteckerl' },
   sections: [
+    rejoinSection(
+      versteck,
+      90,
+      t(
+        'So viele Sekunden bleiben Rolle, Gestalt, Versteck und Punkte frei. Wer rechtzeitig zurückkommt, rastet am selben Platz wieder ein; sonst verlässt er die Runde wie bisher. 0 = aus.',
+        'Role, shape, hiding spot and points stay reserved for this many seconds. Whoever comes back in time snaps back into the same spot; otherwise they leave the round as before. 0 = off.',
+      ),
+    ),
     {
       id: 'station',
       title: t('Gendarmerie', 'Constabulary'),
@@ -3522,6 +3538,14 @@ export const WINTERSPORT_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'wintersport', plugin: 'MorniWintersport' },
   sections: [
+    rejoinSection(
+      winter,
+      90,
+      t(
+        'So viele Sekunden bleiben Disziplin, Lauf und Zeiten frei. Zurück sitzt man gleich wieder im Boot bzw. steht an derselben Stelle; die Uhr läuft weiter. 0 = aus.',
+        'Discipline, run and times stay reserved for this many seconds. Back in time you sit in the boat again or stand at the same spot; the clock keeps running. 0 = off.',
+      ),
+    ),
     {
       id: 'village',
       title: t('Bergdorf', 'Mountain village'),
@@ -3905,6 +3929,14 @@ export const ANGELKOENIG_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'angelkoenig', plugin: 'MorniAngelkoenig' },
   sections: [
+    rejoinSection(
+      angel,
+      90,
+      t(
+        'So viele Sekunden bleiben Turnierplatz und bester Fang nach einem Verbindungsabbruch frei. Wer das Tal während eines Turniers selbst verlässt, verliert seinen Platz gleich. 0 = aus.',
+        'Tournament place and best catch stay reserved for this many seconds after a lost connection. Anyone who leaves the valley on purpose during a tournament loses their place at once. 0 = off.',
+      ),
+    ),
     {
       id: 'valley',
       title: t('Tal', 'Valley'),

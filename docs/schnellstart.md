@@ -53,20 +53,22 @@ sparsames Gerät lohnt sich.
 - **Die Festplatte wird komplett gelöscht.** Nimm einen Rechner, auf dem nichts Wichtiges mehr liegt.
 
 **Wie viel Arbeitsspeicher wofür?** Der Container für MoinMorni bekommt als Standard **32 GB RAM, 8 Kerne und 100 GB
-Festplatte**. Lobby und Proxy laufen immer (zusammen etwa 6 GB). Jeder Spielmodus, in dem gerade jemand spielt, braucht
-etwa 3 GB (MorniSMP 8 GB, MorniCraft 6 GB). **Leere Spielmodi schlafen** und brauchen dann gar nichts. Sie wachen in
-etwa 20 Sekunden auf, sobald jemand in der Lobby die Figur des Modus anklickt.
+Festplatte**. **Alle Server sind immer online**, Spieler kommen sofort hinein: Proxy 1 GB, Lobby 3 GB, Bau-Server
+1,5 GB, MorniSMP und MorniCraft je 3 GB, Morni Party 2 GB, die übrigen Spielmodi je 1,5 GB – zusammen 27 GB, das passt
+in 32 GB. Das sind Höchstwerte: Ist in einem Modus niemand, hält Minecraft dort die Welt an und Java gibt den
+Arbeitsspeicher zurück – ein leerer 1,5-GB-Modus braucht dann etwa 0,7 GB statt 1,4 GB. Im Panel unter Modi lässt sich
+je Modus unter „Wenn niemand drin ist“ auch „Schlafen“ wählen: dann geht er ganz aus und wacht in etwa einer halben Minute auf – oder „Wach bleiben“, dann behält er seinen ganzen Arbeitsspeicher.
 
-| RAM für MoinMorni | Was gleichzeitig läuft                                                |
-| ----------------- | --------------------------------------------------------------------- |
-| 8 GB              | nur Lobby und Proxy gut, ein kleiner Spielmodus knapp                 |
-| 14–16 GB          | Lobby und 2–3 Spielmodi gleichzeitig                                  |
-| 32 GB (Standard)  | Lobby und etwa 8 Spielmodi gleichzeitig, auch MorniSMP und MorniCraft |
-| 48 GB und mehr    | alles gleichzeitig, mit Luft                                          |
+| RAM für MoinMorni | Was gleichzeitig läuft                                                          |
+| ----------------- | ------------------------------------------------------------------------------- |
+| 8 GB              | Lobby, Proxy und zwei kleine Spielmodi – die übrigen schlafen, bis jemand kommt |
+| 14–16 GB          | Lobby und etwa 6 Spielmodi gleichzeitig                                         |
+| 32 GB (Standard)  | alle Server gleichzeitig, immer online                                          |
+| 48 GB und mehr    | alles gleichzeitig, mit Luft                                                    |
 
-Ist der Speicher voll, startet ein schlafender Modus erst, wenn ein anderer leer wird und schlafen geht. Weniger RAM
-heißt also nicht „geht nicht“, sondern „nicht alles auf einmal“. Hat dein Rechner weniger als 34 GB, nimmt das
-Installationsskript von selbst weniger und sagt dir, was das bedeutet.
+Reicht der Speicher nicht für alle, schickt MoinMorni vor dem Start eines Modus erst leere Modi schlafen; sie wachen
+auf, sobald jemand hinein will. Weniger RAM heißt also nicht „geht nicht“, sondern „nicht alles auf einmal“. Hat dein
+Rechner weniger als 34 GB, nimmt das Installationsskript von selbst weniger und sagt dir, was das bedeutet.
 
 ### Und außerdem
 
@@ -539,7 +541,8 @@ Hier musst du nichts tun. Jeder Spielmodus hat sein eigenes Repo auf GitHub. **E
 nach**, welche davon eine fertige Version (ein „Release“) haben, legt für jeden einen eigenen Server an und spielt die
 neueste Version auf. Neue Versionen kommen genauso von selbst.
 
-- **Leere Modi schlafen** und wachen auf, wenn jemand in der Lobby die Figur des Modus anklickt (etwa 20 Sekunden).
+- **Alle Modi sind immer online** – ohne Spieler hält Minecraft die Welt an und gibt Arbeitsspeicher zurück. Wer einen
+  Modus lieber ganz schlafen lässt: Panel → Modi → „Wenn niemand drin ist“ → „Schlafen“ (wacht in etwa einer halben Minute auf).
 - **Panel → Modi:** an- und ausschalten, Wartung, Reihenfolge in der Lobby und auf der Webseite, wie viele Spieler
   hinein dürfen.
 - **Einstellungen der Modi** stehen im Panel in der Gruppe **Spielmodi** – mit Suche und Erklärung. Sie gelten nach dem
@@ -691,8 +694,8 @@ Das Skript liegt noch nicht im Branch `main` – siehe [Teil 9](#9-einmal-auf-gi
 <details>
 <summary><b>Das Skript warnt: zu wenig RAM, Kerne oder Platz</b></summary>
 
-Das sind nur Hinweise – MoinMorni läuft trotzdem. Mit weniger RAM laufen weniger Spielmodi gleichzeitig (leere Modi
-schlafen und brauchen nichts). Später mehr geben: siehe „Mehr RAM oder Kerne für den Container“ und „Speicher voll“
+Das sind nur Hinweise – MoinMorni läuft trotzdem. Mit weniger RAM laufen weniger Spielmodi gleichzeitig (die übrigen
+schlafen, bis jemand kommt). Später mehr geben: siehe „Mehr RAM oder Kerne für den Container“ und „Speicher voll“
 weiter unten. Ist auf dem Proxmox-Speicher zu wenig frei, nimm unter **Erweitert** eine kleinere Festplatte – sie
 lässt sich später vergrößern.
 

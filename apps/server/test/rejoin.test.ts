@@ -416,6 +416,8 @@ describe('Mitten im Spiel', () => {
   test('Schlaf-Modus: Wartet ein Modus auf jemanden, schläft er nicht', async () => {
     const MINUTE = 60_000;
     stores.patchSettings('network', { sleepMinutes: 5 }, 'test');
+    // Seit „immer online“ schläft ein Modus nur, wo es im Panel eingeschaltet ist.
+    stores.patchMode('duels', { sleepWhenEmpty: true }, 'test');
     const motor = {
       request: (_method: string, path: string) =>
         Promise.resolve(

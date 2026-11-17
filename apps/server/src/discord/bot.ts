@@ -1,3 +1,4 @@
+import { networkCommand } from '@moinmorni/shared';
 import crypto from 'node:crypto';
 import { eq, like } from 'drizzle-orm';
 import type { FastifyBaseLogger } from 'fastify';
@@ -568,9 +569,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
 
   const commands = (ctx: HubContext): Command[] => [
     {
-      name: 'discord',
-      aliases: ['dc', 'verbinden'],
-      usage: { de: '/discord', en: '/discord' },
+      ...networkCommand('discord'),
       run: (actor) => {
         // Erst die Einladung (aus dem Panel, sonst die des Bots), dann – mit Bot – der Code zum Verbinden.
         const invite = gameInvite();

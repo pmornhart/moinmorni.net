@@ -110,7 +110,7 @@ describe('Ränge überall: Supporter, Rechte im Spiel, wer immer hineinkommt', (
     // Höhere Ränge kann ein Supporter nicht bestrafen.
     await login(proxy, ANNA, 'Anna');
     await proxy.request({ t: 'command', uuid: SUSI, command: 'mute', args: ['Anna'] });
-    await said('höherer Rang');
+    await said('Anna</white> ist <#ff9f43>Admin</#ff9f43> – das darf nur der <#ff5555>Owner</#ff5555>.');
   });
 
   test('Rechte im Spiel kommen mit dem Profil und ändern sich sofort mit dem Rang', async () => {

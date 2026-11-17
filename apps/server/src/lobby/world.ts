@@ -190,7 +190,7 @@ export interface PackOffer {
 }
 
 const PACK_PROMPT = {
-  text: 'Echte Möbel in der Lobby: Stühle, Eckbänke, Bierbänke und Steinkrüge – dafür unser kleines Paket. / Real furniture in the lobby – needs our small pack.',
+  text: 'Echte Möbel und Blasmusik in der Lobby – dafür unser Paket. / Real furniture and a brass band in the lobby – needs our pack.',
   color: 'gold',
 };
 
