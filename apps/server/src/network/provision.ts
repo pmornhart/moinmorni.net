@@ -72,6 +72,8 @@ export interface ProvisionResult {
   /** Server-ID der Wartungs-Lobby im Motor (baut sich wie die Lobby). */
   readonly wartungServerId: string;
   readonly created: readonly string[];
+  /** Neu angelegte Server, die der Motor nicht starten wollte (z. B. Arbeitsspeicher des Rechners voll). */
+  readonly notStarted?: readonly string[];
   readonly pluginUpdated: readonly string[];
   /**
    * Laufende Server, die neu starten müssen, damit Neues gilt (Plugin, Hub-Schlüssel, server.properties) – am besten,
@@ -439,12 +441,24 @@ export function createProvisioner(
           );
         }
       }
-      await Promise.all(
-        targets
-          .filter((t) => created.includes(t.member))
-          .map((t) => motor.request('POST', `/api/servers/${t.serverId}/actions/start`)),
-      );
+      // Nacheinander (Proxy, Lobby, Wartungs-Lobby, Bau, Modi): Lehnt der Motor einen Start ab (z. B. „Arbeitsspeicher
+      // des Rechners voll“), bleibt nur dieser Server aus – die Einrichtung läuft weiter (Lobby-Welt, Einstellungen).
+      // Vorher brach sie ab und kam erst nach einem Neustart von MoinMorni wieder (Gesamtprobe 17.11.).
+      const notStarted = await newcomers.reduce<Promise<string[]>>(async (acc, t) => {
+        const missed = await acc;
+        try {
+          await motor.request('POST', `/api/servers/${t.serverId}/actions/start`);
+          return missed;
+        } catch (err) {
+          log.warn(
+            { err, server: t.member },
+            'Netzwerk: neuer Server ließ sich nicht starten – bleibt erst einmal aus',
+          );
+          return [...missed, t.member];
+        }
+      }, Promise.resolve([]));
       return {
+        notStarted,
         networkId: network.id,
         lobbyServerId,
         wartungServerId,
