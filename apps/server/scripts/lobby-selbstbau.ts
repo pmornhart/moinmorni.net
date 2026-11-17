@@ -2,12 +2,14 @@
  * Probelauf ohne Motor: baut die Lobby mit dem echten Selbstbau-Code (`src/lobby/world.ts`) auf einem lokalen
  * Paper-Server. Statt des Motors: Dateien direkt im Server-Ordner, Befehle über RCON.
  *   tsx scripts/lobby-selbstbau.ts <server-ordner> <rcon-host:port> <passwort-datei>
+ * Mit MM_WELT=wartung baut es die Wartungs-Lobby (`src/lobby/wartung.ts`) statt der Lobby.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import type { FastifyBaseLogger } from 'fastify';
 import { Rcon } from '@moinmorni/builder';
 import { createLobbyWorld, seasonOf } from '../src/lobby/world.js';
+import { createWartungWorld } from '../src/lobby/wartung.js';
 import { MotorError, type MotorClient } from '../src/motor/client.js';
 
 /** node + Skript stehen vor den eigenen Angaben. */
@@ -65,10 +67,13 @@ async function main(): Promise<void> {
   const say = (o: unknown, m?: string): void => console.log(m ?? o, m ? JSON.stringify(o) : '');
   const log = { info: say, warn: say, error: say } as unknown as FastifyBaseLogger;
   const t0 = Date.now();
-  const world = createLobbyWorld(motor, log, {
-    settleMs: SETTLE_MS,
-    season: () => seasonOf(process.env['MM_SEASON']),
-  });
+  const world =
+    process.env['MM_WELT'] === 'wartung'
+      ? createWartungWorld(motor, log, { settleMs: SETTLE_MS })
+      : createLobbyWorld(motor, log, {
+          settleMs: SETTLE_MS,
+          season: () => seasonOf(process.env['MM_SEASON']),
+        });
   console.log('Eigenschaften geändert:', await world.configure('lobby'));
   const result = await world.build('lobby');
   console.log('Ergebnis:', result, `nach ${Math.round((Date.now() - t0) / SECOND_MS)} s`);

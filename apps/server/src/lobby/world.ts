@@ -10,6 +10,7 @@ import {
   type LobbyPack,
   type Season,
 } from '@moinmorni/builder';
+import { SERVER_MAX_PLAYERS } from '@moinmorni/shared';
 import { INTERIM_LOBBY_PACKS } from '../lib/rename.js';
 import { MotorError, type MotorClient } from '../motor/client.js';
 import { readServerFile, removeServerFiles, writeServerFile } from '../motor/files.js';
@@ -25,7 +26,6 @@ const STAMP_FILE = 'plugins/moinmorni/lobby-world.version';
 const TARGET_FILE = 'plugins/moinmorni/lobby-world.target';
 const PROPERTIES_FILE = 'server.properties';
 const DEFAULT_LEVEL = 'world';
-const PACK_ID = `file/${LOBBY_PACK_DIR}`;
 const RUNNING = 'running';
 const SECOND_MS = 1000;
 const SECONDS_PER_MINUTE = 60;
@@ -78,8 +78,12 @@ export interface LobbyWorldOptions {
   readonly season?: () => Season;
   /** Möbel-Paket, das die Lobby anbieten soll. */
   readonly packOffer?: () => PackOffer;
-  /** Bauplan (Tests: ein kleiner). */
+  /** Bauplan (Tests: ein kleiner; die Wartungs-Lobby: ihr eigener). */
   readonly pack?: () => LobbyPack;
+  /** Was in die server.properties gehört (Standard: die der Lobby, siehe `lobbyProperties`). */
+  readonly properties?: () => Record<string, string>;
+  /** Name der Welt im Protokoll (Standard: Lobby). */
+  readonly label?: string;
   readonly sleep?: (ms: number) => Promise<void>;
   readonly settleMs?: number;
   readonly gapMs?: number;
@@ -225,6 +229,9 @@ export function lobbyProperties(offer?: PackOffer): Record<string, string> {
     'force-gamemode': 'true',
     difficulty: 'peaceful',
     pvp: 'false',
+    // Doppelsprung und Jump and Run: Die Blöcke des Jump and Run kennt nur der Client des Läufers – ohne das würde
+    // Minecraft ihn nach ein paar Sekunden Stillstehen darauf wegen „Schwebens“ hinauswerfen.
+    'allow-flight': 'true',
     'spawn-protection': '0',
     'allow-nether': 'false',
     'generate-structures': 'false',
@@ -232,11 +239,13 @@ export function lobbyProperties(offer?: PackOffer): Record<string, string> {
     // „[Rcon: 16 Chunks … werden nun dauerhaft geladen]“ im Chat.
     'broadcast-rcon-to-ops': 'false',
     'broadcast-console-to-ops': 'false',
+    // Nach Zahl weisen nur Proxy und Hub ab – nicht Minecraft mit seinen 20 (siehe SERVER_MAX_PLAYERS).
+    'max-players': String(SERVER_MAX_PLAYERS),
     ...pack,
   };
 }
 
-function readProperty(text: string, key: string): string | null {
+export function readProperty(text: string, key: string): string | null {
   return (
     text
       .split('\n')
@@ -251,6 +260,8 @@ export function createLobbyWorld(
   options: LobbyWorldOptions = {},
 ): LobbyWorld {
   const opts = { ...DEFAULTS, ...options };
+  // Gleicher Selbstbau für eine andere Welt (Wartungs-Lobby): im Protokoll mit ihrem Namen.
+  const name = options.label ?? 'Lobby';
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const plan = options.pack ?? lobbyPack;
   const busy = new Set<string>();
@@ -273,7 +284,7 @@ export function createLobbyWorld(
       if (!(err instanceof MotorError) || err.code !== COMMAND_FAILED || tries <= 1) throw err;
       log.warn(
         { command: command.slice(0, LOG_COMMAND_CHARS) },
-        'Lobby: Server antwortet langsam – gleich noch einmal',
+        `${name}: Server antwortet langsam – gleich noch einmal`,
       );
       await sleep(opts.retryMs);
       return run(serverId, command, tries - 1);
@@ -297,14 +308,17 @@ export function createLobbyWorld(
 
   const build = async (serverId: string): Promise<BuildResult> => {
     const pack = plan();
+    const ns = pack.namespace ?? LOBBY_NAMESPACE;
+    const packId = `file/${pack.packDir ?? LOBBY_PACK_DIR}`;
+    const probes = probesAt(pack.edge ?? EDGE);
     if ((await readFile(serverId, STAMP_FILE))?.trim() === pack.version) return 'current';
     if (!(await until(async () => (await state(serverId)) === RUNNING, opts.readyTimeoutMs))) {
-      log.warn({ serverId }, 'Lobby: Server läuft nicht – Welt wird beim nächsten Start gebaut');
+      log.warn({ serverId }, `${name}: Server läuft nicht – Welt wird beim nächsten Start gebaut`);
       return 'not_running';
     }
     const properties = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
     const level = readProperty(properties, 'level-name') || DEFAULT_LEVEL;
-    log.info({ version: pack.version, parts: pack.parts }, 'Lobby: Welt wird gebaut');
+    log.info({ version: pack.version, parts: pack.parts }, `${name}: Welt wird gebaut`);
     // Rückbenennung: Datenpakete unter dem Zwischen-Namen weg (sonst blieben sie für immer in der Welt liegen).
     await removeServerFiles(
       motor,
@@ -313,7 +327,7 @@ export function createLobbyWorld(
     );
     await Object.entries(pack.files).reduce(async (prev, [file, content]) => {
       await prev;
-      await writeFile(serverId, `${level}/datapacks/${LOBBY_PACK_DIR}/${file}`, content);
+      await writeFile(serverId, `${level}/datapacks/${pack.packDir ?? LOBBY_PACK_DIR}/${file}`, content);
     }, Promise.resolve());
     await Object.entries(pack.seasonFiles).reduce(async (prev, [file, content]) => {
       await prev;
@@ -323,14 +337,13 @@ export function createLobbyWorld(
     // Paper kennt „reload“ selbst (lädt Plugins neu) – darum immer mit „minecraft:“.
     await run(serverId, 'minecraft:reload');
     await sleep(opts.settleMs);
-    await run(serverId, `minecraft:datapack enable "${PACK_ID}"`);
+    await run(serverId, `minecraft:datapack enable "${packId}"`);
     const ready = await until(
-      async () =>
-        !(await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:prepare`)).includes(UNKNOWN_FUNCTION),
+      async () => !(await run(serverId, `minecraft:function ${ns}:prepare`)).includes(UNKNOWN_FUNCTION),
       opts.loadTimeoutMs,
     );
     if (!ready) {
-      log.error('Lobby: Datenpaket wurde nicht geladen');
+      log.error(`${name}: Datenpaket wurde nicht geladen`);
       return 'failed';
     }
     await pack.load.reduce(async (prev, command) => {
@@ -338,21 +351,21 @@ export function createLobbyWorld(
       await run(serverId, `minecraft:${command}`);
     }, Promise.resolve());
     const loaded = await until(async () => {
-      const answers = await PROBES.reduce<Promise<string[]>>(async (acc, [x, z]) => {
+      const answers = await probes.reduce<Promise<string[]>>(async (acc, [x, z]) => {
         const list = await acc;
         return [...list, await run(serverId, `minecraft:execute if loaded ${x} 64 ${z}`)];
       }, Promise.resolve([]));
       return answers.every((a) => !a.includes('failed'));
     }, opts.loadTimeoutMs);
-    if (!loaded) log.warn('Lobby: nicht alle Stücke der Welt geladen – baue trotzdem');
+    if (!loaded) log.warn(`${name}: nicht alle Stücke der Welt geladen – baue trotzdem`);
     // Erst jetzt aufräumen: alle Stücke sind geladen, alte Figuren und Schilder verschwinden wirklich.
-    await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:clean`);
+    await run(serverId, `minecraft:function ${ns}:clean`);
     // Ein Stück, das der Server nicht laden konnte (z. B. ein Block, den es in dieser Minecraft-Version nicht mehr
     // gibt), meldet „Unknown function“ – es fehlt dann in der Welt. Das soll im Protokoll auffallen.
     const missing = await Array.from({ length: pack.parts }, (_, i) => i).reduce<Promise<string[]>>(
       async (prev, i) => {
         const list = await prev;
-        const answer = await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:${partName(i)}`);
+        const answer = await run(serverId, `minecraft:function ${ns}:${partName(i)}`);
         await sleep(opts.gapMs);
         return answer.includes(UNKNOWN_FUNCTION) ? [...list, partName(i)] : list;
       },
@@ -361,17 +374,20 @@ export function createLobbyWorld(
     if (missing.length > 0)
       log.error(
         { parts: missing },
-        'Lobby: Teile der Welt ließen sich nicht laden (Fehler im Server-Protokoll: „Failed to load function“)',
+        `${name}: Teile der Welt ließen sich nicht laden (Fehler im Server-Protokoll: „Failed to load function“)`,
       );
-    await run(serverId, `minecraft:function ${LOBBY_NAMESPACE}:finish`);
+    if ((await run(serverId, `minecraft:function ${ns}:finish`)).includes(UNKNOWN_FUNCTION))
+      log.error(
+        `${name}: Abschluss des Baus ließ sich nicht laden (Fehler im Server-Protokoll: „Failed to load function“)`,
+      );
     await pack.unload.reduce(async (prev, command) => {
       await prev;
       await run(serverId, `minecraft:${command}`);
     }, Promise.resolve());
     // Fertig: das Paket nicht bei jedem Start laden (es wird nur zum Bauen gebraucht).
-    await run(serverId, `minecraft:datapack disable "${PACK_ID}"`);
+    await run(serverId, `minecraft:datapack disable "${packId}"`);
     await writeFile(serverId, STAMP_FILE, `${pack.version}\n`);
-    log.info({ version: pack.version }, 'Lobby: Welt fertig gebaut');
+    log.info({ version: pack.version }, `${name}: Welt fertig gebaut`);
     await season(serverId, pack);
     return 'built';
   };
@@ -395,6 +411,8 @@ export function createLobbyWorld(
    * Stücken; jede andere Saison räumt liegenden Winter-Schnee weg), wieder loslassen.
    */
   const season = async (serverId: string, pack: LobbyPack): Promise<void> => {
+    // Welten ohne Saison-Deko (Wartungs-Lobby) haben kein Saison-Paket.
+    if (Object.keys(pack.seasonFiles).length === 0) return;
     const current = options.season?.() ?? 'none';
     await runAll(serverId, pack.seasonLoad);
     await until(() => allLoaded(serverId, SEASON_PROBES), opts.loadTimeoutMs);
@@ -411,13 +429,13 @@ export function createLobbyWorld(
     // der Server vorher ab, wüsste die nächste Saison nichts vom Schnee (oder räumte ihn ein zweites Mal weg).
     await run(serverId, `minecraft:${SAVE_WORLD}`);
     await runAll(serverId, pack.seasonUnload);
-    log.info({ season: current }, 'Lobby: Saison-Deko gesetzt');
+    log.info({ season: current }, `${name}: Saison-Deko gesetzt`);
   };
 
   return {
     configure: async (serverId) => {
       const current = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
-      const next = patchProperties(current, lobbyProperties(options.packOffer?.()));
+      const next = patchProperties(current, options.properties?.() ?? lobbyProperties(options.packOffer?.()));
       if (!next.changed) return false;
       await writeFile(serverId, PROPERTIES_FILE, next.text);
       return true;
@@ -430,7 +448,7 @@ export function createLobbyWorld(
         await season(serverId, plan());
         return true;
       } catch (err) {
-        log.error({ err }, 'Lobby: Saison-Deko ließ sich nicht setzen');
+        log.error({ err }, `${name}: Saison-Deko ließ sich nicht setzen`);
         return false;
       } finally {
         busy.delete(serverId);
@@ -442,7 +460,7 @@ export function createLobbyWorld(
       try {
         return await build(serverId);
       } catch (err) {
-        log.error({ err }, 'Lobby: Bau fehlgeschlagen – nächster Versuch beim nächsten Start');
+        log.error({ err }, `${name}: Bau fehlgeschlagen – nächster Versuch beim nächsten Start`);
         return 'failed';
       } finally {
         busy.delete(serverId);

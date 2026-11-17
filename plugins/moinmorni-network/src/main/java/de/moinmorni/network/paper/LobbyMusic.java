@@ -28,7 +28,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * „Plattenspieler/Notenblöcke“, damit der Regler im Spiel wirkt; Minecrafts eigene Hintergrundmusik schweigt, solange
  * unsere spielt.
  *
- * <p>Im Parkour, beim Rundgang und im Gefängnis klingt sie gedämpft: Eine laufende Klangdatei lässt sich nicht leiser
+ * <p>Im Jump and Run, beim Rundgang und im Gefängnis klingt sie gedämpft: Eine laufende Klangdatei lässt sich nicht leiser
  * drehen – dann spielt dasselbe Stück an derselben Stelle leise mit Notenblöcken weiter, das nächste wieder normal.
  */
 final class LobbyMusic implements Listener {
@@ -66,7 +66,7 @@ final class LobbyMusic implements Listener {
     private boolean started;
 
     /**
-     * @param damped wer gerade gedämpft hören soll (Parkour, Rundgang, Gefängnis)
+     * @param damped wer gerade gedämpft hören soll (Jump and Run, Rundgang, Gefängnis)
      */
     LobbyMusic(JavaPlugin plugin, Function<Player, String> langOf, Predicate<UUID> damped) {
         this.plugin = plugin;

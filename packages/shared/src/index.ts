@@ -3,6 +3,7 @@ export * from './settings.js';
 export * from './modes.js';
 export * from './mode-settings.js';
 export * from './team-apply.js';
+export * from './wartung.js';
 export * from './streamer.js';
 export * from './commands.js';
 export * from './lobby-music.js';

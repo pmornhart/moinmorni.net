@@ -62,7 +62,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private Object voice;
     /** Figuren der Lobby (anklicken, Live-Zahlen, Dorfleute) – tut nur etwas, wo es Figuren gibt. */
     private LobbyNpcs lobby;
-    /** Lobby-Funktionen (Begrüßung, Menü, Parkour …) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
+    /** Lobby-Funktionen (Begrüßung, Menü, Jump and Run, Doppelsprung …) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyFeatures features;
     /** Gefängnis-Zelle der Lobby – nur aktiv, wenn der Hub die Zelle schickt. */
     private LobbyJail jail;
@@ -70,6 +70,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private LobbyClock clock;
     private LobbyWinter winter;
 
+    /** Wartungs-Lobby (Leiste, Aushang, Sprung-Parcours, Schutz) – nur auf dem Server „wartung“. */
+    private WartungLobby wartung;
+    private static final String WARTUNG_SERVER = "wartung";
     /** Lobbymusik – nur aktiv, wenn der Hub die Stücke schickt ({@code lobby-music}). */
     private LobbyMusic music;
 
@@ -131,15 +134,25 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         winter = new LobbyWinter(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
-        // Lobbymusik: im Parkour, beim Rundgang und im Gefängnis leiser.
+        // Jump and Run meldet Rekord und Läufe ans Netzwerk (Statistik „lobby“).
+        features.setHub(body -> {
+            if (hub != null) {
+                hub.send(body);
+            }
+        });
+        // Lobbymusik: im Jump and Run, beim Rundgang und im Gefängnis leiser.
         music = new LobbyMusic(this, this::langOf,
-                id -> features.inParkour(id) || features.inTour(id) || jail.isJailed(id));
+                id -> features.inJumpRun(id) || features.inTour(id) || jail.isJailed(id));
         // In der Lobby bauen (im Kreativmodus): wer das Recht „Lobby bearbeiten“ hat – oder OP ist.
         features.setEditors(p -> Rights.mayEditLobby(rankRights(p)));
         getServer().getScheduler().runTask(this, this::logModeAdmins);
         jail.start();
         features.start();
         winter.start();
+        wartung = new WartungLobby(this, WARTUNG_SERVER.equals(serverName), this::langOf, this::rankRights,
+                () -> hub != null && hub.ready());
+        wartung.onLobbyRequest(this::toLobby);
+        wartung.start();
         returnOffer = new ReturnOffer(this, hub, this::langOf);
         returnOffer.setJail(jail::isJailed);
         returnOffer.start();
@@ -272,6 +285,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 winter.onSettings(m);
             }
             case "jail" -> jail.onState(m);
+            case "wartung" -> wartung.onState(m);
             case "lobby-music" -> music.onSettings(m);
             case "lobby-ask" -> leaveAsk.onAsk(m);
             case "lobby-ask-close" -> leaveAsk.onClose(m);
@@ -430,6 +444,16 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             });
         } catch (java.io.IOException e) {
             getLogger().warning("MorniCraft-Spieler-Daten nicht gelesen: " + e.getMessage());
+        }
+    }
+
+    /** Zurück in die Lobby (der Hub prüft, ob das gerade geht – in der Wartung nicht). */
+    private void toLobby(Player p) {
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "to-lobby");
+        body.addProperty("uuid", p.getUniqueId().toString());
+        if (hub != null) {
+            hub.send(body);
         }
     }
 

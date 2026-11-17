@@ -1,7 +1,7 @@
 import { Plus, X } from 'lucide-react';
 import { useState, type KeyboardEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { onStep, type SettingDef } from '@moinmorni/shared';
+import { onStep, textValid, type SettingDef } from '@moinmorni/shared';
 import { Select } from '~/components/select';
 import { Button, Input, Switch, Textarea } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
@@ -15,7 +15,7 @@ export function valueValid(def: SettingDef, value: unknown): boolean {
   const checks: { [K in SettingDef['type']]: (d: Def<K>) => boolean } = {
     boolean: () => typeof value === 'boolean',
     number: (d) => typeof value === 'number' && onStep(value, d.step) && value >= d.min && value <= d.max,
-    text: (d) => typeof value === 'string' && value.length <= d.maxLength,
+    text: (d) => typeof value === 'string' && textValid(d, value),
     select: (d) => d.options.some((o) => o.value === value),
     list: (d) => Array.isArray(value) && value.length <= d.maxItems,
   };
@@ -84,6 +84,8 @@ function NumberField({ def, value, onChange }: FieldProps<'number'>): ReactEleme
 
 /** Texts this short (a sign, a word) get a small box instead of a full-width one. */
 const SHORT_TEXT = 8;
+/** Example in an empty time-of-day box (“maintenance until”). */
+const TIME_EXAMPLE = '22:30';
 /** A multi-line box grows with its lines (one spare line), between these heights. */
 const MIN_ROWS = 4;
 const MAX_ROWS = 16;
@@ -95,11 +97,15 @@ function rowsFor(text: string): number {
 function TextField({ def, value, onChange }: FieldProps<'text'>): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const text = typeof value === 'string' ? value : '';
+  const invalid = !textValid(def, text);
   const props = {
     id: fieldId(def.key),
     value: text,
     maxLength: def.maxLength,
-    spellCheck: true,
+    spellCheck: !def.format,
+    // A fixed form (a time of day): an example in the empty box, red border while it doesn't fit.
+    ...(def.format ? { placeholder: TIME_EXAMPLE } : {}),
+    'aria-invalid': invalid,
   } as const;
   return (
     <div className="grid gap-1.5">
@@ -108,7 +114,10 @@ function TextField({ def, value, onChange }: FieldProps<'text'>): ReactElement {
       ) : (
         <Input
           {...props}
-          className={def.maxLength <= SHORT_TEXT ? 'w-32 font-mono' : undefined}
+          className={cn(
+            def.maxLength <= SHORT_TEXT && 'w-32 font-mono',
+            invalid && 'border-destructive focus-visible:border-destructive',
+          )}
           onChange={(e) => onChange(e.target.value)}
         />
       )}

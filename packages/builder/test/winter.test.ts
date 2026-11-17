@@ -3,13 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { baseName } from '../src/canvas.js';
 import { furniturePack } from '../src/furniture.js';
 import { GROUND } from '../src/nature.js';
-import { pairs, range } from '../src/range.js';
+import { disc, pairs, range } from '../src/range.js';
 import { KUGELN, kugelModel } from '../src/schmuck.js';
 import { MARKET } from '../src/lobby/dorfplatz.js';
 import { SEASON_STORAGE, seasonStepsFor } from '../src/lobby/datapack.js';
 import { NO_HITBOX } from '../src/lobby/deko.js';
 import { BAUM_RADIUS, BAUM_SPITZE, CHRISTBAUM, maibaumBlocks } from '../src/lobby/christbaum.js';
-import { LAUNCHPADS, PARKOUR, TOUR } from '../src/lobby/features.js';
+import { LAUNCHPADS, TOUR } from '../src/lobby/features.js';
+import { JUMP_AND_RUN } from '../src/lobby/jumpandrun.js';
 import { SCHLOSSMARKT } from '../src/lobby/schlossmarkt.js';
 import { SEASONS } from '../src/lobby/season.js';
 import { buildLobby } from '../src/lobby/dorfplatz.js';
@@ -134,7 +135,7 @@ describe('Winter-Wunderland', () => {
         meadow.some(([mx, mz]) => Math.hypot(mx + 0.5 - x, mz + 0.5 - z) < d) || toRink(x, z) < d;
       figures.forEach(([x, z]) => expect(near(x, z, 3), `Figur ${x} ${z}`).toBe(false));
       TOUR.forEach((s) => expect(near(s.x, s.z, 4), s.title.de).toBe(false));
-      [...LAUNCHPADS, ...PARKOUR.blocks].forEach((p) => expect(near(p.x, p.z, 8)).toBe(false));
+      [...LAUNCHPADS, JUMP_AND_RUN.start].forEach((p) => expect(near(p.x, p.z, 8)).toBe(false));
       const stalls = [
         ...MARKET.map(([x, z]) => [x, z] as const),
         ...SCHLOSSMARKT.map((s) => [s.x, s.z] as const),
@@ -146,7 +147,7 @@ describe('Winter-Wunderland', () => {
   );
 
   it(
-    'kein Schnee auf Launchpads und Parkour-Blöcken',
+    'kein Schnee auf Launchpads und am Jump and Run',
     () => {
       const pads = LAUNCHPADS.flatMap((pad) =>
         pairs([-1, 0, 1], [-1, 0, 1]).flatMap(([dx, dz]) =>
@@ -154,11 +155,13 @@ describe('Winter-Wunderland', () => {
         ),
       );
       expect(pads.filter((b) => b !== undefined)).toEqual([]);
-      const parkour = PARKOUR.blocks.flatMap((b) => [
-        plan.blocks.get(b.x, b.y, b.z),
-        plan.blocks.get(b.x, b.y + 1, b.z),
+      // Platz des Jump and Run: Smaragd und Rautenfeld bleiben frei (darauf treten = Start)
+      const { x: jx, y: jy, z: jz } = JUMP_AND_RUN.start;
+      const jump = disc(jx, jz, 5).flatMap(([x, z]) => [
+        plan.blocks.get(x, jy, z),
+        plan.blocks.get(x, jy + 1, z),
       ]);
-      expect(parkour.filter((b) => b !== undefined)).toEqual([]);
+      expect(jump.filter((b) => b !== undefined)).toEqual([]);
     },
     SLOW,
   );

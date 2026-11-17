@@ -24,7 +24,8 @@ import { fbm, random } from '../noise.js';
 import { disc, pairs, range } from '../range.js';
 import { roofsOf, type RoofSpec } from '../shapes.js';
 import { BAUM_RADIUS, christbaum, CHRISTBAUM } from './christbaum.js';
-import { LAUNCHPADS, LOBBY_SPAWN_VIEW, PARKOUR } from './features.js';
+import { LAUNCHPADS, LOBBY_SPAWN_VIEW } from './features.js';
+import { JUMP_AND_RUN } from './jumpandrun.js';
 import { aroundX, aroundY, aroundZ, blockDisplay, placeModel, type Vec } from './deko.js';
 import { BUDEN, budeArea, krippeArea, weihnachtsmarkt } from './weihnachtsmarkt.js';
 import { grosserSchlitten, rodel, schneemann } from './winter-figuren.js';
@@ -129,9 +130,12 @@ function drift(x: number, z: number): number {
   return 1 + DRIFT.filter((d) => n > d).length;
 }
 
-/** Wo kein Schnee hin soll: Launchpads (Platten), Parkour-Blöcke (Farben), Prunkbrunnen (3D-Modell). */
+/** Platz des Jump and Run (Smaragd + Rautenfeld): bleibt frei – wer auf den Smaragd tritt, startet. */
+export const JUMP_CLEAR = 6;
+
+/** Wo kein Schnee hin soll: Launchpads (Platten), Platz des Jump and Run, Prunkbrunnen (3D-Modell). */
 function keepClear(base: Canvas): (x: number, y: number, z: number) => boolean {
-  const parkour = new Set(PARKOUR.blocks.map((b) => `${b.x},${b.y},${b.z}`));
+  const jump = JUMP_AND_RUN.start;
   // „summon marker 0.5 92 -79.5 {Tags:['mm_brunnen_mitte',…]}“ → Mitte des Brunnens
   const fountains = base.extra
     .filter((cmd) => cmd.startsWith('summon marker ') && cmd.includes(MITTE))
@@ -140,7 +144,7 @@ function keepClear(base: Canvas): (x: number, y: number, z: number) => boolean {
   const FOUNTAIN_CLEAR = 8.5;
   return (x, y, z) =>
     LAUNCHPADS.some((p) => Math.abs(x - p.x) <= 1 && Math.abs(z - p.z) <= 1) ||
-    parkour.has(`${x},${y},${z}`) ||
+    Math.hypot(x - jump.x, z - jump.z) <= JUMP_CLEAR ||
     fountains.some(([fx, fz]) => Math.hypot(x + HALF - fx, z + HALF - fz) < FOUNTAIN_CLEAR);
 }
 
@@ -295,7 +299,7 @@ function eisbahn(w: Canvas, v: View): void {
 
 /**
  * Freie Stellen auf den Wiesen rund ums Dorf: ebenes Gras, ringsum nichts Gebautes (keine Wege, Zäune, Bäume) und
- * nicht auf der Sichtachse zum Schloss, am Schlossberg, an Parkour, Christbaum oder Eisbahn.
+ * nicht auf der Sichtachse zum Schloss, am Schlossberg, am Jump and Run, Christbaum oder Eisbahn.
  */
 export function fichtenPlaetze(v: View): Array<readonly [number, number, number]> {
   const rnd = random(1224);
@@ -307,7 +311,7 @@ export function fichtenPlaetze(v: View): Array<readonly [number, number, number]
     ...BUDEN.flatMap((b) => budeArea(b).map(([x, z]) => [x, z, 4] as const)),
     [SCHLITTEN.x, SCHLITTEN.z, 6],
     ...SCHNEEHAUFEN.map(([x, z, r]) => [x, z, r + 4] as const),
-    [-61, -41, 16],
+    [JUMP_AND_RUN.start.x, JUMP_AND_RUN.start.z, 16],
     [-66, 42, 17],
     ...LAUNCHPADS.map((p) => [p.x, p.z, 10] as const),
     ...SCHNEEMAENNER.map(([x, z]) => [x, z, 6] as const),
