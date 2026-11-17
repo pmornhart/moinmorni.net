@@ -37,6 +37,12 @@ const SWAG_OUT = SWAG_SIZE * REACH + 0.02;
 /** Strang an den Seiten (etwas dünner). */
 const SIDE_SIZE = 0.5;
 const SIDE_OUT = SIDE_SIZE * REACH - TOUCH;
+/**
+ * An den Ständen etwas weiter auseinander als am Tor (0,27): gut zwanzig Stände – so bleibt die Zahl der Anzeigen im
+ * Rahmen, der Strang wirkt aus der Nähe trotzdem dicht.
+ */
+const STAND_STEP = 0.33;
+const SIDE_STEP = 0.42;
 
 /** Zwei Bögen von a nach b mit Schleifen an den Enden und einer Kugel in der Mitte, vorne bei `z`. */
 function boegen(
@@ -85,7 +91,12 @@ export function markiseSchmuck(seiten: StandSeiten, k: number, stil: Stil = WEIH
   const to = seiten.right ? 7.15 : 6.7;
   // Name des Stands steht mittig auf der Markise (gut zwei Blöcke breit): dort keine Zapfen, keine Bögen
   const name = (p: Vec): boolean => p[0] < 1.7 || p[0] > 5.3;
-  const lip = strang([from, 4.86, front], [to, 4.86, front], { out: [0, 0, 1], cone: name, stil });
+  const lip = strang([from, 4.86, front], [to, 4.86, front], {
+    out: [0, 0, 1],
+    cone: name,
+    stil,
+    step: STAND_STEP,
+  });
   const swagZ = 1 + SWAG_OUT;
   const swags = [
     ...boegen([seiten.left ? 0.1 : 0.55, 2.1], 4.56, swagZ, 0.45, k, stil),
@@ -93,7 +104,7 @@ export function markiseSchmuck(seiten: StandSeiten, k: number, stil: Stil = WEIH
   ];
   // Seiten: entlang der Dachkante bis hinten
   const side = (x: number, out: number): ModelPart[] =>
-    strang([x, 5.86, -0.1], [x, 5.86, -3.9], { out: [out, 0, 0], size: SIDE_SIZE, stil });
+    strang([x, 5.86, -0.1], [x, 5.86, -3.9], { out: [out, 0, 0], size: SIDE_SIZE, stil, step: SIDE_STEP });
   const sides = [...(seiten.left ? side(-SIDE_OUT, -1) : []), ...(seiten.right ? side(7 + SIDE_OUT, 1) : [])];
   // Vorderpfosten umwunden – unter den Laternen (ab y 3), nicht in die Fässer dahinter
   const posts = [0.5, 6.5].flatMap((x, i) => postSpiral(x, 2.85, Math.PI / 2 + i * Math.PI, 1.25, stil));

@@ -161,7 +161,7 @@ function festzelt(w: Canvas): string[] {
       { text: 'Servus auf der Wiesn!\\n', color: 'gold', bold: true },
       { text: 'Welcome to the fair', color: 'white' },
     ],
-    0.8,
+    1,
   );
   const flags = pennants(
     S,
