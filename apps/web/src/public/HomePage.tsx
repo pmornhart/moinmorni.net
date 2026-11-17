@@ -28,7 +28,7 @@ import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useNews, useSite, useTeam, useTopPlayers, type TeamGroup, type TopPlayer } from '~/lib/site';
-import { modeJoinable, modeLook, useNetworkStatus } from '~/lib/status';
+import { modeLook, modeOpenNow, useNetworkStatus } from '~/lib/status';
 import { useLanguage, usePick } from '~/lib/text';
 import { useTheme } from '~/lib/theme';
 import { useTimeText } from '~/lib/time';
@@ -44,6 +44,7 @@ import {
   setSocials,
   SOCIAL_ICON,
   useDayTime,
+  useHeroUnderHeader,
   WRAP,
 } from './parts';
 
@@ -227,6 +228,7 @@ function Lineup(): ReactElement {
 }
 
 function Hero(): ReactElement {
+  useHeroUnderHeader();
   const { t } = useTranslation(MM_NAMESPACE);
   const { resolved } = useTheme();
   const invite = useSite().data?.discordInvite;
@@ -525,7 +527,8 @@ function Village(): ReactElement {
                   <span className="grid gap-0.5 px-0.5 lg:px-0">
                     <span
                       className={cn(
-                        'truncate font-pixel text-[13px] font-semibold leading-tight sm:text-[15px]',
+                        // Phones: up to three lines instead of "Die Handwerke…".
+                        'font-pixel text-[12.5px] font-semibold leading-tight hyphens-auto [overflow-wrap:anywhere] max-lg:line-clamp-3 sm:text-[15px] lg:truncate',
                         i === index ? 'text-gold-bright' : 'text-band-foreground',
                       )}
                     >
@@ -549,12 +552,15 @@ function StatTile({
   icon: Icon,
   label,
   value,
+  of,
   hint,
   live = false,
 }: {
   readonly icon: LucideIcon;
   readonly label: string;
   readonly value: string;
+  /** "/ 12" after the value, smaller – "12 / 12" in full size broke into two lines on phones. */
+  readonly of?: string;
   readonly hint: string;
   readonly live?: boolean;
 }): ReactElement {
@@ -567,6 +573,11 @@ function StatTile({
       <span className="flex items-center gap-2 font-pixel text-[clamp(2rem,6vw,3.6rem)] font-bold leading-none sm:gap-3">
         {live ? <LiveDot live className="size-2.5 sm:size-3.5" /> : null}
         <span className="tabular">{value}</span>
+        {of ? (
+          <span className="tabular self-end whitespace-nowrap pb-[0.08em] text-[0.5em] text-muted-foreground">
+            / {of}
+          </span>
+        ) : null}
       </span>
       <span className="text-[14px] text-muted-foreground max-sm:hidden">{hint}</span>
     </div>
@@ -578,6 +589,13 @@ const PODIUM_BLOCKS = [
   { face: '#f6c544', edge: '#a87708', height: 'h-36 sm:h-44' },
   { face: '#cfd8df', edge: '#7c8b96', height: 'h-24 sm:h-32' },
   { face: '#d9904f', edge: '#8a4f1f', height: 'h-16 sm:h-24' },
+] as const;
+
+/** One, two or three on the podium: as many columns as players, so it stays centred. */
+const PODIUM_GRID = [
+  'max-w-[220px] grid-cols-1',
+  'max-w-[440px] grid-cols-2',
+  'max-w-[640px] grid-cols-3',
 ] as const;
 
 function PodiumColumn({ player }: { readonly player: TopPlayer }): ReactElement {
@@ -612,7 +630,8 @@ function PodiumColumn({ player }: { readonly player: TopPlayer }): ReactElement 
             faceClassName="rounded-[6px] border-2 border-black/30 shadow-[0_4px_0_rgba(0,0,0,0.25)]"
           />
         </span>
-        <span className="max-w-full truncate text-[0.95rem] font-bold group-hover:text-primary sm:text-[1.05rem]">
+        {/* Whole name, also long Bedrock names (".MoinMornhart"): two lines rather than cut off. */}
+        <span className="line-clamp-2 max-w-full text-[0.85rem] font-bold leading-tight [overflow-wrap:anywhere] group-hover:text-primary sm:text-[1.05rem]">
           {player.name}
         </span>
         {player.role.symbol ? <RankTag role={player.role} className="max-sm:hidden" /> : null}
@@ -636,8 +655,12 @@ function PodiumColumn({ player }: { readonly player: TopPlayer }): ReactElement 
   );
 }
 
+/** Up to this many closed modes are named below "Spielmodi offen", more are only counted. */
+const NAMED_SHUT_MAX = 3;
+
 function StatsSection(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
   const language = useLanguage();
   const status = useNetworkStatus();
   const site = useSite();
@@ -646,7 +669,16 @@ function StatsSection(): ReactElement {
   const total = site.data ? number.format(site.data.players) : '–';
   const online = status.data ? number.format(status.data.players) : '–';
   const modes = status.data?.modes ?? [];
-  const open = modes.filter(modeJoinable).length;
+  const open = modes.filter(modeOpenNow).length;
+  // "Gerade zu: Wintersport (Sommerpause)" instead of "rund um die Uhr offen" while some are not open.
+  const shut = modes.filter((m) => !modeOpenNow(m));
+  const openHint = !shut.length
+    ? t('site.stats.modesOpenHint')
+    : shut.length <= NAMED_SHUT_MAX
+      ? t('site.stats.modesShutHint', {
+          names: shut.map((m) => `${pick(m.name)} (${t(`site.modeState.${modeLook(m)}`)})`).join(', '),
+        })
+      : t('site.stats.modesShutMany', { count: shut.length });
   const podium = top.data ?? [];
   // Second place stands left of the winner, third right of it.
   const order = [podium[1], podium[0], podium[2]].filter((p): p is TopPlayer => Boolean(p));
@@ -677,8 +709,9 @@ function StatsSection(): ReactElement {
           <StatTile
             icon={Play}
             label={t('site.stats.modesOpen')}
-            value={status.data ? `${open} / ${modes.length}` : '–'}
-            hint={t('site.stats.modesOpenHint')}
+            value={status.data ? String(open) : '–'}
+            of={status.data ? String(modes.length) : undefined}
+            hint={status.data ? openHint : t('site.stats.modesOpenHint')}
           />
         </div>
         <div className="grid gap-6 rounded-[10px] border-2 border-border bg-card p-5 shadow-card sm:p-8">
@@ -701,7 +734,12 @@ function StatsSection(): ReactElement {
             <p className="text-muted-foreground">{t('site.stats.noneYet')}</p>
           ) : null}
           {order.length ? (
-            <ol className="mx-auto grid w-full max-w-[640px] grid-cols-3 items-end gap-3 pt-8 sm:gap-6">
+            <ol
+              className={cn(
+                'mx-auto grid w-full items-end gap-3 pt-8 sm:gap-6',
+                PODIUM_GRID[order.length - 1],
+              )}
+            >
               {order.map((p) => (
                 <PodiumColumn key={p.uuid} player={p} />
               ))}

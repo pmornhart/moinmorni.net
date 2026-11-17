@@ -515,6 +515,7 @@ function changelog(): DemoResponse {
 
 const EXACT: Readonly<Record<string, Handler>> = {
   'GET /api/public/changelog': changelog,
+  'GET /api/panel/changelog': changelog,
   'GET /api/commands': commands,
   'GET /api/status': status,
   'GET /api/site': site,

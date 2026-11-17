@@ -65,6 +65,7 @@ import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
 import { createStatusService } from './public/status.js';
 import { registerWwwRedirect } from './public/www.js';
+import { knownPage, registerCrawlRoutes } from './public/crawl.js';
 import { registerSetupRoutes } from './setup/routes.js';
 import { createSetupService, type SetupService } from './setup/service.js';
 import { MODE_JARS, MODE_REPOS } from '@moinmorni/shared';
@@ -472,7 +473,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const updates = createUpdateService(config, motor, stores, github);
   registerUpdateRoutes(app, auth, updates);
   // „Was ist neu“ unten in der Mitte von Webseite und Panel: Version, Änderungen, ob eine neue bereitsteht.
-  registerChangelogRoute(app, {
+  registerChangelogRoute(app, auth, {
     version: config.version,
     file: changelogFile(),
     update: () => updates.peek(),
@@ -524,6 +525,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       .map((p) => ({ id: p.id, name: p.role.name, symbol: p.role.symbol, colour: p.role.colour })),
   );
   await registerMotorProxy(app, config.motorUrl, { beforeStart: (id) => sleep.makeRoom(id) });
+  // robots.txt, sitemap.xml, favicon.ico – vorher kam dafür die Startseite.
+  registerCrawlRoutes(app, config.domain, () => stores.modes());
 
   if (hasWeb) {
     await app.register(fastifyStatic, {
@@ -540,13 +543,16 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     });
   }
   app.setNotFoundHandler((request, reply) => {
+    // HEAD wie GET (Prüfer, Vorschauen von Links): sonst kam für jede Seite 404.
     const page =
-      request.method === 'GET' &&
+      (request.method === 'GET' || request.method === 'HEAD') &&
       !request.url.startsWith(API) &&
       !request.url.startsWith(ASSETS) &&
       !request.url.startsWith(MOTOR_PREFIX);
-    if (page && hasWeb) return reply.type('text/html').sendFile('index.html');
-    return reply.code(HTTP_NOT_FOUND).send({ error: 'not_found' });
+    if (!page || !hasWeb) return reply.code(HTTP_NOT_FOUND).send({ error: 'not_found' });
+    // Unbekannte Pfade: die Webseite zeigt ihre Seite „Nicht gefunden“ – mit dem passenden Status für Suchmaschinen.
+    if (!knownPage(request.url)) reply.code(HTTP_NOT_FOUND);
+    return reply.type('text/html').sendFile('index.html');
   });
 
   const relay: { current: AlertRelay | null } = { current: null };

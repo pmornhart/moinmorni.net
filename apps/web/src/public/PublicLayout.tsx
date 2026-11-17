@@ -40,6 +40,7 @@ import {
   setSocials,
   SOCIAL_ICON,
   useOnlineText,
+  useHeroShown,
   useScrolled,
   WRAP,
 } from './parts';
@@ -346,11 +347,14 @@ function MobileMenu(): ReactElement {
 function Header(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const scrolled = useScrolled(SOLID_AFTER);
+  const hero = useHeroShown();
+  // Without a picture behind it (a page that was not found, still loading) the header is solid from the start.
+  const solid = scrolled || !hero;
   return (
     <header
       className={cn(
         'mm-on-dark fixed inset-x-0 top-0 z-40 text-band-foreground transition-[background-color,box-shadow] duration-300',
-        scrolled
+        solid
           ? 'bg-band/95 shadow-[0_4px_0_rgba(0,0,0,0.28)] backdrop-blur-md'
           : 'bg-gradient-to-b from-black/60 via-black/25 to-transparent',
       )}

@@ -24,10 +24,10 @@ import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { findMode, useModeBoards, useModeTop, useSite } from '~/lib/site';
 import { PlayerFace } from '~/components/player-face';
-import { modeJoinable, modeLook, useNetworkStatus } from '~/lib/status';
-import { usePick } from '~/lib/text';
+import { modeJoinable, modeLook, useNetworkStatus, type ModeLook } from '~/lib/status';
+import { useLanguage, usePick } from '~/lib/text';
 import { modeArt } from './art';
-import { MODE_GUIDES } from './mode-guides';
+import { guideSyntax, MODE_GUIDES } from './mode-guides';
 import { MODE_PARAM, PLACE_COLOURS, useStatText } from './stat-format';
 import { JoinCard, ModeCard, ModeFigure, modeStyle } from './cards';
 import {
@@ -253,7 +253,7 @@ function LivePanel({ mode }: { readonly mode: ModeStatus }): ReactElement {
             {t('site.mode.about', { name: pick(mode.name) })}
           </h2>
           <p className="text-[1.08rem] leading-relaxed text-pretty">{pick(mode.description)}</p>
-          <p className="text-[15px] text-muted-foreground">{t(`site.modeLookText.${look}`)}</p>
+          <LookLine mode={mode} look={look} />
         </div>
         {joinable ? (
           <div className="grid gap-4 rounded-[8px] border-2 border-border bg-background-alt p-4">
@@ -281,6 +281,24 @@ function LivePanel({ mode }: { readonly mode: ModeStatus }): ReactElement {
         </p>
       </div>
     </Panel>
+  );
+}
+
+/** Below the description: open, asleep, closed … – a mode only for invited players says so (MorniCraft). */
+function LookLine({ mode, look }: { readonly mode: ModeStatus; readonly look: ModeLook }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const invite = mode.access === 'whitelist' && (look === 'open' || look === 'asleep');
+  if (!invite) return <p className="text-[15px] text-muted-foreground">{t(`site.modeLookText.${look}`)}</p>;
+  const applies = mode.id === APPLY_MODE;
+  return (
+    <p className="text-[15px] text-muted-foreground">
+      {t(applies ? 'site.modeLookText.inviteApply' : 'site.modeLookText.invite')}{' '}
+      {applies ? (
+        <Link to={APPLY_PAGE} className="font-semibold text-primary underline-offset-4 hover:underline">
+          {t('site.mode.apply')}
+        </Link>
+      ) : null}
+    </p>
   );
 }
 
@@ -343,6 +361,7 @@ function ModeTopThree({ mode }: { readonly mode: ModeStatus }): ReactElement | n
 /** How the mode is played: three numbered tips on its colours and the most important commands. */
 function ModeGuidePanel({ mode }: { readonly mode: ModeStatus }): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
+  const language = useLanguage();
   const guide = MODE_GUIDES[mode.id];
   if (!guide) return null;
   const tips = Array.from({ length: guide.tips }, (_, i) => t(`site.guide.${mode.id}.tip${i + 1}`));
@@ -376,7 +395,7 @@ function ModeGuidePanel({ mode }: { readonly mode: ModeStatus }): ReactElement |
           {guide.commands.map((c) => (
             <div key={c.key} className="grid gap-1">
               <dt>
-                <Cmd>{c.syntax}</Cmd>
+                <Cmd>{guideSyntax(c, language)}</Cmd>
               </dt>
               <dd className="text-[15px] leading-snug text-muted-foreground">
                 {t(`site.guide.${mode.id}.cmd.${c.key}`)}

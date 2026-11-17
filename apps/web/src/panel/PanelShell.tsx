@@ -420,6 +420,7 @@ function Frame(): ReactElement {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center pb-[calc(10px+env(safe-area-inset-bottom))] lg:left-[264px]">
         <VersionPill
           look="panel"
+          audience="team"
           className="pointer-events-auto"
           updatesTo={me.areas.includes('updates') ? UPDATES_PAGE : undefined}
         />
