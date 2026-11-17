@@ -57,6 +57,7 @@ laufend den Ort der Kamera (`* kamera x y z`) – damit klappt `blick kamera`.
 | `bogen <Ziel> [spannen=1.1]` · `schild [s]` | Bogen spannen, mit Fallkurve zielen, loslassen · Schild hochhalten |
 | `klick x y z [seite]` · `setze x y z <seite>` | Block anklicken (mit Blick) · Block an eine Seite setzen |
 | `bahn x,y,z,t x,y,z,t …` | geführte Bahn (z. B. schwerer Parkour): weiche Kurve, Beine laufen mit, Kopf schaut voraus |
+| `physik an\|aus` | eigene Physik aus/an – wenn der Server den Darsteller selbst führt (z. B. ein Test-Autopilot, der ihn jeden Tick versetzt) |
 
 Alte Befehle (`swing`, `use`, `attack`, `hit`, `equip`, `open`, `place`, `take`, `click`, `close`, `inv`, `sneak`) gehen
 weiter. Ausgaben: `ONLINE <Name>`, `FERTIG <Name> <aufgabe>`, `FEHLER …`, `KICK …`.

@@ -15,6 +15,7 @@
 //   essen · nimm <text> · slot <0-8> · chat <text …> · gruss · springe [n] · schleiche an|aus
 //   bogen <Ziel> [spannen=1.1] · schild [s] · klick x y z [seite] · setze x y z <seite>
 //   bahn x,y,z,t x,y,z,t …                           geführte Bahn (weich, Beine laufen mit)
+//   physik an|aus                                   eigene Physik aus, wenn der Server den Darsteller führt
 //   * kamera x y z                                   Ort der Kamera (shot.py meldet ihn laufend)
 // Alte Befehle aus actors.cjs/wk-actors.cjs gehen weiter: swing, use, unuse, attack, hit, equip, open, place, take,
 // click, close, inv, sneak.
@@ -85,6 +86,8 @@ async function handle(line) {
     case 'schild': return a.schild(Number(pos[0] || 1));
     case 'klick': return a.klick(...nums(pos), pos[3] || 'up');
     case 'setze': case 'place': return a.setze(...nums(pos), pos[3] || 'up');
+    // Physik aus, wenn der Server den Darsteller selbst führt (z. B. ein Test-Autopilot, der ihn jeden Tick versetzt)
+    case 'physik': bot.physicsEnabled = !['aus', 'off'].includes(pos[0]); if (!bot.physicsEnabled) a.stop(); return;
     case 'bahn': return a.bahn(pos.map((s) => { const v = s.split(',').map(Number); return { p: v.slice(0, 3), t: v[3] || 0 }; }));
     // ältere Befehle
     case 'swing': return a.schwing(pos[0] === 'links' ? 'left' : 'right');
