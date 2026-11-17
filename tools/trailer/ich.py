@@ -249,6 +249,8 @@ def main():
         pitch = max(-90, min(90, pitch + done_y / ppd))
         k += 1
     ff.stdin.write(b'q'); ff.stdin.flush(); ff.wait()
+    if menu_open(duration):  # ein Fenster ist noch offen – schließen, sonst liegt es über der nächsten Einstellung
+        xdo(display, 'key', 'Escape')
     for _, kind, arg in timeline:  # nichts hängen lassen
         if kind == 'keydown':
             xdo(display, 'keyup', arg)
