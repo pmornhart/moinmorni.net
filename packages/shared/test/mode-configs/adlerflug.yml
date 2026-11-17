@@ -23,3 +23,7 @@ geist-standard: true
 
 # Freiflug von der großen Schanze im Basislager (ohne Zeit); wer im Tal landet, kommt zurück.
 freiflug: true
+
+# Strecke des Tages: jeden Tag eine neue Strecke im Tal im Süden (Richtung, Wind, Tageszeit, Wetter und Ringe ergeben
+# sich aus dem Datum – für alle gleich) mit eigener Tages-Bestenliste. false = aus (die Station bleibt leer).
+strecke-des-tages: true

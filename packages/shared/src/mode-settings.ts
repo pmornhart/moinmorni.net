@@ -3873,6 +3873,17 @@ export const ADLERFLUG_AREA: SettingArea = {
           ),
         }),
         adler.flag({
+          key: 'dailyCourse',
+          at: 'strecke-des-tages',
+          value: true,
+          cmd: 'tagesstrecke',
+          label: t('Strecke des Tages', 'Course of the day'),
+          help: t(
+            'Jeden Tag eine neue Strecke im Tal im Süden – Richtung, Wind, Tageszeit, Wetter und Ringe ergeben sich aus dem Datum, für alle gleich, mit eigener Tages-Bestenliste. Aus = die Station bleibt leer.',
+            'A new course in the valley to the south every day – direction, wind, time of day, weather and rings come from the date, the same for everyone, with its own daily leaderboard. Off = the station stays empty.',
+          ),
+        }),
+        adler.flag({
           key: 'ghostDefault',
           at: 'geist-standard',
           value: true,
