@@ -65,11 +65,25 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
     ],
   },
   duels: {
-    tips: 3,
+    tips: 4,
     commands: [
-      { key: 'duel', syntax: '/duel <name>' },
-      { key: 'kit', syntax: '/kit' },
-      { key: 'top', syntax: '/top' },
+      { key: 'duel', syntax: '/duel <name> [kampfart] [1|3|5]' },
+      { key: 'partykampf', syntax: '/partykampf [kampfart] [teams]' },
+      { key: 'kit', syntax: '/kit [kampfart]' },
+      { key: 'top', syntax: '/top [kampfart]' },
+    ],
+    more: [
+      { key: 'annehmen', syntax: '/duel annehmen [name]' },
+      { key: 'ablehnen', syntax: '/duel ablehnen [name]' },
+      { key: 'warteschlange', syntax: '/warteschlange <kampfart> <locker|gewertet> <1v1|2v2>' },
+      { key: 'spectate', syntax: '/spectate <name>' },
+      { key: 'verlassen', syntax: '/verlassen' },
+      { key: 'stats', syntax: '/stats [name]' },
+    ],
+    // `moinmorni.duels.admin` comes with the game right "manage game modes" (Rights.java).
+    team: [
+      { key: 'neuladen', syntax: '/duels neuladen', right: 'modes-admin' },
+      { key: 'neubauen', syntax: '/duels neubauen', right: 'modes-admin' },
     ],
   },
   party: {
@@ -105,12 +119,18 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
     ],
   },
   mirni: {
-    tips: 3,
+    tips: 4,
     commands: [
       { key: 'rtp', syntax: '/rtp' },
       { key: 'ah', syntax: '/ah' },
+      { key: 'shop', syntax: '/shop' },
+      { key: 'boerse', syntax: '/boerse [ware]' },
       { key: 'gs', syntax: '/gs sichern' },
       { key: 'geld', syntax: '/geld' },
+    ],
+    more: [
+      { key: 'wert', syntax: '/wert [alles]' },
+      { key: 'verkaufen', syntax: '/verkaufen [hand|alles]' },
     ],
   },
   wolkenkampf: {

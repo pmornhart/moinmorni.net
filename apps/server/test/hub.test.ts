@@ -941,6 +941,20 @@ describe('Hub', () => {
     });
     await proxy.request({ t: 'command', uuid: PHILIP, command: 'smpconfig', args: ['haendler', 'aus'] });
     expect(await smp.next('mode-settings')).toMatchObject({ values: { 'haendler.an': false } });
+    // MorniSMP 0.3.0: Preis-Faktor je Abteilung und Börse.
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'smpconfig',
+      args: ['faktor', 'erze', '2,5'],
+    });
+    expect(await smp.next('mode-settings')).toMatchObject({
+      values: { 'haendler.faktoren.erze': 2.5, 'haendler.faktoren.holz': 1, 'boerse.an': true },
+    });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'smpconfig', args: ['boerse', 'aus'] });
+    expect(await smp.next('mode-settings')).toMatchObject({
+      values: { 'boerse.an': false, 'boerse.max-prozent': 300 },
+    });
     expect(
       hide.received.filter((m) => m.t === 'mode-settings').every((m) => m['mode'] === 'versteckerl'),
     ).toBe(true);
@@ -949,6 +963,48 @@ describe('Hub', () => {
     expect(await duels.next('mode-settings')).toMatchObject({
       values: { 'kampf.zeitlimit-sekunden': 300, 'suppe.heilung': 6.5 },
     });
+    // Duels 0.2.0: jede Kampfart an/aus und mit Runden, Regeln der besonderen Kampfarten – die Brücke zählt Tore.
+    expect(first.values).toMatchObject({
+      'kits.sumo.an': true,
+      'kits.sumo.runden': 1,
+      'sumo.aus-tiefe': 2,
+      'bruecke.tore': 3,
+      'labyrinth.ziel': true,
+      'party.max-spieler': 8,
+    });
+    expect(Object.keys(first.values)).not.toContain('kits.bruecke.runden');
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'duelsconfig',
+      args: ['sumo', 'runden', '3'],
+    });
+    expect(await duels.next('mode-settings')).toMatchObject({ values: { 'kits.sumo.runden': 3 } });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'duelsconfig',
+      args: ['sumo', 'tiefe', '3,5'],
+    });
+    expect(await duels.next('mode-settings')).toMatchObject({
+      values: { 'sumo.aus-tiefe': 3.5, 'kits.sumo.an': true },
+    });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'duelsconfig', args: ['bruecke', 'aus'] });
+    expect(await duels.next('mode-settings')).toMatchObject({
+      values: { 'kits.bruecke.an': false, 'bruecke.tore': 3 },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'duelsconfig',
+      args: ['labyrinth', 'ziel', 'aus'],
+    });
+    expect(await duels.next('mode-settings')).toMatchObject({
+      values: { 'labyrinth.ziel': false, 'kits.labyrinth.an': true },
+    });
+    // 6 Runden gibt es nicht (1 bis 5).
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'duelsconfig', args: ['uhc', 'runden', '6'] });
+    expect(stores.settings('duels')['kitUhcRounds']).toBe(1);
     // Im Spiel per Befehl (Owner), Komma geht auch.
     await proxy.request({
       t: 'command',

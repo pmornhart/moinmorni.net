@@ -76,6 +76,27 @@ function updateOldSmp(db: Db): void {
 }
 
 /**
+ * Beschreibungen, die ein Modus früher als Standard hatte (deutscher Text) – sind sie noch unverändert, kommt die neue
+ * aus `DEFAULT_MODES`. Was im Panel selbst geschrieben wurde, bleibt.
+ */
+const OLD_DEFAULT_TEXTS: Readonly<Record<string, readonly string[]>> = {
+  // Duels bis 0.1.x (vor den 20 Kampfarten aus 0.2.0)
+  duels: ['1 gegen 1 und 2 gegen 2: Klassisch mit Suppe, Modern oder mit Fähigkeiten. Gewertet oder locker.'],
+};
+
+function refreshOldTexts(db: Db): void {
+  Object.entries(OLD_DEFAULT_TEXTS).forEach(([id, texts]) => {
+    const row = db.select().from(modes).where(eq(modes.id, id)).get();
+    const fresh = DEFAULT_MODES.find((m) => m.id === id);
+    if (!row || !fresh || !texts.includes(row.data.description.de)) return;
+    db.update(modes)
+      .set({ data: { ...row.data, description: fresh.description } })
+      .where(eq(modes.id, id))
+      .run();
+  });
+}
+
+/**
  * Neue Spielmodi (z. B. Wolkenkampf, Versteckerl …) kommen auch bei bestehenden Installationen dazu – hinten in der
  * Reihenfolge, damit eigene Sortierungen bleiben. Was schon da ist, bleibt unverändert.
  */
@@ -112,6 +133,7 @@ export function createStores(db: Db, events: EventBus): Stores {
   const templateUpgrades = upgradeRoleTemplate(db);
   addNewModes(db);
   updateOldSmp(db);
+  refreshOldTexts(db);
 
   const allRoles = (): Role[] =>
     db
