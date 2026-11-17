@@ -13,6 +13,9 @@ describe('Schlaf-Modus', () => {
   test('leerer Modus schläft nach der eingestellten Zeit, Lobby nie, Spieler halten ihn wach', async () => {
     const stores = createStores(openDatabase(':memory:').db, createEventBus());
     stores.patchSettings('network', { sleepMinutes: 5 }, 'test');
+    // Seit dem 16.11. sind alle Modi standardmäßig immer online – schlafen nur, wo es eingeschaltet ist.
+    stores.patchMode('duels', { sleepWhenEmpty: true }, 'test');
+    stores.patchMode('party', { sleepWhenEmpty: true }, 'test');
     const calls: string[] = [];
     const motor = {
       request: (method: string, path: string) => {

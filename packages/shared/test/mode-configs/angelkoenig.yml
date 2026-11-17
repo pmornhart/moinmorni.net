@@ -1,5 +1,12 @@
 # Morni Angelkönig – Einstellungen. Nach Änderungen: /angeladmin neuladen (oder Server neu starten).
 
+# Zurück ins Spiel: Wer im Tal ist, macht beim laufenden Angel-Turnier mit; wer das Tal verlässt, gibt seinen Platz
+# auf. Verliert jemand während des Turniers die Verbindung (zum Beispiel, weil das Spiel abstürzt), bleibt sein Platz
+# samt bestem Fang so viele Sekunden frei. Kommt er rechtzeitig wieder (direkt oder über „Zurück ins Spiel“ in der
+# Lobby), angelt er dort weiter, wo er war; sonst ist sein Platz frei. Endet das Turnier vorher, zählt sein Platz.
+# 0 = aus (Platz geht sofort, 0–600).
+rueckkehr-sekunden: 90
+
 # Eigene Welt für das Tal (entsteht beim ersten Start aus dem Code).
 welt: angelkoenig
 

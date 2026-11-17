@@ -1,3 +1,4 @@
+import { networkCommand } from '@moinmorni/shared';
 import crypto from 'node:crypto';
 import { and, eq, or } from 'drizzle-orm';
 import type { Db } from '../db/index.js';
@@ -319,12 +320,7 @@ export function createSocial(
 
   const commands: Command[] = [
     {
-      name: 'freunde',
-      aliases: ['friends', 'f', 'freund'],
-      usage: {
-        de: '/freunde [add|annehmen|ablehnen|entfernen] <name>',
-        en: '/friends [add|accept|deny|remove] <name>',
-      },
+      ...networkCommand('freunde'),
       run: (actor, args) => {
         const word = args[0]?.toLowerCase() ?? '';
         if (ADD.has(word)) addFriend(actor, args[1]);
@@ -354,12 +350,7 @@ export function createSocial(
       },
     },
     {
-      name: 'party',
-      aliases: ['p'],
-      usage: {
-        de: '/party [einladen|annehmen|verlassen|kick|leiter|auflösen] <name>',
-        en: '/party [invite|accept|leave|kick|leader|disband] <name>',
-      },
+      ...networkCommand('party'),
       run: (actor, args) => {
         const word = args[0]?.toLowerCase() ?? '';
         const party = partyOf(actor.uuid);
@@ -399,9 +390,7 @@ export function createSocial(
       },
     },
     {
-      name: 'pc',
-      aliases: ['partychat'],
-      usage: { de: '/pc <nachricht>', en: '/pc <message>' },
+      ...networkCommand('pc'),
       run: (actor, args) => {
         const party = partyOf(actor.uuid);
         const message = args.join(' ').trim();

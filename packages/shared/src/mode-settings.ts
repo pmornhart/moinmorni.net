@@ -122,6 +122,38 @@ function settingsFor(root: string) {
   };
 }
 
+/**
+ * Abschnitt „Zurück ins Spiel“ (Schnittstelle Fassung 2): So lange hält ein Modus den Platz frei, wenn jemand mitten im
+ * Spiel die Verbindung verliert. `rueckkehr-sekunden` steht oben in der config.yml jedes Modus, der es kann.
+ */
+function rejoinSection(
+  modeSettings: ReturnType<typeof settingsFor>,
+  value: number,
+  what: Text,
+): SettingSection {
+  return {
+    id: 'rejoin',
+    title: t('Zurück ins Spiel', 'Back into the game'),
+    text: t(
+      'Stürzt das Spiel ab oder ist das Internet kurz weg, bleibt der Platz frei. Die Lobby bietet „Zurück ins Spiel“ an.',
+      'If the game crashes or the internet drops for a moment, the place stays free. The lobby offers “Back into the game”.',
+    ),
+    settings: [
+      modeSettings.number({
+        key: 'rejoinSeconds',
+        at: 'rueckkehr-sekunden',
+        value,
+        min: 0,
+        max: 600,
+        ...SECONDS,
+        cmd: 'rueckkehr',
+        label: t('Platz frei halten', 'Keep the place free'),
+        help: what,
+      }),
+    ],
+  };
+}
+
 // ---------------------------------------------------------------- Duels
 
 const duels = settingsFor('duelsconfig');
@@ -137,6 +169,14 @@ export const DUELS_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'duels', plugin: 'MoinMorniDuels' },
   sections: [
+    rejoinSection(
+      duels,
+      30,
+      t(
+        'So viele Sekunden bleibt der Platz frei. Solange hält der Kampf an (beide eingefroren, die Zeit steht; im 2 gegen 2 kämpft das Team weiter). Wer rechtzeitig zurückkommt, steht mit gleichem Leben und gleicher Ausrüstung wieder dort. 0 = aus: Verbindung weg heißt verloren.',
+        'The place stays free for this many seconds. Meanwhile the fight pauses (both frozen, the clock stops; in 2v2 the team keeps fighting). Whoever comes back in time stands there again with the same health and gear. 0 = off: losing the connection means losing the fight.',
+      ),
+    ),
     {
       id: 'arenas',
       title: t('Arenen', 'Arenas'),
@@ -1225,6 +1265,14 @@ export const GIPFELSTURM_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'gipfelsturm', plugin: 'Gipfelsturm' },
   sections: [
+    rejoinSection(
+      gipfel,
+      90,
+      t(
+        'So viele Sekunden bleibt ein Lauf nach einem Verbindungsabbruch offen. Wer rechtzeitig zurückkommt, macht am letzten Kontrollpunkt weiter (die Uhr ist weitergelaufen), ohne Kontrollpunkt am Start; ein Party-Rennen wartet. 0 = aus.',
+        'A run stays open for this many seconds after a lost connection. Whoever comes back in time continues at the last checkpoint (the clock kept running), without one at the start; a party race waits. 0 = off.',
+      ),
+    ),
     {
       id: 'runs',
       title: t('Läufe', 'Runs'),
@@ -2201,6 +2249,14 @@ export const WOLKENKAMPF_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'wolkenkampf', plugin: 'MorniWolkenkampf' },
   sections: [
+    rejoinSection(
+      wolken,
+      90,
+      t(
+        'So viele Sekunden bleiben Insel, Sachen und Team frei. Wer rechtzeitig zurückkommt, macht genau dort weiter; sonst scheidet er aus. Wer gerade von einem Gegner getroffen wurde, scheidet beim Verlassen sofort aus. 0 = aus.',
+        'Island, items and team stay reserved for this many seconds. Whoever comes back in time continues right there; otherwise they are out. Anyone just hit by an opponent is out at once when leaving. 0 = off.',
+      ),
+    ),
     {
       id: 'harbour',
       title: t('Wolkenhafen', 'Cloud harbour'),
@@ -2937,6 +2993,14 @@ export const VERSTECKERL_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'versteckerl', plugin: 'MorniVersteckerl' },
   sections: [
+    rejoinSection(
+      versteck,
+      90,
+      t(
+        'So viele Sekunden bleiben Rolle, Gestalt, Versteck und Punkte frei. Wer rechtzeitig zurückkommt, rastet am selben Platz wieder ein; sonst verlässt er die Runde wie bisher. 0 = aus.',
+        'Role, shape, hiding spot and points stay reserved for this many seconds. Whoever comes back in time snaps back into the same spot; otherwise they leave the round as before. 0 = off.',
+      ),
+    ),
     {
       id: 'station',
       title: t('Gendarmerie', 'Constabulary'),
@@ -3474,6 +3538,14 @@ export const WINTERSPORT_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'wintersport', plugin: 'MorniWintersport' },
   sections: [
+    rejoinSection(
+      winter,
+      90,
+      t(
+        'So viele Sekunden bleiben Disziplin, Lauf und Zeiten frei. Zurück sitzt man gleich wieder im Boot bzw. steht an derselben Stelle; die Uhr läuft weiter. 0 = aus.',
+        'Discipline, run and times stay reserved for this many seconds. Back in time you sit in the boat again or stand at the same spot; the clock keeps running. 0 = off.',
+      ),
+    ),
     {
       id: 'village',
       title: t('Bergdorf', 'Mountain village'),
@@ -3857,6 +3929,14 @@ export const ANGELKOENIG_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'angelkoenig', plugin: 'MorniAngelkoenig' },
   sections: [
+    rejoinSection(
+      angel,
+      90,
+      t(
+        'So viele Sekunden bleiben Turnierplatz und bester Fang nach einem Verbindungsabbruch frei. Wer das Tal während eines Turniers selbst verlässt, verliert seinen Platz gleich. 0 = aus.',
+        'Tournament place and best catch stay reserved for this many seconds after a lost connection. Anyone who leaves the valley on purpose during a tournament loses their place at once. 0 = off.',
+      ),
+    ),
     {
       id: 'valley',
       title: t('Tal', 'Valley'),

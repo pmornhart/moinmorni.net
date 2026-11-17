@@ -1,5 +1,11 @@
 # Gipfelsturm – Einstellungen. Nach einer Änderung den Server neu starten.
 
+# Zurück ins Spiel: Verliert jemand mitten in einem Lauf die Verbindung (zum Beispiel, weil das Spiel abstürzt), bleibt
+# der Lauf so viele Sekunden frei. Kommt er rechtzeitig wieder (direkt oder über „Zurück ins Spiel“ in der Lobby), geht
+# es am letzten Checkpoint weiter – die Uhr ist weitergelaufen, so bringt ein Abbruch keinen Vorteil. Sonst ist der
+# Lauf vorbei wie bisher. 0 = aus (0–600).
+rueckkehr-sekunden: 90
+
 # Name der Welt, die Gipfelsturm anlegt und baut (Basislager + Strecken). Spieler bauen dort nichts;
 # kommt eine neue Version mit geänderten Strecken, wird sie gelöscht und frisch gebaut.
 welt: gipfelsturm

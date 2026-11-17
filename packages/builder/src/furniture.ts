@@ -1,6 +1,6 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- Modell-Maße in 1/16 Block (Minecraft-Modellkoordinaten) */
 import type { Canvas } from './canvas.js';
-import { zipOf } from './png.js';
+import { zipOf, type ZipEntry } from './png.js';
 import { airItemDefinition, TRACHT_NS, trachtModels, trachtTextures } from './trachten.js';
 import { BRUNNEN_ERSATZ, brunnenItemCases, brunnenModels } from './brunnen.js';
 import { STEP, type Facing } from './shapes.js';
@@ -390,8 +390,11 @@ const PACK_FORMAT = 15;
 const PACK_FORMAT_MAX = 999;
 const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
 
-/** Das Ressourcenpaket der Lobby als ZIP – gleiche Möbel = gleiche Bytes = gleiche SHA-1. */
-export function furniturePack(): Buffer {
+/**
+ * Das Ressourcenpaket der Lobby als ZIP – gleiche Möbel = gleiche Bytes = gleiche SHA-1. `extra` hängt weitere Dateien
+ * an (die Lobbymusik, `musik/paket.ts`).
+ */
+export function furniturePack(extra: readonly ZipEntry[] = []): Buffer {
   const meta = {
     pack: {
       description: 'MoinMorni – Möbel, Trachten und Brunnen der Lobby',
@@ -425,6 +428,7 @@ export function furniturePack(): Buffer {
     ...Object.entries(trachtTextures())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([name, png]) => ({ name: `assets/${TRACHT_NS}/textures/item/tracht/${name}.png`, data: png })),
+    ...extra,
   ]);
 }
 
