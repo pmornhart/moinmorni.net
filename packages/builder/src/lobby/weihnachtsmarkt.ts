@@ -2,10 +2,11 @@
 /**
  * Weihnachtsmarkt – im Winter werden der Dorfmarkt um den Christbaum und der Schlossmarkt zum Weihnachtsmarkt:
  *
- * - **Buden:** Tannengirlande mit Lichtern vorne und an den Seiten der Markise, Eiszapfen an der Kante, Schnee auf dem
- *   Dach (macht `winter.ts`), warmes Licht unter der Markise. Figuren und Stände bleiben, wie sie sind.
+ * - **Buden:** Schmuck wie am Weihnachtstor (`standschmuck.ts`): dicker Tannenstrang an der Markise, Bögen mit roten
+ *   Schleifen, Kugeln, warme Lichter, Zapfen, umwundene Pfosten; Eiszapfen an der Kante, Schnee auf dem Dach (macht
+ *   `winter.ts`), warmes Licht unter der Markise. Figuren, Namen der Stände und Laternen bleiben frei.
  * - **Lichterketten** im Ring von Bude zu Bude (über alle Gassen), am Schlossmarkt von Stand zu Stand und zum
- *   Marktbogen, der Girlande, Lichter und einen Stern bekommt.
+ *   Marktbogen, der Schmuck wie das Weihnachtstor und einen Stern bekommt (Wimpel und Schrift bleiben frei).
  * - **Glühwein- und Lebkuchenbude** am Eingang von der Ankunft her (nur Deko), dazwischen das Weihnachtstor (`weihnachtstor.ts`).
  * - **Krippe** auf der Wiese westlich vom Platz: offener Stall mit Heu, Maria, Josef, dem Kind in der Krippe, Ochs,
  *   Esel und Schafen, Stern über dem Dach.
@@ -34,6 +35,9 @@ import { settle, settleDown } from './halt.js';
 import { esel, josef, krippeMitKind, maria, ochse, schaf, stern } from './winter-figuren.js';
 import { clearPlants, HALF, tags, type View } from './winter-base.js';
 import { weihnachtstor } from './weihnachtstor.js';
+import { bogenSchmuck, budeSchmuck, markiseSchmuck, type Schmuck, type StandSeiten } from './standschmuck.js';
+import type { Stil } from './girlanden.js';
+import { checkDecorations, displayStuck, parseSummon } from '../pruefung.js';
 
 // ---------- Stände ----------
 
@@ -84,38 +88,17 @@ export const yawOf = (front: Facing): number => Math.atan2(STEP[front][0], STEP[
 /** Blickrichtung einer Text-Anzeige in Grad (0 = Süden). */
 const signYaw = (front: Facing): number => (-yawOf(front) * 180) / Math.PI;
 
-const GREEN = { block: 'spruce_leaves', properties: { persistent: 'true' } } as const;
-const STALL_LIGHTS: readonly string[] = ['glowstone', 'red_concrete', 'ochre_froglight', 'red_concrete'];
-
 /**
  * Modell in Rahmen-Koordinaten: Teile mit `at` = [u, y, −v] (also wie `placeModel`: x nach rechts, z nach vorne),
  * Ursprung vorne links unten des Rahmens.
  */
 function inFrame(f: Frame, kind: string, parts: readonly ModelPart[]): string[] {
-  return placeModel(tags(kind), pointAt(f, 0, 0, 0), yawOf(f.front), parts);
+  return inFrameTagged(f, tags(kind), parts);
 }
 
-/** Tannengirlande mit Lichtern entlang einer Kante (in Rahmen-Koordinaten von a nach b, gerade). */
-function garland(a: Vec, b: Vec, thick: number, lights: readonly string[]): ModelPart[] {
-  const length = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
-  const mid: Vec = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-  const alongX = Math.abs(b[0] - a[0]) >= Math.abs(b[2] - a[2]);
-  const green: ModelPart = {
-    at: mid,
-    ...GREEN,
-    scale: alongX ? [length, thick, thick] : [thick, thick, length],
-  };
-  const count = Math.max(2, Math.floor(length / 0.9));
-  const bulbs = range(0, count - 1).map((k): ModelPart => {
-    const t = (k + HALF) / count;
-    return {
-      at: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - thick * 0.3, a[2] + (b[2] - a[2]) * t] as Vec,
-      block: lights[k % lights.length] ?? 'glowstone',
-      scale: [0.15, 0.15, 0.15],
-      glow: true,
-    };
-  });
-  return [green, ...bulbs];
+/** Wie `inFrame`, mit fertigem SNBT-Teil `Tags:[…]` (auch für andere Saisons). */
+function inFrameTagged(f: Frame, tagged: string, parts: readonly ModelPart[]): string[] {
+  return placeModel(tagged, pointAt(f, 0, 0, 0), yawOf(f.front), parts);
 }
 
 /** Eiszapfen unter einer Kante (Rahmen-Koordinaten): unregelmäßig, verschieden lang. */
@@ -133,15 +116,72 @@ function eiszapfen(u1: number, u2: number, y: number, z: number, seed: number): 
     });
 }
 
-/** Weihnachtliche Bude: Girlande vorne und an den Seiten der Markise, Lichter, Eiszapfen an der Kante. */
-function stallDeco(s: Stall, i: number): string[] {
+/** So nah an der Ecke eines anderen Stands hängt an dieser Seite kein Strang (die Zweige stießen aneinander). */
+const SIDE_CLEAR = 2.5;
+
+/** Welche Seiten der Markise frei sind (kein Nachbarstand dicht daneben). */
+function freeSides(s: Stall): StandSeiten {
+  const others = STALLS.filter((o) => o !== s).flatMap((o) => stallCorners(o));
+  const clear = (p: Vec): boolean => others.every((q) => Math.hypot(q[0] - p[0], q[2] - p[2]) > SIDE_CLEAR);
+  const [left, right] = stallCorners(s);
+  return { left: clear(left), right: clear(right) };
+}
+
+/** Weihnachtliche Bude: Schmuck wie am Weihnachtstor (`standschmuck.ts`), Eiszapfen an der Kante. */
+function stallDeco(world: World, s: Stall, i: number): string[] {
   const f = stallFrame(s);
-  return inFrame(f, 'stand', [
-    ...garland([0, 4.96, 1.08], [7, 4.96, 1.08], 0.32, STALL_LIGHTS),
-    ...garland([-0.06, 5.92, 0], [-0.06, 5.92, -4], 0.26, STALL_LIGHTS),
-    ...garland([7.06, 5.92, 0], [7.06, 5.92, -4], 0.26, STALL_LIGHTS),
-    ...eiszapfen(0, 7, 4, 0.9, i),
-  ]);
+  return placeSchmuck(world, f, tags('stand'), markiseSchmuck(freeSides(s), i), eiszapfen(0, 7, 4, 0.9, i));
+}
+
+/**
+ * Alle Marktstände (Dorf- und Schlossmarkt) im Schmuck eines Stils – für andere Saisons (Ostern); `tagged` = SNBT-Teil
+ * `Tags:[…]`.
+ */
+export function staendeSchmuecken(world: World, tagged: string, stil: Stil): string[] {
+  return STALLS.flatMap((s, i) =>
+    placeSchmuck(world, stallFrame(s), tagged, markiseSchmuck(freeSides(s), i, stil), []),
+  );
+}
+
+/** Bude am Eingang (Rahmen `f`, Pfostenhöhe `height`) im Schmuck eines Stils, ohne Eiszapfen. */
+export function budeSchmuecken(
+  world: World,
+  f: Frame,
+  tagged: string,
+  stil: Stil,
+  height: number,
+  k: number,
+): string[] {
+  return placeSchmuck(world, f, tagged, budeSchmuck(BUDE_WIDTH, k, stil, height), []);
+}
+
+/**
+ * Schmuck aufstellen; was um die Pfosten gewunden ist, nur dort, wo es in nichts steckt (Tischchen, Zaun, Theke) – und
+ * nur, was danach noch hält (dieselbe Prüfung wie die Bauplan-Prüfung: kein Rest schwebt).
+ */
+function placeSchmuck(
+  world: World,
+  f: Frame,
+  tagged: string,
+  s: Schmuck,
+  more: readonly ModelPart[],
+): string[] {
+  const fixed = inFrameTagged(f, tagged, [...s.parts, ...more]);
+  const posts = inFrameTagged(f, tagged, s.posts).filter((cmd) => displayStuck(world, cmd) === null);
+  const key = (cmd: string): string => {
+    const p = parseSummon(cmd);
+    return p ? `@ ${p.x} ${p.y} ${p.z}` : cmd;
+  };
+  const prune = (list: readonly string[]): string[] => {
+    const loose = new Set(
+      checkDecorations(SCRATCH, [...fixed, ...list], world)
+        .map((fund) => fund.was.slice(fund.was.indexOf('@')))
+        .filter((k) => k.startsWith('@')),
+    );
+    const kept = list.filter((cmd) => !loose.has(key(cmd)));
+    return kept.length === list.length ? kept : prune(kept);
+  };
+  return [...fixed, ...prune(posts)];
 }
 
 /** Warmes Licht unter der Markise (unsichtbarer Lichtblock vor der Theke). */
@@ -227,19 +267,15 @@ function schlossmarktKetten(): string[] {
   });
 }
 
-/** Marktbogen des Schlossmarkts: Girlande mit Lichtern vorne und hinten am Balken, Stern obendrauf. */
+/** Marktbogen des Schlossmarkts: Schmuck wie am Weihnachtstor (`standschmuck.ts`), Stern obendrauf. */
 function marktbogen(world: World): string[] {
   const top = GROUND + 7;
   const z = MARKET_ARCH_Z;
-  const parts: ModelPart[] = [
-    ...garland([-7, top + 0.9, z + 1.12], [8, top + 0.9, z + 1.12], 0.34, STALL_LIGHTS),
-    ...garland([-7, top + 0.9, z - 0.12], [8, top + 0.9, z - 0.12], 0.34, STALL_LIGHTS),
-  ];
   // Stern: von oben herab, bis er auf dem Bogen steht
   const star = (at: Vec): string[] => placeModel(tags('bogen'), at, 0, stern(1.5));
   const above: Vec = [HALF, top + 2.3, z + HALF];
   return [
-    ...placeModel(tags('bogen'), [0, 0, 0], 0, parts),
+    ...bogenSchmuck(tags('bogen'), [HALF, top, z + HALF]),
     ...(settleDown(world, above, star, above[1] + 1, top) ?? star(above)),
   ];
 }
@@ -320,10 +356,10 @@ function bude(w: Canvas, v: View, b: Bude): string[] {
     f.set(2, 3, 0, 'cake');
     f.set(2, 4, 1, 'light[level=14]');
   }
-  return budeDeko(f, b);
+  return budeDeko((x, y, z) => v.now(x, y, z), f, b);
 }
 
-function budeDeko(f: Frame, b: Bude): string[] {
+function budeDeko(world: World, f: Frame, b: Bude): string[] {
   const right = BUDE_WIDTH;
   const name =
     b.kind === 'gluehwein'
@@ -342,10 +378,13 @@ function budeDeko(f: Frame, b: Bude): string[] {
     name,
     0.62,
   );
-  const deko = inFrame(f, 'bude', [
-    ...garland([-1, BUDE_POSTS + 1.12, 1.12], [right + 1, BUDE_POSTS + 1.12, 1.12], 0.3, STALL_LIGHTS),
-    ...eiszapfen(-1, right + 1, BUDE_POSTS + 1, 0.92, b.kind.length),
-  ]);
+  const deko = placeSchmuck(
+    world,
+    f,
+    tags('bude'),
+    budeSchmuck(BUDE_WIDTH, b.kind.length),
+    eiszapfen(-1, right + 1, BUDE_POSTS + 1, 0.92, b.kind.length),
+  );
   const goods =
     b.kind === 'lebkuchen'
       ? [1.5, 3.5].flatMap((u) =>
@@ -495,7 +534,7 @@ export function weihnachtsmarkt(w: Canvas, v: View): string[] {
   const gate = eingang(w);
   const world: World = (x, y, z) => v.now(x, y, z);
   return [
-    ...STALLS.flatMap(stallDeco),
+    ...STALLS.flatMap((s, i) => stallDeco(world, s, i)),
     ...ringKetten(),
     ...schlossmarktKetten(),
     ...marktbogen(world),

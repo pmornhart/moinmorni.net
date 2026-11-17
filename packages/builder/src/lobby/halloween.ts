@@ -333,7 +333,8 @@ function eingang(w: Canvas): string[] {
   });
   w.set(x1, beam + 1, z, 'jack_o_lantern[facing=south]');
   w.set(x2, beam + 1, z, 'jack_o_lantern[facing=south]');
-  w.set(Math.round((x1 + x2) / 2), beam + 1, z, 'carved_pumpkin[facing=south]');
+  // Die Mitte bleibt frei für das Schild oben auf dem Balken
+  [x1 + 3, x2 - 3].forEach((x) => w.set(x, beam + 1, z, 'carved_pumpkin[facing=south]'));
   const lights = bulbs(
     S,
     'eingang',

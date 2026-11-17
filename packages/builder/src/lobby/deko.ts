@@ -98,6 +98,8 @@ export interface ModelPart {
   readonly scale: Vec;
   readonly rotation?: Quat;
   readonly glow?: boolean;
+  /** Feste Helligkeit (z. B. Christbaumkugeln: leuchten nicht, sind aber auch nachts zu sehen). */
+  readonly light?: { readonly sky: number; readonly block: number };
   readonly properties?: Readonly<Record<string, string>>;
 }
 
@@ -110,6 +112,7 @@ export function placeModel(tags: string, origin: Vec, yaw: number, parts: readon
       scale: p.scale,
       rotation: multiply(turn, p.rotation ?? NO_TURN),
       ...(p.glow ? { glow: true } : {}),
+      ...(p.light ? { light: p.light } : {}),
       ...(p.properties ? { properties: p.properties } : {}),
     });
   });
