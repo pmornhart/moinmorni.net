@@ -197,8 +197,8 @@ export const T = {
   welcomeWeb: { de: '🌐 Webseite', en: '🌐 Website' },
   welcomeLink: { de: '🔗 Konto verbinden', en: '🔗 Link your account' },
   welcomeLinkText: {
-    de: 'Im Spiel `/discord` eingeben, dann hier `/verbinden <code>` – danach hast du deinen Rang auch hier.',
-    en: 'Type `/discord` in game, then `/verbinden <code>` here – your rank then shows here too.',
+    de: 'Im Spiel `/discord` eingeben, dann hier `/verbinden <code>` – danach hast du deinen Rang auch hier. Schreiben und im Sprachkanal reden geht erst mit verbundenem Konto; vorher kannst du mitlesen und zuhören.',
+    en: 'Type `/discord` in game, then `/verbinden <code>` here – your rank then shows here too. Writing and talking in voice channels only works with a linked account; until then you can read and listen.',
   },
   welcomeNext: { de: '🧭 So geht’s weiter', en: '🧭 Next steps' },
   welcomeNextText: {

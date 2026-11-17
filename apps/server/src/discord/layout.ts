@@ -246,6 +246,8 @@ export interface RoleIds {
   readonly team: readonly string[];
   readonly muted: string;
   readonly jail: string;
+  /** „✔ Verbunden“ (Minecraft-Konto verbunden): nur damit schreibt und redet man in offenen Kanälen; null = noch keine. */
+  readonly linked: string | null;
   /** Der Bot selbst (Nutzer-ID): sieht und schreibt in jedem seiner Kanäle. */
   readonly bot: string | null;
 }
@@ -277,9 +279,18 @@ export function overwritesFor(audience: Audience, readOnly: boolean, ids: RoleId
     audience === 'everyone'
       ? [deny(ids.jail, VIEW)]
       : [deny(ids.everyone, VIEW), ...ids.audience(audience).map((id) => allow(id, VIEW | PERM.readHistory))];
+  // Nur lesen: schreiben nur das Team. Offene Kanäle für alle: schreiben und reden nur mit verbundenem
+  // Minecraft-Konto (und das Team) – wer nicht verbunden ist, liest mit und hört zu.
+  const linkedOnly = !readOnly && audience === 'everyone' && ids.linked !== null;
   const writing = readOnly
     ? [deny(ids.everyone, WRITE), ...ids.team.map((id) => allow(id, VIEW | WRITE))]
-    : [];
+    : linkedOnly
+      ? [
+          deny(ids.everyone, WRITE | PERM.speak),
+          allow(ids.linked ?? ids.everyone, WRITE | PERM.speak),
+          ...ids.team.map((id) => allow(id, WRITE | PERM.speak)),
+        ]
+      : [];
   const muted = deny(ids.muted, WRITE | VOICE);
   const all = audience === 'jail' ? jail : [...visible, ...writing, muted];
   // Gleiche Rolle zweimal → zusammenfassen (Discord nimmt pro Rolle nur einen Eintrag).
