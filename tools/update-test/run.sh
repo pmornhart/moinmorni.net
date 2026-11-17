@@ -60,7 +60,11 @@ case "$1 $2" in
     code=0
     for v in "$@"; do rmdir "${V}/${v}" 2>/dev/null || code=1; done
     exit "${code}" ;;
-  "compose build") [[ -f "${FAKE_VOL}/build-fails" ]] && exit 1; exit 0 ;;
+  "compose build")
+    # „Was ist neu“: liegt die Liste der Änderungen beim Bauen bereit (Rechte, Zahl der Versionen)?
+    cl=apps/server/changelog.txt
+    [[ -f "${cl}" ]] && echo "changelog=$(stat -c %a "${cl}") versionen=$(grep -c $'\x1eV ' "${cl}")" >>"${FAKE_LOG}"
+    [[ -f "${FAKE_VOL}/build-fails" ]] && exit 1; exit 0 ;;
   "compose up")
     p="$(project)"
     mkdir -p "${V}/${p}-data" "${V}/${p}-motor-data"
@@ -149,6 +153,10 @@ NETBIRD
 git_q -C "${WORK}/motor-origin" add . && git_q -C "${WORK}/motor-origin" commit -qm "Motor 1"
 git_q init -q -b main "${WORK}/mm-origin"
 cp "${SCRIPT}" "${WORK}/mm-origin/update.sh"
+# „Was ist neu“: update.sh schreibt vor dem Bauen die Liste der Änderungen (apps/server/changelog.txt).
+mkdir -p "${WORK}/mm-origin/scripts" "${WORK}/mm-origin/apps/server"
+cp "${REPO_ROOT}/scripts/changelog.sh" "${WORK}/mm-origin/scripts/changelog.sh"
+echo '{}' >"${WORK}/mm-origin/apps/server/package.json"
 printf 'name: %s\n' "${APP}" >"${WORK}/mm-origin/docker-compose.yml"
 git_q -C "${WORK}/mm-origin" -c protocol.file.allow=always submodule add -q "${WORK}/motor-origin" vendor/mornihosting
 git_q -C "${WORK}/mm-origin" add . && git_q -C "${WORK}/mm-origin" commit -qm "MoinMorni 1"
@@ -185,6 +193,7 @@ check "Auftrag weg" "[[ ! -f '${DATA}/update/request.json' ]]"
 check "Sicherung mit beiden Datenbanken, ohne Welten" "ls '${WORK}'/backups/*/${APP}/${APP}.db >/dev/null && ls '${WORK}'/backups/*/motor/mornihosting.db >/dev/null && ! ls -d '${WORK}'/backups/*/motor/servers >/dev/null 2>&1"
 check "Protokoll fürs Panel" "grep -q 'Update fertig' '${DATA}/update/log.txt'"
 check "gebaut wurden MoinMorni und Motor" "grep -q 'compose build --quiet ${APP} motor' '${FAKE_LOG}'"
+check "„Was ist neu“: Liste der Änderungen beim Bauen da, lesbar, eine Version je Commit" "grep -q 'changelog=644 versionen=2\$' '${FAKE_LOG}' && head -n 1 '${INSTALL}/apps/server/changelog.txt' | grep -q '^MoinMorni-Änderungen 1\$' && ! ls '${INSTALL}'/apps/server/changelog.txt.* >/dev/null 2>&1"
 check "ohne Rückbenennung: nichts verschoben, keine Volumes unter dem Zwischen-Namen" "[[ ! -e '${WORK}/vol/volumes/${INTERIM_APP}-data' ]] && ! grep -q 'Rückbenennung' '${WORK}/out.txt'"
 check "Updates im Panel folgen dem installierten Branch (main), sonst bleibt die .env" "grep -qx 'MM_UPDATE_BRANCH=main' '${INSTALL}/.env' && [[ \$(grep -c '^MM_UPDATE_BRANCH=' '${INSTALL}/.env') == 1 ]] && grep -qx 'MM_DOMAIN=example.org' '${INSTALL}/.env' && [[ \$(stat -c %a '${INSTALL}/.env') == 600 ]]"
 check "NetBird-Adresse kommt in die .env von MoinMorni" "grep -q 'netbird-env env=${INSTALL}/.env' '${FAKE_LOG}' && grep -q 'netbird.example.de' '${WORK}/out.txt'"

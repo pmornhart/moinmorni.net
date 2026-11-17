@@ -6,13 +6,15 @@
  * Gäste-Info, Schmiede, Schreinerei, Wohnhäuser), Wirtshaus mit Wirt und Stammtisch, Biergarten mit Gästen,
  * Leute im Dorf, Obstgarten, Weide, Felder und Teich, ringsum Alpengipfel mit Schnee.
  */
-import { biergarten, castle, chapel, fountain, launchpad, maypole } from '../bavaria.js';
+import { biergarten, castle, chapel, launchpad, maypole } from '../bavaria.js';
 import { Canvas } from '../canvas.js';
+import { dorfbrunnen } from '../dorfbrunnen.js';
 import { fitFurniture } from '../furniture.js';
+import { fitConnections } from '../verbindungen.js';
 import { fbm, pick, random } from '../noise.js';
 import { GROUND, meadow, roundTree, terrain } from '../nature.js';
-import { disc, range } from '../range.js';
-import { discAt, path, type Facing } from '../shapes.js';
+import { disc, pairs, range } from '../range.js';
+import { discAt, path, stairs, STEP, type Facing } from '../shapes.js';
 import { npc } from '../village.js';
 import { LAUNCHPADS } from './features.js';
 import { buildJail } from './jail.js';
@@ -23,13 +25,35 @@ import { buildSchlossmarkt, RING_MODES } from './schlossmarkt.js';
 export const LOBBY = { cx: 0, cz: 0, name: 'Dorfplatz am Schlossberg' };
 
 const HILL = { x: 0, z: -119, top: 44, foot: 92, height: 26 };
+/** Pflaster: helle Steine (Philip: „nicht so düster“), dazwischen ein wenig Kopfstein. */
 const PAVING = [
   'stone_bricks',
-  'cobblestone',
   'polished_andesite',
   'andesite',
   'stone_bricks',
-  'mossy_cobblestone',
+  'polished_andesite',
+  'stone',
+  'polished_diorite',
+  'cobblestone',
+];
+/** Dorfstraße, Handwerkergasse und Feldwege: heller Sandweg, selten ein Kiesfleck (mehr Kies sah fleckig aus). */
+const ROAD = ['dirt_path', 'dirt_path', 'dirt_path', 'dirt_path', 'dirt_path', 'dirt_path', 'gravel'];
+/** Hangwald am Schlossberg: unten Laubbäume und Birken (hell), oben Fichten. */
+const HILL_FOREST = { spruceAbove: GROUND + 18, broadleaf: 0.75, birch: 0.35 } as const;
+/** Am Schlossberg dichteres Gras mit Blumen – es deckt die Erdstufen am Hang. */
+const HILL_MEADOW = [
+  'short_grass',
+  'short_grass',
+  'short_grass',
+  'tall_grass[half=lower]',
+  'fern',
+  'dandelion',
+  'poppy',
+  'cornflower',
+  'oxeye_daisy',
+  'azure_bluet',
+  'pink_tulip',
+  'allium',
 ];
 const POND = { x: -66, z: 42, r: 11 };
 
@@ -38,6 +62,16 @@ const LANE = { z1: 4, z2: 10, x1: -116, x2: -47 };
 /** Oberdorf im Nordosten: kleiner Platz mit Brunnen und Linde, Häuser rundherum. */
 const UPPER = { x: 80, z: -40 };
 const LANE_HOUSES = [-58, -72, -86, -100] as const;
+/**
+ * Dorfbrunnen: am Ende der Handwerkergasse und im Oberdorf (Mitte x, z). Im Oberdorf nach Nordwesten gerückt – der
+ * Brunnen ist größer als der alte, an der alten Stelle stand im Winter der Christbaum mitten im Becken.
+ */
+export const VILLAGE_FOUNTAINS: readonly (readonly [number, number])[] = [
+  [LANE.x1 + 2, 7],
+  [UPPER.x - 5, UPPER.z - 5],
+];
+/** Dorflinde im Oberdorf (mit Rundbank). */
+const LINDE = { x: UPPER.x + 4, z: UPPER.z - 2 } as const;
 
 /** Dorfmarkt: Mitte der Standfront (x, z) und Blickrichtung, je zwei Stände an jeder Ecke des Maibaums. */
 export const MARKET: readonly (readonly [number, number, Facing])[] = [
@@ -118,10 +152,58 @@ const WALKERS: readonly (readonly [number, number, Facing, string, string, boole
   [-1, 70, 'north', 'gast8', 'dorfstrasse'],
   [-70, 7, 'east', 'gast1', 'gasse'],
   [-92, 6, 'west', 'gast5', 'gasse'],
-  [76, -36, 'south', 'gast2', 'oberdorf'],
+  [80, -33, 'south', 'gast2', 'oberdorf'],
   [44, 8, 'north', 'kellnerin', 'biergarten'],
   [2, -27, 'north', 'gast3', 'prachtstrasse'],
 ];
+
+const SHORE: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
+/** Garten hinter einem Haus: Zaun mit Tor (Mitte `gate`), Obstbaum in der Mitte. */
+function backGarden(
+  c: Canvas,
+  [x1, z1, x2, z2]: readonly [number, number, number, number],
+  gate: readonly [number, number],
+  rnd: () => number,
+): void {
+  fence(c, x1, z1, x2, z2, GROUND + 1, [gate[0], gate[1]]);
+  const [cx, cz] = [Math.round((x1 + x2) / 2), Math.round((z1 + z2) / 2)];
+  roundTree(c, cx, GROUND + 1, cz, { height: 8, radius: 3, leaves: 'oak_leaves', rnd });
+}
+
+/** Dorflinde im Oberdorf: Grasfleck im Pflaster und eine Rundbank (vier Bänke, Lehne zum Stamm). */
+function dorflinde(c: Canvas, rnd: () => number): void {
+  const { x, z } = LINDE;
+  pairs(range(x - 1, x + 1), range(z - 1, z + 1)).forEach(([gx, gz]) => c.set(gx, GROUND, gz, 'grass_block'));
+  roundTree(c, x, GROUND + 1, z, { height: 12, radius: 5, leaves: 'oak_leaves', rnd });
+  c.tagged('rundbank', () =>
+    (['north', 'east', 'south', 'west'] as const).forEach((d) => {
+      const [dx, dz] = STEP[d];
+      const toTrunk = STEP_BACK[d];
+      range(-1, 1).forEach((s) =>
+        c.set(
+          x + 2 * dx + s * Math.abs(dz),
+          GROUND + 1,
+          z + 2 * dz + s * Math.abs(dx),
+          stairs('spruce', toTrunk),
+        ),
+      );
+    }),
+  );
+}
+
+/** Lehne zeigt zum Stamm: Treppe nach innen. */
+const STEP_BACK: Readonly<Record<Facing, Facing>> = {
+  north: 'south',
+  south: 'north',
+  east: 'west',
+  west: 'east',
+};
 
 export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) => number } {
   const c = new Canvas();
@@ -142,7 +224,8 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     snowLine: 150,
     seed: 101,
     skipFlat: true,
-    waterLevel: GROUND - 1,
+    // Der Teich steht bis an den Rand voll (vorher eine Stufe darunter – Schilf am Ufer hatte kein Wasser daneben).
+    waterLevel: GROUND,
   });
 
   // Dorfplatz: Kopfsteinpflaster, Rand mit Laternen, Maibaum
@@ -155,18 +238,16 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     const [lx, lz] = [Math.round(Math.cos(a) * 23.5), Math.round(Math.sin(a) * 23.5)];
     if (Math.abs(lx) > 5) lampPost(c, lx, GROUND, lz);
   });
-  maypole(c, 0, GROUND, 0, 30);
+  c.tagged('maibaum', () => maypole(c, 0, GROUND, 0, 30));
 
-  // Prachtstraße zum Schloss (Achse x = 0), Portale links und rechts
+  // Prachtstraße zum Schloss (Achse x = 0), Portale links und rechts. Wo sie am Hangfuß über dem Vorplatz liegt,
+  // steht sie auf einem gemauerten Damm (vorher Erde mit Hohlräumen darunter – von der Seite sah man nackte Erde).
   range(-5, 5).forEach((x) =>
-    range(-82, -22).forEach((z) =>
-      c.set(
-        x,
-        Math.max(GROUND, Math.round(height(x, z))),
-        z,
-        Math.abs(x) === 5 ? 'polished_andesite' : pick(rnd, PAVING),
-      ),
-    ),
+    range(-82, -22).forEach((z) => {
+      const top = Math.max(GROUND, Math.round(height(x, z)));
+      if (top > GROUND + 1) range(GROUND + 1, top - 1).forEach((y) => c.set(x, y, z, 'stone_bricks'));
+      c.set(x, top, z, Math.abs(x) === 5 ? 'polished_andesite' : pick(rnd, PAVING));
+    }),
   );
   range(-80, -24)
     .filter((z) => z % 8 === 0)
@@ -208,18 +289,11 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
   );
 
   // Schlossmarkt: alle weiteren Modi in einer Marktzeile auf dem Vorplatz vor der Schlosstreppe
-  buildSchlossmarkt(c, height);
+  c.tagged('schlossmarkt', () => buildSchlossmarkt(c, height));
 
   // Dorfstraße nach Süden: Läden und Wohnhäuser (alle begehbar), Kapelle am Ende
   range(-3, 3).forEach((x) =>
-    range(22, 104).forEach((z) =>
-      c.set(
-        x,
-        GROUND,
-        z,
-        Math.abs(x) === 3 ? 'stone_bricks' : pick(rnd, ['gravel', 'cobblestone', 'gravel', 'coarse_dirt']),
-      ),
-    ),
+    range(22, 104).forEach((z) => c.set(x, GROUND, z, Math.abs(x) === 3 ? 'stone_bricks' : pick(rnd, ROAD))),
   );
   const west = [
     { interior: 'baeckerei', sign: 'Bäckerei' },
@@ -234,7 +308,20 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     { interior: 'wohnhaus' },
   ] as const;
   [32, 50, 68, 86].forEach((z, i) => {
-    houseAt(c, -10, GROUND, z, 'east', 11, 11, 2 + (i % 2), rnd, 'dark_oak', west[i]);
+    // Dächer im Wechsel hell und dunkel (vorher links alle dunkel)
+    houseAt(
+      c,
+      -10,
+      GROUND,
+      z,
+      'east',
+      11,
+      11,
+      2 + (i % 2),
+      rnd,
+      i % 2 === 0 ? 'dark_oak' : 'spruce',
+      west[i],
+    );
     houseAt(
       c,
       10,
@@ -248,25 +335,24 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
       i % 2 === 0 ? 'spruce' : 'dark_oak',
       east[i],
     );
-    fence(c, -26, z - 7, -15, z + 7, GROUND + 1);
-    fence(c, 15, z - 1, 26, z + 13, GROUND + 1);
-    roundTree(c, -21, GROUND + 1, z, { height: 8, radius: 3, leaves: 'oak_leaves', rnd });
+    // Gärten hinter den Häusern, Tor zum Haus hin, Obstbaum in der Mitte (hinter den ersten beiden Häusern stehen
+    // Rathaus bzw. Gäste-Info – dort keiner)
+    if (i > 0) {
+      backGarden(c, [-32, z - 6, -22, z + 6], [-22, z], rnd);
+      backGarden(c, [22, z, 32, z + 12], [22, z + 6], rnd);
+    }
   });
-  chapel(c, -4, GROUND, 108, 'north');
+  // Laternen an der Dorfstraße, je zwischen zwei Häusern (nachts war es dort bisher dunkel)
+  [41, 59, 77, 95].forEach((z) => lampPost(c, -4, GROUND, z));
+  [47, 65, 83, 101].forEach((z) => lampPost(c, 4, GROUND, z));
+  c.tagged('kapelle', () => chapel(c, -4, GROUND, 108, 'north'));
   houseAt(c, -30, GROUND, 30, 'north', 11, 11, 3, rnd, 'dark_oak', { interior: 'rathaus', sign: 'Rathaus' });
   houseAt(c, 30, GROUND, 30, 'north', 9, 10, 2, rnd, 'dark_oak', { interior: 'info', sign: 'Gäste-Info' });
 
   // Handwerkergasse nach Westen: Vorgärten, Häuser auf beiden Seiten, Brunnen am Ende
   range(LANE.x1, LANE.x2).forEach((x) =>
     range(LANE.z1, LANE.z2).forEach((z) =>
-      c.set(
-        x,
-        GROUND,
-        z,
-        z === LANE.z1 || z === LANE.z2
-          ? 'stone_bricks'
-          : pick(rnd, ['gravel', 'cobblestone', 'gravel', 'coarse_dirt']),
-      ),
+      c.set(x, GROUND, z, z === LANE.z1 || z === LANE.z2 ? 'stone_bricks' : pick(rnd, ROAD)),
     ),
   );
   const north = [
@@ -319,9 +405,10 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     );
     [LANE.z1 - 1, LANE.z2 + 1].forEach((z) => lampPost(c, x + 7, GROUND, z));
     // Vorgärten: Blumen, Hecke vorne, Weg zur Tür frei
+    // (die Reihe direkt vor dem Haus bleibt frei: Fensterbänke, Hausbank, Wandbretter der Laternen)
     [
-      [LANE.z1 - 4, LANE.z1 - 1],
-      [LANE.z2 + 1, LANE.z2 + 4],
+      [LANE.z1 - 3, LANE.z1 - 1],
+      [LANE.z2 + 1, LANE.z2 + 3],
     ].forEach(([za = 0, zb = 0]) =>
       range(x - 5, x + 5).forEach((gx) =>
         range(za, zb).forEach((gz) => {
@@ -333,12 +420,11 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     );
   });
   discAt(c, LANE.x1 + 2, GROUND, 7, 9, () => pick(rnd, PAVING));
-  fountain(c, LANE.x1 + 2, GROUND, 7, 3);
 
   // Oberdorf: Platz mit Brunnen und Linde, vier Häuser rundherum, Weg zum Vorplatz
   discAt(c, UPPER.x, GROUND, UPPER.z, 10, () => pick(rnd, PAVING));
-  fountain(c, UPPER.x - 4, GROUND, UPPER.z + 2, 2);
-  roundTree(c, UPPER.x + 4, GROUND + 1, UPPER.z - 2, { height: 12, radius: 5, leaves: 'oak_leaves', rnd });
+  VILLAGE_FOUNTAINS.forEach(([x, z]) => c.tagged(`brunnen ${x},${z}`, () => dorfbrunnen(c, x, GROUND, z)));
+  dorflinde(c, rnd);
   houseAt(c, UPPER.x - 8, GROUND, UPPER.z - 11, 'south', 11, 10, 3, rnd, 'dark_oak', {
     interior: 'wohnhaus',
   });
@@ -349,7 +435,7 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
   lampPost(c, UPPER.x + 9, GROUND, UPPER.z + 8);
 
   // Biergarten im Osten mit Wirtshaus (Wirt hinterm Tresen, Stammtisch, Gäste)
-  biergarten(c, 30, -16, 60, 16, GROUND, rnd);
+  c.tagged('biergarten', () => biergarten(c, 30, -16, 60, 16, GROUND, rnd));
   houseAt(c, 72, GROUND, 0, 'west', 15, 13, 3, rnd, 'dark_oak', {
     interior: 'wirtshaus',
     sign: 'Wirtshaus Zum Morni',
@@ -393,20 +479,27 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
   field(c, 40, 82, 70, 98, GROUND);
   field(c, -60, 70, -36, 96, GROUND, 'carrots[age=7]');
   fence(c, -61, 69, -35, 97, GROUND + 1, [-48, 69]);
+  // Ufer: Schilf nur direkt am Wasser (Zuckerrohr braucht Wasser daneben), sonst Gras
+  const inPond = (x: number, z: number): boolean => Math.hypot(x - POND.x, z - POND.z) < POND.r;
   disc(POND.x, POND.z, POND.r + 1.5)
-    .filter(([x, z]) => Math.hypot(x - POND.x, z - POND.z) >= POND.r)
-    .forEach(([x, z]) => c.set(x, GROUND + 1, z, rnd() < 0.3 ? 'sugar_cane' : 'short_grass'));
+    .filter(([x, z]) => !inPond(x, z))
+    .forEach(([x, z]) => {
+      const shore = SHORE.some(([dx, dz]) => inPond(x + dx, z + dz));
+      c.set(x, GROUND + 1, z, rnd() < 0.3 && shore ? 'sugar_cane' : 'short_grass');
+    });
 
   // Schloss auf dem Hügel, Freitreppe nach Süden
-  castle(c, { x: 0, y: GROUND + HILL.height, z: -96, front: 'south', wallDrop: 14, rnd });
-  LAUNCHPADS.forEach((l) => launchpad(c, l.x, l.y, l.z));
+  c.tagged('schloss', () =>
+    castle(c, { x: 0, y: GROUND + HILL.height, z: -96, front: 'south', wallDrop: 14, rnd }),
+  );
+  LAUNCHPADS.forEach((l) => c.tagged('launchpad', () => launchpad(c, l.x, l.y, l.z)));
   // Gefängnis: Arrestzelle im Rathauskeller (das Lobby-Plugin hält Eingesperrte dort)
-  buildJail(c);
+  c.tagged('gefaengnis', () => buildJail(c));
 
   // Jump and Run im Nordwesten: Startplatz mit Smaragd und Tafel – die Blöcke zeigt das Lobby-Plugin hoch oben
   buildJumpStart(c);
 
-  const pathBlocks = ['gravel', 'coarse_dirt', 'gravel', 'cobblestone'];
+  const pathBlocks = ROAD;
   path(
     c,
     [
@@ -478,8 +571,25 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
     },
     202,
     rnd,
+    HILL_FOREST,
+  );
+  // Schlossberg dicht bewachsen (Gras deckt die Erdstufen), dann Wiesen ringsum
+  const onSlope = (x: number, z: number): boolean =>
+    Math.hypot(x - HILL.x, z - HILL.z) < HILL.foot && !castleArea(x, z) && !(Math.abs(x) < 54 && z > -42);
+  meadow(
+    c,
+    HILL.x - HILL.foot,
+    HILL.z - HILL.foot,
+    HILL.x + HILL.foot,
+    -40,
+    height,
+    0.42,
+    rnd,
+    HILL_MEADOW,
+    onSlope,
   );
   meadow(c, -125, -125, 125, 125, height, 0.16, rnd);
   fitFurniture(c);
+  fitConnections(c);
   return { canvas: c, height };
 }

@@ -70,6 +70,8 @@ export interface SiteInfo {
   readonly rules: { readonly de: readonly string[]; readonly en: readonly string[] };
   /** Gemeinsame Sprachkanäle aus den Einstellungen. */
   readonly voiceChannels?: readonly string[];
+  /** Rank badges: on/off and every rank in order (help page) – older servers: missing. */
+  readonly badges?: { readonly enabled: boolean; readonly ranks: readonly PublicRole[] };
   readonly discordInvite: string | null;
   readonly socials: Readonly<Record<Social, string | null>>;
   /** Everyone who has ever played on MoinMorni. */

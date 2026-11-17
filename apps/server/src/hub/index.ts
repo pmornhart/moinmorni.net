@@ -13,6 +13,7 @@ import {
 import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
+import { createBadges, type BadgeOffer } from './badges.js';
 import { createChat, type ChatSettings } from './chat.js';
 import { allowed, createCommands, findCommand, type Actor, type Command } from './commands.js';
 import { hasRight, type HubContext } from './context.js';
@@ -61,6 +62,7 @@ const PROXY_ONLY: ReadonlySet<string> = new Set([
   'locale',
   'command',
   'complete',
+  'badge-status',
   'fallback',
   'pack',
 ]);
@@ -174,6 +176,8 @@ export interface HubOptions {
   readonly wake?: (server: string) => Promise<boolean>;
   /** Steht diese Person auf der Whitelist eines Modus „nur auf Einladung“? Ohne = niemand außer dem Team. */
   readonly allowedIn?: (mode: string, uuid: string, name: string) => boolean;
+  /** Rang-Abzeichen: wo das Paket gerade liegt (öffentliche Adresse + SHA-1); ohne = keine Abzeichen. */
+  readonly badgePack?: () => BadgeOffer | null;
 }
 
 export interface Hub {
@@ -285,6 +289,8 @@ export function createHub(options: HubOptions): Hub {
         symbol: role.symbol,
         colour: role.colour,
         position: role.position,
+        // Schlüssel des Abzeichens (Tab-Liste, über dem Kopf); null = aus, dann Symbol wie bisher.
+        badge: badges.keyOf(role),
       },
       /** Rechte im Spiel (das Plugin gibt z. B. auf dem Bau-Server Kreativ und WorldEdit). */
       rights: role.game,
@@ -351,6 +357,7 @@ export function createHub(options: HubOptions): Hub {
     },
     streamer: (uuid) => streamers.parts(uuid),
   };
+  const badges = createBadges({ ctx, offer: () => options.badgePack?.() ?? null, toProxy });
   /** Wer im Gefängnis sitzt (mit Ende und Grund) und wo die Zelle ist – für das Lobby-Plugin. */
   const jailState = (): Body => ({
     t: 'jail',
@@ -413,6 +420,7 @@ export function createHub(options: HubOptions): Hub {
         ...createCommands(ctx, moderation),
         ...social.commands,
         ...voice.commands,
+        ...badges.commands,
         ...rejoin.commands,
         createStreamerCommand(ctx, streamers, { now, changed: sendProfile }),
         ...music.commands,
@@ -422,7 +430,7 @@ export function createHub(options: HubOptions): Hub {
     );
     return cache.commands;
   };
-  const chat = createChat(ctx, () => stores.settings('chat') as unknown as ChatSettings);
+  const chat = createChat(ctx, () => stores.settings('chat') as unknown as ChatSettings, badges);
   /** Mitten im Spiel: Nachfrage vor /lobby, „Zurück ins Spiel“ (rejoin.ts). */
   const rejoin = createRejoin({ ctx, send: toBackend, connected: (s) => conns.backends.has(s), log, now });
 
@@ -847,6 +855,8 @@ export function createHub(options: HubOptions): Hub {
       if (!isHere(conn, m.uuid)) return;
       chat.handle(normalUuid(m.uuid), m.text, now(), m.tag);
     },
+    // Abzeichen-Paket eines Spielers: geladen, abgelehnt (Pflicht → hinaus), ging nicht …
+    'badge-status': (_conn, body) => badges.onStatus(body),
     ...rejoin.handlers,
     pack: music.onPack,
   };
@@ -863,6 +873,7 @@ export function createHub(options: HubOptions): Hub {
         });
         conn.send(network());
         conn.send(bans());
+        conn.send(badges.proxyBody());
         conn.send(streamers.config());
         return;
       }
@@ -947,13 +958,22 @@ export function createHub(options: HubOptions): Hub {
       toBackend(LOBBY_SERVER, lobbyMusicBody(stores));
     }
     if (area === 'voice') voice.broadcast();
+    // Abzeichen an/aus oder Pflicht: Proxy bietet das Paket an (oder nimmt es ab), Tab-Liste und Kopf ziehen nach.
+    if (area === 'badges') {
+      toProxy(badges.proxyBody());
+      presence.all().forEach((p) => sendProfile(p.uuid));
+    }
     // Einstellungen eines Spielmodus → an seinen Server (schläft er, trägt MoinMorni sie vor dem Aufwachen ein).
     const modeServer = serverOfModeArea(stores, area);
     const changed = modeServer ? areaById(area) : undefined;
     const modeSettings = changed ? modeSettingsBody(stores, changed) : null;
     if (modeServer && modeSettings) toBackend(modeServer, modeSettings);
   });
-  events.on('roles.changed', () => presence.all().forEach((p) => sendProfile(p.uuid)));
+  events.on('roles.changed', () => {
+    presence.all().forEach((p) => sendProfile(p.uuid));
+    // Name, Symbol oder Farbe geändert → neues Abzeichen-Paket (neue SHA-1), der Proxy schickt es allen gleich.
+    toProxy(badges.proxyBody());
+  });
   events.on('modes.changed', lobbySoon);
 
   return {

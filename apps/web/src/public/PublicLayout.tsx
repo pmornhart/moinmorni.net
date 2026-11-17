@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, Outlet, ScrollRestoration, useLocation } from 'react-router';
 import { Crest } from '~/components/brand';
 import { useCopy } from '~/components/controls';
+import { VersionPill } from '~/components/whats-new';
 import { chooseLanguage, MM_NAMESPACE, SUPPORTED_LANGUAGES } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useSite } from '~/lib/site';
@@ -516,10 +517,11 @@ function Footer(): ReactElement {
         </div>
       </div>
       <div className="relative border-t-2 border-black/30">
+        {/* Left the name and the note, in the middle the version ("Was ist neu"), right language and theme. */}
         <div
           className={cn(
             WRAP,
-            'flex flex-col gap-4 py-5 text-[13px] text-band-muted md:flex-row md:items-center md:justify-between',
+            'flex flex-col gap-4 py-5 text-[13px] text-band-muted md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center md:gap-6',
           )}
         >
           <div className="grid gap-1">
@@ -528,7 +530,10 @@ function Footer(): ReactElement {
             </span>
             <span>{t('footer.disclaimer')}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex justify-center max-md:order-last">
+            <VersionPill look="site" />
+          </div>
+          <div className="flex items-center gap-2 md:justify-self-end">
             <LanguageToggle />
             <ThemeButton />
           </div>

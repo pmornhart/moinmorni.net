@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { countOfVersion, versionFromCount, type ChangeItem } from '@moinmorni/shared';
 import { z } from 'zod';
 import type { Config } from '../config.js';
 import { GithubLimited, type GithubClient, type GithubKeyState } from '../lib/github.js';
 import type { MotorClient } from '../motor/client.js';
 import type { Stores } from '../panel/stores.js';
+import { itemsOf } from './changes.js';
 
 /**
  * Updates: MoinMorni folgt seinem Branch auf GitHub (`MM_UPDATE_BRANCH`, sonst `main`). MoinMorni kennt den Commit,
@@ -51,26 +53,15 @@ const DESCRIBED = /-g([0-9a-f]{7,40})$/;
 // Nur ein Commit: "abc1234" passt, "v0.1.2" nicht.
 // https://regex101.com/?flavor=javascript&regex=%5E%5B0-9a-f%5D%7B7%2C40%7D%24&testString=abc1234
 const COMMIT = /^[0-9a-f]{7,40}$/;
-// Stichpunkt einer Commit-Nachricht: "- Neu: Gefängnis" passt, "Neu: Gefängnis" (ohne Strich) nicht.
-// https://regex101.com/?flavor=javascript&regex=%5E-%20(Neu%7CBehoben%7CVerbessert%7CEntfernt)%3A%5Cs*(.%2B)%24&testString=-%20Neu%3A%20Gef%C3%A4ngnis
-const BULLET = /^- (Neu|Behoben|Verbessert|Entfernt):\s*(.+)$/;
 // Farb-Codes im Protokoll des Skripts: "\u001b[32m" passt, "[32m" ohne ESC nicht.
 // https://regex101.com/?flavor=javascript&regex=%5Cu001b%5C%5B%5B0-9%3B%5D*m&testString=%1B%5B32m%E2%9C%94%1B%5B0m
 const ANSI = /\u001b\[[0-9;]*m/g;
-const KIND: Readonly<Record<string, ChangeKind>> = {
-  Neu: 'new',
-  Behoben: 'fixed',
-  Verbessert: 'improved',
-  Entfernt: 'removed',
-};
-
-export type ChangeKind = 'new' | 'fixed' | 'improved' | 'removed';
 
 export interface UpdateChange {
   readonly sha: string;
   readonly title: string;
   readonly date: string | null;
-  readonly items: ReadonlyArray<{ readonly kind: ChangeKind; readonly text: string }>;
+  readonly items: readonly ChangeItem[];
 }
 
 export interface UpdateComponent {
@@ -78,6 +69,8 @@ export interface UpdateComponent {
   readonly latest: string | null;
   /** So viele Änderungen ist die neueste Fassung weiter; null = sie ist neuer, wie viel steht noch nicht fest. */
   readonly behind: number | null;
+  /** Versionsnummer der neuesten Fassung („v1.8.9“), null = steht (noch) nicht fest oder nichts Neues. */
+  readonly latestVersion: string | null;
   readonly changes: readonly UpdateChange[];
 }
 
@@ -124,8 +117,15 @@ export interface UpdateView {
 const commitSchema = z.object({
   sha: z.string(),
   commit: z.object({ message: z.string(), committer: z.object({ date: z.string() }).nullable() }),
+  /** Eltern (erst der Branch selbst, dann was ein Merge hereinholt) – für die neue Versionsnummer. */
+  parents: z.array(z.object({ sha: z.string() })).optional(),
 });
-const compareSchema = z.object({ ahead_by: z.number(), commits: z.array(commitSchema) });
+const compareSchema = z.object({
+  ahead_by: z.number(),
+  commits: z.array(commitSchema),
+  /** Nur auf der Platte: so viele Updates (erste Elternlinie) ist die neueste Fassung weiter, null = unbekannt. */
+  steps: z.number().int().nullable().optional(),
+});
 type Compare = z.infer<typeof compareSchema>;
 /** Nur die Zahl (Motor): `?per_page=1&page=2` kommt ohne die lange Liste der geänderten Dateien. */
 const countSchema = z.object({ ahead_by: z.number() });
@@ -140,14 +140,28 @@ const requestSchema = z.object({ at: z.string() });
 /** Was der Motor über sich selbst sagt (öffentlich, ohne GitHub): `version` z. B. „v0.9.4-0-g0ab0370“. */
 const motorStatusSchema = z.object({ version: z.string() });
 
-/** Stichpunkte aus der Commit-Nachricht (Neu/Behoben/Verbessert/Entfernt); ohne Stichpunkte die erste Zeile. */
+/** Stichpunkte aus der Commit-Nachricht (Neu/Behoben/Verbessert/Entfernt); ohne Stichpunkte der Betreff. */
 export function changeOf(sha: string, message: string, date: string | null): UpdateChange {
-  const lines = message.split('\n');
-  const items = lines
-    .map((l) => BULLET.exec(l.trim()))
-    .filter((m): m is RegExpExecArray => m !== null)
-    .map((m) => ({ kind: KIND[m[1] ?? ''] ?? 'improved', text: m[2] ?? '' }));
-  return { sha: sha.slice(0, SHORT_SHA), title: lines[0]?.trim() ?? '', date, items };
+  const title = message.split('\n')[0]?.trim() ?? '';
+  return { sha: sha.slice(0, SHORT_SHA), title, date, items: itemsOf(message) };
+}
+
+/**
+ * So viele Updates liegen zwischen zwei Commits – gezählt wie die Versionsnummer (nur die erste Elternlinie,
+ * update.sh `mm_version`). Aus der Liste des Vergleichs; null, wenn der Weg dort nicht ganz drinsteht.
+ */
+export function firstParentSteps(
+  commits: readonly { readonly sha: string; readonly parents?: readonly { readonly sha: string }[] }[],
+  base: string,
+  head: string,
+): number | null {
+  const parentOf = new Map(commits.map((c) => [c.sha, c.parents?.[0]?.sha]));
+  const walk = (sha: string, steps: number): number | null => {
+    if (sha.startsWith(base)) return steps;
+    const parent = parentOf.get(sha);
+    return parent && steps < commits.length ? walk(parent, steps + 1) : null;
+  };
+  return walk(head, 0);
 }
 
 /** Commit aus der gebauten Version („v0.1.2-0-gabc1234“ oder „abc1234“), null bei „dev“. */
@@ -165,11 +179,17 @@ function pairOf(base: string | null, head: string | null): { base: string; head:
   return base && head && !head.startsWith(base) ? { base, head } : null;
 }
 
-/** Für die Platte reicht, was angezeigt wird: die neuesten Änderungen ohne Merge-Commits. */
-const keepChanges = (cmp: Compare): Compare => ({
-  ahead_by: cmp.ahead_by,
-  commits: cmp.commits.filter((c) => !c.commit.message.startsWith(MERGE_PREFIX)).slice(-MAX_CHANGES),
-});
+/** Für die Platte reicht, was angezeigt wird: die neuesten Änderungen ohne Merge-Commits, dazu die Updates. */
+const keepChanges =
+  (pair: { base: string; head: string }) =>
+  (cmp: Compare): Compare => ({
+    ahead_by: cmp.ahead_by,
+    commits: cmp.commits
+      .filter((c) => !c.commit.message.startsWith(MERGE_PREFIX))
+      .slice(-MAX_CHANGES)
+      .map(({ parents: _parents, ...c }) => c),
+    steps: firstParentSteps(cmp.commits, pair.base, pair.head),
+  });
 
 const changesOf = (cmp: Compare): UpdateChange[] =>
   cmp.commits
@@ -183,6 +203,8 @@ interface Compared {
   readonly base: string;
   readonly head: string;
   readonly behind: number | null;
+  /** Updates bis zur neuesten Fassung (erste Elternlinie), null = unbekannt. */
+  readonly steps: number | null;
   readonly changes: readonly UpdateChange[];
 }
 
@@ -203,6 +225,11 @@ export interface UpdateService {
   readonly start: (by: string) => UpdateView;
   /** Was das letzte Update gebracht hat – einmal nach dem Neustart, für die Meldung in Discord. */
   readonly takeResult: () => UpdateRun | null;
+  /**
+   * Nur ja/nein und die neue Nummer, ohne GitHub zu fragen (für „Was ist neu“ auf der Webseite) – der Stand vom
+   * letzten Nachsehen (Knopf, Update-Karte oder alle paar Minuten von selbst).
+   */
+  readonly peek: () => { readonly available: boolean; readonly version: string | null };
   readonly startAuto: (online: () => number, onRequested: (by: string) => void) => () => void;
 }
 
@@ -286,11 +313,16 @@ export function createUpdateService(
       try {
         const cmp = await github.api(`/repos/${REPO}/compare/${own.base}...${own.head}`, compareSchema, {
           settled: true,
-          keep: keepChanges,
+          keep: keepChanges(own),
         });
         state.list = cmp
-          ? { ...own, behind: cmp.ahead_by, changes: changesOf(cmp) }
-          : { ...own, behind: null, changes: [] };
+          ? {
+              ...own,
+              behind: cmp.ahead_by,
+              steps: cmp.steps ?? firstParentSteps(cmp.commits, own.base, own.head),
+              changes: changesOf(cmp),
+            }
+          : { ...own, behind: null, steps: null, changes: [] };
         state.listFailedAt = null;
       } catch (err) {
         // Bremst GitHub, steht die Zeit im Client; sonst später noch mal.
@@ -305,7 +337,7 @@ export function createUpdateService(
           countSchema,
           { settled: true },
         );
-        state.motorCount = { ...engine, behind: cmp ? cmp.ahead_by : null, changes: [] };
+        state.motorCount = { ...engine, behind: cmp ? cmp.ahead_by : null, steps: null, changes: [] };
       } catch {
         // Die Zahl kommt beim nächsten Nachsehen.
       }
@@ -335,6 +367,21 @@ export function createUpdateService(
   };
 
   const followMotor = (): boolean => stores.settings('updates')['motorFollowMain'] === true;
+  /** Nummer der neuesten Fassung: laufende Nummer + Updates seitdem – null, solange eins davon fehlt. */
+  const latestVersion = (list: Compared | null): string | null => {
+    const count = countOfVersion(config.version);
+    return count !== null && list?.steps != null && list.steps > 0
+      ? versionFromCount(count + list.steps)
+      : null;
+  };
+  /** Gibt es etwas zum Einspielen (wie „Update starten“ es sieht)? */
+  const availableNow = (): boolean => {
+    const own = pairOf(current, state.head);
+    const engine = pairOf(motorCommit(), state.motorHead);
+    return (
+      isNewer(behindOf(own, state.list)) || (followMotor() && isNewer(behindOf(engine, state.motorCount)))
+    );
+  };
   const run = (): UpdateRun | null => {
     const s = readJson('status.json', statusSchema);
     if (!s) return null;
@@ -359,6 +406,7 @@ export function createUpdateService(
       current,
       latest: state.head?.slice(0, SHORT_SHA) ?? null,
       behind: behindOf(own, state.list),
+      latestVersion: latestVersion(list),
       changes: list?.changes ?? [],
     };
     const motorBehind = behindOf(engine, state.motorCount);
@@ -372,7 +420,7 @@ export function createUpdateService(
         latest: state.motorHead?.slice(0, SHORT_SHA) ?? null,
         behind: motorBehind,
       },
-      available: isNewer(moinmorni.behind) || (followMotor() && isNewer(motorBehind)),
+      available: availableNow(),
       checkedAt: state.checkedAt === null ? null : new Date(state.checkedAt).toISOString(),
       checkFailed: state.failedAt !== null,
       branchMissing: state.branchMissing,
@@ -407,6 +455,10 @@ export function createUpdateService(
       return build();
     },
     start,
+    peek: () => {
+      const list = matches(state.list, pairOf(current, state.head)) ? state.list : null;
+      return { available: availableNow(), version: latestVersion(list) };
+    },
     takeResult: () => {
       const r = run();
       if (!r || r.state === 'running') return null;
@@ -443,6 +495,9 @@ export function createUpdateService(
       };
       const tick = async (): Promise<void> => {
         try {
+          // Von selbst nachsehen (Git, höchstens alle 10 Minuten; die Liste nur bei einem neuen Commit) – damit
+          // „Was ist neu“ auf Webseite und Panel ein Update zeigt, ohne dass jemand die Update-Karte öffnet.
+          await refresh(false);
           await tickNow();
         } catch {
           // Nächster Versuch in fünf Minuten.
