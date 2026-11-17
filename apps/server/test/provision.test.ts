@@ -5,6 +5,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, describe, expect, test } from 'vitest';
 import { createBuildService } from '../src/build/service.js';
 import { INTERIM_ID, INTERIM_MODE_JARS, INTERIM_NETWORK_JAR, INTERIM_TITLE } from '../src/lib/rename.js';
+import { MotorError } from '../src/motor/client.js';
 import { createProvisioner } from '../src/network/provision.js';
 import { DEFAULT_MODES } from '@moinmorni/shared';
 import { createHarness, type Harness } from './harness.js';
@@ -77,6 +78,42 @@ describe('Netzwerk richtet sich selbst ein', () => {
     const update = await provisioner.ensure();
     expect(update.modesInstalled).toEqual(['duels']);
     expect(update.restart.map((r) => r.member)).toEqual(['duels']);
+  });
+
+  test('Lehnt der Motor einen Start ab (Arbeitsspeicher voll), läuft die Einrichtung weiter – nur dieser bleibt aus', async () => {
+    h = await createHarness();
+    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    fs.writeFileSync(jar, 'plugin-v1');
+    const started: string[] = [];
+    // Wie der echte Motor auf einem vollen Rechner: der fünfte Start (Duels) kommt mit 409 host_memory_full zurück.
+    const motor = {
+      ...h.mm.motor,
+      request: async <T>(method: string, url: string, body?: unknown): Promise<T> => {
+        if (url.endsWith('/actions/start')) {
+          started.push(url);
+          if (started.length === 5) throw new MotorError(409, 'host_memory_full');
+        }
+        return h.mm.motor.request<T>(method, url, body);
+      },
+    };
+    const provisioner = createProvisioner({ ...h.mm.config, pluginFile: jar }, motor, h.mm.hub, quiet, {
+      proxyAddOns: {},
+      lobbyAddOns: {},
+      buildContent: false,
+      versions: { paper: '1.21.4', velocity: '3.4.0' },
+      modes: () => DEFAULT_MODES,
+      releases: {
+        latest: async (repo) =>
+          repo.endsWith('MoinMorni-Duels')
+            ? { repo, tag: 'v1.0.0', fileName: 'MoinMorni-Duels.jar', bytes: Buffer.from('duels') }
+            : null,
+      },
+    });
+    const first = await provisioner.ensure();
+    expect(first.created).toEqual(['proxy', 'lobby', 'wartung', 'bau', 'duels']);
+    expect(first.notStarted).toEqual(['duels']);
+    expect(first.lobbyServerId).not.toBe('');
+    expect(started).toHaveLength(5);
   });
 
   test('Neue Spielmodi nur mit Schalter (Panel → Updates); der Name der Jar kommt aus MODE_JARS', async () => {

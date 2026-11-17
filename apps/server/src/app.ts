@@ -72,6 +72,8 @@ import { MODE_JARS, MODE_REPOS } from '@moinmorni/shared';
 
 /** So lange darf ein Netzwerk-Server nach der Einrichtung brauchen, bis er am Hub hängt. */
 const HUB_GRACE_MS = 120_000;
+/** Ist die Einrichtung des Netzwerks gescheitert: nach so langer Zeit noch einmal versuchen. */
+const PROVISION_RETRY_MS = 300_000;
 /** Einmal pro Stunde prüft das Netzwerk alles (neue Releases der Spielmodi zusätzlich alle 10 Minuten, siehe unten). */
 const MODE_CHECK_MS = 3_600_000;
 /** Countdown vor einem Neustart, wenn im Panel nichts steht. */
@@ -303,6 +305,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       countdown: hub.countdown,
       connect: hub.connect,
       kick: hub.kick,
+      connected: (member) =>
+        member === PROXY_MEMBER ? hub.proxyOnline() : hub.connectedServers().includes(member),
       wartung: hub.wartung,
     },
     queue: restarts,
@@ -323,8 +327,10 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const releaseSeen: { tags: string | null } = { tags: null };
   const releaseTimer: { current: NodeJS.Timeout | undefined } = { current: undefined };
   const hubCheck: { timer: NodeJS.Timeout | undefined } = { timer: undefined };
+  const provisionRetry: { timer: NodeJS.Timeout | undefined } = { timer: undefined };
   const provisionNow = async (): Promise<void> => {
     if (!config.autoNetwork) return;
+    clearTimeout(provisionRetry.timer);
     try {
       const result = await network.ensure();
       app.log.info(result, 'Netzwerk geprüft');
@@ -408,10 +414,12 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       const wartungRestarts = result.restart.some((s) => s.serverId === result.wartungServerId);
       if (result.wartungServerId && !wartungRestarts) void wartungWorld.build(result.wartungServerId);
     } catch (err) {
-      app.log.error(
-        { err },
-        'Netzwerk konnte nicht eingerichtet werden – nächster Versuch beim nächsten Start',
-      );
+      app.log.error({ err }, 'Netzwerk konnte nicht eingerichtet werden – nächster Versuch in 5 Minuten');
+      // Vorher erst beim nächsten Start von MoinMorni: Bis dahin baute sich die Lobby nicht und neue Modi kamen nicht
+      // dazu (Gesamtprobe 17.11.: Motor lehnte einen Start ab, die Einrichtung blieb stehen).
+      clearTimeout(provisionRetry.timer);
+      provisionRetry.timer = setTimeout(() => void provision(), PROVISION_RETRY_MS);
+      provisionRetry.timer.unref();
     }
   };
   /** Nie zweimal gleichzeitig (sonst entstünden Server doppelt) – wer kommt, während es läuft, wartet darauf. */
@@ -622,6 +630,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       bot.stop();
       restarts.stop();
       clearTimeout(hubCheck.timer);
+      clearTimeout(provisionRetry.timer);
       clearInterval(releaseTimer.current);
       await hub.close();
       await app.close();

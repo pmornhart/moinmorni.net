@@ -38,6 +38,11 @@ export interface RestartHub {
   readonly countdown: (uuid: string, text: string, seconds: number) => void;
   readonly connect: (uuid: string, server: string) => boolean;
   readonly kick: (uuid: string, text: string) => void;
+  /**
+   * Hängt dieser Server (bzw. der Proxy, `proxy`) gerade am Hub? Gleich nach einem Neustart von MoinMorni noch nicht –
+   * dann weiß der Hub auch nicht, wer wo spielt.
+   */
+  readonly connected: (member: string) => boolean;
   /** Wartungs-Lobby: ist sie da, Spieler dort warten lassen (zurück von selbst), hält die Wartung jemanden fest? */
   readonly wartung: {
     readonly open: () => boolean;
@@ -72,6 +77,12 @@ const MOVE_SETTLE_MS = 3000;
 const POLL_MS = 3000;
 /** Länger als drei Minuten wartet MoinMorni nicht auf einen Server – dann ist der nächste dran. */
 const SETTLE_MAX_MS = 180_000;
+/**
+ * So lange wartet der Neustart höchstens darauf, dass Proxy und Server nach dem Start von MoinMorni wieder am Hub hängen.
+ * Nach einem Update startet MoinMorni selbst neu; die Spielserver melden sich erst nach Sekunden bis einer Minute – ohne
+ * Warten fand der Countdown niemanden, und Spieler in den Modi kamen ohne Vorwarnung in die Lobby (Gesamtprobe 17.11.).
+ */
+const HUB_WAIT_MAX_MS = 120_000;
 const RUNNING = 'running';
 const CRASHED = 'crashed';
 
@@ -305,6 +316,21 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
     );
   };
 
+  /** Warten, bis Proxy und diese Server am Hub hängen (höchstens zwei Minuten); danach kurz, bis alle gemeldet sind. */
+  const untilConnected = async (members: readonly string[], waited: number): Promise<void> => {
+    const missing = [PROXY_MEMBER, ...members].filter((m) => !hub.connected(m));
+    if (!missing.length) {
+      if (waited > 0) await pause(POLL_MS);
+      return;
+    }
+    if (waited >= HUB_WAIT_MAX_MS) {
+      log.info({ missing }, 'Netzwerk: Server noch nicht am Hub – Neustart nach dem Update trotzdem');
+      return;
+    }
+    await pause(POLL_MS);
+    return untilConnected(members, waited + POLL_MS);
+  };
+
   const round = async (items: readonly Item[]): Promise<void> => {
     const all = new Map(items.map((i) => [i.target.serverId, i]));
     // Nach einem Update kommt mit, was sonst auf „sobald niemand drauf ist“ wartet (z. B. neue Einstellungen).
@@ -317,6 +343,10 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
       [...all.values()].map(async (i) => ({ i, now: await stateOf(i.target.serverId) })),
     );
     const running = states.filter((x) => x.now === RUNNING).map((x) => x.i);
+    await untilConnected(
+      running.map((i) => i.target.member),
+      0,
+    );
     const modes = running.filter((i) => !NOT_FIRST.includes(i.target.member));
     if (modes.length) await restartModes(modes);
     const lobby = running.find((i) => i.target.member === LOBBY_MEMBER);
