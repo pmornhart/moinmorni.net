@@ -54,6 +54,23 @@ const TEXTS = {
     de: `${P}<red>Das geht nicht bei dir selbst.`,
     en: `${P}<red>You can't do that to yourself.`,
   },
+  // Strafen nur nach unten: {rank} = Rang der Person (in Rangfarbe), {who} = wer es darf.
+  'punish.protected_one': {
+    de: `${P}<red><white>{name}</white> ist {rank} – das darf nur der {who}.`,
+    en: `${P}<red><white>{name}</white> is {rank} – only the {who} may do that.`,
+  },
+  'punish.protected_many': {
+    de: `${P}<red><white>{name}</white> ist {rank} – das dürfen nur {who}.`,
+    en: `${P}<red><white>{name}</white> is {rank} – only {who} may do that.`,
+  },
+  'punish.protected_nobody': {
+    de: `${P}<red><white>{name}</white> ist {rank} – diesen Rang darf niemand bestrafen.`,
+    en: `${P}<red><white>{name}</white> is {rank} – nobody may punish this rank.`,
+  },
+  'punish.and': {
+    de: ' und ',
+    en: ' and ',
+  },
   'cmd.duration': {
     de: `${P}<red>Dauer verstehe ich nicht: <white>{value}</white>. Beispiele: <yellow>30m</yellow>, <yellow>2h</yellow>, <yellow>7d</yellow>, <yellow>perm</yellow>`,
     en: `${P}<red>I don't understand the duration <white>{value}</white>. Examples: <yellow>30m</yellow>, <yellow>2h</yellow>, <yellow>7d</yellow>, <yellow>perm</yellow>`,
@@ -553,6 +570,50 @@ const TEXTS = {
     de: `${P}<red>Die Lobby ist gerade nicht da.`,
     en: `${P}<red>The lobby isn't available right now.`,
   },
+  // Neustart mit Countdown (network/restart-now.ts). {s} in den Leisten zählt das Netzwerk-Plugin selbst herunter.
+  'restart.update': {
+    de: `${P}<gold>Update eingespielt</gold> <gray>– <white>{server}</white> startet in <yellow>{seconds} Sekunden</yellow> neu. Du kommst vorher in die Lobby, gleich geht es weiter.`,
+    en: `${P}<gold>Update installed</gold> <gray>– <white>{server}</white> restarts in <yellow>{seconds} seconds</yellow>. You'll be moved to the lobby first – back in a moment.`,
+  },
+  'restart.release': {
+    de: `${P}<gold>Neue Fassung von {server}</gold> <gray>– der Server startet in <yellow>{seconds} Sekunden</yellow> neu. Du kommst vorher in die Lobby, gleich geht es weiter.`,
+    en: `${P}<gold>New version of {server}</gold> <gray>– the server restarts in <yellow>{seconds} seconds</yellow>. You'll be moved to the lobby first – back in a moment.`,
+  },
+  'restart.lobby': {
+    de: `${P}<gold>Update eingespielt</gold> <gray>– die Lobby startet in <yellow>{seconds} Sekunden</yellow> neu. Es geht gleich weiter: In etwa einer Minute kannst du wieder rein.`,
+    en: `${P}<gold>Update installed</gold> <gray>– the lobby restarts in <yellow>{seconds} seconds</yellow>. It goes on in a moment: you can join again in about a minute.`,
+  },
+  'restart.network': {
+    de: `${P}<gold>Update eingespielt</gold> <gray>– das Netzwerk startet in <yellow>{seconds} Sekunden</yellow> kurz neu. In etwa einer Minute geht es weiter – einfach wieder verbinden.`,
+    en: `${P}<gold>Update installed</gold> <gray>– the network restarts briefly in <yellow>{seconds} seconds</yellow>. It goes on in about a minute – just connect again.`,
+  },
+  'restart.soon': {
+    de: `${P}<gray>Noch <yellow>{seconds} Sekunden</yellow> bis zum Neustart.`,
+    en: `${P}<gray><yellow>{seconds} seconds</yellow> until the restart.`,
+  },
+  'restart.moved': {
+    de: `${P}<gray>Du bist in der Lobby, solange <white>{server}</white> neu startet – gleich ist der Modus wieder da.`,
+    en: `${P}<gray>You're in the lobby while <white>{server}</white> restarts – the mode is back in a moment.`,
+  },
+  'restart.bar.update': {
+    de: `<gold>Update eingespielt</gold> <gray>–</gray> <white>{server}</white> <gray>startet in</gray> <yellow>{s} s</yellow> <gray>neu</gray>`,
+    en: `<gold>Update installed</gold> <gray>–</gray> <white>{server}</white> <gray>restarts in</gray> <yellow>{s} s</yellow>`,
+  },
+  'restart.bar.release': {
+    de: `<gold>Neue Fassung</gold> <gray>–</gray> <white>{server}</white> <gray>startet in</gray> <yellow>{s} s</yellow> <gray>neu</gray>`,
+    en: `<gold>New version</gold> <gray>–</gray> <white>{server}</white> <gray>restarts in</gray> <yellow>{s} s</yellow>`,
+  },
+  'restart.kick.lobby': {
+    de: `<gold>Die Lobby startet neu</gold>\n\n<gray>Update eingespielt – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
+    en: `<gold>The lobby is restarting</gold>\n\n<gray>Update installed – you can join again in about a minute. See you soon!`,
+  },
+  'restart.kick.network': {
+    de: `<gold>Das Netzwerk startet kurz neu</gold>\n\n<gray>Update eingespielt – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
+    en: `<gold>The network is restarting briefly</gold>\n\n<gray>Update installed – you can join again in about a minute. See you soon!`,
+  },
+  'restart.name.lobby': { de: 'die Lobby', en: 'the lobby' },
+  'restart.name.bau': { de: 'der Bau-Server', en: 'the build server' },
+  'restart.name.proxy': { de: 'das Netzwerk', en: 'the network' },
 } as const satisfies Record<string, Record<Lang, string>>;
 
 export type TextKey = keyof typeof TEXTS;

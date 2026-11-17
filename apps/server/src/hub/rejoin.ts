@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
+import { networkCommand } from '@moinmorni/shared';
 import type { Command } from './commands.js';
 import type { HubContext } from './context.js';
 import { normalUuid } from './players.js';
@@ -322,16 +323,12 @@ export function createRejoin({ ctx, send, connected, log, now }: RejoinOptions):
 
   const commands: Command[] = [
     {
-      name: 'lobby',
-      aliases: ['hub', 'l'],
+      ...networkCommand('lobby'),
       own: [...YES, ...NO],
-      usage: { de: '/lobby', en: '/lobby' },
       run: (actor, args) => toLobby(actor.uuid, answerOf(args[0])),
     },
     {
-      name: 'rueckkehr',
-      aliases: ['rejoin'],
-      usage: { de: '/rueckkehr', en: '/rejoin' },
+      ...networkCommand('rueckkehr'),
       run: (actor) => rejoin(actor.uuid),
     },
   ];

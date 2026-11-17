@@ -128,6 +128,8 @@ const LOBBY_SERVER = 'lobby';
 const CLOCK_LATITUDE = 48.137;
 const CLOCK_LONGITUDE = 11.575;
 const BUILD_SERVER = 'bau';
+/** So oft bekommt die Lobby den Stand des Gefängnisses auch ohne Änderung. */
+const JAIL_RESEND_MS = 60_000;
 /** So lange darf ein Modus zum Aufwachen brauchen, dann gibt es eine Meldung. */
 const WAKE_TIMEOUT_MS = 180_000;
 
@@ -161,6 +163,15 @@ export interface Hub {
   readonly moderation: Moderation;
   /** Nachricht an einen Spieler, egal wo er ist (MiniMessage). */
   readonly tell: (uuid: string, text: string) => void;
+  /** Spieler auf einen Server schicken (über den Proxy); false = Server nicht da oder Proxy weg. */
+  readonly connect: (uuid: string, server: string) => boolean;
+  /** Spieler mit einer Nachricht aus dem Netzwerk nehmen (MiniMessage). */
+  readonly kick: (uuid: string, text: string) => void;
+  /**
+   * Leiste oben, die herunterzählt („… startet in {s} s neu“ – {s} zählt das Netzwerk-Plugin selbst). Ältere Plugins
+   * kennen sie nicht und überhören sie – darum steht derselbe Hinweis immer auch im Chat.
+   */
+  readonly countdown: (uuid: string, text: string, seconds: number) => void;
   /** Rang eines Spielers hat sich geändert (Panel) → Spielserver informieren. */
   readonly refreshProfile: (uuid: string) => void;
   /** Ist der Proxy gerade mit dem Hub verbunden? */
@@ -503,6 +514,10 @@ export function createHub(options: HubOptions): Hub {
     morniCraftSettings(stores, { domain: ctx.domain, timeZone: options.timeZone });
   let lobbyTimer: ReturnType<typeof setTimeout> | null = null;
   let closed = false;
+  // Gefängnis: die Lobby bekommt den Stand jede Minute noch einmal – geht eine Freilassung unterwegs verloren, kommt
+  // trotzdem jeder heraus (das Lobby-Plugin setzt Freie, die noch in der Zelle stehen, an den Dorfplatz).
+  const jailTimer = setInterval(() => toBackend(LOBBY_SERVER, jailState()), JAIL_RESEND_MS);
+  jailTimer.unref();
   const lobbySoon = (): void => {
     if (lobbyTimer || closed) return;
     lobbyTimer = setTimeout(() => {
@@ -592,6 +607,19 @@ export function createHub(options: HubOptions): Hub {
       presence.move(m.uuid, m.server);
       sendProfile(m.uuid);
       rejoin.moved(m.uuid, from, m.server);
+      // Eingesperrt, aber auf einem anderen Server angekommen (mitten im Wechsel eingesperrt): zurück in die Zelle.
+      const jail = m.server === LOBBY_SERVER ? undefined : punish.active(normalUuid(m.uuid), 'jail');
+      if (jail && ctx.connect(normalUuid(m.uuid), LOBBY_SERVER)) {
+        const lang = presence.get(m.uuid)?.lang ?? defaultLang();
+        ctx.msg(
+          normalUuid(m.uuid),
+          text(lang, 'jail.blocked', {
+            until: jail.expiresAt
+              ? text(lang, 'punish.until', { date: dateText(lang, jail.expiresAt, ctx.timeZone) })
+              : text(lang, 'punish.forever'),
+          }),
+        );
+      }
       // Erst jetzt ist der Spieler wirklich da: Freunde erfahren es, offene Anfragen kommen an.
       if (first) social.joined(normalUuid(m.uuid));
       social.switched(normalUuid(m.uuid), m.server);
@@ -793,6 +821,7 @@ export function createHub(options: HubOptions): Hub {
       rejoin.stop();
       // Sonst feuert die verzögerte Lobby-Meldung noch nach dem Schließen (Datenbank schon zu).
       closed = true;
+      clearInterval(jailTimer);
       if (lobbyTimer) clearTimeout(lobbyTimer);
       lobbyTimer = null;
       await transport.close();
@@ -803,6 +832,11 @@ export function createHub(options: HubOptions): Hub {
     punish,
     moderation,
     tell: (uuid, line) => ctx.msg(normalUuid(uuid), line),
+    connect: (uuid, server) => ctx.connect(normalUuid(uuid), server),
+    kick: (uuid, line) => ctx.kick(normalUuid(uuid), line),
+    countdown: (uuid, line, seconds) => {
+      toProxy({ t: 'countdown', uuid: normalUuid(uuid), text: line, seconds });
+    },
     refreshProfile: refresh,
     proxyOnline: () => conns.proxy !== null,
     connectedServers: () => [...conns.backends.keys()],

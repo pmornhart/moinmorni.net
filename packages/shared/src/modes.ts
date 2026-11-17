@@ -259,6 +259,27 @@ export const MODE_REPOS: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Name der Jar im Release jedes Modus-Repos (so baut sie dessen Workflow). MoinMorni lädt sie direkt von der
+ * Release-Seite (`github.com/<Repo>/releases/download/<Tag>/<Jar>`) – ohne API-Frage. Fehlt ein Modus hier, heißt die
+ * Jar wie das Repo; stimmt der Name einmal nicht, fragt MoinMorni die API (sparsam) nach der richtigen Datei.
+ */
+export const MODE_JARS: Readonly<Record<string, string>> = {
+  mornicraft: 'MorniCraft.jar',
+  duels: 'MoinMorni-Duels.jar',
+  party: 'Morni-Party.jar',
+  gipfelsturm: 'Morni-Gipfelsturm.jar',
+  burgverlies: 'Morni-Burgverlies.jar',
+  // Repo „Morni-Bollwek“ (so gewollt), die Jar heißt richtig.
+  bollwerk: 'Morni-Bollwerk.jar',
+  mirni: 'Morni-SMP.jar',
+  wolkenkampf: 'Morni-Wolkenkampf.jar',
+  versteckerl: 'Morni-Versteckerl.jar',
+  wintersport: 'Morni-Wintersport.jar',
+  adlerflug: 'Morni-Adlerflug.jar',
+  angelkoenig: 'Morni-Angelkoenig.jar',
+};
+
+/**
  * Arbeitsspeicher der Modus-Server in MB, wo der Standard (1,5 GB) nicht reicht: MorniSMP und MorniCraft haben große
  * Welten, Morni Party baut große Spielbretter. So laufen alle Server zugleich in einem Container mit 32 GB:
  * Proxy 1 + Lobby 3 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + neun Modi je 1,5 = 27 GB, dazu Luft für Java

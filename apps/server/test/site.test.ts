@@ -41,7 +41,8 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
     expect(list[0]?.title.en).toBe('Neu: Morni Party!');
     expect((await anon('/api/news/neu-morni-party')).json()).toMatchObject({
       category: 'update',
-      author: 'philip',
+      // Nie der Anmeldename fürs Panel (security.test.ts): ohne verbundenes Minecraft-Konto „MoinMorni-Team“.
+      author: 'MoinMorni-Team',
     });
     const second = (await call('POST', '/api/panel/news', { ...draft, publish: true })).json<{
       slug: string;
@@ -69,8 +70,18 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
   test('Bestenlisten der Spielmodi: welche es gibt, Zeiten aufsteigend, private Profile zählen nicht', async () => {
     // Finn ist seit dem Test oben privat.
     h.mm.hub.players.seen({ uuid: MIA, name: 'Mia', bedrock: false });
-    h.mm.hub.stats.record({ mode: 'gipfelsturm', uuid: LENA, add: { finishes: 3 }, min: { best_ms: 83_000 } });
-    h.mm.hub.stats.record({ mode: 'gipfelsturm', uuid: FINN, add: { finishes: 5 }, min: { best_ms: 61_000 } });
+    h.mm.hub.stats.record({
+      mode: 'gipfelsturm',
+      uuid: LENA,
+      add: { finishes: 3 },
+      min: { best_ms: 83_000 },
+    });
+    h.mm.hub.stats.record({
+      mode: 'gipfelsturm',
+      uuid: FINN,
+      add: { finishes: 5 },
+      min: { best_ms: 61_000 },
+    });
     h.mm.hub.stats.record({ mode: 'duels', uuid: MIA, add: { wins: 7 } });
     h.mm.hub.stats.record({ mode: 'duels', uuid: FINN, add: { wins: 9 } });
     h.mm.hub.stats.record({ mode: 'gibtsnicht', uuid: MIA, add: { wins: 1 } });
@@ -104,5 +115,31 @@ describe('Webseite: News, Ranglisten, Profile, Team, Regeln', () => {
     expect(site.discordInvite).toBeNull();
     await call('PUT', '/api/panel/settings/website', { discordInvite: 'https://discord.gg/moinmorni' });
     expect((await anon('/api/site')).json()).toMatchObject({ discordInvite: 'https://discord.gg/moinmorni' });
+  });
+
+  test('Befehle-Seite: Ränge mit Rechten, persönlich mit Rang wie im Spiel', async () => {
+    type Answer = {
+      roles: Array<{ id: string; game: string[]; panel: string[]; position: number }>;
+      player: { name: string; uuid: string; role: string } | null;
+    };
+    const all = (await anon('/api/commands')).json<Answer>();
+    expect(all.player).toBeNull();
+    expect(all.roles.map((r) => r.id)).toContain('supporter');
+    expect(all.roles.find((r) => r.id === 'moderator')).toMatchObject({
+      game: expect.arrayContaining(['jail']),
+    });
+    h.mm.hub.players.setRole(LENA, 'moderator');
+    expect((await anon('/api/commands?spieler=lena')).json<Answer>().player).toEqual({
+      name: 'Lena',
+      uuid: LENA,
+      role: 'moderator',
+    });
+    h.mm.hub.players.setRole(LENA, null);
+    // Unbekannt: allgemeine Liste ohne Spieler; privates Profil: nur der Rang (den sieht im Spiel ohnehin jeder).
+    expect((await anon('/api/commands?spieler=Niemand')).json<Answer>().player).toBeNull();
+    expect((await anon('/api/commands?spieler=Finn')).json<Answer>().player).toMatchObject({
+      role: 'player',
+    });
+    expect((await anon('/api/commands?spieler=' + 'x'.repeat(40))).statusCode).toBe(400);
   });
 });

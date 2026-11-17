@@ -1,10 +1,11 @@
-import { mayAssign, type GameRight, type Role } from '@moinmorni/shared';
+import { mayAssign, type GameRight, type Role, networkCommand } from '@moinmorni/shared';
 import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
 import {
   isLasting,
   JAIL_DEFAULT_MINUTES,
   type LiftKind,
+  type ModKind,
   type Moderation,
   type Target,
 } from './moderation.js';
@@ -61,29 +62,43 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       .sort();
   const until = mod.untilText;
 
-  /** Ziel suchen und prüfen: bekannt, nicht man selbst, niedrigerer Rang. */
-  const victim = (actor: Actor, name: string | undefined): Target | null => {
+  /** Ziel suchen: bekannt, nicht man selbst (nur der Owner darf eine alte Strafe von sich selbst aufheben). */
+  const known = (actor: Actor, name: string | undefined, self = false): Target | null => {
     const t = target(name);
     if (!t) {
       say(actor, text(actor.lang, 'cmd.unknown_player', { name: mm(name ?? '') }));
       return null;
     }
-    if (t.uuid === actor.uuid) {
+    if (t.uuid === actor.uuid && !self) {
       say(actor, text(actor.lang, 'cmd.self'));
       return null;
     }
-    if (ctx.players.roleOf(t.uuid).position <= actor.role.position) {
+    return t;
+  };
+
+  /** Ziel für /rang: bekannt, nicht man selbst, niedrigerer Rang. */
+  const victim = (actor: Actor, name: string | undefined): Target | null => {
+    const t = known(actor, name);
+    if (t && ctx.players.roleOf(t.uuid).position <= actor.role.position) {
       say(actor, text(actor.lang, 'cmd.higher', { name: mm(t.name) }));
       return null;
     }
     return t;
   };
 
+  /** Ziel einer Strafe (verhängen oder aufheben): nur jemand mit niedrigerem Rang – den Owner niemand. */
+  const culprit = (actor: Actor, name: string | undefined, kind: ModKind, lifting = false): Target | null => {
+    const t = known(actor, name, lifting && actor.role.id === 'owner');
+    const refused = t ? mod.refusal(actor.role, t, kind, actor.lang, lifting) : null;
+    if (refused) say(actor, refused);
+    return refused ? null : t;
+  };
+
   /** Bann, Stumm, Gefängnis, Sprachchat-Stumm: `<spieler> [dauer] [grund…]` – wie im Panel über die Moderation. */
   const punishing =
     (kind: LiftKind) =>
     (actor: Actor, args: readonly string[]): void => {
-      const t = victim(actor, args[0]);
+      const t = culprit(actor, args[0], kind);
       if (!t) return;
       const minutes = parseDuration(args[1]);
       const reasonParts = minutes === undefined ? args.slice(1) : args.slice(SECOND_WORD);
@@ -96,11 +111,9 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
   const lifting =
     (kind: LiftKind) =>
     (actor: Actor, args: readonly string[]): void => {
-      const t = target(args[0]);
-      if (!t) {
-        say(actor, text(actor.lang, 'cmd.unknown_player', { name: mm(args[0] ?? '') }));
-        return;
-      }
+      // Aufheben wie verhängen: nur bei niedrigerem Rang (alte Strafen bleiben, bis jemand Höheres sie aufhebt).
+      const t = culprit(actor, args[0], kind, true);
+      if (!t) return;
       if (!mod.lift(t, kind, actor.name))
         say(actor, text(actor.lang, NOT_PUNISHED[kind], { name: mm(t.name) }));
     };
@@ -140,9 +153,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
 
   return [
     {
-      name: 'sprache',
-      aliases: ['language', 'lang'],
-      usage: { de: '/sprache <de|en>', en: '/language <de|en>' },
+      ...networkCommand('sprache'),
       run: (actor, args) => {
         const lang = LANGS.find((l) => l === args[0]?.toLowerCase());
         if (!lang) {
@@ -158,9 +169,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: (_, args) => (args.length <= 1 ? LANGS.filter((l) => l.startsWith(args[0] ?? '')) : []),
     },
     {
-      name: 'msg',
-      aliases: ['tell', 'w', 'm', 'whisper'],
-      usage: { de: '/msg <spieler> <nachricht>', en: '/msg <player> <message>' },
+      ...networkCommand('msg'),
       run: (actor, args) => {
         const message = args.slice(1).join(' ').trim();
         const t = ctx.presence.byName(args[0] ?? '');
@@ -177,9 +186,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: playerArg,
     },
     {
-      name: 'r',
-      aliases: ['reply'],
-      usage: { de: '/r <nachricht>', en: '/r <message>' },
+      ...networkCommand('r'),
       run: (actor, args) => {
         const message = args.join(' ').trim();
         if (!message) {
@@ -190,9 +197,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       },
     },
     {
-      name: 'profil',
-      aliases: ['profile'],
-      usage: { de: '/profil [privat|öffentlich]', en: '/profile [private|public]' },
+      ...networkCommand('profil'),
       run: (actor, args) => {
         const word = args[0]?.toLowerCase() ?? '';
         const url = `https://${ctx.domain}/spieler/${encodeURIComponent(actor.name)}`;
@@ -209,86 +214,56 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
     },
     // /lobby (fragt mitten im Spiel nach) und /rueckkehr stehen in rejoin.ts.
     {
-      name: 'bau',
-      aliases: ['build', 'bauserver'],
-      right: 'build',
+      ...networkCommand('bau'),
       noRight: 'build.no_right',
-      usage: { de: '/bau', en: '/build' },
       run: (actor) => {
         say(actor, text(actor.lang, 'build.going'));
         ctx.goTo(actor.uuid, 'bau');
       },
     },
     {
-      name: 'ban',
-      aliases: [],
-      right: 'ban',
-      usage: { de: '/ban <spieler> [dauer] [grund]', en: '/ban <player> [duration] [reason]' },
+      ...networkCommand('ban'),
       run: punishing('ban'),
       complete: punishArgs,
     },
     {
-      name: 'unban',
-      aliases: ['entbannen'],
-      right: 'ban',
-      usage: { de: '/unban <spieler>', en: '/unban <player>' },
+      ...networkCommand('unban'),
       run: lifting('ban'),
     },
     {
-      name: 'mute',
-      aliases: ['stumm'],
-      right: 'mute',
-      usage: { de: '/mute <spieler> [dauer] [grund]', en: '/mute <player> [duration] [reason]' },
+      ...networkCommand('mute'),
       run: punishing('mute'),
       complete: punishArgs,
     },
     {
-      name: 'unmute',
-      aliases: ['entstummen'],
-      right: 'mute',
-      usage: { de: '/unmute <spieler>', en: '/unmute <player>' },
+      ...networkCommand('unmute'),
       run: lifting('mute'),
       complete: playerArg,
     },
     {
-      name: 'gefaengnis',
-      aliases: ['gefängnis', 'jail', 'knast'],
-      right: 'jail',
-      usage: { de: '/gefaengnis <spieler> [dauer] [grund]', en: '/jail <player> [duration] [reason]' },
+      ...networkCommand('gefaengnis'),
       run: punishing('jail'),
       complete: punishArgs,
     },
     {
-      name: 'frei',
-      aliases: ['unjail', 'entlassen'],
-      right: 'jail',
-      usage: { de: '/frei <spieler>', en: '/unjail <player>' },
+      ...networkCommand('frei'),
       run: lifting('jail'),
       complete: playerArg,
     },
     {
-      name: 'voicemute',
-      aliases: ['sprachstumm', 'vcmute'],
-      right: 'voice-mute',
-      usage: { de: '/voicemute <spieler> [dauer] [grund]', en: '/voicemute <player> [duration] [reason]' },
+      ...networkCommand('voicemute'),
       run: punishing('voice'),
       complete: punishArgs,
     },
     {
-      name: 'voiceunmute',
-      aliases: ['sprachfrei', 'vcunmute'],
-      right: 'voice-mute',
-      usage: { de: '/voiceunmute <spieler>', en: '/voiceunmute <player>' },
+      ...networkCommand('voiceunmute'),
       run: lifting('voice'),
       complete: playerArg,
     },
     {
-      name: 'kick',
-      aliases: [],
-      right: 'kick',
-      usage: { de: '/kick <spieler> [grund]', en: '/kick <player> [reason]' },
+      ...networkCommand('kick'),
       run: (actor, args) => {
-        const t = victim(actor, args[0]);
+        const t = culprit(actor, args[0], 'kick');
         if (!t) return;
         if (!t.online) {
           say(actor, text(actor.lang, 'cmd.offline', { name: mm(t.name) }));
@@ -299,27 +274,21 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: playerArg,
     },
     {
-      name: 'warn',
-      aliases: ['verwarnen'],
-      right: 'warn',
-      usage: { de: '/warn <spieler> <grund>', en: '/warn <player> <reason>' },
+      ...networkCommand('warn'),
       run: (actor, args) => {
         const reason = args.slice(1).join(' ').trim();
         if (!reason) {
           say(actor, text(actor.lang, 'cmd.usage', { usage: '/warn <spieler> <grund>' }));
           return;
         }
-        const t = victim(actor, args[0]);
+        const t = culprit(actor, args[0], 'warn');
         if (!t) return;
         mod.punish(t, 'warn', null, reason, actor.name);
       },
       complete: playerArg,
     },
     {
-      name: 'strafen',
-      aliases: ['history', 'punishments'],
-      right: 'warn',
-      usage: { de: '/strafen <spieler>', en: '/history <player>' },
+      ...networkCommand('strafen'),
       run: (actor, args) => {
         const t = target(args[0]);
         if (!t) {
@@ -349,10 +318,7 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: playerArg,
     },
     {
-      name: 'rang',
-      aliases: ['rank'],
-      right: 'ranks',
-      usage: { de: '/rang <spieler> <rang|weg>', en: '/rank <player> <rank|none>' },
+      ...networkCommand('rang'),
       run: (actor, args) => {
         const wanted = args[1]?.toLowerCase();
         if (!wanted) {
