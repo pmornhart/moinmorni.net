@@ -75,6 +75,8 @@ final class LobbyWinter implements Listener {
     /** Läuft gerade ein Umstellen? Neue Wünsche warten darauf. */
     private boolean busy;
     private boolean pending;
+    /** Nach einem Neubau: die gemerkten Biome dort erneuern, wo der Neubau sie gesetzt hat (nicht mehr kalt). */
+    private boolean refresh;
     private BukkitTask flakes;
     private BukkitTask recheck;
 
@@ -154,6 +156,7 @@ final class LobbyWinter implements Listener {
             return;
         }
         plugin.getLogger().info("Winter: Die Lobby wurde neu gebaut – das Biom wird wieder kalt.");
+        refresh = true;
         try {
             Files.deleteIfExists(dir.resolve(DONE));
         } catch (IOException ex) {
@@ -247,12 +250,43 @@ final class LobbyWinter implements Listener {
             plugin.getLogger().info("Winter: Lobby ist verschneit (kaltes Biom gesetzt).");
             finish(world);
         });
-        if (Files.exists(snapshot)) {
+        boolean renew = refresh;
+        refresh = false;
+        if (Files.exists(snapshot) && !renew) {
             freeze.run();
             return;
         }
+        // Nach einem Neubau: Säulen, die der Neubau neu gesetzt hat (nicht mehr kalt), neu merken – die übrigen
+        // behalten, was vor dem Winter war.
+        java.util.Map<String, List<String>> before = new java.util.HashMap<>();
+        if (renew && Files.exists(snapshot)) {
+            try {
+                Files.readAllLines(snapshot, StandardCharsets.UTF_8).forEach(line -> {
+                    String[] p = line.trim().split(" ");
+                    if (p.length == 5) {
+                        before.computeIfAbsent(p[0] + " " + p[1], k -> new ArrayList<>()).add(line.trim());
+                    }
+                });
+            } catch (IOException ex) {
+                plugin.getLogger().warning("Winter: gemerkte Biome nicht lesbar – " + ex.getMessage());
+            }
+        }
+        String cold = COLD.getKey().asString();
         List<String> lines = new ArrayList<>();
-        step(world, new ArrayDeque<>(chunks), chunk -> remember(world, chunk, lines), false, () -> {
+        step(world, new ArrayDeque<>(chunks), chunk -> {
+            List<String> fresh = new ArrayList<>();
+            remember(world, chunk, fresh);
+            java.util.Map<String, List<String>> columns = new java.util.LinkedHashMap<>();
+            fresh.forEach(line -> {
+                String[] p = line.split(" ");
+                columns.computeIfAbsent(p[0] + " " + p[1], k -> new ArrayList<>()).add(line);
+            });
+            columns.forEach((column, rows) -> {
+                boolean stillCold = rows.stream().allMatch(line -> line.endsWith(" " + cold));
+                List<String> old = before.get(column);
+                lines.addAll(stillCold && old != null ? old : rows);
+            });
+        }, false, () -> {
             try {
                 Files.createDirectories(dir);
                 Path tmp = dir.resolve(SNAPSHOT + ".tmp");
