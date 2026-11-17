@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { BADGE_TILE } from '@moinmorni/shared';
 import { PixelTile } from '~/components/pixel-badge';
-import { Card, Pill, Skeleton } from '~/components/ui';
+import { FoldCard } from '~/components/fold-card';
+import { Pill, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { useErrorText } from '~/lib/errors';
 import { Notice } from '../settings/extras/parts';
@@ -57,21 +58,22 @@ export function RanksCard({ ready }: { readonly ready: boolean }): ReactElement 
   const ranks = view?.ranks ?? null;
   const icons = ranks?.look === 'icons';
   return (
-    <Card className="grid gap-5 p-6" data-section="raenge" id="raenge">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid min-w-0 gap-1">
-          <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-            <Award className="size-5 text-gold" aria-hidden />
-            {t('discordRanks.title')}
-          </h2>
-          <p className="text-sm text-muted-foreground">{t('discordRanks.text')}</p>
-        </div>
-        {ranks ? (
+    <FoldCard
+      id="discord:ranks"
+      anchor="raenge"
+      icon={Award}
+      title={t('discordRanks.title')}
+      text={t('discordRanks.text')}
+      defaultOpen={false}
+      bodyClassName="grid gap-5"
+      summary={
+        ranks ? (
           <Pill tone={icons ? 'success' : 'neutral'} dot>
             {icons ? t('discordRanks.modeIcons') : t('discordRanks.modeNames')}
           </Pill>
-        ) : null}
-      </div>
+        ) : null
+      }
+    >
       {!ready ? <p className="text-sm text-muted-foreground">{t('discordLook.notReady')}</p> : null}
       {ready && look.isPending ? <Skeleton className="h-48" /> : null}
       {look.isError ? <p className="text-sm text-muted-foreground">{errorText(look.error)}</p> : null}
@@ -122,6 +124,6 @@ export function RanksCard({ ready }: { readonly ready: boolean }): ReactElement 
           </div>
         </div>
       ) : null}
-    </Card>
+    </FoldCard>
   );
 }

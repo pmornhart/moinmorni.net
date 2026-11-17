@@ -21,6 +21,7 @@ import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { mayAssign, mayPunish, type Role } from '@moinmorni/shared';
 import { Select } from '~/components/select';
+import { FoldCard } from '~/components/fold-card';
 import { Button, Card, Kbd, Pill, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -528,14 +529,14 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
               </ul>
             </Card>
           ) : null}
-          <Card className="grid gap-2 p-5 sm:p-6">
-            <SectionHead icon={History} title={t('players.history.title')}>
-              {player.history.length ? (
-                <span className="text-sm text-muted-foreground">
-                  {t('players.history.count', { count: player.history.length })}
-                </span>
-              ) : null}
-            </SectionHead>
+          <FoldCard
+            id="player:history"
+            icon={History}
+            title={t('players.history.title')}
+            summary={
+              player.history.length ? t('players.history.count', { count: player.history.length }) : undefined
+            }
+          >
             {player.history.length ? (
               <ul className="grid divide-y divide-border">
                 {player.history.map((entry) => (
@@ -547,7 +548,7 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
                 {t('players.history.empty')}
               </p>
             )}
-          </Card>
+          </FoldCard>
         </div>
       </div>
 

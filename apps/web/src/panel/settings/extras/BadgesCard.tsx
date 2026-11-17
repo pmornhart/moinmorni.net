@@ -53,6 +53,7 @@ export function BadgesCard({ entry }: { readonly entry: SettingsEntry }): ReactE
   };
   return (
     <ExtraCard
+      fold="extra:badges"
       icon={Award}
       title={t('badgesCard.title')}
       text={t('badgesCard.text')}

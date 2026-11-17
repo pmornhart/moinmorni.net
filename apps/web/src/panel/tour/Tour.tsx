@@ -34,6 +34,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { PanelArea } from '@moinmorni/shared';
+import { revealFold } from '~/components/fold-card';
 import { Button } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -81,6 +82,8 @@ const STEPS: readonly TourStep[] = [
 
 const STORAGE_PREFIX = 'mm-tour-done:';
 const START_DELAY_MS = 700;
+/** A menu group takes this long to slide open before the spotlight measures its entry again. */
+const FOLD_SETTLE_MS = 260;
 const DESKTOP_QUERY = '(min-width: 1024px)';
 /** Room around the lit-up entry, gap to the bubble, distance to the window edge, arrow inset (px). */
 const SPOT_PAD = 6;
@@ -127,15 +130,19 @@ function useTargetRect(id: StepId, active: boolean): DOMRect | null {
       setRect(null);
       return undefined;
     }
+    // Entries inside a closed menu group: open it first, measure again once it has slid open.
+    revealFold(el);
     el.scrollIntoView({ block: 'nearest' });
     const measure = (): void => setRect(el.getBoundingClientRect());
     const later = (): void => {
       window.requestAnimationFrame(measure);
     };
     measure();
+    const opened = window.setTimeout(later, FOLD_SETTLE_MS);
     window.addEventListener('resize', later);
     window.addEventListener('scroll', later, true);
     return () => {
+      window.clearTimeout(opened);
       window.removeEventListener('resize', later);
       window.removeEventListener('scroll', later, true);
     };

@@ -1131,7 +1131,13 @@
     "myAccount": "My account",
     "accountShort": "Account",
     "modeSettings": "Game modes",
-    "applications": "Applications"
+    "applications": "Applications",
+    "groupPlayers": "Players & punishments",
+    "groupTeam": "Team & roles",
+    "groupNetwork": "Network & lobby",
+    "groupContent": "Content & Discord",
+    "groupSystem": "System",
+    "toggleGroup": "Expand or collapse group {{name}}"
   },
   "overview": {
     "greeting": "Hello, {{name}}!",
@@ -2844,5 +2850,13 @@
       "noBot": "The Discord bot is not set up yet",
       "how": "On our Discord server (or in a chat with the bot) use the /verbinden command and enter this code:"
     }
+  },
+  "fold": {
+    "open": "Expand",
+    "close": "Collapse",
+    "changed_one": "{{count}} setting changed",
+    "changed_other": "{{count}} settings changed",
+    "settings_one": "{{count}} setting",
+    "settings_other": "{{count}} settings"
   }
 }

@@ -14,6 +14,7 @@ import { useId, useRef, useState, type ChangeEvent, type ReactElement, type Reac
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Crest } from '~/components/brand';
+import { FoldCard } from '~/components/fold-card';
 import { Button, Card, Input, Pill, Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -139,14 +140,15 @@ export function AppearanceCard({ ready }: { readonly ready: boolean }): ReactEle
   const shownName = name ?? bot?.name ?? '';
 
   return (
-    <Card className="grid gap-5 p-6" data-section="aussehen" id="aussehen">
-      <div className="grid gap-1">
-        <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-          <Palette className="size-5 text-gold" aria-hidden />
-          {t('discordLook.title')}
-        </h2>
-        <p className="text-sm text-muted-foreground">{t('discordLook.text')}</p>
-      </div>
+    <FoldCard
+      id="discord:look"
+      anchor="aussehen"
+      icon={Palette}
+      title={t('discordLook.title')}
+      text={t('discordLook.text')}
+      defaultOpen={false}
+      bodyClassName="grid gap-5"
+    >
       {look.isPending ? <Skeleton className="h-64" /> : null}
       {look.isError ? <p className="text-sm text-muted-foreground">{errorText(look.error)}</p> : null}
       {view ? (
@@ -331,6 +333,6 @@ export function AppearanceCard({ ready }: { readonly ready: boolean }): ReactEle
         onCancel={() => setFile(null)}
         onDone={upload}
       />
-    </Card>
+    </FoldCard>
   );
 }

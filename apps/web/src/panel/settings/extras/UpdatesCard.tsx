@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { ChangeGroups } from '~/components/change-groups';
+import { FoldCard } from '~/components/fold-card';
 import { Button, Kbd, Pill, Skeleton, type PillTone } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -337,19 +338,19 @@ function ChangeList({ view }: { readonly view: UpdateView }): ReactElement | nul
   );
   const newest = changes.find((c) => c.date)?.date;
   return (
-    <section className="grid gap-4" aria-labelledby="update-changes">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 id="update-changes" className="font-display text-lg font-semibold">
-          {t('updatesCard.changesTitle')}
-        </h3>
-        <span className="text-[13px] text-muted-foreground">
-          {newest
-            ? t('updatesCard.changesCountDate', { count: changes.length, date: time.date(newest) })
-            : t('updatesCard.changesCount', { count: changes.length })}
-        </span>
-      </div>
+    <FoldCard
+      id="extra:updates:changes"
+      look="plain"
+      as="h3"
+      title={t('updatesCard.changesTitle')}
+      summary={
+        newest
+          ? t('updatesCard.changesCountDate', { count: changes.length, date: time.date(newest) })
+          : t('updatesCard.changesCount', { count: changes.length })
+      }
+    >
       <ChangeGroups entries={entries} />
-    </section>
+    </FoldCard>
   );
 }
 
@@ -538,6 +539,7 @@ export function UpdatesCard(): ReactElement {
   const view = updates.data;
   return (
     <ExtraCard
+      fold="extra:updates"
       icon={RefreshCw}
       title={t('updatesCard.title')}
       text={t('updatesCard.text')}

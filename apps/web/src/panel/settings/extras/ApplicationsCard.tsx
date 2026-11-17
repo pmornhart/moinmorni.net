@@ -281,6 +281,7 @@ export function ApplicationsCard({ open }: { readonly open: boolean }): ReactEle
 
   return (
     <ExtraCard
+      fold="extra:mornicraft-applications"
       id="bewerbungen"
       icon={ClipboardList}
       title={t('applicationsCard.title')}

@@ -24,6 +24,7 @@ import { useState, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CopyButton } from '~/components/controls';
+import { FoldCard, openFold } from '~/components/fold-card';
 import { Button, Card, Pill, Skeleton, type PillTone } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -243,11 +244,13 @@ const CREATES: readonly { readonly key: string; readonly icon: LucideIcon }[] = 
 function WhatItCreates(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   return (
-    <Card className="grid content-start gap-4 p-6">
-      <div className="grid gap-1">
-        <h2 className="font-display text-xl font-semibold">{t('discordAdmin.creates.title')}</h2>
-        <p className="text-sm text-muted-foreground">{t('discordAdmin.creates.text')}</p>
-      </div>
+    <FoldCard
+      id="discord:creates"
+      title={t('discordAdmin.creates.title')}
+      text={t('discordAdmin.creates.text')}
+      defaultOpen={false}
+      bodyClassName="grid content-start gap-4"
+    >
       <ul className="grid gap-3">
         {CREATES.map(({ key, icon: Icon }) => (
           <li key={key} className="flex items-start gap-3">
@@ -269,7 +272,7 @@ function WhatItCreates(): ReactElement {
       <p className="rounded-[12px] bg-muted/70 px-3.5 py-2.5 text-[13px] text-muted-foreground">
         {t('discordAdmin.creates.safe')}
       </p>
-    </Card>
+    </FoldCard>
   );
 }
 
@@ -311,11 +314,15 @@ function DiscordSetup(): ReactElement {
         className="grid items-start gap-[22px] xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]"
         id="einrichten"
       >
-        <Card className="overflow-hidden">
-          <div className="grid gap-1 border-b border-border px-5 py-5 sm:px-6">
-            <h2 className="font-display text-xl font-semibold">{t('discordAdmin.steps.title')}</h2>
-            <p className="text-sm text-muted-foreground">{t('discordAdmin.steps.text')}</p>
-          </div>
+        <FoldCard
+          id="discord:steps"
+          title={t('discordAdmin.steps.title')}
+          defaultOpen={!s.setupDone}
+          summary={s.setupDone ? t('discordAdmin.overall.done.pill') : undefined}
+          className="overflow-hidden"
+          bodyClassName="px-0 pb-0 pt-0 sm:px-0"
+        >
+          <p className="px-5 pt-4 text-sm text-muted-foreground sm:px-6">{t('discordAdmin.steps.text')}</p>
           <ol className="grid divide-y divide-border">
             <StepCard n={1} done={tokenOk} icon={Bot} title={t('discordAdmin.steps.s1.title')}>
               <ol className="grid list-decimal gap-1 pl-5">
@@ -416,7 +423,7 @@ function DiscordSetup(): ReactElement {
               <AccessField kind="clientSecret" state={s.credentials.clientSecret} canEdit={s.canEditAccess} />
             </StepCard>
           </ol>
-        </Card>
+        </FoldCard>
         <WhatItCreates />
       </div>
       {guildOk || tokenOk ? (
@@ -441,19 +448,19 @@ export function DiscordPage(): ReactElement {
       <PageHead icon={MessagesSquare} title={t('discordAdmin.title')} text={t('discordAdmin.text')}>
         <nav className="flex flex-wrap gap-2" aria-label={t('discordAdmin.jump')}>
           <Button asChild variant="secondary" size="sm">
-            <a href="#einrichten">
+            <a href="#einrichten" onClick={() => openFold('discord:steps')}>
               <Wand2 />
               {t('discordAdmin.jumpSetup')}
             </a>
           </Button>
           <Button asChild variant="secondary" size="sm">
-            <a href="#aussehen">
+            <a href="#aussehen" onClick={() => openFold('discord:look')}>
               <Palette />
               {t('discordLook.title')}
             </a>
           </Button>
           <Button asChild variant="secondary" size="sm">
-            <a href="#raenge">
+            <a href="#raenge" onClick={() => openFold('discord:ranks')}>
               <Award />
               {t('discordRanks.title')}
             </a>
