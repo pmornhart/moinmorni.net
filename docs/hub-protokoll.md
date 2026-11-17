@@ -210,5 +210,9 @@ Das Netzwerk-Plugin heißt auf Paper `MoinMorni` (auf Velocity ID `moinmorni`) u
 - **Streamer-Modus:** Das Netzwerk-Plugin setzt am Spieler die Metadaten `moinmorni:streamer` = Teile mit Komma
   (`ip,coords,msg,live`, leer = alle aus), ohne Streamer-Modus fehlen sie. Spielmodi verdecken danach, was nur sie zeigen
   (Koordinaten, Post …); MorniCraft liest so den Zustand des Netzwerks (`/streamer` beantwortet der Proxy überall).
+- **Rang-Abzeichen:** Das Netzwerk-Plugin setzt am Spieler die Metadaten `moinmorni:badge` = Schlüssel des Abzeichens
+  aus dem Profil (`role.badge`, z. B. „♛ “, leer = Rang ohne Symbol); sind Abzeichen aus, fehlen sie. Modi, die Tab-Liste,
+  Namen über dem Kopf oder eigene Leisten selbst malen (MorniCraft ab 1.12.1), zeigen den Rang damit als
+  `translatable(key, Rangfarbe)` – mit Abzeichen-Paket das Schild, sonst das Symbol.
 - **Dateien:** `plugins/MorniCraft/network.json` (Einstellungen aus dem Panel, siehe `mornicraft-settings`) und
   `plugins/MorniCraft/summary/<uuid>.json` (Zusammenfassung fürs Panel, geht als `mode-player` an den Hub).

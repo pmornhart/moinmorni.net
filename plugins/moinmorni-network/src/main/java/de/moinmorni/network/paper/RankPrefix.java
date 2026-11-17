@@ -13,6 +13,12 @@ import net.kyori.adventure.text.format.TextColor;
  */
 final class RankPrefix {
 
+    /**
+     * Metadaten am Spieler für Spielmodi, die Rang und Namen selbst malen (MorniCraft): der Schlüssel des Abzeichens
+     * („♛ “, leer = Rang ohne Symbol). Fehlen sie, sind Abzeichen aus – dann wie früher das Symbol.
+     */
+    static final String META = "moinmorni:badge";
+
     private RankPrefix() {
     }
 
@@ -29,5 +35,10 @@ final class RankPrefix {
     /** Eintrag in der Tab-Liste: Rang und Name nebeneinander (der Name nicht als Teil der Übersetzung). */
     static Component listName(Component prefix, String name, TextColor colour) {
         return Component.textOfChildren(prefix, Component.text(name, colour));
+    }
+
+    /** Wert der Metadaten {@link #META}: der Schlüssel selbst, null = Metadaten weg (Abzeichen aus). */
+    static String metaValue(String badge) {
+        return badge;
     }
 }
