@@ -20,6 +20,9 @@ interface FRole {
   mentionable: boolean;
   position: number;
   managed: boolean;
+  /** Rollen-Symbol (Bild) – nur mit der Funktion „ROLE_ICONS“ (Boost-Stufe 2). */
+  icon?: string | null;
+  unicode_emoji?: string | null;
 }
 interface FOverwrite {
   id: string;
@@ -70,6 +73,8 @@ const MANAGE_GUILD = BIT(5);
 const VIEW = BIT(10);
 const SEND = BIT(11);
 const MANAGE_ROLES = BIT(28);
+/** Discord nimmt Rollen-Symbole bis 256 KB. */
+const ROLE_ICON_MAX_BYTES = 262_144;
 const EVERYONE_DEFAULT = (BIT(6) | VIEW | SEND | BIT(14) | BIT(15) | BIT(16) | BIT(20) | BIT(21)).toString();
 
 /**
@@ -254,6 +259,29 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
     images.set(hash, { mime, bytes });
     return hash;
   };
+  /**
+   * Rollen-Symbol wie bei Discord: nur mit der Funktion „ROLE_ICONS“, höchstens 256 KB; Bild und Emoji schließen sich
+   * aus. Gibt einen Fehlertext zurück, wenn Discord ablehnen würde.
+   */
+  const roleIcon = (role: FRole, b: Record<string, unknown>): string | null => {
+    if (!('icon' in b) && !('unicode_emoji' in b)) return null;
+    if (!guild.features.includes('ROLE_ICONS')) return 'ROLE_ICONS';
+    if ('icon' in b) {
+      const data = b['icon'];
+      if (
+        data !== null &&
+        Buffer.from(String(data).slice(String(data).indexOf(',') + 1), 'base64').length > ROLE_ICON_MAX_BYTES
+      )
+        return 'TOO_BIG';
+      role.icon = storeImage(data);
+      if (role.icon) role.unicode_emoji = null;
+    }
+    if ('unicode_emoji' in b) {
+      role.unicode_emoji = (b['unicode_emoji'] as string | null) ?? null;
+      if (role.unicode_emoji) role.icon = null;
+    }
+    return null;
+  };
 
   type Handler = (
     m: RegExpMatchArray,
@@ -323,7 +351,16 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
       (_m, b, res) => {
         if (!isAdmin() && (botPerms() & MANAGE_ROLES) === 0n) return missing(res);
         if (!within(b['permissions'] as string | undefined)) return missing(res);
-        const role = { ...(b as unknown as FRole), id: next(), managed: false, position: 1 };
+        const { icon: _icon, unicode_emoji: _emoji, ...rest } = b;
+        const role: FRole = {
+          ...(rest as unknown as FRole),
+          id: next(),
+          managed: false,
+          position: 1,
+          icon: null,
+          unicode_emoji: null,
+        };
+        if (roleIcon(role, b)) return json(res, 400, { code: 50035, message: 'Invalid Form Body' });
         insertRole(role);
         return json(res, 200, guild.roles.get(role.id));
       },
@@ -353,7 +390,9 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
         if (!role) return notFound(res);
         if (role.position >= botTop() || role.managed) return missing(res);
         if ('permissions' in b && !within(b['permissions'] as string)) return missing(res);
-        Object.assign(role, b);
+        if (roleIcon(role, b)) return json(res, 400, { code: 50035, message: 'Invalid Form Body' });
+        const { icon: _icon, unicode_emoji: _emoji, ...rest } = b;
+        Object.assign(role, rest);
         return json(res, 200, role);
       },
     ],
@@ -537,8 +576,8 @@ export async function startFakeDiscord(): Promise<FakeDiscord> {
       const path = (req.url ?? '').replace(/^\/api\/v10/, '');
       const raw = Buffer.concat(chunks).toString();
       requests.push({ method: req.method ?? '', path: req.url ?? '', body: raw });
-      // Bilder-Server: /icons/<server>/<hash>.png, /banners/…, /avatars/…
-      const picture = /^\/(icons|banners|avatars)\/\d+\/([\w]+)\.(png|gif)/.exec(path);
+      // Bilder-Server: /icons/<server>/<hash>.png, /banners/…, /avatars/…, /role-icons/<rolle>/<hash>.png
+      const picture = /^\/(icons|banners|avatars|role-icons)\/\d+\/([\w]+)\.(png|gif)/.exec(path);
       if (req.method === 'GET' && picture) {
         const image = images.get(picture[2] ?? '');
         if (!image) return notFound(res);

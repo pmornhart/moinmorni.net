@@ -180,6 +180,16 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
     ],
   },
   {
+    // Rang-Abzeichen (packages/shared/src/badges.ts): das Paket noch einmal anbieten; an/aus/Pflicht für das Team kommt
+    // aus dem Einstellungs-Katalog (`/abzeichen an|aus`, `/abzeichen pflicht an|aus`).
+    name: 'abzeichen',
+    aliases: ['badges'],
+    usage: { de: '/abzeichen', en: '/badges' },
+    topic: 'account',
+    where: 'hub',
+    lines: [line('abzeichen', '/abzeichen', '/badges')],
+  },
+  {
     name: 'discord',
     aliases: ['dc', 'verbinden'],
     usage: same('/discord'),

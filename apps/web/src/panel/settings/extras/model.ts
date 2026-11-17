@@ -1,4 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import type { ChangeItem } from '@moinmorni/shared';
 import { mmApi } from '~/lib/mm-api';
 
 export { isBedrockName, MINECRAFT_NAME_MAX, validMinecraftName } from '~/lib/minecraft-name';
@@ -10,14 +11,12 @@ export { isBedrockName, MINECRAFT_NAME_MAX, validMinecraftName } from '~/lib/min
 
 // ---------- Updates ----------
 
-export type ChangeKind = 'new' | 'fixed' | 'improved' | 'removed';
-export const CHANGE_KINDS: readonly ChangeKind[] = ['new', 'fixed', 'improved', 'removed'];
-
 export interface UpdateChange {
   readonly sha: string;
   readonly title: string;
   readonly date: string | null;
-  readonly items: readonly { readonly kind: ChangeKind; readonly text: string }[];
+  /** Bullet points of the commit (or its subject), sorted by kind in the card. */
+  readonly items: readonly ChangeItem[];
 }
 
 export type RunState = 'running' | 'done' | 'failed' | 'rolled_back';
@@ -40,6 +39,8 @@ export interface UpdateView {
     readonly latest: string | null;
     /** null = newer, but how much is not known yet (GitHub still has to send the list). */
     readonly behind: number | null;
+    /** Version number of the newest version ("v1.8.9"), null = not known (yet) or nothing new. */
+    readonly latestVersion: string | null;
     readonly changes: readonly UpdateChange[];
   };
   readonly motor: {

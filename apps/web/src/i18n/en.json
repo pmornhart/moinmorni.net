@@ -289,8 +289,40 @@
         "jump_best": "Jump and run – record",
         "jump_runs": "Jump and run attempts",
         "jumps": "Jumps",
+        "golden_eagles": "Golden eagle medals",
+        "bonus_rings": "Bonus rings",
         "timeOf": "Best time {{course}}",
-        "finishesOf": "Finishes {{course}}"
+        "finishesOf": "Finishes {{course}}",
+        "draws": "Draws",
+        "ranked_games": "Ranked fights",
+        "ranked_wins": "Ranked wins",
+        "streak_best": "Longest win streak",
+        "rounds_won": "Rounds won (best of 3/5)",
+        "hits_boxen": "Boxing hits",
+        "goals_bruecke": "Bridge goals",
+        "goals_labyrinth": "First to the maze goal",
+        "party_games": "Party fights",
+        "party_wins": "Party fight wins",
+        "elo": "Best rating",
+        "gamesOf": "Games {{what}}",
+        "winsOf": "Wins {{what}}",
+        "lossesOf": "Losses {{what}}",
+        "drawsOf": "Draws {{what}}",
+        "eloOf": "Best rating {{what}}",
+        "subjectHead": "Course"
+      },
+      "statsIn": {
+        "duels": {
+          "games": "Fights",
+          "gamesOf": "Fights {{what}}",
+          "subjectHead": "Style"
+        },
+        "party": {
+          "subjectHead": "Game type"
+        },
+        "wintersport": {
+          "subjectHead": "Event"
+        }
       },
       "courses": {
         "almrundflug": "Alpine Loop",
@@ -299,6 +331,9 @@
         "gletscherspalte": "Glacier Crevasse",
         "stollenflug": "Tunnel Flight",
         "gipfelkreuz": "Summit Cross",
+        "tagesflug": "Course of the Day",
+        "hoellenschlund": "Hell’s Gorge",
+        "felsenlabyrinth": "Rock Labyrinth",
         "slalom": "Giant Slalom",
         "biathlon": "Biathlon",
         "bob": "Bobsleigh",
@@ -400,6 +435,17 @@
         "channelsTitle": "Fixed channels for everyone",
         "channelsText": "Reachable from every game mode. Show, join and leave channels:",
         "bedrock": "Sadly there's no voice chat with the Bedrock Edition (phone, console) – Bedrock can't do it."
+      },
+      "badges": {
+        "title": "Rank badges",
+        "short": "The little signs in front of names – and the small pack for them",
+        "intro": "Every name shows its rank as a small sign with a symbol – in the chat, in the tab list and above the head. So that Minecraft can show the signs, MoinMorni brings a small server resource pack: just these pictures, nothing else in your game changes.",
+        "step1": "When you join, Minecraft asks whether to load the server’s resource pack – click “Yes”. It is only a few kilobytes and stays on every MoinMorni server.",
+        "step2": "Pressed “No” by accident or it did not work? Type in the game",
+        "step2b": "– Minecraft asks again.",
+        "step3": "Minecraft does not ask any more? In the server list select MoinMorni → “Edit” → set “Server Resource Packs” to “Enabled” or “Prompt”.",
+        "without": "With the Bedrock Edition (phone, console), with Minecraft Java before 1.20.3 and without the pack you see the rank’s symbol and colour instead of the signs – like before. You can still play; only if the team made the pack required, the window says so.",
+        "off": "The badges are switched off right now – in the game, symbol and colour stand in front of names."
       },
       "discord": {
         "title": "Link Discord",
@@ -578,13 +624,23 @@
         }
       },
       "duels": {
-        "tip1": "Pick a fighting style: classic with mushroom soup, modern or with abilities.",
-        "tip2": "Play casual or ranked – ranked fights count for the leaderboard.",
-        "tip3": "With friends: challenge them directly or go 2v2 as a party.",
+        "tip1": "20 fighting styles in three groups: Classic (mushroom soup, no attack cooldown), Modern (axe & shield, potions, UHC, build fight …) and Fun (Sumo, Boxing, Spleef, Maze, Bridge).",
+        "tip2": "Play casual or ranked – every style has its own rating and leaderboard.",
+        "tip3": "Best of 3 or 5: some fights go over several rounds – whoever wins the majority first takes it.",
+        "tip4": "With friends: challenge each other with /duel or fight as a party – party against party, everyone for themselves or in two teams.",
         "cmd": {
-          "duel": "Challenge someone.",
+          "duel": "Challenge someone – if you like, right away with a style and rounds (best of 3 or 5).",
+          "partykampf": "As party leader: everyone for themselves in your party, with “teams” in two teams.",
           "kit": "Your own layout in the kit editor.",
-          "top": "The best fighters."
+          "top": "The best fighters – also per style, e.g. /top sumo.",
+          "annehmen": "Accept a challenge (or click it in the chat; also /duel accept).",
+          "ablehnen": "Decline a challenge (also /duel deny).",
+          "warteschlange": "Look for an opponent, e.g. /queue bridge ranked 1v1; /warteschlange verlassen leaves.",
+          "spectate": "Watch a fight (also /zuschauen).",
+          "verlassen": "Leave the queue, a fight (counts as a loss) or watching.",
+          "stats": "Your statistics – or someone else's.",
+          "neuladen": "Reload settings and fighting styles (the panel does it by itself).",
+          "neubauen": "Rebuild the tournament yard and the arenas."
         }
       },
       "party": {
@@ -630,12 +686,17 @@
       "mirni": {
         "tip1": "You start in the floating market town – the three travel gates lead to the overworld, Nether and End.",
         "tip2": "Trade with everyone: auction house, orders, your own shop chests and market stalls to rent.",
-        "tip3": "Claim your land – coins only exist in the game, nothing for real money.",
+        "tip3": "Ores are precious: a diamond fetches many times an everyday item from Vroni the merchant. The exchange shows the rates – if everyone sells a lot, she pays less, and over time the rate recovers.",
+        "tip4": "Claim your land – coins only exist in the game, nothing for real money.",
         "cmd": {
           "rtp": "A random safe spot to start.",
           "ah": "Auction house.",
+          "shop": "Merchant house with Vroni the merchant: buy and sell.",
+          "boerse": "The exchange: the rate of every ware, what rises and falls, history over 24 hours and 7 days.",
           "gs": "Claim the chunk you stand in.",
-          "geld": "Your balance."
+          "geld": "Your balance.",
+          "wert": "What the item in your hand is worth – at Vroni’s and between players; with “alles” your whole inventory.",
+          "verkaufen": "Buyback: put things in. “hand” sells what you hold right away (first to orders that pay more), “alles” your inventory with an overview."
         }
       },
       "wolkenkampf": {
@@ -755,6 +816,7 @@
         "profil": "Make your profile on the website private or public.",
         "streamer": "Streamer mode on or off – hides addresses, coordinates and private messages on every server, the others see ● LIVE at your name.",
         "streamerTeil": "Switch one part of streamer mode on or off for yourself (without a word you get the menu to click).",
+        "abzeichen": "Load the badge pack again – then ranks show as little badges before the names.",
         "discord": "An invitation to our Discord – and a code to link your account.",
         "rundgang": "A tour through the village (stop: /tour stop).",
         "jnr": "Start the jump and run: high above the village, block after block appears – every jump scores a point (or step on the emerald at the start; /parkour works too).",
@@ -1095,7 +1157,8 @@
       "media-area": "Sees the channels for streamers and videos.",
       "vip-area": "Sees the VIP channels.",
       "links": "May post links."
-    }
+    },
+    "previewBadge": "With the badge pack (Java 1.20.3 and newer):"
   },
   "servers": {
     "title": "Servers",
@@ -1355,11 +1418,11 @@
     },
     "roles": {
       "title": "Roles",
-      "text": "Symbol, colour and rights of every role – in the game on every server (up to the admin commands of the game modes), in the panel and on Discord. A change applies everywhere at once."
+      "text": "Symbol, colour and rights of every role – in the game on every server (up to the admin commands of the game modes), in the panel and on Discord. A change applies everywhere at once. With the badge pack, players see the rank as a little pixel badge – switch it on and off under Settings → Rank badges."
     },
     "discord": {
       "title": "Discord",
-      "text": "Connect your own Discord bot (enter its token right here), let it set up your Discord server step by step and change the server picture, banner and the bot's profile under “Look”."
+      "text": "Connect your own Discord bot (enter its token right here), let it set up your Discord server step by step and change the server picture, banner and the bot's profile under “Look” Under “Ranks” you see how the ranks look in Discord – from boost level 2 with the badge as role icon."
     },
     "servers": {
       "title": "Servers",
@@ -1731,6 +1794,24 @@
       "use": "Use"
     }
   },
+  "discordRanks": {
+    "title": "Ranks in Discord",
+    "text": "Every role from the panel is a role in Discord – in its colour and with its badge. This is what it looks like there.",
+    "preview": "How Discord shows the ranks",
+    "notYet": "comes with the setup",
+    "modeIcons": "Badge as role icon",
+    "modeNames": "Symbol in the name",
+    "iconsTitle": "Badge next to the name",
+    "iconsText": "Your server may use role icons (boost level 2): every rank has its badge as a small picture next to its name – the same crown, the same sword as in the game, with a gold frame in the rank’s colour. Discord writes the name next to it.",
+    "boostTitle": "Role icons only from boost level {{need}}",
+    "boostText": "Discord only shows pictures next to role names from boost level {{need}} – your server is at level {{tier}}. Until then the symbol is part of the name, e.g. “⚔ Moderator”. As soon as the server reaches level {{need}}, MoinMorni swaps it for the badges on its own.",
+    "offTitle": "Rank badges are off",
+    "offText": "In the game and in Discord the symbol stands before or in the name right now. Switch the badges back on and Discord gets them back too (with boost level 2).",
+    "offLink": "To Settings → Rank badges",
+    "syncTitle": "Follows on its own",
+    "syncText": "Change a role’s name, symbol, colour or order, or add a new one, and a few seconds later Discord shows it the same way – no new setup needed. A new team role sees its team channels right away.",
+    "handText": "Whatever someone changed in Discord by hand (the name, an own picture or emoji as role icon) stays."
+  },
   "teamAdmin": {
     "title": "Team",
     "text": "Everyone who may use the panel. Create new accounts, change roles, reset forgotten passwords or lock an account.",
@@ -1949,13 +2030,6 @@
     "changesCount_other": "{{count}} updates",
     "changesCountDate_one": "{{count}} update · newest from {{date}}",
     "changesCountDate_other": "{{count}} updates · newest from {{date}}",
-    "kinds": {
-      "new": "New",
-      "fixed": "Fixed",
-      "improved": "Improved",
-      "removed": "Removed",
-      "other": "Other changes"
-    },
     "confirm": {
       "title": "Start the update now?",
       "text": "Website and panel are unreachable for 1–2 minutes. The Minecraft servers keep running.",
@@ -2393,5 +2467,43 @@
   },
   "reach": {
     "ownerOnly": "Only the owner sets up NetBird, the website on the domain and “hide the home connection” – they are admin in the engine."
+  },
+  "changes": {
+    "kinds": {
+      "new": "New",
+      "improved": "Improved",
+      "fixed": "Fixed",
+      "removed": "Removed",
+      "other": "Other changes"
+    }
+  },
+  "whatsNew": {
+    "title": "What’s new",
+    "text": "Version {{version}} is running here. Below you can see what changed from version to version – newest first.",
+    "pill": "Version {{version}} – show what’s new",
+    "pillUpdate": "Version {{version}} – a newer version is ready. Show what’s new",
+    "installed": "Running now",
+    "quiet": "Only small things behind the scenes – nothing changes while you play.",
+    "more_one": "… and {{count}} more change",
+    "more_other": "… and {{count}} more changes",
+    "empty": "There is no list of changes for this version yet – it comes with the next update.",
+    "older": "Show older versions",
+    "updateReady": "Version {{version}} is ready",
+    "updateReadyPlain": "A new version is ready",
+    "updateTeam": "Install it under Settings → Updates.",
+    "updateSoon": "The team will install it soon.",
+    "toUpdates": "Go to updates"
+  },
+  "badgesCard": {
+    "title": "What the badges look like in the game",
+    "text": "Drawn from every role’s name, symbol and colour – pixel by pixel as in the pack. On the right: what players without the pack see.",
+    "on": "On",
+    "off": "Off",
+    "with": "With badge pack",
+    "without": "Without pack",
+    "whereTitle": "Where they show",
+    "where": "In chat before the name, in the tab list and above heads – on every server of the network. The proxy offers the pack to every Java player when they join (Minecraft 1.20.3 and newer); it stays when they switch servers. Whoever declines, plays Bedrock or has an older version sees symbol and colour. /badges loads it any time. The jail badge stands before messages from the cell (only the team reads them). In Discord the ranks have the same colour – from boost level 2 with the badge as role icon next to the name (Panel → Discord → Ranks).",
+    "fromRoles": "Change a role’s name, symbol or colour and everyone gets the new pack right away.",
+    "editRoles": "Edit roles"
   }
 }

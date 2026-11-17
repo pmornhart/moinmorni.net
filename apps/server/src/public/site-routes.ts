@@ -240,6 +240,11 @@ export function registerSiteRoutes(
       voiceChannels: ((stores.settings('voice')['channels'] as string[] | undefined) ?? []).filter(
         (c) => typeof c === 'string' && c.trim() !== '',
       ),
+      // Rang-Abzeichen für die Hilfe-Seite: an/aus und alle Ränge der Reihe nach (gleiche Bilder wie im Paket).
+      badges: {
+        enabled: stores.settings('badges')['enabled'] === true,
+        ranks: stores.roles().map((r) => ({ id: r.id, name: r.name, symbol: r.symbol, colour: r.colour })),
+      },
       discordInvite: link(s['discordInvite']) ?? discordInvite(),
       // Offene Stellen im Team (Bewerben unter /team/bewerben).
       teamSearch: openPositions(),

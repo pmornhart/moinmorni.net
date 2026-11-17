@@ -1,5 +1,6 @@
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
+  Award,
   Bird,
   Castle,
   ClipboardList,
@@ -45,6 +46,7 @@ import { NavLink, Outlet, ScrollRestoration } from 'react-router';
 import { Lozenge, Wordmark } from '~/components/brand';
 import { LanguageSwitch, ThemeToggle } from '~/components/controls';
 import { MinecraftHead } from '~/components/minecraft-head';
+import { VersionPill } from '~/components/whats-new';
 import { Button } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -57,6 +59,7 @@ import { TourProvider, useTour } from './tour/Tour';
 
 /** The catalog names an icon per settings area; these are the ones it uses (others get a cog). */
 const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
+  Award,
   Globe,
   Globe2,
   MessagesSquare,
@@ -93,6 +96,9 @@ const ForcePassword = lazy(async () => ({
 
 /** Settings areas of the game modes (MorniCraft, Duels …) get their own group in the menu. */
 const MODE_PANEL = 'modes';
+
+/** Settings area with the update card ("Was ist neu" links there when an update is ready). */
+const UPDATES_PAGE = '/einstellungen/updates';
 
 /** Areas listed under "Verwaltung". */
 const MANAGE_AREAS = ['players', 'punishments', 'roles', 'discord', 'servers'] as const;
@@ -406,10 +412,18 @@ function Frame(): ReactElement {
       </aside>
       <MobileBar />
       <main className="min-w-0">
-        <div className="mx-auto grid max-w-[1440px] content-start gap-[22px] px-4 py-6 sm:px-8 sm:py-8">
+        {/* Room at the bottom so the version pill never covers the last line of a page. */}
+        <div className="mx-auto grid max-w-[1440px] content-start gap-[22px] px-4 pb-16 pt-6 sm:px-8 sm:pb-16 sm:pt-8">
           <Outlet />
         </div>
       </main>
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center pb-[calc(10px+env(safe-area-inset-bottom))] lg:left-[264px]">
+        <VersionPill
+          look="panel"
+          className="pointer-events-auto"
+          updatesTo={me.areas.includes('updates') ? UPDATES_PAGE : undefined}
+        />
+      </div>
       <ScrollRestoration />
       {me.mustChangePassword ? (
         <Suspense fallback={null}>

@@ -50,6 +50,7 @@ import { createApplicationService } from './mornicraft/applications.js';
 import { registerApplyRoutes } from './mornicraft/routes.js';
 import { registerWhitelistTeamRoute } from './mornicraft/team.js';
 import { createUpdateService } from './system/update.js';
+import { changelogFile, registerChangelogRoute } from './system/changelog.js';
 import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
@@ -57,6 +58,7 @@ import { registerPanelRoutes } from './panel/routes.js';
 import { registerModeRestRoutes } from './panel/mode-rest-routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
+import { badgePackOf, badgePackUrl, registerBadgeRoutes } from './badges/pack.js';
 import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { createWartungWorld } from './lobby/wartung.js';
 import { registerPublicRoutes } from './public/routes.js';
@@ -207,6 +209,12 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     log: app.log,
     timeZone: config.timeZone,
     domain: config.domain,
+    // Rang-Abzeichen: Paket zu den Rollen von gerade, von der eigenen Domain (Minecraft lädt es von dort).
+    badgePack: () => {
+      const pack = badgePackOf(stores.roles());
+      const url = badgePackUrl(config.domain, pack.sha1);
+      return url ? { url, sha1: pack.sha1 } : null;
+    },
   });
   const status = createStatusService(config, motor, stores, hub);
   const team = createTeamApplications({ db: handle.db, stores, hub, events });
@@ -453,6 +461,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
   registerPackRoutes(app);
+  registerBadgeRoutes(app, () => stores.roles());
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
   registerModeRestRoutes(app, auth, stores, motor, createMemberIds(motor), restarts);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
@@ -462,6 +471,12 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerNewsRoutes(app, auth, handle.db, events);
   const updates = createUpdateService(config, motor, stores, github);
   registerUpdateRoutes(app, auth, updates);
+  // „Was ist neu“ unten in der Mitte von Webseite und Panel: Version, Änderungen, ob eine neue bereitsteht.
+  registerChangelogRoute(app, {
+    version: config.version,
+    file: changelogFile(),
+    update: () => updates.peek(),
+  });
   // Whitelist im Panel: das Team (kommt über den Rang immer hinein) steht von selbst mit drauf.
   registerWhitelistTeamRoute(app, auth, handle.db, hub.players, applications);
   registerBuildRoutes(app, auth, build);

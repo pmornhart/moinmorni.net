@@ -23,6 +23,18 @@ function check(name, ok, detail = '') {
   console.log(`${ok ? '✔' : '✖'} ${name}${detail ? ` – ${detail}` : ''}`);
 }
 
+/**
+ * Pakete beim Einrichten annehmen (z. B. das Möbel-Paket der Lobby): Der Server wartet dort auf die Antwort, und
+ * mineflayer antwortet mit einer falsch verpackten Kennung – darum hier selbst, mit der Kennung, wie sie kam.
+ */
+function answerPacks(bot) {
+  bot._client.on('add_resource_pack', (p) => {
+    if (bot._client.state !== 'configuration') return;
+    bot._client.write('resource_pack_receive', { uuid: String(p.uuid), result: 3 });
+    bot._client.write('resource_pack_receive', { uuid: String(p.uuid), result: 0 });
+  });
+}
+
 // Velocity lässt pro Adresse nur alle 3 s eine Anmeldung zu.
 const LOGIN_GAP_MS = 3500;
 let lastLogin = 0;
@@ -36,6 +48,7 @@ async function join(username) {
   await gap();
   return new Promise((resolve, reject) => {
     const bot = mineflayer.createBot({ host: HOST, port: PORT, username, version: VERSION, auth: 'offline', physicsEnabled: false });
+    answerPacks(bot);
     bot.lines = [];
     bot.on('messagestr', (m) => bot.lines.push(m));
     bot.once('spawn', () => resolve(bot));
@@ -63,6 +76,7 @@ async function refused(username) {
   await gap();
   return new Promise((resolve) => {
     const bot = mineflayer.createBot({ host: HOST, port: PORT, username, version: VERSION, auth: 'offline', physicsEnabled: false });
+    answerPacks(bot);
     bot.once('spawn', () => {
       bot.quit();
       resolve(null);

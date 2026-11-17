@@ -289,8 +289,40 @@
         "jump_best": "Jump and Run – Rekord",
         "jump_runs": "Jump-and-Run-Läufe",
         "jumps": "Sprünge",
+        "golden_eagles": "Steinadler-Medaillen",
+        "bonus_rings": "Bonus-Ringe",
         "timeOf": "Bestzeit {{course}}",
-        "finishesOf": "Ziele {{course}}"
+        "finishesOf": "Ziele {{course}}",
+        "draws": "Unentschieden",
+        "ranked_games": "Gewertete Kämpfe",
+        "ranked_wins": "Gewertete Siege",
+        "streak_best": "Längste Siegesserie",
+        "rounds_won": "Gewonnene Runden (Bester aus 3/5)",
+        "hits_boxen": "Treffer beim Boxen",
+        "goals_bruecke": "Tore auf der Brücke",
+        "goals_labyrinth": "Zuerst am Labyrinth-Ziel",
+        "party_games": "Party-Kämpfe",
+        "party_wins": "Siege in Party-Kämpfen",
+        "elo": "Beste Wertung",
+        "gamesOf": "Runden {{what}}",
+        "winsOf": "Siege {{what}}",
+        "lossesOf": "Niederlagen {{what}}",
+        "drawsOf": "Unentschieden {{what}}",
+        "eloOf": "Beste Wertung {{what}}",
+        "subjectHead": "Strecke"
+      },
+      "statsIn": {
+        "duels": {
+          "games": "Kämpfe",
+          "gamesOf": "Kämpfe {{what}}",
+          "subjectHead": "Kampfart"
+        },
+        "party": {
+          "subjectHead": "Spielart"
+        },
+        "wintersport": {
+          "subjectHead": "Disziplin"
+        }
       },
       "courses": {
         "almrundflug": "Almrundflug",
@@ -299,6 +331,9 @@
         "gletscherspalte": "Gletscherspalte",
         "stollenflug": "Stollenflug",
         "gipfelkreuz": "Gipfelkreuz",
+        "tagesflug": "Strecke des Tages",
+        "hoellenschlund": "Höllenschlund",
+        "felsenlabyrinth": "Felsenlabyrinth",
         "slalom": "Riesenslalom",
         "biathlon": "Biathlon",
         "bob": "Bobbahn",
@@ -400,6 +435,17 @@
         "channelsTitle": "Feste Kanäle für alle",
         "channelsText": "Von jedem Spielmodus aus erreichbar. Kanäle anzeigen, beitreten und verlassen:",
         "bedrock": "Mit der Bedrock Edition (Handy, Konsole) gibt es leider keinen Sprachchat – das kann Bedrock nicht."
+      },
+      "badges": {
+        "title": "Rang-Abzeichen",
+        "short": "Die Schilder vor den Namen – und das kleine Paket dafür",
+        "intro": "Vor jedem Namen steht der Rang als kleines Schild mit Symbol – im Chat, in der Tab-Liste und über dem Kopf. Damit Minecraft die Schilder zeigen kann, bringt MoinMorni ein kleines Server-Ressourcenpaket mit: nur diese Bilder, sonst ändert sich nichts an deinem Spiel.",
+        "step1": "Beim Betreten fragt Minecraft, ob du das Ressourcenpaket des Servers laden möchtest – klick auf „Ja“. Es ist nur ein paar Kilobyte groß und bleibt auf allen Servern von MoinMorni.",
+        "step2": "Aus Versehen „Nein“ gedrückt oder hat es nicht geklappt? Tippe im Spiel",
+        "step2b": "– dann fragt Minecraft noch einmal.",
+        "step3": "Fragt Minecraft gar nicht mehr? In der Serverliste MoinMorni auswählen → „Bearbeiten“ → „Server-Ressourcenpakete“ auf „Aktiviert“ oder „Abfrage“ stellen.",
+        "without": "Mit der Bedrock Edition (Handy, Konsole), mit Minecraft Java vor 1.20.3 und ohne das Paket siehst du statt der Schilder Symbol und Farbe des Rangs – wie früher. Mitspielen kannst du trotzdem; nur wenn das Team das Paket zur Pflicht gemacht hat, steht das im Fenster.",
+        "off": "Gerade sind die Abzeichen ausgeschaltet – im Spiel stehen Symbol und Farbe vor den Namen."
       },
       "discord": {
         "title": "Discord verbinden",
@@ -578,13 +624,23 @@
         }
       },
       "duels": {
-        "tip1": "Such dir eine Kampfart aus: Klassisch mit Pilzsuppe, Modern oder mit Fähigkeiten.",
-        "tip2": "Spiel locker oder gewertet – gewertete Kämpfe zählen für die Rangliste.",
-        "tip3": "Mit Freunden: Fordere sie direkt heraus oder geht als Party ins 2 gegen 2.",
+        "tip1": "20 Kampfarten in drei Gruppen: Klassisch (Pilzsuppe, keine Abklingzeit beim Schlagen), Modern (Axt und Schild, Tränke, UHC, Bau-Kampf …) und Spaß (Sumo, Boxen, Spleef, Labyrinth, Brücke).",
+        "tip2": "Spiel locker oder gewertet – jede Kampfart hat ihre eigene Wertung und Rangliste.",
+        "tip3": "Bester aus 3 oder 5: Manche Kämpfe gehen über mehrere Runden – wer zuerst die Mehrheit gewinnt, siegt.",
+        "tip4": "Mit Freunden: Fordert euch mit /duel heraus oder kämpft als Party – Party gegen Party, jeder gegen jeden oder in zwei Teams.",
         "cmd": {
-          "duel": "Jemanden herausfordern.",
+          "duel": "Jemanden herausfordern – auf Wunsch gleich mit Kampfart und Runden (Bester aus 3 oder 5).",
+          "partykampf": "Als Party-Leitung: jeder gegen jeden in eurer Party, mit „teams“ in zwei Teams.",
           "kit": "Eigene Anordnung im Kit-Editor.",
-          "top": "Die besten Kämpfer."
+          "top": "Die besten Kämpfer – auch je Kampfart, z. B. /top sumo.",
+          "annehmen": "Herausforderung annehmen (oder im Chat anklicken).",
+          "ablehnen": "Herausforderung ablehnen.",
+          "warteschlange": "Gegner suchen, z. B. /warteschlange brücke gewertet 1v1; /warteschlange verlassen.",
+          "spectate": "Einem Kampf zuschauen (auch /zuschauen).",
+          "verlassen": "Warteschlange, Kampf (zählt als Niederlage) oder Zuschauen verlassen.",
+          "stats": "Deine Statistik – oder die von jemand anderem.",
+          "neuladen": "Einstellungen und Kampfarten neu laden (das Panel macht es von selbst).",
+          "neubauen": "Turnierhof und Arenen neu bauen."
         }
       },
       "party": {
@@ -630,12 +686,17 @@
       "mirni": {
         "tip1": "Du startest in der schwebenden Marktstadt – durch die drei Reisetore geht es in Oberwelt, Nether und End.",
         "tip2": "Handle mit allen: Auktionshaus, Aufträge, eigene Ladenkisten und Marktstände zum Mieten.",
-        "tip3": "Sichere dein Grundstück – Taler gibt es nur im Spiel, nichts für echtes Geld.",
+        "tip3": "Erze sind kostbar: Ein Diamant bringt bei Händlerin Vroni ein Vielfaches von Alltagsware. An der Börse siehst du die Kurse – verkaufen alle viel, zahlt sie weniger, mit der Zeit erholt sich der Kurs.",
+        "tip4": "Sichere dein Grundstück – Taler gibt es nur im Spiel, nichts für echtes Geld.",
         "cmd": {
           "rtp": "Zufälliger sicherer Ort zum Loslegen.",
           "ah": "Auktionshaus.",
+          "shop": "Händlerhaus mit Händlerin Vroni: kaufen und verkaufen.",
+          "boerse": "Die Börse: Kurse jeder Ware, was steigt und fällt, Verlauf über 24 Stunden und 7 Tage.",
           "gs": "Den Chunk unter dir sichern.",
-          "geld": "Dein Kontostand."
+          "geld": "Dein Kontostand.",
+          "wert": "Was das in deiner Hand wert ist – bei Vroni und unter Spielern; mit „alles“ dein ganzes Inventar.",
+          "verkaufen": "Ankauf: Sachen hineinlegen. „hand“ verkauft sofort, was du hältst (erst an Aufträge, die mehr zahlen), „alles“ dein Inventar mit Übersicht."
         }
       },
       "wolkenkampf": {
@@ -755,6 +816,7 @@
         "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
         "streamer": "Streamer-Modus an oder aus – verdeckt Adressen, Koordinaten und private Nachrichten auf jedem Server, die anderen sehen ● LIVE an deinem Namen.",
         "streamerTeil": "Einen Teil des Streamer-Modus für dich an- oder ausschalten (ohne Wort kommt das Menü zum Anklicken).",
+        "abzeichen": "Das Abzeichen-Paket noch einmal laden – dann stehen die Ränge als kleine Schilder vor den Namen.",
         "discord": "Einladung in unseren Discord – und ein Code, um dein Konto zu verbinden.",
         "rundgang": "Ein Rundgang durchs Dorf (beenden: /rundgang stop).",
         "jnr": "Jump and Run starten: hoch über dem Dorf erscheint Block für Block – jeder Sprung ein Punkt (oder auf den Smaragd am Startplatz treten; /parkour geht auch).",
@@ -1095,7 +1157,8 @@
       "media-area": "Sieht die Kanäle für Streamer und Videos.",
       "vip-area": "Sieht die VIP-Kanäle.",
       "links": "Darf Links posten."
-    }
+    },
+    "previewBadge": "Mit Abzeichen-Paket (Java ab 1.20.3):"
   },
   "servers": {
     "title": "Server",
@@ -1355,11 +1418,11 @@
     },
     "roles": {
       "title": "Rollen",
-      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel auf jedem Server (bis zu den Verwaltungs-Befehlen der Spielmodi), im Panel und im Discord. Eine Änderung gilt überall gleichzeitig."
+      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel auf jedem Server (bis zu den Verwaltungs-Befehlen der Spielmodi), im Panel und im Discord. Eine Änderung gilt überall gleichzeitig. Mit dem Abzeichen-Paket sehen Spieler den Rang als kleines Pixel-Schild – ein- und ausschalten unter Einstellungen → Rang-Abzeichen."
     },
     "discord": {
       "title": "Discord",
-      "text": "Den eigenen Discord-Bot verbinden (Token direkt hier eintragen), den Discord-Server Schritt für Schritt einrichten lassen und unter „Aussehen“ Server-Bild, Banner und das Profil des Bots ändern."
+      "text": "Den eigenen Discord-Bot verbinden (Token direkt hier eintragen), den Discord-Server Schritt für Schritt einrichten lassen und unter „Aussehen“ Server-Bild, Banner und das Profil des Bots ändern. Unter „Ränge“ siehst du, wie die Ränge in Discord aussehen – ab Boost-Stufe 2 mit dem Abzeichen als Rollen-Symbol."
     },
     "servers": {
       "title": "Server",
@@ -1731,6 +1794,24 @@
       "use": "Übernehmen"
     }
   },
+  "discordRanks": {
+    "title": "Ränge in Discord",
+    "text": "Jede Rolle aus dem Panel ist in Discord eine Rolle – in ihrer Farbe und mit ihrem Abzeichen. So sieht es dort aus.",
+    "preview": "So zeigt Discord die Ränge",
+    "notYet": "kommt beim Einrichten",
+    "modeIcons": "Abzeichen als Rollen-Symbol",
+    "modeNames": "Symbol im Namen",
+    "iconsTitle": "Abzeichen neben dem Namen",
+    "iconsText": "Euer Server darf Rollen-Symbole (Boost-Stufe 2): Jeder Rang hat sein Abzeichen als kleines Bild neben dem Namen – dieselbe Krone, dasselbe Schwert wie im Spiel, mit goldenem Rahmen in der Farbe des Rangs. Den Namen schreibt Discord daneben.",
+    "boostTitle": "Rollen-Symbole erst ab Boost-Stufe {{need}}",
+    "boostText": "Bilder neben Rollennamen gibt es in Discord erst ab Boost-Stufe {{need}} – euer Server hat Stufe {{tier}}. Bis dahin steht das Symbol im Namen, z. B. „⚔ Moderator“. Sobald der Server Stufe {{need}} erreicht, tauscht MoinMorni das von selbst gegen die Abzeichen.",
+    "offTitle": "Rang-Abzeichen sind aus",
+    "offText": "Im Spiel und in Discord steht gerade das Symbol vor bzw. im Namen. Schaltest du die Abzeichen wieder ein, bekommt Discord sie auch zurück (mit Boost-Stufe 2).",
+    "offLink": "Zu Einstellungen → Rang-Abzeichen",
+    "syncTitle": "Zieht von selbst nach",
+    "syncText": "Änderst du bei den Rollen Name, Symbol, Farbe oder Reihenfolge oder legst eine neue an, ist das ein paar Sekunden später auch in Discord so – ohne neu einzurichten. Eine neue Team-Rolle sieht gleich ihre Team-Kanäle.",
+    "handText": "Was jemand in Discord selbst geändert hat (Name, ein eigenes Bild oder Emoji als Rollen-Symbol), bleibt."
+  },
   "teamAdmin": {
     "title": "Team",
     "text": "Alle, die ins Panel dürfen. Lege neue Konten an, ändere Rollen, setze vergessene Passwörter zurück oder sperre ein Konto.",
@@ -1949,13 +2030,6 @@
     "changesCount_other": "{{count}} Updates",
     "changesCountDate_one": "{{count}} Update · neuestes vom {{date}}",
     "changesCountDate_other": "{{count}} Updates · neuestes vom {{date}}",
-    "kinds": {
-      "new": "Neu",
-      "fixed": "Behoben",
-      "improved": "Verbessert",
-      "removed": "Entfernt",
-      "other": "Weitere Änderungen"
-    },
     "confirm": {
       "title": "Update jetzt starten?",
       "text": "Webseite und Panel sind dabei 1–2 Minuten nicht erreichbar. Die Minecraft-Server laufen weiter.",
@@ -2393,5 +2467,43 @@
   },
   "reach": {
     "ownerOnly": "NetBird, die Webseite auf der Domain und „Hausanschluss verstecken“ richtet nur der Owner ein – er ist im Motor Admin."
+  },
+  "changes": {
+    "kinds": {
+      "new": "Neu",
+      "improved": "Verbessert",
+      "fixed": "Behoben",
+      "removed": "Entfernt",
+      "other": "Weitere Änderungen"
+    }
+  },
+  "whatsNew": {
+    "title": "Was ist neu",
+    "text": "Hier läuft gerade Version {{version}}. Darunter steht, was sich von Version zu Version geändert hat – das Neueste zuerst.",
+    "pill": "Version {{version}} – zeigen, was neu ist",
+    "pillUpdate": "Version {{version}} – eine neuere Version steht bereit. Zeigen, was neu ist",
+    "installed": "Läuft gerade",
+    "quiet": "Nur Kleinigkeiten hinter den Kulissen – beim Spielen ändert sich nichts.",
+    "more_one": "… und noch {{count}} weitere Änderung",
+    "more_other": "… und noch {{count}} weitere Änderungen",
+    "empty": "Für diese Version gibt es noch keine Liste der Änderungen – sie kommt mit dem nächsten Update.",
+    "older": "Ältere Versionen zeigen",
+    "updateReady": "Version {{version}} steht bereit",
+    "updateReadyPlain": "Eine neue Version steht bereit",
+    "updateTeam": "Unter Einstellungen → Updates spielst du sie ein.",
+    "updateSoon": "Das Team spielt sie bald ein.",
+    "toUpdates": "Zu den Updates"
+  },
+  "badgesCard": {
+    "title": "So sehen die Abzeichen im Spiel aus",
+    "text": "Gezeichnet aus Name, Symbol und Farbe jeder Rolle – Pixel für Pixel wie im Paket. Rechts steht, was Spieler ohne Paket sehen.",
+    "on": "An",
+    "off": "Aus",
+    "with": "Mit Abzeichen-Paket",
+    "without": "Ohne Paket",
+    "whereTitle": "Wo man sie sieht",
+    "where": "Im Chat vor dem Namen, in der Tab-Liste und über dem Kopf – auf allen Servern des Netzwerks. Das Paket bietet der Proxy jedem Java-Spieler beim Betreten an (ab Minecraft 1.20.3); es bleibt beim Serverwechsel. Wer es ablehnt, auf Bedrock spielt oder eine ältere Version hat, sieht Symbol und Farbe. Mit /abzeichen lädt man es jederzeit nach. Das Gefängnis-Abzeichen steht vor Nachrichten aus der Zelle (die liest nur das Team). Im Discord haben die Ränge dieselbe Farbe – ab Boost-Stufe 2 mit dem Abzeichen als Rollen-Symbol neben dem Namen (Panel → Discord → Ränge).",
+    "fromRoles": "Änderst du bei einer Rolle Name, Symbol oder Farbe, bekommen alle gleich das neue Paket.",
+    "editRoles": "Rollen bearbeiten"
   }
 }

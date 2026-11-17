@@ -21,9 +21,22 @@ import { lobbyTags } from './lobby-tags.js';
  * Maße in 1/16 Block („px“), y = 0 ist die Höhe, auf der man neben dem Brunnen steht.
  */
 
-type Vec = readonly [number, number, number];
-type Face = 'north' | 'south' | 'east' | 'west' | 'up' | 'down';
-type Tex = 'marmor' | 'zier' | 'gold' | 'wasser' | 'flut' | 'smaragd' | 'diamant' | 'samt';
+export type Vec = readonly [number, number, number];
+export type Face = 'north' | 'south' | 'east' | 'west' | 'up' | 'down';
+export type Tex =
+  | 'marmor'
+  | 'zier'
+  | 'gold'
+  | 'wasser'
+  | 'flut'
+  | 'smaragd'
+  | 'diamant'
+  | 'samt'
+  | 'kalk'
+  | 'ziegel'
+  | 'zierstein'
+  | 'glatt'
+  | 'kupfer';
 
 const TEXTURES: Readonly<Record<Tex, string>> = {
   marmor: 'minecraft:block/quartz_block_side',
@@ -34,6 +47,12 @@ const TEXTURES: Readonly<Record<Tex, string>> = {
   smaragd: 'minecraft:block/emerald_block',
   diamant: 'minecraft:block/diamond_block',
   samt: 'minecraft:block/blue_wool',
+  // Dorfbrunnen (dorfbrunnen.ts): heller Kalkstein, Steinziegel, Zierstein, glatter Stein, Kupfer mit Patina
+  kalk: 'minecraft:block/calcite',
+  ziegel: 'minecraft:block/stone_bricks',
+  zierstein: 'minecraft:block/chiseled_stone_bricks',
+  glatt: 'minecraft:block/smooth_stone',
+  kupfer: 'minecraft:block/weathered_copper',
 };
 /** Wasser-Texturen sind grau – eingefärbt über `tintindex` 0 (stehendes Wasser) bzw. 1 (fallendes Wasser). */
 const TINTED: ReadonlySet<Tex> = new Set<Tex>(['wasser', 'flut']);
@@ -45,7 +64,7 @@ export const STRAHL_FARBE = 0xc4ecff;
 /** Blöcke des Brunnens ohne Paket – das Paket blendet sie aus (gibt es in der Lobby nur am Brunnen). */
 export const BRUNNEN_ERSATZ = { rand: 'tuff_brick_wall', fontaene: 'end_rod[facing=up]' } as const;
 
-interface Box {
+export interface Box {
   readonly from: Vec;
   readonly to: Vec;
   readonly tex: Tex;
@@ -55,7 +74,7 @@ interface Box {
 }
 
 const ALL_FACES: readonly Face[] = ['north', 'south', 'east', 'west', 'up', 'down'];
-const BLOCK = 16;
+export const BLOCK = 16;
 const HALF = 8;
 /** Ein Modell darf von -16 bis 32 reichen: um die Mitte (8) also ±24. */
 export const MODEL_REACH = 24;
@@ -99,7 +118,11 @@ function element(b: Box): Record<string, unknown> {
     faces: Object.fromEntries(
       faces.map((f) => [
         f,
-        { uv: uvOf(b, f), texture: `#${b.tex}`, ...(TINTED.has(b.tex) ? { tintindex: b.tex === 'flut' ? 1 : 0 } : {}) },
+        {
+          uv: uvOf(b, f),
+          texture: `#${b.tex}`,
+          ...(TINTED.has(b.tex) ? { tintindex: b.tex === 'flut' ? 1 : 0 } : {}),
+        },
       ]),
     ),
   };
@@ -119,7 +142,7 @@ export function brunnenModelJson(boxes: readonly Box[]): Record<string, unknown>
 // ---------------------------------------------------------------------------------------------------------------
 
 /** Ein Ring im Querschnitt: von Radius r1 bis r2, Höhe y1 bis y2. */
-interface Ring {
+export interface Ring {
   readonly r1: number;
   readonly r2: number;
   readonly y1: number;
@@ -133,7 +156,7 @@ interface Ring {
  * überlappend. `rc` = Abstand des Anzeige-Objekts von der Mitte, `lift` hebt jedes zweite Segment um einen Hauch an
  * (sonst flimmern die überlappenden Flächen benachbarter Segmente).
  */
-function segment(rings: readonly Ring[], n: number, rc: number, lift: number): Box[] {
+export function segment(rings: readonly Ring[], n: number, rc: number, lift: number): Box[] {
   const t = Math.tan(Math.PI / n);
   return rings.map((g) => {
     const w = g.r2 * t + 0.02;
@@ -147,7 +170,7 @@ function segment(rings: readonly Ring[], n: number, rc: number, lift: number): B
 }
 
 /** Rundes Stück (16-Eck mit Inkreis r) aus acht gedrehten Brettern, jedes einen Hauch höher (kein Flimmern). */
-function round(r: number, y1: number, y2: number, tex: Tex): Box[] {
+export function round(r: number, y1: number, y2: number, tex: Tex): Box[] {
   const w = r * Math.tan(Math.PI / 16);
   const plank = (along: 'x' | 'z', angle: number, k: number): Box => {
     const e = k * 0.02;
@@ -179,7 +202,14 @@ function direction(k: number, n: number): { readonly base: 0 | 1 | 2 | 3; readon
 }
 
 /** Kasten in Richtung `base` (radial a1 … a2, quer ±half) – die Grundachsen sind nur Vertauschungen. */
-function radialBox(base: 0 | 1 | 2 | 3, a1: number, a2: number, half: number, y1: number, y2: number): [Vec, Vec] {
+function radialBox(
+  base: 0 | 1 | 2 | 3,
+  a1: number,
+  a2: number,
+  half: number,
+  y1: number,
+  y2: number,
+): [Vec, Vec] {
   const boxes: Readonly<Record<0 | 1 | 2 | 3, [Vec, Vec]>> = {
     0: [
       [a1, y1, -half],
@@ -234,11 +264,24 @@ function ringRound(
 }
 
 /** Kleine Kästchen rundum (Perlen, Edelsteine): n Stück auf Radius r1 … r2, quer ±half. */
-function studs(n: number, r1: number, r2: number, half: number, y1: number, y2: number, tex: (k: number) => Tex): Box[] {
+function studs(
+  n: number,
+  r1: number,
+  r2: number,
+  half: number,
+  y1: number,
+  y2: number,
+  tex: (k: number) => Tex,
+): Box[] {
   return range(0, n - 1).map((k) => {
     const { base, angle } = direction(k, n);
     const [from, to] = radialBox(base, r1, r2, half, y1, y2);
-    return { from, to, tex: tex(k), ...(angle ? { rot: { axis: 'y' as const, angle, origin: [0, y1, 0] as Vec } } : {}) };
+    return {
+      from,
+      to,
+      tex: tex(k),
+      ...(angle ? { rot: { axis: 'y' as const, angle, origin: [0, y1, 0] as Vec } } : {}),
+    };
   });
 }
 
@@ -322,7 +365,8 @@ const MEASURES: Readonly<Record<BrunnenGroesse, Measures>> = {
     inner: 52,
     outer: 76,
     rimParts: 24,
-    water: 4,
+    // Wasser bis 3,9: auf den Achsen liegt sonst Wasser bei 4, ohne Rand dahinter (es liefe beim nächsten Update aus)
+    water: 3.9,
     rimBlocks: 4.9,
     columnTop: 33,
     bigBowl: true,
@@ -436,7 +480,12 @@ function crownBoxes(): Box[] {
     ];
     return parts.map(([a1, a2, y1, y2]) => {
       const [from, to] = radialBox(base, a1, a2, 0.7, y1, y2);
-      return { from, to, tex: 'gold' as const, ...(angle ? { rot: { axis: 'y' as const, angle, origin: [0, y1, 0] as Vec } } : {}) };
+      return {
+        from,
+        to,
+        tex: 'gold' as const,
+        ...(angle ? { rot: { axis: 'y' as const, angle, origin: [0, y1, 0] as Vec } } : {}),
+      };
     });
   };
   return [
@@ -478,13 +527,13 @@ function vaseBoxes(m: Measures): Box[] {
 // ---------------------------------------------------------------------------------------------------------------
 
 /** Ein Modell mit seiner Höhe: Kästen sind schon um die Mitte des Anzeige-Objekts verschoben. */
-interface Part {
+export interface Part {
   readonly boxes: readonly Box[];
   /** Höhe der Mitte über y = 0 (px) */
   readonly centre: number;
 }
 
-function centred(boxes: readonly Box[]): Part {
+export function centred(boxes: readonly Box[]): Part {
   const ys = boxes.flatMap((b) => [b.from[1], b.to[1]]);
   const centre = (Math.min(...ys) + Math.max(...ys)) / 2;
   const move = (v: Vec): Vec => [v[0], v[1] - centre, v[2]];
@@ -565,12 +614,12 @@ export function brunnenBoxes(): Readonly<Record<string, readonly Box[]>> {
   return Object.fromEntries(Object.entries(all).map(([name, part]) => [name, part.boxes]));
 }
 
-const r4 = (n: number): number => Math.round(n * 10_000) / 10_000;
+export const r4 = (n: number): number => Math.round(n * 10_000) / 10_000;
 /**
  * Minecraft zeichnet Gegenstände in Anzeige-Objekten um 180° gedreht (lokal +x zeigt bei Blickrichtung 0° nach −x).
  * Im echten Client geprüft: ohne Ausgleich zeigten Schalenstücke und Vasenstrahlen nach außen.
  */
-const ITEM_DISPLAY_TURN = 180;
+export const ITEM_DISPLAY_TURN = 180;
 
 /** Anzeige-Objekt eines Teils: Mitte (x, y, z) in der Welt, Drehung um y (Grad), Größe. */
 export interface BrunnenTeil {
@@ -586,7 +635,12 @@ export interface BrunnenTeil {
 export function brunnenTeile(size: BrunnenGroesse, cx: number, y0: number, cz: number): BrunnenTeil[] {
   const m = MEASURES[size];
   const parts = partsOf(size);
-  const at = (name: string, radial: number, deg: number, scale: readonly [number, number, number] = [1, 1, 1]): BrunnenTeil => {
+  const at = (
+    name: string,
+    radial: number,
+    deg: number,
+    scale: readonly [number, number, number] = [1, 1, 1],
+  ): BrunnenTeil => {
     const a = (deg * Math.PI) / 180;
     const part = parts[name];
     return {
@@ -603,7 +657,9 @@ export function brunnenTeile(size: BrunnenGroesse, cx: number, y0: number, cz: n
   );
   const bowl = m.bigBowl
     ? [
-        ...range(0, BOWL_PARTS - 1).map((i) => at(`schale_${i % 2 ? 'b' : 'a'}`, BOWL_RC, (i * 360) / BOWL_PARTS)),
+        ...range(0, BOWL_PARTS - 1).map((i) =>
+          at(`schale_${i % 2 ? 'b' : 'a'}`, BOWL_RC, (i * 360) / BOWL_PARTS),
+        ),
         ...range(0, STREAMS - 1).map((i) => at('vorhang', CURTAIN_R, ((i + 0.5) * 360) / STREAMS)),
         { ...at('schale_wasser', 0, 0, [2, 1, 2]), y: r4(y0 + (BOWL.floor + 0.3) / BLOCK) },
       ]
@@ -645,13 +701,17 @@ function splashPoints(size: BrunnenGroesse): Array<readonly [number, number, num
       ])
     : [];
   const vases = m.vases
-    ? [45, 135, 225, 315].map((deg): readonly [number, number, number] => [rimRc(m) + 1 - vaseReach(m), deg, BASIN_WATER + 0.3])
+    ? [45, 135, 225, 315].map((deg): readonly [number, number, number] => [
+        rimRc(m) + 1 - vaseReach(m),
+        deg,
+        BASIN_WATER + 0.3,
+      ])
     : [];
   return [...upper, ...lower, ...vases];
 }
 
 /** Gegenstand eines Teils (über das leere Luft-Modell, siehe `brunnenItemCases`). */
-const itemOf = (name: string): string =>
+export const itemOf = (name: string): string =>
   `{id:'minecraft:paper',count:1,components:{'minecraft:item_model':'minecraft:air','minecraft:custom_model_data':{strings:['brunnen','${name}']}}}`;
 
 /** Licht der Teile: draußen wie der Himmel, nachts von den Scheinwerfern; drinnen wie unter dem Kronleuchter. */
@@ -698,12 +758,15 @@ export function prunkbrunnen(c: Canvas, x: number, y: number, z: number, size: B
 }
 
 /** Fälle für `items/air.json`: zweiter Text = Name des Teils; Wasser eingefärbt. */
-export function brunnenItemCases(ns: string): Record<string, unknown> {
+export function brunnenItemCases(
+  ns: string,
+  names: readonly string[] = Object.keys(brunnenModels()),
+): Record<string, unknown> {
   return {
     type: 'minecraft:select',
     property: 'minecraft:custom_model_data',
     index: 1,
-    cases: Object.keys(brunnenModels()).map((name) => ({
+    cases: names.map((name) => ({
       when: name,
       model: {
         type: 'minecraft:model',

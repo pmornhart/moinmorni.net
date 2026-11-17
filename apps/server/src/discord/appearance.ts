@@ -1,8 +1,17 @@
 import type { FastifyBaseLogger } from 'fastify';
+import type { Role } from '@moinmorni/shared';
 import { AppError, badRequest } from '../lib/errors.js';
 import { DISCORD_CODES, DiscordError } from './client.js';
 import { parseImage } from './images.js';
 import { LOGO_DATA_URI, LOGO_VERSION } from './logo.js';
+import { discordRoleName } from './layout.js';
+import {
+  rankIconOf,
+  rankLook,
+  ROLE_ICONS_FEATURE,
+  type RankLook,
+  type RankLookReason,
+} from './rank-icons.js';
 import type { DiscordStore } from './store.js';
 
 /**
@@ -41,12 +50,37 @@ export interface AppearanceView {
     /** Banner überhaupt – ab Boost-Stufe 2. */
     readonly banners: boolean;
     readonly animatedBanner: boolean;
+    /** Rollen-Symbole (Bild neben dem Rollennamen) – ab Boost-Stufe 2. */
+    readonly roleIcons: boolean;
+  } | null;
+  /**
+   * Wie Discord die Ränge zeigt: Abzeichen als Rollen-Symbol („icons“) oder Symbol im Namen („names“) – und warum
+   * („boost“: Server unter Stufe 2, „badges_off“: Abzeichen im Panel aus). Ohne Server: null.
+   */
+  readonly ranks: {
+    readonly look: RankLook;
+    readonly reason: RankLookReason;
+    /** Die Ränge so, wie Discord sie zeigt (beste zuerst). */
+    readonly roles: readonly RankView[];
   } | null;
   readonly bot: {
     readonly name: string;
     readonly avatar: string | null;
     readonly avatarIsLogo: boolean;
   } | null;
+}
+
+export interface RankView {
+  readonly id: string;
+  readonly name: string;
+  readonly symbol: string;
+  readonly colour: string;
+  /** Name der Rolle in Discord („Moderator“ mit Bild daneben oder „⚔ Moderator“). */
+  readonly discordName: string;
+  /** Bekommt in Discord das Abzeichen als Rollen-Symbol. */
+  readonly icon: boolean;
+  /** Gibt es schon in Discord (nach „Server einrichten“). */
+  readonly inDiscord: boolean;
 }
 
 export type IconResult = 'set' | 'kept' | 'unchanged';
@@ -74,6 +108,10 @@ export interface AppearanceDeps {
   readonly guildId: () => string | null;
   /** Bilder-Server von Discord (Tests: nachgebautes Discord). */
   readonly cdn: string;
+  /** Rang-Abzeichen im Panel an? */
+  readonly badges: () => boolean;
+  /** Die Ränge aus dem Panel, die es in Discord als Rolle gibt (ohne „Spieler“). */
+  readonly ranks: () => readonly Role[];
   readonly log: FastifyBaseLogger;
 }
 
@@ -123,6 +161,27 @@ export function createAppearance(deps: AppearanceDeps): Appearance {
   };
   const me = (): Promise<DUser> => rest<DUser>('GET', '/users/@me');
 
+  const ranksView = (roleIcons: boolean): NonNullable<AppearanceView['ranks']> => {
+    const look = rankLook(roleIcons, deps.badges());
+    return {
+      ...look,
+      roles: [...deps.ranks()]
+        .sort((a, b) => a.position - b.position)
+        .map((r) => {
+          const icon = look.look === 'icons' && rankIconOf(r) !== null;
+          return {
+            id: r.id,
+            name: r.name.de,
+            symbol: r.symbol,
+            colour: r.colour,
+            discordName: icon ? r.name.de : discordRoleName(r),
+            icon,
+            inDiscord: Boolean(store.get(`role:${r.id}`)),
+          };
+        }),
+    };
+  };
+
   const view = async (): Promise<AppearanceView> => {
     const [g, u] = await Promise.all([guild().catch(() => null), me().catch(() => null)]);
     const icon = store.entry(ICON_KEY);
@@ -138,8 +197,10 @@ export function createAppearance(deps: AppearanceDeps): Appearance {
             animatedIcon: g.features.includes('ANIMATED_ICON'),
             banners: g.features.includes('BANNER'),
             animatedBanner: g.features.includes('ANIMATED_BANNER'),
+            roleIcons: g.features.includes(ROLE_ICONS_FEATURE),
           }
         : null,
+      ranks: g ? ranksView(g.features.includes(ROLE_ICONS_FEATURE)) : null,
       bot: u
         ? {
             name: u.username,

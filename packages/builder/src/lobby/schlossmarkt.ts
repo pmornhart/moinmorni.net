@@ -9,7 +9,7 @@ import type { Canvas } from '../canvas.js';
 import { MOEBEL } from '../furniture.js';
 import { GROUND, roundTree } from '../nature.js';
 import { pick, random } from '../noise.js';
-import { range } from '../range.js';
+import { pairs, range } from '../range.js';
 import { npc, signText } from '../village.js';
 import { lampPost, MODES, stallAt, type Mode } from './common.js';
 
@@ -96,12 +96,13 @@ export function buildSchlossmarkt(c: Canvas, height: (x: number, z: number) => n
     else stallAt(c, slot.x, GROUND, slot.z, 'south', FLOWER_STAND, ['mm_village', 'mm_market']);
     storeBehind(c, slot.x, rnd);
   });
-  // Zwischen den Ständen: Laterne, Blumenkübel; davor Brotzeit-Garnituren
+  // Zwischen den Ständen: Laterne, Tischchen mit Krug (für die Standler), Blumenkübel; davor Brotzeit-Garnituren
   [-1, 1].forEach((side) => {
     [25, 35].forEach((ax) => {
       const x = side * ax;
       lampPost(c, x, GROUND, FRONT_Z + 1);
-      c.set(x, GROUND + 1, FRONT_Z - 1, 'spruce_trapdoor[half=top,facing=south,open=false]');
+      c.set(x, GROUND + 1, FRONT_Z - 1, MOEBEL.wirtstisch);
+      c.set(x, GROUND + 2, FRONT_Z - 1, MOEBEL.krug(1));
       c.set(x, GROUND + 1, FRONT_Z - 3, 'barrel[facing=up]');
       c.set(x, GROUND + 2, FRONT_Z - 3, pick(rnd, ['potted_red_tulip', 'potted_pink_tulip', 'potted_poppy']));
       brotzeit(c, x, -25);
@@ -147,8 +148,12 @@ function retainingWall(c: Canvas, height: (x: number, z: number) => number, rnd:
       } else {
         c.set(x, top + 1, WALL_Z, pick(rnd, HEDGE));
       }
-      // Hinter der Mauer bis zum Hang auffüllen, damit kein Loch bleibt.
-      range(GROUND + 1, GROUND + slope).forEach((y) => c.soft(x, y, WALL_Z - 1, 'dirt'));
+      // Hinter der Mauer bis zum Hang auffüllen, damit kein Loch bleibt – oben Gras, keine nackte Erde. Ohne Hang
+      // nichts (`range` zählt auch rückwärts: aus 65 … 64 würde sonst Erde über dem Boden).
+      if (slope > 0)
+        range(GROUND + 1, GROUND + slope).forEach((y) =>
+          c.soft(x, y, WALL_Z - 1, y === GROUND + slope ? 'grass_block' : 'dirt'),
+        );
     });
 }
 
@@ -202,8 +207,9 @@ function marketArch(c: Canvas): void {
   const pennants = [-5, -4, -3, 3, 4, 5];
   pennants.forEach((x, i) => {
     const colour = colours[i % colours.length] ?? 'white';
-    c.set(x, top - 1, z + 1, `${colour}_wall_banner[facing=south]`);
-    c.set(x, top - 1, z - 1, `${colours[(i + 3) % colours.length] ?? 'white'}_wall_banner[facing=north]`);
+    // am Balken (gleiche Höhe) – eine Reihe tiefer hingen sie vor dem Nichts
+    c.set(x, top, z + 1, `${colour}_wall_banner[facing=south]`);
+    c.set(x, top, z - 1, `${colours[(i + 3) % colours.length] ?? 'white'}_wall_banner[facing=north]`);
   });
   [-1, 1].forEach((x) => c.set(x, top - 1, z, 'lantern[hanging=true]'));
   const name = [{ text: 'Schlossmarkt', color: 'gold', bold: true }] as const;
@@ -214,14 +220,15 @@ function marketArch(c: Canvas): void {
 /** Wegweiser am Nordausgang des Dorfplatzes: wer die neuen Modi sucht, findet sie. */
 function signpost(c: Canvas): void {
   const [x, z] = [7, -21];
-  range(GROUND + 1, GROUND + 3).forEach((y) => c.set(x, y, z, 'spruce_fence'));
+  // Pfahl aus geschältem Fichtenstamm: an einem Zaun hielte das Schild auf der Rückseite nicht
+  range(GROUND + 1, GROUND + 3).forEach((y) => c.set(x, y, z, 'stripped_spruce_log[axis=y]'));
   c.set(x, GROUND + 4, z, 'lantern');
   c.set(x, GROUND + 3, z - 1, 'spruce_wall_sign[facing=north]');
   signText(
     c,
     x + 0.5,
     GROUND + 2.6,
-    z + 0.62,
+    z + 1.02,
     'south',
     [
       { text: '↑ Schlossmarkt\n', color: 'gold', bold: true },
@@ -285,9 +292,11 @@ function marketFolk(c: Canvas): void {
   );
   // Je eine Linde an den Enden spendet Schatten über den Karren.
   const shade = random(77);
-  [-47, 47].forEach((x) =>
-    roundTree(c, x, GROUND + 1, -36, { height: 9, radius: 3.4, leaves: 'oak_leaves', rnd: shade }),
-  );
+  [-47, 47].forEach((x) => {
+    // Baumscheibe: Gras statt Pflaster unter dem Stamm
+    pairs(range(x - 1, x + 1), range(-37, -35)).forEach(([gx, gz]) => c.set(gx, GROUND, gz, 'grass_block'));
+    roundTree(c, x, GROUND + 1, -36, { height: 9, radius: 3.4, leaves: 'oak_leaves', rnd: shade });
+  });
 }
 
 /** Blumenbeete am Südrand des Vorplatzes (zum Dorfplatz hin), mit Lücken zum Durchgehen. */

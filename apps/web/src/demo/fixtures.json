@@ -32,8 +32,8 @@
           "en": "Duels"
         },
         "description": {
-          "de": "1 gegen 1 und 2 gegen 2: Klassisch mit Suppe, Modern oder mit Fähigkeiten. Gewertet oder locker.",
-          "en": "1v1 and 2v2: classic with soup, modern or with abilities. Ranked or casual."
+          "de": "20 Kampfarten von Klassisch mit Suppe bis Sumo, Spleef und Brücke. 1 gegen 1, 2 gegen 2 und Party-Kämpfe, gewertet oder locker.",
+          "en": "20 fighting styles from classic with soup to Sumo, Spleef and Bridge. 1v1, 2v2 and party fights, ranked or casual."
         },
         "state": "on",
         "access": "everyone",
@@ -272,6 +272,21 @@
       }
     },
     {
+      "slug": "duels-20-kampfarten",
+      "category": "update",
+      "pinned": false,
+      "daysAgo": 0,
+      "author": "Finn2015",
+      "title": {
+        "de": "Duels: 20 Kampfarten, Bester aus 3 und Party-Kämpfe",
+        "en": "Duels: 20 fighting styles, best of 3 and party fights"
+      },
+      "body": {
+        "de": "Duels hat jetzt 20 Kampfarten in drei Gruppen: Klassisch (mit Suppe, Nur Schwert, Ritter, Bogen, Angel, Kombo …), Modern (Axt und Schild, Tränke, Enderperlen, UHC, Bau-Kampf …) und Spaß – Sumo auf dem Tanzboden, Boxen, Spleef auf dem Schneefeld, das Labyrinth und die Brücke über die Klamm.\nKämpfe gehen auf Wunsch über „Bester aus 3“ oder „Bester aus 5“. Mit /partykampf kämpft eure Party jeder gegen jeden oder in zwei Teams.\nJede Kampfart hat ihre eigene Wertung – auf deinem Profil siehst du jetzt alle auf einen Blick.",
+        "en": "Duels now has 20 fighting styles in three groups: Classic (with soup, Sword Only, Knight, Archery, Fishing Rod, Combo …), Modern (Axe & Shield, Potions, Ender Pearls, UHC, Build Fight …) and Fun – Sumo on the dance floor, Boxing, Spleef on the snowfield, the Maze and the Bridge across the gorge.\nFights can go best of 3 or best of 5. With /partykampf your party fights everyone for themselves or in two teams.\nEvery style has its own rating – your profile now shows them all at a glance."
+      }
+    },
+    {
       "slug": "wiesn-im-dorf",
       "category": "event",
       "pinned": false,
@@ -451,15 +466,7 @@
       "colour": "#aaaaaa"
     }
   },
-  "teamOrder": [
-    "owner",
-    "admin",
-    "moderator",
-    "supporter",
-    "builder",
-    "media",
-    "vip"
-  ],
+  "teamOrder": ["owner", "admin", "moderator", "supporter", "builder", "media", "vip"],
   "players": [
     {
       "name": "Vroni_Baut",
@@ -480,10 +487,13 @@
           "finishes": 5
         },
         "duels": {
+          "games": 53,
           "wins": 30,
           "losses": 23,
           "kills": 53,
-          "rating": 1207
+          "games_baukampf": 26,
+          "wins_baukampf": 15,
+          "elo_baukampf": 1207
         },
         "wolkenkampf": {
           "wins": 4,
@@ -546,8 +556,11 @@
           "finishes": 14
         },
         "duels": {
+          "games": 32,
           "wins": 12,
-          "losses": 20
+          "losses": 20,
+          "games_sumo": 16,
+          "wins_sumo": 6
         },
         "party": {
           "games": 16,
@@ -592,11 +605,48 @@
       "online": "duels",
       "modes": {
         "duels": {
+          "games": 160,
           "wins": 120,
           "losses": 33,
+          "draws": 7,
           "kills": 410,
-          "best_streak": 14,
-          "rating": 1840
+          "deaths": 151,
+          "ranked_games": 98,
+          "ranked_wins": 75,
+          "streak_best": 14,
+          "rounds_won": 41,
+          "party_games": 12,
+          "party_wins": 5,
+          "hits_boxen": 860,
+          "goals_bruecke": 23,
+          "goals_labyrinth": 6,
+          "games_klassisch": 52,
+          "wins_klassisch": 41,
+          "losses_klassisch": 9,
+          "draws_klassisch": 2,
+          "elo_klassisch": 1840,
+          "games_sumo": 30,
+          "wins_sumo": 24,
+          "losses_sumo": 6,
+          "elo_sumo": 1512,
+          "games_bruecke": 22,
+          "wins_bruecke": 15,
+          "losses_bruecke": 6,
+          "draws_bruecke": 1,
+          "elo_bruecke": 1390,
+          "games_uhc": 20,
+          "wins_uhc": 14,
+          "losses_uhc": 5,
+          "draws_uhc": 1,
+          "elo_uhc": 1350,
+          "games_boxen": 18,
+          "wins_boxen": 12,
+          "losses_boxen": 6,
+          "elo_boxen": 1288,
+          "games_labyrinth": 18,
+          "wins_labyrinth": 14,
+          "losses_labyrinth": 2,
+          "draws_labyrinth": 2
         },
         "party": {
           "games": 32,
@@ -627,10 +677,13 @@
       "lastSeenMinutesAgo": 95,
       "modes": {
         "duels": {
+          "games": 115,
           "wins": 54,
           "losses": 61,
           "kills": 233,
-          "rating": 1426
+          "games_ritter": 57,
+          "wins_ritter": 27,
+          "elo_ritter": 1426
         },
         "party": {
           "wins": 4,
@@ -667,10 +720,35 @@
       "online": "lobby",
       "modes": {
         "duels": {
+          "games": 77,
           "wins": 40,
           "losses": 35,
+          "draws": 2,
           "kills": 64,
-          "rating": 1256
+          "deaths": 70,
+          "ranked_games": 30,
+          "ranked_wins": 16,
+          "streak_best": 5,
+          "party_games": 15,
+          "party_wins": 6,
+          "hits_boxen": 310,
+          "games_klassisch": 25,
+          "wins_klassisch": 13,
+          "losses_klassisch": 12,
+          "elo_klassisch": 1256,
+          "games_boxen": 20,
+          "wins_boxen": 12,
+          "losses_boxen": 8,
+          "elo_boxen": 1102,
+          "games_sumo": 18,
+          "wins_sumo": 9,
+          "losses_sumo": 8,
+          "draws_sumo": 1,
+          "games_faehigkeiten": 14,
+          "wins_faehigkeiten": 6,
+          "losses_faehigkeiten": 7,
+          "draws_faehigkeiten": 1,
+          "elo_faehigkeiten": 1060
         },
         "versteckerl": {
           "points": 378,
@@ -720,10 +798,13 @@
           "edelweiss": 388
         },
         "duels": {
+          "games": 52,
           "wins": 25,
           "losses": 27,
           "kills": 33,
-          "rating": 1136
+          "games_sumo": 26,
+          "wins_sumo": 12,
+          "elo_sumo": 1136
         },
         "wolkenkampf": {
           "wins": 6,
@@ -762,10 +843,13 @@
       "lastSeenMinutesAgo": 260,
       "modes": {
         "duels": {
+          "games": 43,
           "wins": 18,
           "losses": 25,
           "kills": 21,
-          "rating": 1103
+          "games_bogen": 21,
+          "wins_bogen": 9,
+          "elo_bogen": 1103
         },
         "party": {
           "games": 25,
@@ -789,10 +873,13 @@
       "lastSeenMinutesAgo": 1500,
       "modes": {
         "duels": {
+          "games": 20,
           "wins": 11,
           "losses": 9,
           "kills": 12,
-          "rating": 1044
+          "games_perlen": 10,
+          "wins_perlen": 5,
+          "elo_perlen": 1044
         },
         "party": {
           "games": 16,
@@ -844,10 +931,13 @@
       "lastSeenMinutesAgo": 33,
       "modes": {
         "duels": {
+          "games": 32,
           "wins": 16,
           "losses": 16,
           "kills": 29,
-          "rating": 1085
+          "games_spleef": 16,
+          "wins_spleef": 8,
+          "elo_spleef": 1085
         },
         "gipfelsturm": {
           "finishes": 13,
@@ -883,10 +973,13 @@
       "online": "mornicraft",
       "modes": {
         "duels": {
+          "games": 29,
           "wins": 12,
           "losses": 17,
           "kills": 23,
-          "rating": 1074
+          "games_klassisch": 14,
+          "wins_klassisch": 6,
+          "elo_klassisch": 1074
         },
         "gipfelsturm": {
           "finishes": 5,
@@ -942,10 +1035,13 @@
       "lastSeenMinutesAgo": 2880,
       "modes": {
         "duels": {
+          "games": 31,
           "wins": 18,
           "losses": 13,
           "kills": 22,
-          "rating": 1042
+          "games_angel": 15,
+          "wins_angel": 9,
+          "elo_angel": 1042
         },
         "gipfelsturm": {
           "finishes": 14,
@@ -996,10 +1092,13 @@
       "lastSeenMinutesAgo": 610,
       "modes": {
         "duels": {
+          "games": 56,
           "wins": 26,
           "losses": 30,
           "kills": 44,
-          "rating": 1147
+          "games_kombo": 28,
+          "wins_kombo": 13,
+          "elo_kombo": 1147
         },
         "gipfelsturm": {
           "finishes": 8,
@@ -1048,11 +1147,42 @@
       "online": "duels",
       "modes": {
         "duels": {
+          "games": 120,
           "wins": 77,
           "losses": 39,
+          "draws": 4,
           "kills": 260,
-          "best_streak": 9,
-          "rating": 1518
+          "deaths": 140,
+          "ranked_games": 64,
+          "ranked_wins": 41,
+          "streak_best": 9,
+          "rounds_won": 18,
+          "party_games": 21,
+          "party_wins": 9,
+          "goals_bruecke": 11,
+          "games_modern": 40,
+          "wins_modern": 27,
+          "losses_modern": 12,
+          "draws_modern": 1,
+          "elo_modern": 1518,
+          "games_axt": 26,
+          "wins_axt": 17,
+          "losses_axt": 9,
+          "elo_axt": 1402,
+          "games_bruecke": 18,
+          "wins_bruecke": 10,
+          "losses_bruecke": 7,
+          "draws_bruecke": 1,
+          "elo_bruecke": 1210,
+          "games_spleef": 22,
+          "wins_spleef": 15,
+          "losses_spleef": 6,
+          "draws_spleef": 1,
+          "games_traenke": 14,
+          "wins_traenke": 8,
+          "losses_traenke": 5,
+          "draws_traenke": 1,
+          "elo_traenke": 1180
         },
         "gipfelsturm": {
           "finishes": 6,
@@ -1081,10 +1211,13 @@
       "lastSeenMinutesAgo": 4320,
       "modes": {
         "duels": {
+          "games": 39,
           "wins": 17,
           "losses": 22,
           "kills": 33,
-          "rating": 1040
+          "games_uhc": 19,
+          "wins_uhc": 8,
+          "elo_uhc": 1040
         },
         "gipfelsturm": {
           "finishes": 5,
@@ -1147,10 +1280,13 @@
       "lastSeenMinutesAgo": 75,
       "modes": {
         "duels": {
+          "games": 10,
           "wins": 4,
           "losses": 6,
           "kills": 4,
-          "rating": 977
+          "games_schwert": 5,
+          "wins_schwert": 2,
+          "elo_schwert": 977
         },
         "gipfelsturm": {
           "finishes": 2,
@@ -1182,10 +1318,13 @@
       "online": "lobby",
       "modes": {
         "duels": {
+          "games": 26,
           "wins": 15,
           "losses": 11,
           "kills": 24,
-          "rating": 1048
+          "games_faehigkeiten": 13,
+          "wins_faehigkeiten": 7,
+          "elo_faehigkeiten": 1048
         },
         "gipfelsturm": {
           "finishes": 1,
@@ -1277,10 +1416,13 @@
       "bedrock": true,
       "modes": {
         "duels": {
+          "games": 12,
           "wins": 7,
           "losses": 5,
           "kills": 12,
-          "rating": 1041
+          "games_labyrinth": 6,
+          "wins_labyrinth": 3,
+          "elo_labyrinth": 1041
         },
         "gipfelsturm": {
           "finishes": 3,
@@ -1332,10 +1474,13 @@
       "lastSeenMinutesAgo": 1200,
       "modes": {
         "duels": {
+          "games": 22,
           "wins": 10,
           "losses": 12,
           "kills": 15,
-          "rating": 1071
+          "games_diamant": 11,
+          "wins_diamant": 5,
+          "elo_diamant": 1071
         },
         "gipfelsturm": {
           "finishes": 1,
@@ -1382,10 +1527,13 @@
       "lastSeenMinutesAgo": 50,
       "modes": {
         "duels": {
+          "games": 18,
           "wins": 9,
           "losses": 9,
           "kills": 17,
-          "rating": 1028
+          "games_goldapfel": 9,
+          "wins_goldapfel": 4,
+          "elo_goldapfel": 1028
         },
         "gipfelsturm": {
           "finishes": 1,
@@ -1437,10 +1585,13 @@
       "online": "lobby",
       "modes": {
         "duels": {
+          "games": 11,
           "wins": 5,
           "losses": 6,
           "kills": 9,
-          "rating": 1012
+          "games_bruecke": 5,
+          "wins_bruecke": 2,
+          "elo_bruecke": 1012
         },
         "gipfelsturm": {
           "finishes": 1,
@@ -1485,5 +1636,163 @@
     "positions": ["moderator", "supporter", "builder", "media"],
     "minecraftName": "LenaBaut",
     "cooldownDays": 14
+  },
+  "changelog": {
+    "update": "v1.8.9",
+    "versions": [
+      {
+        "count": 188,
+        "sha": "6d4f7e0",
+        "daysAgo": 0,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Jump and Run am Schlossmarkt: Block für Block hoch über dem Dorf, mit Rekord und Bestenliste"
+          },
+          {
+            "kind": "new",
+            "text": "Doppelsprung in der Lobby – zweimal Leertaste für einen Schwung nach vorn"
+          },
+          {
+            "kind": "fixed",
+            "text": "Discord meldete alle 30 Minuten „Panel neu gestartet“, obwohl alles lief"
+          }
+        ]
+      },
+      {
+        "count": 187,
+        "sha": "276da08",
+        "daysAgo": 0,
+        "items": [
+          {
+            "kind": "improved",
+            "text": "„Zurück ins Spiel“ jetzt auch für Versteckerl, Wintersport, Gipfelsturm und Angelkönig im Panel einstellbar"
+          }
+        ]
+      },
+      {
+        "count": 186,
+        "sha": "b42a2c6",
+        "daysAgo": 1,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Wartungs-Lobby: Ist die Lobby kurz weg, wartest du auf der Alm mit Sprung-Parcours – und kommst von selbst zurück"
+          },
+          {
+            "kind": "new",
+            "text": "Nach einem Update starten die Server der Reihe nach neu, mit Countdown oben am Bildschirm"
+          },
+          {
+            "kind": "fixed",
+            "text": "Lobby und Spielmodi ließen nur 20 Leute gleichzeitig hinein"
+          },
+          {
+            "kind": "improved",
+            "text": "Leere Spielmodi brauchen im Ruhezustand nur noch etwa die Hälfte an Arbeitsspeicher"
+          }
+        ]
+      },
+      {
+        "count": 185,
+        "sha": "cf59fc6",
+        "daysAgo": 1,
+        "items": []
+      },
+      {
+        "count": 184,
+        "sha": "473c305",
+        "daysAgo": 1,
+        "items": [
+          {
+            "kind": "fixed",
+            "text": "Die Begrüßung kam manchmal noch in der alten Sprache"
+          },
+          {
+            "kind": "improved",
+            "text": "Beim Countdown sagt der Aushang „Die Lobby ist wieder da – gleich geht’s zurück!“"
+          }
+        ]
+      },
+      {
+        "count": 183,
+        "sha": "a011303",
+        "daysAgo": 2,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Lobbymusik: Blasmusik im Alltag, an der Wiesn richtig bayerisch, an Weihnachten weihnachtlich – /musik leiser, lauter oder aus"
+          }
+        ]
+      },
+      {
+        "count": 182,
+        "sha": "3d72141",
+        "daysAgo": 2,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Streamer-Modus im ganzen Netzwerk: /streamer verdeckt Adressen, Koordinaten und private Nachrichten"
+          },
+          {
+            "kind": "new",
+            "text": "Befehle-Seite auf der Webseite – mit ?spieler=<Name> nur das, was du wirklich darfst"
+          },
+          {
+            "kind": "fixed",
+            "text": "Wer im Gefängnis war, kam nach einem Neustart der Lobby nicht mehr aus der Zelle"
+          },
+          {
+            "kind": "removed",
+            "text": "Die alte Parkour-Spirale – das Jump and Run ersetzt sie"
+          }
+        ]
+      },
+      {
+        "count": 181,
+        "sha": "3d66b0e",
+        "daysAgo": 3,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Supporter ✚ als neuer Rang zwischen Moderator und Builder"
+          },
+          {
+            "kind": "improved",
+            "text": "Auswahllisten im Panel im Stil der Seite, auch im dunklen Modus gut lesbar"
+          }
+        ]
+      },
+      {
+        "count": 180,
+        "sha": "900a7d2",
+        "daysAgo": 3,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Fünf neue Spielmodi: Wolkenkampf, Versteckerl, Wintersport, Adlerflug und Angelkönig"
+          },
+          {
+            "kind": "new",
+            "text": "Schlossmarkt auf dem Vorplatz mit sechs neuen Ständen und Leuten am Markt"
+          }
+        ]
+      },
+      {
+        "count": 179,
+        "sha": "3add676",
+        "daysAgo": 4,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Eigenes MoinMorni-Wappen in der Serverliste von Minecraft"
+          },
+          {
+            "kind": "other",
+            "text": "Webseite: echte Minecraft-Bilder statt eigener Renderings"
+          }
+        ]
+      }
+    ]
   }
 }
