@@ -92,7 +92,7 @@ export function blockDisplay(tags: string, at: Vec, block: string, o: DisplayOpt
 }
 
 /** Ein Teil eines kleinen Modells: Mitte und Drehung in eigenen Koordinaten (vorne = +z, oben = +y). */
-export interface Part {
+export interface ModelPart {
   readonly at: Vec;
   readonly block: string;
   readonly scale: Vec;
@@ -102,7 +102,7 @@ export interface Part {
 }
 
 /** Modell an (x, y, z) aufstellen, Vorderseite in Richtung `yaw` (Bogenmaß, 0 = Süden/+z, π/2 = Osten/+x). */
-export function placeModel(tags: string, origin: Vec, yaw: number, parts: readonly Part[]): string[] {
+export function placeModel(tags: string, origin: Vec, yaw: number, parts: readonly ModelPart[]): string[] {
   const turn = aroundY(yaw);
   return parts.map((p) => {
     const [lx, ly, lz] = rotate(turn, p.at);

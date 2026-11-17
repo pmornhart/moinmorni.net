@@ -42,6 +42,12 @@ const MANNEQUIN = /^summon mannequin ([-\d.]+) [-\d.]+ ([-\d.]+) /;
 // https://regex101.com/?flavor=javascript&regex=Name%3A'minecraft%3A(%5Ba-z_%5D%2B)'&testString=block_state%3A%7BName%3A'minecraft%3Asnow_block'%2Cid%3A'minecraft%3Asnow_block'%7D
 const DISPLAY_BLOCK = /Name:'minecraft:([a-z_]+)'/;
 
+/**
+ * Ein Wesen an festen, lesbaren Koordinaten: "summon block_display 0.5 66.2 -3.75 {" – kein NaN, keine e-Schreibweise.
+ * https://regex101.com/?flavor=javascript&regex=%5Esummon%20%5Cw%2B(%20-%3F%5Cd%2B(%5C.%5Cd%2B)%3F)%7B3%7D%20%5C%7B&testString=summon%20block_display%200.5%2066.2%20-3.75%20%7B
+ */
+const SUMMON_AT = /^summon \w+( -?\d+(\.\d+)?){3} \{/;
+
 describe('Winter-Wunderland', () => {
   const { canvas } = buildLobby();
   const plan = winterPlan(canvas);
@@ -240,9 +246,11 @@ describe('Winter-Wunderland', () => {
         const shown = d.startsWith('summon block_display')
           ? block !== undefined && !renamed.includes(block)
           : true;
-        return !d.includes("'mm_season_winter'") || !d.includes(NO_HITBOX) || !shown;
+        return !d.includes("'mm_season_winter'") || !d.includes(NO_HITBOX) || !shown || !SUMMON_AT.test(d);
       });
       expect(wrong.slice(0, 3)).toEqual([]);
+      // Eine Zeile, die Minecraft nicht lesen kann (z. B. NaN), lässt die ganze Funktion nicht laden.
+      expect([...plan.on, ...plan.off, ...plan.moves].filter((c) => /NaN|Infinity/.test(c))).toEqual([]);
       // Alles da: Kugeln, Stern, Lichter, Buden, Krippe, Weihnachtsmarkt-Schild
       [
         'kugel',

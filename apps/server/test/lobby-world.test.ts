@@ -158,12 +158,13 @@ describe('Lobby baut sich selbst', () => {
     );
     expect(commands).toContain('minecraft:datapack disable "file/moinmorni-lobby"');
     // Danach die Saison-Deko: Bereich festhalten, Schritte der Saison nacheinander (liegt Winter-Schnee, kommt er
-    // weg), loslassen.
-    expect(commands.filter((c) => !c.includes('execute if loaded')).slice(-5)).toEqual([
+    // weg), gleich speichern (sonst ginge der Merker bei einem Absturz verloren), loslassen.
+    expect(commands.filter((c) => !c.includes('execute if loaded')).slice(-6)).toEqual([
       'minecraft:forceload add 0 0 31 31',
       'minecraft:function moinmorni_season:wiesn',
       'minecraft:execute if data storage moinmorni:season {winter:1b} run function moinmorni_season:winter/off_000',
       'minecraft:data remove storage moinmorni:season winter',
+      'minecraft:save-all',
       'minecraft:forceload remove 0 0 31 31',
     ]);
     expect(

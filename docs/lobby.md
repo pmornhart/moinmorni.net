@@ -134,8 +134,8 @@ schickt sie zusammen mit den Panel-Einstellungen als `lobby-settings` an den Lob
   Eiszapfen, Schneekappen auf Zäunen, Gras an den Bergen wird Schnee, Teich friert zu), kaltes Biom (Plugin
   `LobbyWinter.java` merkt sich jedes Biom und stellt es danach wieder her), klares Wetter mit leichtem Flocken-Gestöber
   (kein echter Schneefall – der macht den Himmel grau). **Statt des Maibaums ein riesiger Christbaum** (acht Stufen,
-  gut 36 Blöcke, hängende Zweige, echte Kerzen, über 200 Kugeln in Rot, Gold, Silber, Blau, warme Lichterkette um jede
-  Stufe, großer Stern, Geschenke, unsichtbares Licht ringsum); Dorfleute, die um den Maibaum liefen, gehen ein Stück nach
+  gut 36 Blöcke, hängende Zweige, echte Kerzen, 177 Kugeln in Rot, Gold, Silber, Blau, warme Lichterkette direkt auf
+  den Zweigen jeder Stufe, großer Stern, Geschenke, unsichtbares Licht ringsum); Dorfleute, die um den Maibaum liefen, gehen ein Stück nach
   außen und laufen nicht unter tief hängende Zweige. **Weihnachtsmarkt:** jede Bude am Dorfmarkt und am Schlossmarkt mit
   Tannengirlande und Lichtern vorne und an den Seiten, Eiszapfen und warmem Licht; Lichterketten im Ring von Bude zu Bude
   und am Schlossmarkt bis zum Marktbogen (Girlande, Stern); Glühwein- und Lebkuchenbude am Eingang von der Ankunft her

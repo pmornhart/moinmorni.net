@@ -25,7 +25,7 @@ import {
   itemDisplay,
   placeModel,
   textSign,
-  type Part,
+  type ModelPart,
   type Vec,
 } from './deko.js';
 import { esel, josef, krippeMitKind, maria, ochse, schaf, stern } from './winter-figuren.js';
@@ -77,18 +77,22 @@ const STALL_LIGHTS: readonly string[] = ['glowstone', 'red_concrete', 'ochre_fro
  * Modell in Rahmen-Koordinaten: Teile mit `at` = [u, y, −v] (also wie `placeModel`: x nach rechts, z nach vorne),
  * Ursprung vorne links unten des Rahmens.
  */
-function inFrame(f: Frame, kind: string, parts: readonly Part[]): string[] {
+function inFrame(f: Frame, kind: string, parts: readonly ModelPart[]): string[] {
   return placeModel(tags(kind), pointAt(f, 0, 0, 0), yawOf(f.front), parts);
 }
 
 /** Tannengirlande mit Lichtern entlang einer Kante (in Rahmen-Koordinaten von a nach b, gerade). */
-function garland(a: Vec, b: Vec, thick: number, lights: readonly string[]): Part[] {
+function garland(a: Vec, b: Vec, thick: number, lights: readonly string[]): ModelPart[] {
   const length = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
   const mid: Vec = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
   const alongX = Math.abs(b[0] - a[0]) >= Math.abs(b[2] - a[2]);
-  const green: Part = { at: mid, ...GREEN, scale: alongX ? [length, thick, thick] : [thick, thick, length] };
+  const green: ModelPart = {
+    at: mid,
+    ...GREEN,
+    scale: alongX ? [length, thick, thick] : [thick, thick, length],
+  };
   const count = Math.max(2, Math.floor(length / 0.9));
-  const bulbs = range(0, count - 1).map((k): Part => {
+  const bulbs = range(0, count - 1).map((k): ModelPart => {
     const t = (k + HALF) / count;
     return {
       at: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - thick * 0.3, a[2] + (b[2] - a[2]) * t] as Vec,
@@ -101,10 +105,10 @@ function garland(a: Vec, b: Vec, thick: number, lights: readonly string[]): Part
 }
 
 /** Eiszapfen unter einer Kante (Rahmen-Koordinaten): unregelmäßig, verschieden lang. */
-function eiszapfen(u1: number, u2: number, y: number, z: number, seed: number): Part[] {
+function eiszapfen(u1: number, u2: number, y: number, z: number, seed: number): ModelPart[] {
   return range(0, Math.floor(u2 - u1) - 1)
     .filter((k) => (k * 7 + seed) % 3 !== 0)
-    .map((k): Part => {
+    .map((k): ModelPart => {
       const length = 0.22 + (((k * 5 + seed) % 4) / 4) * 0.3;
       return {
         at: [u1 + k + 0.5 + (((k + seed) % 3) - 1) * 0.15, y - length / 2, z],
@@ -209,7 +213,7 @@ function schlossmarktKetten(): string[] {
 function marktbogen(): string[] {
   const top = GROUND + 7;
   const z = -28;
-  const parts: Part[] = [
+  const parts: ModelPart[] = [
     ...garland([-7, top + 0.9, z + 1.12], [8, top + 0.9, z + 1.12], 0.34, STALL_LIGHTS),
     ...garland([-7, top + 0.9, z - 0.12], [8, top + 0.9, z - 0.12], 0.34, STALL_LIGHTS),
     ...stern(1.5).map((p) => ({
@@ -438,7 +442,7 @@ function krippeFiguren(f: Frame): string[] {
   const facing = (from: Vec, to: Vec): number => Math.atan2(to[0] - from[0], to[2] - from[2]);
   const crib = at(3.5, 1.4);
   const front = yawOf(f.front);
-  const figure = (kind: string, pos: Vec, yaw: number, parts: readonly Part[]): string[] =>
+  const figure = (kind: string, pos: Vec, yaw: number, parts: readonly ModelPart[]): string[] =>
     placeModel(tags(kind), pos, yaw, parts);
   const mary = at(2.35, 1.2);
   const joseph = at(4.75, 1.3);

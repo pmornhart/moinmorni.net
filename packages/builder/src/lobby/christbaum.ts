@@ -151,7 +151,8 @@ function kugeln(): string[] {
   return TIERS.flatMap((t, k) => {
     const size = 0.62 - k * 0.04;
     const under = Math.max(6, Math.round((2 * Math.PI * t.r) / 1.7));
-    const hanging = range(0, under - 1).map((i) => {
+    // Unter der untersten Stufe nicht: die Kugeln lägen dort fast auf dem Pflaster (da liegen die Geschenke).
+    const hanging = (k === 0 ? [] : range(0, under - 1)).map((i) => {
       const a = ((i + (k % 2) * HALF) / under) * Math.PI * 2;
       const r = t.r - 0.35;
       return kugel(
@@ -177,14 +178,34 @@ function kugeln(): string[] {
 
 const WARM: readonly string[] = ['glowstone', 'ochre_froglight', 'glowstone', 'shroomlight'];
 
-/** Warme Lichterkette um jede Stufe (auf der Außenseite des Randes). */
+/** Feinheit beim Suchen der Zweig-Außenkante. */
+const EDGE_STEP = 0.05;
+/** Lichter sitzen so weit vor der Außenkante der Zweige (sonst schweben sie). */
+const ON_LEAVES = 0.06;
+
+/**
+ * Abstand von der Baummitte bis zur Außenkante einer Lage mit Radius r in Richtung a – die Lage besteht aus ganzen
+ * Blöcken (wie `disc`), ihre Kante springt also je nach Richtung um bis zu einen Block.
+ */
+function leafEdge(r: number, a: number): number {
+  const { x: cx, z: cz } = CHRISTBAUM;
+  const inside = (d: number): boolean => {
+    const x = Math.floor(cx + HALF + Math.cos(a) * d) - cx;
+    const z = Math.floor(cz + HALF + Math.sin(a) * d) - cz;
+    return x * x + z * z <= r * r;
+  };
+  const steps = range(0, Math.ceil((r + 2) / EDGE_STEP)).map((i) => r + 2 - i * EDGE_STEP);
+  return steps.find(inside) ?? r;
+}
+
+/** Warme Lichterkette um jede Stufe – direkt auf den äußersten Zweigen der untersten Lage. */
 function lichterkette(): string[] {
   const { x: cx, z: cz } = CHRISTBAUM;
   return TIERS.flatMap((t, k) => {
-    const r = t.r + 0.55;
-    const count = Math.max(8, Math.round((2 * Math.PI * r) / 1.05));
+    const count = Math.max(8, Math.round((2 * Math.PI * (t.r + HALF)) / 1.05));
     return range(0, count - 1).map((i) => {
       const a = ((i + k * 0.37) / count) * Math.PI * 2;
+      const r = leafEdge(t.r, a) + ON_LEAVES;
       // leichte Welle: die Kette hängt zwischen den Zweigen etwas durch
       const sag = Math.abs(Math.sin(a * 4)) * 0.25;
       return blockDisplay(

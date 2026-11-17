@@ -5,16 +5,16 @@
  * Koordinaten je Modell: Boden-Mitte = (0, 0, 0), vorne = +z, oben = +y (siehe `placeModel` in `deko.ts`).
  */
 import { range } from '../range.js';
-import { aroundX, aroundY, aroundZ, multiply, type Part, type Vec } from './deko.js';
+import { aroundX, aroundY, aroundZ, multiply, type ModelPart, type Vec } from './deko.js';
 
 /** Hautfarbe der Figuren: weiße Terrakotta ist in Minecraft ein warmes Beige. */
 const SKIN = 'white_terracotta';
 
-const shift = (parts: readonly Part[], by: Vec): Part[] =>
+const shift = (parts: readonly ModelPart[], by: Vec): ModelPart[] =>
   parts.map((p) => ({ ...p, at: [p.at[0] + by[0], p.at[1] + by[1], p.at[2] + by[2]] as Vec }));
 
 /** Ein Geschenk: Schachtel, Band über Kreuz, Schleife oben. */
-export function present(size: number, box: string, ribbon: string): Part[] {
+export function present(size: number, box: string, ribbon: string): ModelPart[] {
   const h = size * 0.85;
   return [
     { at: [0, h / 2, 0], block: box, scale: [size, h, size] },
@@ -26,12 +26,12 @@ export function present(size: number, box: string, ribbon: string): Part[] {
 }
 
 /** Schneemann mit Kohle-Augen, Rüben-Nase, Knöpfen, Schal, Zylinder und Ast-Armen. */
-export function schneemann(): Part[] {
-  const round = (y: number, size: number): Part[] => [
+export function schneemann(): ModelPart[] {
+  const round = (y: number, size: number): ModelPart[] => [
     { at: [0, y, 0], block: 'snow_block', scale: [size, size, size] },
     { at: [0, y, 0], block: 'snow_block', scale: [size, size - 0.02, size], rotation: aroundY(Math.PI / 4) },
   ];
-  const coal = (x: number, y: number, z: number, size: number): Part => ({
+  const coal = (x: number, y: number, z: number, size: number): ModelPart => ({
     at: [x, y, z],
     block: 'coal_block',
     scale: [size, size, 0.04],
@@ -58,15 +58,19 @@ export function schneemann(): Part[] {
 }
 
 /** Kleiner Rodel mit Kufen, auf Wunsch mit zwei Geschenken. */
-export function rodel(withPresents: boolean): Part[] {
-  const runners = [-0.3, 0.3].flatMap((x): Part[] => [
+export function rodel(withPresents: boolean): ModelPart[] {
+  const runners = [-0.3, 0.3].flatMap((x): ModelPart[] => [
     { at: [x, 0.035, -0.05], block: 'iron_block', scale: [0.06, 0.07, 1.45] },
     { at: [x, 0.17, 0.74], block: 'iron_block', scale: [0.06, 0.07, 0.36], rotation: aroundX(-0.95) },
   ]);
   const posts = [-0.3, 0.3].flatMap((x) =>
-    [-0.45, 0.4].map((z): Part => ({ at: [x, 0.18, z], block: 'spruce_planks', scale: [0.06, 0.22, 0.06] })),
+    [-0.45, 0.4].map((z): ModelPart => ({
+      at: [x, 0.18, z],
+      block: 'spruce_planks',
+      scale: [0.06, 0.22, 0.06],
+    })),
   );
-  const load: Part[] = withPresents
+  const load: ModelPart[] = withPresents
     ? [
         ...shift(present(0.42, 'red_wool', 'gold_block'), [0, 0.35, -0.22]),
         ...shift(present(0.32, 'green_wool', 'white_wool'), [0.05, 0.35, 0.26]),
@@ -81,18 +85,18 @@ export function rodel(withPresents: boolean): Part[] {
 }
 
 /** Großer roter Pferdeschlitten mit goldenen Kufen, Sitzbank und Geschenken (ohne Pferd). */
-export function grosserSchlitten(): Part[] {
+export function grosserSchlitten(): ModelPart[] {
   const gold = 'gold_block';
   const red = 'red_concrete';
-  const runners = [-0.62, 0.62].flatMap((x): Part[] => [
+  const runners = [-0.62, 0.62].flatMap((x): ModelPart[] => [
     { at: [x, 0.05, -0.15], block: gold, scale: [0.08, 0.1, 2.3] },
     { at: [x, 0.33, 1.18], block: gold, scale: [0.08, 0.1, 0.62], rotation: aroundX(-1.05) },
     { at: [x, 0.62, 1.38], block: gold, scale: [0.08, 0.1, 0.3], rotation: aroundX(-2.1) },
-    ...[-0.95, 0, 0.75].map((z): Part => ({ at: [x, 0.28, z], block: gold, scale: [0.07, 0.36, 0.07] })),
+    ...[-0.95, 0, 0.75].map((z): ModelPart => ({ at: [x, 0.28, z], block: gold, scale: [0.07, 0.36, 0.07] })),
   ]);
-  const body: Part[] = [
+  const body: ModelPart[] = [
     { at: [0, 0.5, -0.1], block: red, scale: [1.36, 0.12, 2.0] },
-    ...[-0.66, 0.66].flatMap((x): Part[] => [
+    ...[-0.66, 0.66].flatMap((x): ModelPart[] => [
       { at: [x, 0.78, -0.1], block: red, scale: [0.08, 0.5, 2.0] },
       { at: [x, 1.05, -0.1], block: gold, scale: [0.12, 0.06, 2.04] },
     ]),
@@ -105,7 +109,7 @@ export function grosserSchlitten(): Part[] {
     { at: [0, 1.0, -0.72], block: 'red_wool', scale: [1.18, 0.1, 0.58] },
     { at: [0, 1.06, -0.4], block: 'green_wool', scale: [1.1, 0.05, 0.25], rotation: aroundX(0.6) },
   ];
-  const load: Part[] = [
+  const load: ModelPart[] = [
     ...shift(present(0.5, 'white_wool', 'red_wool'), [-0.3, 0.56, 0.25]),
     ...shift(present(0.42, 'green_wool', 'gold_block'), [0.3, 0.56, 0.35]),
     ...shift(present(0.36, 'blue_wool', 'white_wool'), [0.05, 0.56, -0.1]),
@@ -127,11 +131,11 @@ export function grosserSchlitten(): Part[] {
  * Fünfzackiger Stern (Größe ≈ `size` von Spitze zu Spitze), in drei Ebenen über Kreuz – von jeder Seite ein Stern.
  * Mitte bei (0, 0, 0).
  */
-export function stern(size: number, block = 'gold_block'): Part[] {
+export function stern(size: number, block = 'gold_block'): ModelPart[] {
   const r = size / 2;
-  const plane = (yaw: number): Part[] => {
+  const plane = (yaw: number): ModelPart[] => {
     const turn = aroundY(yaw);
-    return range(0, 4).flatMap((k): Part[] => {
+    return range(0, 4).flatMap((k): ModelPart[] => {
       const a = Math.PI / 2 + (k * 2 * Math.PI) / 5;
       const along = (d: number): Vec => {
         const [x, y] = [Math.cos(a) * d, Math.sin(a) * d];
@@ -144,7 +148,7 @@ export function stern(size: number, block = 'gold_block'): Part[] {
       ];
     });
   };
-  const middle: Part[] = [
+  const middle: ModelPart[] = [
     { at: [0, 0, 0], block, scale: [r * 0.5, r * 0.5, r * 0.5], rotation: aroundY(Math.PI / 4), glow: true },
     { at: [0, 0, 0], block, scale: [r * 0.5, r * 0.5, r * 0.5], rotation: aroundX(Math.PI / 4), glow: true },
   ];
@@ -154,7 +158,7 @@ export function stern(size: number, block = 'gold_block'): Part[] {
 // ---------- Krippe ----------
 
 /** Maria, kniend, im blauen Mantel mit weißem Schleier, die Hände gefaltet. */
-export function maria(): Part[] {
+export function maria(): ModelPart[] {
   return [
     { at: [0, 0.22, -0.05], block: 'blue_wool', scale: [0.6, 0.44, 0.66] },
     { at: [0, 0.74, -0.02], block: 'light_blue_wool', scale: [0.44, 0.62, 0.32] },
@@ -166,7 +170,7 @@ export function maria(): Part[] {
 }
 
 /** Josef, stehend, im braunen Gewand mit grünem Umhang, Bart und Wanderstab. */
-export function josef(): Part[] {
+export function josef(): ModelPart[] {
   return [
     { at: [0, 0.6, 0], block: 'brown_wool', scale: [0.46, 1.2, 0.34] },
     { at: [0, 0.75, -0.19], block: 'green_wool', scale: [0.54, 1.0, 0.07] },
@@ -181,10 +185,10 @@ export function josef(): Part[] {
 }
 
 /** Futterkrippe mit Heu, darin das Kind in weißen Windeln – es leuchtet. */
-export function krippeMitKind(): Part[] {
+export function krippeMitKind(): ModelPart[] {
   const wood = 'spruce_planks';
   const legs = [-1, 1].flatMap((side) =>
-    [-0.25, 0.25].map((z): Part => ({
+    [-0.25, 0.25].map((z): ModelPart => ({
       at: [side * 0.32, 0.18, z],
       block: 'spruce_log',
       scale: [0.06, 0.42, 0.06],
@@ -205,7 +209,7 @@ export function krippeMitKind(): Part[] {
 }
 
 /** Ochse, liegend: braun, helle Schnauze, Hörner. */
-export function ochse(): Part[] {
+export function ochse(): ModelPart[] {
   return [
     { at: [0, 0.3, -0.1], block: 'brown_terracotta', scale: [0.82, 0.56, 1.3] },
     { at: [0, 0.6, 0.72], block: 'brown_terracotta', scale: [0.46, 0.46, 0.46] },
@@ -219,7 +223,7 @@ export function ochse(): Part[] {
 }
 
 /** Esel, liegend: grau, lange Ohren, dunkle Mähne. */
-export function esel(): Part[] {
+export function esel(): ModelPart[] {
   return [
     { at: [0, 0.26, -0.05], block: 'light_gray_terracotta', scale: [0.62, 0.48, 1.05] },
     {
@@ -246,7 +250,7 @@ export function esel(): Part[] {
 }
 
 /** Schaf, liegend: weiße Wolle, dunkler Kopf. */
-export function schaf(): Part[] {
+export function schaf(): ModelPart[] {
   return [
     { at: [0, 0.28, 0], block: 'white_wool', scale: [0.6, 0.5, 0.8] },
     { at: [0, 0.4, 0.45], block: 'brown_terracotta', scale: [0.26, 0.28, 0.26] },
