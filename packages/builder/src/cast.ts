@@ -232,7 +232,7 @@ export const VILLAGE_CAST: Readonly<Record<string, Outfit>> = {
 export const CAST: Readonly<Record<string, Outfit>> = { ...MODE_CAST, ...VILLAGE_CAST };
 
 /**
- * Neue Figuren (16.11.: die Modi vom Schlossmarkt und die Blumenfrau; seit dem 16.11. nachts signiert). Solange eine
+ * Neue Figuren (16.11.: die Modi vom Schlossmarkt und die Blumenfrau, 17.11.: Maibaumklau, Dorfkrimi, Baumeister). Solange eine
  * neue Figur noch nicht von Mojang signiert ist, trägt sie die Tracht einer bestehenden Figur (`STAND_IN`); sobald
  * `tsx tools/lobby-entwuerfe/src/sign-skins.ts` sie signiert hat, trägt sie von selbst ihre eigene.
  */
@@ -242,6 +242,9 @@ export const PENDING_CAST: Readonly<Record<string, Outfit>> = {
   wintersport: MODE_FIGURES.wintersport,
   adlerflug: MODE_FIGURES.adlerflug,
   angelkoenig: MODE_FIGURES.angelkoenig,
+  maibaumklau: MODE_FIGURES.maibaumklau,
+  dorfkrimi: MODE_FIGURES.dorfkrimi,
+  baumeister: MODE_FIGURES.baumeister,
   blumenfrau: dirndl({
     skin: SKIN.fair,
     hair: HAIR.auburn,
@@ -261,6 +264,9 @@ export const STAND_IN: Readonly<Record<string, string>> = {
   wintersport: 'gast3',
   adlerflug: 'gast7',
   angelkoenig: 'gast5',
+  maibaumklau: 'gast3',
+  dorfkrimi: 'gast1',
+  baumeister: 'schreiner',
   blumenfrau: 'gast8',
 };
 
@@ -315,6 +321,10 @@ const SEED_ORDER: readonly string[] = [
   'adlerflug',
   'angelkoenig',
   'blumenfrau',
+  // 17.11. abends: Maibaumklau, Dorfkrimi, Baumeister
+  'maibaumklau',
+  'dorfkrimi',
+  'baumeister',
 ];
 
 /** Skin-Bild einer Figur (immer dasselbe Bild für dieselbe Tracht). */

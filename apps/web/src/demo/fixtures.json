@@ -222,6 +222,60 @@
         "awake": true,
         "server": "angelkoenig",
         "phase": "running"
+      },
+      {
+        "id": "maibaumklau",
+        "name": {
+          "de": "Maibaumklau",
+          "en": "Maypole Raid"
+        },
+        "description": {
+          "de": "Zwei Dörfer, zwei Maibäume: Den fremden Baum umlegen und heimtragen, den eigenen bewachen – ganz ohne Waffen. Für 2–16.",
+          "en": "Two villages, two maypoles: knock over the other village’s pole and carry it home while guarding your own – no weapons at all. For 2–16."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 10,
+        "maxPlayers": 48,
+        "awake": true,
+        "server": "maibaumklau",
+        "phase": "running"
+      },
+      {
+        "id": "dorfkrimi",
+        "name": {
+          "de": "Dorfkrimi",
+          "en": "Village Mystery"
+        },
+        "description": {
+          "de": "Im Dorf treibt ein Wilderer sein Unwesen – Spuren finden, Dorfversammlung rufen, den Richtigen festnehmen. Geheime Rollen für 4–16.",
+          "en": "A poacher is up to no good in the village – find clues, call a village meeting, arrest the right one. Secret roles for 4–16."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 8,
+        "maxPlayers": 48,
+        "awake": true,
+        "server": "dorfkrimi",
+        "phase": "running"
+      },
+      {
+        "id": "baumeister",
+        "name": {
+          "de": "Baumeister",
+          "en": "Master Builder"
+        },
+        "description": {
+          "de": "Ein Thema, eine Parzelle – die Zeit läuft! Baut um die Wette und bewertet die Bauten der anderen. Für 2–16, allein oder zu zweit.",
+          "en": "One theme, one plot – the clock is ticking! Build against each other and rate everyone else’s builds. For 2–16, solo or in pairs."
+        },
+        "state": "on",
+        "access": "everyone",
+        "players": 6,
+        "maxPlayers": 48,
+        "awake": true,
+        "server": "baumeister",
+        "phase": "running"
       }
     ]
   },
@@ -269,6 +323,21 @@
       "body": {
         "de": "Unser Netzwerk hat die Tore geöffnet! Du startest im Alpendorf: Am Dorfmarkt rund um den Maibaum stehen die Figuren der Spielmodi – sprich eine an, und schon bist du im Spiel.\nDuels, Morni Party und Gipfelsturm sind von Anfang an dabei. MorniCraft ist unser Freunde-Survival für alle auf der Whitelist – bewerben kannst du dich hier auf der Webseite.\nDu spielst mit der Java Edition ab Version 1.17 oder mit Bedrock auf Handy, Konsole und Windows. Die Adresse ist moinmorni.net. Wir sehen uns im Biergarten!",
         "en": "Our network has opened its gates! You start in the alpine village: around the maypole at the village market stand the figures of the game modes – talk to one and you are in the game.\nDuels, Morni Party and Summit Rush are there from day one. MorniCraft is our friends’ survival for everyone on the whitelist – you can apply right here on the website.\nPlay with Java Edition from version 1.17 or with Bedrock on phone, console and Windows. The address is moinmorni.net. See you in the beer garden!"
+      }
+    },
+    {
+      "slug": "drei-neue-modi",
+      "category": "update",
+      "pinned": false,
+      "daysAgo": 0,
+      "author": "Morni",
+      "title": {
+        "de": "Drei neue Spielmodi am Schlossmarkt",
+        "en": "Three new game modes at the castle market"
+      },
+      "body": {
+        "de": "Am Schlossmarkt stehen drei neue Figuren: Beim Maibaumklau legt ihr den Maibaum des anderen Dorfs um und tragt ihn heim – ganz ohne Waffen. Im Dorfkrimi treibt ein Wilderer sein Unwesen: Spuren finden, Dorfversammlung rufen, den Richtigen festnehmen. Und beim Baumeister baut ihr um die Wette und bewertet die Bauten der anderen.\nKlick einfach die Figur an – der Bursch mit dem Kranz am Hut, der Kommissar mit der Lupe und die Baumeisterin mit der Kelle warten auf euch.",
+        "en": "Three new figures are waiting at the castle market: in Maypole Raid you knock over the other village’s maypole and carry it home – no weapons at all. In Village Mystery a poacher is up to no good: find clues, call a village meeting, arrest the right one. And in Master Builder you build against each other and rate everyone else’s builds.\nJust click the figure – the lad with the wreath on his hat, the inspector with the magnifier and the master builder with her trowel are waiting for you."
       }
     },
     {
@@ -539,6 +608,43 @@
           "tournaments_won": 3,
           "heaviest_g": 14664,
           "species": 10
+        },
+        "maibaumklau": {
+          "games": 41,
+          "wins": 15,
+          "draws": 2,
+          "tags": 51,
+          "saves": 9,
+          "lifts": 5,
+          "captures": 12,
+          "carried": 2262,
+          "points": 1434,
+          "best_points": 37
+        },
+        "dorfkrimi": {
+          "games": 13,
+          "wins": 2,
+          "wins_wilderer": 1,
+          "wins_gendarm": 6,
+          "arrests": 6,
+          "stuns": 8,
+          "clues": 115,
+          "points": 573,
+          "best_points": 40
+        },
+        "baumeister": {
+          "games": 29,
+          "wins": 8,
+          "podiums": 1,
+          "points": 243,
+          "votes_given": 466,
+          "masterworks": 12,
+          "blocks": 11890,
+          "games_klassisch": 13,
+          "games_schnell": 14,
+          "games_paare": 2,
+          "best_score": 480,
+          "best_points": 64
         }
       }
     },
@@ -593,6 +699,20 @@
           "tournaments_won": 6,
           "heaviest_g": 16367,
           "species": 8
+        },
+        "baumeister": {
+          "games": 33,
+          "wins": 8,
+          "podiums": 4,
+          "points": 832,
+          "votes_given": 377,
+          "masterworks": 4,
+          "blocks": 22263,
+          "games_klassisch": 20,
+          "games_schnell": 8,
+          "games_paare": 5,
+          "best_score": 404,
+          "best_points": 35
         }
       }
     },
@@ -666,6 +786,29 @@
           "tournaments_won": 4,
           "heaviest_g": 11265,
           "species": 20
+        },
+        "maibaumklau": {
+          "games": 40,
+          "wins": 17,
+          "draws": 1,
+          "tags": 57,
+          "saves": 16,
+          "lifts": 10,
+          "captures": 0,
+          "carried": 1822,
+          "points": 842,
+          "best_points": 56
+        },
+        "dorfkrimi": {
+          "games": 9,
+          "wins": 4,
+          "wins_wilderer": 2,
+          "wins_gendarm": 0,
+          "arrests": 7,
+          "stuns": 11,
+          "clues": 79,
+          "points": 852,
+          "best_points": 15
         }
       }
     },
@@ -708,6 +851,31 @@
           "medals": 1,
           "eagles": 0,
           "time_gletscherspalte_ms": 48038
+        },
+        "dorfkrimi": {
+          "games": 31,
+          "wins": 5,
+          "wins_wilderer": 0,
+          "wins_gendarm": 8,
+          "arrests": 3,
+          "stuns": 7,
+          "clues": 72,
+          "points": 428,
+          "best_points": 16
+        },
+        "baumeister": {
+          "games": 27,
+          "wins": 4,
+          "podiums": 4,
+          "points": 865,
+          "votes_given": 359,
+          "masterworks": 35,
+          "blocks": 36939,
+          "games_klassisch": 11,
+          "games_schnell": 4,
+          "games_paare": 12,
+          "best_score": 441,
+          "best_points": 38
         }
       }
     },
@@ -780,6 +948,32 @@
           "time_burgruine_ms": 52150,
           "time_gletscherspalte_ms": 45450,
           "time_almrundflug_ms": 65259
+        },
+        "maibaumklau": {
+          "games": 24,
+          "wins": 12,
+          "draws": 2,
+          "tags": 49,
+          "saves": 10,
+          "lifts": 5,
+          "captures": 5,
+          "carried": 435,
+          "points": 1257,
+          "best_points": 57
+        },
+        "baumeister": {
+          "games": 43,
+          "wins": 0,
+          "podiums": 2,
+          "points": 871,
+          "votes_given": 228,
+          "masterworks": 1,
+          "blocks": 32615,
+          "games_klassisch": 28,
+          "games_schnell": 10,
+          "games_paare": 5,
+          "best_score": 490,
+          "best_points": 47
         }
       }
     },
@@ -832,6 +1026,17 @@
           "time_slalom_ms": 41719,
           "time_bob_ms": 67997,
           "time_biathlon_ms": 224932
+        },
+        "dorfkrimi": {
+          "games": 36,
+          "wins": 3,
+          "wins_wilderer": 5,
+          "wins_gendarm": 3,
+          "arrests": 4,
+          "stuns": 8,
+          "clues": 14,
+          "points": 826,
+          "best_points": 37
         }
       }
     },
@@ -862,6 +1067,43 @@
           "tournaments_won": 1,
           "heaviest_g": 20116,
           "species": 19
+        },
+        "maibaumklau": {
+          "games": 39,
+          "wins": 2,
+          "draws": 1,
+          "tags": 56,
+          "saves": 15,
+          "lifts": 23,
+          "captures": 9,
+          "carried": 1653,
+          "points": 455,
+          "best_points": 32
+        },
+        "dorfkrimi": {
+          "games": 22,
+          "wins": 4,
+          "wins_wilderer": 5,
+          "wins_gendarm": 1,
+          "arrests": 3,
+          "stuns": 1,
+          "clues": 112,
+          "points": 609,
+          "best_points": 24
+        },
+        "baumeister": {
+          "games": 52,
+          "wins": 10,
+          "podiums": 2,
+          "points": 265,
+          "votes_given": 264,
+          "masterworks": 5,
+          "blocks": 47307,
+          "games_klassisch": 28,
+          "games_schnell": 12,
+          "games_paare": 12,
+          "best_score": 379,
+          "best_points": 46
         }
       }
     },
@@ -920,6 +1162,20 @@
           "tournaments_won": 4,
           "heaviest_g": 7464,
           "species": 6
+        },
+        "baumeister": {
+          "games": 45,
+          "wins": 2,
+          "podiums": 18,
+          "points": 187,
+          "votes_given": 328,
+          "masterworks": 40,
+          "blocks": 17840,
+          "games_klassisch": 24,
+          "games_schnell": 14,
+          "games_paare": 7,
+          "best_score": 357,
+          "best_points": 64
         }
       }
     },
@@ -961,6 +1217,29 @@
           "tournaments_won": 5,
           "heaviest_g": 21721,
           "species": 13
+        },
+        "maibaumklau": {
+          "games": 24,
+          "wins": 11,
+          "draws": 1,
+          "tags": 42,
+          "saves": 1,
+          "lifts": 23,
+          "captures": 7,
+          "carried": 1658,
+          "points": 1076,
+          "best_points": 34
+        },
+        "dorfkrimi": {
+          "games": 41,
+          "wins": 15,
+          "wins_wilderer": 4,
+          "wins_gendarm": 7,
+          "arrests": 1,
+          "stuns": 14,
+          "clues": 101,
+          "points": 283,
+          "best_points": 22
         }
       }
     },
@@ -1024,6 +1303,31 @@
           "medals": 2,
           "eagles": 1,
           "time_gletscherspalte_ms": 43164
+        },
+        "dorfkrimi": {
+          "games": 36,
+          "wins": 12,
+          "wins_wilderer": 6,
+          "wins_gendarm": 3,
+          "arrests": 5,
+          "stuns": 19,
+          "clues": 8,
+          "points": 822,
+          "best_points": 33
+        },
+        "baumeister": {
+          "games": 45,
+          "wins": 1,
+          "podiums": 11,
+          "points": 692,
+          "votes_given": 136,
+          "masterworks": 35,
+          "blocks": 17145,
+          "games_klassisch": 21,
+          "games_schnell": 18,
+          "games_paare": 6,
+          "best_score": 456,
+          "best_points": 50
         }
       }
     },
@@ -1081,6 +1385,32 @@
           "tournaments_won": 2,
           "heaviest_g": 2225,
           "species": 17
+        },
+        "maibaumklau": {
+          "games": 31,
+          "wins": 4,
+          "draws": 1,
+          "tags": 43,
+          "saves": 13,
+          "lifts": 11,
+          "captures": 7,
+          "carried": 432,
+          "points": 1142,
+          "best_points": 26
+        },
+        "baumeister": {
+          "games": 24,
+          "wins": 8,
+          "podiums": 3,
+          "points": 560,
+          "votes_given": 287,
+          "masterworks": 28,
+          "blocks": 58076,
+          "games_klassisch": 19,
+          "games_schnell": 2,
+          "games_paare": 3,
+          "best_score": 429,
+          "best_points": 38
         }
       }
     },
@@ -1135,6 +1465,17 @@
           "tournaments_won": 0,
           "heaviest_g": 4904,
           "species": 15
+        },
+        "dorfkrimi": {
+          "games": 40,
+          "wins": 19,
+          "wins_wilderer": 3,
+          "wins_gendarm": 7,
+          "arrests": 0,
+          "stuns": 9,
+          "clues": 38,
+          "points": 248,
+          "best_points": 15
         }
       }
     },
@@ -1200,6 +1541,43 @@
           "survived": 2,
           "whistles": 115,
           "best_points": 47
+        },
+        "maibaumklau": {
+          "games": 60,
+          "wins": 30,
+          "draws": 3,
+          "tags": 48,
+          "saves": 10,
+          "lifts": 6,
+          "captures": 0,
+          "carried": 1144,
+          "points": 281,
+          "best_points": 53
+        },
+        "dorfkrimi": {
+          "games": 48,
+          "wins": 24,
+          "wins_wilderer": 0,
+          "wins_gendarm": 0,
+          "arrests": 1,
+          "stuns": 15,
+          "clues": 95,
+          "points": 368,
+          "best_points": 34
+        },
+        "baumeister": {
+          "games": 26,
+          "wins": 0,
+          "podiums": 8,
+          "points": 649,
+          "votes_given": 470,
+          "masterworks": 14,
+          "blocks": 58841,
+          "games_klassisch": 9,
+          "games_schnell": 5,
+          "games_paare": 12,
+          "best_score": 466,
+          "best_points": 31
         }
       }
     },
@@ -1269,6 +1647,20 @@
           "tournaments_won": 6,
           "heaviest_g": 14522,
           "species": 9
+        },
+        "baumeister": {
+          "games": 56,
+          "wins": 3,
+          "podiums": 14,
+          "points": 159,
+          "votes_given": 428,
+          "masterworks": 34,
+          "blocks": 5920,
+          "games_klassisch": 30,
+          "games_schnell": 14,
+          "games_paare": 12,
+          "best_score": 348,
+          "best_points": 64
         }
       }
     },
@@ -1306,6 +1698,29 @@
           "time_klammflug_ms": 76480,
           "time_burgruine_ms": 57054,
           "time_gletscherspalte_ms": 61885
+        },
+        "maibaumklau": {
+          "games": 24,
+          "wins": 6,
+          "draws": 2,
+          "tags": 49,
+          "saves": 17,
+          "lifts": 18,
+          "captures": 6,
+          "carried": 1711,
+          "points": 95,
+          "best_points": 53
+        },
+        "dorfkrimi": {
+          "games": 27,
+          "wins": 3,
+          "wins_wilderer": 6,
+          "wins_gendarm": 0,
+          "arrests": 10,
+          "stuns": 23,
+          "clues": 115,
+          "points": 351,
+          "best_points": 25
         }
       }
     },
@@ -1371,6 +1786,31 @@
           "time_klammflug_ms": 49347,
           "time_gipfelkreuz_ms": 63372,
           "time_stollenflug_ms": 86412
+        },
+        "dorfkrimi": {
+          "games": 26,
+          "wins": 3,
+          "wins_wilderer": 2,
+          "wins_gendarm": 2,
+          "arrests": 8,
+          "stuns": 7,
+          "clues": 68,
+          "points": 350,
+          "best_points": 29
+        },
+        "baumeister": {
+          "games": 19,
+          "wins": 0,
+          "podiums": 7,
+          "points": 417,
+          "votes_given": 400,
+          "masterworks": 12,
+          "blocks": 33642,
+          "games_klassisch": 6,
+          "games_schnell": 10,
+          "games_paare": 3,
+          "best_score": 393,
+          "best_points": 38
         }
       }
     },
@@ -1404,6 +1844,32 @@
           "tournaments_won": 5,
           "heaviest_g": 11456,
           "species": 17
+        },
+        "maibaumklau": {
+          "games": 21,
+          "wins": 10,
+          "draws": 1,
+          "tags": 42,
+          "saves": 2,
+          "lifts": 13,
+          "captures": 7,
+          "carried": 2212,
+          "points": 875,
+          "best_points": 69
+        },
+        "baumeister": {
+          "games": 35,
+          "wins": 8,
+          "podiums": 5,
+          "points": 268,
+          "votes_given": 350,
+          "masterworks": 34,
+          "blocks": 22781,
+          "games_klassisch": 19,
+          "games_schnell": 6,
+          "games_paare": 10,
+          "best_score": 426,
+          "best_points": 48
         }
       }
     },
@@ -1463,6 +1929,17 @@
           "eagles": 3,
           "time_klammflug_ms": 68729,
           "time_burgruine_ms": 65585
+        },
+        "dorfkrimi": {
+          "games": 32,
+          "wins": 3,
+          "wins_wilderer": 4,
+          "wins_gendarm": 3,
+          "arrests": 2,
+          "stuns": 22,
+          "clues": 24,
+          "points": 856,
+          "best_points": 22
         }
       }
     },
@@ -1516,6 +1993,43 @@
           "tournaments_won": 5,
           "heaviest_g": 10941,
           "species": 15
+        },
+        "maibaumklau": {
+          "games": 35,
+          "wins": 12,
+          "draws": 3,
+          "tags": 69,
+          "saves": 4,
+          "lifts": 9,
+          "captures": 3,
+          "carried": 2080,
+          "points": 593,
+          "best_points": 52
+        },
+        "dorfkrimi": {
+          "games": 18,
+          "wins": 7,
+          "wins_wilderer": 0,
+          "wins_gendarm": 1,
+          "arrests": 5,
+          "stuns": 15,
+          "clues": 14,
+          "points": 500,
+          "best_points": 17
+        },
+        "baumeister": {
+          "games": 36,
+          "wins": 2,
+          "podiums": 3,
+          "points": 403,
+          "votes_given": 87,
+          "masterworks": 18,
+          "blocks": 24267,
+          "games_klassisch": 19,
+          "games_schnell": 14,
+          "games_paare": 3,
+          "best_score": 495,
+          "best_points": 59
         }
       }
     },
@@ -1573,6 +2087,20 @@
           "tournaments_won": 5,
           "heaviest_g": 11335,
           "species": 15
+        },
+        "baumeister": {
+          "games": 21,
+          "wins": 4,
+          "podiums": 5,
+          "points": 492,
+          "votes_given": 492,
+          "masterworks": 20,
+          "blocks": 39669,
+          "games_klassisch": 13,
+          "games_schnell": 6,
+          "games_paare": 2,
+          "best_score": 431,
+          "best_points": 70
         }
       }
     },
@@ -1615,6 +2143,29 @@
           "tournaments_won": 4,
           "heaviest_g": 6886,
           "species": 9
+        },
+        "maibaumklau": {
+          "games": 17,
+          "wins": 5,
+          "draws": 0,
+          "tags": 88,
+          "saves": 20,
+          "lifts": 24,
+          "captures": 12,
+          "carried": 1104,
+          "points": 565,
+          "best_points": 33
+        },
+        "dorfkrimi": {
+          "games": 19,
+          "wins": 7,
+          "wins_wilderer": 6,
+          "wins_gendarm": 6,
+          "arrests": 6,
+          "stuns": 8,
+          "clues": 15,
+          "points": 375,
+          "best_points": 27
         }
       }
     },
@@ -1624,7 +2175,34 @@
       "playMinutes": 7000,
       "firstSeenDaysAgo": 33,
       "lastSeenMinutesAgo": 20,
-      "private": true
+      "private": true,
+      "modes": {
+        "dorfkrimi": {
+          "games": 47,
+          "wins": 8,
+          "wins_wilderer": 2,
+          "wins_gendarm": 0,
+          "arrests": 0,
+          "stuns": 18,
+          "clues": 79,
+          "points": 121,
+          "best_points": 26
+        },
+        "baumeister": {
+          "games": 47,
+          "wins": 13,
+          "podiums": 20,
+          "points": 365,
+          "votes_given": 402,
+          "masterworks": 19,
+          "blocks": 31447,
+          "games_klassisch": 24,
+          "games_schnell": 17,
+          "games_paare": 6,
+          "best_score": 341,
+          "best_points": 56
+        }
+      }
     }
   ],
   "apply": {

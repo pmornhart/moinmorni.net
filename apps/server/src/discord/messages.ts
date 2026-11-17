@@ -62,6 +62,9 @@ const MODE_COLOURS: Readonly<Record<string, string>> = {
   wintersport: '#cfe6ff',
   adlerflug: '#f070dc',
   angelkoenig: '#5b93ff',
+  maibaumklau: '#d9944e',
+  dorfkrimi: '#c7b8ff',
+  baumeister: '#ff8a5c',
 };
 
 const MODE_ICON: Readonly<Record<Mode['state'], string>> = {

@@ -120,8 +120,8 @@ describe('Dorfmarkt und Schlossmarkt', () => {
   });
 
   it('zwischen den Ständen schwebt kein Brett mehr (Philip), kein Topf steht neben einer Figur', () => {
-    const gaps = SCHLOSSMARKT.slice(0, -2).map((s) => s.x + Math.sign(s.x) * 5);
-    expect(gaps.sort((a, b) => a - b)).toEqual([-35, -25, 25, 35]);
+    const gaps = SCHLOSSMARKT.slice(0, -2).map((s) => s.x + Math.sign(s.x) * 4);
+    expect(gaps.sort((a, b) => a - b)).toEqual([-38, -30, -22, 22, 30, 38]);
     gaps.forEach((x) =>
       range(-34, -31).forEach((z) => {
         const knee = canvas.get(x, GROUND + 1, z);

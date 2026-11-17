@@ -43,14 +43,14 @@ import {
   type TopPlayer,
 } from '~/lib/site';
 import { useNetworkStatus } from '~/lib/status';
-import { useLanguage, usePick } from '~/lib/text';
+import { usePick } from '~/lib/text';
 import { useTimeText } from '~/lib/time';
 import { modeArt } from './art';
 import { ModeFigure, modeStyle } from './cards';
 import { Chip, Cmd, EmptyState, GameButton, LiveDot, LoadError, Panel, RankTag } from './kit';
 import { PageHero } from './page-hero';
 import { usePageTitle, WRAP } from './parts';
-import { formatTime, MODE_PARAM, NUMBER_LOCALE, readable, TIME_SUFFIX, useStatText } from './stat-format';
+import { MODE_PARAM, readable, useStatText } from './stat-format';
 import { groupStats, SubjectPicker, SubjectTable, WIDE_FROM_KINDS } from './stat-groups';
 
 /** Longest name the API takes (Bedrock names carry a dot in front). */
@@ -467,7 +467,12 @@ function ModeBoards(): ReactElement | null {
         {top.isSuccess ? (
           <ol className="grid divide-y-2 divide-border">
             {entries.map((e) => (
-              <ModeRow key={e.uuid} entry={e} share={shareOf(e.value)} value={show(key.key, e.value)} />
+              <ModeRow
+                key={e.uuid}
+                entry={e}
+                share={shareOf(e.value)}
+                value={show(key.key, e.value, board.mode)}
+              />
             ))}
           </ol>
         ) : null}
@@ -501,10 +506,7 @@ function ModeStats({ stats }: { readonly stats: NonNullable<PublicProfile['modes
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
   const stat = useStatText();
-  const language = useLanguage();
   const status = useNetworkStatus();
-  const locale = NUMBER_LOCALE[language];
-  const number = new Intl.NumberFormat(locale);
   const entries = Object.entries(stats).filter(([, values]) => Object.keys(values).length);
   if (!entries.length) return null;
   return (
@@ -548,9 +550,7 @@ function ModeStats({ stats }: { readonly stats: NonNullable<PublicProfile['modes
                       {stat.label(key, modeId)}
                     </dt>
                     <dd className="tabular font-pixel text-[1.5rem] font-bold leading-none">
-                      {key.endsWith(TIME_SUFFIX)
-                        ? formatTime(values[key] ?? 0, locale)
-                        : number.format(values[key] ?? 0)}
+                      {stat.value(key, values[key] ?? 0, modeId)}
                     </dd>
                   </div>
                 ))}

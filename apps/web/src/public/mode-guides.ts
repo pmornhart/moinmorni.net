@@ -187,6 +187,61 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
       { key: 'top', syntax: '/top' },
     ],
   },
+  maibaumklau: {
+    tips: 3,
+    commands: [
+      {
+        key: 'karte',
+        syntax: { de: '/karte [bachdoerfer|almdoerfer]', en: '/map [bachdoerfer|almdoerfer]' },
+      },
+      { key: 'bereit', syntax: { de: '/bereit', en: '/ready' } },
+      { key: 'top', syntax: '/top' },
+    ],
+    more: [
+      { key: 'zuschauen', syntax: { de: '/zuschauen [name]', en: '/spectate [name]' } },
+      { key: 'verlassen', syntax: { de: '/verlassen', en: '/leave' } },
+      { key: 'stats', syntax: '/stats [name]' },
+    ],
+    // `moinmorni.maibaumklau.admin` comes with the game right "manage game modes" (Rights.java).
+    team: [{ key: 'admin', syntax: '/maibaumadmin status', right: 'modes-admin' }],
+  },
+  dorfkrimi: {
+    tips: 3,
+    commands: [
+      { key: 'notizbuch', syntax: { de: '/notizbuch', en: '/notes' } },
+      { key: 'abstimmen', syntax: { de: '/abstimmen', en: '/vote' } },
+      {
+        key: 'karte',
+        syntax: { de: '/karte [oberdorf|almwirtschaft]', en: '/map [oberdorf|almwirtschaft]' },
+      },
+      { key: 'bereit', syntax: { de: '/bereit', en: '/ready' } },
+    ],
+    more: [
+      { key: 'bank', syntax: { de: '/bank', en: '/bench' } },
+      { key: 'zuschauen', syntax: { de: '/zuschauen [name]', en: '/spectate [name]' } },
+      { key: 'verlassen', syntax: { de: '/verlassen', en: '/leave' } },
+      { key: 'stats', syntax: '/stats [name]' },
+      { key: 'top', syntax: '/top' },
+    ],
+    team: [{ key: 'admin', syntax: '/krimiadmin status', right: 'modes-admin' }],
+  },
+  baumeister: {
+    tips: 3,
+    commands: [
+      { key: 'thema', syntax: { de: '/thema [1|2|3]', en: '/theme [1|2|3]' } },
+      { key: 'werkzeug', syntax: { de: '/werkzeug', en: '/tools' } },
+      { key: 'bewerten', syntax: { de: '/bewerten <1–5>', en: '/rate <1–5>' } },
+      { key: 'spielart', syntax: '/spielart [klassisch|schnell|paare]' },
+    ],
+    more: [
+      { key: 'bereit', syntax: { de: '/bereit', en: '/ready' } },
+      { key: 'zuschauen', syntax: { de: '/zuschauen [name]', en: '/spectate [name]' } },
+      { key: 'verlassen', syntax: { de: '/verlassen', en: '/leave' } },
+      { key: 'stats', syntax: '/stats [name]' },
+      { key: 'top', syntax: '/top' },
+    ],
+    team: [{ key: 'admin', syntax: '/baumeisteradmin status', right: 'modes-admin' }],
+  },
 };
 
 /** The spelling of a mode command in the reader's language. */

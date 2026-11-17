@@ -236,6 +236,48 @@ export const DEFAULT_MODES: readonly Mode[] = [
     sleepWhenEmpty: false,
     server: 'angelkoenig',
   },
+  {
+    id: 'maibaumklau',
+    name: t('Maibaumklau', 'Maypole Raid'),
+    description: t(
+      'Zwei Dörfer, zwei Maibäume: Den fremden Baum umlegen und heimtragen, den eigenen bewachen – ganz ohne Waffen. Für 2–16.',
+      'Two villages, two maypoles: knock over the other village’s pole and carry it home while guarding your own – no weapons at all. For 2–16.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 12,
+    maxPlayers: 48,
+    sleepWhenEmpty: false,
+    server: 'maibaumklau',
+  },
+  {
+    id: 'dorfkrimi',
+    name: t('Dorfkrimi', 'Village Mystery'),
+    description: t(
+      'Im Dorf treibt ein Wilderer sein Unwesen – Spuren finden, Dorfversammlung rufen, den Richtigen festnehmen. Geheime Rollen für 4–16.',
+      'A poacher is up to no good in the village – find clues, call a village meeting, arrest the right one. Secret roles for 4–16.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 13,
+    maxPlayers: 48,
+    sleepWhenEmpty: false,
+    server: 'dorfkrimi',
+  },
+  {
+    id: 'baumeister',
+    name: t('Baumeister', 'Master Builder'),
+    description: t(
+      'Ein Thema, eine Parzelle – die Zeit läuft! Baut um die Wette und bewertet die Bauten der anderen. Für 2–16, allein oder zu zweit.',
+      'One theme, one plot – the clock is ticking! Build against each other and rate everyone else’s builds. For 2–16, solo or in pairs.',
+    ),
+    state: 'on',
+    access: 'everyone',
+    position: 14,
+    maxPlayers: 48,
+    sleepWhenEmpty: false,
+    server: 'baumeister',
+  },
 ];
 
 /**
@@ -256,6 +298,9 @@ export const MODE_REPOS: Readonly<Record<string, string>> = {
   wintersport: 'pmornhart/morni-wintersport',
   adlerflug: 'pmornhart/morni-adlerflug',
   angelkoenig: 'pmornhart/morni-angelkoenig',
+  maibaumklau: 'pmornhart/morni-maibaumklau',
+  dorfkrimi: 'pmornhart/morni-dorfkrimi',
+  baumeister: 'pmornhart/morni-baumeister',
 };
 
 /**
@@ -277,18 +322,26 @@ export const MODE_JARS: Readonly<Record<string, string>> = {
   wintersport: 'Morni-Wintersport.jar',
   adlerflug: 'Morni-Adlerflug.jar',
   angelkoenig: 'Morni-Angelkoenig.jar',
+  maibaumklau: 'Morni-Maibaumklau.jar',
+  dorfkrimi: 'Morni-Dorfkrimi.jar',
+  baumeister: 'Morni-Baumeister.jar',
 };
 
 /**
  * Arbeitsspeicher der Modus-Server in MB, wo der Standard (1,5 GB) nicht reicht: MorniSMP und MorniCraft haben große
- * Welten, Morni Party baut große Spielbretter. So laufen alle Server zugleich in einem Container mit 32 GB:
- * Proxy 1 + Lobby 3 + Wartungs-Lobby 0,75 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + neun Modi je 1,5 =
- * 27,75 GB, dazu Luft für Java selbst. Im Panel je Server änderbar.
+ * Welten, Morni Party baut große Spielbretter; die drei Modi vom 17.11. (Maibaumklau, Dorfkrimi, Baumeister) haben
+ * kleine Welten und bekommen 1 GB, damit weiter alle Server zugleich in einen Container mit 32 GB passen:
+ * Proxy 1 + Lobby 3 + Wartungs-Lobby 0,75 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + neun Modi je 1,5 +
+ * drei Modi je 1 = 30,75 GB. Im Leerlauf (Ruhezustand) braucht ein leerer Modus nur etwa 0,7–0,9 GB; reicht der
+ * Speicher beim Start trotzdem nicht, schlafen leere Modi zuerst (`sleep.makeRoom`). Im Panel je Server änderbar.
  */
 export const MODE_MEMORY_MB: Readonly<Record<string, number>> = {
   mirni: 3072,
   mornicraft: 3072,
   party: 2048,
+  maibaumklau: 1024,
+  dorfkrimi: 1024,
+  baumeister: 1024,
 };
 
 /** Was Webseite, Lobby und Discord über einen Modus zeigen. */
@@ -340,6 +393,9 @@ export const MODE_HEADLINE_STATS: Readonly<Record<string, string>> = {
   wintersport: 'gold',
   adlerflug: 'finishes',
   angelkoenig: 'heaviest_g',
+  maibaumklau: 'captures',
+  dorfkrimi: 'wins',
+  baumeister: 'wins',
 };
 
 export interface NetworkStatus {

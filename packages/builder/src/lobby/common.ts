@@ -191,6 +191,43 @@ export const MODES: readonly Mode[] = [
       'potted_blue_orchid',
     ],
   },
+  {
+    id: 'maibaumklau',
+    name: 'Maibaumklau',
+    colour: 'brown',
+    line: '● 10 spielen',
+    status: 'Rechtsklick: Mitspielen',
+    skin: 'maibaumklau',
+    icon: 'iron_axe',
+    tint: '#d9944e',
+    holds: { hand: 'iron_axe', offhand: 'lead' },
+    // Töpfe außen (neben der Figur verdeckten sie ihr Gesicht)
+    goods: ['potted_cornflower', 'stripped_birch_log[axis=x]', 'hay_block', 'barrel[facing=up]'],
+  },
+  {
+    id: 'dorfkrimi',
+    name: 'Dorfkrimi',
+    colour: 'black',
+    line: '● 8 spielen',
+    status: 'Rechtsklick: Mitspielen',
+    skin: 'dorfkrimi',
+    icon: 'brush',
+    tint: '#c7b8ff',
+    holds: { hand: 'brush', offhand: 'writable_book' },
+    goods: ['lantern', 'chiseled_bookshelf', 'bell[attachment=floor,facing=south]', 'potted_dead_bush'],
+  },
+  {
+    id: 'baumeister',
+    name: 'Baumeister',
+    colour: 'white',
+    line: '● 6 spielen',
+    status: 'Rechtsklick: Mitspielen',
+    skin: 'baumeister',
+    icon: 'bricks',
+    tint: '#ff8a5c',
+    holds: { hand: 'brick', offhand: 'iron_shovel' },
+    goods: ['bricks', 'scaffolding', 'crafting_table', 'potted_oak_sapling'],
+  },
 ];
 
 /** 0 innerhalb von `from`, 1 ab `to`, weich dazwischen. */

@@ -421,8 +421,34 @@
   28/31: Sommerpause-Schild kam zu spät, bekannt). Bilder mit Client 26.3 nur lokal (vorher/nachher, 3 und 15
   Blöcke, mit/ohne Paket, Tag/Nacht).
 
+- 17.11. abends: **Drei neue Modi im Netzwerk** (Maibaumklau, Dorfkrimi, Baumeister; Branch `claude/neue-modi-netz`,
+  wie die fünf vom 16.11.): `DEFAULT_MODES`, `MODE_REPOS` (`pmornhart/morni-maibaumklau`, `-dorfkrimi`,
+  `-baumeister`), `MODE_JARS`, `MODE_MEMORY_MB` je 1 GB (kleine Welten; alle 18 Server zusammen 30,75 GB),
+  Hauptwert der Bestenliste (Maibaumklau `captures`, Dorfkrimi und Baumeister `wins`). **Einstellungs-Katalog** mit
+  allen Schlüsseln der config.yml außer `welt` samt „Zurück ins Spiel“ (`/maibaumconfig` 19, `/krimiconfig` 21 –
+  `runde.zwei-wilderer-ab` 4–17, 17 = nie –, `/baumeisterconfig` 22 – Parzelle nur gerade 16–40, gesperrte/erlaubte
+  Wörter als Listen), Kopien der config.yml in `packages/shared/test/mode-configs/` (gleich wie auf
+  `claude/erster-stand` der Repos). **Statistik** de/en (`stat-keys.ts`; Baumeister `best_score` als Sterne „4,50“,
+  Spielarten klassisch/schnell/zu zweit als Tabelle im Profil). **Webseite**: Modus-Seiten mit „So wird gespielt“ und
+  Befehlen (`mode-guides.ts`), Befehle-Seite, Kompass-Symbole (Tanne, Lupe, Mauer) und Modusfarben, Demo.
+  **Lobby**: Figuren im Kostüm-Stil (`figuren.ts`, Tabelle in `docs/lobby.md`) – Maibaum-Bursch mit Federhut samt
+  Maibaum-Kranz und weiß-blauen Bändern, grün-weißer Schärpe, Seil, Axt; Kommissar mit Jägerhut und Gamsbart,
+  Lodenmantel, rotem Halstuch, Pinsel und Notizbuch; Baumeisterin mit Zimmermannshut, schwarzer Kluft, Zollstock,
+  Ziegel – über MineSkin signiert. Schlossmarkt jetzt mit acht Ständen (8 Blöcke Abstand, innen nicht näher als x ±18
+  wegen der Launchpads), die Blumenfrau verkauft am westlichen Marktkarren, sobald alle Stände besetzt sind; der
+  Weihnachtsmarkt hängt keine Kette zwischen fast aneinanderstoßende Markisen. Webseiten-Bilder `figur-maibaumklau`,
+  `figur-dorfkrimi`, `figur-baumeister` und `gruppe.webp` (jetzt alle fünfzehn) aus dem echten Client 26.3,
+  freigestellt wie die anderen. Tests: 116 shared/Katalog-, 117 Baukasten- (Bauplan-Prüfung ohne Funde), 272 Server-,
+  65 JUnit, Typen, Prettier, Web- und Demo-Bau. Echt: Paper 26.1.2 + Netzwerk-Plugin + Test-Hub, Lobby mit dem echten
+  Selbstbau neu gebaut (152 s), `schlossmarkt-test` **37/37** (fünfzehn Figuren je einmal, acht am Schlossmarkt,
+  Kompass-Menü mit fünfzehn Modi in fünf Reihen; erster Lauf 34/37: das Sommerpause-Schild kam zu spät beim
+  Test-Spieler an, auf dem Server stand es richtig), `lobby-test` **34/34** (ein Lauf davor 33/34, weil der frische
+  Test-Server noch mit `allow-flight=false` lief – die Lobby setzt es erst für den nächsten Start). Bilder mit Client
+  26.3 nur lokal.
+
 ## Offen
 
+- **Neue Modi (17.11. abends):** Maibaumklau, Dorfkrimi und Baumeister bekommen ihren Server erst, wenn ihr Repo ein Release hat (heute nur Branch `claude/erster-stand`, Philips Go). Die Figuren-Bilder der Webseite zeigen die drei neuen Kostüme; im Spiel nicht mit echten Spielern ausprobiert.
 - **Bauplan-Prüfung:** keine offenen Funde mehr (`packages/builder/test/pruefung-offen.ts` leer) – Schloss, Schlosstreppe, Schlossmarkt und alle Saisons samt ihrer Blöcke (17.11.).
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
 - MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).

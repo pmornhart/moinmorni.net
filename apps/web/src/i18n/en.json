@@ -379,6 +379,32 @@
         },
         "mirni": {
           "balance": "Coins in the bank"
+        },
+        "maibaumklau": {
+          "tags": "Caught",
+          "saves": "Poles saved",
+          "lifts": "Maypoles knocked over",
+          "captures": "Maypoles brought home",
+          "carried": "Blocks carried with the pole",
+          "best_points": "Most points in a round"
+        },
+        "dorfkrimi": {
+          "wins_wilderer": "Wins as poacher",
+          "wins_gendarm": "Wins as constable",
+          "arrests": "Poachers caught",
+          "stuns": "Stunned",
+          "clues": "Clues found",
+          "best_points": "Most points in a round"
+        },
+        "baumeister": {
+          "subjectHead": "Game type",
+          "podiums": "On the podium",
+          "points": "Stars received",
+          "votes_given": "Builds rated",
+          "masterworks": "Masterworks",
+          "blocks": "Blocks placed",
+          "best_score": "Best rating (stars)",
+          "best_points": "Most stars in a round"
         }
       },
       "courses": {
@@ -414,6 +440,11 @@
       "coursesIn": {
         "gipfelsturm": {
           "gipfelkreuz": "Summit Cross Sprint"
+        },
+        "baumeister": {
+          "klassisch": "Classic",
+          "schnell": "Quick",
+          "paare": "In pairs"
         }
       }
     },
@@ -823,6 +854,54 @@
           "fischbuch": "What you have caught so far.",
           "turnier": "When the next tournament is.",
           "top": "Leaderboards."
+        }
+      },
+      "maibaumklau": {
+        "tip1": "Two villages, two maypoles: stand at the other village’s pole and knock it over – faster with two or three, and every guard at the pole holds one of you up.",
+        "tip2": "Carry the pole home together: alone you are slow, everyone from your village walking along makes you faster. Touch a carrier to save the pole.",
+        "tip3": "No weapons at all: on your own half you catch thieves with a single hit. Sprint snack, hay jump and ladders help – all free.",
+        "cmd": {
+          "karte": "Vote for the map.",
+          "bereit": "Say you are ready.",
+          "top": "The best maypole thieves.",
+          "zuschauen": "Watch a round.",
+          "verlassen": "Leave a round or stop watching.",
+          "stats": "Your stats – or someone else’s.",
+          "admin": "State of the rounds (team)."
+        }
+      },
+      "dorfkrimi": {
+        "tip1": "Everyone gets a secret role: poacher, constable or villager. Names are hidden – you recognise each other by your outfit.",
+        "tip2": "Clues and feathers reveal something about the poacher’s outfit. The notebook shows who fits.",
+        "tip3": "Ring the bell to call a village meeting: everyone votes on who gets arrested. Anyone stunned sits on the bench outside the inn.",
+        "cmd": {
+          "notizbuch": "Notebook with everyone and their outfit.",
+          "abstimmen": "Ballot of the village meeting.",
+          "karte": "Vote for the map.",
+          "bereit": "Say you are ready.",
+          "bank": "Out: back to the bench.",
+          "zuschauen": "Watch a round.",
+          "verlassen": "Leave a round or stop watching.",
+          "stats": "Your stats – or someone else’s.",
+          "top": "The best village detectives.",
+          "admin": "State of the rounds (team)."
+        }
+      },
+      "baumeister": {
+        "tip1": "Vote for the theme – then everyone gets their own plot and builds in creative mode until time is up.",
+        "tip2": "In the toolbox: floor, time of day and weather of your plot, heads, banners – and with the folding rule fill, replace and clear.",
+        "tip3": "Afterwards everyone rates the other builds with 1 to 5 stars. Who built what is only revealed at the award ceremony, so ratings stay fair.",
+        "cmd": {
+          "thema": "Open the theme vote or vote.",
+          "werkzeug": "Open the toolbox.",
+          "bewerten": "Rate the build being shown.",
+          "spielart": "Vote for the game type.",
+          "bereit": "Say you are ready.",
+          "zuschauen": "Watch a round.",
+          "verlassen": "Leave a round or stop watching.",
+          "stats": "Your stats – or someone else’s.",
+          "top": "The best master builders.",
+          "admin": "State of the rounds (team)."
         }
       }
     },

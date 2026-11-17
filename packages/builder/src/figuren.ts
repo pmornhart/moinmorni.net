@@ -1,6 +1,6 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- pixel art: colours and pixel rows of the costumes */
 /**
- * Die zwölf Modus-Figuren der Lobby (17.11., Philip: „komplett überarbeiten, passender und schöner“). Jede Figur
+ * Die Modus-Figuren der Lobby (17.11., Philip: „komplett überarbeiten, passender und schöner“). Jede Figur
  * erkennt man an Umriss (Kopfbedeckung, 3D-Teile), Hauptfarbe (= Farbe des Modus), Kostüm und Gegenstand:
  *
  * | Figur       | Kostüm                                                                 |
@@ -17,6 +17,9 @@
  * | Wintersport | Skifahrerin: Bommelmütze, Skibrille, Rennanzug mit Startnummer, Ski    |
  * | Adlerflug   | Flieger: Fliegerhaube, Overall, weißer Schal, große Adlerschwingen     |
  * | Angelkönig  | Fischer: Fischerhut mit Krone, Anglerweste, Wathose, Angel und Fisch   |
+ * | Maibaumklau | Bursch: Hut mit Maibaum-Kranz, grün-weiße Schärpe, Seil, Axt           |
+ * | Dorfkrimi   | Kommissar: Jägerhut mit Gamsbart, Lodenmantel, rotes Halstuch, Pinsel  |
+ * | Baumeister  | Baumeisterin: Zimmermannshut, schwarze Kluft, Zollstock, Ziegel        |
  *
  * Ohne Lobby-Paket (und auf Bedrock) trägt der Skin alles allein: Hüte, Umhänge, Schals und Seile sind gemalt (zweite
  * Ebene), das Paket gibt nur dazu, was absteht (`trachten.ts`).
@@ -596,6 +599,125 @@ const angelkoenig: Outfit = {
   },
 };
 
+const LEDER = 0x6b4426;
+const SASH_GREEN = 0x2f9a3e;
+const maibaumklau: Outfit = {
+  skin: SKIN.warm,
+  hair: HAIR.blond,
+  hairStyle: 'short',
+  eyes: EYES.blue,
+  hat: { kind: 'kranzhut', colour: 0x3e5a34, accent: SASH_GREEN },
+  top: { colour: WHITE, sleeves: 'long', accent: 0xffffff },
+  vest: 0xb0682e,
+  bottom: { kind: 'lederhose', colour: LEDER },
+  socks: WHITE,
+  shoes: 0x3a2a1e,
+  gear: { rope: 0xc8a66a },
+  costume: {
+    base: (part, face, x, y) => {
+      // hochgekrempelte Ärmel: Unterarm Haut
+      if (isArm(part) && vertical(face) && y >= 6 && y < 9) return y === 6 ? cloth(0xe8e2d4) : SKIN.warm;
+      // Hosenträger-Steg der Lederhose mit Edelweiß (unter der Weste sichtbar)
+      if (part === 'body' && face === 'front' && y === 7 && x > 2 && x < 5) return 0xf2f2f2;
+      return undefined;
+    },
+    overlay: layers(
+      // grün-weiße Schärpe von der rechten Schulter
+      sash(SASH_GREEN, 0xf2efe6, 'right', 9),
+      // Seil über der linken Schulter (zur Rolle auf dem Rücken)
+      (part, face, x, y) => {
+        if (part !== 'body') return undefined;
+        if (face === 'top' && x === 1) return cloth(0xc8a66a);
+        if (face === 'back' && x === 6 - y && y < 6) return cloth(y % 2 === 0 ? 0xc8a66a : 0x9a7a44);
+        return undefined;
+      },
+      // Kranz-Abzeichen an der Weste: kleiner Maibaum-Kranz
+      (part, face, x, y) =>
+        part === 'body' && face === 'front' && x === 6 && (y === 3 || y === 4)
+          ? [0x2f6b2a, 0xd8343a][y - 3]
+          : undefined,
+    ),
+  },
+};
+
+const LODEN = 0x3a3a44;
+const LODEN_GREEN = 0x3e5a3a;
+const NECKERCHIEF = 0xc0302a;
+const dorfkrimi: Outfit = {
+  skin: SKIN.light,
+  hair: HAIR.brown,
+  hairStyle: 'short',
+  eyes: EYES.green,
+  beard: 0x6a4630,
+  hat: { kind: 'jaegerhut', colour: 0x2f3a2c, accent: 0xc8b070 },
+  top: { colour: 0xe8e2d4, sleeves: 'long', accent: 0xffffff },
+  bottom: { kind: 'trousers', colour: 0x4a4038 },
+  shoes: 0x2b2622,
+  costume: {
+    base: layers(boots(0x2b2622, 0x4a3a2c, 7), gloves(0x5a3a22), (part, face, x, y) => {
+      // Lodenmantel: Ärmel und Körper, grüner Kragen
+      if (isArm(part) && vertical(face) && y < 9) return cloth(y === 8 ? LODEN_GREEN : LODEN);
+      if (part === 'body' && vertical(face)) {
+        if (face === 'front' && y < 2 && x > 1 && x < 6) return cloth(NECKERCHIEF); // Halstuch
+        if (face === 'front' && y === 2 && (x === 3 || x === 4)) return cloth(shade(NECKERCHIEF, 0.8));
+        if (y < 2) return cloth(LODEN_GREEN); // Kragen
+        if (face === 'front' && (x === 3 || x === 4) && y > 2) return y % 3 === 0 ? 0x9a8a6a : cloth(LODEN); // Hornknöpfe
+        return cloth((x + y) % 5 === 0 ? shade(LODEN, 1.12) : LODEN);
+      }
+      return undefined;
+    }),
+    overlay: layers(beltOver(0x2a1f1a, 0x9a8a6a), (part, face, x, y) => {
+      // Notizbuch und Bleistift in der Brusttasche
+      if (part === 'body' && face === 'front' && x === 1 && (y === 3 || y === 4))
+        return y === 3 ? 0xf2c230 : 0xe8e2d4;
+      // Mantelschöße bis übers Knie
+      if (isLeg(part) && (face === 'back' || outer(part, face)) && y < 6)
+        return cloth(y === 5 ? shade(LODEN, 0.75) : LODEN);
+      if (isLeg(part) && face === 'front' && y < 6 && (part === 'legR' ? x === 0 : x === 3))
+        return cloth(shade(LODEN, 0.9));
+      return undefined;
+    }),
+  },
+};
+
+const KLUFT = 0x26262c;
+const PEARL = 0xe8e8ec;
+const RULER = 0xf2c230;
+const baumeister: Outfit = {
+  skin: SKIN.fair,
+  hair: HAIR.red,
+  hairStyle: 'braids',
+  eyes: EYES.green,
+  hat: { kind: 'zimmerhut', colour: 0x1e1e22, accent: 0x3a3a40 },
+  top: { colour: WHITE, sleeves: 'long', accent: 0xffffff },
+  bottom: { kind: 'trousers', colour: KLUFT },
+  shoes: 0x2b2622,
+  costume: {
+    base: layers(gloves(0xc87a4a), (part, face, x, y) => {
+      // Kluft: schwarze Weste mit zwei Reihen Perlmuttknöpfen, Ärmel bis zum Ellbogen hochgekrempelt
+      if (part === 'body' && vertical(face) && y < 9) {
+        if (face === 'front' && x > 2 && x < 5 && y < 3) return cloth(WHITE); // Hemdkragen (Staude)
+        if (face === 'front' && (x === 2 || x === 5) && y > 1 && y % 2 === 0) return PEARL;
+        return cloth((x + y) % 2 === 0 ? KLUFT : shade(KLUFT, 1.15)); // Cord
+      }
+      // Schlaghose aus Cord, unten weit
+      if (isLeg(part) && vertical(face) && y < 11) return cloth(x % 2 === 0 ? KLUFT : shade(KLUFT, 1.15));
+      return undefined;
+    }),
+    overlay: (part, face, x, y) => {
+      // Zollstock in der Beintasche
+      if (part === 'legR' && face === 'right' && x === 2 && y > 0 && y < 6)
+        return y % 2 === 0 ? RULER : 0x2a2a2a;
+      // Ziegelroter Gürtel mit großer Schnalle
+      if (part === 'body' && vertical(face) && y === 9) {
+        if (face === 'front' && (x === 3 || x === 4)) return SILVER;
+        return cloth(0xb04a2a);
+      }
+      return undefined;
+    },
+  },
+};
+
 /** Die Modus-Figuren (Kennung des Modus → Kostüm). */
 export const MODE_FIGURES = {
   mornicraft,
@@ -610,4 +732,7 @@ export const MODE_FIGURES = {
   wintersport,
   adlerflug,
   angelkoenig,
+  maibaumklau,
+  dorfkrimi,
+  baumeister,
 } as const satisfies Readonly<Record<string, Outfit>>;

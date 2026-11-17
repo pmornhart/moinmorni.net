@@ -1009,6 +1009,62 @@ describe('Hub', () => {
     expect(
       hide.received.filter((m) => m.t === 'mode-settings').every((m) => m['mode'] === 'versteckerl'),
     ).toBe(true);
+    // Die drei Modi vom 17.11.: Maibaumklau (Kommazahl), Dorfkrimi, Baumeister (nur gerade Parzellen, Wortliste).
+    const maibaum = await plugin('maibaumklau', 'backend');
+    expect(await maibaum.next('mode-settings')).toMatchObject({
+      mode: 'maibaumklau',
+      plugin: 'MorniMaibaumklau',
+      values: { 'rueckkehr-sekunden': 90, 'maibaum.tempo-allein': 0.55, 'hilfen.leitern': 4 },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'maibaumconfig',
+      args: ['tempo', 'allein', '0,6'],
+    });
+    expect(await maibaum.next('mode-settings')).toMatchObject({ values: { 'maibaum.tempo-allein': 0.6 } });
+    const krimi = await plugin('dorfkrimi', 'backend');
+    expect(await krimi.next('mode-settings')).toMatchObject({
+      plugin: 'MorniDorfkrimi',
+      values: { 'runde.zwei-wilderer-ab': 10, 'versammlung.an': true },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'krimiconfig',
+      args: ['zwei-wilderer', '17'],
+    });
+    expect(await krimi.next('mode-settings')).toMatchObject({ values: { 'runde.zwei-wilderer-ab': 17 } });
+    const builder = await plugin('baumeister', 'backend');
+    expect(await builder.next('mode-settings')).toMatchObject({
+      plugin: 'MorniBaumeister',
+      values: {
+        'parzelle.groesse': 28,
+        'schutz.erlaubte-woerter': ['barsch', 'marsch', 'harsch', 'mongolei'],
+      },
+    });
+    // Ungerade Parzelle gibt es nicht.
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'baumeisterconfig',
+      args: ['parzelle', '27'],
+    });
+    expect(stores.settings('baumeister')['plotSize']).toBe(28);
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'baumeisterconfig',
+      args: ['parzelle', '32'],
+    });
+    expect(await builder.next('mode-settings')).toMatchObject({ values: { 'parzelle.groesse': 32 } });
+    expect(
+      [maibaum, krimi, builder].every((server, i) =>
+        server.received
+          .filter((m) => m.t === 'mode-settings')
+          .every((m) => m['mode'] === ['maibaumklau', 'dorfkrimi', 'baumeister'][i]),
+      ),
+    ).toBe(true);
     // Panel: nur Duels bekommt die neuen Werte.
     stores.patchSettings('duels', { timeLimit: 300, soupHeal: 6.5 }, 'test');
     expect(await duels.next('mode-settings')).toMatchObject({

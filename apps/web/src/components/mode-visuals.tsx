@@ -1,5 +1,6 @@
 import {
   Bird,
+  BrickWall,
   Castle,
   Cloud,
   Dices,
@@ -7,11 +8,13 @@ import {
   Fish,
   MountainSnow,
   Pickaxe,
+  Search,
   Shield,
   Snowflake,
   Sparkles,
   Sprout,
   Swords,
+  TreePine,
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
@@ -31,6 +34,9 @@ const MODE_ICONS: Readonly<Record<string, LucideIcon>> = {
   wintersport: Snowflake,
   adlerflug: Bird,
   angelkoenig: Fish,
+  maibaumklau: TreePine,
+  dorfkrimi: Search,
+  baumeister: BrickWall,
 };
 
 const TINTS = ['bg-accent text-primary', 'bg-gold-soft text-gold', 'bg-blue-soft text-blue'] as const;

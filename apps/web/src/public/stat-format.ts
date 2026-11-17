@@ -20,6 +20,9 @@ const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
 const MS_DIGITS = 3;
 const TWO_DIGITS = 2;
+/** Values sent in hundredths (Baumeister: average of the stars, 450 = 4.50 stars) – shown with a star. */
+const HUNDREDTHS: Readonly<Record<string, readonly string[]>> = { baumeister: ['best_score'] };
+const HUNDRED = 100;
 
 /** "1:23,456" (or "23,456 s" under a minute) for a time in milliseconds. */
 export function formatTime(ms: number, locale: string): string {
@@ -50,7 +53,8 @@ export function useStatText(): {
   readonly subject: (id: string, mode?: string) => string;
   /** Has the value its own name (then it is not split into kind and subject, e.g. "wins_hider")? */
   readonly named: (key: string, mode?: string) => boolean;
-  readonly value: (key: string, value: number) => string;
+  /** A value as shown; with the mode, values in hundredths become „4,50 ★“. */
+  readonly value: (key: string, value: number, mode?: string) => string;
 } {
   const { t } = useTranslation(MM_NAMESPACE);
   const language = useLanguage();
@@ -61,6 +65,11 @@ export function useStatText(): {
     label: (key, mode) => statName(text, key, mode, language) || readable(key),
     subject: (id, mode) => statSubjectName(text, id, mode, language) || readable(id),
     named: (key, mode) => statHasOwnName(text, key, mode),
-    value: (key, value) => (key.endsWith(TIME_SUFFIX) ? formatTime(value, locale) : number.format(value)),
+    value: (key, value, mode) => {
+      if (key.endsWith(TIME_SUFFIX)) return formatTime(value, locale);
+      if (mode && HUNDREDTHS[mode]?.includes(key))
+        return `${new Intl.NumberFormat(locale, { minimumFractionDigits: TWO_DIGITS, maximumFractionDigits: TWO_DIGITS }).format(value / HUNDRED)} ★`;
+      return number.format(value);
+    },
   };
 }

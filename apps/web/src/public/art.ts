@@ -37,6 +37,9 @@ const IMAGES = {
   figureWintersport: '/bilder/figur-wintersport.webp',
   figureAdlerflug: '/bilder/figur-adlerflug.webp',
   figureAngelkoenig: '/bilder/figur-angelkoenig.webp',
+  figureMaibaumklau: '/bilder/figur-maibaumklau.webp',
+  figureDorfkrimi: '/bilder/figur-dorfkrimi.webp',
+  figureBaumeister: '/bilder/figur-baumeister.webp',
   schlossmarktDay: '/bilder/schlossmarkt-tag.webp',
   schlossmarktNight: '/bilder/schlossmarkt-nacht.webp',
   schlossmarktStandDay: '/bilder/schlossmarkt-stand-tag.webp',
@@ -110,6 +113,9 @@ const MODE_ART: Readonly<Record<string, ModeArt>> = {
   wintersport: { figure: IMAGES.figureWintersport, a: '#cfe6ff', b: '#30507e', scene: 'schlossmarkt' },
   adlerflug: { figure: IMAGES.figureAdlerflug, a: '#f070dc', b: '#4f1150', scene: 'schlossmarkt-stand' },
   angelkoenig: { figure: IMAGES.figureAngelkoenig, a: '#5b93ff', b: '#112c6e', scene: 'schlossmarkt' },
+  maibaumklau: { figure: IMAGES.figureMaibaumklau, a: '#d9944e', b: '#5a2e0e', scene: 'schlossmarkt-stand' },
+  dorfkrimi: { figure: IMAGES.figureDorfkrimi, a: '#c7b8ff', b: '#241d4a', scene: 'schlossmarkt' },
+  baumeister: { figure: IMAGES.figureBaumeister, a: '#ff8a5c', b: '#6b2410', scene: 'schlossmarkt-stand' },
 };
 
 /** Modes Philip adds later have no figure yet: emerald and the market. */

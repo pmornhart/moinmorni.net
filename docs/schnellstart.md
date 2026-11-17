@@ -54,7 +54,7 @@ sparsames Gerät lohnt sich.
 
 **Wie viel Arbeitsspeicher wofür?** Der Container für MoinMorni bekommt als Standard **32 GB RAM, 8 Kerne und 100 GB
 Festplatte**. **Alle Server sind immer online**, Spieler kommen sofort hinein: Proxy 1 GB, Lobby 3 GB, Bau-Server
-1,5 GB, MorniSMP und MorniCraft je 3 GB, Morni Party 2 GB, die übrigen Spielmodi je 1,5 GB – zusammen 27 GB, das passt
+1,5 GB, MorniSMP und MorniCraft je 3 GB, Morni Party 2 GB, Maibaumklau, Dorfkrimi und Baumeister je 1 GB, die übrigen Spielmodi je 1,5 GB – zusammen 30 GB, das passt
 in 32 GB. Das sind Höchstwerte: Ist in einem Modus niemand, hält Minecraft dort die Welt an und Java gibt den
 Arbeitsspeicher zurück – ein leerer 1,5-GB-Modus braucht dann etwa 0,7 GB statt 1,4 GB. Im Panel unter Modi lässt sich
 je Modus unter „Wenn niemand drin ist“ auch „Schlafen“ wählen: dann geht er ganz aus und wacht in etwa einer halben Minute auf – oder „Wach bleiben“, dann behält er seinen ganzen Arbeitsspeicher.
@@ -661,6 +661,9 @@ Ein paar Dinge gehen nur im GitHub-Konto `pmornhart`:
    | Wintersport | `pmornhart/morni-wintersport` |
    | Adlerflug   | `pmornhart/morni-adlerflug`   |
    | Angelkönig  | `pmornhart/morni-angelkoenig` |
+   | Maibaumklau | `pmornhart/morni-maibaumklau` |
+   | Dorfkrimi   | `pmornhart/morni-dorfkrimi`   |
+   | Baumeister  | `pmornhart/morni-baumeister`  |
 
 **Geklappt, wenn** diese Adresse im Browser ein Skript zeigt (statt „404: Not Found“) und unter **Releases** der
 Modus-Repos jeweils eine Version mit einer `.jar`-Datei steht:

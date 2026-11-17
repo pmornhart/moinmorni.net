@@ -96,7 +96,7 @@ export function SubjectTable({
                 return (
                   <td key={kind} className="tabular px-3 py-2 text-right font-pixel text-[1.15rem] font-bold">
                     {key && value !== undefined ? (
-                      stat.value(key, value)
+                      stat.value(key, value, mode)
                     ) : (
                       <span className="text-muted-foreground">–</span>
                     )}

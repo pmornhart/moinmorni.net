@@ -39,7 +39,11 @@ export type HatKind =
   | 'bowler'
   | 'pickel'
   | 'skibeanie'
-  | 'bucket';
+  | 'bucket'
+  // Modus-Figuren vom 17.11. abends (Maibaumklau, Dorfkrimi, Baumeister)
+  | 'kranzhut'
+  | 'jaegerhut'
+  | 'zimmerhut';
 
 /**
  * Kostüm einer Modus-Figur (`figuren.ts`): zeichnet Pixel über die Grundkleidung – `base` auf die erste Ebene,
@@ -168,6 +172,9 @@ export const GOGGLE_GLASS = 0x7fbfd6;
 export const GOGGLE_SHINE = 0xd8f1f8;
 /** Kostüm: hier ist die zweite Ebene durchsichtig (auch wenn die Grundkleidung dort etwas malt). */
 export const CLEAR = -1;
+/** Maibaum-Kranz: Tannengrün mit Blüten in Weiß, Blau, Rot und Gelb. */
+const KRANZ_GREEN = 0x2f6b2a;
+const KRANZ_BLOOM = [0xf2f2f2, 0x3a6fd8, 0xd8343a, 0xf2c230] as const;
 
 /** Hell, Grund, Schatten, tiefer Schatten einer Farbe. */
 export interface Tones {
@@ -457,6 +464,27 @@ const HATS: Readonly<Record<HatKind, (p: HatPixel) => number | undefined>> = {
     if (side && y === 2) return 0x26262c;
     if (side && y === 1) return cloth(accent);
     if (side && y === 0) return cloth(x % 2 === 0 ? colour : shade(colour, 0.92));
+    return undefined;
+  },
+  // Trachtenhut mit Maibaum-Kranz: Tannengrün mit bunten Blüten statt Hutband
+  kranzhut: ({ face, side, x, y, colour }) => {
+    if (face === 'top') return cloth(shade(colour, 1.1));
+    if (side && y < 2) return cloth(y === 0 ? shade(colour, 1.06) : colour);
+    if (side && y === 2) return x % 3 === 1 ? KRANZ_BLOOM[x % KRANZ_BLOOM.length] : cloth(KRANZ_GREEN);
+    return undefined;
+  },
+  // Jägerhut: dunkler Loden, gedrehte Kordel (Zierfarbe)
+  jaegerhut: ({ face, side, x, y, colour, accent }) => {
+    if (face === 'top') return cloth(x === 3 || x === 4 ? shade(colour, 0.85) : shade(colour, 1.08));
+    if (side && y < 2) return cloth(y === 0 ? shade(colour, 1.05) : colour);
+    if (side && y === 2) return x % 2 === 0 ? accent : shade(accent, 0.7);
+    return undefined;
+  },
+  // Zimmermannshut: schwarzer Filz mit breiter Krempe (das Paket gibt die Krempe dazu)
+  zimmerhut: ({ face, side, y, colour, accent }) => {
+    if (face === 'top') return cloth(shade(colour, 1.2));
+    if (side && y < 2) return cloth(y === 0 ? shade(colour, 1.15) : colour);
+    if (side && y === 2) return cloth(accent);
     return undefined;
   },
   // Fischerhut mit Hutband und einem bunten Köder
