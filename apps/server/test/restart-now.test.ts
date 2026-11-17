@@ -431,3 +431,98 @@ describe('Gleich neu starten (nach einem Update)', () => {
     expect(pauses.every((ms) => ms < COUNTDOWN_SECONDS * SECOND_MS)).toBe(true);
   });
 });
+
+describe('Von Hand neu starten (Panel → „Server neu starten“)', () => {
+  test('Alle: Modi nacheinander, Lobby + Proxy zuletzt zusammen, nie die Wartungs-Lobby, eigene Texte', async () => {
+    const log: string[] = [];
+    const motor = fakeMotor([sleeping.serverId], log);
+    const players: Player[] = [
+      { uuid: 'anna', lang: 'de', server: 'duels' },
+      { uuid: 'carl', lang: 'en', server: 'lobby' },
+    ];
+    const restartNow = createRestartNow({
+      motor,
+      hub: { ...fakeHub(players, log, { open: true }), connected: () => false },
+      queue: { entries: () => [waitingInQueue], remove: () => undefined },
+      modes: () => DEFAULT_MODES,
+      countdown: () => COUNTDOWN_SECONDS,
+      log: quiet,
+      pause: async () => undefined,
+    });
+    const run = restartNow.run([duels, bau, lobby, proxy, wartung, sleeping], 'manual');
+    expect(restartNow.progress().servers.map((s) => s.member)).not.toContain('wartung');
+    await run;
+    // Reihenfolge wie nach einem Update – aber ohne Wartungs-Lobby und ohne die Warteschlange.
+    expect(motor.log.filter((l) => l.startsWith('restart'))).toEqual([
+      'restart id-duels',
+      'restart id-bau',
+      'restart id-lobby',
+      'restart id-proxy',
+    ]);
+    expect(log.find((l) => l.startsWith('tell anna'))).toContain('Neustart durchs Team');
+    expect(log.find((l) => l.startsWith('bar anna'))).toContain('<gold>Neustart</gold>');
+    // Proxy startet mit: ein Countdown für alle mit Team-Text, dann Rauswurf ohne „Update“.
+    expect(log.find((l) => l.startsWith('tell carl'))).toContain('The team is restarting the network');
+    expect(log.find((l) => l.startsWith('kick carl'))).toContain('The team is restarting it');
+    expect(log.join('\n')).not.toContain('Update');
+    // Auch ohne Hub-Verbindung kein Warten von zwei Minuten (das gilt nur gleich nach einem Update).
+    const progress = restartNow.progress();
+    expect(progress.running).toBe(false);
+    expect(Object.fromEntries(progress.servers.map((s) => [s.member, s.step]))).toEqual({
+      duels: 'done',
+      bau: 'done',
+      lobby: 'done',
+      proxy: 'done',
+      adlerflug: 'skipped',
+    });
+  });
+
+  test('Nur die Lobby: ihre Spieler warten in der Wartungs-Lobby, die selbst nicht neu startet', async () => {
+    const log: string[] = [];
+    const motor = fakeMotor([], log);
+    const players: Player[] = [{ uuid: 'anna', lang: 'de', server: 'lobby' }];
+    const restartNow = createRestartNow({
+      motor,
+      hub: fakeHub(players, log, { open: true }),
+      queue: { entries: () => [], remove: () => undefined },
+      modes: () => DEFAULT_MODES,
+      countdown: () => COUNTDOWN_SECONDS,
+      log: quiet,
+      pause: async () => undefined,
+    });
+    await restartNow.run([lobby], 'manual');
+    expect(motor.log.filter((l) => l.startsWith('restart'))).toEqual(['restart id-lobby']);
+    expect(log.find((l) => l.startsWith('tell anna'))).toContain('Das Team startet die Lobby neu');
+    expect(log).toContain('park anna');
+    expect(log.indexOf('park anna')).toBeLessThan(log.indexOf('restart id-lobby'));
+    expect(log.some((l) => l.startsWith('kick'))).toBe(false);
+  });
+
+  test('Läuft schon eine Runde, kommen weitere gleich danach dran', async () => {
+    const log: string[] = [];
+    const motor = fakeMotor([], log);
+    const gate: { open: () => void } = { open: () => undefined };
+    const first = new Promise<void>((resolve) => {
+      gate.open = resolve;
+    });
+    const restartNow = createRestartNow({
+      motor,
+      hub: fakeHub([{ uuid: 'anna', lang: 'de', server: 'duels' }], log),
+      queue: { entries: () => [], remove: () => undefined },
+      modes: () => DEFAULT_MODES,
+      countdown: () => COUNTDOWN_SECONDS,
+      log: quiet,
+      // Der erste Countdown hält an, bis der zweite Auftrag da ist.
+      pause: async () => {
+        await first;
+      },
+    });
+    const run = restartNow.run([duels], 'manual');
+    expect(restartNow.busy()).toBe(true);
+    const again = restartNow.run([bau], 'manual');
+    expect(restartNow.progress().servers.map((s) => s.member)).toEqual(['duels', 'bau']);
+    gate.open();
+    await Promise.all([run, again]);
+    expect(motor.log.filter((l) => l.startsWith('restart'))).toEqual(['restart id-duels', 'restart id-bau']);
+  });
+});

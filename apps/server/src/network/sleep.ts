@@ -74,6 +74,8 @@ export interface SleepService {
   readonly keepOnline: () => Promise<string[]>;
   /** Diese Server hat das Netzwerk schlafen geschickt (z. B. vor der Umstellung auf „immer online“). */
   readonly remember: (servers: readonly string[]) => void;
+  /** Wen das Netzwerk gerade schlafen geschickt hat (Namen im Netzwerk). */
+  readonly asleep: () => readonly string[];
   readonly start: () => void;
   readonly stop: () => void;
 }
@@ -305,6 +307,7 @@ export function createSleepService(
     check,
     keepOnline,
     remember,
+    asleep: () => [...asleep],
     start: () => {
       timer.id = setInterval(() => {
         void (async (): Promise<void> => {

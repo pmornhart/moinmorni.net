@@ -9,6 +9,7 @@ import { MM_NAMESPACE } from '~/i18n';
 import { useErrorText } from '~/lib/errors';
 import { PageHead } from '../PanelShell';
 import { MotorSession } from '../motor-session';
+import { RestartButton } from './RestartDialog';
 
 /** The motor's part of the panel: MorniHosting's own server pages, embedded, with the live connection. */
 export function MotorLayout(): ReactElement | null {
@@ -27,7 +28,9 @@ export function ServerListPage(): ReactElement {
   const list = servers.data ?? [];
   return (
     <>
-      <PageHead icon={Server} title={t('servers.title')} text={t('servers.text')} />
+      <PageHead icon={Server} title={t('servers.title')} text={t('servers.text')}>
+        <RestartButton variant="primary" size="md" />
+      </PageHead>
       {servers.isPending ? <Skeleton className="h-48 rounded-[16px]" /> : null}
       {servers.isError ? <Card className="p-6 text-muted-foreground">{errorText(servers.error)}</Card> : null}
       {servers.isSuccess && !list.length ? (

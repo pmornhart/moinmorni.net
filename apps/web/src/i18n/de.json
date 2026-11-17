@@ -1643,7 +1643,7 @@
     },
     "servers": {
       "title": "Server",
-      "text": "Die einzelnen Minecraft-Server mit Konsole, Dateien, Backups und Plugins. Hier schaust du nach, wenn mal etwas klemmt."
+      "text": "Die einzelnen Minecraft-Server mit Konsole, Dateien, Backups und Plugins. Hier schaust du nach, wenn mal etwas klemmt. Oben rechts startest du mit „Server neu starten“ einzelne oder alle Server mit Countdown für die Spieler neu – auch auf der Übersicht."
     },
     "team": {
       "title": "Team",
@@ -2674,7 +2674,10 @@
     "team_apply_minecraft_name": "Das ist kein gültiger Minecraft-Name.",
     "team_apply_pending": "Deine Bewerbung liegt schon beim Team – du hörst bald von uns.",
     "team_position_unknown": "Diese Stelle gibt es nicht (mehr). Lade die Seite neu.",
-    "player_protected": "Strafen gehen nur an niedrigere Ränge: Diese Person hat den gleichen oder einen höheren Rang als du (den Owner bestraft niemand)."
+    "player_protected": "Strafen gehen nur an niedrigere Ränge: Diese Person hat den gleichen oder einen höheren Rang als du (den Owner bestraft niemand).",
+    "restart_wartung": "Die Wartungs-Lobby startet nicht von Hand neu – dort warten die Spieler, solange die Lobby neu startet.",
+    "restart_unknown_server": "Diesen Server gibt es im Netzwerk nicht (mehr). Lade die Liste neu.",
+    "restart_nothing_running": "Keiner der gewählten Server läuft gerade – es gibt nichts neu zu starten."
   },
   "modeSettings": {
     "title": "Gilt nach dem nächsten Neustart des Modus",
@@ -2722,5 +2725,42 @@
     "where": "Im Chat vor dem Namen, in der Tab-Liste und über dem Kopf – auf allen Servern des Netzwerks. Das Paket bietet der Proxy jedem Java-Spieler beim Betreten an (ab Minecraft 1.20.3); es bleibt beim Serverwechsel. Wer es ablehnt, auf Bedrock spielt oder eine ältere Version hat, sieht Symbol und Farbe. Mit /abzeichen lädt man es jederzeit nach. Das Gefängnis-Abzeichen steht vor Nachrichten aus der Zelle (die liest nur das Team). Im Discord haben die Ränge dieselbe Farbe – ab Boost-Stufe 2 mit dem Abzeichen als Rollen-Symbol neben dem Namen (Panel → Discord → Ränge).",
     "fromRoles": "Änderst du bei einer Rolle Name, Symbol oder Farbe, bekommen alle gleich das neue Paket.",
     "editRoles": "Rollen bearbeiten"
+  },
+  "restartDialog": {
+    "button": "Server neu starten",
+    "title": "Server neu starten",
+    "text": "Wähle, welche Server neu starten sollen. MoinMorni startet sie nacheinander neu und sagt den Spielern vorher Bescheid.",
+    "all": "Alle laufenden Server",
+    "chosen": "{{count}} von {{total}} gewählt",
+    "players_one": "{{count}} Spieler drauf",
+    "players_other": "{{count}} Spieler drauf",
+    "proxyHint": "Eingang zum Netzwerk – alle müssen kurz neu verbinden",
+    "state": {
+      "running": "läuft",
+      "starting": "startet",
+      "sleeping": "schläft",
+      "stopped": "aus"
+    },
+    "step": {
+      "waiting": "wartet",
+      "countdown": "Countdown",
+      "restarting": "startet neu",
+      "done": "fertig",
+      "failed": "klemmt",
+      "skipped": "läuft nicht"
+    },
+    "countdown": "Spieler sehen vorher einen Countdown von {{seconds}} Sekunden (im Chat und als Leiste oben) und kommen aus den Spielmodi kurz in die Lobby. Die Zeit stellst du unter Einstellungen → Updates ein.",
+    "order": "Reihenfolge: erst die Spielmodi und der Bau-Server, einer nach dem anderen – zuletzt die Lobby und der Proxy zusammen. Schlafende und ausgeschaltete Server werden nicht geweckt.",
+    "proxyWarn": "Mit dem Proxy startet das ganze Netzwerk kurz neu: Alle Spieler fliegen nach dem Countdown raus und verbinden sich in etwa einer Minute wieder.",
+    "wartung": "Die Wartungs-Lobby startet nie mit – dort warten die Spieler der Lobby, solange sie neu startet, und kommen danach von selbst zurück.",
+    "busy": "Gerade läuft ein Neustart. Was du jetzt noch wählst, kommt gleich danach dran.",
+    "confirm_one": "{{count}} Server neu starten",
+    "confirm_other": "{{count}} Server neu starten",
+    "sending": "Wird gestartet …",
+    "started_one": "Neustart läuft – {{count}} Server ist dran.",
+    "started_other": "Neustart läuft – {{count}} Server sind dran.",
+    "queued_one": "Es lief schon ein Neustart – {{count}} Server kommt gleich danach dran.",
+    "queued_other": "Es lief schon ein Neustart – {{count}} Server kommen gleich danach dran.",
+    "close": "Schließen"
   }
 }

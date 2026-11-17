@@ -27,8 +27,22 @@ export interface Target {
   readonly member: string;
 }
 
-/** Update von MoinMorni – oder nur eine neue Fassung eines Spielmodus. */
-export type RestartWhy = 'update' | 'release';
+/**
+ * Update von MoinMorni, nur eine neue Fassung eines Spielmodus – oder das Team startet im Panel von Hand neu
+ * („Server neu starten“, panel/restart-routes.ts). Von Hand startet die Wartungs-Lobby nie mit: Sie ist das Ziel, in
+ * dem die Spieler der Lobby so lange warten.
+ */
+export type RestartWhy = 'update' | 'release' | 'manual';
+
+/** Wie weit ein Server in der laufenden (oder letzten) Runde ist – fürs Panel. */
+export type RestartStep = 'waiting' | 'countdown' | 'restarting' | 'done' | 'failed' | 'skipped';
+
+export interface RestartProgress {
+  /** Läuft gerade eine Runde? */
+  readonly running: boolean;
+  /** Server der laufenden bzw. letzten Runde in der Reihenfolge, in der sie angemeldet wurden. */
+  readonly servers: ReadonlyArray<{ readonly member: string; readonly step: RestartStep }>;
+}
 
 /** Was der Neustart vom Hub braucht. */
 export interface RestartHub {
@@ -67,6 +81,8 @@ export interface RestartNow {
   /** Diese Server mit Countdown neu starten (nur laufende). Läuft gerade eine Runde, kommen sie gleich danach dran. */
   readonly run: (servers: readonly Target[], why: RestartWhy) => Promise<void>;
   readonly busy: () => boolean;
+  /** Stand der laufenden bzw. letzten Runde (fürs Panel). */
+  readonly progress: () => RestartProgress;
 }
 
 const SECOND_MS = 1000;
@@ -98,11 +114,46 @@ const NOT_FIRST: readonly string[] = [LOBBY_MEMBER, PROXY_MEMBER, WARTUNG_MEMBER
 const CHAT_KEY: Readonly<Record<RestartWhy, TextKey>> = {
   update: 'restart.update',
   release: 'restart.release',
+  manual: 'restart.manual',
 };
 const BAR_KEY: Readonly<Record<RestartWhy, TextKey>> = {
   update: 'restart.bar.update',
   release: 'restart.bar.release',
+  manual: 'restart.bar.manual',
 };
+/** Lobby und Proxy starten nur nach einem Update oder von Hand neu – mit eigenen Texten. */
+type LastWhy = 'update' | 'manual';
+const LAST_KEYS: Readonly<
+  Record<
+    LastWhy,
+    {
+      readonly lobby: TextKey;
+      readonly park: TextKey;
+      readonly network: TextKey;
+      readonly kickLobby: TextKey;
+      readonly kickNetwork: TextKey;
+    }
+  >
+> = {
+  update: {
+    lobby: 'restart.lobby',
+    park: 'restart.lobby.wartung',
+    network: 'restart.network',
+    kickLobby: 'restart.kick.lobby',
+    kickNetwork: 'restart.kick.network',
+  },
+  manual: {
+    lobby: 'restart.manual.lobby',
+    park: 'restart.manual.lobby.wartung',
+    network: 'restart.manual.network',
+    kickLobby: 'restart.manual.kick.lobby',
+    kickNetwork: 'restart.manual.kick.network',
+  },
+};
+/** Nur wenn alles von Hand kam, sprechen die Texte vom Team – sonst vom Update. */
+const lastWhy = (items: ReadonlyArray<Item | undefined>): LastWhy =>
+  items.every((i) => i === undefined || i.why === 'manual') ? 'manual' : 'update';
+const FINISHED: readonly RestartStep[] = ['done', 'failed', 'skipped'];
 
 interface Item {
   readonly target: Target;
@@ -117,7 +168,9 @@ interface Listener {
   readonly why: RestartWhy;
 }
 
-const liveSchema = z.object({ live: z.object({ state: z.string() }).partial().optional() });
+const liveSchema = z.object({
+  live: z.object({ state: z.string(), startedAt: z.string().nullable() }).partial().optional(),
+});
 
 /**
  * Was nach einem Lauf der Einrichtung neu starten muss – gleich (mit Countdown) oder sobald niemand drauf ist:
@@ -178,6 +231,12 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
     options.pause ?? ((ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms)));
   const pending = new Map<string, Item>();
   const state: { running: Promise<void> | null } = { running: null };
+  /** Stand je Server (Name im Netzwerk) – in der Reihenfolge der Anmeldung. */
+  const steps = new Map<string, RestartStep>();
+  const step = (items: ReadonlyArray<Item | undefined>, now: RestartStep): void =>
+    items.forEach((i) => {
+      if (i) steps.set(i.target.member, now);
+    });
 
   const nameOf = (member: string, lang: Lang): string => {
     const fixed = FIXED_NAMES[member];
@@ -187,22 +246,42 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
   };
   const seconds = (): number => Math.max(1, Math.round(options.countdown()));
 
-  const stateOf = async (serverId: string): Promise<string | null> => {
+  const liveOf = async (serverId: string): Promise<{ state: string | null; startedAt: string | null }> => {
     try {
       const detail = liveSchema.safeParse(await motor.request<unknown>('GET', `/api/servers/${serverId}`));
-      return detail.success ? (detail.data.live?.state ?? null) : null;
+      const live = detail.success ? detail.data.live : undefined;
+      return { state: live?.state ?? null, startedAt: live?.startedAt ?? null };
     } catch {
-      return null;
+      return { state: null, startedAt: null };
     }
   };
-  /** Nach dem Auftrag: erst weg (stoppt, startet), dann wieder da – oder nach drei Minuten weiter zum nächsten. */
-  const settle = async (serverId: string, wentDown: boolean, waited: number): Promise<void> => {
-    if (waited >= SETTLE_MAX_MS) return;
+  const stateOf = async (serverId: string): Promise<string | null> => (await liveOf(serverId)).state;
+  /**
+   * Nach dem Auftrag: erst weg (stoppt, startet), dann wieder da – oder nach drei Minuten weiter zum nächsten.
+   * true = läuft wieder.
+   */
+  const settle = async (
+    serverId: string,
+    wentDown: boolean,
+    waited: number,
+    startedBefore: string | null = null,
+  ): Promise<boolean> => {
+    if (waited >= SETTLE_MAX_MS) return false;
     await pause(POLL_MS);
-    const now = await stateOf(serverId);
-    const down = wentDown || (now !== null && now !== RUNNING);
-    if (down && (now === RUNNING || now === CRASHED)) return;
-    return settle(serverId, down, waited + POLL_MS);
+    const live = await liveOf(serverId);
+    const now = live.state;
+    // Ein schneller Neustart zwischen zwei Nachfragen: dann verrät ihn die neue Startzeit.
+    const restarted = startedBefore !== null && live.startedAt !== null && live.startedAt !== startedBefore;
+    const down = wentDown || restarted || (now !== null && now !== RUNNING);
+    if (down && (now === RUNNING || now === CRASHED)) return now === RUNNING;
+    return settle(serverId, down, waited + POLL_MS, startedBefore);
+  };
+  /** Neu starten und warten, bis er wieder läuft; der Stand fürs Panel kommt mit. */
+  const restartAndSettle = async (item: Item): Promise<void> => {
+    step([item], 'restarting');
+    const before = (await liveOf(item.target.serverId)).startedAt;
+    const ok = (await restartOnly(item.target)) && (await settle(item.target.serverId, false, 0, before));
+    step([item], ok ? 'done' : 'failed');
   };
   const restartOnly = async (target: Target): Promise<boolean> => {
     try {
@@ -247,7 +326,9 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
     const listeners = items.flatMap((i) =>
       hub.playersOn(i.target.member).map((p) => ({ ...p, member: i.target.member, why: i.why })),
     );
+    step(items, 'countdown');
     await countdown(listeners, (p) => CHAT_KEY[p.why]);
+    step(items, 'waiting');
     /** Alle von diesem Server in die Lobby (mit Hinweis); true, wenn jemand umziehen musste. */
     const moveOut = (target: Target): boolean =>
       hub.playersOn(target.member).filter((p) => {
@@ -261,7 +342,7 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
       await prev;
       // Wer während des Wartens auf den vorigen Server doch wieder hineinging, kommt vorher noch einmal in die Lobby.
       if (moveOut(i.target)) await pause(MOVE_SETTLE_MS);
-      if (await restartOnly(i.target)) await settle(i.target.serverId, false, 0);
+      await restartAndSettle(i);
     }, Promise.resolve());
   };
 
@@ -272,6 +353,7 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
   const restartWartung = async (item: Item): Promise<void> => {
     const member = item.target.member;
     const here = hub.playersOn(member).map((p) => ({ ...p, member, why: item.why }));
+    step([item], 'countdown');
     await countdown(here, (p) => (hub.wartung.parked(p.uuid) ? 'restart.wartung.held' : CHAT_KEY[p.why]));
     const left = hub.playersOn(member);
     left.forEach((p) => {
@@ -279,7 +361,7 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
         hub.kick(p.uuid, text(p.lang, 'restart.kick.wartung'));
     });
     if (left.length) await pause(MOVE_SETTLE_MS);
-    if (await restartOnly(item.target)) await settle(item.target.serverId, false, 0);
+    await restartAndSettle(item);
   };
 
   /**
@@ -291,29 +373,27 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
     proxy: Item | undefined,
     wartung: Item | undefined,
   ): Promise<void> => {
+    const why = lastWhy([lobby, proxy, wartung]);
+    const keys = LAST_KEYS[why];
+    step([lobby, proxy, wartung], 'countdown');
     if (proxy) {
-      const all = hub.everyone().map((p) => ({ ...p, member: PROXY_MEMBER, why: 'update' as const }));
-      await countdown(all, () => 'restart.network');
-      hub.everyone().forEach((p) => hub.kick(p.uuid, text(p.lang, 'restart.kick.network')));
+      const all = hub.everyone().map((p) => ({ ...p, member: PROXY_MEMBER, why }));
+      await countdown(all, () => keys.network);
+      hub.everyone().forEach((p) => hub.kick(p.uuid, text(p.lang, keys.kickNetwork)));
     } else if (lobby) {
       const park = hub.wartung.open();
-      const here = hub
-        .playersOn(LOBBY_MEMBER)
-        .map((p) => ({ ...p, member: LOBBY_MEMBER, why: 'update' as const }));
-      await countdown(here, () => (park ? 'restart.lobby.wartung' : 'restart.lobby'));
+      const here = hub.playersOn(LOBBY_MEMBER).map((p) => ({ ...p, member: LOBBY_MEMBER, why }));
+      await countdown(here, () => (park ? keys.park : keys.lobby));
       const parked = hub.playersOn(LOBBY_MEMBER).filter((p) => {
         if (park && hub.wartung.park(p.uuid)) return true;
-        hub.kick(p.uuid, text(p.lang, 'restart.kick.lobby'));
+        hub.kick(p.uuid, text(p.lang, keys.kickLobby));
         return false;
       });
       // Erst in der Wartungs-Lobby ankommen lassen, dann die Lobby neu starten.
       if (parked.length) await pause(MOVE_SETTLE_MS);
     }
     const last = [lobby, proxy, wartung].filter((i): i is Item => i !== undefined);
-    const started = await Promise.all(last.map(async (i) => ((await restartOnly(i.target)) ? i : null)));
-    await Promise.all(
-      started.filter((i): i is Item => i !== null).map((i) => settle(i.target.serverId, false, 0)),
-    );
+    await Promise.all(last.map(restartAndSettle));
   };
 
   /** Warten, bis Proxy und diese Server am Hub hängen (höchstens zwei Minuten); danach kurz, bis alle gemeldet sind. */
@@ -343,10 +423,17 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
       [...all.values()].map(async (i) => ({ i, now: await stateOf(i.target.serverId) })),
     );
     const running = states.filter((x) => x.now === RUNNING).map((x) => x.i);
-    await untilConnected(
-      running.map((i) => i.target.member),
-      0,
+    step(
+      states.filter((x) => x.now !== RUNNING).map((x) => x.i),
+      'skipped',
     );
+    // Nur nach einem Neustart von MoinMorni (Update) hängen die Server womöglich noch nicht am Hub – von Hand im
+    // Panel ist alles längst verbunden; wer dann nicht am Hub hängt, hat auch niemanden zum Warnen.
+    if (running.some((i) => i.why !== 'manual'))
+      await untilConnected(
+        running.map((i) => i.target.member),
+        0,
+      );
     const modes = running.filter((i) => !NOT_FIRST.includes(i.target.member));
     if (modes.length) await restartModes(modes);
     const lobby = running.find((i) => i.target.member === LOBBY_MEMBER);
@@ -374,7 +461,13 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
 
   return {
     run: async (servers, why) => {
-      servers.forEach((t) => {
+      // Eine neue Runde: der Stand der letzten, fertigen Runde geht weg.
+      if (!state.running)
+        [...steps].filter(([, now]) => FINISHED.includes(now)).forEach(([member]) => steps.delete(member));
+      // Von Hand nie die Wartungs-Lobby – sie nimmt die Spieler der Lobby auf (das Panel lehnt sie schon ab).
+      const wanted = why === 'manual' ? servers.filter((t) => t.member !== WARTUNG_MEMBER) : servers;
+      wanted.forEach((t) => steps.set(t.member, 'waiting'));
+      wanted.forEach((t) => {
         const before = pending.get(t.serverId);
         pending.set(t.serverId, { target: t, why: before?.why === 'update' ? 'update' : why });
       });
@@ -390,5 +483,9 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
       return state.running;
     },
     busy: () => state.running !== null,
+    progress: () => ({
+      running: state.running !== null,
+      servers: [...steps].map(([member, now]) => ({ member, step: now })),
+    }),
   };
 }

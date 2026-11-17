@@ -693,6 +693,35 @@ const TEXTS = {
     de: `<gold>Das Netzwerk startet kurz neu</gold>\n\n<gray>Update eingespielt – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
     en: `<gold>The network is restarting briefly</gold>\n\n<gray>Update installed – you can join again in about a minute. See you soon!`,
   },
+  // Von Hand im Panel („Server neu starten“).
+  'restart.manual': {
+    de: `${P}<gold>Neustart durchs Team</gold> <gray>– <white>{server}</white> startet in <yellow>{seconds} Sekunden</yellow> neu. Du kommst vorher in die Lobby, gleich geht es weiter.`,
+    en: `${P}<gold>Restart by the team</gold> <gray>– <white>{server}</white> restarts in <yellow>{seconds} seconds</yellow>. You'll be moved to the lobby first – back in a moment.`,
+  },
+  'restart.bar.manual': {
+    de: `<gold>Neustart</gold> <gray>–</gray> <white>{server}</white> <gray>startet in</gray> <yellow>{s} s</yellow> <gray>neu</gray>`,
+    en: `<gold>Restart</gold> <gray>–</gray> <white>{server}</white> <gray>restarts in</gray> <yellow>{s} s</yellow>`,
+  },
+  'restart.manual.lobby': {
+    de: `${P}<gold>Das Team startet die Lobby neu</gold> <gray>– in <yellow>{seconds} Sekunden</yellow>. In etwa einer Minute kannst du wieder rein.`,
+    en: `${P}<gold>The team is restarting the lobby</gold> <gray>– in <yellow>{seconds} seconds</yellow>. You can join again in about a minute.`,
+  },
+  'restart.manual.lobby.wartung': {
+    de: `${P}<gold>Das Team startet die Lobby neu</gold> <gray>– in <yellow>{seconds} Sekunden</yellow>. So lange wartest du in der Wartungs-Lobby und kommst danach von selbst zurück.`,
+    en: `${P}<gold>The team is restarting the lobby</gold> <gray>– in <yellow>{seconds} seconds</yellow>. Meanwhile you wait in the maintenance lobby and come back on your own afterwards.`,
+  },
+  'restart.manual.network': {
+    de: `${P}<gold>Das Team startet das Netzwerk kurz neu</gold> <gray>– in <yellow>{seconds} Sekunden</yellow>. In etwa einer Minute geht es weiter – einfach wieder verbinden.`,
+    en: `${P}<gold>The team is restarting the network briefly</gold> <gray>– in <yellow>{seconds} seconds</yellow>. It goes on in about a minute – just connect again.`,
+  },
+  'restart.manual.kick.lobby': {
+    de: `<gold>Die Lobby startet neu</gold>\n\n<gray>Das Team startet sie kurz neu – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
+    en: `<gold>The lobby is restarting</gold>\n\n<gray>The team is restarting it briefly – you can join again in about a minute. See you soon!`,
+  },
+  'restart.manual.kick.network': {
+    de: `<gold>Das Netzwerk startet kurz neu</gold>\n\n<gray>Das Team startet es kurz neu – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
+    en: `<gold>The network is restarting briefly</gold>\n\n<gray>The team is restarting it briefly – you can join again in about a minute. See you soon!`,
+  },
   'restart.name.lobby': { de: 'die Lobby', en: 'the lobby' },
   'restart.name.bau': { de: 'der Bau-Server', en: 'the build server' },
   'restart.name.proxy': { de: 'das Netzwerk', en: 'the network' },
