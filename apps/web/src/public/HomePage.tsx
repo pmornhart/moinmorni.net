@@ -20,7 +20,7 @@ import {
 import { useState, type CSSProperties, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import type { ModeStatus } from '@moinmorni/shared';
+import { modesNow, sportModeByMonth, type ModeStatus } from '@moinmorni/shared';
 import { Crest } from '~/components/brand';
 import { useCopy } from '~/components/controls';
 import { PlayerFace } from '~/components/player-face';
@@ -28,7 +28,7 @@ import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useNews, useSite, useTeam, useTopPlayers, type TeamGroup, type TopPlayer } from '~/lib/site';
-import { modeLook, modeOpenNow, useNetworkStatus } from '~/lib/status';
+import { modeLook, modeOpenNow, shownModes, useNetworkStatus } from '~/lib/status';
 import { useLanguage, usePick } from '~/lib/text';
 import { useTheme } from '~/lib/theme';
 import { useTimeText } from '~/lib/time';
@@ -158,7 +158,8 @@ function LineupFigure({
   const pick = usePick();
   const art = modeArt(id);
   if (!art.figure) return null;
-  const look = mode ? modeLook(mode) : null;
+  const sport = useNetworkStatus().data?.sport;
+  const look = mode ? modeLook(mode, sport) : null;
   const name = mode ? pick(mode.name) : null;
   const state = ((): string | null => {
     if (!mode || !look) return null;
@@ -209,10 +210,15 @@ const MIN_LINEUP = 7;
 function Lineup(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const status = useNetworkStatus();
-  const modes = status.data?.modes;
-  const entries = modes
-    ? modes.filter((m) => modeArt(m.id).figure).map((m) => ({ id: m.id, mode: m }))
-    : KNOWN_MODES.map((id) => ({ id, mode: undefined }));
+  // Winter Games and Summer Games share one place: only the one that is on (while loading: the one in season).
+  const entries = status.data
+    ? shownModes(status.data)
+        .filter((m) => modeArt(m.id).figure)
+        .map((m) => ({ id: m.id, mode: m }))
+    : modesNow(
+        KNOWN_MODES.map((id) => ({ id })),
+        sportModeByMonth(new Date().getMonth() + 1),
+      ).map(({ id }) => ({ id, mode: undefined }));
   return (
     <ul
       className="mm-scroll-x flex w-full items-end gap-1 px-[8vw] pt-14 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)] sm:justify-center sm:overflow-visible sm:px-0 sm:[mask-image:none]"
@@ -305,7 +311,7 @@ function Hero(): ReactElement {
 function ModesSection(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const status = useNetworkStatus();
-  const modes = status.data?.modes ?? [];
+  const modes = shownModes(status.data);
   const gap = modes.length % MODE_COLUMNS;
   return (
     <section className="relative bg-background" aria-labelledby="home-modes">
@@ -668,7 +674,8 @@ function StatsSection(): ReactElement {
   const number = new Intl.NumberFormat(NUMBER_LOCALE[language]);
   const total = site.data ? number.format(site.data.players) : '–';
   const online = status.data ? number.format(status.data.players) : '–';
-  const modes = status.data?.modes ?? [];
+  // Winter Games and Summer Games share one place: the one that is not on does not count (neither open nor shut).
+  const modes = shownModes(status.data);
   const open = modes.filter(modeOpenNow).length;
   // "Gerade zu: Wintersport (Sommerpause)" instead of "rund um die Uhr offen" while some are not open.
   const shut = modes.filter((m) => !modeOpenNow(m));

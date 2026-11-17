@@ -41,6 +41,7 @@ describe('Status für Webseite und Discord', () => {
         wintersport: { state: 'closed' },
         wolkenkampf: { state: 'closed' },
       }),
+      sport: () => 'sommerspiele',
     } as never;
     const config = { domain: 'moinmorni.net', bedrockPort: BEDROCK_PORT } as unknown as Config;
     const status = await createStatusService(config, motor, stores, hub).status();
@@ -52,6 +53,8 @@ describe('Status für Webseite und Discord', () => {
     expect(modePause(mode('wintersport'))).toBe('summer');
     expect(modePause(mode('wolkenkampf'))).toBe('closed');
     expect(modePause({ ...mode('wintersport'), id: 'sommerspiele' })).toBe('winter');
+    // Wer gerade dran ist, sagt der Hub (dieselbe Entscheidung wie am Sport-Stand der Lobby).
+    expect(status.sport).toBe('sommerspiele');
   });
 
   test('Bedrock-Port: automatisch aus dem Motor, von Hand 19132 (Verteiler von MorniHosting) überall', async () => {
@@ -63,6 +66,7 @@ describe('Status für Webseite und Discord', () => {
       presence: { counts: () => ({}), all: () => [] } as never,
       proxyOnline: () => false,
       modeStates: () => ({}),
+      sport: () => 'wintersport',
     } as never;
     const automatic = 19134;
     const config = { domain: 'moinmorni.net', bedrockPort: automatic } as unknown as Config;

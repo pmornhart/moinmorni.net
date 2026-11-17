@@ -145,7 +145,9 @@
       "maintenance": "Wartung",
       "soon": "Bald",
       "pause": "Sommerpause",
-      "winterPause": "Winterpause"
+      "winterPause": "Winterpause",
+      "backInWinter": "Im Winter wieder da",
+      "backInSummer": "Im Sommer wieder da"
     },
     "modeHint": {
       "on": "Offen",
@@ -162,7 +164,9 @@
       "pause": "Gerade Sommerpause – Wettkämpfe gibt es vom 1. Dezember bis 31. März. Das Dorf kannst du trotzdem besuchen.",
       "winterPause": "Gerade Winterpause – Wettkämpfe gibt es vom 1. April bis 30. November. Das Dorf am Bergsee kannst du trotzdem besuchen.",
       "invite": "Nur auf Einladung – du brauchst einen Platz auf der Whitelist. Frag im Discord nach.",
-      "inviteApply": "Nur auf Einladung – bewirb dich um einen Platz auf der Whitelist."
+      "inviteApply": "Nur auf Einladung – bewirb dich um einen Platz auf der Whitelist.",
+      "backInWinter": "Kommt im Winter wieder. Jetzt dran: {{other}}.",
+      "backInSummer": "Kommt im Sommer wieder. Jetzt dran: {{other}}."
     },
     "mode": {
       "eyebrow": "Spielmodus",
@@ -192,7 +196,12 @@
       "topTitle": "Bestenliste · {{value}}",
       "topAll": "Alle ansehen",
       "pauseText": "Sommerpause: Bis zum Winter gibt es keine Wettkämpfe. Eisfläche, Sessellift und Rodelbahn im Dorf sind trotzdem offen – schau gern vorbei.",
-      "winterPauseText": "Winterpause: Bis zum Frühling gibt es keine Wettkämpfe. Das Dorf am Bergsee mit Biergarten, Maibaum und Strecken ist trotzdem offen – schau gern vorbei. Im Winter wartet Wintersport."
+      "winterPauseText": "Winterpause: Bis zum Frühling gibt es keine Wettkämpfe. Das Dorf am Bergsee mit Biergarten, Maibaum und Strecken ist trotzdem offen – schau gern vorbei. Im Winter wartet Wintersport.",
+      "replaced": {
+        "backInWinter": "{{name}} und {{other}} teilen sich einen Platz im Netzwerk. {{name}} kommt im Winter wieder – deine Werte und Bestenlisten bleiben hier. Jetzt dran: {{other}}.",
+        "backInSummer": "{{name}} und {{other}} teilen sich einen Platz im Netzwerk. {{name}} kommt im Sommer wieder – deine Werte und Bestenlisten bleiben hier. Jetzt dran: {{other}}.",
+        "link": "Jetzt: {{other}}"
+      }
     },
     "stats": {
       "eyebrow": "Ranglisten",
@@ -580,8 +589,7 @@
         "short": "Alle Modi auf einen Blick – und wie du hinkommst",
         "intro": "Alle Spielmodi erreichst du aus der Lobby: Die Figuren am Dorfmarkt um den Maibaum und am Schlossmarkt vor der Schlosstreppe bringen dich mit einem Klick hin. Mit dem Kompass in deiner Leiste geht es noch schneller.",
         "sleep": "Die Spielmodi laufen rund um die Uhr – du kommst sofort hinein. Schläft ein Modus doch einmal, wacht er auf, sobald du kommst – das dauert etwa eine halbe Minute.",
-        "pause": "Wintersport macht eine Sommerpause: Wettkämpfe gibt es nur im Winter (1. Dezember bis 31. März) – das Dorf mit Eisfläche, Lift und Rodelbahn bleibt offen.",
-        "winterPause": "Die Sommerspiele machen eine Winterpause: Wettkämpfe gibt es vom 1. April bis 30. November – das Dorf am Bergsee bleibt offen. So hat immer einer der beiden Sport-Modi Saison, und am Schlossmarkt steht der, der gerade offen ist.",
+        "sport": "Wintersport und Sommerspiele teilen sich einen Platz: Im Winter (1. Dezember bis 31. März) ist Wintersport dran, sonst sind es die Sommerspiele. Am Sport-Stand am Schlossmarkt, im Kompass, hier auf der Webseite und im Discord steht immer der, der gerade dran ist – die Seite des anderen mit seinen Bestenlisten bleibt erreichbar.",
         "more": "Mehr",
         "all": "Alle Spielmodi"
       },
@@ -1176,7 +1184,9 @@
     "noServer": "Noch kein Server zugeordnet",
     "save": "Speichern",
     "saved": "„{{name}}“ gespeichert.",
-    "moved": "Reihenfolge gespeichert."
+    "moved": "Reihenfolge gespeichert.",
+    "sportNow": "Gerade am Sport-Stand",
+    "sportReplaced": "Gerade ersetzt durch {{name}}"
   },
   "roles": {
     "title": "Rollen",

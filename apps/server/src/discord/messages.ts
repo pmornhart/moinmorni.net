@@ -1,4 +1,4 @@
-import type { Mode, NetworkStatus } from '@moinmorni/shared';
+import { modesNow, type Mode, type NetworkStatus } from '@moinmorni/shared';
 import type { PositionView } from '../applications/team.js';
 import { colourInt } from './layout.js';
 import { bt } from './texts.js';
@@ -300,7 +300,8 @@ export function applyMessage(ctx: BoardContext): Body {
 
 /** Die Spielmodi als Embeds (höchstens 10 je Nachricht) – mit Figur, Farbe und Link zur Modus-Seite. */
 export function modesMessages(ctx: BoardContext): Body[] {
-  const embeds = ctx.modes.map((m) => ({
+  // Wintersport und Sommerspiele sind ein Platz: nur der, der gerade dran ist (wie am Sport-Stand der Lobby).
+  const embeds = modesNow(ctx.modes, ctx.status.sport).map((m) => ({
     title: m.name.de,
     url: web(ctx.domain, `/spielmodi/${m.id}`),
     description: cut(
@@ -325,7 +326,7 @@ export function statusMessage(s: NetworkStatus): Body {
   const head = s.online
     ? bt('de', 'statusOnline', { players: s.players, max: s.maxPlayers })
     : bt('de', 'statusOffline');
-  const fields = s.modes
+  const fields = modesNow(s.modes, s.sport)
     .filter((m) => m.state !== 'off' || m.players > 0)
     .map((m) => {
       const state = bt('de', MODE_STATE[m.state]);

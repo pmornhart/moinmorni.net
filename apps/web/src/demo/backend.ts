@@ -1,12 +1,15 @@
 import {
   DEFAULT_ROLES,
   MODE_HEADLINE_STATS,
+  modePause,
+  sportStand,
   TEAM_POSITION_DEFAULTS,
   versionFromCount,
   type ChangeItem,
   type PublicChangelog,
   type ModeStatus,
   type NetworkStatus,
+  type SportMode,
   type Text,
 } from '@moinmorni/shared';
 import type {
@@ -60,7 +63,7 @@ interface FixtureVersion {
 }
 
 interface Fixtures {
-  readonly status: Omit<NetworkStatus, 'players' | 'updatedAt'> & { readonly lobbyPlayers: number };
+  readonly status: Omit<NetworkStatus, 'players' | 'updatedAt' | 'sport'> & { readonly lobbyPlayers: number };
   readonly site: Omit<SiteInfo, 'players'> & { readonly players: number };
   readonly news: readonly FixtureNews[];
   readonly roles: Readonly<Record<string, PublicRole>>;
@@ -194,9 +197,23 @@ function status(): DemoResponse {
     bedrockAddress: DATA.status.bedrockAddress,
     bedrockPort: DATA.status.bedrockPort,
     modes,
+    sport: demoSport(modes),
     updatedAt: new Date().toISOString(),
   };
   return { status: HTTP_OK, body };
+}
+
+/** Like the hub: Winter Games or Summer Games – whoever is open (the demo's Winter Games has its summer break). */
+function demoSport(modes: readonly ModeStatus[]): SportMode {
+  const of = (id: SportMode) => {
+    const m = modes.find((x) => x.id === id);
+    return m ? { hasServer: m.server !== null && m.state !== 'off', pause: modePause(m) } : undefined;
+  };
+  return sportStand(
+    'auto',
+    { wintersport: of('wintersport'), sommerspiele: of('sommerspiele') },
+    new Date().getMonth() + 1,
+  );
 }
 
 function newsView(n: FixtureNews, index: number): NewsItem {

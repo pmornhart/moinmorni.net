@@ -458,6 +458,24 @@ export function sportStand(
   return sportModeByMonth(month);
 }
 
+/**
+ * Wintersport und Sommerspiele sind EIN Platz im Netzwerk: Wer gerade am Sport-Stand steht (`sportStand`), ist überall
+ * zu sehen – auf der Webseite, im Kompass, im Discord. Der andere ist dann „durch ihn ersetzt“. Liefert den Modus, der
+ * statt `id` gerade dran ist, oder null (kein Sport-Modus, er selbst ist dran, oder es ist nichts bekannt).
+ */
+export function sportReplacedBy(id: string, sport: SportMode | null | undefined): SportMode | null {
+  if (!sport || id === sport) return null;
+  return (SPORT_MODES as readonly string[]).includes(id) ? sport : null;
+}
+
+/** Die Modi, die gerade zu sehen sind: alle außer dem Sport-Modus, der gerade nicht dran ist (Reihenfolge bleibt). */
+export function modesNow<T extends { readonly id: string }>(
+  modes: readonly T[],
+  sport: SportMode | null | undefined,
+): T[] {
+  return modes.filter((m) => sportReplacedBy(m.id, sport) === null);
+}
+
 /** Monat (1–12) eines Zeitpunkts in einer Zeitzone (z. B. „Europe/Berlin“). */
 export function monthIn(timeZone: string, at: number): number {
   const month = new Intl.DateTimeFormat('en-US', { timeZone, month: 'numeric' }).format(new Date(at));
@@ -501,5 +519,10 @@ export interface NetworkStatus {
   readonly bedrockAddress: string;
   readonly bedrockPort: number;
   readonly modes: readonly ModeStatus[];
+  /**
+   * Welcher Sport-Modus gerade dran ist (am Sport-Stand der Lobby, im Kompass, auf der Webseite) – der andere ist so
+   * lange durch ihn ersetzt (`modesNow`). Dieselbe Entscheidung wie im Hub (`sportStand`).
+   */
+  readonly sport: SportMode;
   readonly updatedAt: string;
 }

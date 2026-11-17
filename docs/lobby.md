@@ -266,6 +266,14 @@ in seiner config.yml ab Werk auf „das ganze Jahr“ – oder nichts gemeldet) 
 Der Hub schickt den Stand stündlich noch einmal (Monatswechsel). Im **Kompass** steht nur der Modus am Stand; der
 andere fehlt dort (er ist zu, und eine zweite Sport-Figur gibt es im Dorf nicht) – über `/server` geht er trotzdem.
 
+**Ein Platz im ganzen Netzwerk:** Dieselbe Entscheidung (`hub.sport()`) liefert `/api/status` als `sport` mit. Webseite
+(Startseite mit Figuren, Modus-Karten und „Spielmodi offen“, Spielmodi, Hilfe → Spielmodi, Befehle, Bestenlisten,
+Nicht-gefunden-Seite) und Discord (Status-Nachricht, Kanal „Spielmodi“ – wechselt der Stand, wird er neu geschrieben)
+zeigen nur den Modus, der dran ist (`modesNow`); der andere ist **ersetzt**, nicht „in Pause“. Seine Seite bleibt per
+Link erreichbar (Statistiken, Profile, `/befehle/<modus>`, Bestenliste mit `?modus=`) und sagt „Im Winter/Sommer wieder
+da – jetzt: …“ mit Link. Das Panel verwaltet weiter beide und zeigt unter Modi, wer gerade am Stand ist. Nur wenn der
+Stand im Panel fest auf eine Seite steht, kann dort eine Pause angezeigt werden (Absicht, zum Testen).
+
 **Umbau** (wie die Saisons, `saison-plan.ts`): Im Bauplan steht die Skihütte ohne Figur. Das Saison-Datenpaket hat
 `sport/sommerspiele_on` (Bootshaus-Blöcke) und `sport/sommerspiele_off` (genau die alten Blöcke an genau den
 geänderten Stellen) sowie `sport/wintersport` und `sport/sommerspiele` (räumt alle Wesen `mm_sport` am Stand ab, setzt

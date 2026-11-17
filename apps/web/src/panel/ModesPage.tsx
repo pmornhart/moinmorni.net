@@ -8,10 +8,13 @@ import {
   MODE_IDLE,
   MODE_STATES,
   modeIdleOf,
+  SPORT_MODES,
+  sportReplacedBy,
   type Mode,
   type ModeIdle,
   type ModePatch,
   type ModeRest,
+  type SportMode,
 } from '@moinmorni/shared';
 import { FieldBlock } from '~/components/controls';
 import { ModeGlyph } from '~/components/mode-visuals';
@@ -21,7 +24,7 @@ import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
-import { MODE_STATE_TONE } from '~/lib/status';
+import { MODE_STATE_TONE, useNetworkStatus } from '~/lib/status';
 import { usePick } from '~/lib/text';
 import { PageHead } from './PanelShell';
 
@@ -67,6 +70,26 @@ function draftValid(draft: Editable): boolean {
   );
 }
 
+/**
+ * Winter Games and Summer Games share one place: a small note which one is at the sports stand right now – the other is
+ * replaced by it on the website, in the compass and in Discord (both stay editable here).
+ */
+function SportPill({
+  id,
+  sport,
+}: {
+  readonly id: string;
+  readonly sport: { readonly id: SportMode; readonly name: string } | null;
+}): ReactElement | null {
+  const { t } = useTranslation(MM_NAMESPACE);
+  if (!sport || !(SPORT_MODES as readonly string[]).includes(id)) return null;
+  return sportReplacedBy(id, sport.id) ? (
+    <Pill tone="neutral">{t('modes.sportReplaced', { name: sport.name })}</Pill>
+  ) : (
+    <Pill tone="success">{t('modes.sportNow')}</Pill>
+  );
+}
+
 function ModeEditor({
   mode,
   rest,
@@ -76,7 +99,10 @@ function ModeEditor({
   moving,
   open,
   onToggle,
+  sport,
 }: {
+  /** Which sports mode is at the sports stand right now (Winter Games or Summer Games) and its name. */
+  readonly sport: { readonly id: SportMode; readonly name: string } | null;
   readonly rest: ModeRest;
   readonly open: boolean;
   readonly onToggle: () => void;
@@ -154,6 +180,9 @@ function ModeEditor({
               <Pill tone={MODE_STATE_TONE[draft.state]} dot className="sm:hidden">
                 {t(`mode.state.${draft.state}`)}
               </Pill>
+              <span className="sm:hidden">
+                <SportPill id={mode.id} sport={sport} />
+              </span>
             </span>
             <span className="truncate text-xs text-muted-foreground">
               {t('modes.position', { n: index + 1 })} ·{' '}
@@ -161,6 +190,7 @@ function ModeEditor({
             </span>
           </span>
           <span className="hidden flex-wrap justify-end gap-1.5 sm:flex">
+            <SportPill id={mode.id} sport={sport} />
             {draft.access === 'whitelist' ? <Pill tone="gold">{t('mode.whitelist')}</Pill> : null}
             <Pill tone={MODE_STATE_TONE[draft.state]} dot>
               {t(`mode.state.${draft.state}`)}
@@ -338,6 +368,7 @@ function ModeEditor({
 export function ModesPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const errorText = useErrorText();
+  const pick = usePick();
   const queryClient = useQueryClient();
   const modes = useQuery({ queryKey: MODES_KEY, queryFn: () => mmApi<Mode[]>('/api/panel/modes') });
   // Asks the motor; if that fails (motor away), the page still shows the modes.
@@ -346,6 +377,9 @@ export function ModesPage(): ReactElement {
     queryFn: () => mmApi<Record<string, ModeRest>>('/api/panel/modes/rest'),
   });
   const list = [...(modes.data ?? [])].sort((a, b) => a.position - b.position);
+  const sportId = useNetworkStatus().data?.sport;
+  const sportMode = list.find((m) => m.id === sportId);
+  const sport = sportId && sportMode ? { id: sportId, name: pick(sportMode.name) } : null;
   // Which modes are unfolded (kept here, so a card stays open when it reloads after saving).
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const toggle = (id: string): void =>
@@ -392,6 +426,7 @@ export function ModesPage(): ReactElement {
             moving={move.isPending}
             open={open.has(mode.id)}
             onToggle={() => toggle(mode.id)}
+            sport={sport}
             onMove={(direction) => move.mutate({ index, direction })}
           />
         ))}

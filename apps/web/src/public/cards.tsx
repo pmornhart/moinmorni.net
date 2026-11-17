@@ -17,7 +17,7 @@ import { ModeGlyph } from '~/components/mode-visuals';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import type { NewsCategory, NewsItem } from '~/lib/site';
-import { modeJoinable, modeLook, type ModeLook } from '~/lib/status';
+import { modeJoinable, useModeLook, type ModeLook } from '~/lib/status';
 import { usePick } from '~/lib/text';
 import { useTimeText } from '~/lib/time';
 import { modeArt, newsScene, sceneImage } from './art';
@@ -36,6 +36,8 @@ const FIGURE_FILTER: Readonly<Record<ModeLook, string>> = {
   asleep: 'saturate-[0.85]',
   pause: 'saturate-[0.75]',
   winterPause: 'saturate-[0.75]',
+  backInWinter: 'saturate-[0.75]',
+  backInSummer: 'saturate-[0.75]',
   closed: 'grayscale-[0.7] opacity-80',
   maintenance: 'grayscale-[0.35]',
   soon: 'brightness-0 opacity-75',
@@ -85,7 +87,7 @@ export function ModeFigure({
 function ModeFill({ mode }: { readonly mode: ModeStatus }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const art = modeArt(mode.id);
-  const look = modeLook(mode);
+  const look = useModeLook(mode);
   if (!modeJoinable(mode)) {
     return (
       <p className="text-[14px] font-medium text-muted-foreground">{t(`site.modeHint.${mode.state}`)}</p>
@@ -124,7 +126,7 @@ export function ModeCard({
   readonly headingLevel?: 'h2' | 'h3';
 }): ReactElement {
   const pick = usePick();
-  const look = modeLook(mode);
+  const look = useModeLook(mode);
   const Heading = headingLevel;
   return (
     <Link

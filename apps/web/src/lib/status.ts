@@ -1,10 +1,13 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import {
   modePause,
+  modesNow,
+  sportReplacedBy,
   type ModePause,
   type ModeState,
   type ModeStatus,
   type NetworkStatus,
+  type SportMode,
 } from '@moinmorni/shared';
 import { mmApi } from './mm-api';
 
@@ -34,9 +37,19 @@ export const MODE_STATE_TONE: Readonly<Record<ModeState, 'success' | 'neutral' |
  * How the website names a mode's state: open modes that are not running are "asleep" (they wake on arrival); "pause"
  * = summer break of a seasonal mode (Winter Games outside winter), "winterPause" = winter break (Summer Games outside
  * summer) – you can still go and look around; a running mode that says it is closed (e.g. while its server stops) is
- * "closed".
+ * "closed". Winter Games and Summer Games share one place: the one that is not on right now is replaced by the other –
+ * "backInWinter" (Winter Games in summer) or "backInSummer" (Summer Games in winter).
  */
-export type ModeLook = 'open' | 'asleep' | 'pause' | 'winterPause' | 'closed' | 'maintenance' | 'soon';
+export type ModeLook =
+  | 'open'
+  | 'asleep'
+  | 'pause'
+  | 'winterPause'
+  | 'backInWinter'
+  | 'backInSummer'
+  | 'closed'
+  | 'maintenance'
+  | 'soon';
 
 const LOOK_OF_STATE: Readonly<Record<ModeState, ModeLook>> = {
   on: 'open',
@@ -51,6 +64,8 @@ export const MODE_LOOK_TONE: Readonly<Record<ModeLook, 'success' | 'neutral' | '
     asleep: 'blue',
     pause: 'gold',
     winterPause: 'blue',
+    backInWinter: 'blue',
+    backInSummer: 'gold',
     closed: 'neutral',
     maintenance: 'warning',
     soon: 'gold',
@@ -63,7 +78,15 @@ const LOOK_OF_PAUSE: Readonly<Record<ModePause, ModeLook>> = {
   closed: 'closed',
 };
 
-export function modeLook(mode: ModeStatus): ModeLook {
+/** The sports mode that comes back in winter (Winter Games) – the other one comes back in summer. */
+const WINTER_SPORT: SportMode = 'wintersport';
+
+/**
+ * How a mode looks right now. With `sport` (who is at the sports stand, from `/api/status`) the other sports mode is
+ * "back in winter/summer" – it is replaced, not on a break.
+ */
+export function modeLook(mode: ModeStatus, sport?: SportMode | null): ModeLook {
+  if (sportReplacedBy(mode.id, sport)) return mode.id === WINTER_SPORT ? 'backInWinter' : 'backInSummer';
   const pause = modePause(mode);
   if (pause) return LOOK_OF_PAUSE[pause];
   if (mode.state === 'on' && !mode.awake) return 'asleep';
@@ -82,4 +105,17 @@ export function modeJoinable(mode: ModeStatus): boolean {
  */
 export function modeOpenNow(mode: ModeStatus): boolean {
   return mode.state === 'on' && modePause(mode) === null;
+}
+
+/** `modeLook` with the sports mode that is on right now (from the status the page already has). */
+export function useModeLook(mode: ModeStatus): ModeLook {
+  return modeLook(mode, useNetworkStatus().data?.sport);
+}
+
+/**
+ * The modes to show right now: all of them, but only the sports mode that is on (Winter Games and Summer Games share
+ * one place – the other is replaced). Its own page stays reachable by link.
+ */
+export function shownModes(status: NetworkStatus | undefined): ModeStatus[] {
+  return status ? modesNow(status.modes, status.sport) : [];
 }

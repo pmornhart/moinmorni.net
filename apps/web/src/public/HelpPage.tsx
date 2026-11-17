@@ -16,7 +16,6 @@ import {
   Monitor,
   Rocket,
   Smartphone,
-  Snowflake,
   Sparkles,
   Sun,
   Terminal,
@@ -34,7 +33,7 @@ import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useSite } from '~/lib/site';
 import { ModeGlyph } from '~/components/mode-visuals';
-import { useNetworkStatus } from '~/lib/status';
+import { shownModes, useNetworkStatus } from '~/lib/status';
 import { useLanguage, usePick } from '~/lib/text';
 import { Cmd, GameButton, Panel } from './kit';
 import { PageHero } from './page-hero';
@@ -449,7 +448,8 @@ function ModesBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
   const status = useNetworkStatus();
-  const modes = status.data?.modes ?? [];
+  // Winter Games and Summer Games share one place: only the one that is on right now.
+  const modes = shownModes(status.data);
   return (
     <div className="grid gap-5">
       <p>{t('site.help.modes.intro')}</p>
@@ -481,11 +481,7 @@ function ModesBody(): ReactElement {
       </p>
       <p className="flex items-start gap-2.5 text-[15px] text-muted-foreground">
         <Sun className="mt-1 size-4 shrink-0 text-gold" aria-hidden />
-        {t('site.help.modes.pause')}
-      </p>
-      <p className="flex items-start gap-2.5 text-[15px] text-muted-foreground">
-        <Snowflake className="mt-1 size-4 shrink-0 text-blue" aria-hidden />
-        {t('site.help.modes.winterPause')}
+        {t('site.help.modes.sport')}
       </p>
       <GameButton asChild tone="stone" className="justify-self-start">
         <Link to="/spielmodi">

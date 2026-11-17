@@ -35,7 +35,7 @@ import { Skeleton } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useCommandsInfo, type CommandRole } from '~/lib/site';
-import { useNetworkStatus } from '~/lib/status';
+import { shownModes, useNetworkStatus } from '~/lib/status';
 import { useLanguage, usePick } from '~/lib/text';
 import { modeStyle } from './cards';
 import { Chip, GameButton, LoadError, ModeStateChip, Panel, RankTag } from './kit';
@@ -453,8 +453,10 @@ function Commands(): ReactElement {
     })
     .filter((r) => !me || mayUse(me, r.need));
 
-  const modes = (status.data?.modes ?? []).filter((m) => MODE_GUIDES[m.id]);
-  const first = modes.find((m) => m.id === modeParam);
+  // Winter Games and Summer Games share one place: only the one that is on – the other one still opens by link
+  // (/befehle/wintersport in summer).
+  const modes = shownModes(status.data).filter((m) => MODE_GUIDES[m.id]);
+  const first = (status.data?.modes ?? []).find((m) => m.id === modeParam && MODE_GUIDES[m.id]);
   const ordered = first ? [first, ...modes.filter((m) => m !== first)] : modes;
   const showTeam = teamLines.length > 0 || settingRows.length > 0;
 
