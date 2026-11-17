@@ -23,6 +23,22 @@ mm_version() {
   printf 'v%d.%d.%d-0-g%s\n' $((n / 100)) $((n / 10 % 10)) $((n % 10)) "${sha}"
 }
 
+# „Was ist neu“ (Versionsanzeige unten in der Mitte von Webseite und Panel): die Liste der Änderungen aus Git kommt
+# mit ins Image (scripts/changelog.sh). Fehlt das Skript (ältere Fassung) oder klappt es nicht, zeigt MoinMorni nur
+# die Versionsnummer – gebaut wird trotzdem.
+write_changelog() {
+  local tmp
+  rm -f apps/server/changelog.txt
+  [[ -f scripts/changelog.sh && -d apps/server ]] || return 0
+  tmp="$(mktemp apps/server/changelog.txt.XXXXXX)" || return 0
+  # Lesbar für MoinMorni im Container (läuft nicht als root); mktemp legt die Datei nur für root an.
+  if bash scripts/changelog.sh . >"${tmp}" 2>/dev/null && chmod 644 "${tmp}" &&
+    mv -f "${tmp}" apps/server/changelog.txt; then
+    return 0
+  fi
+  rm -f "${tmp}"
+}
+
 INSTALL_DIR="${MM_INSTALL_DIR:-/opt/moinmorni}"
 REPO_URL="${MM_REPO_URL:-https://github.com/pmornhart/moinmorni.net.git}"
 BRANCH="${MM_BRANCH:-main}"
@@ -181,6 +197,7 @@ if [[ -f "${NETBIRD_ENV}" ]] && NB_API="$(MH_ENV_FILE="${INSTALL_DIR}/.env" bash
 fi
 
 msg_info "MoinMorni wird gebaut (das erste Mal dauert es ein paar Minuten)"
+write_changelog
 export MM_BUILD_VERSION MH_BUILD_VERSION
 MM_BUILD_VERSION="$(mm_version .)"
 MH_BUILD_VERSION="$(mm_version vendor/mornihosting)"

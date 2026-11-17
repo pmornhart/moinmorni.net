@@ -2,6 +2,9 @@ import {
   DEFAULT_ROLES,
   MODE_HEADLINE_STATS,
   TEAM_POSITION_DEFAULTS,
+  versionFromCount,
+  type ChangeItem,
+  type PublicChangelog,
   type ModeStatus,
   type NetworkStatus,
   type Text,
@@ -48,6 +51,14 @@ interface FixtureNews {
   readonly body: Text;
 }
 
+/** One version for "Was ist neu" (made up from real changes of the network). */
+interface FixtureVersion {
+  readonly count: number;
+  readonly sha: string;
+  readonly daysAgo: number;
+  readonly items: readonly ChangeItem[];
+}
+
 interface Fixtures {
   readonly status: Omit<NetworkStatus, 'players' | 'updatedAt'> & { readonly lobbyPlayers: number };
   readonly site: Omit<SiteInfo, 'players'> & { readonly players: number };
@@ -66,6 +77,8 @@ interface Fixtures {
     readonly minecraftName: string;
     readonly cooldownDays: number;
   };
+  /** "Was ist neu": the versions (newest first) and the number of the version that is ready. */
+  readonly changelog: { readonly update: string; readonly versions: readonly FixtureVersion[] };
 }
 
 interface MyTeamApplication {
@@ -481,7 +494,27 @@ function commands(request: DemoRequest): DemoResponse {
   };
 }
 
+/** "Was ist neu": the installed version at the top, a newer one is ready (green dot). */
+function changelog(): DemoResponse {
+  const versions = DATA.changelog.versions.map((v, i) => ({
+    version: versionFromCount(v.count),
+    count: v.count,
+    sha: v.sha,
+    // Versions of the same day still come one after the other.
+    date: ago(v.daysAgo * DAY_MS + i * NEWS_HOUR_MS),
+    items: v.items,
+    more: 0,
+  }));
+  const body: PublicChangelog = {
+    version: versions[0]?.version ?? 'dev',
+    versions,
+    update: { available: true, version: DATA.changelog.update },
+  };
+  return { status: HTTP_OK, body };
+}
+
 const EXACT: Readonly<Record<string, Handler>> = {
+  'GET /api/public/changelog': changelog,
   'GET /api/commands': commands,
   'GET /api/status': status,
   'GET /api/site': site,

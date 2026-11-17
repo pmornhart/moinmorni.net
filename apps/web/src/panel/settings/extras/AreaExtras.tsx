@@ -6,6 +6,7 @@ import { Button, Card } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { useCan, type SettingsEntry } from '../../session';
 import { ApplicationsCard } from './ApplicationsCard';
+import { BadgesCard } from './BadgesCard';
 import { BuildCard } from './BuildCard';
 import { Notice } from './parts';
 import { ReachCard } from './ReachCard';
@@ -65,6 +66,7 @@ const EXTRAS: Readonly<Record<string, (props: { readonly entry: SettingsEntry })
   reach: () => <ReachCard />,
   mornicraft: MorniCraftExtras,
   build: () => <BuildCard />,
+  badges: BadgesCard,
 };
 
 /**

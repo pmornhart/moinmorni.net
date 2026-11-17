@@ -139,15 +139,17 @@ describe('Streamer-Modus im Netzwerk', () => {
     await lobby.next('profile', (m) => m['uuid'] === LENA && !(m as unknown as Profile).streamer.on);
   });
 
-  test('Chat: ● LIVE vor dem Namen; Nachrichten an Streamer mit Verdecken-Zeichen, /msg nur mit der Maus', async () => {
+  test('Chat: Rang, Name, dann ● LIVE; Nachrichten an Streamer mit Verdecken-Zeichen, /msg nur mit der Maus', async () => {
     const { proxy, lobby } = await network();
     await command(proxy, LENA, 'streamer', ['an']);
     lobby.send({ t: 'chat', uuid: LENA, text: 'Hallo Stream' });
     const line = (await lobby.next('chat', (m) => JSON.stringify(m).includes('Hallo Stream'))) as unknown as {
       text: { de: string };
     };
-    expect(line.text.de).toContain('<red>● LIVE</red> ');
-    expect(line.text.de.indexOf('LIVE')).toBeLessThan(line.text.de.indexOf('Lena'));
+    expect(line.text.de).toContain(' <red>● LIVE</red>');
+    // Wie in Tab-Liste und über dem Kopf: Rang bzw. Abzeichen vorn, Name, „● LIVE“ hinten.
+    expect(line.text.de.indexOf('LIVE')).toBeGreaterThan(line.text.de.indexOf('Lena'));
+    expect(line.text.de.indexOf('LIVE')).toBeLessThan(line.text.de.indexOf('»'));
     lobby.send({ t: 'chat', uuid: PHILIP, text: 'Ohne live' });
     const plain = (await lobby.next('chat', (m) => JSON.stringify(m).includes('Ohne live'))) as unknown as {
       text: { de: string };
