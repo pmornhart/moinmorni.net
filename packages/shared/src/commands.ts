@@ -209,12 +209,12 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
     lines: [line('rundgang', '/rundgang', '/tour')],
   },
   {
-    name: 'parkour',
-    aliases: [],
-    usage: same('/parkour [start]'),
+    name: 'jumpandrun',
+    aliases: ['jnr', 'parkour'],
+    usage: same('/jnr [top|stop]'),
     topic: 'lobby',
     where: 'lobby',
-    lines: [line('parkour', '/parkour'), line('parkourStart', '/parkour start')],
+    lines: [line('jnr', '/jnr'), line('jnrTop', '/jnr top'), line('jnrStop', '/jnr stop')],
   },
   // ---------- Team ----------
   {

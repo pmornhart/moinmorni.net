@@ -13,9 +13,10 @@ import { fbm, pick, random } from '../noise.js';
 import { GROUND, meadow, roundTree, terrain } from '../nature.js';
 import { disc, range } from '../range.js';
 import { discAt, path, type Facing } from '../shapes.js';
-import { npc, signText } from '../village.js';
-import { LAUNCHPADS, PARKOUR } from './features.js';
+import { npc } from '../village.js';
+import { LAUNCHPADS } from './features.js';
 import { buildJail } from './jail.js';
+import { buildJumpStart, JUMP_AND_RUN } from './jumpandrun.js';
 import {
   fence,
   field,
@@ -30,16 +31,6 @@ import {
 } from './common.js';
 import { buildSchlossmarkt, RING_MODES } from './schlossmarkt.js';
 import { buildSchlosstreppe } from './schlosstreppe.js';
-
-const HALF = 0.5;
-
-/** Block des Parkours an Stelle i: Smaragd = Start, Diamant = Ziel, Gold = Kontrollpunkt, sonst weiß-blau. */
-function parkourBlock(i: number): string {
-  if (i === 0) return 'emerald_block';
-  if (i === PARKOUR.blocks.length - 1) return 'diamond_block';
-  if (PARKOUR.checkpoints.includes(i)) return 'gold_block';
-  return i % 2 === 0 ? 'light_blue_concrete' : 'white_concrete';
-}
 
 export const LOBBY = { cx: 0, cz: 0, name: 'Dorfplatz am Schlossberg' };
 
@@ -432,25 +423,10 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
   // Gefängnis: Arrestzelle im Rathauskeller (das Lobby-Plugin hält Eingesperrte dort)
   buildJail(c);
 
-  // Parkour im Nordwesten: weiß-blaue Spirale, Smaragd = Start, Gold = Kontrollpunkt, Diamant = Ziel
-  PARKOUR.blocks.forEach((b, i) => c.set(b.x, b.y, b.z, parkourBlock(i)));
-  const goal = PARKOUR.blocks[PARKOUR.blocks.length - 1];
-  if (goal) {
-    c.set(goal.x, goal.y + 1, goal.z, 'light_blue_banner[rotation=8]');
-    c.place('Parkour-Ziel', goal.x, goal.y + 1, goal.z, goal.x, goal.z);
-  }
-  const start = PARKOUR.blocks[0];
-  if (start) c.place('Parkour-Start', start.x, start.y + 1, start.z, start.x, start.z);
-  if (start)
-    signText(
-      c,
-      start.x + HALF,
-      start.y + 2.2,
-      start.z + HALF,
-      'east',
-      [{ text: 'Parkour', color: 'gold', bold: true }],
-      1.2,
-    );
+  // Jump and Run im Nordwesten: Startplatz mit Smaragd und Tafel – die Blöcke zeigt das Lobby-Plugin hoch oben
+  buildJumpStart(c);
+  const jump = JUMP_AND_RUN.start;
+  c.place('Jump and Run: Startfeld', jump.x, jump.y + 1, jump.z, jump.x, jump.z);
 
   const pathBlocks = ['gravel', 'coarse_dirt', 'gravel', 'cobblestone'];
   path(

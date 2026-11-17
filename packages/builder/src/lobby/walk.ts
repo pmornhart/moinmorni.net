@@ -446,7 +446,6 @@ export const DECOR_REASONS: Readonly<Record<Exclude<FloorKind, 'boden'>, string>
  */
 export const ON_PURPOSE: Readonly<Record<string, string>> = {
   Arrestzelle: 'Gefängnis – nur das Lobby-Plugin bringt Eingesperrte hinein und wieder hinaus',
-  'Parkour-Ziel': 'nur über die Sprünge des Parkours (das ist der Sinn)',
   'Brunnenbecken der Handwerkergasse': 'Wasserbecken des Brunnens hinter seiner Brüstung',
 };
 

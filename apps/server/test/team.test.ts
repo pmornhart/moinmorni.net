@@ -99,7 +99,8 @@ describe('Team-Konten', () => {
   test('Server-Zugriff im Motor nach Rolle: Admin als Besitzer, Moderator ohne Server-Bereich keinen', async () => {
     const res = await call('POST', '/api/panel/team', owner, { username: 'max', roleId: 'admin' });
     const max = await motorUser('max');
-    expect(max?.access).toHaveLength(3);
+    // Proxy, Lobby, Wartungs-Lobby, Bau-Server.
+    expect(max?.access).toHaveLength(4);
     expect((await motorUser('lena'))?.access).toEqual([]);
 
     // Admin darf keine Admins/Owner anlegen und den Owner nicht anfassen, Moderatoren schon.

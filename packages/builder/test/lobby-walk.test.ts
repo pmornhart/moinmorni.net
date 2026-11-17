@@ -111,7 +111,7 @@ describe('Lobby: alles zu Fuß erreichbar', () => {
     expect(lost).toEqual([]);
   });
 
-  it('gewollt unerreichbar bleibt es: Gefängnis, Parkour-Ziel, Brunnenbecken', () => {
+  it('gewollt unerreichbar bleibt es: Gefängnis, Brunnenbecken', () => {
     Object.keys(ON_PURPOSE).forEach((name) => {
       const place = report.places.find((p) => p.name === name);
       expect(place, name).toBeDefined();

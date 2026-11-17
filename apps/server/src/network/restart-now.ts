@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { Mode } from '@moinmorni/shared';
 import { mm, text, type Lang, type TextKey } from '../hub/texts.js';
 import type { MotorClient } from '../motor/client.js';
-import { BUILD_MEMBER, LOBBY_MEMBER, PROXY_MEMBER } from './provision.js';
+import { BUILD_MEMBER, LOBBY_MEMBER, PROXY_MEMBER, WARTUNG_MEMBER } from './provision.js';
 import type { RestartQueue } from './restart.js';
 
 /**
@@ -15,9 +15,11 @@ import type { RestartQueue } from './restart.js';
  * Freundlich für die Spieler: erst ein Countdown – oben als Leiste (versteht das Netzwerk-Plugin ab dieser Fassung) und
  * immer im Chat (das kann jedes) –, wer in einem Spielmodus ist, kommt kurz vor dem Neustart in die Lobby. Nacheinander
  * statt alle auf einmal, damit Speicher und Prozessor reichen: erst die Spielmodi und der Bau-Server, jeder wartet, bis
- * der vorige wieder läuft. Zuletzt die Lobby; startet auch der Proxy neu (neues Netzwerk-Plugin), dann beide zusammen
- * mit einem Countdown für alle – so muss jeder nur einmal neu verbinden. Was nach einem Update sonst noch auf einen
- * Neustart wartet (z. B. neue Einstellungen eines Modus), kommt gleich mit.
+ * der vorige wieder läuft. Danach die Wartungs-Lobby – das Netz unter der Lobby startet nie als Erstes neu –, zuletzt
+ * die Lobby: Ihre Spieler warten so lange in der Wartungs-Lobby und kommen von selbst zurück. Startet auch der Proxy neu
+ * (neues Netzwerk-Plugin), dann Lobby, Wartungs-Lobby und Proxy zusammen mit einem Countdown für alle – so muss jeder
+ * nur einmal neu verbinden. Was nach einem Update sonst noch auf einen Neustart wartet (z. B. neue Einstellungen eines
+ * Modus), kommt gleich mit.
  */
 
 export interface Target {
@@ -36,6 +38,12 @@ export interface RestartHub {
   readonly countdown: (uuid: string, text: string, seconds: number) => void;
   readonly connect: (uuid: string, server: string) => boolean;
   readonly kick: (uuid: string, text: string) => void;
+  /** Wartungs-Lobby: ist sie da, Spieler dort warten lassen (zurück von selbst), hält die Wartung jemanden fest? */
+  readonly wartung: {
+    readonly open: () => boolean;
+    readonly park: (uuid: string) => boolean;
+    readonly parked: (uuid: string) => boolean;
+  };
 }
 
 export interface RestartNowOptions {
@@ -72,7 +80,10 @@ const FIXED_NAMES: Readonly<Record<string, TextKey>> = {
   [LOBBY_MEMBER]: 'restart.name.lobby',
   [BUILD_MEMBER]: 'restart.name.bau',
   [PROXY_MEMBER]: 'restart.name.proxy',
+  [WARTUNG_MEMBER]: 'restart.name.wartung',
 };
+/** Starten nicht mit den Spielmodi, sondern danach (Wartungs-Lobby) bzw. zuletzt (Lobby, Proxy). */
+const NOT_FIRST: readonly string[] = [LOBBY_MEMBER, PROXY_MEMBER, WARTUNG_MEMBER];
 const CHAT_KEY: Readonly<Record<RestartWhy, TextKey>> = {
   update: 'restart.update',
   release: 'restart.release',
@@ -84,6 +95,14 @@ const BAR_KEY: Readonly<Record<RestartWhy, TextKey>> = {
 
 interface Item {
   readonly target: Target;
+  readonly why: RestartWhy;
+}
+
+/** Wer den Countdown sieht – und für welchen Server. */
+interface Listener {
+  readonly uuid: string;
+  readonly lang: Lang;
+  readonly member: string;
   readonly why: RestartWhy;
 }
 
@@ -194,19 +213,14 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
 
   /** Countdown im Chat und als Leiste; ein Hinweis zehn Sekunden vorher. Ohne Zuhörer: gleich weiter. */
   const countdown = async (
-    listeners: ReadonlyArray<{
-      readonly uuid: string;
-      readonly lang: Lang;
-      readonly member: string;
-      readonly why: RestartWhy;
-    }>,
-    chatKey: (why: RestartWhy) => TextKey,
+    listeners: readonly Listener[],
+    chatKey: (listener: Listener) => TextKey,
   ): Promise<void> => {
     if (!listeners.length) return;
     const s = seconds();
     listeners.forEach((p) => {
       const server = nameOf(p.member, p.lang);
-      hub.tell(p.uuid, text(p.lang, chatKey(p.why), { server, seconds: s }));
+      hub.tell(p.uuid, text(p.lang, chatKey(p), { server, seconds: s }));
       hub.countdown(p.uuid, text(p.lang, BAR_KEY[p.why], { server }), s);
     });
     const early = Math.max(0, s - REMINDER_SECONDS);
@@ -222,7 +236,7 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
     const listeners = items.flatMap((i) =>
       hub.playersOn(i.target.member).map((p) => ({ ...p, member: i.target.member, why: i.why })),
     );
-    await countdown(listeners, (why) => CHAT_KEY[why]);
+    await countdown(listeners, (p) => CHAT_KEY[p.why]);
     /** Alle von diesem Server in die Lobby (mit Hinweis); true, wenn jemand umziehen musste. */
     const moveOut = (target: Target): boolean =>
       hub.playersOn(target.member).filter((p) => {
@@ -240,20 +254,51 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
     }, Promise.resolve());
   };
 
-  /** Zuletzt die Lobby – mit dem Proxy zusammen, wenn der auch neu startet (dann ein Countdown für alle). */
-  const restartLast = async (lobby: Item | undefined, proxy: Item | undefined): Promise<void> => {
+  /**
+   * Die Wartungs-Lobby nach den Spielmodi und vor der Lobby: Wer darf, kommt vorher in die Lobby; wen die Wartung
+   * festhält, der muss kurz raus (in etwa einer Minute wieder rein).
+   */
+  const restartWartung = async (item: Item): Promise<void> => {
+    const member = item.target.member;
+    const here = hub.playersOn(member).map((p) => ({ ...p, member, why: item.why }));
+    await countdown(here, (p) => (hub.wartung.parked(p.uuid) ? 'restart.wartung.held' : CHAT_KEY[p.why]));
+    const left = hub.playersOn(member);
+    left.forEach((p) => {
+      if (hub.wartung.parked(p.uuid) || !hub.connect(p.uuid, LOBBY_MEMBER))
+        hub.kick(p.uuid, text(p.lang, 'restart.kick.wartung'));
+    });
+    if (left.length) await pause(MOVE_SETTLE_MS);
+    if (await restartOnly(item.target)) await settle(item.target.serverId, false, 0);
+  };
+
+  /**
+   * Zuletzt die Lobby – ihre Spieler warten so lange in der Wartungs-Lobby (sonst kurz raus). Startet der Proxy auch neu,
+   * dann alle zusammen (Lobby, Wartungs-Lobby, Proxy) mit einem Countdown für alle.
+   */
+  const restartLast = async (
+    lobby: Item | undefined,
+    proxy: Item | undefined,
+    wartung: Item | undefined,
+  ): Promise<void> => {
     if (proxy) {
       const all = hub.everyone().map((p) => ({ ...p, member: PROXY_MEMBER, why: 'update' as const }));
       await countdown(all, () => 'restart.network');
       hub.everyone().forEach((p) => hub.kick(p.uuid, text(p.lang, 'restart.kick.network')));
     } else if (lobby) {
+      const park = hub.wartung.open();
       const here = hub
         .playersOn(LOBBY_MEMBER)
         .map((p) => ({ ...p, member: LOBBY_MEMBER, why: 'update' as const }));
-      await countdown(here, () => 'restart.lobby');
-      hub.playersOn(LOBBY_MEMBER).forEach((p) => hub.kick(p.uuid, text(p.lang, 'restart.kick.lobby')));
+      await countdown(here, () => (park ? 'restart.lobby.wartung' : 'restart.lobby'));
+      const parked = hub.playersOn(LOBBY_MEMBER).filter((p) => {
+        if (park && hub.wartung.park(p.uuid)) return true;
+        hub.kick(p.uuid, text(p.lang, 'restart.kick.lobby'));
+        return false;
+      });
+      // Erst in der Wartungs-Lobby ankommen lassen, dann die Lobby neu starten.
+      if (parked.length) await pause(MOVE_SETTLE_MS);
     }
-    const last = [lobby, proxy].filter((i): i is Item => i !== undefined);
+    const last = [lobby, proxy, wartung].filter((i): i is Item => i !== undefined);
     const started = await Promise.all(last.map(async (i) => ((await restartOnly(i.target)) ? i : null)));
     await Promise.all(
       started.filter((i): i is Item => i !== null).map((i) => settle(i.target.serverId, false, 0)),
@@ -272,12 +317,14 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
       [...all.values()].map(async (i) => ({ i, now: await stateOf(i.target.serverId) })),
     );
     const running = states.filter((x) => x.now === RUNNING).map((x) => x.i);
-    const isLast = (i: Item): boolean => i.target.member === LOBBY_MEMBER || i.target.member === PROXY_MEMBER;
-    const modes = running.filter((i) => !isLast(i));
+    const modes = running.filter((i) => !NOT_FIRST.includes(i.target.member));
     if (modes.length) await restartModes(modes);
     const lobby = running.find((i) => i.target.member === LOBBY_MEMBER);
     const proxy = running.find((i) => i.target.member === PROXY_MEMBER);
-    if (lobby || proxy) await restartLast(lobby, proxy);
+    const wartung = running.find((i) => i.target.member === WARTUNG_MEMBER);
+    // Ohne neuen Proxy steht die Wartungs-Lobby wieder, bevor die Lobby neu startet – und nimmt deren Spieler auf.
+    if (wartung && !proxy) await restartWartung(wartung);
+    if (lobby || proxy) await restartLast(lobby, proxy, proxy ? wartung : undefined);
   };
 
   const drain = async (): Promise<void> => {

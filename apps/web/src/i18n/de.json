@@ -286,6 +286,9 @@
         "tournaments_won": "Turniersiege",
         "heaviest_g": "Schwerster Fisch (g)",
         "species": "Arten im Fischbuch",
+        "jump_best": "Jump and Run – Rekord",
+        "jump_runs": "Jump-and-Run-Läufe",
+        "jumps": "Sprünge",
         "timeOf": "Bestzeit {{course}}",
         "finishesOf": "Ziele {{course}}"
       },
@@ -428,6 +431,21 @@
         "step4": "Lieber direkt im Discord? Das geht auch – tippe dort",
         "link": "Zur Bewerbung"
       },
+      "lobbyFun": {
+        "title": "Jump and Run & Doppelsprung",
+        "short": "Spaß in der Lobby, während du wartest",
+        "intro": "Im Dorf wird nicht nur gewartet: Hoch über den Dächern wartet unser Jump and Run, und überall in der Lobby kannst du doppelt springen.",
+        "jumpTitle": "Jump and Run",
+        "jump1": "Geh zum Startplatz im Nordwesten des Dorfs (neben dem Schlossmarkt) und tritt auf den Smaragd – oder tippe",
+        "jump2": "Hoch über dem Dorf erscheint vor dir ein Block nach dem anderen. Nur du siehst deine Blöcke.",
+        "jump3": "Jeder geschaffte Sprung gibt einen Punkt. Mit der Zeit wird es schwerer: weitere Sprünge, halbe Stufen, Zäune, Eis, das schnell schmilzt, und Schleim zum Hochfedern.",
+        "jump4": "Wer fällt, ist raus und landet wieder am Startplatz. Dein Rekord steht auf der Tafel am Start (Top 10), in deinem Profil und in den Statistiken.",
+        "top": "Bestenliste im Chat:",
+        "doubleTitle": "Doppelsprung",
+        "double1": "Spring – und drück in der Luft noch einmal die Sprungtaste. Mit Funken geht es ein Stück weiter nach vorn und oben.",
+        "double2": "Auf dem Handy und der Konsole (Bedrock) genauso: zweimal kurz hintereinander springen.",
+        "doubleNot": "Im Jump and Run, im Gefängnis und beim Rundgang gibt es keinen Doppelsprung."
+      },
       "commands": {
         "title": "Befehle",
         "short": "Die wichtigsten Befehle im Chat",
@@ -507,7 +525,7 @@
         "schloss": {
           "title": "Das Schloss",
           "short": "Ganz oben am Berg",
-          "text": "Mit den Launchpads fliegst du die Treppe hinauf. Am Schloss wartet die Parkour-Spirale mit Bestenliste.",
+          "text": "Mit den Launchpads fliegst du die Treppe hinauf. Hoch über dem Dorf wartet das Jump and Run mit Bestenliste.",
           "alt": "Das weiße Schloss mit grünen Turmdächern auf dem Berg"
         },
         "karte": {
@@ -739,8 +757,9 @@
         "streamerTeil": "Einen Teil des Streamer-Modus für dich an- oder ausschalten (ohne Wort kommt das Menü zum Anklicken).",
         "discord": "Einladung in unseren Discord – und ein Code, um dein Konto zu verbinden.",
         "rundgang": "Ein Rundgang durchs Dorf (beenden: /rundgang stop).",
-        "parkour": "Die Bestenliste der Parkour-Spirale und deine Bestzeit.",
-        "parkourStart": "An den Start der Parkour-Spirale.",
+        "jnr": "Jump and Run starten: hoch über dem Dorf erscheint Block für Block – jeder Sprung ein Punkt (oder auf den Smaragd am Startplatz treten; /parkour geht auch).",
+        "jnrTop": "Die Bestenliste des Jump and Run und dein Rekord.",
+        "jnrStop": "Den Lauf beenden und zurück an den Startplatz.",
         "musik": "Lobbymusik für dich aus- und wieder anschalten. Im Alltag spielt Blasmusik, zur Wiesn bayerische Musik, im Winter Weihnachtslieder – mit unserem Lobby-Paket eine echte Kapelle, sonst Notenblöcke.",
         "musikLauter": "Lobbymusik leiser oder lauter stellen (auch als Zahl von 0 bis 100). Der Regler „Plattenspieler/Notenblöcke“ in den Minecraft-Einstellungen wirkt auch.",
         "musikWeiter": "Gleich das nächste Stück.",
@@ -1320,7 +1339,7 @@
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter Lobby → Musik stellst du die Lobbymusik ein (je Saison, welche Stücke laufen). Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter Lobby → Musik stellst du die Lobbymusik ein (je Saison, welche Stücke laufen). Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt. Unter „Netzwerk“ stellst du die Wartung ein: Wer nicht hinein darf – oder nicht in die Lobby kann, weil sie neu startet –, wartet in der Wartungs-Lobby und kommt danach von selbst zurück."
     },
     "news": {
       "title": "News",

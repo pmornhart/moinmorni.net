@@ -10,8 +10,13 @@ import {
   ON_PURPOSE,
   walkReport,
   type FloorKind,
+  type LostFloor,
   type PlaceResult,
 } from '@moinmorni/builder';
+
+type DecorKind = Exclude<FloorKind, 'boden'>;
+/** Deko statt Boden (Dach, Laub, Markise …) – als Typ-Prüfung, damit `DECOR_REASONS` den Schlüssel kennt. */
+const isDecor = (l: LostFloor): l is LostFloor & { readonly kind: DecorKind } => l.kind !== 'boden';
 
 const DEFAULT_MIN = 4;
 /** Höhen im Bericht sind Sechzehntel-Blöcke. */
@@ -46,10 +51,7 @@ floors.forEach((l) =>
     `  ${mark(l.name, false)} ${l.name}: ${l.size} Spalten, Füße auf ${l.y}, x ${l.x1}…${l.x2}, z ${l.z1}…${l.z2}`,
   ),
 );
-const decor = report.lost.filter((l) => l.kind !== 'boden');
-const byKind = decor.reduce(
-  (m, l) => m.set(l.kind, (m.get(l.kind) ?? 0) + 1),
-  new Map<Exclude<FloorKind, 'boden'>, number>(),
-);
+const decor = report.lost.filter(isDecor);
+const byKind = decor.reduce((m, l) => m.set(l.kind, (m.get(l.kind) ?? 0) + 1), new Map<DecorKind, number>());
 console.log('\nUnerreichbar, aber Deko:');
 [...byKind].forEach(([kind, n]) => console.log(`  ${n}× ${DECOR_REASONS[kind]}`));

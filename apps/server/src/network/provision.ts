@@ -8,7 +8,14 @@ import { MotorError, type MotorClient } from '../motor/client.js';
 import { readServerFile, removeServerFiles, writeServerFile } from '../motor/files.js';
 import { isOurNetwork, NETWORK_NAME } from '../public/status.js';
 import { INTERIM_MODE_JARS, INTERIM_NETWORK_JAR, renamedServer } from '../lib/rename.js';
-import { MODE_JARS, MODE_MEMORY_MB, MODE_REPOS, type Mode } from '@moinmorni/shared';
+import {
+  MODE_JARS,
+  MODE_MEMORY_MB,
+  MODE_REPOS,
+  WARTUNG_MEMORY_MB,
+  WARTUNG_SERVER,
+  type Mode,
+} from '@moinmorni/shared';
 import type { ReleaseSource } from './mode-releases.js';
 
 /**
@@ -21,6 +28,8 @@ export const PROXY_MEMBER = 'proxy';
 export const LOBBY_MEMBER = 'lobby';
 /** Bau-Server fürs Bauteam (Kreativ, flach, WorldEdit) – kein Modus, nur mit dem Recht „Bauen“. */
 export const BUILD_MEMBER = 'bau';
+/** Wartungs-Lobby: zweite Wahl nach der Lobby (Neustart, Absturz, Wartung) – klein, immer an, schläft nie. */
+export const WARTUNG_MEMBER = WARTUNG_SERVER;
 const PLUGIN_DIR = 'plugins';
 const HUB_FILE = 'plugins/moinmorni/hub.json';
 const STAMP_FILE = 'plugins/moinmorni/plugin.sha256';
@@ -30,6 +39,7 @@ const PROXY_PORT = 25565;
 const LOBBY_PORT = 25566;
 export const BUILD_MEMORY_MB = 1536;
 const BUILD_PORT = 25567;
+const WARTUNG_PORT = 25568;
 /** WorldEdit von Modrinth (der Motor lädt es mit Prüfsumme). */
 const WORLDEDIT = { source: 'modrinth', projectId: 'worldedit' } as const;
 /** Spielmodi: Speicher pro Server, Ports ab hier (dahinter keine Ports nach außen, nur für den Motor). */
@@ -59,6 +69,8 @@ export interface ProvisionResult {
   readonly networkId: string;
   /** Server-ID der Lobby im Motor (für den Bau der Welt). */
   readonly lobbyServerId: string;
+  /** Server-ID der Wartungs-Lobby im Motor (baut sich wie die Lobby). */
+  readonly wartungServerId: string;
   readonly created: readonly string[];
   readonly pluginUpdated: readonly string[];
   /**
@@ -83,6 +95,13 @@ export interface ProvisionOptions {
   readonly configureLobby?: (serverId: string) => Promise<boolean>;
   /** Stellt den Bau-Server ein (Kreativ, flach, friedlich); true = geändert. */
   readonly configureBuild?: (serverId: string) => Promise<boolean>;
+  /** Stellt die Wartungs-Lobby ein (flache Welt, Abenteuer, friedlich, wenig Sichtweite); true = geändert. */
+  readonly configureWartung?: (serverId: string) => Promise<boolean>;
+  /**
+   * Stellt den Server eines Spielmodus ein (Höchstzahl hinter dem Proxy, `player-cap.ts`) – neue vor dem ersten Start,
+   * bestehende bei jedem Lauf (danach steht es drin, nichts ändert sich mehr); true = geändert.
+   */
+  readonly configureMode?: (serverId: string) => Promise<boolean>;
   /** WorldEdit auf den Bau-Server laden (Tests: nein – kein Internet). */
   readonly buildContent?: boolean;
   /** Spielmodi (aus dem Panel); mit `releases` bekommt jeder Modus mit Repo seinen eigenen Server. */
@@ -280,6 +299,16 @@ export function createProvisioner(
         created.push(LOBBY_MEMBER);
         log.info('Netzwerk: Lobby angelegt');
       }
+      // Wartungs-Lobby: auch bestehende Installationen bekommen sie beim nächsten Start dazu.
+      if (!network.members.some((m) => m.name === WARTUNG_MEMBER)) {
+        const wartung = await createServer('MoinMorni Wartung', 'paper', WARTUNG_MEMORY_MB, WARTUNG_PORT);
+        await motor.request('POST', `/api/networks/${network.id}/members`, {
+          serverId: wartung.id,
+          name: WARTUNG_MEMBER,
+        });
+        created.push(WARTUNG_MEMBER);
+        log.info('Netzwerk: Wartungs-Lobby angelegt');
+      }
       if (!network.members.some((m) => m.name === BUILD_MEMBER)) {
         const bau = await createServer('MoinMorni Bau', 'paper', BUILD_MEMORY_MB, BUILD_PORT);
         await motor.request('POST', `/api/networks/${network.id}/members`, {
@@ -371,14 +400,28 @@ export function createProvisioner(
         options.configureLobby && lobbyServerId ? await options.configureLobby(lobbyServerId) : false;
       if (lobbyChanged && !created.includes(LOBBY_MEMBER))
         log.info('Lobby: Einstellungen geändert – gelten nach dem nächsten Neustart der Lobby');
+      const wartungServerId = fresh.members.find((m) => m.name === WARTUNG_MEMBER)?.serverId ?? '';
+      const wartungChanged =
+        options.configureWartung && wartungServerId ? await options.configureWartung(wartungServerId) : false;
       const buildServerId = fresh.members.find((m) => m.name === BUILD_MEMBER)?.serverId;
       const buildChanged =
         buildServerId && options.configureBuild ? await options.configureBuild(buildServerId) : false;
+      const ownSettings: readonly string[] = [LOBBY_MEMBER, BUILD_MEMBER, WARTUNG_MEMBER];
+      const modesChanged = await fresh.members
+        .filter((m) => !ownSettings.includes(m.name))
+        .reduce<Promise<string[]>>(async (acc, m) => {
+          const done = await acc;
+          return options.configureMode && (await options.configureMode(m.serverId))
+            ? [...done, m.name]
+            : done;
+        }, Promise.resolve([]));
       const stale = new Set([
+        ...modesChanged,
         ...equipped.filter((e) => e.plugin || e.hub).map((e) => e.member),
         ...modesInstalled,
         ...(lobbyChanged ? [LOBBY_MEMBER] : []),
         ...(buildChanged ? [BUILD_MEMBER] : []),
+        ...(wartungChanged ? [WARTUNG_MEMBER] : []),
       ]);
       const restart = targets
         .filter((t) => stale.has(t.member) && !created.includes(t.member))
@@ -404,6 +447,7 @@ export function createProvisioner(
       return {
         networkId: network.id,
         lobbyServerId,
+        wartungServerId,
         created,
         pluginUpdated: updated,
         restart,
