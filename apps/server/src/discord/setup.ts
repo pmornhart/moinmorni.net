@@ -45,6 +45,13 @@ import {
   type RankLookReason,
 } from './rank-icons.js';
 import { positionChanges, roleOrder } from './role-order.js';
+
+/**
+ * Fassung der Kanal-Rechte. Ändert sie sich (z. B. „schreiben nur mit verbundenem Konto“), zieht der Bot beim nächsten
+ * Start die Kanäle eines schon eingerichteten Servers von selbst nach.
+ */
+export const CHANNEL_RULES = 'verbunden-1';
+export const CHANNEL_RULES_KEY = 'channels:rules';
 import type { DiscordStore } from './store.js';
 
 /**
@@ -585,6 +592,7 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
       team: audienceRoles('team'),
       muted: store.get('role:muted') ?? run.g,
       jail: store.get('role:jail') ?? run.g,
+      linked: store.get('role:linked'),
       bot: run.botId,
     };
     const mine = new Set([run.g, run.botId, ...store.withPrefix('role:').map((e) => e.id)]);
@@ -634,6 +642,7 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
         store.drop(e.key);
       }, Promise.resolve());
     step('channels', { state: 'done' });
+    store.put(CHANNEL_RULES_KEY, CHANNEL_RULES);
     return count;
   };
 

@@ -64,6 +64,11 @@ Geprüft im Quelltext von NetBird (Reverse Proxy und Routen), nachgestellt in de
   TCP und UDP frei ist (z. B. 25566), die Karte sagt, wer den Port hat, und alle fünf Minuten probiert der Motor, ob er
   frei geworden ist. Bis dahin geht Java ohne Port mit einem SRV-Eintrag bei INWX (die Karte nennt ihn); Bedrock
   braucht solange die Portnummer.
+- **Bedrock ohne Port über den Verteiler von MorniHosting:** Trag in MorniHosting unter „Weitere Domains über diesen
+  Verteiler“ `moinmorni.net` mit den Ports aus der Karte ein. Der Verteiler auf 19132 erkennt dann an der Adresse, dass
+  der Spieler zu MoinMorni will, und reicht ihn weiter. Danach in MoinMorni unter Einstellungen → Erreichbarkeit → „Für
+  Spieler“ den Bedrock-Port auf 19132 stellen – dann zeigen Webseite, Discord und Lobby 19132, und Bedrock-Spieler
+  lassen den vorausgefüllten Port einfach stehen. Die eigene Nummer (z. B. 19134) geht weiter.
 - **NetBird Cloud** vergibt Ports selbst – dann steht die Nummer in der Adresse. Ohne Port geht es nur mit einem selbst
   betriebenen NetBird, dessen Proxy eigene Ports erlaubt.
 - **Zwei Produkte, ein Ausgang:** MoinMorni legt seine eigene Gruppe „MoinMorni Ausgang“ (nur der Rechner

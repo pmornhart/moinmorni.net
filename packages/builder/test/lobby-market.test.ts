@@ -66,6 +66,34 @@ describe('Dorfmarkt und Schlossmarkt', () => {
     });
   });
 
+  it('Dorfleute, die herumlaufen, stehen frei – nicht in einer Bank, Mauer oder einem Brunnen', () => {
+    // "summon mannequin 2.5 65 9.5 {Tags:['mm_lobby',…,'mm_walker','mm_route_dorfplatz'],…" – die Laufenden
+    // https://regex101.com/?flavor=javascript&regex=%5Esummon%20mannequin%20(%5B-%5Cd.%5D%2B)%20(%5B-%5Cd.%5D%2B)%20(%5B-%5Cd.%5D%2B)%20.*'mm_walker'&testString=summon%20mannequin%202.5%2065%209.5%20%7BTags%3A%5B'mm_npc'%2C'mm_walker'%5D%7D
+    const WALKER = /^summon mannequin ([-\d.]+) ([-\d.]+) ([-\d.]+) .*'mm_walker'/;
+    const walkers = canvas.extra
+      .map((cmd) => WALKER.exec(cmd))
+      .filter((m): m is RegExpExecArray => m !== null);
+    expect(walkers.length).toBeGreaterThanOrEqual(13);
+    // Pflanzen ohne Kollision darf man durchqueren, sonst muss Luft sein (wie beim Laufen im Lobby-Plugin).
+    const open = (b: string | undefined): boolean =>
+      b === undefined || b === 'air' || /^(short_grass|fern|poppy|dandelion|\w+_tulip|cornflower)$/.test(b);
+    walkers.forEach((m) => {
+      const [x, y, z] = [Number(m[1]), Number(m[2]), Number(m[3])];
+      // Körper ±0,3 Blöcke: alle vier Ecken frei, darunter fester Boden (kein Wasser)
+      pairs([-0.3, 0.3], [-0.3, 0.3]).forEach(([dx, dz]) => {
+        const [bx, bz] = [Math.floor(x + dx), Math.floor(z + dz)];
+        const at = `${x} ${z}`;
+        expect(open(canvas.get(bx, y, bz)), `${at}: ${canvas.get(bx, y, bz)}`).toBe(true);
+        expect(open(canvas.get(bx, y + 1, bz)), `${at}: Kopf ${canvas.get(bx, y + 1, bz)}`).toBe(true);
+        const ground = canvas.get(bx, y - 1, bz);
+        expect(
+          ground !== undefined && ground !== 'air' && !ground.startsWith('water'),
+          `${at}: ${ground}`,
+        ).toBe(true);
+      });
+    });
+  });
+
   it('Marktbogen hängt Wimpel in den Farben der Stände über die Straße', () => {
     const banners = canvas.find((b) => b.endsWith(']') && b.includes('_wall_banner[facing=south]'));
     const arch = banners.filter(([, , z]) => z === -27);

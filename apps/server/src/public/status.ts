@@ -58,6 +58,15 @@ const systemSrv: SrvLookup = async (host) => {
   return resolver.resolveSrv(`_minecraft._tcp.${host}`);
 };
 
+/**
+ * Bedrock-Port für Spieler: von Hand eingestellt (Erreichbarkeit → „Für Spieler“, z. B. 19132 über den Verteiler von
+ * MorniHosting) oder der automatische aus dem Motor.
+ */
+const shownBedrockPort = (stores: Stores, automatic: number): number => {
+  const fixed = Number(stores.settings('reach')['bedrockPort'] ?? 0);
+  return Number.isInteger(fixed) && fixed > 0 ? fixed : automatic;
+};
+
 /** Status für Webseite, Lobby-Figuren und Discord: wer ist online, welcher Modus läuft. Kurz zwischengespeichert. */
 /**
  * Spielerzahlen kommen vom Hub (der Proxy meldet jeden Wechsel sofort); ist der Proxy nicht verbunden, aus dem
@@ -165,7 +174,7 @@ export function createStatusService(
       maxPlayers: Number(settings['maxPlayers']),
       javaAddress: play.java,
       bedrockAddress: play.bedrock,
-      bedrockPort: play.bedrockPort,
+      bedrockPort: shownBedrockPort(stores, play.bedrockPort),
       modes: stores.modes().map((m) => modeStatus(m, network, counts, hub.modeStates())),
       updatedAt: new Date().toISOString(),
     };

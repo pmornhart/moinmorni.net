@@ -1,6 +1,14 @@
 # Morni Burgverlies – Einstellungen
 # Nach Änderungen den Server neu starten (oder /bvadmin neuladen).
 
+# Verbindung mitten im Abstieg weg (Spiel abgestürzt, Internet weg)? So viele Sekunden bleibt der Platz frei. Die
+# Gruppe spielt ohne die Person weiter; Kerkertaler, Einkäufe und Wiederbelebungen bleiben. Wer rechtzeitig
+# zurückkommt – im Netzwerk über „Zurück ins Spiel“ in der Lobby –, ist wieder bei der Gruppe: im selben Raum wie sie
+# (oder genau dort, wo er war, wenn die Gruppe noch im selben Raum ist), mit Ausrüstung, Leben und Tränken. Sind alle
+# weg (z. B. allein unterwegs), hält der Abstieg an, bis jemand zurückkommt. Wer nicht kommt, verlässt den Abstieg wie
+# bisher (zählt als Niederlage). 120 reicht auch für einen Neustart von Minecraft. 0 = aus (Verbindung weg = raus).
+rueckkehr-sekunden: 120
+
 # Eigene, leere Welt für Torhaus und Verliese. Das Plugin legt sie an und baut alles selbst.
 welt: burgverlies
 

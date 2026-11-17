@@ -277,7 +277,7 @@ function marketFolk(c: Canvas): void {
     tags: village,
   });
   [
-    [-24, -26, 'gast6'],
+    [-22, -28, 'gast6'],
     [27, -27, 'bua'],
   ].forEach(([x, z, skin]) =>
     npc(c, {

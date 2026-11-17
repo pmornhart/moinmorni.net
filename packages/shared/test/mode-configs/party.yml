@@ -1,6 +1,15 @@
 # Morni Party – Einstellungen
 # Nach Änderungen den Server neu starten (oder /mparty neuladen für Zeiten und Regeln – gilt für neue Partien).
 
+# Verbindung mitten in der Partie weg (Spiel abgestürzt, Internet weg)? So viele Sekunden bleibt der Platz frei: Figur,
+# Taler, Edelweiß und Gegenstände bleiben, wo sie sind. Ist er am Zug, würfelt das Spiel nach der Würfel-Zeit für ihn
+# (wie sonst auch); Minispiele laufen ohne ihn (zählt als nicht angetreten – im Hüttenaufstieg als letzter Platz). Wer
+# rechtzeitig zurückkommt – im Netzwerk über „Zurück ins Spiel“ in der Lobby –, steht wieder auf seinem Feld (läuft
+# gerade ein Minispiel, schaut er zu und ist ab dem nächsten wieder dabei). Wer nicht kommt, ist raus wie bisher.
+# 120 reicht auch für einen Neustart von Minecraft; die anderen warten dabei nur seine Würfel-Zeit ab. Sind alle weg,
+# hält die Partie an. 0 = aus (Verbindung weg = sofort raus).
+rueckkehr-sekunden: 120
+
 # Eigene, leere Welt für Festplatz, Spielbretter und Minispiel-Plätze. Das Plugin legt sie an und baut alles selbst.
 welt: party
 

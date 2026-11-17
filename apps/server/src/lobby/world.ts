@@ -379,8 +379,9 @@ export function createLobbyWorld(
         `${name}: Abschluss des Baus ließ sich nicht laden (Fehler im Server-Protokoll: „Failed to load function“)`,
       );
     // Gleich speichern: stürzt der Server danach ab, bevor er von selbst speichert, stünde sonst die Bau-Version in
-    // der Datei, aber eine halb gebaute Welt auf der Platte – und sie würde nie neu gebaut.
-    await run(serverId, 'minecraft:save-all flush');
+    // der Datei, aber eine halb gebaute Welt auf der Platte – und sie würde nie neu gebaut. Ohne „flush“: das Schreiben
+    // auf die Platte läuft im Hintergrund (mit „flush“ stand der Server auf einer langsamen Platte über 10 s still).
+    await run(serverId, 'minecraft:save-all');
     await pack.unload.reduce(async (prev, command) => {
       await prev;
       await run(serverId, `minecraft:${command}`);

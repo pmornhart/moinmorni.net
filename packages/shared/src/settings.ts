@@ -821,7 +821,7 @@ export const LOBBY_AREA: SettingArea = {
         {
           key: 'walkers',
           type: 'number',
-          default: 12,
+          default: 13,
           min: 0,
           max: 40,
           label: t('Dorfbewohner, die herumlaufen', 'Villagers walking around'),
@@ -1596,6 +1596,27 @@ export const REACH_AREA: SettingArea = {
   icon: 'Network',
   panel: 'settings',
   sections: [
+    {
+      id: 'players',
+      title: t('Für Spieler', 'For players'),
+      settings: [
+        {
+          key: 'bedrockPort',
+          type: 'number',
+          default: 0,
+          min: 0,
+          max: 65535,
+          label: t(
+            'Bedrock-Port auf Webseite, Discord und in der Lobby',
+            'Bedrock port on the website, in Discord and in the lobby',
+          ),
+          help: t(
+            '0 = automatisch: der Port, den NetBird dem Proxy gegeben hat (hält schon jemand 19132, z. B. der Verteiler von MorniHosting, ist es der nächste freie wie 19134). Hast du moinmorni.net in MorniHosting unter „Weitere Domains über diesen Verteiler“ eingetragen, stell hier 19132 ein – dann reicht Bedrock-Spielern der vorausgefüllte Port, und überall steht 19132. Der automatische Port geht weiter.',
+            '0 = automatic: the port NetBird gave the proxy (if someone already holds 19132, e.g. the MorniHosting address router, it is the next free one like 19134). If you added your domain in MorniHosting under “More domains through this router”, set 19132 here – then Bedrock players can keep the pre-filled port, and 19132 shows everywhere. The automatic port keeps working.',
+          ),
+        },
+      ],
+    },
     {
       id: 'alerts',
       title: t('Meldungen', 'Alerts'),

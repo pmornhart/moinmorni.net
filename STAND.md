@@ -282,6 +282,41 @@
   Saison → **5/5** (Biome wie vorher) → wieder Winter **5/5**. Bilder mit echtem Client 26.3 und Lobby-Paket, Tag,
   Nacht und F3+B (Kugeln ohne Rahmen), nur lokal.
 
+- 17.11. morgens: **Lobby-Figuren laufen sauber** (Philip: „alle Figuren, auch die, die rumlaufen, buggen noch etwas“;
+  Branch `claude/npc-neu`, `LobbyNpcs.java`, Doku `docs/lobby.md`):
+  - **Gefunden** (echter Client 26.3, Videos vorher/nachher nur lokal): Dorfleute liefen durch andere Figuren und
+    Spieler hindurch und standen ineinander; zwei standen von Anfang an fest – eine im Bau in einer Bierbank am
+    Schlossmarkt (stand sichtbar in der Bank), eine in der Brunnenmauer im Oberdorf; bei einem neuen Ziel drehte die
+    Figur mit einem Ruck bis 180° herum – Minecraft drehte den Körper dann kurz rückwärts und der Rock sprang hinterher;
+    jeder Neustart und jedes Nachladen der Gegend machte den aktuellen Standort zum neuen Platz (sie wanderten mit der
+    Zeit aus ihrer Gasse); mehr Dorfleute als im Panel eingestellt blieben mitten im Schritt starr stehen; Köpfe
+    drehten in Sprüngen (alle fünf Ticks); Laufen auf halben Stufen (Füße in der Luft), über Zäune und Mauern, durch
+    Schilder, Fahnen und Wasser war möglich; Figuren am Rand der geladenen Gegend liefen weiter und luden Gelände
+    nach. Nebenbei: die Jump-and-Run-Tafel am Start stand nach Nachladen bis zu fünfmal übereinander (der
+    `lobby-test` las dann eine alte), und `save-all flush` nach dem Lobby-Bau hielt den Server über 10 s an.
+  - **Behoben:** erst auf der Stelle drehen (12° je Tick), dann geradeaus gehen; Körperdrehung für die Tracht genau wie
+    Minecraft (`bodyAfter`: im Gehen 30 %/Tick, im Stehen erst ab 50° Kopf voraus); 0,8 Blöcke Abstand zu Figuren
+    (auch sitzenden) und Spielern (Zuschauer zählen nicht), besetzte Ziele werden nicht gewählt, nach drei Versuchen
+    ein anderes; Platz aus dem Bau an der Figur gemerkt (`moinmorni:home`); nur fester, ebener Boden (voller Block
+    oder Trampelpfad), keine Zäune/Mauern, nicht durch Schilder, Fahnen, Fackeln, Zuckerrohr, hohe Blumen, Wasser;
+    nur in laufender, geladener Gegend; Wartende und überzählige Dorfleute schauen sich um wie stehende Figuren;
+    Köpfe drehen weich (höchstens 9°/Tick, zum Ende langsamer) bei allen Figuren; Startplätze der beiden
+    festsitzenden verlegt (Schlossmarkt −22/−28; die im Oberdorf steht nach dem Umbau der Brunnen
+    im Entwicklungs-Branch ohnehin woanders) + Test, dass jede laufende Figur frei startet; Tafel mit Kennung
+    `mm_jnr_board`, ältere Tafeln am Start werden weggeräumt; nach dem Bau `save-all` ohne „flush“.
+  - Tests (nach dem Zusammenführen mit dem Entwicklungs-Branch): 68 Baukasten- (neu: Startplätze frei; ohne die
+    Änderung rot), 107 Katalog-, 262 Server-Tests, 65 JUnit (4 neu: Körper im Stehen, Platz merken, Hindernisse,
+    weicher Kopf), Typen, Prettier. Echt: Paper 26.1.2 + Netzwerk-Plugin + Test-Hub, Lobby mit dem echten Selbstbau neu
+    gebaut, `lobby-test` **30/30**, `schlossmarkt-test` **31/31** (je ein Lauf davor unter Last mit Ausreißern: einmal
+    zählte das Jump and Run nur 6 statt 13 Sprünge, einmal kam das Wintersport-Schild zu spät beim Test-Spieler an).
+    Probe-Platz mit sieben laufenden Figuren und Hindernissen (Zaun, Treppen, Stufen, Schild, Wasser, halbe Stufen):
+    kleinster Abstand zwischen Figuren in 20 s **0,81** (vorher standen sie ineinander); im Dorf
+    bewegten sich in einer Minute alle Laufenden in der geladenen Gegend (die zwei festsitzenden jetzt auch);
+    Nachladen der Gegend (Kamera 300 Blöcke weg und zurück): 46 Figuren, 13 Trachten, jede Tracht auf ihrer Figur,
+    Schilder 72 (12 × 6) – nichts doppelt, nichts liegen geblieben; ohne Ressourcenpaket nur die Skins, nichts
+    Seltsames. Nicht echt geprüft: Bedrock; Körper-gegen-Rock beim Drehen nur nach Minecrafts Regeln nachgerechnet
+    und in Bildfolgen angesehen (keine Zeitlupe; der Rechner war voll, Videos ruckelten unter Last).
+
 - 17.11.: **Wiesn als eigenes Volksfest** (Philip: „das mit dem Winterwunderland auch für alle anderen Events und
   Dekos machen“; Branch `claude/winter-wunderland`, `packages/builder/src/lobby/wiesn.ts`): **Kettenkarussell um den
   Maibaum** (Herzstück: weiß-blaues Dach in 16 Feldern, 16 Sitze an Ketten, Wimpel und Lichter am Rand, darunter frei
