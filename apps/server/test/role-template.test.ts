@@ -14,7 +14,9 @@ const oldTemplate = (): Role[] =>
   DEFAULT_ROLES.filter((r) => r.id !== 'supporter').map((r) => ({
     ...r,
     position: OLD_IDS.indexOf(r.id),
-    game: r.game.filter((g) => g !== 'modes-admin' && !(TEAM_LATER.has(r.id) && g === 'maintenance-join')),
+    game: r.game.filter(
+      (g) => g !== 'modes-admin' && g !== 'lobby-fly' && !(TEAM_LATER.has(r.id) && g === 'maintenance-join'),
+    ),
   }));
 
 const installed = (list: readonly Role[]): Db => {
@@ -34,7 +36,7 @@ describe('Rollen-Vorlage: Neues kommt auch bei bestehenden Installationen an', (
   test('Supporter kommt gleich unter den Moderator, Owner und Admin bekommen „Spielmodi verwalten“', () => {
     const db = installed(oldTemplate());
     const stores = createStores(db, createEventBus());
-    expect(stores.templateUpgrades).toEqual(['supporter', 'modes-admin', 'team-always-in']);
+    expect(stores.templateUpgrades).toEqual(['supporter', 'modes-admin', 'team-always-in', 'lobby-fly']);
     const list = stores.roles();
     expect(list.map((r) => [r.id, r.position])).toEqual([
       ['owner', 0],
@@ -93,7 +95,7 @@ describe('Rollen-Vorlage: Neues kommt auch bei bestehenden Installationen an', (
     // Admin heißt weiter „Chef“, hat seine eigenen Rechte – plus das neue.
     expect(list.find((r) => r.id === 'admin')).toMatchObject({
       name: { de: 'Chef', en: 'Boss' },
-      game: ['kick', 'ban', 'modes-admin'],
+      game: ['kick', 'ban', 'lobby-fly', 'modes-admin'],
     });
     expect(list.find((r) => r.id === 'helfer')).toMatchObject({ ...own, position: 4 });
     const ids = before.map((r) => r.id);
@@ -115,7 +117,11 @@ describe('Rollen-Vorlage: Neues kommt auch bei bestehenden Installationen an', (
       name: { de: 'Supporter', en: 'Supporter' },
     };
     const db = installed([...oldTemplate().filter((r) => r.id !== 'vip'), mine]);
-    expect(createStores(db, createEventBus()).templateUpgrades).toEqual(['modes-admin', 'team-always-in']);
+    expect(createStores(db, createEventBus()).templateUpgrades).toEqual([
+      'modes-admin',
+      'team-always-in',
+      'lobby-fly',
+    ]);
     expect(order(db).filter((id) => id.startsWith('support'))).toEqual(['support']);
   });
 
@@ -144,6 +150,30 @@ describe('Rollen-Vorlage: Neues kommt auch bei bestehenden Installationen an', (
     const stores = createStores(db, createEventBus());
     expect(stores.templateUpgrades).toEqual(['team-always-in', 'supporter-punishments']);
     expect(stores.roles()).toEqual([...DEFAULT_ROLES]);
+    expect(createStores(db, createEventBus()).templateUpgrades).toEqual([]);
+  });
+
+  test('In der Lobby fliegen: VIP und alle Ränge darüber bekommen es einmal, Spieler und eigene Rollen nicht', () => {
+    const before = DEFAULT_ROLES.map((r) => ({ ...r, game: r.game.filter((g) => g !== 'lobby-fly') }));
+    const own: Role = { ...before.find((r) => r.id === 'player')!, id: 'gast', position: 9 };
+    const db = installed([...before, own]);
+    const at = new Date().toISOString();
+    ['supporter', 'modes-admin', 'team-always-in', 'supporter-punishments'].forEach((key) =>
+      db
+        .insert(settingValues)
+        .values({ area: '_rollen-vorlage', key, value: at, updatedBy: 'MoinMorni', updatedAt: at })
+        .run(),
+    );
+    const stores = createStores(db, createEventBus());
+    expect(stores.templateUpgrades).toEqual(['lobby-fly']);
+    expect(
+      stores
+        .roles()
+        .filter((r) => r.game.includes('lobby-fly'))
+        .map((r) => r.id),
+    ).toEqual(['owner', 'admin', 'moderator', 'supporter', 'builder', 'media', 'vip']);
+    expect(stores.roles().filter((r) => r.id !== 'gast')).toEqual([...DEFAULT_ROLES]);
+    // Vom Owner danach wieder weggenommen: bleibt weg.
     expect(createStores(db, createEventBus()).templateUpgrades).toEqual([]);
   });
 

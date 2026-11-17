@@ -46,7 +46,7 @@ describe('Jump and Run statt Parkour-Spirale', () => {
     expect(spiral).toEqual([]);
   });
 
-  it('schwebende Wegweiser-Blöcke sind nicht erreichbar (auch nicht mit Doppelsprung)', () => {
+  it('schwebende Wegweiser-Blöcke hängen höher, als ein Doppelsprung vom Platz aus trägt (Standard gut 7 Blöcke)', () => {
     const hints = canvas
       .find((b) => b.endsWith('_concrete'))
       .filter(([x, y, z]) => y > GROUND && Math.hypot(x - start.x, z - start.z) < 5);

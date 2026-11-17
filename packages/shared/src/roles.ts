@@ -65,6 +65,7 @@ export const GAME_RIGHTS = [
   'reserved-slot',
   'bigger-party',
   'lobby-extras',
+  'lobby-fly',
   'chat-colour',
   'maintenance-join',
   'ranks',
@@ -125,6 +126,7 @@ const TEAM_GAME_RIGHTS: GameRight[] = [
   'inspect',
   'voice-join-any',
   'voice-mute',
+  'lobby-fly',
   'maintenance-join',
 ];
 /**
@@ -138,9 +140,18 @@ export const SUPPORTER_GAME_RIGHTS: readonly GameRight[] = [
   'spectate',
   'inspect',
   'voice-mute',
+  'lobby-fly',
   'maintenance-join',
 ];
-const VIP_GAME_RIGHTS: GameRight[] = ['reserved-slot', 'bigger-party', 'lobby-extras', 'chat-colour'];
+/** „In der Lobby fliegen“ gibt es ab VIP – für VIP und alle Ränge darüber (Philip, 17.11.). */
+export const LOBBY_FLY_RIGHT = 'lobby-fly' satisfies GameRight;
+const VIP_GAME_RIGHTS: GameRight[] = [
+  'reserved-slot',
+  'bigger-party',
+  'lobby-extras',
+  'lobby-fly',
+  'chat-colour',
+];
 
 /**
  * Die Vorlage, mit der MoinMorni startet (Philip, 14.11.: Owner, Admin, Moderator, Builder, Media, VIP, Spieler;
@@ -203,7 +214,7 @@ export const DEFAULT_ROLES: readonly Role[] = [
     symbol: '⚒',
     colour: '#55ff55',
     panel: ['overview', 'build'],
-    game: ['build', 'worldedit', 'lobby-edit', 'gamemode', 'creative', 'maintenance-join'],
+    game: ['build', 'worldedit', 'lobby-edit', 'gamemode', 'creative', 'lobby-fly', 'maintenance-join'],
     discord: ['builder-area', 'links'],
     position: ROLE_IDS.indexOf('builder'),
     fallback: false,

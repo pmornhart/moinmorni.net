@@ -342,8 +342,17 @@ Lobby-Server (bei jeder Änderung neu).
   `/jnr top`, `/jnr stop`; Werte gehen als Statistik „lobby“ an den Hub (`jump_best`, `jump_runs`, `jumps` – Profil
   und Bestenliste der Webseite). `/parkour` leitet um. Ein Teleport, Kreativ-/Zuschauermodus, Gefängnis oder Rundgang
   beenden den Lauf. Die alte `parkour.yml` bleibt liegen (Zeiten passen nicht zu Punkten).
-- **Doppelsprung** (`LobbyDoubleJump.java`): in der Luft noch einmal springen gibt einen zweiten Schwung nach vorn und
-  oben, mit Funken und Klang (Stärke im Panel 0,5–2). Wer darf, hat „Fliegen erlaubt“; das Einschalten des Fliegens
+- **Doppelsprung** (`LobbyDoubleJump.java`): der klassische Lobby-Doppelsprung – springen, in der Luft noch einmal die
+  Sprungtaste, und ein kräftiger Schub wirft einen in Blickrichtung in hohem Bogen davon (Blickrichtung × 1,6 × Stärke,
+  nach oben 0,6 + 0,4 × Stärke Blöcke pro Tick; Stärke im Panel 0,5–2, Standard 1 ≈ 15 Blöcke weit, 7 hoch, bei 2 gut
+  30 weit und 12 hoch). Nach der Landung sofort wieder, Landen auf Dächern ist gewollt; Funken, Wolke und Klang, kein
+  Fallschaden. Aus der Lobby kommt man nicht: die Weltgrenze liegt innerhalb des Bergkranzes und hält auch im Flug.
+- **Fliegen ab VIP** (Spielrecht „In der Lobby fliegen“, `lobby-fly`, Vorlage: VIP und alle Ränge darüber; bestehende
+  Installationen bekommen es einmal, `panel/role-template.ts`): statt des Doppelsprungs richtig fliegen – zweimal
+  Leertaste an und aus wie im Kreativmodus, auch wenn der Doppelsprung im Panel aus ist. `/fly` (`/fliegen`) wechselt
+  zwischen Fliegen und Doppelsprung; wer den Doppelsprung wählt, steht in `plugins/moinmorni/lobby-fly.txt`. Nicht im
+  Jump and Run (beim Start landet man), im Gefängnis und beim Rundgang; nur in der Lobby, nicht in der Wartungs-Lobby
+  (deren Sprung-Parcours wäre sonst sinnlos) und nicht in den Spielmodi. Wer darf, hat „Fliegen erlaubt“; das Einschalten des Fliegens
   fängt das Plugin ab und gibt stattdessen den Schwung, bis zur Landung kein zweiter. Bedrock (Geyser) meldet das
   Fliegen genauso. Nicht im Jump and Run, nicht im Gefängnis, nicht beim Rundgang; Kreativ und Zuschauer bleiben
   unberührt. Die Lobby läuft mit `allow-flight=true` (sonst würde Minecraft Läufer, die auf Blöcken stehen, die nur

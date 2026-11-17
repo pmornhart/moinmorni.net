@@ -33,6 +33,8 @@ final class Rights {
     static final String EVERYTHING = "admin";
     static final String CREATIVE = "creative";
     static final String LOBBY_EDIT = "lobby-edit";
+    /** In der Lobby fliegen statt doppelt springen (ab VIP, {@code LobbyDoubleJump}). */
+    static final String LOBBY_FLY = "lobby-fly";
     /** Das Netzwerk-Plugin unter seinem Namen und dem Zwischen-Namen (ältere Modus-Jars hängen sich noch daran). */
     static final Set<String> NETWORK_PLUGINS = Set.of("MoinMorni", "MorniNet");
     private static final String ADMIN_SUFFIX = ".admin";

@@ -81,12 +81,25 @@ function addSupporterPunishments(list: readonly Role[]): Role[] {
   );
 }
 
+const LOBBY_FLY: GameRight = 'lobby-fly';
+const FLY_ROLES = new Set(['owner', 'admin', 'moderator', 'supporter', 'builder', 'media', 'vip']);
+
+/** In der Lobby fliegen (17.11., Philip: „alles ab VIP“): VIP und alle Ränge der Vorlage darüber – wie in der Vorlage. */
+function addLobbyFly(list: readonly Role[]): Role[] {
+  return list.map((r) =>
+    FLY_ROLES.has(r.id) && !r.game.includes(LOBBY_FLY)
+      ? { ...r, game: GAME_RIGHTS.filter((g) => g === LOBBY_FLY || r.game.includes(g)) }
+      : r,
+  );
+}
+
 /** In dieser Reihenfolge; neue Neuerungen kommen hinten dazu (mit neuer Kennung, alte nie ändern). */
 const UPGRADES: readonly Upgrade[] = [
   { id: 'supporter', apply: addSupporter },
   { id: 'modes-admin', apply: addModesAdmin },
   { id: 'team-always-in', apply: addTeamAlwaysIn },
   { id: 'supporter-punishments', apply: addSupporterPunishments },
+  { id: 'lobby-fly', apply: addLobbyFly },
 ];
 
 /**
