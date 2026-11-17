@@ -1,5 +1,14 @@
 # Morni Bollwerk – Einstellungen. Nach Änderungen: /bollwerk neuladen (oder Server neu starten).
 
+# Verbindung mitten in der Runde weg (Spiel abgestürzt, Internet weg)? So viele Sekunden bleibt der Platz frei. Die
+# anderen verteidigen weiter; Gulden, Ausrüstung und Kills bleiben. Wer rechtzeitig zurückkommt – im Netzwerk über
+# „Zurück ins Spiel“ in der Lobby –, steht wieder auf derselben Karte, genau dort, wo er war, mit Ausrüstung und Leben
+# (wer beim Gehen am Boden lag, ist raus wie bisher und kommt in der nächsten Aufbauphase wieder). Sind alle weg (z. B.
+# allein), hält die Runde an, bis jemand zurückkommt. Wer nicht kommt: wie bisher (später in der Aufbauphase wieder
+# dabei, in einer Welle als Zuschauer; sind alle weg, endet die Runde). 120 reicht auch für einen Neustart von
+# Minecraft. 0 = aus.
+rueckkehr-sekunden: 120
+
 # Eigene leere Welt für Wachstube und Karten (wird beim ersten Start angelegt und gebaut).
 welt: bollwerk
 

@@ -1025,6 +1025,14 @@ export const PARTY_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'party', plugin: 'MorniParty' },
   sections: [
+    rejoinSection(
+      party,
+      120,
+      t(
+        'So viele Sekunden bleibt der Platz frei. Figur, Taler, Edelweiß und Gegenstände bleiben; ist man am Zug, würfelt das Spiel nach der Würfel-Zeit, Minispiele laufen ohne einen. Wer rechtzeitig zurückkommt, steht wieder auf dem eigenen Feld. Sind alle weg, hält die Partie an. 0 = aus.',
+        'The place stays free for this many seconds. Piece, coins, edelweiss and items stay; if it is your turn, the game rolls after the dice time, minigames run without you. Whoever comes back in time stands on their own space again. If everyone is gone, the game pauses. 0 = off.',
+      ),
+    ),
     {
       id: 'tables',
       title: t('Tische und Spieler', 'Tables and players'),
@@ -1740,6 +1748,14 @@ export const BURGVERLIES_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'burgverlies', plugin: 'MorniBurgverlies' },
   sections: [
+    rejoinSection(
+      verlies,
+      120,
+      t(
+        'So viele Sekunden bleibt der Platz frei. Die Gruppe spielt weiter; wer rechtzeitig zurückkommt, steht im Raum der Gruppe mit gleicher Ausrüstung und gleichem Leben. Sind alle weg, hält der Abstieg an – auch die Zeit. 0 = aus.',
+        'The place stays free for this many seconds. The group plays on; whoever comes back in time stands in the group’s room with the same gear and health. If everyone is gone, the descent pauses – the clock too. 0 = off.',
+      ),
+    ),
     {
       id: 'dungeons',
       title: t('Verliese', 'Dungeons'),
@@ -1898,6 +1914,14 @@ export const BOLLWERK_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'bollwerk', plugin: 'MorniBollwerk' },
   sections: [
+    rejoinSection(
+      bollwerk,
+      120,
+      t(
+        'So viele Sekunden bleibt der Platz frei. Die anderen verteidigen weiter; wer rechtzeitig zurückkommt, steht an derselben Stelle mit gleicher Ausrüstung und gleichem Leben. Sind alle weg, hält die Runde an. 0 = aus.',
+        'The place stays free for this many seconds. The others keep defending; whoever comes back in time stands at the same spot with the same gear and health. If everyone is gone, the round pauses. 0 = off.',
+      ),
+    ),
     {
       id: 'hall',
       title: t('Wachstube', 'Guardroom'),
