@@ -19,6 +19,7 @@ export * from './lobby/jail.js';
 export * from './lobby/jumpandrun.js';
 export * from './lobby/schlossmarkt.js';
 export * from './lobby/season.js';
+export * from './lobby/walk.js';
 export * from './lobby/winter.js';
 export * from './lobby/saison-plan.js';
 export * from './lobby/wiesn.js';

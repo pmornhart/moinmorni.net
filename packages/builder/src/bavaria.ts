@@ -12,7 +12,7 @@ import { cylinder, discAt, gableRoof, lathe, slab, stairs, STEP, YAW, type Facin
 import { furnish, signText, type RoomKind } from './village.js';
 import { roundTree } from './nature.js';
 import { MOEBEL, MOEBEL_BODEN } from './furniture.js';
-import { castleLights, hollowWing, rotunda, type WingKind } from './schloss.js';
+import { castleGate, castleLights, hollowWing, rotunda, wingEntrance, type WingKind } from './schloss.js';
 import { prunkbrunnen } from './brunnen.js';
 
 const D = {
@@ -61,6 +61,18 @@ const WINDOW_FLOWERS = [
   'potted_allium',
   'potted_orange_tulip',
 ] as const;
+/** Name je Hausart für die Prüfung „zu Fuß erreichbar“ (Häuser mit Schild heißen wie das Schild). */
+const ROOM_NAMES: Readonly<Record<RoomKind, string>> = {
+  wohnhaus: 'Wohnhaus',
+  wirtshaus: 'Wirtshaus',
+  baeckerei: 'Bäckerei',
+  schmiede: 'Schmiede',
+  laden: 'Laden',
+  rathaus: 'Rathaus',
+  info: 'Gäste-Info',
+  apotheke: 'Apotheke',
+  schreinerei: 'Schreinerei',
+};
 /** Ab dieser Breite (u bis w) passt ein Kamin neben den First. */
 const CHIMNEY_MIN_W = 6;
 
@@ -158,7 +170,21 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
       D.signScale,
     );
   }
-  if (h.interior) furnish(f, { kind: h.interior, w, d, floors: h.floors, storey: D.floor, wood, door });
+  if (h.interior) {
+    furnish(f, { kind: h.interior, w, d, floors: h.floors, storey: D.floor, wood, door });
+    const [dx, , dz] = f.at(door, 0, 0);
+    const label = `${h.sign ?? ROOM_NAMES[h.interior]} bei ${dx}/${dz}`;
+    range(0, h.floors - 1).forEach((fl) =>
+      f.place(
+        `${label} – ${fl === 0 ? 'Erdgeschoss' : `${fl}. Stock`}`,
+        1,
+        fl * D.floor + 1,
+        1,
+        w - 1,
+        d - 1,
+      ),
+    );
+  }
   if (h.floors > 1) {
     const by = D.floor + 1;
     f.fill(0, D.floor, -D.balconyDepth, w, D.floor, -D.balconyDepth, slab(wood, 'top'));
@@ -321,6 +347,7 @@ export function biergarten(
   pairs(range(x1, x2), range(z1, z2)).forEach(([x, z]) =>
     c.set(x, y, z, rnd() < 0.85 ? 'gravel' : 'coarse_dirt'),
   );
+  c.place('Biergarten', x1, y + 1, z1, x2, z2);
   const rows = range(z1 + 2, z2 - 2).filter((z) => (z - z1 - 2) % D.tableGap === 0);
   const cols = range(x1 + 2, x2 - D.tableLen - 1).filter((x) => (x - x1 - 2) % (D.tableLen + 3) === 0);
   // Bierbank und Biertisch aus dem Ressourcenpaket; unter den Bänken Kies (das Modell zeichnet ihn mit).
@@ -420,12 +447,16 @@ export function palaceWing(c: Canvas, s: WingSpec): void {
   f.fill(0, 0, 0, w, top, d, 'white_concrete');
   f.fill(0, 0, 0, w, 1, d, 'stone_bricks');
   const pane = `light_blue_stained_glass_pane[${f.dir('left')}=true,${f.dir('right')}=true]`;
+  const door = Math.floor(w / 2);
   range(0, w).forEach((u) => {
-    const pilaster = u % D.pilasterGap === 0;
+    // Pilaster im Takt, aber keiner vor der Tür – dafür rahmen zwei die Tür ein
+    const fromDoor = Math.abs(u - door);
+    const pilaster = (u % D.pilasterGap === 0 && fromDoor > 1) || fromDoor === 2;
     if (pilaster) f.fill(u, 2, -1, u, top, -1, 'quartz_pillar');
     range(0, s.storeys - 1).forEach((st) => {
       const wy = st * D.storey + D.centre;
-      if (!pilaster && u % D.pilasterGap === 2) {
+      const inDoor = st === 0 && fromDoor <= 1;
+      if (!pilaster && !inDoor && u % D.pilasterGap === 2) {
         f.fill(u, wy, 0, u, wy + 2, 0, pane);
         f.set(u, wy + D.centre, -1, 'gold_block');
         f.set(u, wy - 1, -1, stairs('quartz', f.dir('back'), 'top'));
@@ -448,11 +479,11 @@ export function palaceWing(c: Canvas, s: WingSpec): void {
     overhang: 1,
     eaves: 0,
   });
-  const door = Math.floor(w / 2);
   if (s.interior) hollowWing(c, f, s.interior, w, d, top);
   f.fill(door - 1, 2, 0, door + 1, 5, 0, 'air');
   f.fill(door - 2, 6, -1, door + 2, 6, -1, 'gold_block');
   f.set(door, 7, -1, 'emerald_block');
+  if (s.interior) wingEntrance(f, door, s.interior);
 }
 
 export interface PortalSpec {
@@ -522,6 +553,11 @@ export interface CastleSpec {
   /** Wie tief die Bastei-Mauer nach unten reicht. */
   readonly wallDrop: number;
   readonly rnd: () => number;
+  /**
+   * Freitreppe vor dem Tor die Bastei hinunter (Standard). Aus, wenn davor ein eigener Platz liegt – in der Lobby der
+   * Schlossvorplatz, unter dem sie sonst unsichtbar begraben läge.
+   */
+  readonly frontStairs?: boolean;
 }
 
 /**
@@ -537,19 +573,20 @@ export function castle(c: Canvas, s: CastleSpec): void {
     .filter(([u, v]) => u === -W || u === W || v === 0 || v === DEPTH)
     .forEach(([u, v]) => {
       f.fill(u, -s.wallDrop, v, u, 0, v, s.rnd() < 0.15 ? 'mossy_stone_bricks' : 'stone_bricks');
-      f.set(u, 1, v, (u + v) % 2 === 0 ? 'stone_brick_wall' : 'air');
+      // Zinnen; die Lücken bleiben, wie sie sind – hinten, wo der Berg über die Bastei wächst, blieb sonst ein Loch
+      // unter dem Hang, durch das man auf nackte Erde sah
+      if ((u + v) % 2 === 0) f.set(u, 1, v, 'stone_brick_wall');
     });
-  f.fill(-4, 1, 0, 4, 1, 0, 'air');
-  range(1, s.wallDrop).forEach((i) => f.fill(-4, -i, -i, 4, -i, -i, stairs('stone_brick', f.dir('back'))));
-  range(1, s.wallDrop).forEach((i) => f.fill(-4, -i - 1, -i, 4, -i - 1, -i, 'stone_bricks'));
-  [-5, 5].forEach((u) => {
-    f.fill(u, -s.wallDrop, -s.wallDrop, u, 0, 0, 'stone_bricks');
-    f.set(u, 1, 0, 'gold_block');
-    f.set(u, 2, 0, 'lantern');
-  });
-  // Ehrenhof: Kies-Wege, Beete, Brunnen
+  if (s.frontStairs !== false) {
+    range(1, s.wallDrop).forEach((i) => f.fill(-4, -i, -i, 4, -i, -i, stairs('stone_brick', f.dir('back'))));
+    range(1, s.wallDrop).forEach((i) => f.fill(-4, -i - 1, -i, 4, -i - 1, -i, 'stone_bricks'));
+    [-5, 5].forEach((u) => f.fill(u, -s.wallDrop, -s.wallDrop, u, -1, 0, 'stone_bricks'));
+  }
+  castleGate(c, f);
+  // Ehrenhof: Kies-Wege (Mittelweg 5 breit, Querweg zu Bibliothek und Rittersaal 3 breit wie deren Türen), Beete,
+  // Brunnen
   pairs(range(-18, 18), range(3, 30)).forEach(([u, v]) => {
-    const pathTile = Math.abs(u) <= 2 || v === 16;
+    const pathTile = Math.abs(u) <= 2 || Math.abs(v - 16) <= 1;
     f.set(u, 0, v, pathTile ? 'gravel' : 'grass_block');
     if (!pathTile && (Math.abs(u) === 5 || Math.abs(u) === 16 || v === 4 || v === 29))
       f.set(u, 1, v, 'azalea_leaves[persistent=true]');
@@ -558,6 +595,7 @@ export function castle(c: Canvas, s: CastleSpec): void {
   });
   const [fx, fy, fz] = f.at(0, 0, 16);
   prunkbrunnen(c, fx, fy, fz, 'gross');
+  f.place('Schloss: Ehrenhof', -18, 1, 3, 18, 30);
   // Seitenflügel (Fronten zum Hof), Hauptflügel hinten
   palaceWing(c, {
     ...wingOrigin(f, -W + 2, 1, 1, 'right'),
@@ -632,6 +670,9 @@ function wingOrigin(
   return { x, y: wy, z, front: f.dir(face) };
 }
 
+/** Glockenstube oben im Kapellenturm als Ort (zu Fuß gewollt nicht – keine Leiter). */
+export const BELFRY = 'Kapelle: Glockenstube';
+
 /**
  * Dorfkapelle: weißes Schiff mit Bänken, Mittelgang und Altar, Satteldach; Turm mit Vorhalle (Tür in der Turmwand),
  * offener Glockenstube und grüner Zwiebelhaube mit goldener Kugel. Begehbar: Turmtür → Vorhalle → Kirchentür.
@@ -647,6 +688,7 @@ export function chapel(c: Canvas, x: number, y: number, z: number, front: Facing
     .filter(([u, v]) => u === 0 || u === 8 || v === 0 || v === 14)
     .forEach(([u, v]) => f.fill(u, 1, v, u, 6, v, 'white_concrete'));
   f.fill(1, 1, 1, 7, 6, 13, 'air');
+  f.place('Kapelle', 1, 1, 1, 7, 13);
   [3, 7, 11].forEach((v) => [0, 8].forEach((u) => f.fill(u, 3, v, u, 5, v, 'yellow_stained_glass')));
   f.fill(4, 2, 14, 4, 5, 14, 'light_blue_stained_glass');
   // Mittelgang, Bänke (Lehne zur Tür), Altar mit Kerzen und Blumen, Leuchter an der Decke
@@ -681,6 +723,7 @@ export function chapel(c: Canvas, x: number, y: number, z: number, front: Facing
   door(4, -5);
   f.fill(3, 10, -5, 5, 12, -2, 'air');
   f.fill(2, 10, -4, 6, 12, -2, 'air');
+  f.place(BELFRY, 2, 10, -4, 6, -2);
   f.set(4, 12, -3, 'bell[attachment=ceiling]');
   f.fill(1, 17, -6, 7, 17, 0, 'smooth_quartz');
   const [tx, ty, tz] = f.at(4, 18, -3);

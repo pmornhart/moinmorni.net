@@ -17,7 +17,7 @@ import { GROUND } from '../nature.js';
 import { pairs, range } from '../range.js';
 import { gableRoof, STEP, type Facing } from '../shapes.js';
 import { MARKET } from './dorfplatz.js';
-import { SCHLOSSMARKT } from './schlossmarkt.js';
+import { MARKET_ARCH_Z, SCHLOSSMARKT } from './schlossmarkt.js';
 import {
   aroundX,
   aroundY,
@@ -199,7 +199,7 @@ function schlossmarktKetten(): string[] {
       stallCorners(s).reduce((p, q) => (Math.abs(q[0]) < Math.abs(p[0]) ? q : p));
     const outer = (s: Stall): Vec =>
       stallCorners(s).reduce((p, q) => (Math.abs(q[0]) > Math.abs(p[0]) ? q : p));
-    const arch: Vec = [sign > 0 ? 7.5 : -6.5, GROUND + 6.6, -27.5];
+    const arch: Vec = [sign > 0 ? 7.5 : -6.5, GROUND + 6.6, MARKET_ARCH_Z + HALF];
     const first = stalls[0];
     return [
       ...(first ? lightChain('kette', arch, inner(first), 0.9, CHAIN_LIGHTS) : []),
@@ -214,7 +214,7 @@ function schlossmarktKetten(): string[] {
 /** Marktbogen des Schlossmarkts: Girlande mit Lichtern vorne und hinten am Balken, Stern obendrauf. */
 function marktbogen(world: World): string[] {
   const top = GROUND + 7;
-  const z = -28;
+  const z = MARKET_ARCH_Z;
   const parts: ModelPart[] = [
     ...garland([-7, top + 0.9, z + 1.12], [8, top + 0.9, z + 1.12], 0.34, STALL_LIGHTS),
     ...garland([-7, top + 0.9, z - 0.12], [8, top + 0.9, z - 0.12], 0.34, STALL_LIGHTS),

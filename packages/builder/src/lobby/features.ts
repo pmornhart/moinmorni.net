@@ -110,8 +110,8 @@ export const TOUR: readonly TourStop[] = [
     p(14, GROUND + 1, -26),
     { de: 'Launchpads', en: 'Launch pads' },
     {
-      de: 'Lauf über die Smaragd-Platten – sie schießen dich Richtung Schloss.',
-      en: 'Step on the emerald pads – they launch you towards the castle.',
+      de: 'Lauf über die Smaragd-Platten – sie schießen dich Richtung Schloss. Zu Fuß geht es über die Schlosstreppe.',
+      en: 'Step on the emerald pads – they launch you towards the castle. Or walk up the castle stairs.',
     },
   ),
   stop(

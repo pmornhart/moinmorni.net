@@ -5,7 +5,9 @@ import { pairs, range } from '../src/range.js';
 import { LAUNCHPADS } from '../src/lobby/features.js';
 import { MODES, modeIcon } from '../src/lobby/common.js';
 import { buildLobby } from '../src/lobby/dorfplatz.js';
-import { RING_MODES, SCHLOSSMARKT } from '../src/lobby/schlossmarkt.js';
+import { LOBBY_SPAWN_VIEW } from '../src/lobby/features.js';
+import { collisionOf, spotKey, walkReport } from '../src/lobby/walk.js';
+import { MARKET_ARCH_Z, RING_MODES, SCHLOSSMARKT } from '../src/lobby/schlossmarkt.js';
 
 // Figur eines Modus im Bau: "summon mannequin 20.5 65 -30.5 {Tags:['mm_npc','mm_skin_x','mm_mode_npc','mm_mode_duels'],…"
 // passt nicht: Schilder ("summon text_display …"). https://regex101.com/?flavor=javascript&regex=%5Esummon%20mannequin%20(%5B-%5Cd.%5D%2B)%20(%5B-%5Cd.%5D%2B)%20(%5B-%5Cd.%5D%2B)%20.*'mm_mode_(%5Ba-z%5D%2B)'&testString=summon%20mannequin%2020.5%2065%20-30.5%20%7BTags%3A%5B'mm_npc'%2C'mm_mode_npc'%2C'mm_mode_duels'%5D%7D
@@ -13,6 +15,7 @@ const MODE_FIGURE = /^summon mannequin ([-\d.]+) ([-\d.]+) ([-\d.]+) .*'mm_mode_
 
 describe('Dorfmarkt und Schlossmarkt', () => {
   const { canvas } = buildLobby();
+  const walk = walkReport(canvas, LOBBY_SPAWN_VIEW);
   const figures = canvas.extra
     .map((cmd) => MODE_FIGURE.exec(cmd))
     .filter((m): m is RegExpExecArray => m !== null && m[4] !== 'npc')
@@ -66,6 +69,83 @@ describe('Dorfmarkt und Schlossmarkt', () => {
     });
   });
 
+  it('Launchpad-Flug wie im Spiel (Luftreibung, ganzer Körper) bis zur Landung frei – gelandet wird auf der Schlosstreppe', () => {
+    const { map, reach } = walk;
+    /** Steckt der Körper (0,6 breit, 1,8 hoch, Füße auf y) in einem Block? */
+    const hits = (x: number, y: number, z: number): string | undefined =>
+      pairs([x - 0.3, x + 0.29], [z - 0.3, z + 0.29])
+        .flatMap(([bx, bz]) =>
+          range(Math.floor(y), Math.floor(y + 1.8)).map((by) => {
+            const block = canvas.get(Math.floor(bx), by, Math.floor(bz)) ?? (by <= GROUND ? 'dirt' : 'air');
+            const shape = collisionOf(block);
+            const inside = shape && y < by + shape[1] && y + 1.8 > by + shape[0];
+            return inside ? `${block} bei ${Math.floor(bx)} ${by} ${Math.floor(bz)}` : undefined;
+          }),
+        )
+        .find((b) => b !== undefined);
+    LAUNCHPADS.forEach((pad) => {
+      const fly = (
+        t: number,
+        p: { x: number; y: number; z: number; vx: number; vy: number; vz: number },
+      ): typeof p & { t: number } => {
+        const next = {
+          x: p.x + p.vx,
+          y: p.y + p.vy,
+          z: p.z + p.vz,
+          vx: p.vx * 0.91,
+          vy: (p.vy - 0.08) * 0.98,
+          vz: p.vz * 0.91,
+        };
+        const blocked = hits(next.x, next.y, next.z);
+        // Fällt der Körper auf etwas, ist er gelandet (darf es nur von oben treffen)
+        if (blocked && p.vy < 0 && !hits(next.x, p.y, next.z)) return { ...p, t };
+        expect(
+          blocked,
+          `Flug von ${pad.x}: Tick ${t} ${next.x.toFixed(1)} ${next.y.toFixed(1)} ${next.z.toFixed(1)}`,
+        ).toBeUndefined();
+        return t > 80 ? { ...next, t } : fly(t + 1, next);
+      };
+      const [vx, vy, vz] = pad.push;
+      const end = fly(1, { x: pad.x + 0.5, y: pad.y + 1, z: pad.z + 0.5, vx, vy, vz });
+      const [x, z] = [Math.floor(end.x), Math.floor(end.z)];
+      const landing = map
+        .column(x, z)
+        .filter((s) => s.h <= end.y * 16 + 1)
+        .sort((a, b) => b.h - a.h)[0];
+      expect(end.t, 'gelandet').toBeLessThan(60);
+      expect(z, 'auf der Schlosstreppe').toBeLessThan(-34);
+      expect(Math.abs(x), 'auf der Schlosstreppe').toBeLessThanOrEqual(5);
+      expect(landing && reach.jumps.get(spotKey(x, z, landing.h)), 'Landeplatz zu Fuß erreichbar').toBe(0);
+    });
+  });
+
+  it('zwischen den Ständen schwebt kein Brett mehr (Philip), kein Topf steht neben einer Figur', () => {
+    const gaps = SCHLOSSMARKT.slice(0, -2).map((s) => s.x + Math.sign(s.x) * 5);
+    expect(gaps.sort((a, b) => a - b)).toEqual([-35, -25, 25, 35]);
+    gaps.forEach((x) =>
+      range(-34, -31).forEach((z) => {
+        const knee = canvas.get(x, GROUND + 1, z);
+        expect(knee?.includes('trapdoor') ?? false, `${x} ${z}: ${knee}`).toBe(false);
+      }),
+    );
+    // Neben jeder Figur des Schlossmarkts (auf der Theke links und rechts) kein Blumentopf vor dem Gesicht
+    SCHLOSSMARKT.forEach((s) =>
+      [s.x - 2, s.x + 2].forEach((x) => {
+        const goods = canvas.get(x, GROUND + 2, -32);
+        expect(goods?.startsWith('potted_') ?? false, `${s.mode} ${x}: ${goods}`).toBe(false);
+      }),
+    );
+  });
+
+  it('auch am Dorfmarkt steht kein Blumentopf direkt neben einer Figur (Waren 2 und 3 liegen neben ihr)', () => {
+    // marketStall legt die Waren auf die Fässer bei u = 0, 1, 5, 6 – die Figur steht bei u = 3, neben ihr u = 1 und 5
+    MODES.forEach((m) =>
+      [m.goods[1], m.goods[2]].forEach((g) =>
+        expect(g?.startsWith('potted_') ?? false, `${m.id}: ${g}`).toBe(false),
+      ),
+    );
+  });
+
   it('Dorfleute, die herumlaufen, stehen frei – nicht in einer Bank, Mauer oder einem Brunnen', () => {
     // "summon mannequin 2.5 65 9.5 {Tags:['mm_lobby',…,'mm_walker','mm_route_dorfplatz'],…" – die Laufenden
     // https://regex101.com/?flavor=javascript&regex=%5Esummon%20mannequin%20(%5B-%5Cd.%5D%2B)%20(%5B-%5Cd.%5D%2B)%20(%5B-%5Cd.%5D%2B)%20.*'mm_walker'&testString=summon%20mannequin%202.5%2065%209.5%20%7BTags%3A%5B'mm_npc'%2C'mm_walker'%5D%7D
@@ -96,7 +176,7 @@ describe('Dorfmarkt und Schlossmarkt', () => {
 
   it('Marktbogen hängt Wimpel in den Farben der Stände über die Straße', () => {
     const banners = canvas.find((b) => b.endsWith(']') && b.includes('_wall_banner[facing=south]'));
-    const arch = banners.filter(([, , z]) => z === -27);
+    const arch = banners.filter(([, , z]) => z === MARKET_ARCH_Z + 1);
     expect(arch.length).toBe(6);
     expect(new Set(arch.map(([, , , b]) => b)).size).toBe(6);
   });

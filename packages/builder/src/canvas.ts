@@ -207,6 +207,16 @@ function command(b: Box, block: string): string {
     : `fill ${b.x1} ${b.y1} ${b.z1} ${b.x2} ${b.y2} ${b.z2} ${block} strict`;
 }
 
+/** Boden eines Raums oder Platzes, den man zu Fuß erreichen soll (Füße auf Höhe `y`). */
+export interface Place {
+  readonly name: string;
+  readonly x1: number;
+  readonly z1: number;
+  readonly x2: number;
+  readonly z2: number;
+  readonly y: number;
+}
+
 /** Ein Block traf auf einen Block anderer Herkunft (z. B. ein Baum auf eine Hauswand), für die Bauplan-Prüfung. */
 export interface Overlap {
   readonly x: number;
@@ -231,6 +241,21 @@ export class Canvas {
   private origin = '';
   /** Zusätzliche Befehle nach den Blöcken (z. B. `summon` für Texte und NPCs). */
   readonly extra: string[] = [];
+  /** Räume und Plätze, die die Bauten melden – die Prüfung „zu Fuß erreichbar“ geht sie alle durch. */
+  readonly places: Place[] = [];
+
+  /** Raum oder Platz merken: Boden von (x1, z1) bis (x2, z2), Füße auf Höhe y. */
+  place(name: string, x1: number, y: number, z1: number, x2: number, z2: number): void {
+    this.places.push({
+      name,
+      x1: Math.min(x1, x2),
+      z1: Math.min(z1, z2),
+      x2: Math.max(x1, x2),
+      z2: Math.max(z1, z2),
+      y,
+    });
+  }
+
   /** Wo Blöcke verschiedener Herkunft aufeinandertrafen (nur die Prüfung liest das). */
   readonly overlaps: Overlap[] = [];
 
@@ -305,6 +330,14 @@ export class Canvas {
       .map(([k, v]) => [unkey(k), this.palette[v] ?? 'air'] as const)
       .filter(([, block]) => match(block))
       .map(([[x, y, z], block]) => [x, y, z, block] as const);
+  }
+
+  /** Jede gesetzte Stelle einmal (für Auswertungen des fertigen Plans, z. B. „zu Fuß erreichbar“). */
+  forEachBlock(fn: (x: number, y: number, z: number, block: string) => void): void {
+    this.cells.forEach((v, k) => {
+      const [x, y, z] = unkey(k);
+      fn(x, y, z, this.palette[v] ?? 'air');
+    });
   }
 
   /** Steht dort ein fester Block (nicht Luft, nichts Empfindliches)? */
