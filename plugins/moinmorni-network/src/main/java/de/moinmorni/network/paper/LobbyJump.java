@@ -141,6 +141,8 @@ final class LobbyJump implements Listener {
     /** Blöcke neu schicken und Aktionsleiste: alle so viele Ticks. */
     private static final long REFRESH = 10L;
     private static final long BOARD_CHECK = 200L;
+    /** Kennung der Tafel: ältere Tafeln (etwa aus einer Zeit, als die Gegend nur halb geladen war) räumen wir weg. */
+    private static final String BOARD_TAG = "mm_jnr_board";
     private static final long RESTART_PAUSE_MS = 1500;
     private static final int TOP = 10;
     /** Ab so vielen Punkten erfahren alle vom neuen Rekord. */
@@ -191,6 +193,8 @@ final class LobbyJump implements Listener {
         Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (settings != null && (board == null || !board.isValid())) {
                 refreshBoard();
+            } else if (settings != null) {
+                removeOtherBoards();
             }
         }, BOARD_CHECK, BOARD_CHECK);
     }
@@ -745,6 +749,22 @@ final class LobbyJump implements Listener {
                 .toList();
     }
 
+    /** Alle Tafeln am Start außer der aktuellen entfernen. */
+    private void removeOtherBoards() {
+        Settings s = settings;
+        if (s == null) {
+            return;
+        }
+        LobbyFeatures.View v = s.board();
+        Location at = new Location(Bukkit.getWorlds().get(0), v.x(), v.y(), v.z());
+        if (!at.isChunkLoaded()) {
+            return;
+        }
+        at.getWorld().getNearbyEntities(at, 2, 2, 2, e -> e instanceof TextDisplay && e != board
+                && (e.getScoreboardTags().contains(BOARD_TAG) || e.getScoreboardTags().isEmpty()
+                        && !e.isPersistent())).forEach(org.bukkit.entity.Entity::remove);
+    }
+
     /** Die Tafel am Start: Top 10 (Namen und Zahlen – gleich für beide Sprachen). */
     private void refreshBoard() {
         Settings s = settings;
@@ -757,9 +777,12 @@ final class LobbyJump implements Listener {
         }
         LobbyFeatures.View v = s.board();
         Location at = new Location(Bukkit.getWorlds().get(0), v.x(), v.y(), v.z(), v.yaw(), 0);
-        if (!at.isChunkLoaded()) {
+        if (!at.isChunkLoaded() || !at.getChunk().isEntitiesLoaded()) {
             return;
         }
+        // Nie zwei Tafeln übereinander: war die alte gerade nicht erreichbar (Gegend halb geladen), stand sie sonst
+        // weiter da, und jede Änderung stellte eine neue davor.
+        removeOtherBoards();
         TextColor[] places = {NamedTextColor.GOLD, TextColor.color(0xD8D8D8), TextColor.color(0xCD8A4B)};
         Component content = Component.text("Top " + TOP, NamedTextColor.YELLOW, TextDecoration.BOLD);
         List<Map.Entry<String, Integer>> list = top();
@@ -784,6 +807,7 @@ final class LobbyJump implements Listener {
         Component text = content;
         board = at.getWorld().spawn(at, TextDisplay.class, d -> {
             d.setPersistent(false);
+            d.addScoreboardTag(BOARD_TAG);
             d.setBillboard(Display.Billboard.FIXED);
             d.setRotation(v.yaw(), 0);
             d.setShadowed(true);

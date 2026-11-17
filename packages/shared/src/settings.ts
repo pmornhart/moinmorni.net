@@ -821,7 +821,7 @@ export const LOBBY_AREA: SettingArea = {
         {
           key: 'walkers',
           type: 'number',
-          default: 12,
+          default: 13,
           min: 0,
           max: 40,
           label: t('Dorfbewohner, die herumlaufen', 'Villagers walking around'),
