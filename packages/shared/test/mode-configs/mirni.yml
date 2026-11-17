@@ -98,6 +98,9 @@ haendler:
   verkauf-max-prozent: 40
   # Ab diesem Betrag fragt der Händler noch einmal nach („Wirklich?“)
   bestaetigen-ab: 250
+  # Fassung der Preisliste (nicht ändern): Steht auf einem Server noch die unveränderte Liste einer älteren Fassung,
+  # bekommt er beim Start die neue; eine selbst geänderte Liste bleibt
+  preisliste: 3
   # Abteilungen: Kennung → Symbol (Minecraft-Sorte) und Name auf Deutsch/Englisch. Reihenfolge = Reihenfolge im Menü.
   abteilungen:
     bloecke: {symbol: bricks, de: "Baublöcke", en: "Building blocks"}
@@ -110,6 +113,21 @@ haendler:
     redstone: {symbol: redstone, de: "Redstone & Technik", en: "Redstone & tech"}
     beute: {symbol: bone, de: "Mob-Beute", en: "Mob drops"}
     besonderes: {symbol: firework_rocket, de: "Besonderes & Saison", en: "Special & seasonal"}
+
+  # Preis-Faktor je Abteilung: alle Kauf- und Ankaufspreise der Abteilung mal diesem Wert (1 = wie in der Liste unten,
+  # 2 = doppelt so teuer, 0.5 = halb so teuer; 0.05 bis 100). Der Schleifen-Wächter senkt danach jeden Ankaufspreis, der
+  # sonst eine Geld-Schleife über Werkbank, Ofen oder Abbauen öffnen würde (steht dann als Hinweis im Server-Log).
+  faktoren:
+    bloecke: 1
+    holz: 1
+    erze: 1
+    deko: 1
+    essen: 1
+    werkzeug: 1
+    traenke: 1
+    redstone: 1
+    beute: 1
+    besonderes: 1
 
   # Waren je Abteilung (Reihenfolge = Reihenfolge im Menü). Preise in Talern pro Stück:
   #   kauf      – so viel zahlen Spieler (weglassen = nicht zu kaufen)
@@ -150,10 +168,10 @@ haendler:
       nether_bricks: {kauf: 1.5}
       blackstone: {kauf: 0.5, verkauf: 0.05, tag: 256}
       basalt: {kauf: 0.5}
-      quartz_block: {kauf: 7}
+      quartz_block: {kauf: 90}
       prismarine: {kauf: 3}
       purpur_block: {kauf: 3}
-      copper_block: {kauf: 10}
+      copper_block: {kauf: 110}
     holz:
       oak_log: {kauf: 1.2, verkauf: 0.3, tag: 256}
       spruce_log: {kauf: 1.2, verkauf: 0.3, tag: 256}
@@ -189,27 +207,34 @@ haendler:
       wheat_seeds: {kauf: 0.2}
       pumpkin_seeds: {kauf: 0.5}
       melon_seeds: {kauf: 0.5}
+    # Erze und Edelsteine sind kostbar: Kohle und Kupfer etwa 10-mal, Eisen, Gold, Lapis, Redstone und Quarz 15- bis
+    # 20-mal, Diamant und Smaragd 40-mal, Antiker Schutt und Netherit 50-mal so teuer wie Alltagsware. Smaragde kauft
+    # Vroni nicht an – Dorfbewohner geben sie für Weizen oder Glasscheiben her, das wäre eine Gelddruckmaschine.
     erze:
-      coal: {kauf: 1.5, verkauf: 0.4, tag: 128}
+      coal: {kauf: 15, verkauf: 4, tag: 128}
       charcoal: {kauf: 1.4, verkauf: 0.3, tag: 128}
-      raw_copper: {kauf: 1, verkauf: 0.25, tag: 128}
-      copper_ingot: {kauf: 1.2, verkauf: 0.3, tag: 128}
-      raw_iron: {kauf: 7, verkauf: 1.8, tag: 64}
-      iron_ingot: {kauf: 8, verkauf: 2.4, tag: 64}
-      iron_nugget: {kauf: 1}
-      raw_gold: {kauf: 9, verkauf: 2.4, tag: 64}
-      gold_ingot: {kauf: 10, verkauf: 3, tag: 64}
-      gold_nugget: {kauf: 1.2}
-      lapis_lazuli: {kauf: 2, verkauf: 0.5, tag: 128}
-      quartz: {kauf: 1.5, verkauf: 0.4, tag: 128}
-      amethyst_shard: {kauf: 2, verkauf: 0.5, tag: 64}
-      emerald: {kauf: 25, verkauf: 6, tag: 32}
-      diamond: {kauf: 80, verkauf: 20, tag: 16}
-      netherite_scrap: {kauf: 400, kauf-tag: 2}
-      coal_block: {kauf: 13.5}
-      iron_block: {kauf: 72}
-      gold_block: {kauf: 90}
-      emerald_block: {kauf: 225}
+      raw_copper: {kauf: 10, verkauf: 2.5, tag: 128}
+      copper_ingot: {kauf: 12, verkauf: 3, tag: 128}
+      raw_iron: {kauf: 140, verkauf: 36, tag: 64}
+      iron_ingot: {kauf: 160, verkauf: 48, tag: 64}
+      iron_nugget: {kauf: 18}
+      raw_gold: {kauf: 180, verkauf: 45, tag: 64}
+      gold_ingot: {kauf: 200, verkauf: 60, tag: 64}
+      gold_nugget: {kauf: 23}
+      lapis_lazuli: {kauf: 40, verkauf: 10, tag: 64}
+      quartz: {kauf: 22, verkauf: 6, tag: 64}
+      amethyst_shard: {kauf: 20, verkauf: 5, tag: 64}
+      emerald: {kauf: 1000}
+      diamond: {kauf: 3200, verkauf: 800, tag: 16}
+      ancient_debris: {kauf: 20000, verkauf: 5000, tag: 4, kauf-tag: 2}
+      netherite_scrap: {kauf: 20000, verkauf: 5000, tag: 4, kauf-tag: 2}
+      netherite_ingot: {kauf: 85000, verkauf: 20000, tag: 2, kauf-tag: 1}
+      coal_block: {kauf: 135}
+      iron_block: {kauf: 1440}
+      gold_block: {kauf: 1800}
+      lapis_block: {kauf: 360}
+      emerald_block: {kauf: 9000}
+      diamond_block: {kauf: 28800, kauf-tag: 1}
     deko:
       white_wool: {kauf: 2, verkauf: 0.5, tag: 128}
       red_wool: {kauf: 2}
@@ -235,16 +260,16 @@ haendler:
       lily_of_the_valley: {kauf: 0.8}
       sunflower: {kauf: 1}
       peony: {kauf: 1}
-      torch: {kauf: 0.3}
-      lantern: {kauf: 4}
-      soul_lantern: {kauf: 4}
+      torch: {kauf: 0.4}
+      lantern: {kauf: 150}
+      soul_lantern: {kauf: 150}
       white_candle: {kauf: 2}
       flower_pot: {kauf: 1}
       painting: {kauf: 3}
       item_frame: {kauf: 2}
       white_bed: {kauf: 5}
       white_banner: {kauf: 4}
-      iron_chain: {kauf: 3}
+      iron_chain: {kauf: 200}
       glass_pane: {kauf: 0.3}
       sea_lantern: {kauf: 9}
       end_rod: {kauf: 3}
@@ -259,7 +284,7 @@ haendler:
       cocoa_beans: {kauf: 1.2, verkauf: 0.4, tag: 256}
       sweet_berries: {kauf: 0.6, verkauf: 0.2, tag: 256}
       glow_berries: {kauf: 1, verkauf: 0.2, tag: 128}
-      apple: {kauf: 3, verkauf: 1, tag: 64}
+      apple: {kauf: 3, verkauf: 0.5, tag: 64}
       egg: {kauf: 1, verkauf: 0.3, tag: 128}
       bread: {kauf: 1.5}
       baked_potato: {kauf: 1.5}
@@ -280,33 +305,33 @@ haendler:
       cooked_salmon: {kauf: 3}
       hay_block: {kauf: 15}
       melon: {kauf: 3}
-      golden_apple: {kauf: 100, kauf-tag: 4}
+      golden_apple: {kauf: 1650, kauf-tag: 4}
     werkzeug:
       stone_pickaxe: {kauf: 2}
       stone_axe: {kauf: 2}
       stone_sword: {kauf: 1.5}
-      iron_pickaxe: {kauf: 30}
-      iron_axe: {kauf: 30}
-      iron_shovel: {kauf: 10}
-      iron_sword: {kauf: 20}
-      diamond_pickaxe: {kauf: 260, kauf-tag: 1}
-      diamond_sword: {kauf: 170, kauf-tag: 1}
+      iron_pickaxe: {kauf: 500}
+      iron_axe: {kauf: 500}
+      iron_shovel: {kauf: 170}
+      iron_sword: {kauf: 330}
+      diamond_pickaxe: {kauf: 9700, kauf-tag: 1}
+      diamond_sword: {kauf: 6450, kauf-tag: 1}
       bow: {kauf: 10}
-      crossbow: {kauf: 15}
+      crossbow: {kauf: 260}
       arrow: {kauf: 0.3, verkauf: 0.1, tag: 256}
-      shield: {kauf: 12}
+      shield: {kauf: 170}
       fishing_rod: {kauf: 5}
-      shears: {kauf: 18}
-      flint_and_steel: {kauf: 10}
-      iron_helmet: {kauf: 45}
-      iron_chestplate: {kauf: 70}
-      iron_leggings: {kauf: 60}
-      iron_boots: {kauf: 35}
-      bucket: {kauf: 25}
-      water_bucket: {kauf: 26}
-      compass: {kauf: 40}
-      clock: {kauf: 45}
-      spyglass: {kauf: 10}
+      shears: {kauf: 330}
+      flint_and_steel: {kauf: 170}
+      iron_helmet: {kauf: 820}
+      iron_chestplate: {kauf: 1300}
+      iron_leggings: {kauf: 1140}
+      iron_boots: {kauf: 660}
+      bucket: {kauf: 490}
+      water_bucket: {kauf: 495}
+      compass: {kauf: 680}
+      clock: {kauf: 850}
+      spyglass: {kauf: 45}
     traenke:
       glass_bottle: {kauf: 0.5}
       nether_wart: {kauf: 1.5, verkauf: 0.5, tag: 256}
@@ -319,37 +344,37 @@ haendler:
       ghast_tear: {kauf: 20, verkauf: 5, tag: 16}
       rabbit_foot: {kauf: 10, verkauf: 3, tag: 16}
       phantom_membrane: {kauf: 6, verkauf: 2, tag: 32}
-      golden_carrot: {kauf: 12}
-      glistering_melon_slice: {kauf: 10}
+      golden_carrot: {kauf: 190}
+      glistering_melon_slice: {kauf: 190}
       brewing_stand: {kauf: 15}
-      cauldron: {kauf: 60}
+      cauldron: {kauf: 1150}
       experience_bottle: {kauf: 10, kauf-tag: 64}
       book: {kauf: 4}
       paper: {kauf: 0.5}
       bookshelf: {kauf: 12}
-      enchanting_table: {kauf: 180, kauf-tag: 1}
+      enchanting_table: {kauf: 6500, kauf-tag: 1}
     redstone:
-      redstone: {kauf: 1.5, verkauf: 0.4, tag: 128}
-      redstone_block: {kauf: 13.5}
-      redstone_torch: {kauf: 2}
-      repeater: {kauf: 5}
-      comparator: {kauf: 8}
-      piston: {kauf: 12}
-      sticky_piston: {kauf: 14}
-      observer: {kauf: 6}
-      hopper: {kauf: 45}
-      dropper: {kauf: 3}
-      dispenser: {kauf: 13}
+      redstone: {kauf: 30, verkauf: 8, tag: 64}
+      redstone_block: {kauf: 270}
+      redstone_torch: {kauf: 31}
+      repeater: {kauf: 95}
+      comparator: {kauf: 130}
+      piston: {kauf: 200}
+      sticky_piston: {kauf: 205}
+      observer: {kauf: 90}
+      hopper: {kauf: 810}
+      dropper: {kauf: 35}
+      dispenser: {kauf: 45}
       lever: {kauf: 0.5}
       stone_button: {kauf: 0.6}
-      rail: {kauf: 3}
-      powered_rail: {kauf: 18}
-      minecart: {kauf: 45}
+      rail: {kauf: 62}
+      powered_rail: {kauf: 210}
+      minecart: {kauf: 800}
       chest: {kauf: 3}
-      trapped_chest: {kauf: 12}
+      trapped_chest: {kauf: 85}
       barrel: {kauf: 3}
-      target: {kauf: 3}
-      redstone_lamp: {kauf: 5}
+      target: {kauf: 140}
+      redstone_lamp: {kauf: 130}
       tnt: {kauf: 8, kauf-tag: 16}
     beute:
       rotten_flesh: {kauf: 0.5, verkauf: 0.1, tag: 512}
@@ -370,14 +395,14 @@ haendler:
       ender_eye: {kauf: 15, kauf-tag: 12}
     besonderes:
       name_tag: {kauf: 15}
-      saddle: {kauf: 25}
+      saddle: {kauf: 180}
       lead: {kauf: 3}
       firework_rocket: {kauf: 1}
       armor_stand: {kauf: 2}
-      map: {kauf: 2}
+      map: {kauf: 690}
       bundle: {kauf: 8}
       honeycomb: {kauf: 3}
-      bell: {kauf: 30}
+      bell: {kauf: 300}
       ender_chest: {kauf: 70, kauf-tag: 2}
       carved_pumpkin: {kauf: 4, monate: [9, 10, 11]}
       jack_o_lantern: {kauf: 5, monate: [9, 10, 11]}
@@ -385,6 +410,22 @@ haendler:
       spruce_leaves: {kauf: 0.5, monate: [12]}
       pink_tulip: {kauf: 0.6, monate: [3, 4, 5]}
       torchflower: {kauf: 2, monate: [3, 4, 5]}
+
+# Börse: Jede Ware des Händlerhauses hat einen Kurs nach Angebot und Nachfrage. Verkaufen alle zusammen viel an Vroni,
+# sinkt der Kurs und sie zahlt weniger; kaufen alle viel, steigt er und sie verlangt mehr. Mit der Zeit kehrt jeder Kurs
+# zum Grundpreis (Preise oben) zurück. Vroni zahlt nie mehr als den Grundpreis und verlangt nie weniger – darum bringt
+# „billig kaufen, warten, teuer verkaufen“ bei ihr nie Gewinn. Spielerpreise (Auktionshaus, Aufträge, Läden) bleiben frei.
+boerse:
+  # Kurse an? (aus: immer der Grundpreis)
+  an: true
+  # So viele Tagesmengen („tag“ der Ware) muss die Stadt mehr an Vroni verkaufen als bei ihr kaufen, bis sie nur noch
+  # die Hälfte zahlt – und genauso viele mehr kaufen als verkaufen, bis sie das Doppelte verlangt
+  halbieren-nach: 4
+  # Nach so vielen Stunden ist die Hälfte eines Ausschlags wieder weg (der Kurs erholt sich)
+  erholung-stunden: 6
+  # Grenzen in Prozent vom Grundpreis: der Ankauf fällt höchstens bis „min“, der Verkauf steigt höchstens bis „max“
+  min-prozent: 25
+  max-prozent: 300
 
 # Stufen des Ankaufs (gilt für alles, was der Händler ankauft): Wer mehr als die Tagesmenge („tag“ der Ware) bringt,
 # bekommt weniger – ab dem Vielfachen der Tagesmenge so viel Prozent.

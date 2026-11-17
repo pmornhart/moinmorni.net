@@ -1,5 +1,5 @@
 # MoinMorni Duels – Einstellungen
-# Nach Änderungen den Server neu starten (oder /duels neuladen für Zeiten, Wertung, Suppe und Rückkehr).
+# Nach Änderungen den Server neu starten (oder /duels neuladen für Zeiten, Wertung, Suppe, Rückkehr und Kampfarten).
 
 # Verbindung mitten im Kampf weg (Spiel abgestürzt, Internet weg)? So viele Sekunden bleibt der Platz frei. So lange
 # ist der Kampf angehalten: beide stehen eingefroren, die Zeit läuft nicht weiter (im 2 gegen 2 kämpft das Team weiter,
@@ -12,8 +12,10 @@ rueckkehr-sekunden: 30
 # Eigene, leere Welt für Wartehalle und Arenen. Das Plugin legt sie an und baut alles selbst.
 welt: duels
 
-# Jede Arena (Almwiese, Burghof, Bergwerk, Wirtshausgarten) gibt es so oft.
-# 3 Kopien × 4 Arenen = bis zu 12 Kämpfe gleichzeitig. Ändern baut die Arenen beim nächsten Start neu.
+# Jede Arena gibt es so oft: die vier für alle (Almwiese, Burghof, Bergwerk, Wirtshausgarten) und die eigenen von
+# Sumo (Tanzboden), Spleef (Schneefeld), Labyrinth (Irrgarten) und Brücke (Klammbrücke). 3 Kopien × 4 Arenen = bis zu
+# 12 Kämpfe gleichzeitig mit Schwert und Bogen, dazu je 3 in den eigenen Arenen. Ändern baut die Arenen beim nächsten
+# Start neu.
 arena-kopien: 3
 
 kampf:
@@ -41,3 +43,123 @@ wertung:
 suppe:
   # So viele Lebenspunkte heilt eine Pilzsuppe im Kit „Klassisch“ (7 = 3,5 Herzen).
   heilung: 7.0
+
+# ---------- Kampfarten ----------
+# Jede Kampfart lässt sich einzeln ausschalten (an: false) – sie verschwindet dann aus Menüs, Warteschlangen und
+# Herausforderungen. „runden“: so viele Runden hat ein Kampf aus der Warteschlange – 1 = ein Kampf, 3 = Bester aus 3
+# (wer zuerst 2 gewinnt), 5 = Bester aus 5. Bei Herausforderungen (/duel) wählt man die Runden selbst. Die Brücke zählt
+# Tore statt Runden (siehe unten).
+kits:
+  # Gruppe „Klassisch“: Kampf wie früher (keine Abklingzeit beim Schlagen)
+  klassisch:
+    an: true
+    runden: 1
+  # Nur ein Diamantschwert, keine Rüstung, nichts zu essen
+  schwert:
+    an: true
+    runden: 1
+  # Komplett aus Eisen, dazu Bogen und Goldäpfel
+  ritter:
+    an: true
+    runden: 1
+  # Komplett aus Diamant, leicht verzaubert
+  diamant:
+    an: true
+    runden: 1
+  # Bogen mit unendlich Pfeilen, Lederrüstung
+  bogen:
+    an: true
+    runden: 1
+  # Schwert und Angel (der Haken stupst an, Einholen zieht den Gegner heran)
+  angel:
+    an: true
+    runden: 1
+  # Kaum Pause zwischen Treffern (siehe kombo.treffer-pause-ticks)
+  kombo:
+    an: true
+    runden: 1
+  # Gruppe „Modern“: Kampf wie heute
+  modern:
+    an: true
+    runden: 1
+  # Diamantaxt und Schild
+  axt:
+    an: true
+    runden: 1
+  # Verzauberte Goldäpfel, sehr starke Rüstung, Tränke
+  goldapfel:
+    an: true
+    runden: 1
+  # Heiltränke zum Werfen, Schnelligkeit, Enderperlen
+  traenke:
+    an: true
+    runden: 1
+  # 16 Enderperlen, Landen tut nicht weh
+  perlen:
+    an: true
+    runden: 1
+  # Keine natürliche Heilung, Goldäpfel, Lava, Wasser, Blöcke (die Arena wird danach zurückgesetzt)
+  uhc:
+    an: true
+    runden: 1
+  # Blöcke bauen erlaubt (die Arena wird danach zurückgesetzt)
+  baukampf:
+    an: true
+    runden: 1
+  # Gruppe „Spaß“: besondere Regeln
+  faehigkeiten:
+    an: true
+    runden: 1
+  # Tanzboden: kein Schaden, wer herunterfällt, verliert
+  sumo:
+    an: true
+    runden: 1
+  # Kein Schaden, wer zuerst genug Treffer landet, gewinnt (siehe boxen.treffer)
+  boxen:
+    an: true
+    runden: 1
+  # Schneefeld: den Boden unter dem Gegner wegschaufeln
+  spleef:
+    an: true
+    runden: 1
+  # Irrgarten: Start in entgegengesetzten Ecken, zum Ziel in der Mitte laufen oder den Gegner besiegen
+  labyrinth:
+    an: true
+    runden: 1
+  # Klammbrücke: ins gegnerische Tor springen (zählt Tore, keine Runden)
+  bruecke:
+    an: true
+
+sumo:
+  # So viele Blöcke unter dem Tanzboden scheidet man aus (0,5 bis 20).
+  aus-tiefe: 2.0
+
+boxen:
+  # So viele Treffer braucht man (im 2 gegen 2 das Team zusammen) zum Sieg.
+  treffer: 100
+
+bruecke:
+  # So viele Tore braucht ein Team zum Sieg (1 bis 20).
+  tore: 3
+
+kombo:
+  # Pause zwischen zwei Treffern in Ticks (20 Ticks = 1 Sekunde). Normal sind es 10 – kleiner heißt schnellere Kombos.
+  treffer-pause-ticks: 2
+
+angel:
+  # Wie stark die Angel den Gegner beim Einholen heranzieht (0 = gar nicht, 1 = normal, bis 3).
+  zug: 1.0
+
+labyrinth:
+  # Kompass im Kit, der zum nächsten Gegner zeigt (false = selbst suchen).
+  kompass: true
+  # Ziel in der Mitte des Irrgartens: wer zuerst darauf steht, gewinnt die Runde – sonst wer alle Gegner besiegt
+  # (false = nur besiegen zählt). Ein Lichtstrahl über dem Ziel zeigt die Richtung.
+  ziel: true
+  # Vor jeder Runde ein neuer Irrgarten (immer so gebaut, dass beide Startecken gleich weit vom Ziel entfernt sind).
+  # false = immer derselbe Irrgarten.
+  jede-runde-neu: true
+
+party:
+  # Größte Party für „Party gegen Party“ und „Party: Jeder gegen jeden“ (2 bis 8).
+  max-spieler: 8
