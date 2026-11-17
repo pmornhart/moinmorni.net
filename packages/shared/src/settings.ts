@@ -17,6 +17,29 @@ export interface Text {
   readonly en: string;
 }
 
+/** Feste Form eines Textes (siehe `format` bei Text-Einstellungen). */
+export type TextFormat = 'time';
+
+// Uhrzeit wie man sie schreibt: "22:30", "7:05", "22.30" – nicht "25:00", "22:3" oder "22 Uhr".
+// https://regex101.com/?flavor=javascript&regex=%5E(%5B01%5D%3F%5Cd%7C2%5B0-3%5D)%5B%3A.%5D(%5B0-5%5D%5Cd)%24&testString=22%3A30
+const TIME_TEXT = /^([01]?\d|2[0-3])[:.]([0-5]\d)$/;
+const TIME_DIGITS = 2;
+
+/** Uhrzeit als „HH:MM“ („7.05“ → „07:05“); null = keine Uhrzeit. */
+export function timeOf(text: string): string | null {
+  const m = TIME_TEXT.exec(text.trim());
+  return m ? `${(m[1] ?? '').padStart(TIME_DIGITS, '0')}:${m[2] ?? ''}` : null;
+}
+
+/** Passt ein Text zu seiner Einstellung (Länge und ggf. feste Form)? */
+export function textValid(
+  def: { readonly maxLength: number; readonly format?: TextFormat },
+  value: string,
+): boolean {
+  if (value.length > def.maxLength) return false;
+  return !def.format || value.trim() === '' || timeOf(value) !== null;
+}
+
 /**
  * Wo eine Einstellung eines Spielmodus in der config.yml seines Plugins steht. Der Hub schickt dem Modus-Server
  * „Pfad → Wert“, das Netzwerk-Plugin trägt es dort ein.
@@ -62,6 +85,11 @@ export type SettingDef =
       readonly default: string;
       readonly maxLength: number;
       readonly multiline?: boolean;
+      /**
+       * Feste Form: „time“ = Uhrzeit wie „22:30“. Leer geht dann immer (= keine Angabe), im Spiel löscht „weg“ den
+       * Wert. Geprüft mit `textValid` – im Panel, im Server und beim Befehl im Spiel gleich.
+       */
+      readonly format?: TextFormat;
     })
   | (Base & {
       readonly type: 'select';
@@ -108,6 +136,15 @@ export interface ModeLink {
   readonly plugin: string;
 }
 
+/** So viele dürfen höchstens gleichzeitig ins Netzwerk (Panel → Netzwerk → Spieler höchstens). */
+export const NETWORK_PLAYERS_MAX = 2000;
+/**
+ * Höchstzahl in der server.properties jedes Spielservers hinter dem Proxy (Lobby, Wartungs-Lobby, Bau-Server, Modi):
+ * weit über dem Netzwerk, denn Team und VIP dürfen auch bei voll hinein. Nach Zahl abweisen tun nur Proxy und Hub
+ * (Netzwerk und Höchstzahl je Modus) – nie Minecraft selbst, das neue Server mit „max-players=20“ anlegt.
+ */
+export const SERVER_MAX_PLAYERS = 10_000;
+
 const t = (de: string, en: string): Text => ({ de, en });
 const seconds = t('Sekunden', 'seconds');
 const players = t('Spieler', 'players');
@@ -153,7 +190,7 @@ export const NETWORK_AREA: SettingArea = {
           type: 'number',
           default: 200,
           min: 1,
-          max: 2000,
+          max: NETWORK_PLAYERS_MAX,
           unit: players,
           label: t('Spieler höchstens', 'Players at most'),
           help: t(
@@ -181,7 +218,10 @@ export const NETWORK_AREA: SettingArea = {
     {
       id: 'maintenance',
       title: t('Wartung', 'Maintenance'),
-      text: t('Während der Wartung kommt nur das Team herein.', 'During maintenance only the team can join.'),
+      text: t(
+        'Während der Wartung kommt nur das Team ins Netzwerk – alle anderen warten in der Wartungs-Lobby, einer kleinen Bergwerkstatt mit Leiste, Aushang und Sprung-Parcours. Dort landet auch, wer gerade nicht in die Lobby kann (Neustart, Update, Absturz).',
+        'During maintenance only the team gets into the network – everyone else waits in the maintenance lobby, a small mountain workshop with a status bar, a notice board and a little jump course. Whoever can’t get into the lobby right now (restart, update, crash) lands there too.',
+      ),
       settings: [
         {
           key: 'maintenance',
@@ -189,8 +229,8 @@ export const NETWORK_AREA: SettingArea = {
           default: false,
           label: t('Wartung für das ganze Netzwerk', 'Maintenance for the whole network'),
           help: t(
-            'Einzelne Modi setzt du unter „Modi“ in Wartung.',
-            'Single modes are set to maintenance under “Modes”.',
+            'Spieler ohne „Kommt immer rein“ kommen in die Wartungs-Lobby (wer gerade online ist, auch); das Team kommt wie immer überall hin. Einzelne Modi setzt du unter „Modi“ in Wartung.',
+            'Players without “Always gets in” go to the maintenance lobby (those online right now too); the team still goes everywhere. Single modes are set to maintenance under “Modes”.',
           ),
           command: '/wartung an|aus',
         },
@@ -200,9 +240,47 @@ export const NETWORK_AREA: SettingArea = {
           default: 'Wir bauen gerade um – gleich geht’s weiter!',
           maxLength: 120,
           multiline: true,
-          label: t('Nachricht für Spieler', 'Message for players'),
-          help: t('Sehen Spieler, die nicht hereinkommen.', 'Shown to players who cannot join.'),
+          label: t('Text und Grund', 'Text and reason'),
+          help: t(
+            'Steht in der Wartungs-Lobby auf dem Aushang und im Chat – und beim Anmelden, wenn die Wartungs-Lobby aus ist. Z. B. „Wir spielen ein großes Update ein.“',
+            'Shown in the maintenance lobby on the notice board and in chat – and when joining if the maintenance lobby is off. E.g. “We’re installing a big update.”',
+          ),
           command: '/wartung text <text>',
+        },
+        {
+          key: 'maintenanceUntil',
+          type: 'text',
+          format: 'time',
+          default: '',
+          maxLength: 5,
+          label: t('Wartung bis (Uhrzeit)', 'Maintenance until (time)'),
+          help: t(
+            'Freiwillig, z. B. 22:30 – dann steht „Wartung bis ca. 22:30“ in der Leiste, auf dem Aushang und in der Serverliste. Leer lassen, wenn du es nicht weißt; im Spiel löscht „/wartung bis weg“ die Zeit.',
+            'Optional, e.g. 22:30 – the status bar, the notice board and the server list then say “maintenance until approx. 22:30”. Leave it empty if you don’t know; in game “/wartung bis weg” clears it.',
+          ),
+          command: '/wartung bis <uhrzeit>',
+        },
+        {
+          key: 'maintenanceLobby',
+          type: 'boolean',
+          default: true,
+          label: t('Wartungs-Lobby', 'Maintenance lobby'),
+          help: t(
+            'An: Wer gerade nicht hinein darf (Wartung) oder nicht in die Lobby kann (sie startet neu, stürzt ab), wartet in der Wartungs-Lobby statt abgewiesen oder getrennt zu werden. Aus: wie früher – bei Wartung abweisen, ohne Lobby trennen.',
+            'On: whoever may not get in right now (maintenance) or can’t reach the lobby (restarting, crashed) waits in the maintenance lobby instead of being turned away or disconnected. Off: as before – turned away during maintenance, disconnected without a lobby.',
+          ),
+          command: '/wartung lobby an|aus',
+        },
+        {
+          key: 'maintenanceReturn',
+          type: 'boolean',
+          default: true,
+          label: t('Automatisch zurück in die Lobby', 'Back to the lobby automatically'),
+          help: t(
+            'Ist die Lobby wieder da oder die Wartung vorbei, holt das Netzwerk alle aus der Wartungs-Lobby zurück – nach einem kurzen Countdown. Aus: Jeder geht selbst mit /lobby.',
+            'Once the lobby is back or maintenance is over, the network brings everyone back from the maintenance lobby – after a short countdown. Off: everyone goes themselves with /lobby.',
+          ),
+          command: '/wartung zurueck an|aus',
         },
       ],
     },
@@ -741,14 +819,6 @@ export const LOBBY_AREA: SettingArea = {
           command: '/lobby launchpads an|aus',
         },
         {
-          key: 'parkour',
-          type: 'boolean',
-          default: true,
-          label: t('Lobby-Parkour', 'Lobby parkour'),
-          help: t('Mit Zeitmessung und Bestenliste.', 'With timing and leaderboard.'),
-          command: '/lobby parkour an|aus',
-        },
-        {
           key: 'walkers',
           type: 'number',
           default: 12,
@@ -760,6 +830,76 @@ export const LOBBY_AREA: SettingArea = {
             'Figures strolling through the village (0 = none).',
           ),
           command: '/lobby bewohner <zahl>',
+        },
+      ],
+    },
+    {
+      id: 'jumpandrun',
+      title: t('Jump and Run', 'Jump and run'),
+      text: t(
+        'Am Startplatz im Nordwesten auf den Smaragd treten (oder /jnr): Hoch über dem Dorf erscheint Block für Block – nur für dich. Jeder Sprung ein Punkt, wer fällt, ist raus. Rekord je Spieler, Top 10 auf der Tafel am Start und auf der Webseite.',
+        'Step on the emerald at the start in the north-west (or /jnr): high above the village, block after block appears – only for you. Every jump scores a point, falling ends the run. Record per player, top 10 on the board at the start and on the website.',
+      ),
+      settings: [
+        {
+          key: 'jumpAndRun',
+          type: 'boolean',
+          default: true,
+          label: t('Jump and Run', 'Jump and run'),
+          help: t(
+            'Aus: Der Startplatz bleibt stehen, aber niemand kann loslegen; laufende Läufe enden.',
+            'Off: the start stays, but nobody can begin; runs in progress end.',
+          ),
+          command: '/lobby jumpandrun an|aus',
+        },
+        {
+          key: 'jumpHarderFrom',
+          type: 'number',
+          default: 10,
+          min: 1,
+          max: 100,
+          unit: t('Punkten', 'points'),
+          label: t('Schwerer ab', 'Harder from'),
+          help: t(
+            'Bis dahin nur leichte Sprünge, die man auch ohne Sprinten schafft. Danach alle 15 Punkte eine Stufe schwerer: weiter, höher, halbe Stufen, Zäune und Mauern, Eis, das schnell schmilzt, und Schleim zum Hochfedern.',
+            'Until then only easy jumps you can make without sprinting. After that, one level harder every 15 points: further, higher, slabs, fences and walls, ice that melts quickly and slime to bounce on.',
+          ),
+          command: '/lobby jumpandrun schwerer <punkte>',
+        },
+      ],
+    },
+    {
+      id: 'doublejump',
+      title: t('Doppelsprung', 'Double jump'),
+      text: t(
+        'In der Luft noch einmal springen (zweimal Leertaste) gibt einen zweiten Schwung nach vorn und oben – mit Funken. Nicht im Jump and Run, nicht im Gefängnis und nicht beim Rundgang.',
+        'Jump again in mid-air (press space twice) for a second boost forwards and upwards – with sparks. Not in the jump and run, not in jail and not during the tour.',
+      ),
+      settings: [
+        {
+          key: 'doubleJump',
+          type: 'boolean',
+          default: true,
+          label: t('Doppelsprung', 'Double jump'),
+          help: t(
+            'Geht auf Java und Bedrock (dort ebenfalls zweimal springen).',
+            'Works on Java and Bedrock (there, too, jump twice).',
+          ),
+          command: '/lobby doppelsprung an|aus',
+        },
+        {
+          key: 'doubleJumpStrength',
+          type: 'number',
+          default: 1,
+          min: 0.5,
+          max: 2,
+          step: 0.1,
+          label: t('Stärke', 'Strength'),
+          help: t(
+            '1 = etwa 5 Blöcke weit und 3 hoch. 2 = doppelt so weit und gut 6 hoch, 0,5 = ein kleiner Hüpfer.',
+            '1 = about 5 blocks far and 3 high. 2 = twice as far and over 6 high, 0.5 = a little hop.',
+          ),
+          command: '/lobby doppelsprung staerke <zahl>',
         },
       ],
     },
@@ -1541,8 +1681,8 @@ export const UPDATES_AREA: SettingArea = {
           default: true,
           label: t('Nach einem Update gleich neu starten', 'Restart right after an update'),
           help: t(
-            'Nach einem Update von MoinMorni starten alle Server, die etwas Neues haben (Netzwerk-Plugin, Spielmodus, Einstellungen), gleich neu – nacheinander und mit Countdown: erst die Spielmodi, dann der Bau-Server und die Lobby, zuletzt der Proxy. Aus: jeder Server erst, wenn gerade niemand drauf ist.',
-            'After a MoinMorni update, every server with something new (network plugin, game mode, settings) restarts right away – one after another and with a countdown: game modes first, then the build server and the lobby, the proxy last. Off: each server only when nobody is on it.',
+            'Nach einem Update von MoinMorni starten alle Server, die etwas Neues haben (Netzwerk-Plugin, Spielmodus, Einstellungen), gleich neu – nacheinander und mit Countdown: erst die Spielmodi und der Bau-Server, dann die Wartungs-Lobby, zuletzt die Lobby (ihre Spieler warten so lange in der Wartungs-Lobby) und der Proxy. Aus: jeder Server erst, wenn gerade niemand drauf ist.',
+            'After a MoinMorni update, every server with something new (network plugin, game mode, settings) restarts right away – one after another and with a countdown: game modes and the build server first, then the maintenance lobby, the lobby (its players wait in the maintenance lobby meanwhile) and the proxy last. Off: each server only when nobody is on it.',
           ),
           command: '/updates neustart an|aus',
         },
@@ -1648,7 +1788,11 @@ function validator(def: SettingDef): z.ZodType {
         .min(d.min)
         .max(d.max)
         .refine((v) => onStep(v, d.step)),
-    text: (d) => z.string().max(d.maxLength),
+    text: (d) =>
+      z
+        .string()
+        .max(d.maxLength)
+        .refine((v) => textValid(d, v)),
     select: (d) => z.enum(d.options.map((o) => o.value) as [string, ...string[]]),
     list: (d) => z.array(z.string().trim().min(1).max(d.maxLength)).max(d.maxItems),
   };

@@ -179,13 +179,21 @@ async function main() {
 
   // ---------- Serverwechsel: Abzeichen bleibt, Möbel-Paket geht ----------
   lena.removed.length = 0;
+  // Erst weiter, wenn Lena auf Duels wirklich im Spiel ist: Auf einem vollen Rechner dauert der Wechsel (Konfiguration
+  // des neuen Servers) mehrere Sekunden – ein Chat davor ginge verloren, das Möbel-Paket nimmt der Proxy erst danach ab.
+  const arrived = new Promise((resolve) => {
+    lena.once('respawn', resolve);
+    lena.once('login', resolve);
+    setTimeout(resolve, 20000);
+  });
   lena.chat('/server duels');
-  await sleep(6000);
+  await arrived;
   check(
     'Wechsel nach Duels: Möbel-Paket abgenommen',
-    lena.removed.includes(MOEBEL),
+    Boolean(await until(() => lena.removed.includes(MOEBEL))),
     JSON.stringify(lena.removed),
   );
+  await sleep(1000);
   check('… Abzeichen-Paket bleibt', !lena.removed.includes(BADGES) && !lena.removed.includes('alle'));
   lena.chat('Servus aus Duels');
   const duelsLine = await until(() => lena.raw.find((r) => r.includes('Servus aus Duels')));

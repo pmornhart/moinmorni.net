@@ -112,8 +112,32 @@ const TEXTS = {
     en: '<red><bold>Kicked by the team</bold></red>\n\n<gray>Reason: <white>{reason}',
   },
   'maintenance.screen': {
-    de: '<gold><bold>Wartung</bold></gold>\n\n<gray>{message}',
-    en: '<gold><bold>Maintenance</bold></gold>\n\n<gray>{message}',
+    de: '<gold><bold>Wartung</bold></gold>\n\n<gray>{message}{until}',
+    en: '<gold><bold>Maintenance</bold></gold>\n\n<gray>{message}{until}',
+  },
+  'wartung.until': {
+    de: ' <gray>(bis ca. <white>{time}</white> Uhr)</gray>',
+    en: ' <gray>(until approx. <white>{time}</white>)</gray>',
+  },
+  'wartung.bye': {
+    de: '<gold><bold>Die Lobby startet gerade neu</bold></gold>\n\n<gray>Gleich ist sie wieder da – versuch es in ein paar Sekunden nochmal.',
+    en: '<gold><bold>The lobby is restarting</bold></gold>\n\n<gray>It’ll be back in a moment – try again in a few seconds.',
+  },
+  'wartung.moving': {
+    de: `${P}<gold>Die Wartung beginnt</gold> <gray>– du wartest in der Wartungs-Lobby, bis wir fertig sind{until}.`,
+    en: `${P}<gold>Maintenance is starting</gold> <gray>– you’ll wait in the maintenance lobby until we’re done{until}.`,
+  },
+  'wartung.held': {
+    de: `${P}<gold>Wartung läuft</gold> <gray>– bis wir fertig sind, wartest du in der Wartungs-Lobby{until}. Danach geht’s automatisch weiter.`,
+    en: `${P}<gold>Maintenance in progress</gold> <gray>– until we’re done you’ll wait in the maintenance lobby{until}. Afterwards you’ll go on automatically.`,
+  },
+  'wartung.back': {
+    de: `${P}<green>Die Lobby ist wieder da!</green> <gray>Ab zurück …`,
+    en: `${P}<green>The lobby is back!</green> <gray>Off you go …`,
+  },
+  'wartung.back_manual': {
+    de: `${P}<green>Die Lobby ist wieder da!</green> <gray>Mit <yellow>/lobby</yellow> kommst du zurück.`,
+    en: `${P}<green>The lobby is back!</green> <gray>Use <yellow>/lobby</yellow> to go back.`,
   },
   'full.screen': {
     de: '<gold><bold>Das Netzwerk ist voll</bold></gold>\n\n<gray>Probier es gleich nochmal.',
@@ -609,8 +633,8 @@ const TEXTS = {
     en: `${P}<gray>Your profile: <aqua><click:open_url:'{url}'>{url}</click></aqua> <dark_gray>·</dark_gray> <yellow>/profile private</yellow> or <yellow>/profile public</yellow>`,
   },
   'lobby.missing': {
-    de: `${P}<red>Die Lobby ist gerade nicht da.`,
-    en: `${P}<red>The lobby isn't available right now.`,
+    de: `${P}<gold>Die Lobby startet gerade neu</gold> <gray>– gleich ist sie wieder da.`,
+    en: `${P}<gold>The lobby is restarting</gold> <gray>– it’ll be back in a moment.`,
   },
   // Neustart mit Countdown (network/restart-now.ts). {s} in den Leisten zählt das Netzwerk-Plugin selbst herunter.
   'restart.update': {
@@ -624,6 +648,14 @@ const TEXTS = {
   'restart.lobby': {
     de: `${P}<gold>Update eingespielt</gold> <gray>– die Lobby startet in <yellow>{seconds} Sekunden</yellow> neu. Es geht gleich weiter: In etwa einer Minute kannst du wieder rein.`,
     en: `${P}<gold>Update installed</gold> <gray>– the lobby restarts in <yellow>{seconds} seconds</yellow>. It goes on in a moment: you can join again in about a minute.`,
+  },
+  'restart.lobby.wartung': {
+    de: `${P}<gold>Update eingespielt</gold> <gray>– die Lobby startet in <yellow>{seconds} Sekunden</yellow> neu. So lange wartest du in der Wartungs-Lobby und kommst danach von selbst zurück.`,
+    en: `${P}<gold>Update installed</gold> <gray>– the lobby restarts in <yellow>{seconds} seconds</yellow>. Meanwhile you wait in the maintenance lobby and come back on your own afterwards.`,
+  },
+  'restart.wartung.held': {
+    de: `${P}<gold>Update eingespielt</gold> <gray>– die Wartungs-Lobby startet in <yellow>{seconds} Sekunden</yellow> neu. In etwa einer Minute kannst du wieder rein.`,
+    en: `${P}<gold>Update installed</gold> <gray>– the maintenance lobby restarts in <yellow>{seconds} seconds</yellow>. You can join again in about a minute.`,
   },
   'restart.network': {
     de: `${P}<gold>Update eingespielt</gold> <gray>– das Netzwerk startet in <yellow>{seconds} Sekunden</yellow> kurz neu. In etwa einer Minute geht es weiter – einfach wieder verbinden.`,
@@ -649,6 +681,10 @@ const TEXTS = {
     de: `<gold>Die Lobby startet neu</gold>\n\n<gray>Update eingespielt – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
     en: `<gold>The lobby is restarting</gold>\n\n<gray>Update installed – you can join again in about a minute. See you soon!`,
   },
+  'restart.kick.wartung': {
+    de: `<gold>Die Wartungs-Lobby startet neu</gold>\n\n<gray>Update eingespielt – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
+    en: `<gold>The maintenance lobby is restarting</gold>\n\n<gray>Update installed – you can join again in about a minute. See you soon!`,
+  },
   'restart.kick.network': {
     de: `<gold>Das Netzwerk startet kurz neu</gold>\n\n<gray>Update eingespielt – in etwa einer Minute kannst du wieder rein. Bis gleich!`,
     en: `<gold>The network is restarting briefly</gold>\n\n<gray>Update installed – you can join again in about a minute. See you soon!`,
@@ -656,6 +692,7 @@ const TEXTS = {
   'restart.name.lobby': { de: 'die Lobby', en: 'the lobby' },
   'restart.name.bau': { de: 'der Bau-Server', en: 'the build server' },
   'restart.name.proxy': { de: 'das Netzwerk', en: 'the network' },
+  'restart.name.wartung': { de: 'die Wartungs-Lobby', en: 'the maintenance lobby' },
 } as const satisfies Record<string, Record<Lang, string>>;
 
 export type TextKey = keyof typeof TEXTS;

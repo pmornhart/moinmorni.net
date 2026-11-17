@@ -29,6 +29,7 @@ const party: Target = { serverId: 'id-party', member: 'morni-party' };
 const bau: Target = { serverId: 'id-bau', member: 'bau' };
 const lobby: Target = { serverId: 'id-lobby', member: 'lobby' };
 const proxy: Target = { serverId: 'id-proxy', member: 'proxy' };
+const wartung: Target = { serverId: 'id-wartung', member: 'wartung' };
 const sleeping: Target = { serverId: 'id-adler', member: 'adlerflug' };
 const waitingInQueue: Target = { serverId: 'id-wolken', member: 'wolkenkampf' };
 
@@ -66,7 +67,12 @@ function fakeMotor(
   return { log, request: request as MotorClient['request'] };
 }
 
-function fakeHub(players: Player[], log: string[]): RestartHub {
+/** Wartungs-Lobby im Test: aus – oder da, mit festgehaltenen Spielern (Wartung). */
+function fakeHub(
+  players: Player[],
+  log: string[],
+  wartungLobby: { readonly open: boolean; readonly parked?: readonly string[] } = { open: false },
+): RestartHub {
   return {
     playersOn: (member) => players.filter((p) => p.server === member),
     everyone: () => players,
@@ -79,6 +85,17 @@ function fakeHub(players: Player[], log: string[]): RestartHub {
       return true;
     },
     kick: (uuid, text) => log.push(`kick ${uuid} ${text}`),
+    wartung: {
+      open: () => wartungLobby.open,
+      park: (uuid) => {
+        const p = players.find((x) => x.uuid === uuid);
+        if (!wartungLobby.open || !p) return false;
+        p.server = 'wartung';
+        log.push(`park ${uuid}`);
+        return true;
+      },
+      parked: (uuid) => wartungLobby.parked?.includes(uuid) ?? false,
+    },
   };
 }
 
@@ -233,6 +250,78 @@ describe('Gleich neu starten (nach einem Update)', () => {
     // Anna ist seit dem Neustart von Duels in der Lobby – auch sie bekommt den Hinweis.
     expect(log.filter((l) => l.startsWith('kick')).map((l) => l.split(' ')[1])).toEqual(['anna', 'carl']);
     expect(log.find((l) => l.startsWith('kick carl'))).toContain('The lobby is restarting');
+  });
+
+  test('Wartungs-Lobby nie als Erste: nach den Modi, vor der Lobby – und nimmt deren Spieler auf', async () => {
+    const log: string[] = [];
+    const motor = fakeMotor([], log);
+    const players: Player[] = [
+      { uuid: 'anna', lang: 'de', server: 'duels' },
+      { uuid: 'carl', lang: 'de', server: 'lobby' },
+      { uuid: 'dora', lang: 'en', server: 'wartung' },
+      { uuid: 'eva', lang: 'de', server: 'wartung' },
+    ];
+    const restartNow = createRestartNow({
+      motor,
+      hub: fakeHub(players, log, { open: true, parked: ['eva'] }),
+      queue: { entries: () => [], remove: () => undefined },
+      modes: () => DEFAULT_MODES,
+      countdown: () => COUNTDOWN_SECONDS,
+      log: quiet,
+      pause: async () => undefined,
+    });
+    // Auch wenn die Wartungs-Lobby vorne in der Liste steht.
+    await restartNow.run([wartung, lobby, duels], 'update');
+    expect(motor.log.filter((l) => l.startsWith('restart'))).toEqual([
+      'restart id-duels',
+      'restart id-wartung',
+      'restart id-lobby',
+    ]);
+    // Sie läuft wieder, bevor die Lobby neu startet.
+    expect(motor.log.indexOf('running id-wartung')).toBeLessThan(motor.log.indexOf('restart id-lobby'));
+    // Vor ihrem Neustart: wer darf, in die Lobby; wen die Wartung festhält, der muss kurz raus.
+    const restartWartung = log.indexOf('restart id-wartung');
+    expect(log.find((l) => l.startsWith('tell dora'))).toContain('maintenance lobby');
+    expect(log.indexOf('connect dora lobby')).toBeLessThan(restartWartung);
+    expect(log.find((l) => l.startsWith('tell eva'))).toContain('In etwa einer Minute kannst du wieder rein');
+    expect(
+      log.findIndex((l) => l.startsWith('kick eva') && l.includes('Wartungs-Lobby startet neu')),
+    ).toBeLessThan(restartWartung);
+    // Die Lobby startet allein neu: ihre Spieler warten in der Wartungs-Lobby statt rauszufliegen.
+    const restartLobby = log.indexOf('restart id-lobby');
+    expect(log.filter((l) => l.startsWith('tell carl')).join('\n')).toContain(
+      'So lange wartest du in der Wartungs-Lobby',
+    );
+    expect(log.indexOf('park carl')).toBeLessThan(restartLobby);
+    expect(log.indexOf('park anna')).toBeLessThan(restartLobby);
+    expect(log.some((l) => l.startsWith('kick carl') || l.startsWith('kick anna'))).toBe(false);
+    expect(players.find((p) => p.uuid === 'carl')?.server).toBe('wartung');
+  });
+
+  test('Neues Netzwerk-Plugin: Wartungs-Lobby startet mit Lobby und Proxy zusammen – zuletzt', async () => {
+    const log: string[] = [];
+    const motor = fakeMotor([], log);
+    const players: Player[] = [{ uuid: 'dora', lang: 'de', server: 'wartung' }];
+    const restartNow = createRestartNow({
+      motor,
+      hub: fakeHub(players, log, { open: true }),
+      queue: { entries: () => [], remove: () => undefined },
+      modes: () => DEFAULT_MODES,
+      countdown: () => COUNTDOWN_SECONDS,
+      log: quiet,
+      pause: async () => undefined,
+    });
+    await restartNow.run([wartung, proxy, lobby, duels], 'update');
+    expect(motor.log.filter((l) => l.startsWith('restart'))).toEqual([
+      'restart id-duels',
+      'restart id-lobby',
+      'restart id-proxy',
+      'restart id-wartung',
+    ]);
+    // Ein Countdown fürs ganze Netzwerk, einmal neu verbinden – kein eigener Umzug aus der Wartungs-Lobby.
+    expect(log.find((l) => l.startsWith('tell dora'))).toContain('das Netzwerk startet');
+    expect(log.filter((l) => l.startsWith('kick dora'))).toHaveLength(1);
+    expect(log.some((l) => l.startsWith('connect dora') || l.startsWith('park dora'))).toBe(false);
   });
 
   test('Wer während des Wartens wieder in einen Modus geht, kommt vor dessen Neustart noch einmal in die Lobby', async () => {
