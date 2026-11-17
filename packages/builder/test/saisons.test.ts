@@ -16,6 +16,8 @@ import { SCHLOSSMARKT } from '../src/lobby/schlossmarkt.js';
 import { seasonPlan, type Season } from '../src/lobby/season.js';
 import { EINGANG } from '../src/lobby/weihnachtsmarkt.js';
 import { INNER, kindOf } from '../src/lobby/winter-base.js';
+import { EIERBAUM, OSTERBRUNNEN, OSTERHASE } from '../src/lobby/ostern.js';
+import { KUGELN } from '../src/schmuck.js';
 import { KARUSSELL, RIESENRAD, riesenradArea } from '../src/lobby/wiesn.js';
 
 const BASE = GROUND + 1;
@@ -63,6 +65,11 @@ const CONCRETE = /_concrete$/;
  * https://regex101.com/?flavor=javascript&regex=scale%3A%5C%5B0%5C.6f%3F%2C0%5C.1f%3F%2C&testString=scale%3A%5B0.6f%2C0.1f%2C0.55f%5D
  */
 const SEAT = /scale:\[0\.6f?,0\.1f?,/;
+/**
+ * Blüte an einem Baum: "cherry_leaves[persistent=true]", "flowering_azalea_leaves"; passt nicht: "oak_leaves".
+ * https://regex101.com/?flavor=javascript&regex=%5E(cherry%7Cflowering_azalea)_leaves&testString=cherry_leaves%5Bpersistent%3Dtrue%5D
+ */
+const BLOSSOM = /^(cherry|flowering_azalea)_leaves/;
 /** Blöcke, durch die man gehen kann (oder die man nicht als Hindernis sieht). */
 const PASSABLE_BLOCKS: ReadonlySet<string> = new Set(['air', 'light', 'snow']);
 const passable = (block: string): boolean =>
@@ -75,7 +82,7 @@ const figures = canvas.extra
   .map((m) => [Number(m[1]), Number(m[2]), m.input.includes("'mm_walker'")] as const);
 
 /** Regeln, die für jede Saison mit Bauten gelten; `kinds` = Arten der Deko, die da sein müssen. */
-function sharedRules(season: Season, kinds: readonly string[]): void {
+function sharedRules(season: Season, kinds: readonly string[], keepsMaypole = true): void {
   const plan = seasonPlan(season, canvas);
   if (!plan) throw new Error(`keine Bauten: ${season}`);
   const before = (x: number, y: number, z: number): string => canvas.get(x, y, z) ?? groundOf(y);
@@ -151,8 +158,10 @@ function sharedRules(season: Season, kinds: readonly string[]): void {
         }),
       );
       expect(blocked).toEqual([]);
-      // Der Maibaum steht weiter (die Saison baut um ihn herum)
-      const pole = maibaumBlocks().filter(([x, y, z]) => plan.blocks.get(x, y, z) !== undefined);
+      // Der Maibaum steht weiter – oder (Halloween) kommt mit jeder anderen Saison genau zurück
+      const pole = maibaumBlocks().filter(([x, y, z, b]) =>
+        keepsMaypole ? plan.blocks.get(x, y, z) !== undefined : plan.restore.get(x, y, z) !== b,
+      );
       expect(pole.slice(0, 5)).toEqual([]);
     },
     SLOW,
@@ -238,6 +247,100 @@ describe('Wiesn', () => {
       [...LAUNCHPADS, JUMP_AND_RUN.start].forEach((p) =>
         expect(Math.hypot(p.x - x, p.z - z), `${p.x} ${p.z}`).toBeGreaterThan(12),
       );
+    },
+    SLOW,
+  );
+});
+
+describe('Ostern', () => {
+  sharedRules('easter', ['brunnen', 'eierbaum', 'hase', 'eingang', 'bude', 'kette', 'garten']);
+  const plan = seasonPlan('easter', canvas);
+  const before = (x: number, y: number, z: number): string => canvas.get(x, y, z) ?? groundOf(y);
+  const at = (x: number, y: number, z: number): string | undefined => plan?.blocks.get(x, y, z);
+  const changed = plan?.blocks.find(() => true) ?? [];
+
+  it(
+    'Osterbrunnen um den Maibaum: Wasser ringsum im Kalkstein-Rand, acht Bögen mit Eiern zur Krone',
+    () => {
+      const water = changed.filter(([, , , b]) => b === 'water');
+      expect(water.length).toBeGreaterThan(30);
+      // Wasser läuft nirgends aus: jeder Nachbar ist Wasser, Rand oder der Maibaum
+      const leaks = water.filter(([x, y, z]) =>
+        [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ].some(([dx = 0, dz = 0]) => {
+          const n = at(x + dx, y, z + dz) ?? before(x + dx, y, z + dz);
+          return !['water', 'calcite'].includes(n) && !(x + dx === CHRISTBAUM.x && z + dz === CHRISTBAUM.z);
+        }),
+      );
+      expect(leaks).toEqual([]);
+      water.forEach(([x, y, z]) => {
+        expect(y).toBe(BASE);
+        expect(Math.hypot(x - CHRISTBAUM.x, z - CHRISTBAUM.z)).toBeLessThan(OSTERBRUNNEN.r);
+      });
+      const bows = plan?.displays.filter(
+        (d) => d.includes("'mm_easter_brunnen'") && d.includes('spruce_leaves'),
+      );
+      expect(bows?.length).toBe(8 * 9);
+      const eggs = new Set<string>(Object.values(KUGELN));
+      const brunnenEggs = plan?.displays.filter(
+        (d) => d.includes("'mm_easter_brunnen'") && eggs.has(DISPLAY_BLOCK.exec(d)?.[1] ?? ''),
+      );
+      expect(brunnenEggs?.length).toBeGreaterThan(80);
+      // Dorfleute, die um den Maibaum liefen, gehen ein Stück zur Seite
+      expect(plan?.moves[0]).toContain('tag=mm_walker');
+    },
+    SLOW,
+  );
+
+  it(
+    'Frühling: nur Laubbäume blühen (Fichten bleiben), Blumen nur auf Gras – nie vor Figuren',
+    () => {
+      const blossoms = changed.filter(([, , , b]) => BLOSSOM.test(b));
+      expect(blossoms.length).toBeGreaterThan(10_000);
+      const wrongTree = blossoms.filter(([x, y, z]) => {
+        const old = before(x, y, z);
+        return !(old.startsWith('oak_leaves') || old.startsWith('birch_leaves')) && old !== 'air';
+      });
+      expect(wrongTree.slice(0, 5)).toEqual([]);
+      const flowers = changed.filter(([, y, , b]) => y === BASE && kindOf(b) === 'plant');
+      expect(flowers.length).toBeGreaterThan(2000);
+      expect(flowers.filter(([x, , z]) => before(x, GROUND, z) !== 'grass_block').slice(0, 5)).toEqual([]);
+      figures.forEach(([fx, fz]) =>
+        expect(
+          flowers.some(([x, , z]) => Math.hypot(x + 0.5 - fx, z + 0.5 - fz) < 1.5),
+          `Figur ${fx} ${fz}`,
+        ).toBe(false),
+      );
+    },
+    SLOW,
+  );
+
+  it(
+    'Eierbaum und Osterhase stehen auf freier Wiese, weg von Launchpads und Jump and Run',
+    () => {
+      const free = (cx: number, cz: number, r: number): Array<readonly [number, number]> =>
+        disc(cx, cz, r).filter(([x, z]) =>
+          range(BASE + 1, BASE + 12).some((y) => {
+            const b = canvas.get(x, y, z) ?? 'air';
+            return b !== 'air' && !passable(b);
+          }),
+        );
+      expect(free(EIERBAUM.x, EIERBAUM.z, 6)).toEqual([]);
+      expect(free(OSTERHASE.x, OSTERHASE.z, 5)).toEqual([]);
+      expect(at(EIERBAUM.x, BASE, EIERBAUM.z)).toBe('cherry_log');
+      expect(at(OSTERHASE.x, BASE, OSTERHASE.z)).toBe('white_wool');
+      const eggs = plan?.displays.filter(
+        (d) => d.includes("'mm_easter_eierbaum'") && !d.startsWith('summon text'),
+      );
+      expect(eggs?.length).toBeGreaterThan(30);
+      [...LAUNCHPADS, JUMP_AND_RUN.start].forEach((p) => {
+        expect(Math.hypot(p.x - EIERBAUM.x, p.z - EIERBAUM.z)).toBeGreaterThan(12);
+        expect(Math.hypot(p.x - OSTERHASE.x, p.z - OSTERHASE.z)).toBeGreaterThan(12);
+      });
     },
     SLOW,
   );

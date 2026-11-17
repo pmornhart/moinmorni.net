@@ -335,9 +335,26 @@
   Wiesn weg, Winter an **5/5**, wieder Wiesn → Winter weg **5/5**, keine Saison → `kill -9` 5 s danach → Wiesn aus
   **3/3**, Winter aus **5/5**, wieder Wiesn **3/3**. Bilder vorher/nachher mit Client 26.3, Tag und Nacht, nur lokal.
 
+- 17.11.: **Ostern als Frühlingsfest** (Philip: „das mit dem Winterwunderland auch für alle anderen Events“; Branch
+  `claude/winter-wunderland`, `packages/builder/src/lobby/ostern.ts`): **Osterbrunnen um den Maibaum** (Herzstück:
+  Kalkstein-Brunnen mit Wasser, acht Bögen aus Tannengrün zur Osterkrone, über 100 Ostereier, Bänder, Blumentöpfe),
+  **Eierbaum** (blühender Kirschbaum voller Eier auf der Westwiese, Tulpenkreis), **Osterhase** aus Wolle neben der
+  Ankunft (Korb, bemaltes Riesen-Ei, „Frohe Ostern!“), **Frühling überall** (gut 23 000 Laubblätter im Dorf blühen als
+  Kirsch- oder Azaleenblüte, je Krone, rund 5 000 Frühlingsblumen in Flecken auf den Wiesen), Ostermarkt am Eingang,
+  Eingangsbogen mit Blütengirlande und Eiern, Pastell-Wimpel, Eier in den Vorgärten, Hasen. Eier = runde Kugeln aus
+  dem Lobby-Paket in fünf neuen Farben, in die Höhe gezogen. **Saison-Welt im Plugin** (`LobbyWinter.java`): Biom je
+  Saison – Winter verschneit, Ostern Kirschblütenhain (helles Grün), Halloween blasser Garten (grauer Nebel) –, aus
+  einer gemerkten Kopie zurück; Teilchen je Saison (Flocken, Blüten, Asche); Wechsel Winter → Ostern stellt das Biom
+  direkt um. Bauplan-Prüfung Ostern **0 Funde** (Anzeigen und Blöcke). Tests: 94 Baukasten- (neu: Brunnen dicht,
+  Bögen und Eier, nur Laubbäume blühen, Blumen nur auf Gras und nie vor Figuren, Eierbaum und Hase auf freier
+  Wiese), 65 JUnit, Lobby-Server-Tests, Typen. Echt (Paper 26.1.2 mit Netzwerk-Plugin und Test-Hub, echter
+  Selbstbau): Ostern an **4/4** (mit Biom), `lobby-test` **30/30**, Winter → Ostern weg **4/4**, Winter an **5/5**,
+  wieder Ostern **4/4**, keine Saison → `kill -9` 5 s danach → Ostern aus **4/4**, Winter aus **5/5**, wieder Ostern
+  **4/4**. Bilder vorher/nachher mit Client 26.3 und Lobby-Paket, Tag und Nacht, nur lokal.
+
 ## Offen
 
-- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit der Wiesn auch ihre Blöcke).
+- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit der Wiesn auch ihre Blöcke; Ostern ebenso).
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
 - MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).
 - **Philip testet.** Morni Party: Burg Weißenstein + Minispiel-Kulissen (Helfer), danach Go fürs Release. MoinMorni selbst (`main`) und MorniHosting-PR #117 brauchen noch ein eigenes Go, danach Submodul wieder auf MorniHosting `main`.

@@ -259,7 +259,18 @@ Lobby-Server (bei jeder Änderung neu).
   einer Stütze am Einstieg, Bühne mit Laternen, Nabe, Achse, Stützen und Speichen als Anzeigen, acht bunte Gondeln,
   Lichterkranz, Tafel), **Lebkuchenherzen- und Breznbude** am Eingang, Lebkuchenherzen an allen Marktständen,
   weiß-blaue Wimpel und Lichter von Stand zu Stand, Wimpel über Dorfstraße und Handwerkergasse, Fässer am Biergarten.
-- **Saisons mit Bauten** (Winter, Wiesn): jede setzt Blöcke über den Bauplan und merkt sich je Stelle den alten Block
+- **Ostern** (Saison „Ostern“, `lobby/ostern.ts`): **Osterbrunnen um den Maibaum** (Herzstück: runder Brunnen aus
+  Kalkstein mit Wasser, acht Bögen aus Tannengrün zur Osterkrone am Maibaum, über 100 bunte Ostereier an den Bögen,
+  Bänder an der Krone, Blumentöpfe auf dem Rand; Dorfleute gehen ein Stück zur Seite), **Eierbaum** (blühender
+  Kirschbaum voller Eier auf der Westwiese, Tulpenkreis, Tafel), **Osterhase** aus Wolle neben der Ankunft (Korb mit
+  Eiern, bemaltes Riesen-Ei, „Frohe Ostern!“), **Frühling überall**: die Laubbäume im Dorf blühen (je Krone
+  Kirschblüte, Azaleenblüte oder grün – Kirschblüten lassen von selbst Blüten fallen), Frühlingsblumen in Flecken auf
+  den Wiesen (nicht vor Figuren, Launchpads, Jump and Run), **Ostermarkt** am Eingang (Ostereier, Osterlamm &
+  Hefezopf, Blütengirlanden), Eingangsbogen mit Blütengirlande und Eiern, Wimpel in Pastell, Eier in den Vorgärten,
+  Hasen. Die Eier sind die runden Kugeln aus dem Lobby-Paket (`schmuck.ts`, neue Farben rosa, grün, hellblau, lila,
+  orange), in die Höhe gezogen. Biom „Kirschblütenhain“ (helles Grün) und ab und zu eine Blüte in der Luft
+  (`LobbyWinter.java`).
+- **Saisons mit Bauten** (Winter, Wiesn, Ostern): jede setzt Blöcke über den Bauplan und merkt sich je Stelle den alten Block
   (`lobby/saison-plan.ts`). Beim Wechsel räumt erst jede andere Saison ihre Blöcke weg (nur, wenn ihr Merker liegt),
   dann wird gespeichert, die Merker kommen weg, wieder gespeichert, dann setzt die neue Saison Merker, Blöcke und Deko
   (`seasonStepsFor` in `datapack.ts`) – auch nach einem Absturz mitten im Wechsel passt der Merker zu den Blöcken.

@@ -30,10 +30,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
- * Winter in der Lobby (Saison „Winter“ aus dem Panel) – Schnee, der wirklich fällt:
+ * Welt der Saison in der Lobby (Saison aus dem Panel). Winter: Schnee, der wirklich fällt; Ostern: Kirschblütenhain
+ * (helles Grün, fallende Blüten); Halloween: blasser Garten (grauer Himmel und Nebel, Asche in der Luft):
  * <ul>
  * <li>Biom: Minecraft lässt Schnee nur in kalten Biomen fallen. Bevor die Lobby „Verschneite Ebene“ wird, merkt sich
- * das Plugin jedes Biom des Lobby-Geländes (Zellen zu 4×4×4 Blöcken, {@code plugins/moinmorni/winter-biome.txt}); bei
+ * das Plugin jedes Biom des Lobby-Geländes (einmal, für alle Saisons mit eigenem Biom) (Zellen zu 4×4×4 Blöcken, {@code plugins/moinmorni/winter-biome.txt}); bei
  * jeder anderen Saison kommen genau diese Biome zurück, dann ist die Datei weg.</li>
  * <li>Wetter: bleibt klar – echter Schneefall macht den Himmel grau und dunkel, die Lobby soll hell und freundlich
  * sein. Wer aus einer älteren Fassung noch Spieler-Schneefall hat, bekommt wieder das Wetter der Welt.</li>
@@ -53,16 +54,21 @@ final class LobbyWinter implements Listener {
     private static final int CHUNK = 16;
     private static final String SNAPSHOT = "winter-biome.txt";
     private static final String DONE = "winter-biome.done";
-    private static final String WINTER = "winter";
-    private static final Biome COLD = Biome.SNOWY_PLAINS;
+    /** Biom je Saison: Winter verschneit, Ostern Kirschblütenhain (helles Grün), Halloween blasser Garten (grauer Nebel). */
+    private static final java.util.Map<String, Biome> BIOMES = java.util.Map.of(
+            "winter", Biome.SNOWY_PLAINS,
+            "easter", Biome.CHERRY_GROVE,
+            "halloween", Biome.PALE_GARDEN);
+    /** Teilchen je Saison um jeden Spieler: Art, Anzahl, Streuung, Höhe, wie weit über dem Kopf. */
+    private record Drift(Particle particle, int count, double spread, double height, double above) { }
+    private static final java.util.Map<String, Drift> DRIFTS = java.util.Map.of(
+            "winter", new Drift(Particle.SNOWFLAKE, 3, 7, 1.5, 4),
+            "easter", new Drift(Particle.CHERRY_LEAVES, 1, 6, 1.5, 4),
+            "halloween", new Drift(Particle.WHITE_ASH, 14, 8, 2.5, 2));
     /** So viele Stücke je Tick umstellen (das Gelände hat 28 × 28). */
     private static final int CHUNKS_PER_TICK = 12;
     /** Leichtes Gestöber: drei Flocken alle 5 Ticks um jeden Spieler. */
     private static final long FLAKE_TICKS = 5L;
-    private static final int FLAKES = 3;
-    private static final double FLAKE_SPREAD = 7;
-    private static final double FLAKE_HEIGHT = 1.5;
-    private static final double FLAKE_ABOVE = 4;
     /** Alle 30 s nachsehen, ob ein Neubau der Lobby das Biom zurückgesetzt hat. */
     private static final long RECHECK_TICKS = 600L;
     /** Dort wird nachgesehen: Mitte des Dorfplatzes, über dem Pflaster. */
@@ -110,8 +116,19 @@ final class LobbyWinter implements Listener {
         Bukkit.getScheduler().runTask(plugin, () -> configure(next));
     }
 
-    private boolean winter() {
-        return WINTER.equals(season);
+    /** Biom der laufenden Saison (null = Biome des Bauplans). */
+    private Biome target() {
+        return season == null ? null : BIOMES.get(season);
+    }
+
+    /** Für welche Saison das Biom gerade gesetzt ist (Merker-Datei), sonst null. */
+    private String applied() {
+        try {
+            Path done = dir.resolve(DONE);
+            return Files.exists(done) ? Files.readString(done, StandardCharsets.UTF_8).trim() : null;
+        } catch (IOException ex) {
+            return null;
+        }
     }
 
     private void configure(String next) {
@@ -121,9 +138,9 @@ final class LobbyWinter implements Listener {
             pending = true;
             return;
         }
-        if (winter() && !Files.exists(dir.resolve(DONE))) {
+        if (target() != null && !season.equals(applied())) {
             change(true);
-        } else if (!winter() && Files.exists(dir.resolve(SNAPSHOT))) {
+        } else if (target() == null && Files.exists(dir.resolve(SNAPSHOT))) {
             change(false);
         }
     }
@@ -149,13 +166,14 @@ final class LobbyWinter implements Listener {
      */
     private void recheck() {
         World world = lobbyWorld();
-        if (!winter() || busy || world == null || !Files.exists(dir.resolve(DONE)) || !world.isChunkLoaded(0, 0)) {
+        Biome target = target();
+        if (target == null || busy || world == null || !season.equals(applied()) || !world.isChunkLoaded(0, 0)) {
             return;
         }
-        if (world.getBiome(0, PROBE_Y, 0) == COLD) {
+        if (world.getBiome(0, PROBE_Y, 0) == target) {
             return;
         }
-        plugin.getLogger().info("Winter: Die Lobby wurde neu gebaut – das Biom wird wieder kalt.");
+        plugin.getLogger().info("Saison: Die Lobby wurde neu gebaut – das Biom der Saison kommt wieder.");
         refresh = true;
         try {
             Files.deleteIfExists(dir.resolve(DONE));
@@ -167,7 +185,8 @@ final class LobbyWinter implements Listener {
     }
 
     private void snowflakes() {
-        if (!winter()) {
+        Drift drift = season == null ? null : DRIFTS.get(season);
+        if (drift == null) {
             return;
         }
         World world = lobbyWorld();
@@ -175,8 +194,8 @@ final class LobbyWinter implements Listener {
             if (!p.getWorld().equals(world) || p.getGameMode() == GameMode.SPECTATOR) {
                 continue;
             }
-            var at = p.getLocation().add(rnd.nextGaussian(), FLAKE_ABOVE, rnd.nextGaussian());
-            p.spawnParticle(Particle.SNOWFLAKE, at, FLAKES, FLAKE_SPREAD, FLAKE_HEIGHT, FLAKE_SPREAD, 0);
+            var at = p.getLocation().add(rnd.nextGaussian(), drift.above(), rnd.nextGaussian());
+            p.spawnParticle(drift.particle(), at, drift.count(), drift.spread(), drift.height(), drift.spread(), 0);
         }
     }
 
@@ -231,23 +250,29 @@ final class LobbyWinter implements Listener {
     /** Winter: erst jedes Biom merken (nur einmal – die Datei bleibt bis zum Rückweg), dann alles kalt. */
     private void snow(World world, List<long[]> chunks) {
         Path snapshot = dir.resolve(SNAPSHOT);
+        String name = season;
+        Biome target = target();
+        if (target == null) {
+            finish(world);
+            return;
+        }
         Runnable freeze = () -> step(world, new ArrayDeque<>(chunks), chunk -> {
             int x0 = (int) chunk[0] << CHUNK_SHIFT;
             int z0 = (int) chunk[1] << CHUNK_SHIFT;
             for (int x = x0; x < x0 + CHUNK; x += CELL) {
                 for (int z = z0; z < z0 + CHUNK; z += CELL) {
                     for (int y = Y_FROM; y <= Y_TO; y += CELL) {
-                        world.setBiome(x, y, z, COLD);
+                        world.setBiome(x, y, z, target);
                     }
                 }
             }
         }, true, () -> {
             try {
-                Files.writeString(dir.resolve(DONE), "winter\n", StandardCharsets.UTF_8);
+                Files.writeString(dir.resolve(DONE), name + "\n", StandardCharsets.UTF_8);
             } catch (IOException ex) {
                 plugin.getLogger().warning("Winter: Merker ließ sich nicht schreiben – " + ex.getMessage());
             }
-            plugin.getLogger().info("Winter: Lobby ist verschneit (kaltes Biom gesetzt).");
+            plugin.getLogger().info("Saison " + name + ": Biom " + target.getKey().asString() + " gesetzt.");
             finish(world);
         });
         boolean renew = refresh;
@@ -271,7 +296,7 @@ final class LobbyWinter implements Listener {
                 plugin.getLogger().warning("Winter: gemerkte Biome nicht lesbar – " + ex.getMessage());
             }
         }
-        String cold = COLD.getKey().asString();
+        String cold = target.getKey().asString();
         List<String> lines = new ArrayList<>();
         step(world, new ArrayDeque<>(chunks), chunk -> {
             List<String> fresh = new ArrayList<>();
