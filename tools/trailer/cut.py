@@ -23,6 +23,71 @@ def dur(f):
                                           'csv=p=0', f]).decode().strip())
 
 
+def stepwise(plan, base, shots, lengths, total, music, out):
+    """Wenig Speicher (MM_CUT_STEPS=1): jede Einstellung einzeln mit Karte rendern, dann Stück für Stück überblenden –
+    nie mehr als zwei Videos gleichzeitig offen (auf einem vollen Rechner beendet der Speicherwächter sonst ffmpeg)."""
+    tmp = os.path.join(base, 'schnitt-tmp')
+    os.makedirs(tmp, exist_ok=True)
+    sig = os.path.join(tmp, 'plan.json')  # Zwischenstücke nur weiterverwenden, wenn der Plan derselbe ist
+    want = json.dumps([shots, lengths], sort_keys=True)
+    if not os.path.exists(sig) or open(sig).read() != want:
+        for f_ in os.listdir(tmp):
+            os.remove(os.path.join(tmp, f_))
+        open(sig, 'w').write(want)
+
+    def run(cmd, target):  # erst fertig schreiben, dann umbenennen – ein abgebrochener Lauf macht dort weiter
+        if os.path.exists(target):
+            return
+        part = target + '.teil.mp4'
+        subprocess.run(cmd + [part], check=True)
+        os.replace(part, target)
+    enc = ['-c:v', 'libx264', '-preset', 'medium', '-crf', '15', '-threads', '1', '-pix_fmt', 'yuv420p', '-an']
+    n = len(shots)
+    parts = []
+    for i, (s, length) in enumerate(zip(shots, lengths)):
+        src = os.path.join(base, s['file'])
+        have = dur(src) - s.get('start', 0)
+        need = length + (FADE if i < n - 1 else 0)
+        pad = max(0.0, need - have + 0.05)
+        chain = f'[0:v]scale={W}:{H}:flags=lanczos,setsar=1,fps=30'
+        if pad > 0:
+            chain += f',tpad=stop_mode=clone:stop_duration={pad:.3f}'
+            print(f'  Hinweis: {s["file"]} ist {pad:.1f}s zu kurz – letztes Bild bleibt stehen')
+        chain += f',trim=0:{need:.3f},setpts=PTS-STARTPTS'
+        args = ['-ss', f"{s.get('start', 0):.3f}", '-i', src]
+        card = s.get('card')
+        if card:
+            args += ['-loop', '1', '-t', f'{need:.3f}', '-i', os.path.join(base, card)]
+            c_at = s.get('cardAt', 0.25)
+            c_end = s.get('cardEnd', length - 0.35 if s['bars'] != 'rest' else None)
+            fade = f'format=rgba,fade=t=in:st={c_at:.2f}:d={CARD_IN}:alpha=1'
+            if c_end:
+                fade += f',fade=t=out:st={c_end - CARD_IN:.2f}:d={CARD_IN}:alpha=1'
+            fc = f'[1:v]{fade}[c];{chain}[b];[b][c]overlay=0:0:format=auto,format=yuv420p[v]'
+        else:
+            fc = f'{chain},format=yuv420p[v]'
+        p = os.path.join(tmp, f'teil{i:02d}.mp4')
+        run(['ffmpeg', '-y', '-loglevel', 'error', '-filter_complex_threads', '1', *args, '-filter_complex', fc,
+             '-map', '[v]', *enc], p)
+        parts.append(p)
+    acc, offset = parts[0], 0.0
+    for i in range(1, n):
+        offset += lengths[i - 1]
+        nxt = os.path.join(tmp, f'kette{i:02d}.mp4')
+        trans = shots[i].get('transition', 'fade')
+        run(['ffmpeg', '-y', '-loglevel', 'error', '-i', acc, '-i', parts[i], '-filter_complex',
+             f'[0:v][1:v]xfade=transition={trans}:duration={FADE}:offset={offset:.3f}[v]', '-map', '[v]', *enc], nxt)
+        acc = nxt
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', acc, '-i', music, '-filter_complex',
+                    f'[0:v]fade=t=in:st=0:d=0.6,fade=t=out:st={total - 1.0:.3f}:d=1.0,trim=0:{total:.3f}[vout]',
+                    '-map', '[vout]', '-map', '1:a', '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-threads', '2',
+                    '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-shortest', out],
+                   check=True)
+    import shutil
+    shutil.rmtree(tmp, ignore_errors=True)
+    print(out, f'{total:.1f}s')
+
+
 def main():
     plan_file, out = sys.argv[1], sys.argv[2]
     plan = json.load(open(plan_file))
@@ -41,6 +106,8 @@ def main():
     if abs(used - total) > 0.05:
         sys.exit(f'Takte passen nicht zur Musik: {used:.2f}s statt {total:.2f}s')
 
+    if os.environ.get('MM_CUT_STEPS') == '1':
+        return stepwise(plan, base, shots, lengths, total, music, out)
     inputs, filters = [], []
     n = len(shots)
     for i, (s, length) in enumerate(zip(shots, lengths)):

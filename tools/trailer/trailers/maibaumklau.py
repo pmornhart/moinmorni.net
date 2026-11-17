@@ -85,7 +85,7 @@ def status(karte=None):
                 out['trees'][int(k[4:])].update(state=f[0], leader=f[3], carriers=int(f[5]))
             elif k[:4] in ('fuss', 'lage') and k[4:].isdigit():
                 out['trees'][int(k[4:])][k[:4]] = [float(x) for x in v.split(':')]
-            elif k[:1].isupper():
+            elif v.count(':') >= 8:  # Spieler (Namen dürfen klein anfangen)
                 f = v.split(':')
                 out['players'][k] = (f[0], f[1] if len(f) > 1 else f[0])
             else:
