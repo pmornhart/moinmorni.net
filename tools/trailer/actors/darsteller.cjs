@@ -465,6 +465,26 @@ class Darsteller {
     this.useBlock(x, y, z, FACES[face] ?? 1);
   }
 
+  /** Block abbauen (Schaufel, Spitzhacke …) – mit Blick dorthin, der Kopf folgt weich. */
+  async grabe(x, y, z) {
+    const b = this.bot.blockAt(new Vec3(x, y, z));
+    if (!b || b.name === 'air') return;
+    const p = new Vec3(x + 0.5, y + 0.5, z + 0.5);
+    this.look = p;
+    await this.until(() => Math.abs(wrap(angles(this.eye, p).yaw - this.head.yaw)) < 0.25, 1.0);
+    // Selbst gesendet statt bot.dig: mineflayer rechnet die Abbauzeit aus den Verzauberungen und scheitert an 26.x.
+    // Anfangen + Fertig (Schnee mit Schaufel bricht sofort), Arm schwingt mit.
+    const loc = new Vec3(x, y, z);
+    const send = (status) => {
+      this.e.seq = (this.e.seq || 1) + 1;
+      this.bot._client.write('block_dig', { status, location: loc, face: 1, sequence: this.e.seq });
+    };
+    send(0);
+    this.bot.swingArm('right');
+    await zeit.wait(100);
+    send(2);
+  }
+
   useBlock(x, y, z, face) {
     this.e.seq = (this.e.seq || 1) + 1;
     this.bot._client.write('block_place', {

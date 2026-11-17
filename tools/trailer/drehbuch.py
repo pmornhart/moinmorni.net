@@ -53,6 +53,30 @@ def pos(name):
     return v[-3:] if len(v) >= 3 else None
 
 
+def pause_menu_open(display=None):
+    """Liegt das Spielmenü (Escape) über dem Bild? Erkennt die graue Taste „Zurück zum Spiel“ (1600×900, GUI 3)."""
+    display = display or os.environ.get('MM_DISPLAY', ':98')
+    try:
+        raw = subprocess.run(['import', '-window', 'root', '-crop', '1x1+600+262', '-depth', '8', 'rgb:-'],
+                             env=dict(os.environ, DISPLAY=display), capture_output=True, timeout=20).stdout
+        raw2 = subprocess.run(['import', '-window', 'root', '-crop', '1x1+1000+262', '-depth', '8', 'rgb:-'],
+                              env=dict(os.environ, DISPLAY=display), capture_output=True, timeout=20).stdout
+    except (OSError, subprocess.SubprocessError):
+        return False
+    gray = lambda b: len(b) >= 3 and 100 <= b[0] <= 125 and b[0] == b[1] == b[2]
+    return gray(raw) and gray(raw2)
+
+
+def close_pause_menu(display=None):
+    """Spielmenü schließen, falls es offen ist (z. B. nach einem überzähligen Escape)."""
+    display = display or os.environ.get('MM_DISPLAY', ':98')
+    if pause_menu_open(display):
+        subprocess.run(['xdotool', 'key', 'Escape'], env=dict(os.environ, DISPLAY=display))
+        time.sleep(1.5)
+        return True
+    return False
+
+
 def until(cond, t=20, step=0.3, what=''):
     end = time.time() + t
     while time.time() < end:

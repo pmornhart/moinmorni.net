@@ -14,6 +14,7 @@
 //   truhe x y z [nimm=alles|text] [dann=sword]       hingehen, öffnen, ausräumen
 //   essen · nimm <text> · slot <0-8> · chat <text …> · gruss · springe [n] · schleiche an|aus
 //   bogen <Ziel> [spannen=1.1] · schild [s] · klick x y z [seite] · setze x y z <seite>
+//   grabe x y z                                      Block abbauen (mit Blick, Werkzeug in der Hand)
 //   bahn x,y,z,t x,y,z,t …                           geführte Bahn (weich, Beine laufen mit)
 //   physik an|aus                                   eigene Physik aus, wenn der Server den Darsteller führt
 //   * kamera x y z                                   Ort der Kamera (shot.py meldet ihn laufend)
@@ -85,6 +86,7 @@ async function handle(line) {
     case 'bogen': return a.bogen(pos[0], o);
     case 'schild': return a.schild(Number(pos[0] || 1));
     case 'klick': return a.klick(...nums(pos), pos[3] || 'up');
+    case 'grabe': case 'dig': return a.grabe(...nums(pos));
     case 'setze': case 'place': return a.setze(...nums(pos), pos[3] || 'up');
     // Physik aus, wenn der Server den Darsteller selbst führt (z. B. ein Test-Autopilot, der ihn jeden Tick versetzt)
     case 'physik': bot.physicsEnabled = !['aus', 'off'].includes(pos[0]); if (!bot.physicsEnabled) a.stop(); return;
