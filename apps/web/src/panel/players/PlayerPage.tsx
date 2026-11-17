@@ -11,6 +11,7 @@ import {
   Save,
   ShieldHalf,
   ShieldAlert,
+  Lock,
   Undo2,
   type LucideIcon,
 } from 'lucide-react';
@@ -52,6 +53,8 @@ import { MorniCraftCard } from './MorniCraftCard';
 
 const OWNER = 'owner';
 const NO_ROLE = '';
+/** "Only …" by how many ranks may: nobody, one, several. */
+const PROTECTED_KEYS = ['protectedNobody', 'protectedOne', 'protectedMany'] as const;
 const STATE_TONE: Readonly<Record<PunishmentState, 'danger' | 'neutral' | 'success' | 'blue'>> = {
   active: 'danger',
   revoked: 'success',
@@ -249,24 +252,50 @@ function RankCard({
   );
 }
 
+/**
+ * Punishments only go down: "Mia is Admin – only the Owner may do that." Who may comes from the server (highest
+ * first); without that list (older server) the general sentence.
+ */
+function useProtectedText(): (player: PlayerDetail) => string {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
+  const language = useLanguage();
+  return (player) => {
+    if (!player.punishers) return t('players.act.higher', { name: player.name });
+    const rank = pick(player.role.name);
+    const names = player.punishers.map((r) => pick(r.name));
+    const who = new Intl.ListFormat(language, { type: 'conjunction' }).format(names);
+    const key = PROTECTED_KEYS[Math.min(names.length, PROTECTED_KEYS.length - 1)] ?? 'protectedMany';
+    return t(`players.act.${key}`, { name: player.name, rank, who });
+  };
+}
+
 function ActionsCard({
   player,
   blocked,
   onPunish,
 }: {
-  readonly player: PlayerView;
+  readonly player: PlayerDetail;
   readonly blocked: boolean;
   readonly onPunish: (kind: ModKind) => void;
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const me = usePanel();
-  const note = ((): string => {
-    if (blocked) return t('players.act.higher', { name: player.name });
-    return player.online ? t('players.act.help') : t('punish.kickOffline', { name: player.name });
-  })();
+  const protectedText = useProtectedText();
+  const shield = blocked ? protectedText(player) : null;
+  const note = player.online ? t('players.act.help') : t('punish.kickOffline', { name: player.name });
   return (
     <Card className="grid gap-4 p-5 sm:p-6">
       <SectionHead icon={ShieldAlert} title={t('players.act.title')} />
+      {shield ? (
+        <p
+          role="note"
+          className="flex items-start gap-2.5 rounded-[12px] border border-gold/30 bg-gold/10 px-3.5 py-3 text-sm font-medium"
+        >
+          <Lock className="mt-0.5 size-4 shrink-0 text-gold" aria-hidden />
+          <span>{shield}</span>
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {MOD_KINDS.map((kind) => {
           const Icon = KIND_ICON[kind];
@@ -274,6 +303,7 @@ function ActionsCard({
           // Like the command in the game: each punishment needs its right (voice chat mute: "voice-mute").
           const allowed = mayPunish(me.role, kind);
           const why = ((): string | undefined => {
+            if (shield) return shield;
             if (!allowed) return t('punish.noRight');
             return offline ? t('punish.kickOffline', { name: player.name }) : undefined;
           })();
@@ -292,7 +322,7 @@ function ActionsCard({
           );
         })}
       </div>
-      <p className="text-[13px] leading-snug text-muted-foreground">{note}</p>
+      {shield ? null : <p className="text-[13px] leading-snug text-muted-foreground">{note}</p>}
     </Card>
   );
 }
@@ -474,7 +504,13 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
           {player.mornicraft ? <MorniCraftCard data={player.mornicraft} /> : null}
         </div>
         <div className="grid gap-[22px]">
-          {canPunish ? <ActionsCard player={player} blocked={higher === false} onPunish={setDialog} /> : null}
+          {canPunish ? (
+            <ActionsCard
+              player={player}
+              blocked={player.punishable === undefined ? higher === false : !player.punishable}
+              onPunish={setDialog}
+            />
+          ) : null}
           {running.length ? (
             <Card className="grid gap-4 p-5 sm:p-6">
               <SectionHead icon={ShieldAlert} title={t('players.active.title')} />
@@ -486,7 +522,7 @@ function PlayerProfile({ player }: { readonly player: PlayerDetail }): ReactElem
                     kind={active.kind}
                     until={active.until}
                     reason={active.reason}
-                    canLift={canPunish && mayPunish(me.role, active.kind)}
+                    canLift={canPunish && mayPunish(me.role, active.kind) && player.liftable !== false}
                   />
                 ))}
               </ul>

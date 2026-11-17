@@ -36,7 +36,7 @@ ARG MM_VERSION=dev
 RUN pnpm --filter @moinmorni/web build \
  && pnpm --filter @moinmorni/server build \
  && pnpm --filter @moinmorni/server deploy --prod --legacy /out \
- && cp -r apps/server/dist apps/server/drizzle /out/
+ && cp -r apps/server/dist apps/server/drizzle apps/server/musik /out/
 
 FROM node:22-alpine
 ARG MM_VERSION=dev

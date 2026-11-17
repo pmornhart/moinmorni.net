@@ -1,4 +1,4 @@
-import type { GameRight, Role } from '@moinmorni/shared';
+import type { GameRight, Role, StreamerPart } from '@moinmorni/shared';
 import type { Stores } from '../panel/stores.js';
 import type { PlayerService } from './players.js';
 import type { Presence } from './presence.js';
@@ -19,8 +19,13 @@ export interface HubContext {
   readonly kick: (uuid: string, text: string) => void;
   /** false = Server nicht im Netzwerk. */
   readonly connect: (uuid: string, server: string) => boolean;
-  /** Wie über eine Figur: erst prüfen (Rechte, Wartung, Whitelist) und schlafende Server wecken, dann verbinden. */
-  readonly goTo: (uuid: string, server: string) => void;
+  /** Wartung des Netzwerks: Hinweis, wenn dieser Spieler gerade nur in der Wartungs-Lobby sein darf (sonst null). */
+  readonly held: (uuid: string, lang: Lang) => string | null;
+  /**
+   * Wie über eine Figur: erst prüfen (Rechte, Wartung, Whitelist) und schlafende Server wecken, dann verbinden.
+   * true = gleich verbunden (sonst Hinweis an den Spieler, oder er kommt nach dem Aufwachen von selbst hinein).
+   */
+  readonly goTo: (uuid: string, server: string) => boolean;
   /** Chat-Zeile an Spielserver: `servers` = alle oder einer. Text pro Sprache. */
   readonly chat: (servers: 'all' | string, line: Record<Lang, string>) => void;
   /** Hinweis an alle im Team, die dieses Recht haben. */
@@ -29,6 +34,8 @@ export interface HubContext {
   readonly refreshProfile: (uuid: string) => void;
   /** Bann-Liste an den Proxy. */
   readonly syncBans: () => void;
+  /** Streamer-Modus: was für diesen Spieler gerade verdeckt wird (leer = aus). */
+  readonly streamer: (uuid: string) => readonly StreamerPart[];
 }
 
 export const hasRight = (role: Role, right: GameRight): boolean => role.game.includes(right);

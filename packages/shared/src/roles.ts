@@ -262,6 +262,51 @@ export function mayPunish(role: Pick<Role, 'id' | 'game'>, kind: PunishmentKind)
   return role.id === 'owner' || role.game.includes(PUNISHMENT_RIGHTS[kind]);
 }
 
+const OWNER_ID = 'owner';
+
+/**
+ * Strafen nur nach unten (Philip, 16.11.): Wer jemanden bestrafen will – verwarnen, stummschalten (Chat und
+ * Sprachchat), einsperren, rauswerfen, bannen, und auch aufheben –, braucht einen höheren Rang als die Person. Den
+ * Owner bestraft niemand, auch kein anderer Owner; der Owner darf alle anderen (auch Admins). Mit dem Rang zählt der
+ * Rang im Spiel: eigener Rang oder Team-Konto mit verbundenem Minecraft-Konto, der höhere (siehe `higherRole`).
+ * Ob die Rolle die Strafe überhaupt verhängen darf, sagt `mayPunish`.
+ */
+export function mayPunishPlayer(
+  actor: Pick<Role, 'id' | 'position'>,
+  target: Pick<Role, 'id' | 'position'>,
+): boolean {
+  if (target.id === OWNER_ID) return false;
+  if (actor.id === OWNER_ID) return true;
+  return target.position > actor.position;
+}
+
+/**
+ * Aufheben gilt wie Verhängen – nur der Owner darf jede Strafe aufheben, auch eine alte auf einem Owner (sonst
+ * käme niemand mehr an sie heran).
+ */
+export function mayLiftFor(
+  actor: Pick<Role, 'id' | 'position'>,
+  target: Pick<Role, 'id' | 'position'>,
+): boolean {
+  return actor.id === OWNER_ID || mayPunishPlayer(actor, target);
+}
+
+/** Wer darf jemanden mit diesem Rang so bestrafen? Für den Hinweis „das darf nur der Owner“ (höchste zuerst). */
+export function punishersOf<R extends Pick<Role, 'id' | 'game' | 'position'>>(
+  roles: readonly R[],
+  target: Pick<Role, 'id' | 'position'>,
+  kind: PunishmentKind,
+): R[] {
+  return roles
+    .filter((r) => mayPunish(r, kind) && mayPunishPlayer(r, target))
+    .sort((a, b) => a.position - b.position);
+}
+
+/** Der höhere von zwei Rängen (kleinere Position; bei Gleichstand der erste). */
+export function higherRole<R extends Pick<Role, 'position'>>(a: R, b: R | undefined): R {
+  return b && b.position < a.position ? b : a;
+}
+
 /** Rollen, die nur Owner vergeben oder in der Vorlage ändern dürfen. */
 export const OWNER_ONLY_ROLES: readonly string[] = ['owner', 'admin'];
 /** Diese Ränge vergibt nur der Owner – VIP „vergibt nur Philip, nie ein Shop“. */

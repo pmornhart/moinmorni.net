@@ -50,7 +50,7 @@ describe('Netzwerk richtet sich selbst ein', () => {
       },
     });
     const first = await provisioner.ensure();
-    expect(first.created).toEqual(['proxy', 'lobby', 'bau', 'duels']);
+    expect(first.created).toEqual(['proxy', 'lobby', 'wartung', 'bau', 'duels']);
     expect(first.modesInstalled).toEqual(['duels']);
 
     const nets = await h.mm.motor.request<Net[]>('GET', '/api/networks');
@@ -77,6 +77,37 @@ describe('Netzwerk richtet sich selbst ein', () => {
     const update = await provisioner.ensure();
     expect(update.modesInstalled).toEqual(['duels']);
     expect(update.restart.map((r) => r.member)).toEqual(['duels']);
+  });
+
+  test('Neue Spielmodi nur mit Schalter (Panel → Updates); der Name der Jar kommt aus MODE_JARS', async () => {
+    h = await createHarness();
+    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    fs.writeFileSync(jar, 'plugin-v1');
+    const asked: Array<readonly [string, string | undefined]> = [];
+    const allow = { modes: false };
+    const provisioner = createProvisioner({ ...h.mm.config, pluginFile: jar }, h.mm.motor, h.mm.hub, quiet, {
+      proxyAddOns: {},
+      lobbyAddOns: {},
+      buildContent: false,
+      versions: { paper: '1.21.4', velocity: '3.4.0' },
+      modes: () => DEFAULT_MODES,
+      addModes: () => allow.modes,
+      releases: {
+        latest: async (repo, jarName) => {
+          asked.push([repo, jarName]);
+          return repo.endsWith('Morni-Bollwek')
+            ? { repo, tag: 'v0.1.3', fileName: jarName ?? '', bytes: Buffer.from('bollwerk') }
+            : null;
+        },
+      },
+    });
+    const first = await provisioner.ensure();
+    expect(first.created).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
+    expect(asked).toContainEqual(['pmornhart/Morni-Bollwek', 'Morni-Bollwerk.jar']);
+    allow.modes = true;
+    const second = await provisioner.ensure();
+    expect(second.created).toEqual(['bollwerk']);
+    expect(second.modesInstalled).toEqual(['bollwerk']);
   });
 
   test('Rückbenennung: Netzwerk, Server und Jars unter dem Zwischen-Namen werden zurückgestellt', async () => {
@@ -143,6 +174,7 @@ describe('Netzwerk richtet sich selbst ein', () => {
       'MoinMorni Duels',
       'MoinMorni Lobby',
       'MoinMorni Proxy',
+      'MoinMorni Wartung',
     ]);
     const jars = async (id: string): Promise<string[]> =>
       (await motor.request<Array<{ name: string }>>('GET', `/api/servers/${id}/files?path=plugins`))
@@ -153,7 +185,7 @@ describe('Netzwerk richtet sich selbst ein', () => {
     expect(await jars(after!.proxy.serverId)).toEqual(['MoinMorni-Network.jar']);
     expect(await jars(duelsId)).toEqual(['MoinMorni-Duels.jar', 'MoinMorni-Network.jar']);
     // Alles neu auf laufenden Servern → Neustart, sobald niemand drauf ist (den Ordner holt das Plugin dabei zurück).
-    expect(result.restart.map((r) => r.member).sort()).toEqual(['bau', 'duels', 'lobby', 'proxy']);
+    expect(result.restart.map((r) => r.member).sort()).toEqual(['bau', 'duels', 'lobby', 'proxy', 'wartung']);
   });
 
   test('Proxy und Lobby anlegen, Plugin und Schlüssel aufspielen – beim zweiten Mal nichts doppelt', async () => {
@@ -169,13 +201,23 @@ describe('Netzwerk richtet sich selbst ein', () => {
     });
 
     const first = await provisioner.ensure();
-    expect(first.created).toEqual(['proxy', 'lobby', 'bau']);
-    expect(first.pluginUpdated).toEqual(['proxy', 'lobby', 'bau']);
+    // Die Wartungs-Lobby gehört von Anfang an dazu (zweite Wahl nach der Lobby).
+    expect(first.created).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
+    expect(first.pluginUpdated).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
+    expect(first.wartungServerId).not.toBe('');
     expect(first.restart).toEqual([]); // neu angelegt: startet ohnehin frisch
+    // Immer online, ohne Spieler aber wenig Arbeitsspeicher: jeder neue Server gibt im Leerlauf Speicher frei.
+    const created = await h.mm.motor.request<Array<{ readonly releaseIdleMemory?: boolean }>>(
+      'GET',
+      '/api/servers',
+    );
+    expect(created.map((s) => s.releaseIdleMemory)).toEqual(
+      ['proxy', 'lobby', 'wartung', 'bau'].map(() => true),
+    );
 
     const nets = await h.mm.motor.request<Net[]>('GET', '/api/networks');
     const net = nets.find((n) => n.name === 'MoinMorni');
-    expect(net?.members.map((m) => m.name)).toEqual(['lobby', 'bau']);
+    expect(net?.members.map((m) => m.name)).toEqual(['lobby', 'wartung', 'bau']);
     expect(net?.defaultMember).toBe('lobby');
 
     const lobbyId = net?.members[0]?.serverId ?? '';
@@ -209,9 +251,9 @@ describe('Netzwerk richtet sich selbst ein', () => {
 
     fs.writeFileSync(jar, 'plugin-v2');
     const third = await provisioner.ensure();
-    expect(third.pluginUpdated).toEqual(['proxy', 'lobby', 'bau']);
+    expect(third.pluginUpdated).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
     // Neues Plugin auf laufenden Servern → Neustart, sobald niemand drauf ist.
-    expect(third.restart.map((r) => r.member)).toEqual(['proxy', 'lobby', 'bau']);
+    expect(third.restart.map((r) => r.member)).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
     expect((await h.mm.motor.request<Net[]>('GET', '/api/networks')).length).toBe(1);
   });
   test('Bau-Server: Kreativ und flach, Bauten (Schematics) per Knopf in die Lobby kopieren', async () => {

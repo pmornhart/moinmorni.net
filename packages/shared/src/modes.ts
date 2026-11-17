@@ -30,7 +30,11 @@ export const modeSchema = z.object({
   /** Reihenfolge in der Lobby und auf der Webseite (kleiner = weiter vorne). */
   position: z.number().int().min(0),
   maxPlayers: z.number().int().min(1).max(PLAYERS_MAX),
-  /** Schlafen, wenn niemand drin ist (startet beim Klick auf die Figur wieder). */
+  /**
+   * Schlafen, wenn niemand drin ist: Der Server geht ganz aus (kein Arbeitsspeicher) und startet beim Klick auf die
+   * Figur wieder (dauert etwa eine halbe Minute). Aus (Standard seit 16.11.): immer online – im Leerlauf hält Minecraft
+   * die Welt an und Java gibt ungenutzten Arbeitsspeicher zurück („Arbeitsspeicher im Leerlauf freigeben“ im Motor).
+   */
   sleepWhenEmpty: z.boolean(),
   /** Server im Netzwerk (Name in Velocity); null = noch keiner (z. B. „bald“). */
   server: z.string().regex(SERVER_NAME).max(NAME_MAX).nullable(),
@@ -39,6 +43,26 @@ export type Mode = z.infer<typeof modeSchema>;
 
 export const modePatchSchema = modeSchema.omit({ id: true }).partial();
 export type ModePatch = z.infer<typeof modePatchSchema>;
+
+/**
+ * Ruhezustand eines Modus (Panel → Modi): Gibt sein Server im Leerlauf Arbeitsspeicher frei („Arbeitsspeicher im
+ * Leerlauf freigeben“ im Motor)? null = noch kein Server (oder ein Motor ohne diesen Schalter).
+ */
+export interface ModeRest {
+  readonly on: boolean | null;
+  /** Geändert, gilt aber erst nach dem Neustart – der kommt, sobald niemand drin ist. */
+  readonly restartPending: boolean;
+}
+
+/** Was mit einem leeren Modus passiert: Ruhezustand (Standard), ganz schlafen oder voll wach bleiben. */
+export const MODE_IDLE = ['rest', 'sleep', 'awake'] as const;
+export type ModeIdle = (typeof MODE_IDLE)[number];
+
+/** Aus „schlafen, wenn leer“ (`sleepWhenEmpty`) und dem Ruhezustand des Servers: was die Modi-Seite anzeigt. */
+export function modeIdleOf(sleepWhenEmpty: boolean, restOn: boolean | null): ModeIdle {
+  if (sleepWhenEmpty) return 'sleep';
+  return restOn === false ? 'awake' : 'rest';
+}
 
 const t = (de: string, en: string): Text => ({ de, en });
 
@@ -69,7 +93,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 1,
     maxPlayers: 100,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'duels',
   },
   {
@@ -83,7 +107,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 2,
     maxPlayers: 64,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'party',
   },
   {
@@ -97,7 +121,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 3,
     maxPlayers: 60,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'gipfelsturm',
   },
   {
@@ -111,7 +135,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 4,
     maxPlayers: 40,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'burgverlies',
   },
   {
@@ -125,7 +149,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 5,
     maxPlayers: 40,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'bollwerk',
   },
   {
@@ -139,7 +163,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 6,
     maxPlayers: 60,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'smp',
   },
   {
@@ -153,7 +177,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 7,
     maxPlayers: 48,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'wolkenkampf',
   },
   {
@@ -167,7 +191,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 8,
     maxPlayers: 48,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'versteckerl',
   },
   {
@@ -181,7 +205,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 9,
     maxPlayers: 36,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'wintersport',
   },
   {
@@ -195,7 +219,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 10,
     maxPlayers: 40,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'adlerflug',
   },
   {
@@ -209,7 +233,7 @@ export const DEFAULT_MODES: readonly Mode[] = [
     access: 'everyone',
     position: 11,
     maxPlayers: 40,
-    sleepWhenEmpty: true,
+    sleepWhenEmpty: false,
     server: 'angelkoenig',
   },
 ];
@@ -235,10 +259,31 @@ export const MODE_REPOS: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Name der Jar im Release jedes Modus-Repos (so baut sie dessen Workflow). MoinMorni lädt sie direkt von der
+ * Release-Seite (`github.com/<Repo>/releases/download/<Tag>/<Jar>`) – ohne API-Frage. Fehlt ein Modus hier, heißt die
+ * Jar wie das Repo; stimmt der Name einmal nicht, fragt MoinMorni die API (sparsam) nach der richtigen Datei.
+ */
+export const MODE_JARS: Readonly<Record<string, string>> = {
+  mornicraft: 'MorniCraft.jar',
+  duels: 'MoinMorni-Duels.jar',
+  party: 'Morni-Party.jar',
+  gipfelsturm: 'Morni-Gipfelsturm.jar',
+  burgverlies: 'Morni-Burgverlies.jar',
+  // Repo „Morni-Bollwek“ (so gewollt), die Jar heißt richtig.
+  bollwerk: 'Morni-Bollwerk.jar',
+  mirni: 'Morni-SMP.jar',
+  wolkenkampf: 'Morni-Wolkenkampf.jar',
+  versteckerl: 'Morni-Versteckerl.jar',
+  wintersport: 'Morni-Wintersport.jar',
+  adlerflug: 'Morni-Adlerflug.jar',
+  angelkoenig: 'Morni-Angelkoenig.jar',
+};
+
+/**
  * Arbeitsspeicher der Modus-Server in MB, wo der Standard (1,5 GB) nicht reicht: MorniSMP und MorniCraft haben große
  * Welten, Morni Party baut große Spielbretter. So laufen alle Server zugleich in einem Container mit 32 GB:
- * Proxy 1 + Lobby 3 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + neun Modi je 1,5 = 27 GB, dazu Luft für Java
- * selbst. Im Panel je Server änderbar.
+ * Proxy 1 + Lobby 3 + Wartungs-Lobby 0,75 + Bau 1,5 + MorniSMP 3 + MorniCraft 3 + Party 2 + neun Modi je 1,5 =
+ * 27,75 GB, dazu Luft für Java selbst. Im Panel je Server änderbar.
  */
 export const MODE_MEMORY_MB: Readonly<Record<string, number>> = {
   mirni: 3072,
@@ -274,6 +319,8 @@ export const MODE_PHASE_PAUSE = 'closed';
  * Zeiten (…_ms) zählen kleiner = besser.
  */
 export const MODE_HEADLINE_STATS: Readonly<Record<string, string>> = {
+  // Kein Spielmodus, aber mit Statistik: das Jump and Run der Lobby.
+  lobby: 'jump_best',
   versteckerl: 'points',
   wintersport: 'gold',
   adlerflug: 'finishes',

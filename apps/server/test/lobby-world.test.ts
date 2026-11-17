@@ -107,6 +107,8 @@ describe('Lobby baut sich selbst', () => {
     const props = await read('server.properties');
     expect(props).toContain('gamemode=adventure');
     expect(props).toContain('difficulty=peaceful');
+    // Jump and Run: Blöcke nur beim Läufer – sonst „Schweben“-Rauswurf.
+    expect(props).toContain('allow-flight=true');
     // Ohne eigene Domain kein Möbel-Paket (Minecraft lädt nur von außen erreichbare Adressen).
     expect(props).toMatch(/^resource-pack=$/m); // eslint-disable-line ts-patterns/require-regex-example -- empty pack line: "resource-pack=" yes, "resource-pack=https://…" no
     expect(props).toContain('require-resource-pack=false');

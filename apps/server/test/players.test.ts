@@ -161,4 +161,87 @@ describe('Panel: Spieler und Strafen', () => {
     expect((await call('DELETE', `/api/panel/punishments/${LENA}/voice`)).statusCode).toBe(OK);
     expect((await call('PUT', '/api/panel/roles', roles)).statusCode).toBe(OK);
   });
+
+  test('Strafen nur nach unten: Knöpfe und Prüfung nach Rang, Owner schaltet Admins stumm, Owner bestraft niemand', async () => {
+    const ANNA = '55555555-5555-5555-5555-555555555555';
+    const OWEN = '66666666-6666-6666-6666-666666666666';
+    const SUSI = '77777777-7777-7777-7777-777777777777';
+    const OK = 200;
+    const FORBIDDEN = 403;
+    for (const [uuid, name, role] of [
+      [ANNA, 'Anna', 'admin'],
+      [OWEN, 'Owen', 'owner'],
+      [SUSI, 'Susi', 'supporter'],
+    ] as const) {
+      h.mm.hub.players.seen({ uuid, name, bedrock: false });
+      h.mm.hub.players.setRole(uuid, role);
+    }
+    const account = async (username: string, roleId: string) => {
+      const made = await call('POST', '/api/panel/team', { username, roleId });
+      const login = await h.login(username, made.json<{ password: string }>().password);
+      return (method: 'GET' | 'POST' | 'DELETE', url: string, payload?: object) =>
+        h.mm.app.inject({
+          method,
+          url,
+          payload,
+          headers: { cookie: login.cookie, 'x-csrf-token': login.csrf },
+        });
+    };
+    const asMod = await account('moritz', 'moderator');
+    const asAdmin = await account('ada', 'admin');
+
+    // Moderator sieht bei einem Admin: nicht bestrafen, das darf nur der Owner.
+    const annaForMod = (await asMod('GET', `/api/panel/players/${ANNA}`)).json();
+    expect(annaForMod).toMatchObject({
+      punishable: false,
+      liftable: false,
+      punishers: [{ id: 'owner', name: { de: 'Owner' }, colour: '#ff5555' }],
+    });
+    expect((await asMod('GET', `/api/panel/players/${SUSI}`)).json()).toMatchObject({ punishable: true });
+    for (const kind of ['jail', 'mute', 'voice', 'warn', 'kick', 'ban']) {
+      const res = await asMod('POST', '/api/panel/punishments', { player: 'Anna', kind, minutes: 10 });
+      expect(res.statusCode).toBe(FORBIDDEN);
+      expect(res.json()).toEqual({ error: 'player_protected' });
+    }
+    expect(h.mm.hub.punish.history(ANNA)).toEqual([]);
+
+    // Owner schaltet den Admin stumm; aufheben kann der Moderator nicht (Knopf aus), der Owner schon.
+    expect(
+      (await call('POST', '/api/panel/punishments', { player: 'Anna', kind: 'mute', minutes: 10 }))
+        .statusCode,
+    ).toBe(OK);
+    const rows = (await asMod('GET', '/api/panel/punishments')).json<
+      Array<{ playerUuid: string; liftable: boolean }>
+    >();
+    expect(rows.find((r) => r.playerUuid === ANNA)).toMatchObject({ liftable: false });
+    expect((await asMod('DELETE', `/api/panel/punishments/${ANNA}/mute`)).statusCode).toBe(FORBIDDEN);
+    expect(h.mm.hub.punish.active(ANNA, 'mute')).toBeDefined();
+    expect((await call('DELETE', `/api/panel/punishments/${ANNA}/mute`)).statusCode).toBe(OK);
+
+    // Admin bannt keinen Owner, der Owner auch nicht (auch nicht sich selbst über das Panel).
+    expect((await asAdmin('GET', `/api/panel/players/${OWEN}`)).json()).toMatchObject({
+      punishable: false,
+      punishers: [],
+    });
+    expect(
+      (
+        await asAdmin('POST', '/api/panel/punishments', { player: 'Owen', kind: 'ban', minutes: null })
+      ).json(),
+    ).toEqual({ error: 'player_protected' });
+    expect(
+      (await call('POST', '/api/panel/punishments', { player: 'Owen', kind: 'jail', minutes: 10 }))
+        .statusCode,
+    ).toBe(FORBIDDEN);
+    // Admin gegen Admin: gleicher Rang – nein.
+    expect(
+      (await asAdmin('POST', '/api/panel/punishments', { player: 'Anna', kind: 'warn', minutes: null }))
+        .statusCode,
+    ).toBe(FORBIDDEN);
+
+    // Alte Strafe auf einem Owner bleibt; nur ein Owner hebt sie auf.
+    h.mm.hub.punish.add({ uuid: OWEN, kind: 'jail', reason: 'alt', by: 'früher', minutes: 60 });
+    expect((await asAdmin('DELETE', `/api/panel/punishments/${OWEN}/jail`)).statusCode).toBe(FORBIDDEN);
+    expect((await call('GET', `/api/panel/players/${OWEN}`)).json()).toMatchObject({ liftable: true });
+    expect((await call('DELETE', `/api/panel/punishments/${OWEN}/jail`)).statusCode).toBe(OK);
+  });
 });

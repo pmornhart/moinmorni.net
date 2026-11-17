@@ -22,6 +22,8 @@ export interface RestartQueue {
   /** Einmal prüfen (sonst alle 30 s von selbst). */
   readonly check: () => Promise<void>;
   readonly pending: () => string[];
+  /** Was gerade wartet, mit Server-ID (für „gleich neu starten“ nach einem Update, network/restart-now.ts). */
+  readonly entries: () => Array<{ readonly serverId: string; readonly member: string }>;
   readonly stop: () => void;
 }
 
@@ -89,6 +91,7 @@ export function createRestartQueue(
     },
     check,
     pending: () => [...waiting.values()],
+    entries: () => [...waiting].map(([serverId, member]) => ({ serverId, member })),
     stop: () => clearInterval(timer),
   };
 }

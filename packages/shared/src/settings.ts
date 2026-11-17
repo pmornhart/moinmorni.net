@@ -1,6 +1,8 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the game needs them */
 import { z } from 'zod';
+import { LOBBY_MUSIC_SECTIONS } from './lobby-music.js';
 import { MODE_SETTING_AREAS } from './mode-settings.js';
+import { STREAMER_SECTION } from './streamer.js';
 import { TEAM_APPLY_AREA } from './team-apply.js';
 import type { PanelArea } from './roles.js';
 
@@ -13,6 +15,29 @@ import type { PanelArea } from './roles.js';
 export interface Text {
   readonly de: string;
   readonly en: string;
+}
+
+/** Feste Form eines Textes (siehe `format` bei Text-Einstellungen). */
+export type TextFormat = 'time';
+
+// Uhrzeit wie man sie schreibt: "22:30", "7:05", "22.30" – nicht "25:00", "22:3" oder "22 Uhr".
+// https://regex101.com/?flavor=javascript&regex=%5E(%5B01%5D%3F%5Cd%7C2%5B0-3%5D)%5B%3A.%5D(%5B0-5%5D%5Cd)%24&testString=22%3A30
+const TIME_TEXT = /^([01]?\d|2[0-3])[:.]([0-5]\d)$/;
+const TIME_DIGITS = 2;
+
+/** Uhrzeit als „HH:MM“ („7.05“ → „07:05“); null = keine Uhrzeit. */
+export function timeOf(text: string): string | null {
+  const m = TIME_TEXT.exec(text.trim());
+  return m ? `${(m[1] ?? '').padStart(TIME_DIGITS, '0')}:${m[2] ?? ''}` : null;
+}
+
+/** Passt ein Text zu seiner Einstellung (Länge und ggf. feste Form)? */
+export function textValid(
+  def: { readonly maxLength: number; readonly format?: TextFormat },
+  value: string,
+): boolean {
+  if (value.length > def.maxLength) return false;
+  return !def.format || value.trim() === '' || timeOf(value) !== null;
 }
 
 /**
@@ -60,6 +85,11 @@ export type SettingDef =
       readonly default: string;
       readonly maxLength: number;
       readonly multiline?: boolean;
+      /**
+       * Feste Form: „time“ = Uhrzeit wie „22:30“. Leer geht dann immer (= keine Angabe), im Spiel löscht „weg“ den
+       * Wert. Geprüft mit `textValid` – im Panel, im Server und beim Befehl im Spiel gleich.
+       */
+      readonly format?: TextFormat;
     })
   | (Base & {
       readonly type: 'select';
@@ -106,6 +136,15 @@ export interface ModeLink {
   readonly plugin: string;
 }
 
+/** So viele dürfen höchstens gleichzeitig ins Netzwerk (Panel → Netzwerk → Spieler höchstens). */
+export const NETWORK_PLAYERS_MAX = 2000;
+/**
+ * Höchstzahl in der server.properties jedes Spielservers hinter dem Proxy (Lobby, Wartungs-Lobby, Bau-Server, Modi):
+ * weit über dem Netzwerk, denn Team und VIP dürfen auch bei voll hinein. Nach Zahl abweisen tun nur Proxy und Hub
+ * (Netzwerk und Höchstzahl je Modus) – nie Minecraft selbst, das neue Server mit „max-players=20“ anlegt.
+ */
+export const SERVER_MAX_PLAYERS = 10_000;
+
 const t = (de: string, en: string): Text => ({ de, en });
 const seconds = t('Sekunden', 'seconds');
 const players = t('Spieler', 'players');
@@ -115,8 +154,8 @@ export const NETWORK_AREA: SettingArea = {
   id: 'network',
   title: t('Netzwerk', 'Network'),
   text: t(
-    'Was für das ganze Netzwerk gilt: Name, Begrüßung, Wartung.',
-    'What applies to the whole network: name, welcome, maintenance.',
+    'Was für das ganze Netzwerk gilt: Name, Begrüßung, Wartung, Streamer-Modus.',
+    'What applies to the whole network: name, welcome, maintenance, streamer mode.',
   ),
   icon: 'Globe',
   panel: 'settings',
@@ -151,7 +190,7 @@ export const NETWORK_AREA: SettingArea = {
           type: 'number',
           default: 200,
           min: 1,
-          max: 2000,
+          max: NETWORK_PLAYERS_MAX,
           unit: players,
           label: t('Spieler höchstens', 'Players at most'),
           help: t(
@@ -169,8 +208,8 @@ export const NETWORK_AREA: SettingArea = {
           unit: t('Minuten', 'minutes'),
           label: t('Leere Modi schlafen nach', 'Empty modes sleep after'),
           help: t(
-            'Ist so lange niemand in einem Modus, schläft sein Server und spart Speicher. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute).',
-            'When nobody is in a mode for this long, its server sleeps and saves memory. Whoever wants in wakes it up (takes about half a minute).',
+            'Nur für Modi, die schlafen dürfen (Panel → Modi → „Wenn niemand drin ist“ → Schlafen): Ist so lange niemand drin, geht ihr Server ganz aus. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute). Alle anderen Modi bleiben immer online und brauchen ohne Spieler kaum Arbeitsspeicher.',
+            'Only for modes that may sleep (panel → Modes → “When nobody is inside” → Sleep): when nobody is in them for this long, their server shuts down. Whoever wants in wakes it up (takes about half a minute). All other modes stay online and need hardly any memory without players.',
           ),
           command: '/netzwerk schlaf <minuten>',
         },
@@ -179,7 +218,10 @@ export const NETWORK_AREA: SettingArea = {
     {
       id: 'maintenance',
       title: t('Wartung', 'Maintenance'),
-      text: t('Während der Wartung kommt nur das Team herein.', 'During maintenance only the team can join.'),
+      text: t(
+        'Während der Wartung kommt nur das Team ins Netzwerk – alle anderen warten in der Wartungs-Lobby, einer kleinen Bergwerkstatt mit Leiste, Aushang und Sprung-Parcours. Dort landet auch, wer gerade nicht in die Lobby kann (Neustart, Update, Absturz).',
+        'During maintenance only the team gets into the network – everyone else waits in the maintenance lobby, a small mountain workshop with a status bar, a notice board and a little jump course. Whoever can’t get into the lobby right now (restart, update, crash) lands there too.',
+      ),
       settings: [
         {
           key: 'maintenance',
@@ -187,8 +229,8 @@ export const NETWORK_AREA: SettingArea = {
           default: false,
           label: t('Wartung für das ganze Netzwerk', 'Maintenance for the whole network'),
           help: t(
-            'Einzelne Modi setzt du unter „Modi“ in Wartung.',
-            'Single modes are set to maintenance under “Modes”.',
+            'Spieler ohne „Kommt immer rein“ kommen in die Wartungs-Lobby (wer gerade online ist, auch); das Team kommt wie immer überall hin. Einzelne Modi setzt du unter „Modi“ in Wartung.',
+            'Players without “Always gets in” go to the maintenance lobby (those online right now too); the team still goes everywhere. Single modes are set to maintenance under “Modes”.',
           ),
           command: '/wartung an|aus',
         },
@@ -198,9 +240,47 @@ export const NETWORK_AREA: SettingArea = {
           default: 'Wir bauen gerade um – gleich geht’s weiter!',
           maxLength: 120,
           multiline: true,
-          label: t('Nachricht für Spieler', 'Message for players'),
-          help: t('Sehen Spieler, die nicht hereinkommen.', 'Shown to players who cannot join.'),
+          label: t('Text und Grund', 'Text and reason'),
+          help: t(
+            'Steht in der Wartungs-Lobby auf dem Aushang und im Chat – und beim Anmelden, wenn die Wartungs-Lobby aus ist. Z. B. „Wir spielen ein großes Update ein.“',
+            'Shown in the maintenance lobby on the notice board and in chat – and when joining if the maintenance lobby is off. E.g. “We’re installing a big update.”',
+          ),
           command: '/wartung text <text>',
+        },
+        {
+          key: 'maintenanceUntil',
+          type: 'text',
+          format: 'time',
+          default: '',
+          maxLength: 5,
+          label: t('Wartung bis (Uhrzeit)', 'Maintenance until (time)'),
+          help: t(
+            'Freiwillig, z. B. 22:30 – dann steht „Wartung bis ca. 22:30“ in der Leiste, auf dem Aushang und in der Serverliste. Leer lassen, wenn du es nicht weißt; im Spiel löscht „/wartung bis weg“ die Zeit.',
+            'Optional, e.g. 22:30 – the status bar, the notice board and the server list then say “maintenance until approx. 22:30”. Leave it empty if you don’t know; in game “/wartung bis weg” clears it.',
+          ),
+          command: '/wartung bis <uhrzeit>',
+        },
+        {
+          key: 'maintenanceLobby',
+          type: 'boolean',
+          default: true,
+          label: t('Wartungs-Lobby', 'Maintenance lobby'),
+          help: t(
+            'An: Wer gerade nicht hinein darf (Wartung) oder nicht in die Lobby kann (sie startet neu, stürzt ab), wartet in der Wartungs-Lobby statt abgewiesen oder getrennt zu werden. Aus: wie früher – bei Wartung abweisen, ohne Lobby trennen.',
+            'On: whoever may not get in right now (maintenance) or can’t reach the lobby (restarting, crashed) waits in the maintenance lobby instead of being turned away or disconnected. Off: as before – turned away during maintenance, disconnected without a lobby.',
+          ),
+          command: '/wartung lobby an|aus',
+        },
+        {
+          key: 'maintenanceReturn',
+          type: 'boolean',
+          default: true,
+          label: t('Automatisch zurück in die Lobby', 'Back to the lobby automatically'),
+          help: t(
+            'Ist die Lobby wieder da oder die Wartung vorbei, holt das Netzwerk alle aus der Wartungs-Lobby zurück – nach einem kurzen Countdown. Aus: Jeder geht selbst mit /lobby.',
+            'Once the lobby is back or maintenance is over, the network brings everyone back from the maintenance lobby – after a short countdown. Off: everyone goes themselves with /lobby.',
+          ),
+          command: '/wartung zurueck an|aus',
         },
       ],
     },
@@ -228,6 +308,39 @@ export const NETWORK_AREA: SettingArea = {
         },
       ],
     },
+    {
+      id: 'in-game',
+      title: t('Mitten im Spiel', 'In the middle of a game'),
+      text: t(
+        'Damit niemand aus Versehen seine Runde verlässt – und wer rausfliegt, schnell wieder hineinkommt.',
+        'So nobody leaves a round by accident – and whoever drops out gets back in quickly.',
+      ),
+      settings: [
+        {
+          key: 'lobbyConfirm',
+          type: 'boolean',
+          default: true,
+          label: t('Vor /lobby nachfragen', 'Ask before /lobby'),
+          help: t(
+            'Wer gerade eine Runde spielt und /lobby eingibt (oder im Spielmodus auf „Zur Lobby“ klickt), wird erst gefragt: ein kleines Fenster mit „Ja, zur Lobby“ und „Weiterspielen“ (Java und Bedrock), auf Java zusätzlich Knöpfe im Chat. Ein zweites /lobby innerhalb von 10 Sekunden gilt als Ja. Wer gerade nicht spielt (wartet, zuschaut, ausgeschieden), geht sofort.',
+            'Whoever is playing a round and types /lobby (or clicks “To the lobby” in a game mode) is asked first: a small window with “Yes, to the lobby” and “Keep playing” (Java and Bedrock), on Java also buttons in chat. A second /lobby within 10 seconds counts as yes. Whoever is not playing right now (waiting, watching, knocked out) goes straight away.',
+          ),
+          command: '/netzwerk nachfragen an|aus',
+        },
+        {
+          key: 'rejoinOffer',
+          type: 'boolean',
+          default: true,
+          label: t('„Zurück ins Spiel“ anbieten', 'Offer “Back to the game”'),
+          help: t(
+            'Fliegt jemand mitten in einer Runde raus (Verbindung weg, Spiel abgestürzt), hält der Spielmodus seinen Platz eine Weile frei. Kommt er in der Zeit wieder, bietet ihm die Lobby „Zurück ins Spiel“ an – im Chat, über der Schnellleiste und als Gegenstand in der Mitte der Leiste (auch auf Bedrock); ein Klick bringt ihn auf genau diesen Server zurück. Wie lange der Platz frei bleibt, steht bei den Einstellungen des jeweiligen Spielmodus.',
+            'If someone drops out in the middle of a round (connection lost, game crashed), the game mode keeps their spot for a while. If they come back in time, the lobby offers “Back to the game” – in chat, above the hotbar and as an item in the middle of the hotbar (Bedrock too); one click takes them back to exactly that server. How long the spot is kept is in the settings of each game mode.',
+          ),
+          command: '/netzwerk rueckkehr an|aus',
+        },
+      ],
+    },
+    STREAMER_SECTION,
   ],
 };
 
@@ -661,14 +774,6 @@ export const LOBBY_AREA: SettingArea = {
           command: '/lobby launchpads an|aus',
         },
         {
-          key: 'parkour',
-          type: 'boolean',
-          default: true,
-          label: t('Lobby-Parkour', 'Lobby parkour'),
-          help: t('Mit Zeitmessung und Bestenliste.', 'With timing and leaderboard.'),
-          command: '/lobby parkour an|aus',
-        },
-        {
           key: 'walkers',
           type: 'number',
           default: 12,
@@ -683,6 +788,77 @@ export const LOBBY_AREA: SettingArea = {
         },
       ],
     },
+    {
+      id: 'jumpandrun',
+      title: t('Jump and Run', 'Jump and run'),
+      text: t(
+        'Am Startplatz im Nordwesten auf den Smaragd treten (oder /jnr): Hoch über dem Dorf erscheint Block für Block – nur für dich. Jeder Sprung ein Punkt, wer fällt, ist raus. Rekord je Spieler, Top 10 auf der Tafel am Start und auf der Webseite.',
+        'Step on the emerald at the start in the north-west (or /jnr): high above the village, block after block appears – only for you. Every jump scores a point, falling ends the run. Record per player, top 10 on the board at the start and on the website.',
+      ),
+      settings: [
+        {
+          key: 'jumpAndRun',
+          type: 'boolean',
+          default: true,
+          label: t('Jump and Run', 'Jump and run'),
+          help: t(
+            'Aus: Der Startplatz bleibt stehen, aber niemand kann loslegen; laufende Läufe enden.',
+            'Off: the start stays, but nobody can begin; runs in progress end.',
+          ),
+          command: '/lobby jumpandrun an|aus',
+        },
+        {
+          key: 'jumpHarderFrom',
+          type: 'number',
+          default: 10,
+          min: 1,
+          max: 100,
+          unit: t('Punkten', 'points'),
+          label: t('Schwerer ab', 'Harder from'),
+          help: t(
+            'Bis dahin nur leichte Sprünge, die man auch ohne Sprinten schafft. Danach alle 15 Punkte eine Stufe schwerer: weiter, höher, halbe Stufen, Zäune und Mauern, Eis, das schnell schmilzt, und Schleim zum Hochfedern.',
+            'Until then only easy jumps you can make without sprinting. After that, one level harder every 15 points: further, higher, slabs, fences and walls, ice that melts quickly and slime to bounce on.',
+          ),
+          command: '/lobby jumpandrun schwerer <punkte>',
+        },
+      ],
+    },
+    {
+      id: 'doublejump',
+      title: t('Doppelsprung', 'Double jump'),
+      text: t(
+        'In der Luft noch einmal springen (zweimal Leertaste) gibt einen zweiten Schwung nach vorn und oben – mit Funken. Nicht im Jump and Run, nicht im Gefängnis und nicht beim Rundgang.',
+        'Jump again in mid-air (press space twice) for a second boost forwards and upwards – with sparks. Not in the jump and run, not in jail and not during the tour.',
+      ),
+      settings: [
+        {
+          key: 'doubleJump',
+          type: 'boolean',
+          default: true,
+          label: t('Doppelsprung', 'Double jump'),
+          help: t(
+            'Geht auf Java und Bedrock (dort ebenfalls zweimal springen).',
+            'Works on Java and Bedrock (there, too, jump twice).',
+          ),
+          command: '/lobby doppelsprung an|aus',
+        },
+        {
+          key: 'doubleJumpStrength',
+          type: 'number',
+          default: 1,
+          min: 0.5,
+          max: 2,
+          step: 0.1,
+          label: t('Stärke', 'Strength'),
+          help: t(
+            '1 = etwa 5 Blöcke weit und 3 hoch. 2 = doppelt so weit und gut 6 hoch, 0,5 = ein kleiner Hüpfer.',
+            '1 = about 5 blocks far and 3 high. 2 = twice as far and over 6 high, 0.5 = a little hop.',
+          ),
+          command: '/lobby doppelsprung staerke <zahl>',
+        },
+      ],
+    },
+    ...LOBBY_MUSIC_SECTIONS,
   ],
 };
 
@@ -1347,11 +1523,11 @@ export const BUILD_AREA: SettingArea = {
         {
           key: 'sleepWhenEmpty',
           type: 'boolean',
-          default: true,
+          default: false,
           label: t('Schlafen, wenn niemand baut', 'Sleep when nobody is building'),
           help: t(
-            'Spart Arbeitsspeicher; /bau weckt ihn wieder (dauert ein paar Sekunden).',
-            'Saves memory; /bau wakes it up again (takes a few seconds).',
+            'Aus: Der Bau-Server ist immer online und braucht ohne Spieler kaum Arbeitsspeicher. An: Er geht ganz aus (gar kein Arbeitsspeicher), /bau weckt ihn wieder – das dauert etwa eine halbe Minute.',
+            'Off: the build server is always online and needs hardly any memory without players. On: it shuts down completely (no memory at all), /bau wakes it up again – that takes about half a minute.',
           ),
           command: '/bauserver schlafen an|aus',
         },
@@ -1447,6 +1623,72 @@ export const UPDATES_AREA: SettingArea = {
       ],
     },
     {
+      id: 'restart',
+      title: t('Neustart der Server', 'Restarting the servers'),
+      text: t(
+        'Neues gilt auf einem Server erst nach seinem Neustart. Spieler sehen vorher einen Countdown; wer in einem Spielmodus ist, kommt erst in die Lobby.',
+        'Something new only applies on a server after it restarts. Players see a countdown first; anyone in a game mode is moved to the lobby first.',
+      ),
+      settings: [
+        {
+          key: 'restartAfterUpdate',
+          type: 'boolean',
+          default: true,
+          label: t('Nach einem Update gleich neu starten', 'Restart right after an update'),
+          help: t(
+            'Nach einem Update von MoinMorni starten alle Server, die etwas Neues haben (Netzwerk-Plugin, Spielmodus, Einstellungen), gleich neu – nacheinander und mit Countdown: erst die Spielmodi und der Bau-Server, dann die Wartungs-Lobby, zuletzt die Lobby (ihre Spieler warten so lange in der Wartungs-Lobby) und der Proxy. Aus: jeder Server erst, wenn gerade niemand drauf ist.',
+            'After a MoinMorni update, every server with something new (network plugin, game mode, settings) restarts right away – one after another and with a countdown: game modes and the build server first, then the maintenance lobby, the lobby (its players wait in the maintenance lobby meanwhile) and the proxy last. Off: each server only when nobody is on it.',
+          ),
+          command: '/updates neustart an|aus',
+        },
+        {
+          key: 'restartCountdown',
+          type: 'number',
+          default: 30,
+          min: 10,
+          max: 300,
+          unit: seconds,
+          label: t('Countdown vor dem Neustart', 'Countdown before the restart'),
+          help: t(
+            'So lange sehen die Spieler vorher den Hinweis „Update eingespielt – Duels startet in 30 s neu“ (oben als Leiste und im Chat).',
+            'How long players see the notice “Update installed – Duels restarts in 30 s” beforehand (as a bar at the top and in chat).',
+          ),
+          command: '/updates countdown <sekunden>',
+        },
+        {
+          key: 'modeUpdatesNow',
+          type: 'boolean',
+          default: false,
+          label: t(
+            'Neue Fassung eines Spielmodus gleich einspielen',
+            'Install a new game-mode version right away',
+          ),
+          help: t(
+            'An: Kommt eine neue Fassung eines Spielmodus heraus, startet sein Server gleich mit Countdown neu. Aus: sobald gerade niemand darin spielt. MoinMorni schaut alle 10 Minuten nach neuen Fassungen.',
+            'On: when a new version of a game mode comes out, its server restarts right away with a countdown. Off: as soon as nobody is playing in it. MoinMorni looks for new versions every 10 minutes.',
+          ),
+          command: '/updates modi-sofort an|aus',
+        },
+      ],
+    },
+    {
+      id: 'modes',
+      title: t('Neue Spielmodi', 'New game modes'),
+      settings: [
+        {
+          key: 'addModes',
+          type: 'boolean',
+          default: true,
+          label: t('Neue Spielmodi automatisch hinzufügen', 'Add new game modes automatically'),
+          help: t(
+            'Hat ein neuer Spielmodus seine erste fertige Fassung (ein Release auf GitHub), bekommt er von selbst seinen Server und eine Figur in der Lobby. Aus: neue Modi warten, bis du das wieder anschaltest – Modi, die schon da sind, bekommen ihre neuen Fassungen trotzdem.',
+            'When a new game mode has its first finished version (a release on GitHub), it gets its own server and a figure in the lobby by itself. Off: new modes wait until you switch this back on – modes that are already there still get their new versions.',
+          ),
+          command: '/updates neue-modi an|aus',
+        },
+      ],
+    },
+    {
       id: 'motor',
       title: t('Motor (MorniHosting)', 'Engine (MorniHosting)'),
       settings: [
@@ -1500,7 +1742,11 @@ function validator(def: SettingDef): z.ZodType {
         .min(d.min)
         .max(d.max)
         .refine((v) => onStep(v, d.step)),
-    text: (d) => z.string().max(d.maxLength),
+    text: (d) =>
+      z
+        .string()
+        .max(d.maxLength)
+        .refine((v) => textValid(d, v)),
     select: (d) => z.enum(d.options.map((o) => o.value) as [string, ...string[]]),
     list: (d) => z.array(z.string().trim().min(1).max(d.maxLength)).max(d.maxItems),
   };
