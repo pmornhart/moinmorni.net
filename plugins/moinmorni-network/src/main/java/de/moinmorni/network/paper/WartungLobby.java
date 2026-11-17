@@ -75,6 +75,11 @@ final class WartungLobby implements Listener {
     /** Recht „Kommt immer rein“ (darf auch während der Wartung überall hin). */
     private static final String ALWAYS_IN = "maintenance-join";
     private static final long TICK = 20L;
+    /**
+     * Begrüßung erst nach drei Sekunden: Die Sprache des Clients kommt kurz nach dem Betreten beim Hub an, das Profil
+     * mit der richtigen Sprache folgt.
+     */
+    private static final long GREETING_DELAY = 60L;
     private static final long PARKOUR_TICK = 2L;
     private static final int VOID_Y = 40;
     /** Unter dieser Höhe steht man wieder auf der Wiese (Parcours vorbei). */
@@ -245,6 +250,8 @@ final class WartungLobby implements Listener {
             text = (s.message().isEmpty() ? "Wartungsarbeiten" : s.message()) + until;
         } else if (!s.lobby() || !hubReady.getAsBoolean()) {
             text = "Die Lobby startet gerade neu – gleich geht’s weiter!\nThe lobby is restarting – back in a moment!";
+        } else if (s.returnAuto()) {
+            text = "Die Lobby ist wieder da – gleich geht’s zurück!\nThe lobby is back – heading back in a moment!";
         } else {
             text = "Die Lobby ist wieder da – ab zurück mit /lobby!\nThe lobby is back – /lobby takes you there!";
         }
@@ -280,11 +287,11 @@ final class WartungLobby implements Listener {
         if (health != null) {
             p.setHealth(health.getValue());
         }
-        boolean en = "en".equals(lang(p));
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!p.isOnline()) {
                 return;
             }
+            boolean en = "en".equals(lang(p));
             p.showTitle(Title.title(
                     Component.text(en ? "⚒ Maintenance lobby" : "⚒ Wartungs-Lobby", NamedTextColor.GOLD,
                             TextDecoration.BOLD),
@@ -295,7 +302,7 @@ final class WartungLobby implements Listener {
             p.sendMessage(Component.text(en ? "Pass the time: the jump course on the left starts at the plate – up to the bell!"
                     : "Zum Zeitvertreib: Der Sprung-Parcours links beginnt an der Platte – hinauf zur Glocke!",
                     NamedTextColor.GRAY));
-        }, TICK);
+        }, GREETING_DELAY);
     }
 
     /** Warum man hier ist – im Chat, sobald man wirklich da ist (beim Serverwechsel ginge eine Nachricht verloren). */
