@@ -301,6 +301,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       countdown: hub.countdown,
       connect: hub.connect,
       kick: hub.kick,
+      connected: (member) =>
+        member === PROXY_MEMBER ? hub.proxyOnline() : hub.connectedServers().includes(member),
       wartung: hub.wartung,
     },
     queue: restarts,

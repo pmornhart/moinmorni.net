@@ -85,6 +85,7 @@ function fakeHub(
       return true;
     },
     kick: (uuid, text) => log.push(`kick ${uuid} ${text}`),
+    connected: () => true,
     wartung: {
       open: () => wartungLobby.open,
       park: (uuid) => {
@@ -144,6 +145,59 @@ describe('Gleich neu starten (nach einem Update)', () => {
     );
     expect(firstStartAfterUpdate(other, 'v0.1.1-0-gbbbbbbb')).toBe(true);
     fs.rmSync(other, { recursive: true, force: true });
+  });
+
+  test('Gleich nach dem Start von MoinMorni: erst warten, bis die Server am Hub hängen – dann Countdown für alle', async () => {
+    // Wie in der Gesamtprobe (17.11.): MoinMorni startet nach dem Update neu, Proxy und Duels melden sich erst nach
+    // einigen Sekunden beim Hub. Vorher kennt der Hub niemanden – ohne Warten fand der Countdown keinen Zuhörer und
+    // Anna kam ohne Vorwarnung aus Duels in die Lobby.
+    const log: string[] = [];
+    const motor = fakeMotor([], log);
+    const players: Player[] = [];
+    const online = { at: 0 };
+    const hub = fakeHub(players, log);
+    const restartNow = createRestartNow({
+      motor,
+      hub: {
+        ...hub,
+        connected: () => online.at >= 3,
+        playersOn: (member) => (online.at >= 3 ? hub.playersOn(member) : []),
+      },
+      queue: { entries: () => [], remove: () => undefined },
+      modes: () => DEFAULT_MODES,
+      countdown: () => COUNTDOWN_SECONDS,
+      log: quiet,
+      pause: async (ms) => {
+        log.push(`pause ${ms}`);
+        online.at += 1;
+        if (online.at === 3) players.push({ uuid: 'anna', lang: 'de', server: 'duels' });
+      },
+    });
+    await restartNow.run([duels], 'update');
+    expect(log.some((l) => l.startsWith(`bar anna ${COUNTDOWN_SECONDS}`))).toBe(true);
+    expect(log.findIndex((l) => l.startsWith('bar anna'))).toBeLessThan(log.indexOf('connect anna lobby'));
+    expect(log.indexOf('connect anna lobby')).toBeLessThan(log.indexOf('restart id-duels'));
+  });
+
+  test('Hängt ein Server nach zwei Minuten noch nicht am Hub, startet er trotzdem neu', async () => {
+    const log: string[] = [];
+    const motor = fakeMotor([], log);
+    const pauses: number[] = [];
+    const restartNow = createRestartNow({
+      motor,
+      hub: { ...fakeHub([], log), connected: (member) => member !== 'duels' },
+      queue: { entries: () => [], remove: () => undefined },
+      modes: () => DEFAULT_MODES,
+      countdown: () => COUNTDOWN_SECONDS,
+      log: quiet,
+      pause: async (ms) => {
+        pauses.push(ms);
+      },
+    });
+    await restartNow.run([duels], 'update');
+    expect(motor.log).toContain('restart id-duels');
+    const waited = pauses.slice(0, pauses.length - STARTING_POLLS - 1).reduce((a, b) => a + b, 0);
+    expect(waited).toBe(120_000);
   });
 
   test('Countdown, Spieler in die Lobby, Modi nacheinander, Lobby und Proxy zuletzt – zusammen', async () => {
