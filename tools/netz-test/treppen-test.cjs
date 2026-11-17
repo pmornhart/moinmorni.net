@@ -12,6 +12,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const mineflayer = require('mineflayer');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
+const { Vec3 } = require('vec3');
 
 const [HOST = '127.0.0.1', PORT = '25990', RCON = '127.0.0.1:26090', PASS_FILE = '.rcon-pass'] =
   process.argv.slice(2);
@@ -136,6 +137,11 @@ async function main() {
   moves.allowParkour = false;
   moves.canOpenDoors = true;
   moves.scafoldingBlocks = [];
+  // Anzeige-Objekte (Modelle des Prunkbrunnens, Schriften) haben im Spiel keine Kollision – Pathfinder 2.4 kennt sie
+  // nicht und hielt sie für Hindernisse (kam am Brunnen nicht vorbei). Figuren bleiben Hindernisse.
+  ['item_display', 'block_display', 'text_display', 'interaction', 'marker'].forEach((n) =>
+    moves.passableEntities.add(n),
+  );
   const plate = bot.registry.blocksByName.light_weighted_pressure_plate;
   if (plate) moves.blocksToAvoid.add(plate.id);
   bot.pathfinder.setMovements(moves);
@@ -143,6 +149,37 @@ async function main() {
   await wait(2500);
   // Wege mit Zwischenzielen auf den Wegen (Pathfinder nimmt sonst gern Abkürzungen über Hecken, die er nicht schafft)
   const near = (x, y, z, r = 1) => new goals.GoalNear(x, y, z, r);
+  /** Geradeaus gehen (Blick wie in Minecraft, 0 = Süden), bis `done`; als Schritt in einer Wegliste. */
+  const forward = (yaw, done, ms) => async () => {
+    await bot.look(((180 - yaw) * Math.PI) / 180, 0, true);
+    bot.setControlState('forward', true);
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms && !done(bot.entity.position)) await wait(100);
+    bot.setControlState('forward', false);
+    await wait(300);
+    return done(bot.entity.position);
+  };
+  /** Tür anklicken wie ein Spieler (nur wenn sie zu ist); als Schritt in einer Wegliste. */
+  const openDoor = (x, y, z) => async () => {
+    const door = bot.blockAt(new Vec3(x, y, z));
+    if (!door || !door.name.endsWith('_door')) return false;
+    // mit leerer Hand (mit dem Kompass der Lobby in der Hand öffnet ein Rechtsklick das Menü statt der Tür)
+    const empty = [...Array(9).keys()].find((i) => !bot.inventory.slots[bot.inventory.hotbarStart + i]);
+    if (empty !== undefined) bot.setQuickBarSlot(empty);
+    if (door.getProperties().open !== true) await bot.activateBlock(door);
+    await wait(500);
+    return true;
+  };
+  // Am Prunkbrunnen enden die Hecken des Hofs knapp neben dem Beckenrand: Pathfinder schneidet die Ecke schräg und
+  // bleibt am Heckenende hängen (ein Mensch geht außen herum) – dort einzeln vorbei, Seite −1 = West, 1 = Ost.
+  const aroundFountain = (side, way) =>
+    ({
+      // vom Querweg nach Süden zum Festsaal bzw. zurück
+      south: [near(side * 5, 91, -114, 0), near(side * 4, 91, -116, 0), near(side * 4, 91, -118, 0)],
+      up: [near(side * 4, 91, -118, 0), near(side * 4, 91, -116, 0), near(side * 5, 91, -114, 0)],
+      // vom Querweg nach Norden zum Tor
+      north: [near(side * 5, 91, -110, 0), near(side * 4, 91, -108, 0)],
+    })[way];
   const legs = [
     ['Ankunft → Fuß der Schlosstreppe (Schlossmarkt)', [near(0, 65, -32)], 90000],
     ['→ Philips Stelle 2 am Schlossberg (Schlosstreppe)', [near(-4, 83, -57)], 60000],
@@ -153,19 +190,33 @@ async function main() {
       [near(-9, 91, -112, 2), near(-19, 91, -111)],
       90000,
     ],
-    ['→ in die Bibliothek', [near(-32, 93, -105)], 60000],
+    ['→ in die Bibliothek', [near(-31, 93, -111)], 60000],
     [
       '→ in den Festsaal',
-      [near(-19, 91, -111, 2), near(-9, 91, -112, 2), near(0, 91, -122, 2), near(-10, 93, -132)],
+      [
+        near(-19, 91, -111, 2),
+        near(-9, 91, -112, 2),
+        ...aroundFountain(-1, 'south'),
+        near(0, 91, -122, 2),
+        // gerade durch die Tür (schräg hängt Pathfinder am Türrahmen fest)
+        near(0, 93, -131, 0),
+        near(-10, 93, -132),
+      ],
       120000,
     ],
-    ['→ über die Prunktreppe auf die Galerie', [near(-22, 103, -135)], 90000],
+    // erst in die Mitte des Podests (schräg hängt Pathfinder am Goldpfosten am Fuß der Treppe fest), Ziel oben an der
+    // Treppe – weiter hinten auf der Galerie steht unsichtbares Licht auf Kopfhöhe, das mineflayer für fest hält
+    ['→ über die Prunktreppe auf die Galerie', [near(-5, 93, -141, 0), near(-19, 103, -140)], 90000],
     [
       '→ in den Rittersaal',
       [
-        near(-6, 93, -139, 2),
-        near(0, 93, -131, 2),
+        // die Prunktreppe hinunter, an der Rotunde vorbei, gerade durch die Tür
+        near(-5, 93, -141, 0),
+        near(-5, 93, -132, 0),
+        near(0, 93, -131, 0),
+        near(0, 93, -128, 0),
         near(0, 91, -122, 2),
+        ...aroundFountain(1, 'up'),
         near(9, 91, -112, 2),
         near(19, 91, -111, 2),
         near(31, 93, -112),
@@ -177,12 +228,19 @@ async function main() {
       [
         near(19, 91, -111, 2),
         near(9, 91, -112, 2),
+        ...aroundFountain(1, 'north'),
         near(0, 91, -104, 2),
         near(0, 91, -80, 2),
         near(0, 65, -32, 2),
         near(0, 65, 27, 2),
         near(0, 65, 98, 2),
-        near(-8, 65, 101, 1),
+        // Kapelle: vor die Turmtür (Mitte des Blocks), Türen öffnet der Test-Spieler selbst (Pathfinder plant nicht
+        // durch geschlossene Türen und bleibt an der Turmecke hängen), dann nur mit der Vorwärts-Taste hindurch
+        new goals.GoalXZ(-8, 100),
+        openDoor(-8, 65, 103),
+        forward(0, (p) => p.z >= 105.5, 8000),
+        openDoor(-8, 65, 108),
+        forward(0, (p) => p.z >= 111.5, 8000),
         near(-8, 65, 112),
       ],
       300000,
@@ -193,7 +251,10 @@ async function main() {
     let ok = true;
     for (const goal of waypoints) {
       if (!ok) break;
-      ok = await walkTo(bot, goal, Math.max(10000, ms - (Date.now() - t0)));
+      ok =
+        typeof goal === 'function'
+          ? await goal()
+          : await walkTo(bot, goal, Math.max(10000, ms - (Date.now() - t0)));
     }
     const p = bot.entity.position;
     const last = waypoints[waypoints.length - 1];

@@ -245,6 +245,34 @@
 
 - 17.11.: **Spawn durchgeschaut** (Philip: „Laternen in der Luft, Bäume, die durchdecken – jedes Detail“, „Brunnen neu“, „saftig, heller“; Branch `claude/spawn-pruefung`): **Bauplan-Prüfung** (`packages/builder/src/pruefung.ts`, `lobby/pruefen.ts`, auch `npx tsx tools/lobby-entwuerfe/src/pruefen.ts [art]`) prüft den ganzen Bauplan samt allen Saison-Dekos mit Koordinaten – Laternen, Fackeln, Schilder, Falltüren, Töpfe, Teppiche, Kerzen ohne Halt, Ketten ohne Ende, Zaun-Arme ins Leere, Türen ohne Rahmen, Bäume in Bauten/Dächern/Ständen/Wegen (Herkunft je Block über `Canvas.tagged`), auslaufendes Wasser, Pflanzen ohne Boden, schwebende Blöcke, offen liegende Erde (nur wo man sie sieht), Figuren in Wänden; der Test `lobby-pruefung.test.ts` schlägt bei jedem neuen Fund an (bekannte in fremden Teilen: `test/pruefung-offen.ts`). Vorher 1712 Funde (ohne Erd-Prüfung), jetzt 48 im Bauplan – alle in Schloss und Schlossmarkt – und je Saison-Deko 29–41 (alle in `season.ts`). **Behoben:** Biergarten (Laternen an Ketten unter den Kronen statt im Nichts, Kastanien in den Gängen statt in Tischen), Bäume in Häusern/Kapelle/Wegen (`forest` prüft Platz), Zäune und Mauern verbunden (`verbindungen.ts`), Fensterläden an der Wand, Kapelle begehbar, Schilf nur am Wasser, Prachtstraße am Hangfuß auf gemauertem Damm (Philips Erde bei x −8, z −37). **Dorfbrunnen** (`dorfbrunnen.ts`, Handwerkergasse und Oberdorf – dort weg vom Christbaum): achteckiger Trog aus hellem Kalkstein mit Steinziegel-Sockel und Zierfeldern, Säule mit Kupferband und goldenem Zapfen, vier Wasserspeier, Geranien, Eckbeete; ohne Paket/Bedrock ein Becken aus Ersatzblöcken mit Wasser, Säule und Fontäne. **Saftig und hell:** Biom Wald über die ganze Lobby (`fillbiome`) – Gras und Laub sattgrün statt fahl, helles Pflaster ohne Moos, Sandwege, Laub- und Birkenwald am Schlossberg, dichtes Gras mit Blumen, Laternen an der Dorfstraße. Bau-Version = Prüfsumme (zählt von selbst weiter). Tests nach dem Zusammenführen mit Jump and Run, Wartungs-Lobby und den neuen Lobby-Figuren: 67 Baukasten-, 235 Server-Tests, Typen; echt (vor diesem letzten Zusammenführen) Paper 26.1.2 mit dem echten Selbstbau (85 Teile): `lobby-test` **16/16**, `schlossmarkt-test` **31/31**; Bilder vorher/nachher mit Client 26.3 und Paket, Tag und Nacht (nur lokal).
 
+- 17.11.: **Prunkaufgang zum Schloss** (Philip: „richtig schön, edel, wow – jetzt ist hier richtig Party angesagt“,
+  „Treppen am Festsaal und vom Schlossmarkt zum Schloss“; Branch `claude/lobby-treppen`, `docs/lobby.md`): Statt der
+  Rampe aus ganzen Blöcken führt die **Schlosstreppe** (`packages/builder/src/lobby/schlosstreppe.ts`) vom Schlossmarkt
+  hinauf – vier Läufe, 26 Stufen aus weißem Marmor, drei Podeste mit Goldborte, roter Läufer, Marmorwangen mit
+  Blütenhecke, Pfosten mit Laternen, Goldkugeln, Kübel und Fahnenmasten (`fahnen.ts`: Fahnen, Wappen). Unten das
+  **Prunkportal** (Säulenpaare, Rundbogen mit Kronleuchter, Inschrift „♛ Zum Schloss ♛“, Wappen vorn und hinten, Banner,
+  Fahnen, nachts angestrahlt), der **rote Teppich** vom Dorfplatz durch Marktbogen, Portal, über Stufen und Vorplatz bis
+  vor den Prunkbrunnen; oben der **Schlossvorplatz** (heller Stein, Stern im Teppich, Beete, Linden, Fahnenallee,
+  Lichterketten aus Ketten mit eisernen Knäufen und Laternen), am **Schlosstor** Fahnen, Laternen und ein Kronleuchter.
+  Im Schloss Freitreppen vor Festsaal, Bibliothek und Rittersaal und die zweiläufige **Prunktreppe** zur Galerie
+  (Vorgänger-Helfer). Philips Fundstellen: das schwebende Brett zwischen den Ständen weg (Blumenbeet), kein Blumentopf
+  mehr vor einem Gesicht am Markt (Test), die Erdwand bei x −8, z −37 weg (Test `lobby-eingang.test.ts` sucht jede
+  sichtbare Erde am Rand von Markt, Treppe und Vorplatz; dabei ein Erdhügel hinter der Stützmauer gefunden – `range`
+  zählt auch rückwärts). Marktbogen nach vorn (z −24), damit er das Portal nicht verdeckt. Prüfung „zu Fuß erreichbar“
+  (`lobby/walk.ts`, Vorgänger): jeder Ort ohne Sprung. **Bauplan-Prüfung**: Schloss und Schlosstreppe ohne Funde –
+  behoben: Rüstungsständer im Eckturm des Rittersaals, Erde mit Hohlraum hinter der Schlossterrasse (Zinnenlücken
+  graben nicht mehr in den Hang), schwebende Geländerstäbe der Prunktreppe (jetzt auf einer Marmorwange), Laternen
+  unter waagerechten Ketten (wären beim nächsten Block-Update gefallen; jetzt unter eisernen Knäufen), die alte
+  Freitreppe des Schlosses lag unsichtbar unter dem Vorplatz (`frontStairs: false`), Kübel, Waren der Blumenfrau, Topf
+  auf dem Komposter am Dorfplatz; `pruefung-offen.ts` ohne Schloss und Treppe. Tests: 83 Baukasten, 261 Server,
+  Typen, Prettier. Echt mit Paper 26.1.2: echter Selbstbau der Lobby (85 Teile, 100 s, keine Ladefehler),
+  `lobby-test` **34/34**, `schlossmarkt-test` **31/31**, `treppen-test` **17/17** (Teil A: alle Treppen nur mit der
+  Vorwärts-Taste, kein Sprung; Teil B mit Pathfinder – Anzeige-Objekte des Prunkbrunnens zählen jetzt als passierbar,
+  am Heckenende, im Türrahmen und am Goldpfosten Zwischenziele, weil Pathfinder dort schräg die Ecke schneidet; die
+  Kapellentüren öffnet der Test-Spieler selbst). Echter Client 26.3 mit
+  Lobby-Paket: Bilder tags und nachts (Markt → Portal, Treppe hinauf, Vorplatz, Tor, Torweg, von oben, Festsaal,
+  Prunktreppe, Fundstellen), nur lokal.
+
 ## Offen
 
 - **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schlossmarkt (Falltüren und Wimpel am Marktbogen ohne Wand, Wegweiser-Schild, Linden auf Pflaster, Erde hinter der Stützmauer), Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse), Saison-Dekos in `season.ts` (Ketten-Enden in der Luft, Winter-Christbaum im Stand am Dorfplatz, Ostern/Halloween-Deko in Blöcken bzw. schwebend).
@@ -268,4 +296,10 @@
 - **Lobbymusik (Philip):** Hörproben anhören (`apps/server/musik/*.ogg`). Stücke tauschen oder neu: Noten in `packages/builder/src/musik/lieder/`, Name/Herkunft in `packages/shared/src/lobby-music.ts`, dann `npx tsx tools/lobby-musik/src/render.ts` (braucht fluidsynth, ffmpeg, fluid-soundfont-gm). „Kommet, ihr Hirten“ fehlt bewusst – die Vorlage hatte zweistimmige Akkorde, aus denen die Melodie nicht sicher herauszulesen war. Nicht echt geprüft: Klang im echten Java-Client (Sandbox-Speicher), Bedrock (Notenblöcke über Geyser), echte Spieler mit echten Ohren.
 - **Wartungs-Lobby (17.11.):** Die `try`-Liste in der velocity.toml schreibt weiter der Motor (alle Mitglieder) – das Netzwerk-Plugin übergeht sie; ohne geladenes Netzwerk-Plugin (Proxy nicht eingerichtet) würde Velocity sie wieder durchlaufen. Sauberer wäre in MorniHosting ein Feld „Ausweich-Server“ je Netzwerk (`try` = Lobby, Wartung) – nicht gebaut.
 - **Was ist neu (17.11.):** Die Änderungen sind die Commit-Texte – auch in der englischen Ansicht deutsch, manchmal technisch (sie stehen ohnehin öffentlich auf GitHub). Eine Installation zeigt die Liste erst nach dem ersten Update mit dieser Fassung (vorher nur die Nummer); von Hand gebaut (`docker compose build` ohne install.sh/update.sh) ebenso nur die Nummer. Nicht echt geprüft: Docker-Bau mit der Datei im Image (der update-test baut mit nachgebautem Docker).
+- **Prunkaufgang (17.11.):** Die Wimpel am Marktbogen hängen unter dem Balken statt an ihm (Schlossmarkt, Spawn-Helfer;
+  stehen in `packages/builder/test/pruefung-offen.ts`, jetzt bei z −23/−25, weil der Bogen nach vorn gerückt ist). Die
+  Zufallsfolge des Dorfs hat sich durch die kürzere Prachtstraße verschoben – drei Oster-Funde in `pruefung-offen.ts`
+  tragen darum andere Blocknamen (gleiche Stellen). Nicht echt geprüft: Bedrock (Läufer, Knäufe, Fahnen über Geyser),
+  echte Spieler auf der Treppe. Gesehen beim Test: Wer den Kompass der Lobby in der Hand hält, öffnet mit einem
+  Rechtsklick auf eine Tür das Menü statt der Tür (`LobbyFeatures.onInteract`) – vielleicht Türen dort durchlassen.
 - Bausteine siehe Fortschrittsseite (`docs/fortschritt/index.html`, Artefakt https://claude.ai/artifact/FDBGtjXT6fgaY85Z1AvTsR).
