@@ -236,6 +236,9 @@ malt über die Grundkleidung – `costume` im Outfit; Dorfleute sind unveränder
 | Wintersport | Skifahrerin: Rennanzug mit Startnummer, Skischuhe, rote Handschuhe     | Bommelmütze mit Skibrille, Ski am Rücken | Schneeball                        |
 | Adlerflug   | Flieger: Overall, weißer Schal, Stulpen, gefaltete Schwingen gemalt    | Fliegerhaube, große Adlerschwingen       | Feder                             |
 | Angelkönig  | Fischer: Anglerweste mit Ködern, Karohemd, Wathose                     | Fischerhut mit kleiner Krone             | Angel, Kabeljau                   |
+| Maibaumklau | Maibaum-Bursch: grün-weiße Schärpe, Seil, Weste, Lederhose             | Federhut mit Maibaum-Kranz und Bändern   | Axt, Leine                        |
+| Dorfkrimi   | Kommissar: Lodenmantel, rotes Halstuch, Notizbuch in der Brusttasche   | Jägerhut mit Gamsbart                    | Pinsel, Notizbuch                 |
+| Baumeister  | Baumeisterin: schwarze Kluft mit Perlmuttknöpfen, Zollstock, Gürtel    | Zimmermannshut mit breiter Krempe        | Ziegel, Schaufel                  |
 
 Ohne Paket und auf Bedrock trägt der Skin alles allein (Hüte, Umhänge, Seile, Schals sind gemalt). Ein Gegenstand mit
 Komponenten (z. B. ein Schild mit Muster) steht als `name{komponenten}` in `holds` (`itemSnbtOf` in `village.ts`).
