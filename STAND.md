@@ -568,7 +568,49 @@
 
 - 17.11. abends: **Klassischer Doppelsprung + Fliegen ab VIP** (Philip: „dieses klassische Double Jump, wo du so zweimal hüpfst und dann hin und her reisen kannst“, „VIPs sollen auch in der Lobby fliegen können, also alles ab VIP“; Branch `claude/doppelsprung-klassisch`): **Doppelsprung** (`LobbyDoubleJump.java`) – in der Luft noch einmal springen gibt jetzt einen kräftigen Schub in Blickrichtung (Blickrichtung × 1,6 × Stärke, nach oben 0,6 + 0,4 × Stärke Blöcke pro Tick; vorher 0,45 waagrecht und 0,72 hoch): bei Stärke 1 (Standard) ~15–16 Blöcke weit und 7 hoch statt ~4 weit und 3 hoch, bei 2 gut 30 weit und 12 hoch; nach oben schauen = höher und kürzer; nach der Landung sofort wieder, Landen auf Dächern gewollt, die Weltgrenze innerhalb des Bergkranzes hält auch im Flug; „gelandet“ zählt erst 4 Ticks nach dem Schub (kein dritter Sprung in der Luft); Funken/Wolke/Klang kräftiger, die Wolke verdeckt die Sicht nicht. **Fliegen ab VIP**: neues Spielrecht „In der Lobby fliegen“ (`lobby-fly`, Vorlage: Owner, Admin, Moderator, Supporter, Builder, Media, VIP; bestehende Installationen einmal über `panel/role-template.ts`, Merker `lobby-fly`), wer es hat, fliegt statt doppelt zu springen (zweimal Leertaste an/aus wie im Kreativmodus, auch wenn der Doppelsprung im Panel aus ist); `/fly` (`/fliegen`, `an|aus`) wechselt zwischen Fliegen und Doppelsprung, gemerkt in `plugins/moinmorni/lobby-fly.txt`; nicht im Jump and Run (beim Start landet man), Gefängnis, Rundgang; nur Lobby (nicht Wartungs-Lobby – deren Parcours –, nicht die Modi). Texte im Katalog, Rechte de/en im Panel, Befehle-Seite (`/fly` mit Recht), Hilfe „Jump and Run & Doppelsprung“, `docs/lobby.md`. Tests: 6 JUnit `LobbyDoubleJumpTest` (Schub, Blickwinkel, Stärke-Grenzen, Bogen-Weite nach Minecrafts Flugregeln, Fliegen/Doppelsprung je Recht, `/fly`-Wörter; 78 im Plugin), 126 shared, 287 Server-Tests (neu: Rollen-Vorlage „In der Lobby fliegen“), Baukasten-Test Jump-and-Run-Start, Typen, Prettier. Echt: Velocity 4.3.1 + Paper 26.1.2 + Netzwerk-Plugin + Test-Hub (VIP per `--rang`), Lobby mit dem echten Selbstbau neu gebaut (73 s), `lobby-test` **46/46** (Schub 1,6/1,0, **16,2 Blöcke weit, 7,1 hoch**; VIP fliegt, `/fly aus` → Schub, Wahl gemerkt, Jump and Run → Fliegen aus, Spieler ohne Recht bekommt „ab VIP“). Ein Video und Bilder aus dem echten Client 26.3 in Ich-Sicht (Abflug, über den Markt, Landung auf einem Standdach) nur lokal. Hinweis: Die schwebenden Wegweiser am Jump-and-Run-Start (ab 10 über dem Boden) erreicht man jetzt vom Tafeldach aus – harmlos. Nicht echt geprüft: Bedrock (Fliegen/Doppelsprung über Geyser), echter Spieler mit Tastatur.
 
+- 17.11. abends: **Hüte und Kleidung im Angelkönig mit eigenem Aussehen** (Philip nach den Fisch-Designs: „für die Hüte
+  auch eigene Designs“; Branch `claude/kleidung-designs`, Angelkönig 0.2.1 auf gleichnamigem Branch): alle neun Stücke
+  aus dem Kleiderschrank, per Code gebaut (`packages/builder/src/kleidung/`): **Hüte als 3D-Modelle** im Stil von
+  Blockbench (`modell.ts`: Quader mit Drehung, je Fläche ein Maler, Atlas-Packer, JSON mit `head`-Darstellung –
+  Minecraft setzt Kopf-Gegenstände 0,625-fach auf den Kopf): Fischerhut (olivgrünes Segeltuch mit Nähten, Luftlöcher,
+  Hutband mit Schnalle, hängende Krempe, vier bunte Fliegen am Band), Strohhut (Flechtmuster, breite Krempe mit
+  dunklerem Rand, rot-weißes Band, Schleife, Margerite und Enzian), Trachtenhut (grüner Filz mit Kniff, hinten
+  aufgestellte Krempe, gedrehte Kordel weiß-rot-grün, Edelweiß, Gamsbart in Silberhülse, Feder), Königskrone (Reif mit
+  Gravur, sieben Zacken mit Perlen, goldener Fisch vorn, Rubin/Saphir/Smaragd, Samtkappe mit Hermelin, Reichsapfel
+  mit Kreuz; **Lichtstreif wandert in 12 Bildern übers Gold**, Steine funkeln); **Weste, Regenjacke, Lederhose,
+  Wathose, Gummistiefel als eigenes Muster am Körper** (`ruestung.ts`, Rüstungs-Raster 64 × 32, Ausrüstungs-Aussehen
+  `moinmorni:kleidung/<stück>` in `humanoid` bzw. `humanoid_leggings`): Weste ärmellos mit Reißverschluss, Taschen,
+  Fliegen-Flicken, Netz und Kescher-Ring hinten; Jacke knallgelb mit Knebelknöpfen, Leuchtstreifen, Kapuze im Rücken;
+  Lederhose kurz mit Hosenträgern (Steg mit Edelweiß, hinten über Kreuz), Latz, grünen Nähten, Kniebund; Wathose bis
+  zur Brust mit Trägern, Schnallen, angesetzten Stiefeln; Gummistiefel mit gelbem Rand, Sohle, Schlammspritzern. Im
+  Inventar kleine 3D-Bilder aus denselben Texturen. Ins **Angelkönig-Paket** (`fishPack(fische, kleidung)`): je
+  Grund-Gegenstand ein `select` auf `custom_model_data` (Fische und Kleidung zusammen, z. B. `leather_boots`), Rückfall
+  Minecraft samt Lederfarbe. Gleiche Bytes = gleiche SHA-1. Liste `packages/shared/src/angel-kleidung.ts` = Kopie
+  `packages/shared/test/angel-kleidung.txt` = `docs/kleidung-modelle.txt` in Angelkönig (Test in beiden Repos).
+  **Paket jetzt von Angelkönig selbst** (Fund im echten Test): beim Paket aus der server.properties erfährt ein Plugin
+  nicht, wer es geladen hat (`getResourcePackStatus()` sagt immer „geladen“), ein zweites Anbieten im Spiel lädt alles
+  noch einmal. Angelkönig 0.2.1 bietet das Paket darum beim Verbinden selbst an und legt `plugins/MorniAngelkoenig/
+  paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, feste Kennung `ANGEL_PACK_ID` – der
+  Proxy nimmt es weiter außerhalb ab) und nimmt unser Paket aus der server.properties (`offerAngelPack`, einmal
+  Neustart); ältere Angelkönig-Fassungen bekommen es wie bisher. **Je Betrachter**: Angelkönig zeigt die neuen Modelle
+  nur, wer das Paket hat; wer nicht, sieht die gewohnte Lederkleidung (sonst flacher Helm vor der Stirn bzw. gar
+  nichts). **Webseite**: Angelkönig-Seite mit „Hüte und Kleidung“ (Holzpuppe trägt je ein Stück, Platz, Preis, Satz
+  de/en; Bilder `apps/web/public/bilder/kleidung-<stück>.png` aus `apps/server/scripts/kleidung-bilder.ts` mit einem
+  eigenen kleinen Strahlen-Zeichner `vorschau.ts`/`bilder.ts`, Test: gleich wie aus dem Paket). Tests: 129 shared
+  (3 neu), 132 Baukasten (4 neu), 292 Server (6 neu in `angel-kleidung.test.ts`: Modelle gültig, Hüte sitzen auf dem
+  Kopf über der zweiten Skin-Ebene, Krone 12 Bilder, Körper-Muster 64 × 32 je Schicht, Rückfall Minecraft,
+  Webseiten-Bilder = Paket; Provisioner-Test um `paket.json` erweitert), Typen, Web- und Demo-Bau. Echt: Paper 26.1.2
+  + zwei Test-Spieler **11/11** (Anna mit Paket, Bert ohne: jeder sieht den anderen in seiner Fassung), Paper 26.3 +
+  echter Client 26.3 mit Paket: alle vier Hüte auf dem Kopf von vorn und hinten, Weste, Jacke, Hosen, Stiefel am
+  Körper, Kleiderschrank mit 3D-Bildern; ohne Paket Lederkleidung und Goldhelm (Bilder nur lokal
+  `/home/user/mm-cache/bilder-kleidung/`, Übersicht der Zeichnungen im Scratchpad `kleidung-bilder/`).
+
 ## Offen
+
+- **Kleidung (17.11.):** Philip: Go für Angelkönig 0.2.1 und diesen Branch zusammen. Nicht echt geprüft: über
+  Velocity (Paket-Angebot beim Verbinden durch den Proxy, Abnehmen außerhalb), Bedrock (sieht Leder). Neues Stück →
+  Zeile in `angel-kleidung.ts` + Kopie der Liste, Modell in `huete.ts` bzw. Muster in `ruestung.ts`,
+  `npx tsx apps/server/scripts/kleidung-bilder.ts`.
 
 - **Fische (17.11.):** Philip: Go für Angelkönig 0.2.0 (`claude/fisch-designs` im Angelkönig-Repo) und diesen
   Branch. Nicht echt geprüft: über das echte Netzwerk (Proxy nimmt das Paket beim Verlassen ab – nur im Code, gleicher

@@ -51,6 +51,7 @@ import {
   WhitelistChip,
 } from './kit';
 import { PageHero } from './page-hero';
+import { ClothesGallery } from './clothes-gallery';
 import { FishGallery } from './fish-gallery';
 import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, WRAP } from './parts';
 
@@ -610,6 +611,11 @@ export function ModePage(): ReactElement {
         {mode.id === 'angelkoenig' ? (
           <div className="lg:col-span-2">
             <FishGallery />
+          </div>
+        ) : null}
+        {mode.id === 'angelkoenig' ? (
+          <div className="lg:col-span-2">
+            <ClothesGallery />
           </div>
         ) : null}
       </div>
