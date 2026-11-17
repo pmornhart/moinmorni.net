@@ -319,7 +319,7 @@ function JumpBar({
   return (
     <nav
       aria-label={t('site.commands.jump')}
-      className="sticky top-[var(--header-h)] z-20 border-b-2 border-border bg-background/92 backdrop-blur-md"
+      className="sticky top-[var(--header-h-small)] z-20 border-b-2 border-border bg-background/92 backdrop-blur-md"
     >
       {/* Phones scroll sideways; from tablets on everything wraps into rows, so no mode is out of reach. */}
       <div

@@ -527,8 +527,8 @@ function Village(): ReactElement {
                   <span className="grid gap-0.5 px-0.5 lg:px-0">
                     <span
                       className={cn(
-                        // Phones: two lines instead of "Die Handwerke…".
-                        'font-pixel text-[13px] font-semibold leading-tight hyphens-auto [overflow-wrap:anywhere] max-lg:line-clamp-2 sm:text-[15px] lg:truncate',
+                        // Phones: up to three lines instead of "Die Handwerke…".
+                        'font-pixel text-[12.5px] font-semibold leading-tight hyphens-auto [overflow-wrap:anywhere] max-lg:line-clamp-3 sm:text-[15px] lg:truncate',
                         i === index ? 'text-gold-bright' : 'text-band-foreground',
                       )}
                     >
