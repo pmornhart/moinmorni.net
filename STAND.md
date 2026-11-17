@@ -484,6 +484,24 @@
   Stand (von Hand) → beim Start repariert. Bilder mit echtem Client 26.3, beide Formen tags und nachts, je vorn,
   schräg, nah und weit, nur lokal.
 
+- 17.11. abends: **Trailer Spawn neu gedreht** (Branch `claude/trailer-lobby`, auf dem Stand der Lobby vom 17.11.):
+  Drehbuch `tools/trailer/trailers/spawn.py` ganz neu mit der gemeinsamen Regie (`drehbuch.py`) – Anflug, Ankunft am
+  Dorfplatz mit Darstellern (eigene Skins, echte Physik), Modus-Figuren im Kostüm mit Schild in drei Zeilen und
+  Live-Zahl, Klick auf die Duels-Figur in der Ich-Sicht (Funken in der Modusfarbe, sie winkt), Biergarten, Schlossmarkt
+  mit Sport-Stand (Bootshaus), Prunkaufgang mit rotem Teppich, Launchpad-Flug, Prunkbrunnen, Festsaal, Jump and Run in
+  der Ich-Sicht hoch über dem Dorf (Blöcke ploppen nur für den Läufer auf), Doppelsprung, Kompass-Menü, die vier
+  Saisons in derselben Fahrt (Winter-Wunderland, Wiesn mit Kettenkarussell, Ostern, Halloween-Riesenkürbis) und das
+  angestrahlte Schloss bei Nacht; Musik `spawn` (30 Takte, 64,6 s). Gedreht auf eigenem Test-Server (Paper 26.1.2 +
+  Netzwerk-Plugin aus dem Branch + Via, Lobby mit dem echten Selbstbau, Saisons mit `MM_SEASON`, Test-Hub mit Steuerung
+  und Lobby-Paket, alle Modi und ein Ersatz-Proxy „auf Zuruf“ für die Live-Zahlen), echter Client 26.3 mit Paket.
+  Regie-Plugin nur im Cache (`~/mm-cache/trailer/regie-spawn/`: `/jnrauto` lässt den Läufer mit echtem Schwung springen
+  – der Client fliegt den Bogen selbst –, Marker auf dem nächsten Block als Blickziel). Werkzeug: Darsteller nehmen jetzt
+  angebotene Server-Pakete ohne Hänger an (Kennung geradegezogen), `hud.py` wartet nach F1 drei Sekunden (unter Last
+  zeichnete der Client nur ein Bild pro Sekunde und die Anzeige wurde zurückgeschaltet). Gesehen: Die Trefferfläche der
+  Modus-Figuren (Mannequin) endet bei 1,8 Blöcken – wer auf den großen Kopf zielt, klickt darüber hinweg (Schild und
+  Hut liegen höher); kein Fehler, aber Klicks auf den Kopf gehen ins Leere. Video nur lokal
+  (`~/mm-cache/trailer/spawn/MoinMorni-Trailer-Spawn.mp4` + `-720p`), alte Fassung vom 15.11. unter `spawn-alt-1511/`.
+
 ## Offen
 
 - **Sommerspiele (17.11.):** bekommt seinen Server erst, wenn `pmornhart/morni-sommerspiele` ein Release hat (heute

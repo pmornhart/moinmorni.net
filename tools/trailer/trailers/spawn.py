@@ -183,15 +183,16 @@ def _schlossmarkt():
 def prep_treppe():
     park(RESI, SEPPL)
     for i, (n, x) in enumerate(((ELLA, -0.5), (MATZE, 1.5), (LENA, 0.5))):
-        tp(n, x, -38.5 - 1.2 * i, 180, 71.5)
+        tp(n, x, -36.0 - 1.0 * i, 180, 70.0)
     time.sleep(1)
 
 
 def _treppe():
     """Durchs Prunkportal die Schlosstreppe hinauf – der rote Teppich führt bis vor das Schloss."""
-    cam = [{'p': [0.5, 67.6, -26.0], 'look': [0.5, 72.0, -46.0], 't': 0},
-           {'p': [0.5, 72.5, -37.0], 'look': [0.5, 82.0, -60.0], 't': 2.7},
-           {'p': [0.5, 79.5, -47.5], 'look': [0.5, 93.0, -78.0], 't': 2.7, 'ease': 1}]
+    cam = [{'p': [0.5, 67.4, -24.0], 'look': [0.5, 70.0, -46.0], 't': 0},
+           {'p': [2.6, 67.6, -31.0], 'look': [0.5, 74.0, -52.0], 't': 1.8},
+           {'p': [2.6, 72.5, -38.0], 'look': [0.5, 82.0, -62.0], 't': 1.6},
+           {'p': [0.5, 81.5, -48.5], 'look': [0.5, 94.0, -78.0], 't': 2.2, 'ease': 1}]
     ev = [act(0.1, f'{n} geh {x} 92 -72') for n, x in ((ELLA, -0.5), (MATZE, 1.5), (LENA, 0.5))]
     return {'camera': cam, 'events': ev}
 
@@ -244,18 +245,20 @@ def prep_jnr():
     x, y, z = JNR_START
     rc(f'tp {POV} {x} {y} {z} 90 10')
     time.sleep(3)
-    subprocess.run(['xdotool', 'keydown', 'w'], env=dict(os.environ, DISPLAY=os.environ['MM_DISPLAY']))
-    time.sleep(1.2)
-    subprocess.run(['xdotool', 'keyup', 'w'], env=dict(os.environ, DISPLAY=os.environ['MM_DISPLAY']))
-    D.until(lambda: (D.pos(POV) or [0, 0, 0])[1] > 140, 10, 0.3, 'oben im Jump and Run')
+    env = dict(os.environ, DISPLAY=os.environ['MM_DISPLAY'])
+    subprocess.run(['xdotool', 'keydown', 'w'], env=env)
+    try:  # loslassen, sobald man oben steht – sonst läuft man gleich vom Startblock
+        D.until(lambda: (D.pos(POV) or [0, 0, 0])[1] > 140, 10, 0.05, 'oben im Jump and Run')
+    finally:
+        subprocess.run(['xdotool', 'keyup', 'w'], env=env)
     time.sleep(1.5)
 
 
 def _jnr():
     """Ich-Sicht hoch über dem Dorf: jeder Sprung ein Punkt, der nächste Block ploppt auf (nur für den Läufer)."""
-    return {'gamemode': 'adventure', 'aim': 30, 'wait': 0.5,
-            'look': [{'at': 0.0, 'target': '@e[type=marker,tag=jnr_ziel,limit=1]', 'height': -0.6}],
-            'events': [{'at': 0.1, 'cmd': f'jnrauto {POV} an 7'}]}
+    return {'gamemode': 'adventure', 'aim': 90, 'wait': 0.5,
+            'look': [{'at': 0.0, 'target': '@e[type=marker,tag=jnr_ziel,limit=1]', 'height': 0.3}],
+            'events': [{'at': 0.1, 'cmd': f'jnrauto {POV} an 9'}]}
 
 
 def _doppelsprung():
@@ -278,9 +281,13 @@ def _kompass():
 
 def _saison():
     """Gleiche Fahrt in jeder Saison: der Maibaum-Platz als Winter-Wunderland, Wiesn, Ostern, Halloween."""
-    cam = [{'p': [15.0, 68.5, 17.0], 'look': [0.5, 74.0, 0.5], 't': 0},
-           {'p': [12.5, 68.0, 14.0], 'look': [0.5, 74.5, 0.5], 't': 6.0, 'ease': 1}]
+    cam = [{'p': [-5.0, 75.0, 26.0], 'look': [0.5, 73.0, 0.5], 't': 0},
+           {'p': [-13.0, 75.5, 22.0], 'look': [0.5, 73.5, 0.5], 't': 6.0, 'ease': 1}]
     return {'camera': cam}
+
+
+def prep_saison():
+    daytime('day')
 
 
 def prep_nacht():
@@ -289,9 +296,9 @@ def prep_nacht():
 
 def _ende():
     """Nacht: Lichter am Markt, das Schloss angestrahlt – die Kamera steigt auf."""
-    cam = [{'p': [0.5, 70.0, 12.0], 'look': [0.0, 92.0, -100.0], 't': 0},
-           {'p': [0.5, 82.0, 34.0], 'look': [0.0, 92.0, -100.0], 't': 4.0},
-           {'p': [10.0, 98.0, 52.0], 'look': [0.0, 90.0, -100.0], 't': 4.0, 'ease': 1}]
+    cam = [{'p': [7.0, 69.5, 10.0], 'look': [-2.0, 90.0, -100.0], 't': 0},
+           {'p': [9.0, 80.0, 30.0], 'look': [-1.0, 90.0, -100.0], 't': 4.0},
+           {'p': [14.0, 96.0, 50.0], 'look': [0.0, 88.0, -100.0], 't': 4.0, 'ease': 1}]
     return {'camera': cam}
 
 
@@ -311,10 +318,10 @@ SHOTS = [
      'after': lambda: rc(f'jnrauto {POV} aus')},
     {'id': '12-doppelsprung', 'bars': 1, 'card': 'lt-doppelsprung.png', 'kind': 'ich', 'spec': _doppelsprung},
     {'id': '13-kompass', 'bars': 1, 'card': 'lt-kompass.png', 'kind': 'ich', 'spec': _kompass},
-    {'id': '14-winter', 'bars': 1, 'card': 'lt-winter.png', 'spec': _saison},
-    {'id': '15-wiesn', 'bars': 1, 'card': 'lt-wiesn.png', 'spec': _saison},
-    {'id': '16-ostern', 'bars': 1, 'card': 'lt-ostern.png', 'spec': _saison},
-    {'id': '17-halloween', 'bars': 1, 'card': 'lt-halloween.png', 'spec': _saison},
+    {'id': '14-winter', 'bars': 1, 'card': 'lt-winter.png', 'prep': prep_saison, 'spec': _saison},
+    {'id': '15-wiesn', 'bars': 1, 'card': 'lt-wiesn.png', 'prep': prep_saison, 'spec': _saison},
+    {'id': '16-ostern', 'bars': 1, 'card': 'lt-ostern.png', 'prep': prep_saison, 'spec': _saison},
+    {'id': '17-halloween', 'bars': 1, 'card': 'lt-halloween.png', 'prep': prep_saison, 'spec': _saison},
     {'id': '18-ende', 'bars': 'rest', 'card': 'ende.png', 'cardAt': 0.35, 'prep': prep_nacht, 'spec': _ende},
 ]
 
