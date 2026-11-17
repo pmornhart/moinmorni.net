@@ -695,10 +695,14 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         if (colour != null) {
             team.color(net.kyori.adventure.text.format.NamedTextColor.nearestTo(colour));
         }
+        // Bukkit liefert für dasselbe Team jedes Mal ein neues Objekt – darum über den Namen vergleichen. Sonst verlässt
+        // ein Streamer beim nächsten Profil sein eigenes LIVE-Team, das dabei verschwindet (Abzeichen und LIVE weg).
         Team old = board.getEntryTeam(p.getName());
-        if (old != null && old != team && old.getName().startsWith(TEAM_PREFIX)) {
+        if (old != null && !old.getName().equals(teamName) && old.getName().startsWith(TEAM_PREFIX)) {
             leaveTeam(old, p.getName());
         }
-        team.addEntry(p.getName());
+        if (!team.hasEntry(p.getName())) {
+            team.addEntry(p.getName());
+        }
     }
 }

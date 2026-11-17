@@ -175,6 +175,17 @@ async function main() {
     overHead(philip, 'Lena'),
   );
   check('Philip selbst ohne LIVE', !tabName(lena, 'Philip').includes('LIVE'), tabName(lena, 'Philip'));
+  // Neues Profil, während LIVE schon gilt (ein Teil aus und wieder an): das eigene LIVE-Team bleibt – vorher verschwand
+  // es bei jeder zweiten Meldung samt Rang über dem Kopf.
+  for (const round of [1, 2]) {
+    lena.chat('/streamer koordinaten');
+    await sleep(2500);
+    check(
+      `Über dem Kopf: ● LIVE bleibt nach neuem Profil (${round}.)`,
+      overHead(philip, 'Lena').includes('● LIVE'),
+      overHead(philip, 'Lena'),
+    );
+  }
 
   // ---- Chat: IP-Adressen und eigene Adresse verdeckt, nur für Lena ----
   philip.chat('Kommt auf 85.215.54.143:25565 oder play.moinmorni.net');
