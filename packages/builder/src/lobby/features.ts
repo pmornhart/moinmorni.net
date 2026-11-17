@@ -1,7 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a building plan: positions in the lobby as the world has them */
 /**
- * Was in der Lobby „lebt“, als Daten: Ankunftspunkt, Launchpads, Parkour-Strecke und Stationen des Rundgangs.
- * Der Bau (`dorfplatz.ts`) setzt die Blöcke, MoinMorni schickt dieselben Punkte ans Lobby-Plugin.
+ * Was in der Lobby „lebt“, als Daten: Ankunftspunkt, Launchpads und Stationen des Rundgangs (das Jump and Run steht in
+ * `jumpandrun.ts`). Der Bau (`dorfplatz.ts`) setzt die Blöcke, MoinMorni schickt dieselben Punkte ans Lobby-Plugin.
  */
 import { GROUND } from '../nature.js';
 
@@ -52,46 +52,6 @@ export const LAUNCHPADS: readonly Launchpad[] = [
   { x: 14, y: GROUND, z: -26, push: [-1.15, 1.8, -2.6] },
 ];
 
-/**
- * Parkour im Nordwesten: Start in der Wiese, dann 24 Sprünge in einer Spirale nach oben (sechs Seiten à vier Sprünge:
- * 2 Blöcke vor + 1 hoch, 3 vor, 2 vor + 1 hoch, 3 vor). Jede Seite endet auf einem Kontrollpunkt.
- */
-const PARKOUR_START = p(-56, GROUND, -36);
-const HEADINGS: readonly (readonly [number, number])[] = [
-  [-1, 0],
-  [0, -1],
-  [1, 0],
-  [0, 1],
-];
-const SIDE: readonly (readonly [number, number])[] = [
-  [2, 1],
-  [3, 0],
-  [2, 1],
-  [3, 0],
-];
-const SIDES = 6;
-
-export interface ParkourCourse {
-  /** Blöcke, auf denen man steht (Start = erster, Ziel = letzter). */
-  readonly blocks: readonly LobbyPoint[];
-  /** Indizes der Kontrollpunkte (ohne Start). */
-  readonly checkpoints: readonly number[];
-}
-
-export const PARKOUR: ParkourCourse = (() => {
-  const blocks = Array.from({ length: SIDES * SIDE.length }).reduce<LobbyPoint[]>(
-    (acc, _, i) => {
-      const last = acc[acc.length - 1] ?? PARKOUR_START;
-      const [hx, hz] = HEADINGS[Math.floor(i / SIDE.length) % HEADINGS.length] ?? [0, 0];
-      const [ahead, up] = SIDE[i % SIDE.length] ?? [0, 0];
-      return [...acc, p(last.x + hx * ahead, last.y + up, last.z + hz * ahead)];
-    },
-    [PARKOUR_START],
-  );
-  const checkpoints = Array.from({ length: SIDES }, (_, s) => (s + 1) * SIDE.length);
-  return { blocks, checkpoints };
-})();
-
 const stop = (from: LobbyPoint, at: LobbyPoint, title: Bilingual, text: Bilingual): TourStop => ({
   ...look(from, at),
   title,
@@ -137,12 +97,12 @@ export const TOUR: readonly TourStop[] = [
     },
   ),
   stop(
-    p(-50, GROUND + 4, -28),
-    p(-60, GROUND + 8, -42),
-    { de: 'Parkour', en: 'Parkour' },
+    p(-50, GROUND + 4, -30),
+    p(-60, GROUND + 3, -43),
+    { de: 'Jump and Run', en: 'Jump and run' },
     {
-      de: 'Spring die weiß-blaue Spirale hoch – mit Zeitmessung und Bestenliste.',
-      en: 'Jump up the white-and-blue spiral – timed, with a leaderboard.',
+      de: 'Tritt auf den Smaragd – hoch über dem Dorf erscheint Block für Block. Wie weit kommst du?',
+      en: 'Step on the emerald – high above the village, block after block appears. How far can you get?',
     },
   ),
   stop(

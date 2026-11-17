@@ -105,8 +105,9 @@ hält je Figur zwei Schilder (Deutsch/Englisch); jeder Spieler sieht nur das in 
 
 ## Leben in der Lobby (`LobbyFeatures.java`, Einstellungen im Panel unter „Lobby“)
 
-Die festen Punkte (Ankunft, Launchpads, Parkour, Rundgang) stehen in `packages/builder/src/lobby/features.ts`; der Hub
-schickt sie zusammen mit den Panel-Einstellungen als `lobby-settings` an den Lobby-Server (bei jeder Änderung neu).
+Die festen Punkte (Ankunft, Launchpads, Rundgang) stehen in `packages/builder/src/lobby/features.ts`, die des Jump and
+Run in `jumpandrun.ts`; der Hub schickt sie zusammen mit den Panel-Einstellungen als `lobby-settings` an den
+Lobby-Server (bei jeder Änderung neu).
 
 - **Ankunft:** am Dorfplatz mit Blick zum Schloss; Begrüßung als Titel (Text im Panel).
 - **Ankündigungen:** Leiste oben, wechselt alle n Sekunden (Liste und Takt im Panel).
@@ -115,8 +116,28 @@ schickt sie zusammen mit den Panel-Einstellungen als `lobby-settings` an den Lob
 - **Rundgang:** Buch in der Leiste oder `/rundgang`; neue Spieler bekommen ihn einmal automatisch (Schalter im Panel),
   acht Stationen im Zuschauer-Modus, `/rundgang stop` bricht ab.
 - **Launchpads:** zwei Smaragd-Platten am Vorplatz schießen schräg zur Mitte die Schlosstreppe hinauf.
-- **Parkour:** weiß-blaue Spirale im Nordwesten (Start = Smaragd, Kontrollpunkte = Gold, Ziel = Diamant), Zeitmessung,
-  Sturz → letzter Kontrollpunkt, Bestzeiten in `plugins/moinmorni/parkour.yml`, Bestenliste als Schild und `/parkour`.
+- **Jump and Run** (statt der Parkour-Spirale, `LobbyJump.java`, Weg in `JumpCourse.java`): Startplatz im Nordwesten
+  neben dem Schlossmarkt (runder Platz, Smaragd in der Mitte, Tafel mit Dach, weiß-blaue Fahnen, Laternen, ein Bogen
+  schwebender Blöcke in den Himmel). Auf den Smaragd treten oder `/jnr` (`/jumpandrun`): Man steht hoch über dem Dorf
+  (86–106 Blöcke über dem Boden) in einer **eigenen Bahn** (neun Würfel à 32 × 32, die nächste zuerst), vor einem
+  ploppt ein Block nach dem anderen auf. Die Blöcke gibt es **nur beim Läufer** (`sendBlockChange`, dazu ein
+  unsichtbares Licht darüber und ein Anzeige-Wesen zum Aufploppen, das nur er sieht) – der Server kennt sie nicht,
+  niemand sonst sieht sie oder steht darauf. Jeder geschaffte Sprung ein Punkt; gelandet ist, wer nach seinen eigenen
+  Bewegungen auf der Fläche des nächsten Blocks steht (lag-sicher, nicht nach der Zeit), alle halbe Sekunde werden die
+  Blöcke neu geschickt. Bis „schwerer ab“ (Panel, Standard 10) nur kurze Sprünge ohne Sprinten, danach alle 15 Punkte
+  eine Stufe mehr: weiter, höher und tiefer, halbe Stufen, Zaun- und Mauerpfosten, offene Falltüren als Balken, Eis
+  (schmilzt 2 s nach der Landung), Schleim zum Hochfedern – jeder Sprung bleibt unter dem, was Minecrafts Bewegung
+  (Java und Bedrock) schafft (Tick-für-Tick-Rechnung in `JumpCourseTest`). Fallen beendet den Lauf: zurück am
+  Startplatz, Titel mit Punkten. Rekord je Spieler in `plugins/moinmorni/jumpandrun.yml`, **Top 10 auf der Tafel**,
+  `/jnr top`, `/jnr stop`; Werte gehen als Statistik „lobby“ an den Hub (`jump_best`, `jump_runs`, `jumps` – Profil
+  und Bestenliste der Webseite). `/parkour` leitet um. Ein Teleport, Kreativ-/Zuschauermodus, Gefängnis oder Rundgang
+  beenden den Lauf. Die alte `parkour.yml` bleibt liegen (Zeiten passen nicht zu Punkten).
+- **Doppelsprung** (`LobbyDoubleJump.java`): in der Luft noch einmal springen gibt einen zweiten Schwung nach vorn und
+  oben, mit Funken und Klang (Stärke im Panel 0,5–2). Wer darf, hat „Fliegen erlaubt“; das Einschalten des Fliegens
+  fängt das Plugin ab und gibt stattdessen den Schwung, bis zur Landung kein zweiter. Bedrock (Geyser) meldet das
+  Fliegen genauso. Nicht im Jump and Run, nicht im Gefängnis, nicht beim Rundgang; Kreativ und Zuschauer bleiben
+  unberührt. Die Lobby läuft mit `allow-flight=true` (sonst würde Minecraft Läufer, die auf Blöcken stehen, die nur
+  ihr Client kennt, wegen „Schwebens“ hinauswerfen).
 - **Schutz:** kein Abbauen/Setzen, kein Schaden, kein Hunger, nichts fallen lassen; aus der Welt gefallen → Dorfplatz.
 - **Saison-Deko:** Wiesn, Winter, Ostern, Halloween oder keine (`packages/builder/src/lobby/season.ts`, eigenes
   Datenpaket `moinmorni-lobby-season`). Wechsel im Panel setzt die Deko sofort neu. Anzeige-Blöcke tragen den Block
@@ -149,7 +170,7 @@ Halloween Griegs Bergkönig und zwei Gruselstücke. 25 Stücke, jedes eine bis a
 - Gespielt wird für jeden Spieler einzeln (zufälliges erstes Stück, dann der Reihe nach), im Bereich
   **„Plattenspieler/Notenblöcke“** – der Regler im Spiel wirkt, und Minecrafts eigene Hintergrundmusik wird so lange
   angehalten. Ob jemand das Paket geladen hat, meldet der Proxy (`pack`) – der Lobby-Server sieht es nicht.
-- **Gedämpft** im Parkour, beim Rundgang und im Gefängnis (Panel: „Gedämpft“, Vorgabe 40 %): Eine laufende
+- **Gedämpft** im Jump and Run, beim Rundgang und im Gefängnis (Panel: „Gedämpft“, Vorgabe 40 %): Eine laufende
   Klangdatei lässt sich nicht leiser drehen – dann spielt dasselbe Stück an derselben Stelle leise mit Notenblöcken
   weiter, das nächste wieder als Klangdatei.
 - **Jeder Spieler:** `/musik an|aus|leiser|lauter|weiter|0–100` (englisch `/music on|off|quieter|louder|next`),
@@ -186,8 +207,8 @@ Die Strafe gilt im ganzen Netzwerk:
 Beim Einrichten (und nach jedem Update, wenn sich der Bauplan geändert hat) baut MoinMorni die Welt auf dem
 Lobby-Server auf – ohne RCON von außen, nur über den Motor (`apps/server/src/lobby/world.ts`):
 
-1. server.properties der Lobby: Abenteuermodus, friedlich, kein PvP, kein Nether, kein Texturpaket (die Skins sind
-   signiert).
+1. server.properties der Lobby: Abenteuermodus, friedlich, kein PvP, kein Nether, Fliegen erlaubt (Doppelsprung, Jump
+   and Run), kein Texturpaket (die Skins sind signiert).
 2. Bauplan als Datenpaket nach `world/datapacks/moinmorni-lobby/` (`lobbyPack()` in
    `packages/builder/src/lobby/datapack.ts`, ~83 Funktionen à 3000 Befehle).
 3. `minecraft:reload`, Welt-Stücke in kleinen Portionen festhalten (`forceload`, 4×4 Stücke pro Befehl – alles auf

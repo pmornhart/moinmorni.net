@@ -774,14 +774,6 @@ export const LOBBY_AREA: SettingArea = {
           command: '/lobby launchpads an|aus',
         },
         {
-          key: 'parkour',
-          type: 'boolean',
-          default: true,
-          label: t('Lobby-Parkour', 'Lobby parkour'),
-          help: t('Mit Zeitmessung und Bestenliste.', 'With timing and leaderboard.'),
-          command: '/lobby parkour an|aus',
-        },
-        {
           key: 'walkers',
           type: 'number',
           default: 12,
@@ -793,6 +785,76 @@ export const LOBBY_AREA: SettingArea = {
             'Figures strolling through the village (0 = none).',
           ),
           command: '/lobby bewohner <zahl>',
+        },
+      ],
+    },
+    {
+      id: 'jumpandrun',
+      title: t('Jump and Run', 'Jump and run'),
+      text: t(
+        'Am Startplatz im Nordwesten auf den Smaragd treten (oder /jnr): Hoch über dem Dorf erscheint Block für Block – nur für dich. Jeder Sprung ein Punkt, wer fällt, ist raus. Rekord je Spieler, Top 10 auf der Tafel am Start und auf der Webseite.',
+        'Step on the emerald at the start in the north-west (or /jnr): high above the village, block after block appears – only for you. Every jump scores a point, falling ends the run. Record per player, top 10 on the board at the start and on the website.',
+      ),
+      settings: [
+        {
+          key: 'jumpAndRun',
+          type: 'boolean',
+          default: true,
+          label: t('Jump and Run', 'Jump and run'),
+          help: t(
+            'Aus: Der Startplatz bleibt stehen, aber niemand kann loslegen; laufende Läufe enden.',
+            'Off: the start stays, but nobody can begin; runs in progress end.',
+          ),
+          command: '/lobby jumpandrun an|aus',
+        },
+        {
+          key: 'jumpHarderFrom',
+          type: 'number',
+          default: 10,
+          min: 1,
+          max: 100,
+          unit: t('Punkten', 'points'),
+          label: t('Schwerer ab', 'Harder from'),
+          help: t(
+            'Bis dahin nur leichte Sprünge, die man auch ohne Sprinten schafft. Danach alle 15 Punkte eine Stufe schwerer: weiter, höher, halbe Stufen, Zäune und Mauern, Eis, das schnell schmilzt, und Schleim zum Hochfedern.',
+            'Until then only easy jumps you can make without sprinting. After that, one level harder every 15 points: further, higher, slabs, fences and walls, ice that melts quickly and slime to bounce on.',
+          ),
+          command: '/lobby jumpandrun schwerer <punkte>',
+        },
+      ],
+    },
+    {
+      id: 'doublejump',
+      title: t('Doppelsprung', 'Double jump'),
+      text: t(
+        'In der Luft noch einmal springen (zweimal Leertaste) gibt einen zweiten Schwung nach vorn und oben – mit Funken. Nicht im Jump and Run, nicht im Gefängnis und nicht beim Rundgang.',
+        'Jump again in mid-air (press space twice) for a second boost forwards and upwards – with sparks. Not in the jump and run, not in jail and not during the tour.',
+      ),
+      settings: [
+        {
+          key: 'doubleJump',
+          type: 'boolean',
+          default: true,
+          label: t('Doppelsprung', 'Double jump'),
+          help: t(
+            'Geht auf Java und Bedrock (dort ebenfalls zweimal springen).',
+            'Works on Java and Bedrock (there, too, jump twice).',
+          ),
+          command: '/lobby doppelsprung an|aus',
+        },
+        {
+          key: 'doubleJumpStrength',
+          type: 'number',
+          default: 1,
+          min: 0.5,
+          max: 2,
+          step: 0.1,
+          label: t('Stärke', 'Strength'),
+          help: t(
+            '1 = etwa 5 Blöcke weit und 3 hoch. 2 = doppelt so weit und gut 6 hoch, 0,5 = ein kleiner Hüpfer.',
+            '1 = about 5 blocks far and 3 high. 2 = twice as far and over 6 high, 0.5 = a little hop.',
+          ),
+          command: '/lobby doppelsprung staerke <zahl>',
         },
       ],
     },

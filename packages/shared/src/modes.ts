@@ -319,6 +319,8 @@ export const MODE_PHASE_PAUSE = 'closed';
  * Zeiten (…_ms) zählen kleiner = besser.
  */
 export const MODE_HEADLINE_STATS: Readonly<Record<string, string>> = {
+  // Kein Spielmodus, aber mit Statistik: das Jump and Run der Lobby.
+  lobby: 'jump_best',
   versteckerl: 'points',
   wintersport: 'gold',
   adlerflug: 'finishes',

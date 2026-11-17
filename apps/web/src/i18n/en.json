@@ -286,6 +286,9 @@
         "tournaments_won": "Tournament wins",
         "heaviest_g": "Heaviest fish (g)",
         "species": "Species in the fish book",
+        "jump_best": "Jump and run – record",
+        "jump_runs": "Jump and run attempts",
+        "jumps": "Jumps",
         "timeOf": "Best time {{course}}",
         "finishesOf": "Finishes {{course}}"
       },
@@ -428,6 +431,21 @@
         "step4": "Rather apply directly in Discord? That works too – type there",
         "link": "To the application"
       },
+      "lobbyFun": {
+        "title": "Jump and run & double jump",
+        "short": "Fun in the lobby while you wait",
+        "intro": "The village is not just for waiting: high above the roofs our jump and run awaits, and anywhere in the lobby you can double jump.",
+        "jumpTitle": "Jump and run",
+        "jump1": "Go to the start in the north-west of the village (next to the castle market) and step on the emerald – or type",
+        "jump2": "High above the village, one block after another appears in front of you. Only you can see your blocks.",
+        "jump3": "Every jump you make scores a point. Over time it gets harder: longer jumps, slabs, fences, ice that melts quickly and slime to bounce on.",
+        "jump4": "If you fall, you are out and land back at the start. Your record is on the board at the start (top 10), on your profile and in the statistics.",
+        "top": "Leaderboard in the chat:",
+        "doubleTitle": "Double jump",
+        "double1": "Jump – and press the jump key once more in mid-air. With sparks, you get a little further forwards and upwards.",
+        "double2": "On phones and consoles (Bedrock) it works the same: jump twice in quick succession.",
+        "doubleNot": "There is no double jump in the jump and run, in jail or during the tour."
+      },
       "commands": {
         "title": "Commands",
         "short": "The most important chat commands",
@@ -507,7 +525,7 @@
         "schloss": {
           "title": "The castle",
           "short": "At the top of the mountain",
-          "text": "Launch pads fly you up the stairs. The parkour spiral with its leaderboard waits at the castle.",
+          "text": "Launch pads fly you up the stairs. High above the village, the jump and run with its leaderboard is waiting.",
           "alt": "The white castle with green tower roofs on the mountain"
         },
         "karte": {
@@ -739,8 +757,9 @@
         "streamerTeil": "Switch one part of streamer mode on or off for yourself (without a word you get the menu to click).",
         "discord": "An invitation to our Discord – and a code to link your account.",
         "rundgang": "A tour through the village (stop: /tour stop).",
-        "parkour": "The leaderboard of the parkour spiral and your best time.",
-        "parkourStart": "To the start of the parkour spiral.",
+        "jnr": "Start the jump and run: high above the village, block after block appears – every jump scores a point (or step on the emerald at the start; /parkour works too).",
+        "jnrTop": "The jump and run leaderboard and your record.",
+        "jnrStop": "End the run and go back to the start.",
         "musik": "Turn the lobby music off and on for you. A brass band plays on normal days, Bavarian music at Oktoberfest, carols in winter – with our lobby pack a real band, otherwise note blocks.",
         "musikLauter": "Make the lobby music quieter or louder (also as a number from 0 to 100). The “Jukebox/Note Blocks” slider in Minecraft's settings works too.",
         "musikWeiter": "Skip to the next piece.",

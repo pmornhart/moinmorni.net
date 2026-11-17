@@ -16,6 +16,7 @@ export * from './lobby/dorfplatz.js';
 export * from './lobby/datapack.js';
 export * from './lobby/features.js';
 export * from './lobby/jail.js';
+export * from './lobby/jumpandrun.js';
 export * from './lobby/schlossmarkt.js';
 export * from './lobby/season.js';
 export * from './wartung/werkstatt.js';
