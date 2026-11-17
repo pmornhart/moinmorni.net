@@ -236,6 +236,21 @@ Lobby-Server (bei jeder Änderung neu).
   Figuren der Spielmodi bleiben, wie sie sind. Jede geänderte Stelle steht mit ihrem alten Block im Plan – jede andere
   Saison stellt sie genau wieder her (auch den Maibaum), Merker `moinmorni:season` in der Welt.
   Probe in einer echten Lobby: `apps/server/scripts/winter-probe.ts <ordner> <rcon> <passwort-datei> an|aus`.
+- **Wiesn** (Saison „Wiesn“, `lobby/wiesn.ts`, Baukasten der Saisons `lobby/saison-kit.ts`): **Kettenkarussell um
+  den Maibaum** (Herzstück: weiß-blaues Dach in 16 Feldern sechs Blöcke über dem Platz, 16 Sitze an Ketten, Wimpel und
+  Lichter am Rand, Licht darunter – darunter läuft man frei durch, der Maibaum bleibt der Mast), **Festzelt-Eingang**
+  von der Ankunft her (Giebel mit weiß-blauen Rauten, großes Herz und „Wiesn“, Fahnen, Laternen, Wimpel, Lichter an
+  den Giebelkanten, Schild „Servus auf der Wiesn!“), **Riesenrad** auf der Wiese westlich vom Platz (Ring aus Beton auf
+  einer Stütze am Einstieg, Bühne mit Laternen, Nabe, Achse, Stützen und Speichen als Anzeigen, acht bunte Gondeln,
+  Lichterkranz, Tafel), **Lebkuchenherzen- und Breznbude** am Eingang, Lebkuchenherzen an allen Marktständen,
+  weiß-blaue Wimpel und Lichter von Stand zu Stand, Wimpel über Dorfstraße und Handwerkergasse, Fässer am Biergarten.
+- **Saisons mit Bauten** (Winter, Wiesn): jede setzt Blöcke über den Bauplan und merkt sich je Stelle den alten Block
+  (`lobby/saison-plan.ts`). Beim Wechsel räumt erst jede andere Saison ihre Blöcke weg (nur, wenn ihr Merker liegt),
+  dann wird gespeichert, die Merker kommen weg, wieder gespeichert, dann setzt die neue Saison Merker, Blöcke und Deko
+  (`seasonStepsFor` in `datapack.ts`) – auch nach einem Absturz mitten im Wechsel passt der Merker zu den Blöcken.
+  Die Bauplan-Prüfung prüft bei diesen Saisons auch ihre Blöcke (über dem Bauplan, `checkLobbyCanvas`). Probe in einer
+  echten Lobby für jede Saison: `apps/server/scripts/saison-probe.ts <ordner> <rcon> <passwort-datei> <saison> an|aus`
+  (Stellen, die gerade eine andere Saison belegt, zählen bei „aus“ nicht).
 - **Dorfleute:** wie viele herumlaufen, stellt das Panel ein.
 
 ## Lobbymusik (`LobbyMusic.java`, Noten in `packages/builder/src/musik/`)

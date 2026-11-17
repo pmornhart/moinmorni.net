@@ -3,8 +3,8 @@
  * Saison-Deko der Lobby (Panel: Lobby → Saison-Deko): Wiesn, Winter, Ostern, Halloween. Die Deko sind Anzeige-Wesen
  * (block_display/text_display) mit dem Tag `mm_season` + `mm_season_<name>` – Umschalten = alte weg, neue hin; das
  * Lobby-Plugin räumt Deko einer anderen Saison weg, sobald sie geladen wird.
- * Der Winter setzt dazu Blöcke (Schnee, Eis, Christbaum, Eisbahn – `winter.ts`); jede Saison stellt sie über
- * `winter/off_…` genau wieder her (datapack.ts).
+ * Wiesn und Winter setzen dazu Blöcke (`wiesn.ts`, `winter.ts`: Karussell, Riesenrad, Schnee, Christbaum …); jede
+ * andere Saison stellt sie über `<saison>/off_…` genau wieder her (datapack.ts).
  */
 import type { Canvas } from '../canvas.js';
 import { GROUND } from '../nature.js';
@@ -14,6 +14,8 @@ import { buildLobby } from './dorfplatz.js';
 import { blockDisplay, multiply, type Quat, type Vec } from './deko.js';
 import { anchorEnd, settle, stands } from './halt.js';
 import { pointAt, stallFrame, STALLS as MARKT_STAENDE } from './weihnachtsmarkt.js';
+import type { SeasonPlan } from './saison-plan.js';
+import { wiesnPlan } from './wiesn.js';
 import { winterPlan, type WinterPlan } from './winter.js';
 
 export const SEASONS = ['none', 'wiesn', 'winter', 'easter', 'halloween'] as const;
@@ -33,9 +35,6 @@ function turnAlong(dx: number, dz: number): Quat {
   return [0, Math.sin(angle / 2), 0, Math.cos(angle / 2)];
 }
 
-/** Zahl für Koordinaten (ohne f). */
-const c = (n: number): string => `${Number(n.toFixed(4))}`;
-const f = (n: number): string => `${Number(n.toFixed(4))}f`;
 const tags = (season: Season): string => `Tags:['mm_season','mm_season_${season}']`;
 
 interface DisplayOptions {
@@ -122,15 +121,6 @@ function chains(w: World, season: Season, colours: readonly string[], lights = f
   return [...street, ...lane, ...radial];
 }
 
-/** Text-Anzeige (für Lebkuchenherzen u. ä.). */
-function sign(season: Season, at: Vec, text: string, colour: string, scale: number): string {
-  const [x, y, z] = at;
-  return (
-    `summon text_display ${c(x)} ${c(y)} ${c(z)} {${tags(season)},billboard:'vertical',text:{text:'${text}',color:'${colour}',bold:true},` +
-    `background:0,shadow:true,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[${f(scale)},${f(scale)},${f(scale)}]}}`
-  );
-}
-
 /** Punkt vor einem Marktstand (Dorfmarkt und Schlossmarkt) in Rahmen-Koordinaten des Stands (siehe `pointAt`). */
 const atStalls = (u: number, y: number, v: number): Vec[] =>
   MARKT_STAENDE.map((stall) => pointAt(stallFrame(stall), u, y, v));
@@ -141,7 +131,6 @@ const DOORS: readonly Vec[] = [32, 50, 68, 86].flatMap((z) => [
   [9.5, GROUND + 1, z + 6 + HALF] as Vec,
 ]);
 
-const WIESN: readonly string[] = ['white_wool', 'light_blue_wool'];
 const EASTER: readonly string[] = [
   'pink_wool',
   'yellow_wool',
@@ -159,27 +148,6 @@ const EGG_COLOURS: readonly string[] = [
   'orange_concrete',
   'cyan_concrete',
 ];
-
-/** Lebkuchenherz vorne unter der Markise jedes Marktstands. */
-const HEART: Vec = [3.5, 3.05, -1.1];
-
-function wiesn(w: World): string[] {
-  const s: Season = 'wiesn';
-  const hearts = atStalls(...HEART).flatMap(([x, y, z]) => [
-    sign(s, [x, y, z], '♥', 'red', 3.6),
-    sign(s, [x, y + 0.35, z], 'Servus!', 'white', 0.7),
-  ]);
-  const barrelSpots: readonly Vec[] = [
-    [55.5, GROUND + 1.5, -20.5],
-    [56.5, GROUND + 1.5, -20.5],
-    [56, GROUND + 2.5, -20.5],
-    [60.5, GROUND + 1.5, 18.5],
-  ];
-  const barrels = barrelSpots.map((at) =>
-    display(s, at, 'barrel', { scale: [1, 1, 1], properties: { facing: 'south' } }),
-  );
-  return [...chains(w, s, WIESN), ...hearts, ...barrels];
-}
 
 /**
  * Winter-Wunderland: alles aus dem Winter-Plan (Dächer, Baum, Stände, Lichterketten vom Maibaum …). Die Ketten quer
@@ -276,9 +244,33 @@ function halloween(w: World): string[] {
   return [...chains(w, s, HALLOWEEN), ...pumpkins, ...stalls, ...graves, ...webs];
 }
 
+/** Saisons mit Bauten (Blöcke, die die Saison setzt und jede andere genau wieder wegräumt). */
+const BUILT: Readonly<Partial<Record<Season, (base: Canvas) => SeasonPlan>>> = {
+  wiesn: wiesnPlan,
+  winter: winterPlan,
+};
+
+/** Bauplan einer Saison mit Bauten – null, wenn sie nur Anzeigen hat (oder keine Saison). */
+export function seasonPlan(season: Season, base: Canvas): SeasonPlan | null {
+  return BUILT[season]?.(base) ?? null;
+}
+
+/** Alle Saisons mit Bauten und ihre Pläne. */
+export function seasonPlans(base: Canvas): Partial<Record<Season, SeasonPlan>> {
+  return Object.fromEntries(
+    SEASONS.flatMap((season) => {
+      const plan = seasonPlan(season, base);
+      return plan ? [[season, plan] as const] : [];
+    }),
+  );
+}
+
 const PLANS: Readonly<Record<Season, (lobby: () => Canvas) => string[]>> = {
   none: () => [],
-  wiesn: (lobby) => wiesn(worldOf(lobby())),
+  wiesn: (lobby) => {
+    const plan = wiesnPlan(lobby());
+    return [...plan.displays, ...plan.moves];
+  },
   winter: (lobby) => winter(winterPlan(lobby())),
   easter: (lobby) => easter(worldOf(lobby())),
   halloween: (lobby) => halloween(worldOf(lobby())),

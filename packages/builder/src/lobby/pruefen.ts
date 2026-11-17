@@ -1,15 +1,15 @@
 /**
- * Die Lobby prüfen: Bauplan mit allen Saison-Dekos durch die Bauplan-Prüfung (`pruefung.ts`). Mit Absicht frei in der
- * Luft steht nur der Bogen aus bunten Blöcken über dem Startplatz des Jump and Run (die Sprünge selbst zeigt das
- * Lobby-Plugin, sie stehen nicht im Bauplan).
+ * Die Lobby prüfen: Bauplan mit allen Saison-Dekos durch die Bauplan-Prüfung (`pruefung.ts`) – bei Saisons mit Bauten
+ * (Winter, Wiesn …) auch ihre Blöcke, so wie sie über dem Bauplan stehen. Mit Absicht frei in der Luft steht nur der
+ * Bogen aus bunten Blöcken über dem Startplatz des Jump and Run (die Sprünge selbst zeigt das Lobby-Plugin, sie stehen
+ * nicht im Bauplan).
  */
-import type { Canvas } from '../canvas.js';
+import { Canvas } from '../canvas.js';
 import { GROUND } from '../nature.js';
 import { checkDecorations, checkPlan, worldOf, type Fund, type World } from '../pruefung.js';
 import { buildLobby } from './dorfplatz.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
-import { SEASONS, seasonCommands, type Season } from './season.js';
-import { winterPlan } from './winter.js';
+import { SEASONS, seasonCommands, seasonPlan, type Season } from './season.js';
 
 /** Wo man in der Lobby herumläuft: das Dorf mit den Wiesen ringsum und der Schlossberg samt Schloss. */
 const WALK = { radius: 125, castle: { x: 45, z1: -170, z2: -80 }, top: GROUND + 40 } as const;
@@ -34,23 +34,49 @@ export interface LobbyCheck {
 }
 
 /**
- * Die Welt, in der die Deko einer Saison steht: der Winter setzt auch Blöcke (Schnee, Christbaum statt Maibaum,
- * Buden, Krippe) – seine Anzeigen hängen und stehen daran.
+ * Die Welt, in der die Deko einer Saison steht: Saisons mit Bauten setzen auch Blöcke (Winter: Schnee, Christbaum,
+ * Buden, Krippe; Wiesn: Karussell, Riesenrad, Festzelt-Eingang …) – ihre Anzeigen hängen und stehen daran.
  */
 function seasonWorld(canvas: Canvas, season: Season): World {
   const base = worldOf(canvas);
-  if (season !== 'winter') return base;
-  const blocks = winterPlan(canvas).blocks;
-  return (x, y, z) => blocks.get(x, y, z) ?? base(x, y, z);
+  const plan = seasonPlan(season, canvas);
+  if (!plan) return base;
+  return (x, y, z) => plan.blocks.get(x, y, z) ?? base(x, y, z);
 }
+
+/** Bauplan der Lobby mit den Blöcken einer Saison darüber (Herkunft der Blöcke bleibt). */
+function withSeason(canvas: Canvas, blocks: Canvas): Canvas {
+  const merged = new Canvas();
+  canvas.each((x, y, z, b) => {
+    const origin = canvas.originAt(x, y, z);
+    if (origin) merged.tagged(origin, () => merged.set(x, y, z, b));
+    else merged.set(x, y, z, b);
+  });
+  // Ein Saison-Block behält seine Herkunft (Eierbaum: Baum), sonst die der Stelle (Blüten an einem Baum bleiben Baum)
+  blocks.each((x, y, z, b) => {
+    const origin = blocks.originAt(x, y, z) || canvas.originAt(x, y, z);
+    if (origin) merged.tagged(origin, () => merged.set(x, y, z, b));
+    else merged.set(x, y, z, b);
+  });
+  return merged;
+}
+
+const fundKey = (f: Fund): string => `${f.art} ${f.x} ${f.y} ${f.z} ${f.text}`;
 
 /** Prüft einen fertigen Bauplan der Lobby samt aller Saison-Dekos. */
 export function checkLobbyCanvas(canvas: Canvas): LobbyCheck {
-  const plan = checkPlan(canvas, { floatingAllowed: jumpHint, walkArea });
+  const opts = { floatingAllowed: jumpHint, walkArea };
+  const plan = checkPlan(canvas, opts);
+  const known = new Set(plan.map(fundKey));
+  /** Was die Blöcke einer Saison (Schnee, Karussell, Riesenrad …) an neuen Funden bringen. */
+  const built = (s: Season): Fund[] => {
+    const own = seasonPlan(s, canvas);
+    return own ? checkPlan(withSeason(canvas, own.blocks), opts).filter((f) => !known.has(fundKey(f))) : [];
+  };
   const seasons = SEASONS.reduce(
     (all, s) => ({
       ...all,
-      [s]: checkDecorations(canvas, seasonCommands(s, canvas), seasonWorld(canvas, s)),
+      [s]: [...built(s), ...checkDecorations(canvas, seasonCommands(s, canvas), seasonWorld(canvas, s))],
     }),
     {} as Partial<Record<Season, readonly Fund[]>>,
   ) as Readonly<Record<Season, readonly Fund[]>>;

@@ -9,8 +9,7 @@ import crypto from 'node:crypto';
 import { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG } from '../village.js';
 import { biomeCommands } from '../shapes.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
-import { SEASONS, seasonCommands, type Season } from './season.js';
-import { winterPlan } from './winter.js';
+import { SEASONS, seasonCommands, seasonPlans, type Season } from './season.js';
 import { withoutHitbox } from './deko.js';
 
 export const LOBBY_NAMESPACE = 'moinmorni_lobby';
@@ -204,13 +203,16 @@ export function lobbyPack(): LobbyPack {
     [fn('finish')]: `${finish.join('\n')}\n`,
     ...Object.fromEntries(parts.map((p, i) => [fn(partName(i)), `${p.join('\n')}\n`])),
   };
-  const winter = winterPlan(canvas);
   const chunks = (list: readonly string[]): string[][] =>
     Array.from({ length: Math.ceil(list.length / PART_SIZE) }, (_, i) =>
       list.slice(i * PART_SIZE, (i + 1) * PART_SIZE),
     );
-  const winterOn = chunks(winter.on);
-  const winterOff = chunks(winter.off);
+  // Saisons mit Bauten (Winter, Wiesn …): Stücke zum Setzen und zum Zurückstellen
+  const built = Object.entries(seasonPlans(canvas)).map(([season, plan]) => ({
+    season: season as Season,
+    on: chunks(plan.on),
+    off: chunks(plan.off),
+  }));
   const seasonFn = (name: string): string => `data/${SEASON_NAMESPACE}/function/${name}.mcfunction`;
   const seasonFiles: Record<string, string> = {
     'pack.mcmeta': `${JSON.stringify({ ...meta, pack: { ...meta.pack, description: 'MoinMorni – Saison-Deko der Lobby' } }, null, 2)}\n`,
@@ -220,10 +222,16 @@ export function lobbyPack(): LobbyPack {
         `${seasonCommands(season, canvas).map(withoutHitbox).join('\n')}\n`,
       ]),
     ),
-    ...Object.fromEntries(winterOn.map((p, i) => [seasonFn(winterPart('on', i)), `${p.join('\n')}\n`])),
-    ...Object.fromEntries(winterOff.map((p, i) => [seasonFn(winterPart('off', i)), `${p.join('\n')}\n`])),
+    ...Object.fromEntries(
+      built.flatMap(({ season, on, off }) => [
+        ...on.map((p, i) => [seasonFn(seasonPart(season, 'on', i)), `${p.join('\n')}\n`] as const),
+        ...off.map((p, i) => [seasonFn(seasonPart(season, 'off', i)), `${p.join('\n')}\n`] as const),
+      ]),
+    ),
   };
-  const seasonSteps = seasonStepsFor(winterOn.length, winterOff.length);
+  const seasonSteps = seasonStepsFor(
+    Object.fromEntries(built.map(({ season, on, off }) => [season, { on: on.length, off: off.length }])),
+  );
   const hash = crypto.createHash('sha256');
   Object.keys(files)
     .sort()
@@ -258,9 +266,14 @@ export function partName(i: number): string {
   return `part/${String(i).padStart(PART_DIGITS, '0')}`;
 }
 
-/** Name eines Winter-Stücks, z. B. `winter/on_003` (Schnee setzen) oder `winter/off_000` (alte Blöcke zurück). */
+/** Name eines Stücks einer Saison, z. B. `winter/on_003` (Schnee setzen) oder `wiesn/off_000` (alte Blöcke zurück). */
+export function seasonPart(season: Season, way: 'on' | 'off', i: number): string {
+  return `${season}/${way}_${String(i).padStart(PART_DIGITS, '0')}`;
+}
+
+/** Name eines Winter-Stücks (wie `seasonPart('winter', …)`). */
 export function winterPart(way: 'on' | 'off', i: number): string {
-  return `winter/${way}_${String(i).padStart(PART_DIGITS, '0')}`;
+  return seasonPart('winter', way, i);
 }
 
 /**
@@ -270,33 +283,48 @@ export function winterPart(way: 'on' | 'off', i: number): string {
  */
 export const SAVE_NOW = 'save-all flush';
 
+/** Stücke einer Saison mit Bauten: wie viele zum Setzen und wie viele zum Zurückstellen. */
+export interface SeasonParts {
+  readonly on: number;
+  readonly off: number;
+}
+
 /**
- * Schritte je Saison bei `onParts` Stücken „Winter an“ und `offParts` Stücken „Winter weg“: Winter = Merker setzen
- * (gleich gespeichert), Stücke, Deko, speichern; jede andere Saison = ihre Deko, die alten Blöcke zurück (nur wenn
- * Winter lag), speichern, erst dann Merker weg und noch einmal speichern. So liegt der Merker nach einem Absturz
- * immer, solange noch Schnee liegen könnte.
+ * Schritte je Saison. Jede Saison mit Bauten hat einen Merker in der Welt (`moinmorni:season {winter:1b}` usw.):
+ * erst räumen die anderen Saisons ihre Bauten weg (nur die, deren Merker liegt), speichern, dann sind ihre Merker weg
+ * und es wird noch einmal gespeichert; dann setzt die gewählte Saison ihren Merker (gleich gespeichert), ihre Bauten
+ * in Stücken, ihre Deko, und alles wird gespeichert. So liegt der Merker nach einem Absturz immer, solange noch
+ * Bauten der Saison stehen könnten.
  */
-export function seasonStepsFor(onParts: number, offParts: number): Record<Season, readonly string[]> {
+export function seasonStepsFor(
+  parts: Partial<Record<Season, SeasonParts>>,
+): Record<Season, readonly string[]> {
   const fnCall = (name: string): string => `function ${SEASON_NAMESPACE}:${name}`;
-  const winterLies = `execute if data storage ${SEASON_STORAGE} {winter:1b} run`;
-  const parts = (n: number): number[] => Array.from({ length: n }, (_, i) => i);
-  const stepsOf = (season: Season): string[] =>
-    season === 'winter'
+  const lies = (s: Season): string => `execute if data storage ${SEASON_STORAGE} {${s}:1b} run`;
+  const count = (n: number): number[] => Array.from({ length: n }, (_, i) => i);
+  const withBlocks = SEASONS.filter((s) => parts[s] !== undefined);
+  const stepsOf = (target: Season): string[] => {
+    const others = withBlocks.filter((s) => s !== target);
+    const own = parts[target];
+    const away = others.flatMap((s) =>
+      count(parts[s]?.off ?? 0).map((i) => `${lies(s)} ${fnCall(seasonPart(s, 'off', i))}`),
+    );
+    const forget = others.map((s) => `data remove storage ${SEASON_STORAGE} ${s}`);
+    const build = own
       ? [
-          // Merker zuerst: bricht das Setzen ab, räumt die nächste Saison trotzdem alles weg.
-          `data modify storage ${SEASON_STORAGE} winter set value 1b`,
+          `data modify storage ${SEASON_STORAGE} ${target} set value 1b`,
           SAVE_NOW,
-          ...parts(onParts).map((i) => fnCall(winterPart('on', i))),
-          fnCall('winter'),
-          SAVE_NOW,
+          ...count(own.on).map((i) => fnCall(seasonPart(target, 'on', i))),
         ]
-      : [
-          fnCall(season),
-          ...parts(offParts).map((i) => `${winterLies} ${fnCall(winterPart('off', i))}`),
-          SAVE_NOW,
-          `data remove storage ${SEASON_STORAGE} winter`,
-          SAVE_NOW,
-        ];
+      : [];
+    return [
+      ...away,
+      ...(others.length > 0 ? [SAVE_NOW, ...forget, SAVE_NOW] : []),
+      ...build,
+      fnCall(target),
+      SAVE_NOW,
+    ];
+  };
   return {
     none: stepsOf('none'),
     wiesn: stepsOf('wiesn'),

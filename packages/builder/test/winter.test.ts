@@ -306,31 +306,49 @@ describe('Winter-Wunderland', () => {
 });
 
 describe('Saison wechseln', () => {
-  const steps = seasonStepsFor(7, 3);
+  const steps = seasonStepsFor({ winter: { on: 7, off: 3 }, wiesn: { on: 2, off: 1 } });
+  const part = (season: string, way: string, i: number): string =>
+    `function moinmorni_season:${season}/${way}_${String(i).padStart(3, '0')}`;
+  const lies = (season: string): string => `execute if data storage ${SEASON_STORAGE} {${season}:1b} run`;
 
-  it('Winter setzt den Merker zuerst (gleich gespeichert), dann die Stücke, die Deko, und speichert', () => {
-    expect(steps.winter.slice(0, 2)).toEqual([
-      `data modify storage ${SEASON_STORAGE} winter set value 1b`,
+  it('Winter räumt erst die Wiesn weg (nur wenn sie liegt), setzt dann den Merker (gleich gespeichert), die Stücke, die Deko', () => {
+    expect(steps.winter.slice(0, 5)).toEqual([
+      `${lies('wiesn')} ${part('wiesn', 'off', 0)}`,
       SAVE_NOW,
+      `data remove storage ${SEASON_STORAGE} wiesn`,
+      SAVE_NOW,
+      `data modify storage ${SEASON_STORAGE} winter set value 1b`,
     ]);
-    expect(steps.winter.slice(2, 9)).toEqual(
-      range(0, 6).map((i) => `function moinmorni_season:winter/on_${String(i).padStart(3, '0')}`),
-    );
+    expect(steps.winter[5]).toBe(SAVE_NOW);
+    expect(steps.winter.slice(6, 13)).toEqual(range(0, 6).map((i) => part('winter', 'on', i)));
     expect(steps.winter.slice(-2)).toEqual(['function moinmorni_season:winter', SAVE_NOW]);
   });
 
-  it('jede andere Saison räumt Winter-Blöcke weg – nur wenn Winter lag – und nimmt den Merker weg', () => {
-    SEASONS.filter((s) => s !== 'winter').forEach((season) => {
+  it('jede Saison ohne Bauten räumt Winter- und Wiesn-Blöcke weg – nur wo der Merker liegt – und nimmt die Merker weg', () => {
+    SEASONS.filter((s) => s !== 'winter' && s !== 'wiesn').forEach((season) => {
       const list = steps[season];
-      expect(list[0]).toBe(`function moinmorni_season:${season}`);
-      expect(list.slice(1, 4)).toEqual(
-        range(0, 2).map(
-          (i) =>
-            `execute if data storage ${SEASON_STORAGE} {winter:1b} run function moinmorni_season:winter/off_${String(i).padStart(3, '0')}`,
-        ),
-      );
-      // erst die Blöcke sicher auf der Platte, dann der Merker weg (nach einem Absturz liegt er sonst falsch)
-      expect(list.slice(-3)).toEqual([SAVE_NOW, `data remove storage ${SEASON_STORAGE} winter`, SAVE_NOW]);
+      expect(list.slice(0, 4)).toEqual([
+        `${lies('wiesn')} ${part('wiesn', 'off', 0)}`,
+        ...range(0, 2).map((i) => `${lies('winter')} ${part('winter', 'off', i)}`),
+      ]);
+      // erst die Blöcke sicher auf der Platte, dann die Merker weg (nach einem Absturz lägen sie sonst falsch)
+      expect(list.slice(4, 8)).toEqual([
+        SAVE_NOW,
+        `data remove storage ${SEASON_STORAGE} wiesn`,
+        `data remove storage ${SEASON_STORAGE} winter`,
+        SAVE_NOW,
+      ]);
+      expect(list.slice(-2)).toEqual([`function moinmorni_season:${season}`, SAVE_NOW]);
+      expect(list.some((c) => c.includes('set value 1b'))).toBe(false);
     });
+  });
+
+  it('die Wiesn baut erst nach dem Aufräumen des Winters', () => {
+    const list = steps.wiesn;
+    const setFlag = list.indexOf(`data modify storage ${SEASON_STORAGE} wiesn set value 1b`);
+    const winterGone = list.indexOf(`data remove storage ${SEASON_STORAGE} winter`);
+    expect(winterGone).toBeGreaterThan(-1);
+    expect(setFlag).toBeGreaterThan(winterGone);
+    expect(list.slice(setFlag + 2, setFlag + 4)).toEqual([part('wiesn', 'on', 0), part('wiesn', 'on', 1)]);
   });
 });
