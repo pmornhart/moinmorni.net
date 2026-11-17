@@ -20,6 +20,8 @@ export * from './lobby/jumpandrun.js';
 export * from './lobby/schlossmarkt.js';
 export * from './lobby/season.js';
 export * from './lobby/winter.js';
+export * from './lobby/saison-plan.js';
+export * from './lobby/wiesn.js';
 export * from './lobby/deko.js';
 export * from './lobby/christbaum.js';
 export * from './lobby/weihnachtsmarkt.js';

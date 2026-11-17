@@ -3,13 +3,21 @@
  * - „an“: an jeder Stelle, die der Winter ändert, steht der Winter-Block; außen an den Bergen ist Gras Schneeblock;
  *   alle Winter-Wesen sind da; der Merker liegt; das Biom ist „Verschneite Ebene“ (vorher gemerkte Biome kommen in
  *   eine Kopie neben dem Server, für den Rückweg).
- * - „aus“: überall wieder der alte Block (auch außen Gras), kein Winter-Wesen, kein Merker, die gemerkten Biome sind
- *   zurück.
+ * - „aus“: überall wieder der alte Block (auch außen Gras; außer wo gerade eine andere Saison mit Bauten steht), kein
+ *   Winter-Wesen, kein Merker, die gemerkten Biome sind zurück.
  *   tsx scripts/winter-probe.ts <server-ordner> <rcon-host:port> <passwort-datei> <an|aus>
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildLobby, forceloadCommands, Rcon, winterPlan, type Canvas } from '@moinmorni/builder';
+import {
+  buildLobby,
+  forceloadCommands,
+  Rcon,
+  seasonPlans,
+  winterPlan,
+  type Canvas,
+  type SeasonPlan,
+} from '@moinmorni/builder';
 
 /** node + Skript stehen vor den eigenen Angaben. */
 const ARGS_FROM = 2;
@@ -74,6 +82,24 @@ function mountainSample(
     .map(([x, y, z]) => [x, y, z, winterOn ? 'snow_block' : 'grass_block']);
 }
 
+/**
+ * Stellen, die gerade eine andere Saison mit Bauten belegt (ihr Merker liegt): dort steht zu Recht deren Block – der
+ * Rückweg dieser Saison gilt dort erst, wenn auch die andere wieder weg ist.
+ */
+async function takenByOthers(
+  rcon: Rcon,
+  canvas: Canvas,
+  own: string,
+): Promise<(x: number, y: number, z: number) => boolean> {
+  const others = Object.entries(seasonPlans(canvas)).filter(([s]) => s !== own);
+  const active = await others.reduce<Promise<SeasonPlan[]>>(async (prev, [s, p]) => {
+    const list = await prev;
+    const flag = await rcon.command(`execute if data storage moinmorni:season {${s}:1b}`);
+    return flag.startsWith(PASSED) ? [...list, p] : list;
+  }, Promise.resolve([]));
+  return (x, y, z) => active.some((p) => p.blocks.get(x, y, z) !== undefined);
+}
+
 async function main(): Promise<void> {
   // Erst rechnen (dauert ein paar Sekunden), dann verbinden – sonst schließt RCON die stille Verbindung.
   const { canvas } = buildLobby();
@@ -105,7 +131,11 @@ async function main(): Promise<void> {
     checks.push({ name, ok, detail });
     console.log(`${ok ? '✓' : '✗'} ${name}${detail ? ` – ${detail}` : ''}`);
   };
-  const expected = (winterOn ? plan.blocks : plan.restore).find(() => true);
+  const taken = winterOn ? (): boolean => false : await takenByOthers(rcon, canvas, 'winter');
+  const all = (winterOn ? plan.blocks : plan.restore).find(() => true);
+  const expected = all.filter(([x, y, z]) => !taken(x, y, z));
+  if (expected.length < all.length)
+    console.log(`${all.length - expected.length} Stellen gehören gerade einer anderen Saison`);
   console.log(`Stellen innen: ${expected.length}`);
   const wrong = await positions(rcon, expected);
   check(

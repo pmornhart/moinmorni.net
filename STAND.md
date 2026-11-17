@@ -317,9 +317,27 @@
     Seltsames. Nicht echt geprüft: Bedrock; Körper-gegen-Rock beim Drehen nur nach Minecrafts Regeln nachgerechnet
     und in Bildfolgen angesehen (keine Zeitlupe; der Rechner war voll, Videos ruckelten unter Last).
 
+- 17.11.: **Wiesn als eigenes Volksfest** (Philip: „das mit dem Winterwunderland auch für alle anderen Events und
+  Dekos machen“; Branch `claude/winter-wunderland`, `packages/builder/src/lobby/wiesn.ts`): **Kettenkarussell um den
+  Maibaum** (Herzstück: weiß-blaues Dach in 16 Feldern, 16 Sitze an Ketten, Wimpel und Lichter am Rand, darunter frei
+  begehbar, der Maibaum ist der Mast), **Festzelt-Eingang** von der Ankunft her (Giebel mit weiß-blauen Rauten, großes
+  Herz „Wiesn“, Fahnen, Lichter, „Servus auf der Wiesn!“), **Riesenrad** auf der Wiese westlich (Betonring auf einer
+  Stütze am Einstieg, Speichen, Nabe und Stützen als Anzeigen, acht Gondeln, Lichterkranz), Lebkuchenherzen- und
+  Breznbude, Herzen an allen Ständen, weiß-blaue Wimpel und Lichter; Musik wie gehabt die Wiesn-Stücke. **Saisons mit
+  Bauten allgemein** (`saison-plan.ts`, `saison-kit.ts`): jede Saison kann Blöcke setzen und merkt sich den alten Block
+  je Stelle; beim Wechsel räumt jede andere ihre Blöcke weg (nur wenn ihr Merker liegt), dann wird gespeichert und
+  erst danach gebaut (`seasonStepsFor`), Probe für jede Saison `apps/server/scripts/saison-probe.ts` (bei „aus“ zählen
+  Stellen einer gerade liegenden anderen Saison nicht, ebenso in `winter-probe.ts`). Die Bauplan-Prüfung prüft jetzt
+  auch die Blöcke jeder Saison (über dem Bauplan, Herkunft bleibt) – Wiesn 0 Funde, Winter 0 Funde. Tests: 86
+  Baukasten- (neu `saisons.test.ts`: Rückweg, Figuren/Rundgang/Launchpads/Jump and Run frei, Eingang offen, Maibaum
+  bleibt, Karussell, Riesenrad; Saisonwechsel mit zwei Saisons mit Bauten), Typen. Echt (Paper 26.1.2 mit
+  Netzwerk-Plugin und Test-Hub, echter Selbstbau): Wiesn an **3/3**, `lobby-test` **30/30** in der Wiesn, Winter →
+  Wiesn weg, Winter an **5/5**, wieder Wiesn → Winter weg **5/5**, keine Saison → `kill -9` 5 s danach → Wiesn aus
+  **3/3**, Winter aus **5/5**, wieder Wiesn **3/3**. Bilder vorher/nachher mit Client 26.3, Tag und Nacht, nur lokal.
+
 ## Offen
 
-- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.).
+- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit der Wiesn auch ihre Blöcke).
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
 - MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).
 - **Philip testet.** Morni Party: Burg Weißenstein + Minispiel-Kulissen (Helfer), danach Go fürs Release. MoinMorni selbst (`main`) und MorniHosting-PR #117 brauchen noch ein eigenes Go, danach Submodul wieder auf MorniHosting `main`.
