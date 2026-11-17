@@ -289,6 +289,8 @@
         "jump_best": "Jump and run – record",
         "jump_runs": "Jump and run attempts",
         "jumps": "Jumps",
+        "golden_eagles": "Golden eagle medals",
+        "bonus_rings": "Bonus rings",
         "timeOf": "Best time {{course}}",
         "finishesOf": "Finishes {{course}}"
       },
@@ -299,6 +301,9 @@
         "gletscherspalte": "Glacier Crevasse",
         "stollenflug": "Tunnel Flight",
         "gipfelkreuz": "Summit Cross",
+        "tagesflug": "Course of the Day",
+        "hoellenschlund": "Hell’s Gorge",
+        "felsenlabyrinth": "Rock Labyrinth",
         "slalom": "Giant Slalom",
         "biathlon": "Biathlon",
         "bob": "Bobsleigh",
