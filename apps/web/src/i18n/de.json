@@ -1126,7 +1126,13 @@
     "myAccount": "Mein Konto",
     "accountShort": "Konto",
     "modeSettings": "Spielmodi",
-    "applications": "Bewerbungen"
+    "applications": "Bewerbungen",
+    "groupPlayers": "Spieler & Strafen",
+    "groupTeam": "Team & Rollen",
+    "groupNetwork": "Netzwerk & Lobby",
+    "groupContent": "Inhalte & Discord",
+    "groupSystem": "System",
+    "toggleGroup": "Gruppe {{name}} auf- oder zuklappen"
   },
   "overview": {
     "greeting": "Servus, {{name}}!",
@@ -2763,5 +2769,13 @@
     "queued_one": "Es lief schon ein Neustart – {{count}} Server kommt gleich danach dran.",
     "queued_other": "Es lief schon ein Neustart – {{count}} Server kommen gleich danach dran.",
     "close": "Schließen"
+  },
+  "fold": {
+    "open": "Aufklappen",
+    "close": "Zuklappen",
+    "changed_one": "{{count}} Einstellung geändert",
+    "changed_other": "{{count}} Einstellungen geändert",
+    "settings_one": "{{count}} Einstellung",
+    "settings_other": "{{count}} Einstellungen"
   }
 }

@@ -1126,7 +1126,13 @@
     "myAccount": "My account",
     "accountShort": "Account",
     "modeSettings": "Game modes",
-    "applications": "Applications"
+    "applications": "Applications",
+    "groupPlayers": "Players & punishments",
+    "groupTeam": "Team & roles",
+    "groupNetwork": "Network & lobby",
+    "groupContent": "Content & Discord",
+    "groupSystem": "System",
+    "toggleGroup": "Expand or collapse group {{name}}"
   },
   "overview": {
     "greeting": "Hello, {{name}}!",
@@ -2763,5 +2769,13 @@
     "queued_one": "A restart was already running – {{count}} server comes right after it.",
     "queued_other": "A restart was already running – {{count}} servers come right after it.",
     "close": "Close"
+  },
+  "fold": {
+    "open": "Expand",
+    "close": "Collapse",
+    "changed_one": "{{count}} setting changed",
+    "changed_other": "{{count}} settings changed",
+    "settings_one": "{{count}} setting",
+    "settings_other": "{{count}} settings"
   }
 }
