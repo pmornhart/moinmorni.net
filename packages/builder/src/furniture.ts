@@ -3,6 +3,7 @@ import type { Canvas } from './canvas.js';
 import { zipOf, type ZipEntry } from './png.js';
 import { airItemDefinition, TRACHT_NS, trachtModels, trachtTextures } from './trachten.js';
 import { BRUNNEN_ERSATZ, brunnenItemCases, brunnenModels } from './brunnen.js';
+import { dorfbrunnenModels } from './dorfbrunnen.js';
 import { STEP, type Facing } from './shapes.js';
 
 /**
@@ -371,7 +372,12 @@ function hiddenBlockstates(): Readonly<Record<string, unknown>> {
   );
 }
 
-/** `items/air.json`: erster Text „brunnen“ → Teil des Prunkbrunnens, sonst wie bisher (Trachten). */
+/** Alle Brunnen-Modelle: Prunkbrunnen (Schlosshof, Rotunde) und Dorfbrunnen (Gasse, Oberdorf). */
+function fountainModels(): Record<string, Record<string, unknown>> {
+  return { ...brunnenModels(), ...dorfbrunnenModels() };
+}
+
+/** `items/air.json`: erster Text „brunnen“ → Teil eines Brunnens, sonst wie bisher (Trachten). */
 function airWithFountain(): Record<string, unknown> {
   const trachten = airItemDefinition() as { readonly model: unknown };
   return {
@@ -379,7 +385,7 @@ function airWithFountain(): Record<string, unknown> {
       type: 'minecraft:select',
       property: 'minecraft:custom_model_data',
       index: 0,
-      cases: [{ when: 'brunnen', model: brunnenItemCases(NS) }],
+      cases: [{ when: 'brunnen', model: brunnenItemCases(NS, Object.keys(fountainModels())) }],
       fallback: trachten.model,
     },
   };
@@ -419,7 +425,7 @@ export function furniturePack(extra: readonly ZipEntry[] = []): Buffer {
     // Trachten und Prunkbrunnen über das (sonst leere) Luft-Modell, siehe trachten.ts und brunnen.ts
     { name: 'assets/minecraft/items/air.json', data: json(airWithFountain()) },
     { name: `assets/${NS}/models/block/leer.json`, data: json(EMPTY_MODEL) },
-    ...Object.entries(brunnenModels())
+    ...Object.entries(fountainModels())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([name, m]) => ({ name: `assets/${NS}/models/item/brunnen/${name}.json`, data: json(m) })),
     ...Object.entries(trachtModels())
