@@ -25,6 +25,8 @@ const WALL_Z = -39;
 const PLAZA = { x1: -50, x2: 50, z1: -38, z2: -23 };
 /** Prachtstraße x −5 … 5 (bleibt frei, steigt zum Schloss an); daneben stehen Mauerpfeiler und Bogen. */
 const STREET = 5;
+/** Marktbogen über der Straße (vorne am Markt, zum Dorfplatz hin). */
+export const MARKET_ARCH_Z = -24;
 const ARCH_POST = STREET + 1;
 
 /**
@@ -201,9 +203,12 @@ function marketCart(c: Canvas, x: number, z: number, side: number, rnd: () => nu
   c.set(x - side, GROUND + 1, z + 1, 'oak_fence');
 }
 
-/** Marktbogen über der Prachtstraße: Pfosten, Balken, Wimpel in den Farben der Stände, Schild „Schlossmarkt“. */
+/**
+ * Marktbogen über der Prachtstraße am Eingang vom Dorfplatz: Pfosten, Balken, Wimpel in den Farben der Stände, Schild
+ * „Schlossmarkt“. Er steht vorne am Markt, damit er das Prunkportal am Fuß der Schlosstreppe nicht verdeckt.
+ */
 function marketArch(c: Canvas): void {
-  const z = -28;
+  const z = MARKET_ARCH_Z;
   const top = GROUND + 7;
   [-ARCH_POST, ARCH_POST].forEach((x) => {
     range(GROUND + 1, top - 1).forEach((y) => c.set(x, y, z, 'stripped_dark_oak_log[axis=y]'));

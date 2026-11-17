@@ -190,7 +190,6 @@ export function buildLobby(): { canvas: Canvas; height: (x: number, z: number) =
       c.set(x, GROUND, z, Math.abs(x) === 5 ? 'polished_andesite' : pick(rnd, PAVING)),
     ),
   );
-  [-6, 6].forEach((x) => lampPost(c, x, GROUND, -24));
   range(-50, 50).forEach((x) => range(-38, -23).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));
   // Weg vom Platz zur Handwerkergasse
   range(-47, -22).forEach((x) => range(3, 11).forEach((z) => c.set(x, GROUND, z, pick(rnd, PAVING))));

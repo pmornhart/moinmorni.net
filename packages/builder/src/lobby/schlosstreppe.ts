@@ -7,7 +7,7 @@
  * bis durchs Schlosstor. Vier Läufe mit 26 Stufen aus weißem Marmor und drei Podesten mit goldener Borte folgen dem
  * Schlossberg; Wangen aus Marmor mit einer Blütenhecke als Geländer, alle paar Stufen ein Pfosten mit Laterne, an den
  * Podesten Goldkugeln, Blumenkübel und Fahnenmasten. Oben der **Schlossvorplatz** in hellem Stein mit Blumenbeeten,
- * Fahnenallee, Lichter- und Wimpelketten über dem Platz, Laternen und zwei Linden. Nachts leuchten die Laternen,
+ * Fahnenallee, Lichterketten (goldene und blaue Laternen) über dem Platz, Laternen und zwei Linden. Nachts leuchten die Laternen,
  * unsichtbares Licht strahlt Portal, Fahnen und Stufen an.
  * Die Launchpads schießen weiter über die Treppe – ihre Flugbahn bleibt frei (Test).
  */
@@ -78,11 +78,12 @@ export const SCHLOSSTREPPE: readonly StairRow[] = RUNS.reduce<StairRow[]>((rows,
 
 const BED_FLOWERS = ['cornflower', 'white_tulip', 'cornflower', 'azure_bluet', 'red_tulip', 'oxeye_daisy'];
 const SLOPE_FLOWERS = ['poppy', 'cornflower', 'oxeye_daisy', 'allium', 'red_tulip', 'azure_bluet'];
-/** Wimpel der Ketten über dem Vorplatz. */
-const PENNANTS = ['lime', 'yellow', 'white', 'light_blue'];
 
-/** Ketten über dem Vorplatz (zwischen den Fahnenmasten am Rand). */
-const GARLAND_Z = [-77, -84, -91];
+/** Fahnenallee am Rand des Vorplatzes (je ein Paar Masten), über den ersten beiden Paaren Lichterketten. */
+const FLAG_ALLEY_Z = [-77, -84, -91];
+const LIGHT_CHAINS = 2;
+/** So hoch sind die Masten der Fahnenallee; die Lichterkette hängt oben an ihnen. */
+const ALLEY_POLE = 7;
 
 /** Stern aus Gold und Smaragd in der Mitte des Teppichs. */
 const STAR_Z = -82;
@@ -264,6 +265,8 @@ function portal(c: Canvas): void {
     depth.forEach((z) => c.set(x, y + 16, z, 'smooth_quartz_slab[type=bottom]'));
   });
   wappen((x, row, block) => c.set(x, y + 15 - row, front, block));
+  // … und hinten (zur Treppe hin) noch einmal, von dort gesehen ebenso links Smaragd
+  wappen((x, row, block) => c.set(-x, y + 15 - row, back - 1, block));
   // Kronleuchter im Bogen: Kette, goldene Mitte, vier Laternen an kurzen Armen
   c.set(0, y + 6, back, 'iron_chain[axis=y]');
   c.set(0, y + 5, back, 'gold_block');
@@ -310,8 +313,8 @@ function portal(c: Canvas): void {
 
 /**
  * Schlossvorplatz: heller Stein, der rote Teppich mit Goldborte und einem Stern aus Gold und Smaragd darin,
- * Blumenbeete, Fahnenallee mit Lichter- und Wimpelketten über dem Platz, Laternen, zwei Linden, zwei hohe Fahnen am
- * Kopf der Treppe.
+ * Blumenbeete, Fahnenallee mit Lichterketten über dem Platz, Laternen, zwei Linden, zwei hohe Fahnen am Kopf der
+ * Treppe.
  */
 function vorplatz(c: Canvas, height: (x: number, z: number) => number, rnd: () => number): void {
   const { x1, x2, z1, z2, y } = VORPLATZ;
@@ -319,7 +322,7 @@ function vorplatz(c: Canvas, height: (x: number, z: number) => number, rnd: () =
     range(z1, z2).forEach((z) => {
       const ground = Math.round(height(x, z));
       range(Math.min(ground, y) - 1, y - 1).forEach((fy) => c.set(x, fy, z, 'stone_bricks'));
-      range(y + 1, y + 7).forEach((fy) => c.set(x, fy, z, 'air'));
+      range(y + 1, y + ALLEY_POLE + 1).forEach((fy) => c.set(x, fy, z, 'air'));
       c.set(x, y, z, plazaTile(x, z));
       if (Math.abs(x) <= RUNNER_HALF && !inStar(x, z)) c.set(x, y + 1, z, CARPET);
       const bed = Math.abs(x) >= 5 && Math.abs(x) <= 10 && z <= z2 - 4 && z >= z1 + 4;
@@ -350,17 +353,16 @@ function vorplatz(c: Canvas, height: (x: number, z: number) => number, rnd: () =
     roundTree(c, x, y + 1, z2 - 2, { height: 9, radius: 3.2, leaves: 'oak_leaves', rnd });
   });
   [-WALL, WALL].forEach((x) => flagpole(c, x, y, z2 - 1, 7, flagOf(x)));
-  // Fahnenallee am Rand, dazwischen Ketten mit Laternen und Wimpeln über den ganzen Platz
-  GARLAND_Z.forEach((z, row) => {
-    [-11, 11].forEach((x) => flagpole(c, x, y, z, 6, row === 1 ? FLAG_GOLD : flagOf(x)));
-    range(-10, 10).forEach((x) => {
-      c.set(x, y + 6, z, 'iron_chain[axis=x]');
-      if (x % 3 === 0) c.set(x, y + 5, z, 'lantern[hanging=true]');
-      else if (Math.abs(x) % 3 === 1) {
-        const colour = PENNANTS[(x + 10 + row) % PENNANTS.length] ?? 'white';
-        c.set(x, y + 5, z, `${colour}_wall_banner[facing=${row % 2 === 0 ? 'south' : 'north'}]`);
-      }
-    });
+  // Fahnenallee am Rand; an den ersten beiden Paaren Lichterketten über den Platz – goldene und blaue Laternen im
+  // Wechsel (weiß-blau), hoch genug, dass sie den Blick aufs Schlosstor frei lassen
+  FLAG_ALLEY_Z.forEach((z, row) => {
+    [-11, 11].forEach((x) => flagpole(c, x, y, z, ALLEY_POLE, row === 1 ? FLAG_GOLD : flagOf(x)));
+    if (row < LIGHT_CHAINS)
+      range(-10, 10).forEach((x) => {
+        c.set(x, y + ALLEY_POLE, z, 'iron_chain[axis=x]');
+        if (x % 2 === 0)
+          c.set(x, y + ALLEY_POLE - 1, z, `${x % 4 === 0 ? '' : 'soul_'}lantern[hanging=true]`);
+      });
   });
   c.place('Schlossvorplatz', x1, y + 1, z1, x2, z2);
 }

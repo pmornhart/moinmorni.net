@@ -7,7 +7,7 @@ import { MODES, modeIcon } from '../src/lobby/common.js';
 import { buildLobby } from '../src/lobby/dorfplatz.js';
 import { LOBBY_SPAWN_VIEW } from '../src/lobby/features.js';
 import { collisionOf, spotKey, walkReport } from '../src/lobby/walk.js';
-import { RING_MODES, SCHLOSSMARKT } from '../src/lobby/schlossmarkt.js';
+import { MARKET_ARCH_Z, RING_MODES, SCHLOSSMARKT } from '../src/lobby/schlossmarkt.js';
 
 // Figur eines Modus im Bau: "summon mannequin 20.5 65 -30.5 {Tags:['mm_npc','mm_skin_x','mm_mode_npc','mm_mode_duels'],…"
 // passt nicht: Schilder ("summon text_display …"). https://regex101.com/?flavor=javascript&regex=%5Esummon%20mannequin%20(%5B-%5Cd.%5D%2B)%20(%5B-%5Cd.%5D%2B)%20(%5B-%5Cd.%5D%2B)%20.*'mm_mode_(%5Ba-z%5D%2B)'&testString=summon%20mannequin%2020.5%2065%20-30.5%20%7BTags%3A%5B'mm_npc'%2C'mm_mode_npc'%2C'mm_mode_duels'%5D%7D
@@ -139,9 +139,18 @@ describe('Dorfmarkt und Schlossmarkt', () => {
     );
   });
 
+  it('auch am Dorfmarkt steht kein Blumentopf direkt neben einer Figur (Waren 2 und 3 liegen neben ihr)', () => {
+    // marketStall legt die Waren auf die Fässer bei u = 0, 1, 5, 6 – die Figur steht bei u = 3, neben ihr u = 1 und 5
+    MODES.forEach((m) =>
+      [m.goods[1], m.goods[2]].forEach((g) =>
+        expect(g?.startsWith('potted_') ?? false, `${m.id}: ${g}`).toBe(false),
+      ),
+    );
+  });
+
   it('Marktbogen hängt Wimpel in den Farben der Stände über die Straße', () => {
     const banners = canvas.find((b) => b.endsWith(']') && b.includes('_wall_banner[facing=south]'));
-    const arch = banners.filter(([, , z]) => z === -27);
+    const arch = banners.filter(([, , z]) => z === MARKET_ARCH_Z + 1);
     expect(arch.length).toBe(6);
     expect(new Set(arch.map(([, , , b]) => b)).size).toBe(6);
   });

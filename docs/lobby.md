@@ -33,15 +33,36 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   mit Theke und Verkäufer). Einrichtung als Daten in `packages/builder/src/village.ts`.
 - **Leute im Dorf**: Figuren mit Tag `mm_walker` schlendern um ihren Platz herum, stehende Figuren schauen Spieler
   in der Nähe an, Kinder sind kleiner.
-- **Schlosstreppe** (`schlosstreppe.ts`): vom Schlossmarkt zu Fuß hinauf zum Schloss – vier Läufe mit 26 Stufen
-  und drei Podesten, dem Schlossberg nachgeführt (Andesit mit hellem Mittelstreifen), Wangen mit Geländer,
-  Laternenpfosten und Blumenkübeln an den Podesten, Blumen am Hang. Unten ein **Aufgang** mit Quarzsäulen, Bogen,
-  Bannern (Smaragd/Gold, Weiß-Blau) und dem Schild „Zum Schloss“, oben der **Schlossvorplatz** mit Mittelweg und Stern
-  aus Gold und Smaragd, Blumenbeeten in Weiß-Blau-Rot, Laternen und zwei Linden. Die Launchpads bleiben zusätzlich –
-  ihre Flugbahn ist frei, gelandet wird auf der Treppe (Test mit Luftreibung wie im Spiel, ganzer Körper).
-- **Schloss** auf dem Hügel: oben an der Treppe das **Schlosstor** (zwei Torpfeiler mit Pilastern, Goldkugel und
-  Laterne, Rundbogen, offene Torflügel, darüber die Attika mit dem Wappen – links Smaragd, rechts Weiß-Blau, Goldrand,
-  Krone – und Banner). Vor Festsaal, Bibliothek und Rittersaal führt je eine **Freitreppe** mit Podest, Wangen,
+- **Prunkaufgang zum Schloss** (`schlosstreppe.ts`, Philip: „richtig schön, edel, wow – jetzt ist hier richtig Party
+  angesagt“): Der **rote Teppich** beginnt am Rand des Dorfplatzes, läuft mit goldener Borte durch den Marktbogen,
+  über die Stufen (Läufer aus rotem Netherziegel – Teppich liegt auf Treppen nicht), über den Vorplatz und durchs
+  Schlosstor bis vor den Prunkbrunnen im Ehrenhof (Test: ohne Lücke).
+  - **Prunkportal** am Fuß der Treppe: je Seite ein Pfeiler mit zwei Quarzsäulen und goldenen Kapitellen, dazwischen
+    eine Nische mit Banner (links Smaragd/Gold, rechts Weiß-Blau) und Blumentopf, Rundbogen aus Marmor mit
+    Schlussstein und Kronleuchter, Gebälk mit der Inschrift „♛ Zum Schloss ♛“, darüber die Attika mit dem Wappen
+    (Smaragd, Gold, Weiß-Blau, Krone; hinten zur Treppe hin noch einmal), Fahnen auf den Pfeilern, Laternen an den
+    Ecken, Blumenkübel davor und in den Ecken zur Stützmauer. Nachts angestrahlt (unsichtbares Licht vor der Front).
+    Der Marktbogen steht dafür vorne am Markt (z −24, zum Dorfplatz hin) – vorher stand er vier Blöcke vor dem Portal
+    und verdeckte es.
+  - **Schlosstreppe**: vier Läufe mit 26 Stufen aus weißem Marmor und drei Podesten (Marmor, Quarzziegel-Rand,
+    goldene Borte neben dem Teppich), dem Schlossberg nachgeführt. Wangen aus Marmor, als Geländer eine Blütenhecke,
+    alle drei Stufen ein Quarzpfosten mit Laterne, an den Enden der Podeste Goldkugeln mit Laternen und Blumenkübel,
+    neben jedem Podest zwei **Fahnenmasten** (Smaragd links, Weiß-Blau rechts), Blumen am Hang, Licht über den Stufen.
+  - **Schlossvorplatz** in hellem Stein (Diorit, glatter Stein), Teppich mit Goldborte und einem Stern aus Gold und
+    Smaragd darin, Blumenbeete, am Kopf der Treppe zwei hohe Fahnen, am Rand eine **Fahnenallee**, zwischen den ersten
+    beiden Paaren **Lichterketten** über den Platz (goldene und blaue Laternen im Wechsel – weiß-blau; so hoch, dass
+    der Blick aufs Schlosstor frei bleibt), Laternen am Mittelweg, zwei Linden, helle Brüstung (Dioritmauer), wo der
+    Platz über dem Hang liegt.
+  - **Schlosstor**: zwei Torpfeiler mit Pilastern, Fahnenmasten auf den Pfeilern, Laternen an den Ecken, Rundbogen,
+    offene Torflügel, **Kronleuchter** im Torweg, darüber die Attika mit dem Wappen und Banner; nachts angestrahlt.
+  - Fahnenmasten sind aus Blasseichen-Zaun (Endstäbe sind dem Prunkbrunnen vorbehalten – das Möbel-Paket blendet sie
+    aus), jede Fahne bekommt unsichtbares Licht (`fahnen.ts`: `flagpole`, `banner`, Wappen).
+  - Die Launchpads bleiben zusätzlich – ihre Flugbahn ist frei (Portal, Fahnen und Pfosten stehen außerhalb, Test mit
+    Luftreibung wie im Spiel, ganzer Körper), gelandet wird auf der Treppe.
+  - **Keine nackte Erde** am Rand von Schlossmarkt, Treppe und Vorplatz (Philip sah bei x −8, z −37 eine Erdwand
+    neben der alten Rampe; Test `lobby-eingang.test.ts` sucht jede sichtbare Erde neben Gebautem). Behoben dabei: ein
+    Erdhügel hinter dem niedrigen Teil der Stützmauer (`range` zählt auch rückwärts).
+- **Schloss** auf dem Hügel: Vor Festsaal, Bibliothek und Rittersaal führt je eine **Freitreppe** mit Podest, Wangen,
   Laternen und Blumen zur Tür (die Säle liegen zwei Blöcke über dem Hof; vorher kam man nicht hinein, und vor jeder
   Tür stand ein Pilaster). Im Festsaal die **Prunktreppe** zur Galerie: zweiläufig links und rechts der Rotunde,
   Marmor mit rotem Läufer, schmiedeeisernes Geländer, Goldpfosten mit Laternen, Teppich unten und oben.
@@ -193,7 +214,9 @@ Lobby-Server auf – ohne RCON von außen, nur über den Motor (`apps/server/src
    nacheinander, `finish` (Spielregeln, Ankunftspunkt, Weltgrenze, Reste älterer Bauten), Stücke loslassen,
    Datenpaket wieder ausschalten. Minecraft lädt die Wesen eines Stücks erst nach den Blöcken – was dabei noch nicht
    geladen war, räumt das Lobby-Plugin über die Bau-Version weg.
-4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun.
+4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun. Die **Bau-Version** ist die
+   Prüfsumme des Datenpakets (`lobbyPack()`): jede Änderung am Bauplan zählt sie von selbst weiter, das nächste
+   Update baut die Lobby neu (von Hand muss nichts hochgezählt werden).
 
 Echt geprüft mit einem frischen Paper 26.3 (`apps/server/scripts/lobby-selbstbau.ts`, Brücke statt Motor):
 Welt-Stücke erzeugen ~4 Min., Bau 55 s, keine Ladefehler, kein Hänger.
