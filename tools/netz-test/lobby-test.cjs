@@ -117,7 +117,7 @@ async function main() {
   const hotbar0 = bot.inventory.slots[36];
   const hotbar8 = bot.inventory.slots[44];
   check('Kompass in der Leiste', hotbar0?.name === 'compass', hotbar0?.name);
-  check('Buch (Rundgang) in der Leiste', hotbar8?.name === 'writable_book', hotbar8?.name);
+  check('Buch (Rundgang) in der Leiste', hotbar8?.name === 'book', hotbar8?.name);
   check(
     'Begrüßung als Titel',
     titles.some((t) => t.includes('Servus in MoinMorni')),
