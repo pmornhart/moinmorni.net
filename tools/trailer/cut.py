@@ -78,8 +78,9 @@ def main():
     filters.append(f'[{last}]fade=t=in:st=0:d=0.6,fade=t=out:st={total - 1.0:.3f}:d=1.0,trim=0:{total:.3f}[vout]')
     mi = 2 * n
     inputs += ['-i', music]
-    cmd = ['ffmpeg', '-y', '-loglevel', 'error', *inputs, '-filter_complex', ';'.join(filters), '-map', '[vout]',
-           '-map', f'{mi}:a', '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-pix_fmt', 'yuv420p',
+    # wenig Threads: auf einem vollen Rechner beendet sonst der Speicherwächter ffmpeg (viele Eingänge in 1080p)
+    cmd = ['ffmpeg', '-y', '-loglevel', 'error', '-filter_complex_threads', '1', *inputs, '-filter_complex', ';'.join(filters), '-map', '[vout]',
+           '-map', f'{mi}:a', '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-threads', '2', '-pix_fmt', 'yuv420p',
            '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-shortest', out]
     subprocess.run(cmd, check=True)
     print(out, f'{total:.1f}s')

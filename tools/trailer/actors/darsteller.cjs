@@ -67,6 +67,15 @@ class Darsteller {
     this.bot = bot;
     zeit.follow(bot);
     bot._client.on('add_resource_pack', (p) => bot._client.write('resource_pack_receive', { uuid: p.uuid, result: 1 }));
+    // Schwung vom Server (Sprungpolster, Heuwagen, Rückstoß) auf den eigenen Körper: mineflayer (bis 26.1) teilt den
+    // Wert wie früher durch 8000 – beim eigenen Spieler bleibt dann nichts übrig. Erst nach der Anmeldung anhängen,
+    // damit dieser Empfänger nach dem von mineflayer läuft und dessen Wert ersetzt.
+    bot.once('login', () => bot._client.on('entity_velocity', (p) => {
+      const v = p.velocity;
+      if (bot.entity && p.entityId === bot.entity.id && v && [v.x, v.y, v.z].every(Number.isFinite)) {
+        bot.entity.velocity.set(v.x, v.y, v.z);
+      }
+    }));
     bot.on('kicked', (r) => this.log('KICK', JSON.stringify(r).slice(0, 200)));
     bot.on('error', (e) => this.log('FEHLER', e.message));
     bot.on('end', () => { this.log('WEG'); this.bot = null; if (!this.e.closing) setTimeout(() => this.connect(), 5000); });

@@ -6,7 +6,8 @@ keine fremden Melodien.
 
   python3 music.py <stil> <ausgabe.wav> [--takte-json takte.json]
 
-Stile: spawn duels gipfelsturm bollwerk burgverlies party mirni mornicraft wolkenkampf versteckerl
+Stile: spawn duels gipfelsturm bollwerk burgverlies party mirni mornicraft wolkenkampf versteckerl adlerflug
+       wintersport angelkoenig maibaumklau dorfkrimi baumeister
 Schreibt neben der WAV-Datei eine JSON mit den Zeitpunkten der Takte (für den Schnitt im Takt).
 """
 import json, os, random, subprocess, sys, tempfile
@@ -72,6 +73,25 @@ STYLES = {
     # whistle = Takte, in denen auf Schlag 4 gepfiffen wird (dazu einmal im Schluss), stacc = kurze Melodietöne.
     'versteckerl': dict(tempo=120, key=2, minor=True, form='IAB AE', lead=71, lead2=9, bass=32, comp=45, pad=49,
                         groove='sneak', drums='sneak', vel=92, whistle=[1, 3, 11, 23], stacc=0.45),
+    # Adlerflug: majestätisch und schnell – Horn über aufsteigenden Streicher-Achteln, Harfe, treibende Pauken.
+    'adlerflug':   dict(tempo=132, key=4, minor=False, form='IAB AE', lead=60, lead2=48, bass=33, comp=48, pad=89,
+                        groove='flight', drums='flight', vel=98),
+    # Wintersport: festlich und sportlich – Trompete und Glockenspiel, Galopp-Begleitung, Schellen und Triangel.
+    'wintersport': dict(tempo=152, key=5, minor=False, form='IAB ABE', lead=56, lead2=9, bass=58, comp=46, pad=48,
+                        groove='gallop', drums='sleigh', vel=98),
+    # Angelkönig: gemütlich am See – Mundharmonika über gezupfter Gitarre, Kontrabass, Besen und Shaker.
+    'angelkoenig': dict(tempo=116, key=7, minor=False, form='IAB AE', lead=22, lead2=24, bass=32, comp=24, pad=48,
+                        groove='pick', drums='brush', vel=90),
+    # Maibaumklau: Blaskapelle beim Dorffest – Trompete und Posaune über Tuba und Akkordeon-Nachschlag, Marschtrommel.
+    'maibaumklau': dict(tempo=120, key=2, minor=False, form='IAB AE', lead=56, lead2=57, bass=58, comp=21, pad=61,
+                        groove='oompah', drums='polka', vel=100),
+    # Dorfkrimi: Nacht im Oberdorf – Oboe über Harfe und langen Streichern, gezupfter Bass, leise Pauke; dazu die
+    # Kirchenglocke (Röhrenglocke) als Motiv: bell = Takte, in denen sie auf Schlag 1 zweimal schlägt.
+    'dorfkrimi':   dict(tempo=92, key=-3, minor=True, form='IAB E', lead=68, lead2=11, bass=32, comp=46, pad=49,
+                        groove='dark', drums='dark', vel=90, bell=[0, 12, 20]),
+    # Baumeister: fröhliche Baustelle – Marimba und Glockenspiel, treibender Bass, Hämmern auf Holzblöcken, Klatschen.
+    'baumeister':  dict(tempo=128, key=7, minor=False, form='IAB AE', lead=12, lead2=9, bass=33, comp=24, pad=48,
+                        groove='drive', drums='werk', vel=96),
 }
 
 
@@ -175,6 +195,19 @@ class Song:
                     if beat == 0:
                         for q in tones: self.note(2, t, q + 12 + k, .25, v - 10)
                     self.note(2, t + TPB // 2, tones[(beat + 1) % len(tones)] + 12 + k, .25, v - 16)
+                elif groove == 'flight':  # aufsteigende Streicher-Achtel, Bass treibt in Achteln, Harfe oben
+                    for e in range(2):
+                        self.note(1, t + e * TPB // 2, root + k + (12 if e else 0), .45, v + (6 if e == 0 else -4))
+                        step = beat * 2 + e
+                        q = tones[step % len(tones)] + 12 * (1 + step // len(tones) % 2)
+                        self.note(2, t + e * TPB // 2, q + k, .5, v - 14 + 3 * beat)
+                    if beat == 0:
+                        for q in tones: self.note(3, t, q + k + 24, 4, v - 34)
+                elif groove == 'gallop':  # Schlittenfahrt: Bass auf 1 und 3, Akkorde im Galopp dazwischen
+                    if beat in (0, 2):
+                        self.note(1, t, root + k + (7 if beat == 2 else 0), .9, v + 8)
+                    for e, d in ((0.5, .25), (0.75, .25)):
+                        for q in tones: self.note(2, t + int(e * TPB), q + 12 + k, d, v - 12)
                 elif groove == 'harp':
                     if beat == 0:
                         self.note(1, t, root + k, 4, v)
@@ -216,6 +249,28 @@ class Song:
                 hit(47 if i % 2 else 45, 3, v - 20)
                 hit(51, 0, v - 45); hit(51, 2, v - 50)
                 if i % 4 == 0: hit(49, 0, v - 25)
+            elif kind == 'flight':  # Pauken und Toms rollen nach vorn, Becken alle vier Takte
+                hit(36, 0, v); hit(36, 1.5, v - 10); hit(36, 2.5, v - 5)
+                hit(38, 1, v - 10); hit(38, 3, v - 10)
+                for b in range(8): hit(42, b / 2, v - 42)
+                if i % 4 == 0: hit(49, 0, v - 15)
+                if i % 2 == 1: hit(47, 3.5, v - 25); hit(45, 3.75, v - 25)
+            elif kind == 'sleigh':  # Schellen auf jedem Achtel, Triangel, Pauke auf 1 und 3
+                hit(36, 0, v); hit(36, 2, v - 8)
+                hit(38, 1, v - 18); hit(38, 3, v - 18)
+                for b in range(8): hit(54, b / 2, v - 30 + (8 if b % 2 == 0 else 0))
+                if i % 2 == 0: hit(81, 0, v - 35)
+                if i % 4 == 0: hit(49, 0, v - 25)
+            elif kind == 'brush':  # Besen und Shaker, ganz entspannt
+                hit(36, 0, v - 28); hit(36, 2.5, v - 40)
+                hit(38, 1, v - 45); hit(38, 3, v - 45)
+                for b in range(8): hit(69, b / 2, v - 48 + (6 if b % 2 else 0))
+            elif kind == 'werk':  # Baustelle: Bass-Trommel, Klatschen, Hammer auf Holzblöcken, Shaker
+                hit(36, 0, v); hit(36, 2, v - 6); hit(36, 2.5, v - 18)
+                hit(39, 1, v - 12); hit(39, 3, v - 12)
+                for b, n in ((.5, 76), (.75, 76), (1.5, 77), (3.5, 76), (3.75, 77)): hit(n, b, v - 20)
+                for b in range(8): hit(70, b / 2, v - 45)
+                if i % 4 == 0: hit(49, 0, v - 25)
             elif kind == 'soft':
                 hit(36, 0, v - 30); hit(37, 2, v - 40)
                 for b in range(4): hit(42, b + .5, v - 55)
@@ -227,7 +282,7 @@ class Song:
                 if i % 4 == 0: hit(81, 0, v - 44)
                 if last:
                     for b, n in ((3, 76), (3.25, 76), (3.5, 77), (3.75, 77)): hit(n, b, v - 22)
-            if last and kind not in ('dark', 'soft', 'sneak'):
+            if last and kind not in ('dark', 'soft', 'sneak', 'brush'):
                 for b in (2, 2.5, 3, 3.25, 3.5, 3.75): hit(45 if b < 3 else 38, b, v - 10)
 
     def build(self):
@@ -276,7 +331,17 @@ class Song:
                 self.whistle(b, 3.0)
             if marks and marks[-1][0] == 'ende':
                 self.whistle(marks[-1][1], 1.5)
+        if s.get('bell'):  # Kirchenglocke als Motiv (eigener Kanal), zuletzt noch einmal im Schluss
+            programs[6] = 14
+            for b in s['bell']:
+                self.bell(b)
         return programs, marks, bar
+
+    def bell(self, bar):
+        """Zwei Glockenschläge (Röhrenglocke) auf Schlag 1 und 3 – wie die Glocke zur Dorfversammlung."""
+        t = bar * self.bar_ticks
+        self.note(6, t, 64 + self.s['key'], 2, 100)
+        self.note(6, t + 2 * TPB, 59 + self.s['key'], 2, 92)
 
     def whistle(self, bar, beat):
         """„Fiu-fiu“: zwei kurze Pfiffe eine Quarte hinauf – wie der Pfiff im Spiel (Flöte, Tonhöhe 1,3 → 1,8)."""

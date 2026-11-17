@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Trailer bauen: python3 make.py <trailer> <schritt> [einstellung …]
 
-Schritte: music · cards · shot [ids|all] [--neu] · sheet · cut · all
+Schritte: music · cards · shot [ids|all] [--neu] · sheet · cut · fertig (720p-Fassung + vorschau.jpg) · all
 Trailer liegen in trailers/<name>.py (STYLE, CARDS, SHOTS, END_NOTE …). Ergebnis und Zwischenstände in
 $MM_TRAILER_OUT/<name>/ (Standard ~/mm-cache/trailer). Die Videos enthalten echte Minecraft-Grafik: nur lokal ansehen
 und an Philip schicken – nie ins Repo oder auf die Webseite.
@@ -109,6 +109,16 @@ def main():
         pf = os.path.join(d, 'schnitt.json'); json.dump(plan, open(pf, 'w'), indent=1)
         out = os.path.join(d, t.FILE)
         subprocess.run([py, os.path.join(HERE, 'cut.py'), pf, out], check=True)
+    if step in ('fertig', 'all'):
+        full = os.path.join(d, t.FILE)
+        small = full.replace('.mp4', '-720p.mp4')
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', full, '-vf', 'scale=1280:720:flags=lanczos',
+                        '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-threads', '2', '-c:a', 'aac', '-b:a',
+                        '160k', '-movflags', '+faststart', small], check=True)
+        at = getattr(t, 'PREVIEW_AT', 2.5)  # Titelkarte mit Bild dahinter
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', str(at), '-i', full, '-frames:v', '1', '-q:v', '3',
+                        os.path.join(d, 'vorschau.jpg')], check=True)
+        print(small, os.path.join(d, 'vorschau.jpg'))
 
 
 if __name__ == '__main__':
