@@ -254,7 +254,8 @@ Lobby-Server auf – ohne RCON von außen, nur über den Motor (`apps/server/src
    `packages/builder/src/lobby/datapack.ts`, ~83 Funktionen à 3000 Befehle).
 3. `minecraft:reload`, Welt-Stücke in kleinen Portionen festhalten (`forceload`, 4×4 Stücke pro Befehl – alles auf
    einmal ließ den Server minutenlang hängen), warten bis geladen, `clean` (alte Wesen weg), Bau-Funktionen
-   nacheinander, `finish` (Spielregeln, Ankunftspunkt, Weltgrenze, Reste älterer Bauten), Stücke loslassen,
+   nacheinander, `finish` (Spielregeln, Ankunftspunkt, Weltgrenze, Reste älterer Bauten), `save-all flush` (stürzt
+   der Server gleich danach ab, steht sonst eine halb gebaute Welt mit neuer Version da), Stücke loslassen,
    Datenpaket wieder ausschalten. Minecraft lädt die Wesen eines Stücks erst nach den Blöcken – was dabei noch nicht
    geladen war, räumt das Lobby-Plugin über die Bau-Version weg.
 4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun.

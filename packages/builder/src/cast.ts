@@ -297,9 +297,9 @@ export const VILLAGE_CAST: Readonly<Record<string, Outfit>> = {
 export const CAST: Readonly<Record<string, Outfit>> = { ...MODE_CAST, ...VILLAGE_CAST };
 
 /**
- * Neue Figuren (16.11.: die Modi vom Schlossmarkt und die Blumenfrau), deren Skins noch nicht von Mojang signiert
- * sind. Bis dahin tragen sie die Tracht einer bestehenden Figur (`STAND_IN`); sobald
- * `tsx tools/lobby-entwuerfe/src/sign-skins.ts` sie signiert hat, tragen sie von selbst ihre eigene.
+ * Neue Figuren (16.11.: die Modi vom Schlossmarkt und die Blumenfrau; seit dem 16.11. nachts signiert). Solange eine
+ * neue Figur noch nicht von Mojang signiert ist, trägt sie die Tracht einer bestehenden Figur (`STAND_IN`); sobald
+ * `tsx tools/lobby-entwuerfe/src/sign-skins.ts` sie signiert hat, trägt sie von selbst ihre eigene.
  */
 export const PENDING_CAST: Readonly<Record<string, Outfit>> = {
   wolkenkampf: {
