@@ -19,14 +19,21 @@ describe('Spielmodi beim Start', () => {
     const stores = createStores(handle.db, createEventBus());
     const ids = stores.modes().map((m) => m.id);
     expect(ids).toHaveLength(DEFAULT_MODES.length);
-    ['wolkenkampf', 'versteckerl', 'wintersport', 'adlerflug', 'angelkoenig'].forEach((id) =>
-      expect(ids).toContain(id),
-    );
+    [
+      'wolkenkampf',
+      'versteckerl',
+      'wintersport',
+      'adlerflug',
+      'angelkoenig',
+      'maibaumklau',
+      'dorfkrimi',
+      'baumeister',
+    ].forEach((id) => expect(ids).toContain(id));
     const duels = stores.modes().find((m) => m.id === 'duels');
     expect(duels).toMatchObject({ position: 20, maxPlayers: 7 });
     // Neue hinter allen bestehenden (auch hinter dem nach hinten sortierten Duels), in ihrer Reihenfolge.
     const fresh = stores.modes().filter((m) => !old.some((o) => o.id === m.id));
-    expect(fresh.map((m) => m.position)).toEqual([21, 22, 23, 24, 25]);
+    expect(fresh.map((m) => m.position)).toEqual([21, 22, 23, 24, 25, 26, 27, 28]);
     // Zweiter Start: nichts doppelt, nichts verschoben.
     const again = createStores(handle.db, createEventBus()).modes();
     expect(again.map((m) => [m.id, m.position])).toEqual(stores.modes().map((m) => [m.id, m.position]));

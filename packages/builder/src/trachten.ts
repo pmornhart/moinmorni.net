@@ -49,7 +49,10 @@ type TexName =
   | 'lampe'
   | 'skiglas'
   | 'gold'
-  | 'gurt';
+  | 'gurt'
+  // Modus-Figuren vom 17.11. abends: Maibaum-Kranz und weiß-blaue Bänder (fertig gefärbt)
+  | 'kranz'
+  | 'raute';
 interface Part {
   readonly from: Vec;
   readonly to: Vec;
@@ -290,6 +293,45 @@ function MODE_HATS(): Record<string, readonly Part[]> {
       p([5.6, HI + 2.6, 5.6], [10.4, HI + 6.8, 10.4], 'filz', 1),
       p([X0 - 0.5, BRIM - 0.2, X0 - 0.5], [X1 + 0.5, BRIM + 1.2, X1 + 0.5], 'gurt'),
       p([h(0.4), BRIM - 0.6, X0 - 1.6], [h(7.6), BRIM + 1.8, X0 - 0.5], 'skiglas'),
+    ],
+    // Trachtenhut mit Maibaum-Kranz um den Hutkopf, weiß-blauen Bändern im Nacken und einem Gamsbart an der Seite
+    kranzhut: [
+      p([LO - 2.4, BRIM, LO - 2.4], [HI + 2.4, BRIM + 0.6, HI + 2.4], 'filz', 0),
+      p([X0, BRIM + 0.6, X0], [X1, HI + 3.0, X1], 'filz', 0),
+      p([X0 + 1.6, HI + 3.0, X0 + 2.4], [X1 - 1.6, HI + 3.8, X1 - 2.4], 'filz', 0),
+      p([X0 - 0.7, BRIM + 0.6, X0 - 0.7], [X1 + 0.7, BRIM + 2.6, X1 + 0.7], 'kranz'),
+      p([5.6, BRIM - 6.4, X1 + 0.8], [7.4, BRIM + 1.2, X1 + 1.2], 'raute'),
+      p([8.8, BRIM - 7.6, X1 + 0.8], [10.6, BRIM + 1.2, X1 + 1.2], 'raute'),
+      p([X1 + 0.8, BRIM + 1.4, 8.4], [X1 + 2.4, BRIM + 8.2, 10.8], 'feder', undefined, {
+        angle: -22.5,
+        axis: 'z',
+        origin: [X1 + 1.0, BRIM + 1.6, 9.6],
+      }),
+    ],
+    // Jägerhut: vorn tiefer gezogene Krempe, Kordel (Farbe 1), großer Gamsbart hinten als buschiger Pinsel
+    jaegerhut: [
+      p([LO - 2.2, BRIM - 0.3, LO - 3.0], [HI + 2.2, BRIM + 0.3, HI + 2.2], 'filz', 0),
+      p([X0, BRIM + 0.3, X0], [X1, HI + 2.8, X1], 'filz', 0),
+      p([X0 + 1.4, HI + 2.8, X0 + 2.2], [X1 - 1.4, HI + 3.6, X1 - 2.2], 'filz', 0),
+      p([X0 - 0.2, BRIM + 0.3, X0 - 0.2], [X1 + 0.2, BRIM + 1.3, X1 + 0.2], 'band', 1),
+      p([9.6, BRIM + 1.0, X1 + 0.2], [12.4, BRIM + 3.0, X1 + 1.4], 'band', 1),
+      p([9.4, BRIM + 2.6, X1 + 0.4], [12.6, BRIM + 9.6, X1 + 3.2], 'feder', undefined, {
+        angle: 22.5,
+        axis: 'x',
+        origin: [11, BRIM + 2.6, X1 + 1.0],
+      }),
+      p([10.0, BRIM + 8.4, X1 + 0.8], [12.0, BRIM + 11.0, X1 + 2.8], 'feder', undefined, {
+        angle: 22.5,
+        axis: 'x',
+        origin: [11, BRIM + 2.6, X1 + 1.0],
+      }),
+    ],
+    // Zimmermannshut: sehr breite Krempe, niedriger Kopf, schwarzes Band (Farbe 1)
+    zimmerhut: [
+      p([LO - 5.2, BRIM, LO - 5.2], [HI + 5.2, BRIM + 0.6, HI + 5.2], 'filz', 0),
+      p([X0, BRIM + 0.6, X0], [X1, HI + 2.6, X1], 'filz', 0),
+      p([LO + 0.4, HI + 2.6, LO + 0.4], [HI - 0.4, HI + 3.2, HI - 0.4], 'filz', 0),
+      p([X0 - 0.2, BRIM + 0.6, X0 - 0.2], [X1 + 0.2, BRIM + 1.8, X1 + 0.2], 'band', 1),
     ],
     // Fischerhut: Krempe nach unten, Band (Farbe 1), oben eine kleine goldene Krone
     bucket: [
@@ -717,6 +759,13 @@ export function trachtTextures(): Record<TexName, Buffer> {
       30,
     ),
     gold: pic((x, y, r) => shadeHex(0xe8b830, 0.9 + (x + y === 4 ? 0.3 : 0) + r() * 0.12), 31),
+    // Maibaum-Kranz: Tannengrün mit Blüten
+    kranz: pic((x, y, r) => {
+      if ((x * 5 + y * 3) % 7 === 0) return [0xf4f4f4, 0x3a6fd8, 0xe0403a, 0xf2c230][(x + y) % 4] ?? 0xf4f4f4;
+      return shadeHex(0x2f6b2a, 0.8 + ((x + 2 * y) % 4) * 0.08 + r() * 0.08);
+    }, 33),
+    // Bänder: weiß-blaue Rauten wie am Maibaum
+    raute: pic((x, y) => (Math.abs((x % 8) - 4) + Math.abs((y % 8) - 4) < 4 ? 0x2f6fd8 : 0xf4f4f4), 34),
     // Gurt: dunkles Band mit Naht
     gurt: pic((_x, y, r) => grey((y % 5 === 0 ? 70 : 46) + r() * 10), 32),
   };

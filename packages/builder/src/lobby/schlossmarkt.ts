@@ -18,8 +18,14 @@ export const RING_MODES = 7;
 
 /** Vorderkante der Stände (sie schauen nach Süden, zum Dorfplatz). */
 const FRONT_Z = -31;
-/** Mitte der Stände: innen zuerst (nah an der Prachtstraße), abwechselnd links und rechts. */
-const SLOTS: readonly number[] = [-20, 20, -30, 30, -40, 40];
+/**
+ * Mitte der Stände: innen zuerst (nah an der Prachtstraße), abwechselnd links und rechts. Seit dem 17.11. acht Stände
+ * mit je 8 Blöcken Abstand (vorher sechs mit 10) – Platz für Maibaumklau, Dorfkrimi und Baumeister. Innen nicht näher
+ * an die Straße: Dort fliegen die Launchpads (x ±14) zur Schlosstreppe hinauf.
+ */
+const SLOTS: readonly number[] = [-18, 18, -26, 26, -34, 34, -42, 42];
+/** Zwischen zwei Ständen (Laterne, Tischchen, Fass; davor eine Brotzeit-Garnitur): so weit neben der Mitte. */
+const GAP = 4;
 /** Nordrand des Vorplatzes: dahinter steigt der Schlossberg an (Stützmauer mit Hecke). */
 const WALL_Z = -39;
 /** Stützmauer am Nordrand: ihre Pfeiler an der Straße bleiben stehen, die Schlosstreppe schließt an sie an. */
@@ -32,7 +38,8 @@ export const MARKET_ARCH_Z = -24;
 const ARCH_POST = STREET + 1;
 
 /**
- * Der sechste Stand gehört keinem Modus: Blumen und Kräuter aus dem Schlossgarten. Neben der Blumenfrau liegen nur
+ * Ein freier Stand gehört keinem Modus: Blumen und Kräuter aus dem Schlossgarten. Sind alle Stände besetzt, verkauft die
+ * Blumenfrau am Marktkarren im Westen. Neben der Blumenfrau liegen nur
  * flache Sachen auf der Theke – Kräuter (Moos) und Kerzen (Töpfe dort verdeckten von der Seite ihr Gesicht, Blüten
  * wachsen nicht auf einem Fass), Töpfe nur außen.
  */
@@ -107,22 +114,48 @@ export function buildSchlossmarkt(c: Canvas, height: (x: number, z: number) => n
   });
   // Zwischen den Ständen: Laterne, Tischchen mit Krug (für die Standler), Blumenkübel; davor Brotzeit-Garnituren
   [-1, 1].forEach((side) => {
-    [25, 35].forEach((ax) => {
-      const x = side * ax;
-      lampPost(c, x, GROUND, FRONT_Z + 1);
-      c.set(x, GROUND + 1, FRONT_Z - 1, MOEBEL.wirtstisch);
-      c.set(x, GROUND + 2, FRONT_Z - 1, MOEBEL.krug(1));
-      c.set(x, GROUND + 1, FRONT_Z - 3, 'barrel[facing=up]');
-      c.set(x, GROUND + 2, FRONT_Z - 3, pick(rnd, ['potted_red_tulip', 'potted_pink_tulip', 'potted_poppy']));
-      brotzeit(c, x, -25);
-    });
-    marketCart(c, side * 47, FRONT_Z + 1, side, rnd);
+    SLOTS.filter((x) => x > 0)
+      .slice(0, -1)
+      .map((x) => x + GAP)
+      .forEach((ax) => {
+        const x = side * ax;
+        lampPost(c, x, GROUND, FRONT_Z + 1);
+        c.set(x, GROUND + 1, FRONT_Z - 1, MOEBEL.wirtstisch);
+        c.set(x, GROUND + 2, FRONT_Z - 1, MOEBEL.krug(1));
+        c.set(x, GROUND + 1, FRONT_Z - 3, 'barrel[facing=up]');
+        c.set(
+          x,
+          GROUND + 2,
+          FRONT_Z - 3,
+          pick(rnd, ['potted_red_tulip', 'potted_pink_tulip', 'potted_poppy']),
+        );
+        brotzeit(c, x, -25);
+      });
+    marketCart(c, side * 48, FRONT_Z + 1, side, rnd);
   });
 
+  if (!SCHLOSSMARKT.some((slot) => slot.mode === FLOWER_STAND.id)) flowerCart(c);
   marketArch(c);
   flowerBorder(c, rnd);
   signpost(c);
   marketFolk(c);
+}
+
+/** Sind alle Stände besetzt: Die Blumenfrau verkauft neben dem westlichen Marktkarren (mit Blume in der Hand). */
+function flowerCart(c: Canvas): void {
+  const [x, z] = [-46, FRONT_Z + 3];
+  npc(c, {
+    x,
+    y: GROUND + 1,
+    z,
+    look: 'south',
+    skin: FLOWER_STAND.skin,
+    hand: 'poppy',
+    tags: ['mm_village', 'mm_market'],
+  });
+  [-1, 1].forEach((dx) =>
+    c.set(x + dx, GROUND + 1, z - 1, dx < 0 ? 'potted_red_tulip' : 'potted_oxeye_daisy'),
+  );
 }
 
 /** Wo der Schlossberg schon über den Vorplatz wächst, das Gras wegnehmen (die Pflaster bleiben). */
@@ -277,7 +310,7 @@ function marketFolk(c: Canvas): void {
     tags: village,
   });
   npc(c, {
-    x: 35,
+    x: 38,
     y: GROUND + 1,
     z: -24,
     look: 'north',
@@ -300,9 +333,9 @@ function marketFolk(c: Canvas): void {
       tags: ['mm_walker', 'mm_route_schlossmarkt'],
     }),
   );
-  // Je eine Linde an den Enden spendet Schatten über den Karren.
+  // Je eine Linde an den Enden spendet Schatten über den Karren (außerhalb der Markisen).
   const shade = random(77);
-  [-47, 47].forEach((x) => {
+  [-50, 50].forEach((x) => {
     // Baumscheibe: Gras statt Pflaster unter dem Stamm
     pairs(range(x - 1, x + 1), range(-37, -35)).forEach(([gx, gz]) => c.set(gx, GROUND, gz, 'grass_block'));
     roundTree(c, x, GROUND + 1, -36, { height: 9, radius: 3.4, leaves: 'oak_leaves', rnd: shade });

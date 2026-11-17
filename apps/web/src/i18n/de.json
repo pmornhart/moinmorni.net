@@ -379,6 +379,32 @@
         },
         "mirni": {
           "balance": "Taler auf dem Konto"
+        },
+        "maibaumklau": {
+          "tags": "Abgefangen",
+          "saves": "Bäume gerettet",
+          "lifts": "Maibäume umgelegt",
+          "captures": "Maibäume heimgebracht",
+          "carried": "Blöcke mit dem Baum getragen",
+          "best_points": "Meiste Punkte in einer Runde"
+        },
+        "dorfkrimi": {
+          "wins_wilderer": "Siege als Wilderer",
+          "wins_gendarm": "Siege als Gendarm",
+          "arrests": "Wilderer gefasst",
+          "stuns": "Betäubt",
+          "clues": "Spuren gefunden",
+          "best_points": "Meiste Punkte in einer Runde"
+        },
+        "baumeister": {
+          "subjectHead": "Spielart",
+          "podiums": "Auf dem Podest",
+          "points": "Sterne bekommen",
+          "votes_given": "Bauten bewertet",
+          "masterworks": "Meisterwerke",
+          "blocks": "Blöcke gesetzt",
+          "best_score": "Beste Wertung (Sterne)",
+          "best_points": "Meiste Sterne in einer Runde"
         }
       },
       "courses": {
@@ -414,6 +440,11 @@
       "coursesIn": {
         "gipfelsturm": {
           "gipfelkreuz": "Gipfelkreuz-Sprint"
+        },
+        "baumeister": {
+          "klassisch": "Klassisch",
+          "schnell": "Schnell",
+          "paare": "Zu zweit"
         }
       }
     },
@@ -823,6 +854,54 @@
           "fischbuch": "Was du schon gefangen hast.",
           "turnier": "Wann das nächste Turnier ist.",
           "top": "Bestenlisten."
+        }
+      },
+      "maibaumklau": {
+        "tip1": "Zwei Dörfer, zwei Maibäume: Stell dich an den fremden Baum und leg ihn um – zu zweit oder zu dritt geht es schneller, jede Wache am Baum hält einen auf.",
+        "tip2": "Tragt den Baum gemeinsam heim: Allein bist du langsam, jeder aus deinem Dorf, der mitläuft, macht euch schneller. Wer einen Träger berührt, rettet den Baum.",
+        "tip3": "Ganz ohne Waffen: Auf der eigenen Hälfte fängst du Diebe mit einem Schlag ab. Sprint-Brotzeit, Heuballen-Sprung und Leitern helfen – alles kostenlos.",
+        "cmd": {
+          "karte": "Über die Karte abstimmen.",
+          "bereit": "Bereit melden.",
+          "top": "Die besten Maibaumdiebe.",
+          "zuschauen": "Einer Runde zuschauen.",
+          "verlassen": "Runde oder Zuschauen verlassen.",
+          "stats": "Deine Statistik – oder die von jemand anderem.",
+          "admin": "Stand der Runden (Team)."
+        }
+      },
+      "dorfkrimi": {
+        "tip1": "Jeder bekommt eine geheime Rolle: Wilderer, Gendarm oder Dorfleute. Namen sind verborgen – man erkennt sich an der Tracht.",
+        "tip2": "Spuren und Federn verraten etwas über die Tracht des Wilderers. Das Notizbuch zeigt, wer dazu passt.",
+        "tip3": "Mit der Glocke ruft man die Dorfversammlung: Alle stimmen ab, wer festgenommen wird. Wer betäubt ist, sitzt auf der Bank vor der Wirtschaft.",
+        "cmd": {
+          "notizbuch": "Notizbuch mit allen und ihrer Tracht.",
+          "abstimmen": "Stimmzettel der Dorfversammlung.",
+          "karte": "Über die Karte abstimmen.",
+          "bereit": "Bereit melden.",
+          "bank": "Ausgeschieden: zurück auf die Bank.",
+          "zuschauen": "Einer Runde zuschauen.",
+          "verlassen": "Runde oder Zuschauen verlassen.",
+          "stats": "Deine Statistik – oder die von jemand anderem.",
+          "top": "Die besten Dorfdetektive.",
+          "admin": "Stand der Runden (Team)."
+        }
+      },
+      "baumeister": {
+        "tip1": "Stimmt über das Thema ab – dann hat jeder seine eigene Parzelle und baut im Kreativmodus, bis die Zeit um ist.",
+        "tip2": "In der Werkzeugkiste: Boden, Uhrzeit und Wetter der Parzelle, Köpfe, Banner – und mit dem Zollstock Füllen, Ersetzen, Leeren.",
+        "tip3": "Danach bewertet jeder die Bauten der anderen mit 1 bis 5 Sternen. Wer erst bei der Siegerehrung erfährt, wer was gebaut hat, bewertet fair.",
+        "cmd": {
+          "thema": "Themen-Wahl öffnen oder abstimmen.",
+          "werkzeug": "Werkzeugkiste öffnen.",
+          "bewerten": "Den gezeigten Bau bewerten.",
+          "spielart": "Über die Spielart abstimmen.",
+          "bereit": "Bereit melden.",
+          "zuschauen": "Einer Runde zuschauen.",
+          "verlassen": "Runde oder Zuschauen verlassen.",
+          "stats": "Deine Statistik – oder die von jemand anderem.",
+          "top": "Die besten Baumeister.",
+          "admin": "Stand der Runden (Team)."
         }
       }
     },

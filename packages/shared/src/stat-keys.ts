@@ -44,6 +44,8 @@ export const ADLERFLUG_COURSES = [
 const ADLERFLUG_DAILY = 'tagesflug';
 /** Disziplinen von Wintersport (`time_<disziplin>_ms`). */
 export const WINTERSPORT_DISCIPLINES = ['slalom', 'biathlon', 'bob'] as const;
+/** Spielarten von Baumeister (`games_<spielart>`). */
+export const BAUMEISTER_GAME_TYPES = ['klassisch', 'schnell', 'paare'] as const;
 
 const each = (ids: readonly string[], ...kinds: readonly string[]): string[] =>
   ids.flatMap((id) => kinds.map((kind) => `${kind}_${id}`));
@@ -138,6 +140,41 @@ export const MODE_STAT_KEYS: Readonly<Record<string, readonly string[]>> = {
     ...timesOf(ADLERFLUG_COURSES),
   ],
   angelkoenig: ['catches', 'legendary', 'tournaments_won', 'heaviest_g', 'species'],
+  maibaumklau: [
+    'games',
+    'wins',
+    'draws',
+    'tags',
+    'saves',
+    'lifts',
+    'captures',
+    'carried',
+    'points',
+    'best_points',
+  ],
+  dorfkrimi: [
+    'games',
+    'wins',
+    'wins_wilderer',
+    'wins_gendarm',
+    'arrests',
+    'stuns',
+    'clues',
+    'points',
+    'best_points',
+  ],
+  baumeister: [
+    'games',
+    'wins',
+    'podiums',
+    'points',
+    'votes_given',
+    'masterworks',
+    'blocks',
+    'best_score',
+    'best_points',
+    ...each(BAUMEISTER_GAME_TYPES, 'games'),
+  ],
 };
 
 /**

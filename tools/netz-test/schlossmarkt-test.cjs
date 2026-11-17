@@ -1,8 +1,8 @@
 /**
  * Test des Schlossmarkts mit einem echten Test-Spieler (mineflayer, Paper 26.1.2) nach einem Neubau der Lobby:
- * Jeder der zwölf Modi hat genau eine Figur, die neuen stehen am Schlossmarkt, ihr Schild zeigt Live-Zustände
+ * Jeder der fünfzehn Modi hat genau eine Figur, die neuen stehen am Schlossmarkt, ihr Schild zeigt Live-Zustände
  * (Wintersport „Sommerpause“, wenn er das meldet), ein Klick auf eine neue Figur schickt dem Hub `play` und der
- * antwortet („Ab nach Versteckerl …“), das Kompass-Menü zeigt zwölf Modi in mittigen Reihen.
+ * antwortet („Ab nach Versteckerl …“), das Kompass-Menü zeigt fünfzehn Modi in mittigen Reihen.
  * Ohne Velocity spielt `apps/server/scripts/proxy-lauschen.ts` den Proxy (meldet den Test-Spieler als „in der Lobby“
  * und schreibt mit, was der Hub dem Proxy schickt) – dessen Ausgabe liest der Test (PROXY_LOG).
  * Mit MIRNI_HUB=<hub.json des MorniSMP-Servers> prüft er dazu „gerade geschlossen“ statt „Sommerpause“: MorniSMP
@@ -39,9 +39,21 @@ const MODES = [
   'wintersport',
   'adlerflug',
   'angelkoenig',
+  'maibaumklau',
+  'dorfkrimi',
+  'baumeister',
 ];
 /** Die neuen Modi stehen am Schlossmarkt (x der Standmitte, Figur bei z −32). */
-const MARKET = { wolkenkampf: -20, versteckerl: 20, wintersport: -30, adlerflug: 30, angelkoenig: -40 };
+const MARKET = {
+  wolkenkampf: -18,
+  versteckerl: 18,
+  wintersport: -26,
+  adlerflug: 26,
+  angelkoenig: -34,
+  maibaumklau: 34,
+  dorfkrimi: -42,
+  baumeister: 42,
+};
 /** MorniSMP steht am Dorfmarkt (Figur bei x −7,5, z 14,5, schaut nach Norden). */
 const MIRNI = { x: -7.5, z: 14.5 };
 const MIRNI_HUB = process.env.MIRNI_HUB;
@@ -126,7 +138,7 @@ async function main() {
     check(`Figur ${id}`, n === 1, `${n}×`);
   });
   const all = count(rcon('execute if entity @e[type=minecraft:mannequin,tag=mm_mode_npc]'));
-  check('genau zwölf Modus-Figuren', all === MODES.length, `${all}`);
+  check('genau fünfzehn Modus-Figuren', all === MODES.length, `${all}`);
   Object.entries(MARKET).forEach(([id, x]) => {
     const n = count(
       rcon(
@@ -136,10 +148,10 @@ async function main() {
     check(`${id} steht am Schlossmarkt`, n === 1);
   });
   const blume = count(rcon('execute if entity @e[type=minecraft:mannequin,tag=mm_skin_blumenfrau]'));
-  check('Blumenfrau am sechsten Stand', blume === 1);
+  check('Blumenfrau am Marktkarren (alle Stände besetzt)', blume === 1);
 
   // Schild über der Wintersport-Figur (Live vom Lobby-Plugin): Sommerpause, wenn der Modus das meldet.
-  rcon(`tp ${NAME} -29.5 65 -27.5 180 0`);
+  rcon(`tp ${NAME} -25.5 65 -27.5 180 0`);
   await wait(2500);
   const labels = Object.values(bot.entities).filter(
     (e) => e.position && e.position.distanceTo(bot.entity.position) < 8 && e.metadata,
@@ -156,9 +168,9 @@ async function main() {
   check('Schild Wintersport: Klick zum Anschauen', /Dorf anschauen|look around/.test(signs));
 
   // Klick auf die Versteckerl-Figur → Hub antwortet
-  rcon(`tp ${NAME} 20.5 65 -28.5 180 0`);
+  rcon(`tp ${NAME} 18.5 65 -28.5 180 0`);
   await wait(2500);
-  const figure = figureAt(bot, 20.5, -31.5);
+  const figure = figureAt(bot, 18.5, -31.5);
   check(
     'Versteckerl-Figur in Reichweite',
     Boolean(figure),
@@ -174,9 +186,9 @@ async function main() {
   check('Klick: Hub antwortet mit Versteckerl', /Versteckerl/.test(answer), answer.slice(0, 200));
 
   // Klick auf Wintersport im Sommer: freundlicher Hinweis
-  rcon(`tp ${NAME} -29.5 65 -28.5 180 0`);
+  rcon(`tp ${NAME} -25.5 65 -28.5 180 0`);
   await wait(2500);
-  const winter = figureAt(bot, -29.5, -31.5);
+  const winter = figureAt(bot, -25.5, -31.5);
   check('Wintersport-Figur in Reichweite', Boolean(winter));
   const before2 = proxyLines();
   if (winter) {
@@ -189,7 +201,7 @@ async function main() {
 
   if (MIRNI_HUB) await mirniClosed(bot);
 
-  // Kompass-Menü: zwölf Modi, je Reihe mittig
+  // Kompass-Menü: fünfzehn Modi, je Reihe mittig
   const compass = bot.inventory.items().find((i) => i.name === 'compass');
   check('Kompass in der Leiste', Boolean(compass));
   if (compass) {
@@ -205,16 +217,16 @@ async function main() {
         .filter(([s]) => s && !s.name.endsWith('stained_glass_pane'))
         .map(([s, i]) => ({ i, name: s.name }));
       check(
-        'zwölf Modi im Menü',
-        modeSlots.length === 12,
+        'fünfzehn Modi im Menü',
+        modeSlots.length === 15,
         modeSlots.map((s) => `${s.i}:${s.name}`).join(' '),
       );
-      check('Menü mit vier Reihen', slots.length === 36, `${slots.length} Plätze`);
-      const rows = [10, 11, 12, 13, 14, 15, 16, 20, 21, 22, 23, 24];
+      check('Menü mit fünf Reihen', slots.length === 45, `${slots.length} Plätze`);
+      const rows = [10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 31];
       check('Reihen mittig', JSON.stringify(modeSlots.map((s) => s.i)) === JSON.stringify(rows));
       check(
         'Symbole der neuen Modi',
-        ['white_wool', 'hay_block', 'elytra', 'fishing_rod'].every((n) =>
+        ['white_wool', 'hay_block', 'elytra', 'fishing_rod', 'iron_axe', 'brush', 'bricks'].every((n) =>
           modeSlots.some((s) => s.name === n),
         ),
       );

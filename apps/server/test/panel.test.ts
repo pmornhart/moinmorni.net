@@ -73,6 +73,9 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
       'wintersport',
       'adlerflug',
       'angelkoenig',
+      'maibaumklau',
+      'dorfkrimi',
+      'baumeister',
     ]);
     // Noch nichts gemeldet: keine Sommerpause o. Ä.
     expect(status.modes.every((m) => m.phase === null)).toBe(true);
@@ -116,6 +119,9 @@ describe('MoinMorni mit echtem Motor (MorniHosting, nachgebautes Docker)', () =>
       'wintersport',
       'adlerflug',
       'angelkoenig',
+      'maibaumklau',
+      'dorfkrimi',
+      'baumeister',
       'build',
       'reach',
       'updates',

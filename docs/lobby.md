@@ -12,8 +12,10 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   der Gasse südlich vom Markt. Hier stehen die ersten sieben Modi (`RING_MODES` in
   `packages/builder/src/lobby/schlossmarkt.ts`).
 - **Schlossmarkt** (16.11., `schlossmarkt.ts`): alle weiteren Modi in einer Marktzeile auf dem Vorplatz vor der
-  Schlosstreppe – je drei Stände links und rechts der Prachtstraße (innen zuerst: Wolkenkampf, Versteckerl,
-  Wintersport, Adlerflug, Angelkönig, dazu die Blumenfrau mit Blumen und Kräutern), Marktbogen über der Straße mit
+  Schlosstreppe – seit dem 17.11. je vier Stände links und rechts der Prachtstraße, 8 Blöcke auseinander (innen
+  zuerst: Wolkenkampf, Versteckerl, Wintersport, Adlerflug, Angelkönig, Maibaumklau, Dorfkrimi, Baumeister; innen nicht
+  näher als x ±18, dort fliegen die Launchpads). Ist ein Stand frei, verkauft dort die Blumenfrau Blumen und Kräuter,
+  sonst steht sie mit einer Blume neben dem westlichen Marktkarren. Marktbogen über der Straße mit
   Wimpeln in den Farben der Stände und Schild „Schlossmarkt“, Wegweiser am Nordausgang des Dorfplatzes, Stützmauer
   mit Hecke und Laternenpfeilern zum Schlossberg (der Hang wächst nicht mehr über den Vorplatz), Lager hinter den
   Ständen (Fässer, Heu, Holzstoß), Laternen und Blumen zwischen den Ständen, Brotzeit-Garnituren davor,
@@ -22,7 +24,9 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   in Kopfhöhe der Figuren (vorher ein schwebendes Brett und ein Topf auf dem Fass): vorne die Laterne, ein Blumenbeet
   im Pflaster, hinten ein Fass; neben den Figuren stehen keine Blumentöpfe auf der Theke (Test).
 - **Neue Figuren** bekommen eigene Trachten (`PENDING_CAST` in `cast.ts`: Ballonfahrerin, Dorfgendarm,
-  Skilehrerin, Flieger, Fischer, Blumenfrau). Bis sie bei MineSkin signiert sind
+  Skilehrerin, Flieger, Fischer, Blumenfrau; 17.11.: Maibaum-Bursch mit Kranzhut, grün-weißer Schärpe, Seil und Axt,
+  Kommissar mit Jägerhut, Lodenmantel, Pinsel und Notizbuch, Baumeisterin mit Zimmermannshut, Kluft, Zollstock und
+  Ziegel). Bis sie bei MineSkin signiert sind
   (`tsx tools/lobby-entwuerfe/src/sign-skins.ts`), trägt jede die Tracht einer passenden bestehenden Figur
   (`STAND_IN`); danach von selbst die eigene – Skin und 3D-Tracht passen immer zusammen.
 - **Dorfstraße** nach Süden (heller Sandweg, Laternen zwischen den Häusern): Bäckerei, Krämerladen, Apotheke,

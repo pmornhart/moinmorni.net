@@ -2,6 +2,7 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
   Award,
   Bird,
+  BrickWall,
   Castle,
   ClipboardList,
   Cloud,
@@ -26,6 +27,7 @@ import {
   Newspaper,
   Pickaxe,
   RefreshCw,
+  Search,
   Server,
   Settings2,
   Shield,
@@ -33,6 +35,7 @@ import {
   Snowflake,
   Store,
   Swords,
+  TreePine,
   UserCog,
   UserRoundCog,
   Users,
@@ -82,6 +85,9 @@ const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
   Snowflake,
   Bird,
   Fish,
+  TreePine,
+  Search,
+  BrickWall,
   Network,
 };
 

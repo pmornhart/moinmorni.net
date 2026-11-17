@@ -205,7 +205,11 @@ function schlossmarktKetten(): string[] {
       ...(first ? lightChain('kette', arch, inner(first), 0.9, CHAIN_LIGHTS) : []),
       ...stalls.slice(1).flatMap((s, i) => {
         const prev = stalls[i];
-        return prev ? lightChain('kette', outer(prev), inner(s), 0.35, CHAIN_LIGHTS) : [];
+        if (!prev) return [];
+        // Seit acht Ständen (17.11.) stoßen die Markisen fast aneinander – dort hängt keine Kette.
+        const [a, b] = [outer(prev), inner(s)];
+        if (Math.hypot(b[0] - a[0], b[2] - a[2]) < MIN_CHAIN) return [];
+        return lightChain('kette', a, b, 0.35, CHAIN_LIGHTS);
       }),
     ];
   });

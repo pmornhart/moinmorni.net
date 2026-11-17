@@ -347,7 +347,7 @@ function ModeTopThree({ mode }: { readonly mode: ModeStatus }): ReactElement | n
                 />
                 <span className="min-w-0 flex-1 truncate font-bold group-hover:text-primary">{e.name}</span>
                 <span className="tabular shrink-0 font-pixel text-[15px] font-semibold">
-                  {stat.value(key.key, e.value)}
+                  {stat.value(key.key, e.value, mode.id)}
                 </span>
               </Link>
             </li>
