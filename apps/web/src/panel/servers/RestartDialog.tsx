@@ -83,7 +83,12 @@ function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement 
   /** null = untouched: all running servers are ticked. */
   const [chosen, setChosen] = useState<ReadonlySet<string> | null>(null);
   const servers = useMemo(() => query.data?.servers ?? [], [query.data]);
-  const running = useMemo(() => servers.filter((s) => s.state === 'running').map((s) => s.member), [servers]);
+  /** Neu startbar: läuft (geordnet mit Countdown) oder ist aus (wird gestartet). Startet gerade / schläft: kommt
+   * ohnehin frisch hoch und blockiert die anderen nicht. */
+  const running = useMemo(
+    () => servers.filter((s) => s.state === 'running' || s.state === 'stopped').map((s) => s.member),
+    [servers],
+  );
   const picked = chosen ?? new Set(running);
   const allPicked = running.length > 0 && running.every((m) => picked.has(m));
   const progress = query.data?.progress;
@@ -146,7 +151,7 @@ function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement 
       <ul className="grid max-h-[46dvh] gap-1 overflow-y-auto pr-1">
         {servers.map((server, index) => {
           const id = `${baseId}-${server.member}`;
-          const can = server.state === 'running';
+          const can = server.state === 'running' || server.state === 'stopped';
           const step = stepOf.get(server.member);
           return (
             <li key={server.member}>

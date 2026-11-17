@@ -124,4 +124,34 @@ describe('Panel → „Server neu starten“', () => {
     },
     RUN_MS * 2,
   );
+
+  test(
+    '„Alle“ geht immer: ein gestoppter Server wird gestartet, einer, der gerade startet, blockiert nichts',
+    async () => {
+      const duels = (
+        await h.mm.motor.request<Array<{ id: string; name: string }>>('GET', '/api/servers')
+      ).find((s) => s.name.toLowerCase().includes('duels'));
+      expect(duels).toBeDefined();
+      await h.mm.motor.request('POST', `/api/servers/${duels!.id}/actions/stop`);
+      await until(
+        async () => (await overview()).servers.find((s) => s.member === 'duels')?.state === 'stopped',
+        RUN_MS,
+      );
+      const res = await call('POST', '/api/panel/servers/restart', owner, { servers: ['duels'] });
+      expect(res.statusCode, res.body).toBe(OK);
+      expect(res.json<RestartRequestResult>().started).toEqual(['duels']);
+      await until(
+        async () => (await overview()).servers.find((s) => s.member === 'duels')?.state === 'running',
+        RUN_MS,
+      );
+      // Gleich nach einem Neustart steht der Bau-Server auf „startet“ – zusammen mit anderen gewählt, geht es trotzdem.
+      await call('POST', '/api/panel/servers/restart', owner, { servers: ['bau'] });
+      const both = await call('POST', '/api/panel/servers/restart', owner, { servers: ['bau', 'duels'] });
+      expect(both.statusCode, both.body).toBe(OK);
+      const result = both.json<RestartRequestResult>();
+      expect([...result.started, ...result.skipped].sort()).toEqual(['bau', 'duels']);
+      expect(result.started).toContain('duels');
+    },
+    RUN_MS * 3,
+  );
 });
