@@ -353,9 +353,24 @@
   wieder Ostern **4/4**, keine Saison → `kill -9` 5 s danach → Ostern aus **4/4**, Winter aus **5/5**, wieder Ostern
   **4/4**. Bilder vorher/nachher mit Client 26.3 und Lobby-Paket, Tag und Nacht, nur lokal.
 
+- 17.11.: **Halloween als schaurig-schöne Nacht** (Branch `claude/winter-wunderland`,
+  `packages/builder/src/lobby/halloween.ts`): **Riesenkürbis statt Maibaum** (Herzstück: runder Kürbis gut zehn
+  Blöcke hoch, geschnitztes Gesicht nach Süden und Norden mit Pilzlicht dahinter – nachts leuchtet es –, Stiel mit
+  Blatt; der Maibaum kommt genau zurück), **Kürbisfeld** mit zwei Vogelscheuchen auf der Westwiese, **Schaurige
+  Ruine** neben der Ankunft (bemooste Kapelle, Turmstumpf, Seelenlaternen, Seelenfeuer, Grabsteine, Gespenster),
+  **Gruselmarkt** (Kürbissuppe, Süßes oder Saures), Eingangsbogen mit leuchtenden Kürbissen, Lichter von Stand zu
+  Stand, dazu die bisherige Deko (Kürbisse an Türen und Ständen, Spinnweben, Wimpel). Biom „Blasser Garten“ (grauer
+  Himmel und Nebel) und Asche in der Luft über das Lobby-Plugin. Bauplan-Prüfung **alle Saisons 0 Funde** (Anzeigen
+  und Blöcke). Tests: 19 in `saisons.test.ts` (neu: Kürbis mit leuchtendem Gesicht vorn und hinten, Kürbisfeld auf
+  grober Erde, Ruine und Feld auf freier Wiese, Maibaum kommt zurück), Typen. Echt (Paper 26.1.2 mit Netzwerk-Plugin
+  und Test-Hub, echter Selbstbau): Halloween an **4/4** (mit Biom), `lobby-test` **30/30**, Winter → Halloween weg
+  **4/4**, Winter an **5/5**, wieder Halloween **4/4**, keine Saison → `kill -9` 5 s danach → Halloween aus **4/4**,
+  Winter aus **5/5**, wieder Halloween **4/4**; nach dem Umbau des Kürbisses noch einmal an **4/4** und `lobby-test`
+  **30/30**. Bilder vorher/nachher mit Client 26.3, Tag und Nacht, nur lokal.
+
 ## Offen
 
-- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit der Wiesn auch ihre Blöcke; Ostern ebenso).
+- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit Wiesn, Ostern und Halloween auch ihre Blöcke).
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
 - MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).
 - **Philip testet.** Morni Party: Burg Weißenstein + Minispiel-Kulissen (Helfer), danach Go fürs Release. MoinMorni selbst (`main`) und MorniHosting-PR #117 brauchen noch ein eigenes Go, danach Submodul wieder auf MorniHosting `main`.

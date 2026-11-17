@@ -3,8 +3,9 @@
  * Saison-Deko der Lobby (Panel: Lobby → Saison-Deko): Wiesn, Winter, Ostern, Halloween. Die Deko sind Anzeige-Wesen
  * (block_display/text_display) mit dem Tag `mm_season` + `mm_season_<name>` – Umschalten = alte weg, neue hin; das
  * Lobby-Plugin räumt Deko einer anderen Saison weg, sobald sie geladen wird.
- * Wiesn, Winter und Ostern setzen dazu Blöcke (`wiesn.ts`, `winter.ts`, `ostern.ts`: Karussell, Riesenrad, Schnee,
- * Christbaum, Osterbrunnen, Blüten …); jede andere Saison stellt sie über `<saison>/off_…` genau wieder her (datapack.ts).
+ * Alle Saisons setzen dazu Blöcke (`wiesn.ts`, `winter.ts`, `ostern.ts`, `halloween.ts`: Karussell, Riesenrad, Schnee,
+ * Christbaum, Osterbrunnen, Blüten, Riesenkürbis …); jede andere Saison stellt sie über `<saison>/off_…` genau wieder
+ * her (datapack.ts).
  */
 import type { Canvas } from '../canvas.js';
 import { GROUND } from '../nature.js';
@@ -14,6 +15,7 @@ import { blockDisplay, multiply, type Quat, type Vec } from './deko.js';
 import { anchorEnd, settle } from './halt.js';
 import { pointAt, stallFrame, STALLS as MARKT_STAENDE } from './weihnachtsmarkt.js';
 import type { SeasonPlan } from './saison-plan.js';
+import { halloweenPlan } from './halloween.js';
 import { osternPlan } from './ostern.js';
 import { wiesnPlan } from './wiesn.js';
 import { winterPlan, type WinterPlan } from './winter.js';
@@ -185,6 +187,7 @@ const BUILT: Readonly<Partial<Record<Season, (base: Canvas) => SeasonPlan>>> = {
   wiesn: wiesnPlan,
   winter: winterPlan,
   easter: osternPlan,
+  halloween: halloweenPlan,
 };
 
 /** Bauplan einer Saison mit Bauten – null, wenn sie nur Anzeigen hat (oder keine Saison). */
@@ -213,7 +216,13 @@ const PLANS: Readonly<Record<Season, (lobby: () => Canvas) => string[]>> = {
     const plan = osternPlan(lobby());
     return [...plan.displays, ...plan.moves];
   },
-  halloween: (lobby) => halloween(worldOf(lobby())),
+  halloween: (lobby) => {
+    const plan = halloweenPlan(lobby());
+    const base = worldOf(lobby());
+    // Kürbisse an Türen und Ständen, Spinnweben, Wimpel: in der Welt samt Halloween-Bauten
+    const world: World = (x, y, z) => plan.blocks.get(x, y, z) ?? base(x, y, z);
+    return [...halloween(world), ...plan.displays, ...plan.moves];
+  },
 };
 
 /**
