@@ -72,9 +72,9 @@ geladen, `/bau` → weg, `/lobby` → wieder da.
 
 Am Ende der Handwerkergasse und im Oberdorf steht je ein **Dorfbrunnen** (`packages/builder/src/dorfbrunnen.ts`) – so
 fein gearbeitet wie der Prunkbrunnen im Schlosshof (`brunnen.ts`), aber kleiner und ländlicher: achteckiger Trog aus
-Tuffstein mit Sockel, glatter Abdeckung und Zierfeldern, in der Mitte die Brunnensäule mit Kupferband, Kapitell und
-goldenem Zapfen, vier Wasserspeier aus Kupfer mit Wasserstrahlen ins Becken, Geranien auf dem Rand, Blumenbeete an den
-Ecken. Wie beim Prunkbrunnen sind es Item-Anzeigen mit dem leeren Modell `minecraft:air` (Teile `dorf_*` im
+hellem Kalkstein mit Steinziegel-Sockel, glatter Abdeckung und Zierfeldern, in der Mitte die Brunnensäule mit
+Kupferband, Kapitell und goldenem Zapfen, vier Wasserspeier aus Kupfer mit Wasserstrahlen ins Becken, Geranien auf dem
+Rand, Blumenbeete an den Ecken. Wie beim Prunkbrunnen sind es Item-Anzeigen mit dem leeren Modell `minecraft:air` (Teile `dorf_*` im
 Möbel-Paket), Spritzer und Plätschern kommen vom Lobby-Plugin.
 
 **Ohne Paket und auf Bedrock** steht ein schlichter Brunnen aus Blöcken da: niedrige Tuffziegel-Mauer als Becken mit

@@ -45,8 +45,8 @@ const PAVING = [
   'polished_diorite',
   'cobblestone',
 ];
-/** Dorfstraße, Handwerkergasse und Feldwege: heller Sandweg mit etwas Kies. */
-const ROAD = ['dirt_path', 'dirt_path', 'gravel', 'dirt_path', 'dirt_path', 'andesite'];
+/** Dorfstraße, Handwerkergasse und Feldwege: heller Sandweg, selten ein Kiesfleck (mehr Kies sah fleckig aus). */
+const ROAD = ['dirt_path', 'dirt_path', 'dirt_path', 'dirt_path', 'dirt_path', 'dirt_path', 'gravel'];
 /** Hangwald am Schlossberg: unten Laubbäume und Birken (hell), oben Fichten. */
 const HILL_FOREST = { spruceAbove: GROUND + 18, broadleaf: 0.75, birch: 0.35 } as const;
 /** Am Schlossberg dichteres Gras mit Blumen – es deckt die Erdstufen am Hang. */

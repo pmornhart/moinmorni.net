@@ -1,10 +1,10 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- Modell-Maße in 1/16 Block (Minecraft-Modellkoordinaten) und der Bauplan */
 /**
  * Dorfbrunnen (Handwerkergasse, Oberdorf) als eigenes 3D-Modell im Möbel-Paket – kleiner und ländlicher als der
- * Prunkbrunnen im Schlosshof (`brunnen.ts`), aber genauso fein gearbeitet: achteckiger Trog aus Tuffstein mit Sockel,
- * glatter Abdeckung und Zierfeldern, in der Mitte die Brunnensäule mit Kupferband, Kapitell und goldenem Zapfen (wie
- * die Zirbelnuss auf alten Brunnen in Bayern), vier Wasserspeier aus Kupfer, deren Strahlen ins Becken fallen. Auf dem
- * Rand Geranien in Töpfen, an den Ecken Blumenbeete im Pflaster.
+ * Prunkbrunnen im Schlosshof (`brunnen.ts`), aber genauso fein gearbeitet: achteckiger Trog aus hellem Kalkstein mit
+ * Steinziegel-Sockel, glatter Abdeckung und Zierfeldern, in der Mitte die Brunnensäule mit Kupferband, Kapitell und
+ * goldenem Zapfen (wie die Zirbelnuss auf alten Brunnen in Bayern), vier Wasserspeier aus Kupfer, deren Strahlen ins
+ * Becken fallen. Auf dem Rand Geranien in Töpfen, an den Ecken Blumenbeete im Pflaster.
  *
  * Ohne Paket (oder auf Bedrock) bleibt ein schlichter Brunnen aus Blöcken: niedrige Tuffziegel-Mauer als Becken, Säule
  * aus Mauer-Pfosten mit Endstab als Fontäne, dieselben Blumen. Mauer und Endstab gibt es in der Lobby nur an den
@@ -40,8 +40,8 @@ const SIDES = 8;
 const TROG_RC = 31;
 /** Trog im Querschnitt: Sockel, Wand (innen ein Hauch über dem Wasser), Abdeckung mit Überstand (px). */
 const TROG: readonly Ring[] = [
-  { r1: 36, r2: 40, y1: 0, y2: 2.5, tex: 'tuffziegel' },
-  { r1: 23.5, r2: 37, y1: 0, y2: 13, tex: 'tuff' },
+  { r1: 36, r2: 40, y1: 0, y2: 2.5, tex: 'ziegel' },
+  { r1: 23.5, r2: 37, y1: 0, y2: 13, tex: 'kalk' },
   { r1: 22.5, r2: 39, y1: 13, y2: 16, tex: 'glatt' },
 ];
 /** Zierfeld auf jeder Außenseite (etwas schmaler als die Seite). */
@@ -63,7 +63,7 @@ function trogStueck(lift: number): Box[] {
     {
       from: [FELD.r1 - TROG_RC, FELD.y1, -half],
       to: [FELD.r2 - TROG_RC, FELD.y2, half],
-      tex: 'tuffzier',
+      tex: 'zierstein',
     },
   ];
 }
@@ -71,9 +71,9 @@ function trogStueck(lift: number): Box[] {
 /** Säule unten: Fuß im Wasser, Wulst, Schaft mit Kupferband (dort sitzen die Speier). */
 function saeuleUnten(): Box[] {
   return [
-    ...round(7.5, 0, 15, 'tuffziegel'),
+    ...round(7.5, 0, 15, 'ziegel'),
     ...round(8.5, 15, 17, 'glatt'),
-    ...round(5, 17, 34, 'tuff'),
+    ...round(5, 17, 34, 'kalk'),
     ...round(5.6, SPEIER.y - 2, SPEIER.y + 2, 'kupfer'),
   ];
 }
@@ -90,10 +90,10 @@ function saeuleOben(): Box[] {
     [0.6, 62, 63.5],
   ];
   return [
-    ...round(5, 34, 42, 'tuff'),
-    ...round(6.5, 42, 45, 'tuffzier'),
+    ...round(5, 34, 42, 'kalk'),
+    ...round(6.5, 42, 45, 'zierstein'),
     ...round(8, 45, 47, 'glatt'),
-    ...round(4.5, 47, 49, 'tuffziegel'),
+    ...round(4.5, 47, 49, 'ziegel'),
     ...zapfen.flatMap(([r, y1, y2]) => round(r, y1, y2, 'gold')),
   ];
 }

@@ -32,9 +32,9 @@ export type Tex =
   | 'smaragd'
   | 'diamant'
   | 'samt'
-  | 'tuff'
-  | 'tuffziegel'
-  | 'tuffzier'
+  | 'kalk'
+  | 'ziegel'
+  | 'zierstein'
   | 'glatt'
   | 'kupfer';
 
@@ -47,10 +47,10 @@ const TEXTURES: Readonly<Record<Tex, string>> = {
   smaragd: 'minecraft:block/emerald_block',
   diamant: 'minecraft:block/diamond_block',
   samt: 'minecraft:block/blue_wool',
-  // Dorfbrunnen (dorfbrunnen.ts): Tuffstein, glatter Stein, Kupfer mit Patina
-  tuff: 'minecraft:block/polished_tuff',
-  tuffziegel: 'minecraft:block/tuff_bricks',
-  tuffzier: 'minecraft:block/chiseled_tuff',
+  // Dorfbrunnen (dorfbrunnen.ts): heller Kalkstein, Steinziegel, Zierstein, glatter Stein, Kupfer mit Patina
+  kalk: 'minecraft:block/calcite',
+  ziegel: 'minecraft:block/stone_bricks',
+  zierstein: 'minecraft:block/chiseled_stone_bricks',
   glatt: 'minecraft:block/smooth_stone',
   kupfer: 'minecraft:block/weathered_copper',
 };
