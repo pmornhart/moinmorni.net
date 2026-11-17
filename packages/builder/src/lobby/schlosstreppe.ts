@@ -297,30 +297,24 @@ function portal(c: Canvas): void {
     c.set(x, y + 5, z, KNOB);
     c.set(x, y + 4, z, 'lantern[hanging=true]');
   });
-  // Inschrift am Gebälk
+  // Inschrift am Gebälk: eine Zeile mitten auf der Marmorreihe – darüber hängt das Wappen, zwei Zeilen reichten hinein
   signText(
     c,
     0.5,
-    y + 8.08,
+    y + 8.3,
     front + 1.02,
     'south',
-    [
-      { text: '♛ Zum Schloss ♛\n', color: 'gold', bold: true },
-      { text: 'Festsaal · Bibliothek · Rittersaal · To the castle', color: 'white' },
-    ],
-    0.8,
+    [{ text: '♛ Zum Schloss · To the Castle ♛', color: 'gold', bold: true }],
+    0.85,
   );
   signText(
     c,
     0.5,
-    y + 8.08,
+    y + 8.3,
     back - 0.02,
     'north',
-    [
-      { text: '↓ Schlossmarkt & Dorfplatz\n', color: 'gold', bold: true },
-      { text: 'To the market', color: 'gray', italic: true },
-    ],
-    0.8,
+    [{ text: 'Schlossmarkt · Dorfplatz · Market', color: 'gold', bold: true }],
+    0.85,
   );
   // Nachts angestrahlt
   [-PORTAL_HALF + 1, 0, PORTAL_HALF - 1].forEach((x) =>

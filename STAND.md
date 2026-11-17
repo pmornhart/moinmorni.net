@@ -555,6 +555,29 @@
   Hut liegen höher); kein Fehler, aber Klicks auf den Kopf gehen ins Leere. Video nur lokal
   (`~/mm-cache/trailer/spawn/MoinMorni-Trailer-Spawn.mp4` + `-720p`), alte Fassung vom 15.11. unter `spawn-alt-1511/`.
 
+- 17.11. abends: **Weihnachtstor + Wegweiser** (Philip: „des etwas schöner mit dem Tannen-Zeugs entlang des Tores“,
+  Wegweiser am Schlossmarkt „sehr irreführend“; Branch `claude/weihnachtstor`): **Weihnachtstor** (Eingangsbogen des
+  Weihnachtsmarkts von der Ankunft her, `packages/builder/src/lobby/weihnachtstor.ts`): dicke Tannengirlande vorne und
+  hinten am ganzen Balken, vier Bögen (Swags) mit roten Schleifen, warmen Lichtern, Kugeln (mit Paket rund) und
+  Tannenzapfen, an beiden Pfosten eine Girlande, die sich hinunterwindet, zwei Christbäumchen im Holzkübel, Kränze,
+  Laternen, warmes Licht unter dem Balken. **Schrift überlappte:** das Schild „Weihnachtsmarkt“ hing unter dem Balken –
+  von der Ankunft aus genau in der Bildmitte, wo der Begrüßungstitel erscheint; jetzt ein Holzschild mit Goldrahmen und
+  Stern **oben auf dem Balken** (hinten „Frohe Weihnachten!“), die Begrüßung bleibt frei (gleiche Lage wie im echten
+  Client nachgestellt, Titel und Untertitel per Befehl). Ohne Paket/Bedrock tragen echte Blöcke das Tor (Fichtenlaub mit
+  Schnee auf dem Balken, Laternen, Kübel mit Tannenbusch). **Wegweiser** (`wegweiser.ts`): der Pfosten am Nordausgang
+  des Dorfplatzes mit riesiger schwebender Schrift „↑ Schlossmarkt“ und allen Modusnamen (samt
+  „Wintersport/Sommerspiele“) ist weg; jetzt ein Holzpfosten mit Laterne neben dem roten Teppich (4/−20) und kleinen
+  Pfeil-Brettern über Kopfhöhe, die wirklich zum Ziel zeigen – Schloss, Jump and Run, Dorfplatz –, beidseitig in
+  Schildgröße beschriftet, Pfeil für den Leser richtig herum; den Schlossmarkt nennt der Marktbogen gleich dahinter.
+  Inschrift am Prunkportal eine Zeile („♛ Zum Schloss · To the Castle ♛“, hinten „Schlossmarkt · Dorfplatz · Market“)
+  mitten auf dem Gebälk statt zwei Zeilen bis ans Wappen. Tests: 128 Baukasten- (Bauplan-Prüfung aller Saisons 0 Funde,
+  Saison-Rückweg, Eingang offen, zu Fuß erreichbar), Server-Tests, Typen, Prettier. Echt: Paper 26.1.2 +
+  Netzwerk-Plugin + Test-Hub, Lobby mit dem echten Selbstbau, Winter: Probe an **5/5**, keine Saison → Probe aus
+  **5/5**, wieder Winter **5/5**, `lobby-test` **30/30**. Bilder vorher/nachher mit Client 26.3 (+ Lobby-Paket nachher),
+  tags und nachts, Ankunft mit Begrüßung, Tor nah/schräg/von innen, Wegweiser aus Philips Blick, Portal (nur lokal
+  `~/mm-cache/bilder-weihnachtstor/`). Offen: Wiesn, Ostern und Halloween hängen ihr Schild am Eingangsbogen
+  (`gateSign` in `saison-kit.ts`) weiter unter den Balken – dort überlappt die Begrüßung genauso.
+
 ## Offen
 
 - **Fische (17.11.):** Philip: Go für Angelkönig 0.2.0 (`claude/fisch-designs` im Angelkönig-Repo) und diesen

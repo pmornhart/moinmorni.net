@@ -16,7 +16,9 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   zuerst: Wolkenkampf, Versteckerl, Wintersport, Adlerflug, Angelkönig, Maibaumklau, Dorfkrimi, Baumeister; innen nicht
   näher als x ±18, dort fliegen die Launchpads). Ist ein Stand frei, verkauft dort die Blumenfrau Blumen und Kräuter,
   sonst steht sie mit einer Blume neben dem westlichen Marktkarren. Marktbogen über der Straße mit
-  Wimpeln in den Farben der Stände und Schild „Schlossmarkt“, Wegweiser am Nordausgang des Dorfplatzes, Stützmauer
+  Wimpeln in den Farben der Stände und Schild „Schlossmarkt“, Wegweiser am Nordausgang des Dorfplatzes (`wegweiser.ts`: Holzpfosten mit Laterne,
+  kleine Pfeil-Bretter über Kopfhöhe, die wirklich zum Ziel zeigen – Schloss, Jump and Run, Dorfplatz –, Schrift in
+  Schildgröße auf beiden Seiten, Pfeil für den Leser richtig herum; keine Modusnamen), Stützmauer
   mit Hecke und Laternenpfeilern zum Schlossberg (der Hang wächst nicht mehr über den Vorplatz), Lager hinter den
   Ständen (Fässer, Heu, Holzstoß), Laternen und Blumen zwischen den Ständen, Brotzeit-Garnituren davor,
   Marktkarren unter Linden an beiden Enden, Blumenbeete zum Dorfplatz, Leute beim Schauen und Bummeln. Die
@@ -372,7 +374,12 @@ Lobby-Server (bei jeder Änderung neu).
   außen und laufen nicht unter tief hängende Zweige. **Weihnachtsmarkt:** jede Bude am Dorfmarkt und am Schlossmarkt mit
   Tannengirlande und Lichtern vorne und an den Seiten, Eiszapfen und warmem Licht; Lichterketten im Ring von Bude zu Bude
   und am Schlossmarkt bis zum Marktbogen (Girlande, Stern); Glühwein- und Lebkuchenbude am Eingang von der Ankunft her
-  (Kessel überm Feuer, Krüge, Plätzchen, Lebkuchenherzen), dazwischen das Schild „Weihnachtsmarkt“; Krippe auf der Wiese
+  (Kessel überm Feuer, Krüge, Plätzchen, Lebkuchenherzen), dazwischen das **Weihnachtstor** (`weihnachtstor.ts`: dicke
+  Tannengirlande vorne und hinten am Balken, vier Bögen mit roten Schleifen, Lichtern, Kugeln und Tannenzapfen,
+  Girlande um beide Pfosten gewunden, Holzschild „✦ Weihnachtsmarkt ✦ / Christmas Market“ (hinten „Frohe
+  Weihnachten!“) mit Goldrahmen und Stern **oben** auf dem Balken – unter dem Balken lag es genau hinter dem
+  Begrüßungstitel –, Kränze, Laternen, zwei Christbäumchen im Kübel; ohne Paket/Bedrock Fichtenlaub mit Schnee auf
+  dem Balken, Laternen, Kübel mit Tannenbusch); Krippe auf der Wiese
   westlich (Stall, Maria, Josef, Kind in der Krippe, Ochs, Esel, Schafe, Stern), Eisbahn, großer Pferdeschlitten mit
   Geschenken, Rodel, drei Schneemänner, verschneite Fichten rund ums Dorf; Laternen statt Kürbis an den Marktecken. Die
   Figuren der Spielmodi bleiben, wie sie sind. Jede geänderte Stelle steht mit ihrem alten Block im Plan – jede andere
