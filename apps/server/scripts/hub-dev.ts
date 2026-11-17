@@ -31,7 +31,7 @@ import { MotorError } from '../src/motor/client.js';
 import { createStores } from '../src/panel/stores.js';
 import { createModeSettingsSync } from '../src/network/mode-settings.js';
 import { BADGE_PACK_PATH, badgePackOf } from '../src/badges/pack.js';
-import { LOBBY_PACK_PATH, lobbyPackInfo } from '../src/lobby/packs.js';
+import { NETZ_PACK_PATH, netzPackInfo } from '../src/packs/netz.js';
 import { DEFAULT_ROLES, type Role } from '@moinmorni/shared';
 import { createRestartQueue } from '../src/network/restart.js';
 import { createRestartNow } from '../src/network/restart-now.js';
@@ -191,6 +191,11 @@ const hub = createHub({
           const pack = badgePackOf(stores.roles());
           return { url: `http://127.0.0.1:${controlPort}${BADGE_PACK_PATH}?v=${pack.sha1}`, sha1: pack.sha1 };
         },
+        // Netzwerk-Paket: ebenso von der Steuerung.
+        netzPack: () => {
+          const { sha1 } = netzPackInfo();
+          return { url: `http://127.0.0.1:${controlPort}${NETZ_PACK_PATH}?v=${sha1}`, sha1 };
+        },
       }
     : {}),
 });
@@ -265,9 +270,10 @@ if (control) {
       void (async () => {
         try {
           const body = req.method === 'POST' ? await read(req) : {};
-          if (req.url?.startsWith(BADGE_PACK_PATH) || req.url === LOBBY_PACK_PATH) {
-            const bytes =
-              req.url === LOBBY_PACK_PATH ? lobbyPackInfo().bytes : badgePackOf(stores.roles()).bytes;
+          if (req.url?.startsWith(BADGE_PACK_PATH) || req.url?.startsWith(NETZ_PACK_PATH)) {
+            const bytes = req.url.startsWith(NETZ_PACK_PATH)
+              ? netzPackInfo().bytes
+              : badgePackOf(stores.roles()).bytes;
             res.setHeader('content-type', 'application/zip');
             res.end(bytes);
           } else if (req.url === '/rollen' && req.method === 'GET') {

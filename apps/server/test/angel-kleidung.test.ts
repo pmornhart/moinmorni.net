@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { clothingPreview, garment, HAT_BUILDERS } from '@moinmorni/builder';
 import { ANGEL_CLOTHES } from '@moinmorni/shared';
-import { angelPackInfo } from '../src/angelkoenig/pack.js';
+import { netzPackInfo } from '../src/packs/netz.js';
 
 /** Dateien im (ungepackten) ZIP. */
 function zipFiles(zip: Buffer): Map<string, Buffer> {
@@ -47,7 +47,7 @@ const BODY = ANGEL_CLOTHES.filter((c) => c.slot !== 'head');
 const ANGLES = [-45, -22.5, 0, 22.5, 45];
 
 describe('Angelkönig: Hüte und Kleidung mit eigenem Aussehen', () => {
-  const files = zipFiles(angelPackInfo().bytes);
+  const files = zipFiles(netzPackInfo().bytes);
   const model = (id: string): Model =>
     JSON.parse(files.get(`assets/moinmorni/models/item/kleidung/${id}.json`)?.toString() ?? '{}') as Model;
 

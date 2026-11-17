@@ -15,7 +15,7 @@ import type { Api } from '../app.js';
  * Das Abzeichen-Paket: ein kleines Ressourcenpaket mit einem Pixel-Schild pro Rang (packages/shared/src/badges.ts).
  * Jedes Schild liegt als Bild auf einem eigenen Zeichen der Standard-Schrift (Bereich für eigene Zeichen ab U+E900),
  * und die Sprachdateien übersetzen den Schlüssel des Rangs („♛ “) in dieses Zeichen. Der Proxy schickt das Paket
- * jedem Java-Spieler beim Betreten (eigene Kennung neben dem Möbel-Paket der Lobby, bleibt auf allen Servern).
+ * jedem Java-Spieler beim Betreten (eigene Kennung neben dem Netzwerk-Paket, packs/netz.ts; beide bleiben auf allen Servern).
  *
  * Gleiche Ränge = gleiche Bytes = gleiche SHA-1: Minecraft lädt nur neu, wenn sich im Panel Name, Symbol oder Farbe
  * eines Rangs ändern.
@@ -24,7 +24,7 @@ import type { Api } from '../app.js';
 export const BADGE_PACK_PATH = '/api/public/packs/abzeichen.zip';
 /** Erstes eigenes Zeichen der Abzeichen (MorniCraft nimmt U+E700, so kommen sich beide nie in die Quere). */
 const FIRST_CHAR = 0xe900;
-/** Ressourcenpaket-Bereich wie beim Möbel-Paket (Minecraft liest `pack_format` bzw. ab 1.21.9 `min/max_format`). */
+/** Ressourcenpaket-Bereich wie beim Netzwerk-Paket (Minecraft liest `pack_format` bzw. ab 1.21.9 `min/max_format`). */
 const PACK_FORMAT = 15;
 const PACK_FORMAT_MAX = 999;
 /** Das Bild ist 9 Pixel hoch; mit Oberkante 8 über der Grundlinie deckt das Schild genau die Großbuchstaben ab. */
@@ -151,7 +151,7 @@ export function badgePackUrl(domain: string, sha1: string): string | null {
   return host ? `https://${host}${BADGE_PACK_PATH}?v=${sha1}` : null;
 }
 
-/** Die Webseite liefert das Paket aus (öffentlich, wie das Möbel-Paket der Lobby). */
+/** Die Webseite liefert das Paket aus (öffentlich, wie das Netzwerk-Paket). */
 export function registerBadgeRoutes(app: Api, roles: () => readonly Role[]): void {
   app.get(BADGE_PACK_PATH, async (_request, reply) => {
     const pack = badgePackOf(roles());

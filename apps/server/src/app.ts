@@ -57,8 +57,8 @@ import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { registerModeRestRoutes } from './panel/mode-rest-routes.js';
 import { createStores, type Stores } from './panel/stores.js';
-import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
-import { ANGEL_MODE, offerAngelPack, registerAngelPackRoutes } from './angelkoenig/pack.js';
+import { netzPackInfo, netzPackUrl, registerNetzPackRoutes } from './packs/netz.js';
+import { dropServerPack } from './angelkoenig/pack.js';
 import { badgePackOf, badgePackUrl, registerBadgeRoutes } from './badges/pack.js';
 import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { createWartungWorld } from './lobby/wartung.js';
@@ -223,16 +223,17 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
       const url = badgePackUrl(config.domain, pack.sha1);
       return url ? { url, sha1: pack.sha1 } : null;
     },
+    // Netzwerk-Paket (Möbel, Brunnen, Fische, Kleidung, Musik): der Proxy bietet es einmal beim Betreten an.
+    netzPack: () => {
+      const { sha1 } = netzPackInfo();
+      const url = netzPackUrl(config.domain, sha1);
+      return url ? { url, sha1 } : null;
+    },
   });
   const status = createStatusService(config, motor, stores, hub);
   const team = createTeamApplications({ db: handle.db, stores, hub, events });
   const lobbyWorld = createLobbyWorld(motor, app.log, {
     season: () => seasonOf(stores.settings('lobby')['season']),
-    packOffer: () => ({
-      url: lobbyPackUrl(config.domain),
-      sha1: lobbyPackInfo().sha1,
-      required: stores.settings('lobby')['packRequired'] === true,
-    }),
   });
   const lobbyRef = { id: '', season: seasonOf(stores.settings('lobby')['season']) };
   // Wartungs-Lobby: baut sich wie die Lobby selbst (eigener kleiner Bauplan).
@@ -254,8 +255,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     configureWartung: wartungWorld.configure,
     configureMode: async (serverId, member) => {
       const cap = await openPlayerCap(motor, serverId);
-      // Angelkönig bietet sein Fisch-Paket an (eigene Zeichnungen, `angelkoenig/pack.ts`).
-      const pack = member === ANGEL_MODE ? await offerAngelPack(motor, serverId, config.domain) : false;
+      // Kein Spielserver bietet ein eigenes Paket an – alles steckt im Netzwerk-Paket vom Proxy (`packs/netz.ts`).
+      const pack = await dropServerPack(motor, serverId, member);
       return cap || pack;
     },
     modes: () => stores.modes(),
@@ -462,7 +463,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   // Saison-Deko umgeschaltet (Panel oder /lobby saison …) → gleich in der Lobby tauschen.
   events.on('settings.changed', ({ area }) => {
     if (area !== 'lobby' || !lobbyRef.id) return;
-    // Möbel-Paket Pflicht an/aus: server.properties der Lobby neu, Neustart sobald niemand drin ist.
+    // server.properties der Lobby nachziehen (falls sich etwas geändert hat), Neustart sobald niemand drin ist.
     void (async () => {
       try {
         if (await lobbyWorld.configure(lobbyRef.id))
@@ -479,8 +480,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const setup = createSetupService(config, handle.db, motor, app.log, events);
   registerSetupRoutes(app, setup);
   registerPublicRoutes(app, status);
-  registerPackRoutes(app);
-  registerAngelPackRoutes(app);
+  registerNetzPackRoutes(app);
   registerBadgeRoutes(app, () => stores.roles());
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
   registerModeRestRoutes(app, auth, stores, motor, createMemberIds(motor), restarts);

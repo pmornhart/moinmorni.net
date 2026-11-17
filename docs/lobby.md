@@ -80,7 +80,7 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
     Platz über dem Hang liegt.
   - **Schlosstor**: zwei Torpfeiler mit Pilastern, Fahnenmasten auf den Pfeilern, Laternen an den Ecken, Rundbogen,
     offene Torflügel, **Kronleuchter** im Torweg, darüber die Attika mit dem Wappen und Banner; nachts angestrahlt.
-  - Fahnenmasten sind aus Blasseichen-Zaun (Endstäbe sind dem Prunkbrunnen vorbehalten – das Möbel-Paket blendet sie
+  - Fahnenmasten sind aus Blasseichen-Zaun (Endstäbe sind dem Prunkbrunnen vorbehalten – das Netzwerk-Paket blendet sie
     aus), jede Fahne bekommt unsichtbares Licht (`fahnen.ts`: `flagpole`, `banner`, Wappen).
   - Die Launchpads bleiben zusätzlich – ihre Flugbahn ist frei (Portal, Fahnen und Pfosten stehen außerhalb, Test mit
     Luftreibung wie im Spiel, ganzer Körper), gelandet wird auf der Treppe.
@@ -125,34 +125,61 @@ Berghang (Hohlraum, kein Platz).
   Sandwege auf Dorfstraße, Gasse und Feldwegen, am Schlossberg Laubbäume und Birken statt nur Fichten und dichtes
   Gras mit Blumen über den Erdstufen, Dächer an der Dorfstraße im Wechsel hell und dunkel.
 
-## Möbel (Ressourcenpaket)
+## Ein Paket fürs ganze Netzwerk
+
+Philip (17.11.): „Nicht immer, wenn man zwischen den Servern wechselt, Resource Packs laden – einfach schnips und es
+geht.“ Darum gibt es **ein Netzwerk-Paket** (`packages/builder/src/netzpaket.ts`, ausgeliefert unter
+`/api/public/packs/netz.zip`, feste Kennung `6d6f696e-6d6f-726e-692d-6e65747a7061`): Möbel, Brunnen, Trachten,
+Christbaumkugeln und Ostereier der Lobby, Fische und Kleidung aus Angelkönig und die Lobbymusik. Dazu kommt das kleine
+**Abzeichen-Paket** (hängt an den Rollen; eine neue Rolle lädt nur dieses neu, nicht die Musik).
+
+- Der **Proxy** bietet beide einmal an, sobald man den ersten Server betritt (Minecraft fragt einmal und lädt beides in
+  einem Rutsch), und nimmt sie nie wieder ab. Jeder Wechsel Lobby ↔ Modus geht danach ohne Ladebildschirm.
+- **Kein Spielserver bietet ein eigenes Paket an.** MoinMorni räumt beim Einrichten die früheren Einträge aus der
+  server.properties (Lobby: Möbel-Paket, Angelkönig: Fisch-Paket; nur unsere Kennung bzw. Adresse, fremde bleiben).
+  Will ein noch nicht aufgeräumter Server trotzdem eins schicken, lässt der Proxy es nicht durch.
+- Angelkönig bekommt `plugins/MorniAngelkoenig/paket.json` = `{"netz": true}` und liest ab 0.2.2 aus den Metadaten
+  `moinmorni:paket` (setzt das Netzwerk-Plugin aus dem Profil des Hubs), wer das Paket geladen hat.
+- **Pflicht** ist ein Schalter für beide Pakete: **Netzwerk → Ressourcenpaket → Paket verpflichtend**
+  (`/netzwerk paket an|aus`; vorher getrennt „Möbel-Paket verpflichtend“ und „Abzeichen-Paket verpflichtend“ – war einer
+  an, ist der neue einmal an). `/paket` (`/pack`) schickt das Netzwerk-Paket noch einmal.
+- Nur Java (jede Version; vor 1.20.3 kann Minecraft nur ein Server-Paket – dort nur das Netzwerk-Paket), nie Bedrock.
+
+**Wichtig, weil das Paket überall gilt:** Es ändert **keinen einzigen Blockzustand** und keinen normalen Gegenstand
+(Test in `packages/builder/test/netzpaket.test.ts`). Früher bekamen Mangroven-Treppen, Birken-Stufen, braune Kerzen,
+Trockenbeton, Tuffziegel-Mauern und Endstäbe im Lobby-Paket ein neues Aussehen – in MorniSMP, MorniCraft oder auf dem
+Bau-Server wären gebaute Mangroven-Treppen dann Stühle gewesen und Endstäbe unsichtbar. Heute hängt alles an Gegenständen
+mit unserem Namen in `custom_model_data` (`moinmorni:moebel/stuhl`, `moinmorni:kugel`, `moinmorni:versteckt` …) bzw. am
+leeren Luft-Modell; die Gegenstands-Dateien wählen nur bei diesem Namen etwas anderes, sonst bleibt das Aussehen von
+Minecraft.
+
+## Möbel
 
 Stühle mit Herz-Lehne, Eckbänke, Wirtstische, Hocker, Bierbänke, Biertische und Steinkrüge sind **eigene 3D-Modelle**
-(`packages/builder/src/furniture.ts`). Sie hängen an Blöcken, die es in der Lobby **nur als Möbel** gibt – das Paket
-gibt ihnen ein neues Aussehen, Kollision und Sitzhöhe bleiben echt:
+(`packages/builder/src/furniture.ts`). Die Bauten setzen dafür Platzhalter-Blöcke, die es in der Lobby **nur als
+Möbel** gibt (so prüfen Tests und die Bauplan-Prüfung Sitzhöhe und Wege wie bisher):
 
-| Block                                                             | Möbel                                            |
-| ----------------------------------------------------------------- | ------------------------------------------------ |
-| Mangroven-Treppe unten, gerade/innen                              | Eckbank (mit Rückwand)                           |
-| Mangroven-Treppe sonst                                            | Stuhl                                            |
-| Mangroven-Stufe oben / unten                                      | Wirtstisch / Hocker                              |
-| Birken-Stufe oben / unten                                         | Biertisch / Bierbank                             |
-| braune Kerze (1–4, aus)                                           | 1–4 Steinkrüge                                   |
-| Trockenbeton rot / gelb / hellgrau / blau (nur als Block-Anzeige) | runde Christbaumkugel rot / gold / silber / blau |
+| Platzhalter im Bauplan               | Möbel                  |
+| ------------------------------------ | ---------------------- |
+| Mangroven-Treppe unten, gerade/innen | Eckbank (mit Rückwand) |
+| Mangroven-Treppe sonst               | Stuhl                  |
+| Mangroven-Stufe oben / unten         | Wirtstisch / Hocker    |
+| Birken-Stufe oben / unten            | Biertisch / Bierbank   |
+| braune Kerze (1–4)                   | 1–4 Steinkrüge         |
 
-**Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen, keine braunen Kerzen und keinen Trockenbeton für
-anderes verbauen** (Test in `winter.test.ts`). Die Kugeln (`packages/builder/src/schmuck.ts`) sind übereinander gestapelte
-Scheiben aus je vier gedrehten Quadraten – von allen Seiten rund; ohne Paket sieht man einen schräg gestellten Würfel in
-der Farbe.
-Die Modelle nutzen nur Minecrafts eigene Texturen (es liegen keine Mojang-Dateien im Paket). Weil Minecraft die Fläche
-unter Treppen/Stufen weglässt, malen die Modelle ein Stück Boden (Dielen bzw. Kies) mit; `fitFurniture` setzt vor einer
-Wand eine Eckbank statt eines Stuhls und Kies unter jede Bierbank (Tests in `packages/builder/test/`).
+Beim Bauen (`packages/builder/src/lobby/moebel.ts`) wird jeder Platzhalter zu einer **Item-Anzeige** in der Mitte des
+Blocks (Tag `mm_moebel`, Drehung wie früher der Blockzustand) und einem unsichtbaren Block für die Kollision
+(`barrier`; bei Krügen nichts). Ohne Paket zeigt die Anzeige die gewohnte Mangrove-/Birken-Stufe, die Krüge fehlen dann.
+Figuren sitzen wie bisher (ihr Sitz hängt am Block darüber). **Darum in der Lobby keine Mangroven-/Birken-Treppen und
+-Stufen und keine braunen Kerzen für anderes verbauen** (Test in `winter.test.ts`). Saison-Blöcke werden nicht
+umgewandelt (die Kerzen am Weihnachtsmarkt sind einfach Kerzen).
 
-Ausgeliefert unter `/api/public/packs/lobby.zip`; die Lobby bietet es per `server.properties` an (ID
-`6d6f696e-6d6f-726e-692d-6d6f6562656c`), Pflicht nur mit dem Schalter **Lobby → Möbel-Paket → Möbel-Paket verpflichtend**
-(`/lobby paket an|aus`). Der Proxy nimmt es beim Wechsel auf einen anderen Server wieder ab. Ohne Paket (abgelehnt,
-Bedrock) sieht man die normalen Blöcke – nichts fehlt. Echt geprüft mit Client 26.3 in der Docker-Lobby: angeboten,
-geladen, `/bau` → weg, `/lobby` → wieder da.
+Christbaumkugeln und Ostereier (`schmuck.ts`) sind Item-Anzeigen aus Trockenbeton mit `moinmorni:kugel`: mit Paket
+rund (übereinander gestapelte Scheiben aus je vier gedrehten Quadraten), ohne Paket ein schräg gestellter Würfel in der
+Farbe. Die Modelle nutzen nur Minecrafts eigene Texturen (es liegen keine Mojang-Dateien im Paket).
+
+**Bedrock:** Item-Anzeigen zeigt Geyser (ohne Erweiterung) nicht – Bedrock-Spieler sehen die Möbel nicht mehr (vorher
+die Holzstufen), laufen aber nicht hindurch. Nicht prüfbar in der Sandbox.
 
 ## Dorfbrunnen (Ressourcenpaket)
 
@@ -161,11 +188,13 @@ fein gearbeitet wie der Prunkbrunnen im Schlosshof (`brunnen.ts`), aber kleiner 
 hellem Kalkstein mit Steinziegel-Sockel, glatter Abdeckung und Zierfeldern, in der Mitte die Brunnensäule mit
 Kupferband, Kapitell und goldenem Zapfen, vier Wasserspeier aus Kupfer mit Wasserstrahlen ins Becken, Geranien auf dem
 Rand, Blumenbeete an den Ecken. Wie beim Prunkbrunnen sind es Item-Anzeigen mit dem leeren Modell `minecraft:air` (Teile `dorf_*` im
-Möbel-Paket), Spritzer und Plätschern kommen vom Lobby-Plugin.
+Netzwerk-Paket), Spritzer und Plätschern kommen vom Lobby-Plugin.
 
 **Ohne Paket und auf Bedrock** steht ein schlichter Brunnen aus Blöcken da: niedrige Tuffziegel-Mauer als Becken mit
 echtem Wasser, Säule aus Mauer-Pfosten mit einem Endstab als Fontäne, dieselben Blumen. Tuffziegel-Mauern und
-Endstäbe gibt es in der Lobby nur an den Brunnen – das Paket blendet sie aus.
+Endstäbe gibt es in der Lobby nur an den Brunnen. Auch sie werden beim Bauen zu Anzeigen (`moinmorni:versteckt`: mit
+Paket unsichtbar, ohne Paket Mauer bzw. Endstab), in der Welt stehen unsichtbare Blöcke (Mauer: `barrier`, hält das
+Wasser; Fontäne: Licht wie der Endstab) – so sehen echte Endstäbe auf anderen Servern aus wie immer.
 
 ## Figuren und Skins
 
@@ -195,7 +224,7 @@ Vorschaubilder.
 
 ## Trachten in 3D (Ressourcenpaket)
 
-Was über die Figur hinausragt, kommt mit dem Möbel-Paket in 3D dazu (`packages/builder/src/trachten.ts`); alles
+Was über die Figur hinausragt, kommt mit dem Netzwerk-Paket in 3D dazu (`packages/builder/src/trachten.ts`); alles
 Flache malt der Skin selbst (oben). Farben kommen aus der Tracht der Figur (`cast.ts`).
 
 - **Hüte** (Trachtenhut mit Gamsbart, Strohhut, Kochmütze, Mütze mit Bommel, Kappe mit Schirm, Kopftuch, Krone,
@@ -410,7 +439,7 @@ Lobby-Server (bei jeder Änderung neu).
   Kirschblüte, Azaleenblüte oder grün – Kirschblüten lassen von selbst Blüten fallen), Frühlingsblumen in Flecken auf
   den Wiesen (nicht vor Figuren, Launchpads, Jump and Run), **Ostermarkt** am Eingang (Ostereier, Osterlamm &
   Hefezopf, Blütengirlanden), Eingangsbogen mit Blütengirlande und Eiern, Wimpel in Pastell, Eier in den Vorgärten,
-  Hasen. Die Eier sind die runden Kugeln aus dem Lobby-Paket (`schmuck.ts`, neue Farben rosa, grün, hellblau, lila,
+  Hasen. Die Eier sind die runden Kugeln aus dem Netzwerk-Paket (`schmuck.ts`, neue Farben rosa, grün, hellblau, lila,
   orange), in die Höhe gezogen. Biom „Kirschblütenhain“ (helles Grün) und ab und zu eine Blüte in der Luft
   (`LobbyWinter.java`).
 - **Halloween** (Saison „Halloween“, `lobby/halloween.ts`): **Riesenkürbis statt Maibaum** (Herzstück: runder
@@ -448,7 +477,7 @@ Halloween Griegs Bergkönig und zwei Gruselstücke. 25 Stücke, jedes eine bis a
   Ländler, Lied, Choral, Wiegenlied, Spuk): Tuba auf den Hauptschlägen, Nachschlag, zweite Stimme in Terzen und Sexten,
   gebrochene Akkorde, Liegeakkorde, Schlagwerk, Klatschen, Schlittenschellen; Besetzungen in `musik/band.ts`
   (Blaskapelle, Bierzelt, Stubenmusik, Glocken, Turmblasen, Frühling, Spuk, Geister).
-- **Mit Lobby-Paket:** echte Klangdateien (`apps/server/musik/<stück>.ogg`, `sounds.json` im Paket mit
+- **Mit Netzwerk-Paket:** echte Klangdateien (`apps/server/musik/<stück>.ogg`, `sounds.json` im Paket mit
   `stream: true`). Gerendert mit `npx tsx tools/lobby-musik/src/render.ts` (MIDI → FluidSynth mit dem Klangsatz
   FluidR3_GM, MIT-Lizenz → ffmpeg, Lautheit −18 LUFS, Ogg Vorbis); `lieder.json` merkt sich einen Fingerabdruck der
   Noten – ändert sich ein Stück, meldet es der Server-Test, bis es neu gerendert ist (rendert nur Geänderte).

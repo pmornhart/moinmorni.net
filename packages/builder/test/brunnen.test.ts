@@ -66,13 +66,15 @@ describe('Prunkbrunnen (Modelle im Ressourcenpaket)', () => {
     found.forEach(([x, y, z, b]) => expect(near(x, z), `${b} bei ${x} ${y} ${z}`).toBe(true));
   }, 300_000);
 
-  it('das Paket enthält Modelle, Luft-Auswahl und die ausgeblendeten Blöcke', () => {
+  it('das Paket enthält Modelle, Luft-Auswahl und blendet die Ersatz-Teile nur in Anzeigen aus', () => {
     const zip = furniturePack().toString('latin1');
     expect(zip).toContain('assets/moinmorni/models/item/brunnen/dorf_trog_a.json');
     expect(zip).toContain('dorf_speier');
     expect(zip).toContain('assets/moinmorni/models/item/brunnen/krone.json');
-    expect(zip).toContain('assets/minecraft/blockstates/tuff_brick_wall.json');
-    expect(zip).toContain('assets/minecraft/blockstates/end_rod.json');
+    // Keine Blockzustände (das Paket gilt auf allen Servern) – ausgeblendet werden nur Anzeigen mit unserem Namen.
+    expect(zip).not.toContain('assets/minecraft/blockstates/');
+    expect(zip).toContain('assets/minecraft/items/tuff_brick_wall.json');
+    expect(zip).toContain('assets/minecraft/items/end_rod.json');
   });
 });
 

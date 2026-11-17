@@ -10,7 +10,7 @@ import { allFishArt, type FishArt } from './arten.js';
 import { stack } from './leinwand.js';
 import { clothingCase, clothingFiles, type ClothingPackEntry } from '../kleidung/paket.js';
 
-/** Feste Kennung des Pakets (der Proxy nimmt es beim Verlassen von Angelkönig wieder ab). */
+/** Feste Kennung des früheren Angelkönig-Pakets (heute im Netzwerk-Paket; MoinMorni räumt sie weg, der Proxy lässt sie nicht mehr durch). */
 export const ANGEL_PACK_ID = '6d6f696e-6d6f-726e-692d-616e67656c6b';
 
 const NS = 'moinmorni';
@@ -89,28 +89,14 @@ function textureEntries(art: FishArt): ZipEntry[] {
   ];
 }
 
-/** Das Paket als ZIP: Fische und (wenn angegeben) Hüte und Kleidung aus dem Kleiderschrank. */
-export function fishPack(
+/** Dateien des Angelkönig-Teils (Fische, Kleidung) ohne `pack.mcmeta` – fürs Netzwerk-Paket (`netzpaket.ts`). */
+export function angelPackEntries(
   entries: readonly FishPackEntry[],
   clothes: readonly ClothingPackEntry[] = [],
-): Buffer {
+): ZipEntry[] {
   const arts = allFishArt(entries.map((e) => e.id));
   const bases = [...new Set([...entries, ...clothes].map((e) => e.base))].sort();
-  const meta = {
-    pack: {
-      description: clothes.length
-        ? 'MoinMorni – Fische und Kleidung im Angelkönig'
-        : 'MoinMorni – Fische im Angelkönig',
-      pack_format: PACK_FORMAT,
-      supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
-      min_format: PACK_FORMAT,
-      max_format: PACK_FORMAT_MAX,
-    },
-  };
-  const icon = arts.find((a) => a.id === 'goldforelle')?.frames[0];
-  return zipOf([
-    { name: 'pack.mcmeta', data: json(meta) },
-    ...(icon ? [{ name: 'pack.png', data: icon.picture().png() }] : []),
+  return [
     ...bases.map((base) => ({
       name: `assets/minecraft/items/${base}.json`,
       data: json(
@@ -131,10 +117,38 @@ export function fishPack(
     })),
     ...arts.flatMap(textureEntries),
     ...clothingFiles(clothes),
+  ];
+}
+
+/** Bild des Pakets in der Liste der Ressourcenpakete: die Goldforelle. */
+export function packIcon(): ZipEntry[] {
+  const icon = allFishArt(['goldforelle'])[0]?.frames[0];
+  return icon ? [{ name: 'pack.png', data: icon.picture().png() }] : [];
+}
+
+/** Nur der Angelkönig-Teil als eigenes ZIP (Tests, Bilder für die Webseite). */
+export function fishPack(
+  entries: readonly FishPackEntry[],
+  clothes: readonly ClothingPackEntry[] = [],
+): Buffer {
+  const meta = {
+    pack: {
+      description: clothes.length
+        ? 'MoinMorni – Fische und Kleidung im Angelkönig'
+        : 'MoinMorni – Fische im Angelkönig',
+      pack_format: PACK_FORMAT,
+      supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
+      min_format: PACK_FORMAT,
+      max_format: PACK_FORMAT_MAX,
+    },
+  };
+  return zipOf([
+    { name: 'pack.mcmeta', data: json(meta) },
+    ...(entries.some((e) => e.id === 'goldforelle') ? packIcon() : []),
+    ...angelPackEntries(entries, clothes),
   ]);
 }
 
-/** Einzelbild einer Art als PNG (erstes Bild der Bildfolge) – für die Webseite. */
 export function fishPicture(id: string, scale = 1): Buffer {
   const art = allFishArt([id])[0];
   const first = art?.frames[0];

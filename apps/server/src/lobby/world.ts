@@ -3,6 +3,7 @@ import {
   LOBBY_NAMESPACE,
   LOBBY_PACK_DIR,
   lobbyPack,
+  ANGEL_PACK_ID,
   MOEBEL_PACK_ID,
   partName,
   SEASON_PACK_DIR,
@@ -74,8 +75,6 @@ const ESCAPE_PREFIX = 2;
 export interface LobbyWorldOptions {
   /** Aktuelle Saison-Deko (Panel: Lobby → Saison-Deko). */
   readonly season?: () => Season;
-  /** Möbel-Paket, das die Lobby anbieten soll. */
-  readonly packOffer?: () => PackOffer;
   /** Bauplan (Tests: ein kleiner; die Wartungs-Lobby: ihr eigener). */
   readonly pack?: () => LobbyPack;
   /** Was in die server.properties gehört (Standard: die der Lobby, siehe `lobbyProperties`). */
@@ -186,39 +185,35 @@ export function patchProperties(
   return { text: `${[...updated, ...added].join('\n')}\n`, changed };
 }
 
-/** Möbel-Paket, das die Lobby anbietet (`lobby/packs.ts`); ohne Adresse (keine Domain) bietet sie keins an. */
-export interface PackOffer {
-  readonly url: string | null;
-  readonly sha1: string;
-  readonly required: boolean;
-}
+/** Kennungen, die früher ein Spielserver selbst angeboten hat (Lobby: Möbel, Angelkönig: Fische). */
+export const OLD_SERVER_PACK_IDS: readonly string[] = [MOEBEL_PACK_ID, ANGEL_PACK_ID];
 
-const PACK_PROMPT = {
-  text: 'Echte Möbel und Blasmusik in der Lobby – dafür unser Paket. / Real furniture and a brass band in the lobby – needs our pack.',
-  color: 'gold',
+/** Server-eigenes Paket aus: Seit es das Netzwerk-Paket gibt, bietet kein Spielserver mehr selbst eins an. */
+const NO_PACK: Readonly<Record<string, string>> = {
+  'resource-pack': '',
+  'resource-pack-sha1': '',
+  'resource-pack-id': '',
+  'require-resource-pack': 'false',
+  'resource-pack-prompt': '',
 };
 
 /**
- * Was die Lobby in ihrer server.properties braucht. Die Figuren brauchen kein Paket (von Mojang signierte Skins); das
- * Möbel-Paket bietet sie an, wenn es eine öffentliche Adresse gibt – mit fester Kennung, damit der Proxy es beim
- * Verlassen der Lobby wieder entfernt.
+ * server.properties ohne unser früheres Server-Paket – nur, wenn es unsere Kennung oder unsere Adresse trägt; ein von
+ * Hand eingetragenes fremdes Paket bleibt.
  */
-export function lobbyProperties(offer?: PackOffer): Record<string, string> {
-  const pack = offer?.url
-    ? {
-        'resource-pack': offer.url,
-        'resource-pack-sha1': offer.sha1,
-        'resource-pack-id': MOEBEL_PACK_ID,
-        'require-resource-pack': String(offer.required),
-        'resource-pack-prompt': JSON.stringify(PACK_PROMPT),
-      }
-    : {
-        'resource-pack': '',
-        'resource-pack-sha1': '',
-        'resource-pack-id': '',
-        'require-resource-pack': 'false',
-        'resource-pack-prompt': '',
-      };
+export function withoutOwnPack(text: string): { text: string; changed: boolean } {
+  const id = readProperty(text, 'resource-pack-id') ?? '';
+  const url = readProperty(text, 'resource-pack') ?? '';
+  const ours = OLD_SERVER_PACK_IDS.includes(id) || url.includes('/api/public/packs/');
+  return ours ? patchProperties(text, NO_PACK) : { text, changed: false };
+}
+
+/**
+ * Was die Lobby in ihrer server.properties braucht. Ein Ressourcenpaket bietet sie nicht mehr selbst an: Das
+ * Netzwerk-Paket kommt vom Proxy, einmal beim Betreten des Netzwerks (`packs/netz.ts`).
+ */
+export function lobbyProperties(): Record<string, string> {
+  const pack = NO_PACK;
   return {
     gamemode: 'adventure',
     // Minecraft ab 26.x legt neue Server mit eingeschalteter Whitelist an – wer hinein darf, entscheidet der Hub.
@@ -434,7 +429,7 @@ export function createLobbyWorld(
   return {
     configure: async (serverId) => {
       const current = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
-      const next = patchProperties(current, options.properties?.() ?? lobbyProperties(options.packOffer?.()));
+      const next = patchProperties(current, options.properties?.() ?? lobbyProperties());
       if (!next.changed) return false;
       await writeFile(serverId, PROPERTIES_FILE, next.text);
       return true;
