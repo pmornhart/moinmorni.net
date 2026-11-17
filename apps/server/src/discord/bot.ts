@@ -23,7 +23,13 @@ import type { DiscordCredentials, CredentialsView } from './credentials.js';
 import { EXTRA_ROLES, invitePermissions, permNames, type ExtraRole, type PermName } from './layout.js';
 import { CUSTOM_IDS, EMERALD, statusMessage, type BoardContext } from './messages.js';
 import { badgesOn, ROLE_ICONS_FEATURE, ROLE_ICONS_KEY } from './rank-icons.js';
-import { createDiscordSetup, type SetupProgress, type SetupReport } from './setup.js';
+import {
+  CHANNEL_RULES,
+  CHANNEL_RULES_KEY,
+  createDiscordSetup,
+  type SetupProgress,
+  type SetupReport,
+} from './setup.js';
 import { createDiscordStore } from './store.js';
 import { createTeamBot } from './team-apply.js';
 import { botLang, bt, type BotLang } from './texts.js';
@@ -759,6 +765,8 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
         live.roleIcons = (d['features'] as unknown[]).includes(ROLE_ICONS_FEATURE);
         const applied = get(ROLE_ICONS_KEY);
         if (applied !== null && applied !== (live.roleIcons ? 'on' : 'off')) syncRanksSoon();
+        // Neue Kanal-Rechte (z. B. schreiben nur mit verbundenem Konto): einmal nachziehen.
+        else if (get(CHANNEL_RULES_KEY) !== CHANNEL_RULES) syncRanksSoon();
       }
       return;
     }

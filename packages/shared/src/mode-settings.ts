@@ -158,12 +158,384 @@ function rejoinSection(
 
 const duels = settingsFor('duelsconfig');
 
+/** Eine Kampfart von Duels (`kits.<id>` in der config.yml) mit ihren eigenen Einstellungen. */
+interface DuelsKit {
+  readonly id: string;
+  readonly name: Text;
+  readonly help: Text;
+  /** Die Brücke zählt Tore statt Runden – sie hat kein `runden`. */
+  readonly noRounds?: true;
+  /** Was nur diese Kampfart hat (Suppe, Tanzboden, Tore …), gleich unter ihrem Schalter. */
+  readonly extra?: readonly SettingDef[];
+}
+
+/** Name der Kampfart vor dem Namen einer ihrer Einstellungen: „Sumo: Runden“. */
+const ofKit = (kit: Text, de: string, en: string): Text => t(`${kit.de}: ${de}`, `${kit.en}: ${en}`);
+const kitKey = (id: string): string => `kit${(id[0] ?? '').toUpperCase()}${id.slice(1)}`;
+
+/** Schalter und Runden einer Kampfart, dann ihre eigenen Einstellungen. */
+function duelsKit(kit: DuelsKit): SettingDef[] {
+  const on = duels.flag({
+    key: kitKey(kit.id),
+    at: `kits.${kit.id}.an`,
+    value: true,
+    cmd: kit.id,
+    label: kit.name,
+    help: kit.help,
+  });
+  const rounds = duels.number({
+    key: `${kitKey(kit.id)}Rounds`,
+    at: `kits.${kit.id}.runden`,
+    value: 1,
+    min: 1,
+    max: 5,
+    unit: t('Runden', 'rounds'),
+    arg: 'runden',
+    cmd: `${kit.id} runden`,
+    label: ofKit(kit.name, 'Runden', 'rounds'),
+    help: t(
+      '1 = ein Kampf, 3 = Bester aus 3 (wer zuerst 2 gewinnt), 5 = Bester aus 5; 2 und 4 werden zu 3 und 5.',
+      '1 = one fight, 3 = best of 3 (first to win 2), 5 = best of 5; 2 and 4 become 3 and 5.',
+    ),
+  });
+  return [on, ...(kit.noRounds ? [] : [rounds]), ...(kit.extra ?? [])];
+}
+
+const SOUP = t('Klassisch', 'Classic');
+const ROD = t('Angel', 'Fishing Rod');
+const COMBO = t('Kombo', 'Combo');
+const SUMO = t('Sumo', 'Sumo');
+const BOXING = t('Boxen', 'Boxing');
+const MAZE = t('Labyrinth', 'Maze');
+const BRIDGE = t('Brücke', 'Bridge');
+
+/** Gruppe „Klassisch“: Kampf wie früher, ohne Abklingzeit beim Schlagen. */
+const DUELS_CLASSIC: readonly DuelsKit[] = [
+  {
+    id: 'klassisch',
+    name: SOUP,
+    help: t(
+      'Eisenrüstung, Diamantschwert und Pilzsuppen – eine Suppe heilt sofort.',
+      'Iron armour, diamond sword and mushroom soup – a soup heals instantly.',
+    ),
+    extra: [
+      duels.number({
+        key: 'soupHeal',
+        at: 'suppe.heilung',
+        value: 7,
+        min: 0.5,
+        max: 20,
+        step: 0.5,
+        unit: t('Lebenspunkte', 'health points'),
+        arg: 'punkte',
+        cmd: 'suppe',
+        label: t('Eine Pilzsuppe heilt', 'One mushroom soup heals'),
+        help: t(
+          'Zwei Lebenspunkte sind ein Herz – 7 heilt also 3,5 Herzen.',
+          'Two health points are one heart – so 7 heals 3.5 hearts.',
+        ),
+      }),
+    ],
+  },
+  {
+    id: 'schwert',
+    name: t('Nur Schwert', 'Sword Only'),
+    help: t(
+      'Nur ein Diamantschwert – keine Rüstung, nichts zu essen. Wer besser trifft, gewinnt.',
+      'Just a diamond sword – no armour, nothing to eat. Whoever hits better wins.',
+    ),
+  },
+  {
+    id: 'ritter',
+    name: t('Ritter', 'Knight'),
+    help: t(
+      'Komplett aus Eisen: Rüstung und Schwert, dazu Bogen und zwei Goldäpfel.',
+      'All iron: armour and sword, plus a bow and two golden apples.',
+    ),
+  },
+  {
+    id: 'diamant',
+    name: t('Diamant', 'Diamond'),
+    help: t(
+      'Komplett aus Diamant, leicht verzaubert, dazu Bogen und Goldäpfel.',
+      'All diamond, lightly enchanted, plus a bow and golden apples.',
+    ),
+  },
+  {
+    id: 'bogen',
+    name: t('Bogen', 'Archery'),
+    help: t(
+      'Bogen mit unendlich Pfeilen und leichte Lederrüstung – gut zielen, in Deckung gehen.',
+      'A bow with endless arrows and light leather armour – aim well, take cover.',
+    ),
+  },
+  {
+    id: 'angel',
+    name: ROD,
+    help: t(
+      'Schwert und Angel: Der Haken stupst an, beim Einholen holst du den Gegner heran.',
+      'Sword and fishing rod: the hook gives a nudge, reeling in pulls the opponent closer.',
+    ),
+    extra: [
+      duels.number({
+        key: 'rodPull',
+        at: 'angel.zug',
+        value: 1,
+        min: 0,
+        max: 3,
+        step: 0.1,
+        unit: t('mal so stark', 'times as strong'),
+        arg: 'staerke',
+        cmd: 'angel zug',
+        label: ofKit(ROD, 'Zug beim Einholen', 'pull when reeling in'),
+        help: t(
+          'Wie stark die Angel den Gegner heranzieht: 0 = gar nicht, 1 = normal, bis 3.',
+          'How strongly the rod pulls the opponent in: 0 = not at all, 1 = normal, up to 3.',
+        ),
+      }),
+    ],
+  },
+  {
+    id: 'kombo',
+    name: COMBO,
+    help: t(
+      'Fast keine Pause zwischen Treffern – schnelle Schlagfolgen, starke Rüstung.',
+      'Almost no pause between hits – fast strings of hits, strong armour.',
+    ),
+    extra: [
+      duels.number({
+        key: 'comboPauseTicks',
+        at: 'kombo.treffer-pause-ticks',
+        value: 2,
+        min: 0,
+        max: 10,
+        ...TICKS,
+        cmd: 'kombo pause',
+        label: ofKit(COMBO, 'Pause zwischen Treffern', 'pause between hits'),
+        help: t(
+          'Sonst sind es 10 Ticks (eine halbe Sekunde) – kleiner heißt schnellere Kombos.',
+          'Normally it is 10 ticks (half a second) – smaller means faster combos.',
+        ),
+      }),
+    ],
+  },
+];
+
+/** Gruppe „Modern“: Kampf wie heute, mit Abklingzeit beim Schlagen. */
+const DUELS_MODERN: readonly DuelsKit[] = [
+  {
+    id: 'modern',
+    name: t('Modern', 'Modern'),
+    help: t(
+      'Diamantrüstung, Schwert, Axt, Bogen, Goldäpfel, Enderperlen und Schild – Kampf wie heute.',
+      'Diamond armour, sword, axe, bow, golden apples, ender pearls and a shield – fighting like today.',
+    ),
+  },
+  {
+    id: 'axt',
+    name: t('Axt und Schild', 'Axe & Shield'),
+    help: t(
+      'Diamantaxt und Schild: Axt-Treffer legen den Schild des Gegners kurz lahm.',
+      'Diamond axe and shield: axe hits briefly disable the opponent’s shield.',
+    ),
+  },
+  {
+    id: 'goldapfel',
+    name: t('Goldapfel', 'Golden Apple'),
+    help: t(
+      'Verzauberte Goldäpfel, sehr starke Rüstung und Tränke für Stärke und Tempo.',
+      'Enchanted golden apples, very strong armour and potions for strength and speed.',
+    ),
+  },
+  {
+    id: 'traenke',
+    name: t('Tränke', 'Potions'),
+    help: t(
+      'Heiltränke zum Werfen, Schnelligkeit zum Trinken und ein paar Enderperlen.',
+      'Healing potions to throw, speed to drink and a few ender pearls.',
+    ),
+  },
+  {
+    id: 'perlen',
+    name: t('Enderperlen', 'Ender Pearls'),
+    help: t(
+      '16 Enderperlen – das Landen tut nicht weh. Springen, überraschen, zuschlagen.',
+      '16 ender pearls – landing does not hurt. Jump, surprise, strike.',
+    ),
+  },
+  {
+    id: 'uhc',
+    name: t('UHC', 'UHC'),
+    help: t(
+      'UHC heißt „Ultra Hardcore“: keine natürliche Heilung, nur Goldäpfel. Dazu Lava, Wasser, Blöcke und Bogen – danach steht die Arena wieder wie neu.',
+      'UHC means “Ultra Hardcore”: no natural healing, only golden apples. Plus lava, water, blocks and a bow – afterwards the arena is as good as new.',
+    ),
+  },
+  {
+    id: 'baukampf',
+    name: t('Bau-Kampf', 'Build Fight'),
+    help: t(
+      'Blöcke bauen erlaubt: Türme, Wände, Brücken. Danach steht die Arena wieder wie neu.',
+      'Building blocks is allowed: towers, walls, bridges. Afterwards the arena is as good as new.',
+    ),
+  },
+];
+
+/** Gruppe „Spaß“: besondere Regeln und eigene Arenen. */
+const DUELS_FUN: readonly DuelsKit[] = [
+  {
+    id: 'faehigkeiten',
+    name: t('Fähigkeiten', 'Abilities'),
+    help: t(
+      'Eisen und eine besondere Fähigkeit mit Abklingzeit: Bergführer, Schmied, Kräuterfrau oder Jäger.',
+      'Iron and a special ability with a cooldown: mountain guide, smith, herbalist or hunter.',
+    ),
+  },
+  {
+    id: 'sumo',
+    name: SUMO,
+    help: t(
+      'Runder Tanzboden, kein Schaden: Treffer stoßen nur – wer herunterfällt, verliert.',
+      'Round dance floor, no damage: hits only push – whoever falls off loses.',
+    ),
+    extra: [
+      duels.number({
+        key: 'sumoDepth',
+        at: 'sumo.aus-tiefe',
+        value: 2,
+        min: 0.5,
+        max: 20,
+        step: 0.5,
+        ...BLOCKS,
+        cmd: 'sumo tiefe',
+        label: ofKit(SUMO, 'ausgeschieden ab', 'out from'),
+        help: t(
+          'So viele Blöcke unter dem Tanzboden scheidet man aus.',
+          'You are out this many blocks below the dance floor.',
+        ),
+      }),
+    ],
+  },
+  {
+    id: 'boxen',
+    name: BOXING,
+    help: t(
+      'Kein Schaden – Treffer zählen. Wer zuerst genug Treffer landet, gewinnt.',
+      'No damage – hits count. Whoever lands enough hits first wins.',
+    ),
+    extra: [
+      duels.number({
+        key: 'boxingHits',
+        at: 'boxen.treffer',
+        value: 100,
+        min: 1,
+        max: 1000,
+        unit: t('Treffer', 'hits'),
+        arg: 'treffer',
+        cmd: 'boxen treffer',
+        label: ofKit(BOXING, 'Treffer zum Sieg', 'hits to win'),
+        help: t(
+          'So viele Treffer braucht man zum Sieg – im 2 gegen 2 das Team zusammen.',
+          'This many hits are needed to win – in 2v2 the whole team together.',
+        ),
+      }),
+    ],
+  },
+  {
+    id: 'spleef',
+    name: t('Spleef', 'Spleef'),
+    help: t(
+      'Mit der Schaufel auf dem Schneefeld: den Schnee unter dem Gegner wegschaufeln – wer hinunterfällt, verliert.',
+      'With a shovel on the snowfield: dig the snow away under your opponent – whoever falls through loses.',
+    ),
+  },
+  {
+    id: 'labyrinth',
+    name: MAZE,
+    help: t(
+      'Irrgarten aus Hecken: Start in entgegengesetzten Ecken, zum Ziel in der Mitte laufen oder den Gegner besiegen.',
+      'A hedge maze: start in opposite corners, run to the goal in the middle or defeat your opponent.',
+    ),
+    extra: [
+      duels.flag({
+        key: 'mazeCompass',
+        at: 'labyrinth.kompass',
+        value: true,
+        cmd: 'labyrinth kompass',
+        label: ofKit(MAZE, 'Kompass im Kit', 'compass in the kit'),
+        help: t(
+          'Der Kompass zeigt zum nächsten Gegner. Aus = selbst suchen.',
+          'The compass points to the nearest opponent. Off = find them yourself.',
+        ),
+      }),
+      duels.flag({
+        key: 'mazeGoal',
+        at: 'labyrinth.ziel',
+        value: true,
+        cmd: 'labyrinth ziel',
+        label: ofKit(MAZE, 'Ziel in der Mitte', 'goal in the middle'),
+        help: t(
+          'Wer zuerst darauf steht, gewinnt die Runde – ein Lichtstrahl zeigt die Richtung. Aus = nur Besiegen zählt.',
+          'Whoever stands on it first wins the round – a beam of light shows the way. Off = only defeating counts.',
+        ),
+      }),
+      duels.flag({
+        key: 'mazeReshuffle',
+        at: 'labyrinth.jede-runde-neu',
+        value: true,
+        cmd: 'labyrinth neu',
+        label: ofKit(MAZE, 'jede Runde ein neuer Irrgarten', 'a new maze every round'),
+        help: t(
+          'Immer so gebaut, dass beide Startecken gleich weit vom Ziel weg sind. Aus = immer derselbe Irrgarten.',
+          'Always built so that both starting corners are equally far from the goal. Off = always the same maze.',
+        ),
+      }),
+    ],
+  },
+  {
+    id: 'bruecke',
+    name: BRIDGE,
+    help: t(
+      'Zwei Seiten, eine Brücke über die Klamm: ins gegnerische Tor springen und punkten. Zählt Tore statt Runden.',
+      'Two sides, one bridge across the gorge: jump into the other team’s goal to score. Counts goals instead of rounds.',
+    ),
+    noRounds: true,
+    extra: [
+      duels.number({
+        key: 'bridgeGoals',
+        at: 'bruecke.tore',
+        value: 3,
+        min: 1,
+        max: 20,
+        unit: t('Tore', 'goals'),
+        arg: 'tore',
+        cmd: 'bruecke tore',
+        label: ofKit(BRIDGE, 'Tore zum Sieg', 'goals to win'),
+        help: t('So viele Tore braucht ein Team zum Sieg.', 'A team needs this many goals to win.'),
+      }),
+    ],
+  },
+];
+
+/** Alle Kampfarten von Duels (Kennung, Name) in der Reihenfolge des Menüs – auch für die Webseite. */
+export const DUELS_KITS: ReadonlyArray<{ readonly id: string; readonly name: Text }> = [
+  ...DUELS_CLASSIC,
+  ...DUELS_MODERN,
+  ...DUELS_FUN,
+].map((k) => ({ id: k.id, name: k.name }));
+
+const KITS_OFF = t(
+  'Jede Kampfart lässt sich einzeln ausschalten – sie verschwindet dann aus Menüs, Warteschlangen und Herausforderungen. „Runden“ gilt für Kämpfe aus der Warteschlange, bei /duel wählt man selbst.',
+  'Each fighting style can be switched off on its own – it then disappears from menus, queues and challenges. “Rounds” applies to fights from the queue; with /duel players choose themselves.',
+);
+const withKitsOff = (de: string, en: string): Text => t(`${de} ${KITS_OFF.de}`, `${en} ${KITS_OFF.en}`);
+
 export const DUELS_AREA: SettingArea = {
   id: 'duels',
   title: t('Duels', 'Duels'),
   text: t(
-    '1 gegen 1 und 2 gegen 2: Arenen, Kampfzeiten, die Suppe im Kit „Klassisch“ und die gewertete Rangliste.',
-    '1v1 and 2v2: arenas, fight times, the soup in the “Classic” kit and the ranked leaderboard.',
+    '20 Kampfarten in drei Gruppen, 1 gegen 1, 2 gegen 2 und Party-Kämpfe: jede Kampfart an oder aus, Bester aus 3 oder 5, dazu Arenen, Kampfzeiten und die gewertete Rangliste.',
+    '20 fighting styles in three groups, 1v1, 2v2 and party fights: each style on or off, best of 3 or 5, plus arenas, fight times and the ranked leaderboard.',
   ),
   icon: 'Swords',
   panel: 'modes',
@@ -190,8 +562,8 @@ export const DUELS_AREA: SettingArea = {
           cmd: 'arenen',
           label: t('Kopien jeder Arena', 'Copies of each arena'),
           help: t(
-            'Jede der vier Arenen (Almwiese, Burghof, Bergwerk, Wirtshausgarten) gibt es so oft – 3 Kopien = bis zu 12 Kämpfe gleichzeitig. Mehr Kopien brauchen mehr Speicher; neue werden beim Neustart dazugebaut.',
-            'Each of the four arenas (alpine meadow, castle yard, mine, tavern garden) exists this often – 3 copies = up to 12 fights at once. More copies need more memory; new ones are built at the restart.',
+            'Jede Arena gibt es so oft: die vier für alle (Almwiese, Burghof, Bergwerk, Wirtshausgarten) und die eigenen von Sumo (Tanzboden), Spleef (Schneefeld), Labyrinth (Irrgarten) und Brücke (Klammbrücke). 3 Kopien = bis zu 12 Kämpfe gleichzeitig mit Schwert und Bogen, dazu je 3 in den eigenen Arenen. Mehr Kopien brauchen mehr Speicher; neue werden beim Neustart dazugebaut.',
+            'Each arena exists this often: the four for everyone (alpine meadow, castle yard, mine, tavern garden) and the own ones of Sumo (dance floor), Spleef (snowfield), Maze (hedge maze) and Bridge (gorge bridge). 3 copies = up to 12 fights at once with sword and bow, plus 3 each in the own arenas. More copies need more memory; new ones are built at the restart.',
           ),
         }),
       ],
@@ -210,8 +582,8 @@ export const DUELS_AREA: SettingArea = {
           cmd: 'zeitlimit',
           label: t('Zeitlimit eines Kampfes', 'Time limit of a fight'),
           help: t(
-            'Dauert ein Kampf länger, endet er unentschieden (600 = 10 Minuten).',
-            'If a fight takes longer, it ends in a draw (600 = 10 minutes).',
+            'Dauert ein Kampf länger, endet er unentschieden – außer ein Team liegt bei Runden, Treffern (Boxen) oder Toren (Brücke) vorn, dann gewinnt es (600 = 10 Minuten).',
+            'If a fight takes longer, it ends in a draw – unless a team is ahead in rounds, hits (Boxing) or goals (Bridge), then it wins (600 = 10 minutes).',
           ),
         }),
         duels.number({
@@ -259,33 +631,11 @@ export const DUELS_AREA: SettingArea = {
       ],
     },
     {
-      id: 'soup',
-      title: t('Kit „Klassisch“', 'Kit “Classic”'),
-      settings: [
-        duels.number({
-          key: 'soupHeal',
-          at: 'suppe.heilung',
-          value: 7,
-          min: 0.5,
-          max: 20,
-          step: 0.5,
-          unit: t('Lebenspunkte', 'health points'),
-          arg: 'punkte',
-          cmd: 'suppe',
-          label: t('Eine Pilzsuppe heilt', 'One mushroom soup heals'),
-          help: t(
-            'Zwei Lebenspunkte sind ein Herz – 7 heilt also 3,5 Herzen.',
-            'Two health points are one heart – so 7 heals 3.5 hearts.',
-          ),
-        }),
-      ],
-    },
-    {
       id: 'ranked',
       title: t('Gewertete Kämpfe', 'Ranked fights'),
       text: t(
-        'Die Rangliste zählt Wertungspunkte (Elo): Wer gewinnt, bekommt Punkte vom Verlierer – gegen Stärkere mehr, gegen Schwächere weniger.',
-        'The leaderboard counts rating points (Elo): the winner gets points from the loser – more against stronger players, fewer against weaker ones.',
+        'Die Rangliste zählt Wertungspunkte (Elo) je Kampfart: Wer gewinnt, bekommt Punkte vom Verlierer – gegen Stärkere mehr, gegen Schwächere weniger.',
+        'The leaderboard counts rating points (Elo) per fighting style: the winner gets points from the loser – more against stronger players, fewer against weaker ones.',
       ),
       settings: [
         duels.number({
@@ -366,6 +716,57 @@ export const DUELS_AREA: SettingArea = {
           help: t('Weiter wächst der Abstand nicht.', 'The gap does not grow any further.'),
         }),
       ],
+    },
+    {
+      id: 'party',
+      title: t('Party-Kämpfe', 'Party fights'),
+      text: t(
+        'Zwei Party-Leitungen fordern sich mit /duel heraus (Party gegen Party), oder eine Party kämpft mit /partykampf unter sich: jeder gegen jeden oder in zwei Teams. Party-Kämpfe sind immer locker.',
+        'Two party leaders challenge each other with /duel (party against party), or a party fights among itself with /partykampf: everyone for themselves or in two teams. Party fights are always casual.',
+      ),
+      settings: [
+        duels.number({
+          key: 'partyMax',
+          at: 'party.max-spieler',
+          value: 8,
+          min: 2,
+          max: 8,
+          ...PLAYERS,
+          cmd: 'party groesse',
+          label: t('Größte Party', 'Largest party'),
+          help: t(
+            'So viele dürfen in einem Party-Kampf höchstens sein – mehr Startplätze haben die Arenen nicht.',
+            'At most this many may be in a party fight – the arenas have no more starting places.',
+          ),
+        }),
+      ],
+    },
+    {
+      id: 'kits-classic',
+      title: t('Kampfarten: Klassisch', 'Fighting styles: Classic'),
+      text: withKitsOff(
+        'Kampf wie früher: keine Abklingzeit beim Schlagen, Rückstoß wie damals.',
+        'Fighting like the old days: no attack cooldown, knockback like back then.',
+      ),
+      settings: DUELS_CLASSIC.flatMap(duelsKit),
+    },
+    {
+      id: 'kits-modern',
+      title: t('Kampfarten: Modern', 'Fighting styles: Modern'),
+      text: withKitsOff(
+        'Kampf wie heute: mit Abklingzeit beim Schlagen, Schild, Tränken und Blöcken.',
+        'Fighting like today: with attack cooldown, shield, potions and blocks.',
+      ),
+      settings: DUELS_MODERN.flatMap(duelsKit),
+    },
+    {
+      id: 'kits-fun',
+      title: t('Kampfarten: Spaß', 'Fighting styles: Fun'),
+      text: withKitsOff(
+        'Besondere Regeln und eigene Arenen: Tanzboden, Schneefeld, Irrgarten und Klammbrücke.',
+        'Special rules and their own arenas: dance floor, snowfield, hedge maze and gorge bridge.',
+      ),
+      settings: DUELS_FUN.flatMap(duelsKit),
     },
   ],
 };
@@ -624,6 +1025,14 @@ export const PARTY_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'party', plugin: 'MorniParty' },
   sections: [
+    rejoinSection(
+      party,
+      120,
+      t(
+        'So viele Sekunden bleibt der Platz frei. Figur, Taler, Edelweiß und Gegenstände bleiben; ist man am Zug, würfelt das Spiel nach der Würfel-Zeit, Minispiele laufen ohne einen. Wer rechtzeitig zurückkommt, steht wieder auf dem eigenen Feld. Sind alle weg, hält die Partie an. 0 = aus.',
+        'The place stays free for this many seconds. Piece, coins, edelweiss and items stay; if it is your turn, the game rolls after the dice time, minigames run without you. Whoever comes back in time stands on their own space again. If everyone is gone, the game pauses. 0 = off.',
+      ),
+    ),
     {
       id: 'tables',
       title: t('Tische und Spieler', 'Tables and players'),
@@ -1339,6 +1748,14 @@ export const BURGVERLIES_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'burgverlies', plugin: 'MorniBurgverlies' },
   sections: [
+    rejoinSection(
+      verlies,
+      120,
+      t(
+        'So viele Sekunden bleibt der Platz frei. Die Gruppe spielt weiter; wer rechtzeitig zurückkommt, steht im Raum der Gruppe mit gleicher Ausrüstung und gleichem Leben. Sind alle weg, hält der Abstieg an – auch die Zeit. 0 = aus.',
+        'The place stays free for this many seconds. The group plays on; whoever comes back in time stands in the group’s room with the same gear and health. If everyone is gone, the descent pauses – the clock too. 0 = off.',
+      ),
+    ),
     {
       id: 'dungeons',
       title: t('Verliese', 'Dungeons'),
@@ -1497,6 +1914,14 @@ export const BOLLWERK_AREA: SettingArea = {
   panel: 'modes',
   mode: { id: 'bollwerk', plugin: 'MorniBollwerk' },
   sections: [
+    rejoinSection(
+      bollwerk,
+      120,
+      t(
+        'So viele Sekunden bleibt der Platz frei. Die anderen verteidigen weiter; wer rechtzeitig zurückkommt, steht an derselben Stelle mit gleicher Ausrüstung und gleichem Leben. Sind alle weg, hält die Runde an. 0 = aus.',
+        'The place stays free for this many seconds. The others keep defending; whoever comes back in time stands at the same spot with the same gear and health. If everyone is gone, the round pauses. 0 = off.',
+      ),
+    ),
     {
       id: 'hall',
       title: t('Wachstube', 'Guardroom'),
@@ -1671,6 +2096,20 @@ const BUYBACK_TIERS: ReadonlyArray<readonly [number, number]> = [
   [4, 5],
 ];
 
+/** Abteilungen des Händlerhauses (`haendler.faktoren.<abteilung>`), Namen wie im Spiel. */
+const MERCHANT_DEPARTMENTS: ReadonlyArray<readonly [string, Text]> = [
+  ['bloecke', t('Baublöcke', 'Building blocks')],
+  ['holz', t('Holz & Pflanzen', 'Wood & plants')],
+  ['erze', t('Erze & Edelsteine', 'Ores & gems')],
+  ['deko', t('Farben & Deko', 'Colours & decor')],
+  ['essen', t('Essen & Ernte', 'Food & crops')],
+  ['werkzeug', t('Werkzeug & Waffen', 'Tools & weapons')],
+  ['traenke', t('Tränke & Zauber', 'Potions & magic')],
+  ['redstone', t('Redstone & Technik', 'Redstone & tech')],
+  ['beute', t('Mob-Beute', 'Mob drops')],
+  ['besonderes', t('Besonderes & Saison', 'Special & seasonal')],
+];
+
 const MAX_TALER = 100_000;
 const money = (key: string, at: string, value: number, cmd: string, label: Text, help: Text): SettingDef =>
   smp.number({ key, at, value, min: 0, max: MAX_TALER, step: 0.01, ...TALER, cmd, label, help });
@@ -1681,8 +2120,8 @@ export const SMP_AREA: SettingArea = {
   id: 'smp',
   title: t('MorniSMP', 'MorniSMP'),
   text: t(
-    'Überleben mit freiem Markt: Taler, Weltgrenzen, Reisen, Auktionshaus, Aufträge, Stände, Grundstücke, das Händlerhaus der Stadt und tägliche Belohnung. Nichts davon gibt es für echtes Geld.',
-    'Survival with a free market: coins, world borders, travel, auction house, orders, stalls, plots, the town’s merchant house and the daily reward. None of it is for real money.',
+    'Überleben mit freiem Markt: Taler, Weltgrenzen, Reisen, Auktionshaus, Aufträge, Stände, Grundstücke, das Händlerhaus der Stadt mit Börse und tägliche Belohnung. Nichts davon gibt es für echtes Geld.',
+    'Survival with a free market: coins, world borders, travel, auction house, orders, stalls, plots, the town’s merchant house with its exchange and the daily reward. None of it is for real money.',
   ),
   icon: 'Store',
   panel: 'modes',
@@ -2089,6 +2528,112 @@ export const SMP_AREA: SettingArea = {
             'From this amount the merchant asks once more when buying or selling (“Really?”). 0 = never.',
           ),
         ),
+      ],
+    },
+    {
+      id: 'merchant-prices',
+      title: t('Händlerhaus: Preise je Abteilung', 'Merchant house: prices per department'),
+      text: t(
+        'Alle Kauf- und Ankaufspreise einer Abteilung mal diesem Wert: 1 = wie in der Preisliste, 2 = doppelt so teuer, 0,5 = halb so teuer. Erze und Edelsteine sind von Haus aus kostbar (Diamant etwa 40-mal so viel wie Alltagsware). Würde ein Ankaufspreis danach „kaufen, umbauen, verkaufen“ lohnend machen, senkt MorniSMP ihn von selbst.',
+        'All buying and buyback prices of a department times this value: 1 = as in the price list, 2 = twice as dear, 0.5 = half as dear. Ores and gems are precious from the start (a diamond is about 40 times an everyday item). If a buyback price would then make “buy, craft, sell” pay off, MorniSMP lowers it by itself.',
+      ),
+      settings: MERCHANT_DEPARTMENTS.map(([id, name]) =>
+        smp.number({
+          key: keyOf('factor', id),
+          at: `haendler.faktoren.${id}`,
+          value: 1,
+          min: 0.05,
+          max: 100,
+          step: 0.05,
+          unit: t('mal', 'times'),
+          arg: 'faktor',
+          cmd: `faktor ${id}`,
+          label: name,
+          help: t(
+            `Preise der Abteilung „${name.de}“ mal diesem Wert.`,
+            `Prices of the department “${name.en}” times this value.`,
+          ),
+        }),
+      ),
+    },
+    {
+      id: 'exchange',
+      title: t('Börse', 'Exchange'),
+      text: t(
+        'Jede Ware der Händlerin hat einen Kurs nach Angebot und Nachfrage: Verkaufen alle zusammen viel an Vroni, zahlt sie weniger; kaufen alle viel, verlangt sie mehr. Mit der Zeit kehrt jeder Kurs zum Grundpreis zurück. Vroni zahlt nie mehr als den Grundpreis und verlangt nie weniger – billig kaufen und teuer verkaufen lohnt sich bei ihr also nie. Spielerpreise (Auktionshaus, Aufträge, Läden) bleiben frei. Im Spiel: /boerse und /wert.',
+        'Every ware of the merchant has a rate by supply and demand: if everyone together sells a lot to Vroni, she pays less; if everyone buys a lot, she asks more. Over time every rate returns to the base price. Vroni never pays more than the base price and never asks less – so buying cheap and selling dear never pays off with her. Player prices (auction house, orders, shops) stay free. In the game: /boerse and /wert.',
+      ),
+      settings: [
+        smp.flag({
+          key: 'exchange',
+          at: 'boerse.an',
+          value: true,
+          cmd: 'boerse',
+          label: t('Kurse an', 'Rates on'),
+          help: t(
+            'Aus: Die Händlerin nimmt immer den Grundpreis aus der Preisliste.',
+            'Off: the merchant always uses the base price from the price list.',
+          ),
+        }),
+        smp.number({
+          key: 'exchangeHalveAfter',
+          at: 'boerse.halbieren-nach',
+          value: 4,
+          min: 0.25,
+          max: 1000,
+          step: 0.25,
+          unit: t('Tagesmengen', 'daily amounts'),
+          arg: 'tagesmengen',
+          cmd: 'boerse halbieren-nach',
+          label: t('Halber Preis nach', 'Half price after'),
+          help: t(
+            'So viele Tagesmengen einer Ware muss die Stadt mehr an Vroni verkaufen als bei ihr kaufen, bis sie nur noch die Hälfte zahlt – und genauso viele mehr kaufen als verkaufen, bis sie das Doppelte verlangt. Kleiner = der Kurs reagiert schneller.',
+            'The town has to sell this many daily amounts of a ware more to Vroni than it buys from her until she pays only half – and buy as many more than it sells until she asks double. Smaller = the rate reacts faster.',
+          ),
+        }),
+        smp.number({
+          key: 'exchangeRecovery',
+          at: 'boerse.erholung-stunden',
+          value: 6,
+          min: 0.05,
+          max: 1440,
+          step: 0.05,
+          ...HOURS,
+          cmd: 'boerse erholung',
+          label: t('Kurs erholt sich zur Hälfte in', 'Rate recovers halfway in'),
+          help: t(
+            'Nach so vielen Stunden ist die Hälfte eines Ausschlags wieder weg.',
+            'After this many hours half of a swing is gone again.',
+          ),
+        }),
+        smp.number({
+          key: 'exchangeMinPercent',
+          at: 'boerse.min-prozent',
+          value: 25,
+          min: 1,
+          max: 100,
+          ...PERCENT,
+          cmd: 'boerse min',
+          label: t('Ankauf fällt höchstens auf', 'Buyback falls at most to'),
+          help: t(
+            'So viel Prozent vom Grundpreis zahlt Vroni mindestens, auch wenn alle verkaufen.',
+            'Vroni pays at least this many percent of the base price, even when everyone sells.',
+          ),
+        }),
+        smp.number({
+          key: 'exchangeMaxPercent',
+          at: 'boerse.max-prozent',
+          value: 300,
+          min: 100,
+          max: 1000,
+          ...PERCENT,
+          cmd: 'boerse max',
+          label: t('Verkauf steigt höchstens auf', 'Selling price rises at most to'),
+          help: t(
+            'So viel Prozent vom Grundpreis verlangt Vroni höchstens, auch wenn alle kaufen.',
+            'Vroni asks at most this many percent of the base price, even when everyone buys.',
+          ),
+        }),
       ],
     },
     {

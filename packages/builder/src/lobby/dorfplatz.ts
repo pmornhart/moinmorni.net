@@ -76,7 +76,7 @@ export const VILLAGE_FOUNTAINS: readonly (readonly [number, number])[] = [
 const LINDE = { x: UPPER.x + 4, z: UPPER.z - 2 } as const;
 
 /** Dorfmarkt: Mitte der Standfront (x, z) und Blickrichtung, je zwei Stände an jeder Ecke des Maibaums. */
-const MARKET: readonly (readonly [number, number, Facing])[] = [
+export const MARKET: readonly (readonly [number, number, Facing])[] = [
   [-8, -13, 'south'],
   [8, -13, 'south'],
   [-13, -8, 'east'],
@@ -161,7 +161,8 @@ const WALKERS: readonly (readonly [number, number, Facing, string, string, boole
   [-92, 6, 'west', 'gast5', 'gasse'],
   [80, -33, 'south', 'gast2', 'oberdorf'],
   [44, 8, 'north', 'kellnerin', 'biergarten'],
-  [2, -27, 'north', 'gast3', 'prachtstrasse'],
+  // neben dem roten Teppich (auf Teppich laufen die Dorfleute nicht – er hat eine dünne Kollision)
+  [4, -27, 'north', 'gast3', 'prachtstrasse'],
 ];
 
 const SHORE: readonly (readonly [number, number])[] = [

@@ -2,6 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   DEFAULT_MODES,
+  DUELS_KITS,
   MODE_SETTING_AREAS,
   DEFAULT_ROLES,
   SETTING_AREAS,
@@ -113,6 +114,28 @@ describe('Einstellungen der Spielmodi', () => {
     expect(onStep(0.1 + 0.2, 0.1)).toBe(true);
   });
 
+  test('Duels 0.2.0: 20 Kampfarten in drei Gruppen, je an/aus und mit Runden – außer der Brücke (sie zählt Tore)', () => {
+    const area = areaById('duels')!;
+    const paths = settingsOf(area).map((d) => d.config?.path ?? '');
+    expect(DUELS_KITS).toHaveLength(20);
+    DUELS_KITS.forEach((k) => {
+      expect(paths).toContain(`kits.${k.id}.an`);
+      expect(paths.includes(`kits.${k.id}.runden`)).toBe(k.id !== 'bruecke');
+    });
+    const groups = ['kits-classic', 'kits-modern', 'kits-fun'].map(
+      (id) =>
+        area.sections.find((s) => s.id === id)?.settings.filter((d) => d.config?.path.endsWith('.an')).length,
+    );
+    expect(groups).toEqual([7, 7, 6]);
+    const duels = patchSchemaFor(area);
+    expect(duels.safeParse({ kitSumoRounds: 3, sumoDepth: 2.5, rodPull: 1.5, bridgeGoals: 5 }).success).toBe(
+      true,
+    );
+    expect(duels.safeParse({ kitSumoRounds: 6 }).success).toBe(false);
+    expect(duels.safeParse({ sumoDepth: 2.3 }).success).toBe(false);
+    expect(duels.safeParse({ partyMax: 9 }).success).toBe(false);
+  });
+
   test('MorniSMP: vom Sortiment des Händlerhauses nur Schalter und Zahlen, keine einzelne Ware', () => {
     // MorniSMP nimmt „haendler.waren“ nur als Ganzes: Steht dort auch nur eine Ware in der config.yml, gilt allein
     // diese Liste – einzelne Werte aus dem Panel würden das Sortiment verkleinern.
@@ -121,6 +144,24 @@ describe('Einstellungen der Spielmodi', () => {
       expect.arrayContaining(['haendler.an', 'haendler.verkauf-max-prozent', 'haendler.bestaetigen-ab']),
     );
     expect(paths.filter((p) => p.startsWith('haendler.waren') || p.startsWith('ankauf.preise'))).toEqual([]);
+    // 0.3.0: Preis-Faktor je Abteilung und Börse ja, der interne Merker der Preisliste nicht.
+    expect(paths.filter((p) => p.startsWith('haendler.faktoren.'))).toHaveLength(10);
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        'boerse.an',
+        'boerse.halbieren-nach',
+        'boerse.erholung-stunden',
+        'boerse.min-prozent',
+        'boerse.max-prozent',
+      ]),
+    );
+    expect(paths).not.toContain('haendler.preisliste');
+    const smp = patchSchemaFor(areaById('smp')!);
+    expect(smp.safeParse({ factorErze: 2.5, exchangeHalveAfter: 0.25, exchangeRecovery: 0.05 }).success).toBe(
+      true,
+    );
+    expect(smp.safeParse({ factorErze: 0 }).success).toBe(false);
+    expect(smp.safeParse({ exchangeMaxPercent: 99 }).success).toBe(false);
   });
 });
 

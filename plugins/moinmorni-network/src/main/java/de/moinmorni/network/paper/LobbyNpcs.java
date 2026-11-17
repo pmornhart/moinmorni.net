@@ -17,13 +17,18 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Tag;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -43,6 +48,7 @@ import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import io.papermc.paper.entity.TeleportFlag;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
@@ -98,6 +104,9 @@ final class LobbyNpcs implements Listener {
     /** So weit dreht eine stehende Figur den Kopf (Grad links/rechts); wer weiter hinten steht, wird nicht angeschaut. */
     private static final float HEAD_TURN = 60;
     private static final float HEAD_PITCH = 35;
+    /** Der Kopf dreht sich weich (höchstens so viele Grad je Tick, zum Ende langsamer) statt in Sprüngen. */
+    private static final float HEAD_STEP = 9;
+    private static final float HEAD_EASE = 0.35f;
     /** Alle zwei Sekunden nachsehen, ob die Lobby neu gebaut wurde (dann alte Wesen wegräumen). */
     private static final int BUILD_CHECK_TICKS = 40;
     /** Blöcke pro Tick: etwa 1,8 Blöcke pro Sekunde – gemütliches Schlendern (im Rock 1,2). */
@@ -106,24 +115,44 @@ final class LobbyNpcs implements Listener {
     /** So schnell folgt der Körper der Laufrichtung (wie Minecraft selbst: 30 % je Tick, höchstens 50° hinter dem Kopf). */
     private static final float BODY_FOLLOW = 0.3f;
     private static final float BODY_MAX_BEHIND = 50;
+    /** Ab so viel Weg je Tick dreht Minecraft den Körper in die Laufrichtung (0,05 Blöcke). */
+    private static final double MOVING = 0.05;
+    /**
+     * So viele Grad dreht sich eine Figur je Tick auf der Stelle, bevor sie losgeht – wie ein Mensch, nicht mit einem
+     * Ruck herum (ein Ruck ließ Minecraft den Körper kurz rückwärts drehen, die Tracht sprang hinterher).
+     */
+    private static final float TURN_STEP = 12;
+    /** So nah (Mitte zu Mitte) läuft niemand an eine andere Figur oder einen Spieler heran. */
+    private static final double KEEP_APART = 0.8;
+    /** Ein Ziel, an dem schon jemand steht, wird nicht angesteuert. */
+    private static final double TARGET_APART = 1.2;
+    private static final int BLOCKED_WAIT = 12;
+    private static final int BLOCKED_GIVE_UP = 3;
     private static final double WANDER_MIN = 2;
     private static final double WANDER_MAX = 8;
     private static final int TARGET_TRIES = 6;
     private static final double PATH_STEP = 0.5;
     private static final double BODY = 0.3;
     private static final double ARRIVED = 0.15;
+    /** Trampelpfad und Ackerboden sind 15/16 hoch – das sieht niemand. */
+    private static final double GROUND_MIN = 0.9;
     private static final int PAUSE_SHORT = 20;
     private static final int PAUSE_MIN = 60;
     private static final int PAUSE_SPREAD = 160;
 
     /**
-     * Ein Modus, wie die Lobby ihn zeigt. {@code phase} = was der Modus selbst zuletzt gemeldet hat; „closed“ heißt
-     * Pause (Wintersport im Sommer): man darf trotzdem hin und sich umschauen.
+     * Ein Modus, wie die Lobby ihn zeigt. {@code pause} sagt der Hub: „summer“ = Sommerpause (Wintersport außerhalb
+     * der Saison – man darf trotzdem hin und sich umschauen), „closed“ = gerade geschlossen (z. B. während der Server
+     * beendet wird), sonst null. Ein schlafender Modus ist nie geschlossen – er wacht auf, sobald jemand kommt.
      */
     record ModeInfo(String id, String nameDe, String nameEn, String state, String access, int players,
-                    boolean hasServer, boolean awake, String icon, String phase) {
-        boolean paused() {
-            return "on".equals(state) && hasServer && "closed".equals(phase);
+                    boolean hasServer, boolean awake, String icon, String phase, String pause) {
+        boolean summerBreak() {
+            return "on".equals(state) && hasServer && "summer".equals(pause);
+        }
+
+        boolean closedNow() {
+            return "on".equals(state) && hasServer && "closed".equals(pause);
         }
     }
 
@@ -132,14 +161,44 @@ final class LobbyNpcs implements Listener {
         final double speed;
         Location target;
         int pause;
+        /** So oft hintereinander stand jemand im Weg. */
+        int blocked;
         /** Wohin der Körper schaut (Minecraft dreht ihn beim Laufen langsam nach) – die Tracht folgt ihm. */
         float body;
+        /** Kopf beim Stehenbleiben (schaut sich nach Spielern um). */
+        final Gaze gaze;
 
-        Walk(Location home, double speed, int pause) {
+        Walk(Location home, double speed, int pause, float body) {
             this.home = home;
             this.speed = speed;
             this.pause = pause;
-            this.body = home.getYaw();
+            this.body = body;
+            this.gaze = new Gaze(body, 0);
+        }
+    }
+
+    /** Wohin der Kopf einer stehenden Figur schaut und wohin er will. Der Körper (und die Tracht) bleibt bei {@code home}. */
+    static final class Gaze {
+        float home;
+        float yaw;
+        float pitch;
+        float wantYaw;
+        float wantPitch;
+
+        Gaze(float home, float pitch) {
+            this.home = home;
+            this.yaw = home;
+            this.wantYaw = home;
+            this.pitch = pitch;
+            this.wantPitch = 0;
+        }
+
+        void reset(float facing) {
+            home = facing;
+            yaw = facing;
+            wantYaw = facing;
+            pitch = 0;
+            wantPitch = 0;
         }
     }
 
@@ -159,6 +218,8 @@ final class LobbyNpcs implements Listener {
     }
 
     private final JavaPlugin plugin;
+    /** Platz eines Dorfbewohners aus dem Bau (bleibt am Wesen, auch nach Neustart und Nachladen). */
+    private final NamespacedKey homeKey;
     private final HubClient hub;
     private final Function<Player, String> langOf;
     private final Map<String, ModeInfo> modes = new ConcurrentHashMap<>();
@@ -168,7 +229,7 @@ final class LobbyNpcs implements Listener {
     private final Map<UUID, TextColor> tints = new HashMap<>();
     private final Map<UUID, Walk> walkers = new HashMap<>();
     /** Stehende Figuren und ihre Blickrichtung aus dem Bau. */
-    private final Map<UUID, Float> standing = new HashMap<>();
+    private final Map<UUID, Gaze> standing = new HashMap<>();
     private final Map<UUID, Long> lastClick = new HashMap<>();
     private final Random rnd = new Random();
     private int ticks;
@@ -185,6 +246,7 @@ final class LobbyNpcs implements Listener {
 
     LobbyNpcs(JavaPlugin plugin, HubClient hub, Function<Player, String> langOf) {
         this.plugin = plugin;
+        this.homeKey = new NamespacedKey(plugin, "home");
         this.hub = hub;
         this.langOf = langOf;
     }
@@ -214,7 +276,7 @@ final class LobbyNpcs implements Listener {
             fresh.put(id, new ModeInfo(id, HubClient.str(name, "de"), HubClient.str(name, "en"),
                     HubClient.str(o, "state"), HubClient.str(o, "access"), o.get("players").getAsInt(),
                     o.get("hasServer").getAsBoolean(), o.get("awake").getAsBoolean(), HubClient.str(o, "icon"),
-                    HubClient.str(o, "phase")));
+                    HubClient.str(o, "phase"), HubClient.str(o, "pause")));
         }
         modes.clear();
         modes.putAll(fresh);
@@ -264,15 +326,19 @@ final class LobbyNpcs implements Listener {
             state = Component.text(en ? "○ Coming soon" : "○ bald", NamedTextColor.GRAY);
         } else if ("maintenance".equals(m.state())) {
             state = Component.text(en ? "⚒ Maintenance" : "⚒ Wartung", NamedTextColor.GOLD);
-        } else if (m.paused()) {
+        } else if (m.summerBreak()) {
             state = Component.text(en ? "☀ Summer break" : "☀ Sommerpause", NamedTextColor.YELLOW);
+        } else if (m.closedNow()) {
+            state = Component.text(en ? "● Closed right now" : "● Gerade geschlossen", NamedTextColor.GOLD);
         } else if (!m.awake()) {
             state = Component.text(en ? "☾ Asleep – click to wake" : "☾ schläft – Klick weckt", NamedTextColor.AQUA);
         } else {
             state = Component.text("● " + m.players() + playing(m.players(), en), NamedTextColor.GREEN);
         }
-        if (m.paused()) {
+        if (m.summerBreak()) {
             hint = Component.text(en ? "Right-click to look around" : "Rechtsklick: Dorf anschauen", HINT_GREY);
+        } else if (m.closedNow()) {
+            hint = Component.text(en ? "Back in a moment" : "Gleich wieder offen", HINT_GREY);
         } else if (!"off".equals(m.state()) && !soon) {
             hint = "whitelist".equals(m.access())
                     ? Component.text(en ? "Invitation only" : "Nur auf Einladung", NamedTextColor.LIGHT_PURPLE)
@@ -353,12 +419,18 @@ final class LobbyNpcs implements Listener {
             }
         });
         if (tags.contains(WALKER_TAG)) {
-            double speed = tags.contains(ROCK_TAG) ? WALK_SPEED_ROCK : WALK_SPEED;
-            walkers.putIfAbsent(e.getUniqueId(), new Walk(e.getLocation(), speed, rnd.nextInt(PAUSE_SPREAD)));
+            if (!walkers.containsKey(e.getUniqueId())) {
+                double speed = tags.contains(ROCK_TAG) ? WALK_SPEED_ROCK : WALK_SPEED;
+                // Nach dem Laden schaut der Körper dorthin, wohin die Figur schaut (so setzt ihn Minecraft beim
+                // Erscheinen) – die Tracht dreht gleich mit, statt bis zum ersten Schritt schief zu sitzen.
+                float yaw = e.getLocation().getYaw();
+                walkers.put(e.getUniqueId(), new Walk(homeOf(e), speed, rnd.nextInt(PAUSE_SPREAD), yaw));
+                turnWith(e, yaw);
+            }
         } else if (!e.isInsideVehicle() && !standing.containsKey(e.getUniqueId())) {
             // Der Körper bleibt, wie er gebaut wurde; nur der Kopf schaut sich um (die Tracht sitzt so immer).
             float yaw = e.getLocation().getYaw();
-            standing.put(e.getUniqueId(), yaw);
+            standing.put(e.getUniqueId(), new Gaze(yaw, e.getLocation().getPitch()));
             turnWith(e, yaw);
         }
     }
@@ -390,6 +462,8 @@ final class LobbyNpcs implements Listener {
         return feet.getWorld().spawn(at, TextDisplay.class, d -> {
             d.setPersistent(false);
             d.setVisibleByDefault(false);
+            // Keine Hitbox mit F3+B (Anzeige bleibt sichtbar), wie bei der Deko aus dem Datenpaket
+            d.setInvisible(true);
             d.setBillboard(Display.Billboard.VERTICAL);
             d.setShadowed(true);
             d.setBrightness(FULL_BRIGHT);
@@ -586,16 +660,31 @@ final class LobbyNpcs implements Listener {
 
     private void tick() {
         ticks++;
+        boolean look = ticks % LOOK_EVERY_TICKS == 0;
         int limit = walkerLimit;
-        walkers.keySet().stream().sorted().limit(limit).forEach(uuid -> {
+        List<UUID> order = walkers.keySet().stream().sorted().toList();
+        for (int i = 0; i < order.size(); i++) {
+            UUID uuid = order.get(i);
             Entity e = Bukkit.getEntity(uuid);
-            if (e != null && e.isValid()) {
-                step(e, walkers.get(uuid));
+            // Nur, wo die Welt gerade läuft (am Rand der geladenen Gegend bleiben sie stehen).
+            if (e == null || !e.isValid() || !e.isTicking()) {
+                continue;
+            }
+            Walk walk = walkers.get(uuid);
+            if (i < limit) {
+                step(e, walk, look);
+            } else {
+                // Mehr Dorfleute als eingestellt: die übrigen stehen und schauen sich um wie die anderen Figuren.
+                walk.gaze.home = e.getLocation().getYaw();
+                gazeAround(e, walk.gaze, look);
+            }
+        }
+        standing.forEach((uuid, gaze) -> {
+            Entity e = Bukkit.getEntity(uuid);
+            if (e != null && e.isValid() && e.isTicking()) {
+                gazeAround(e, gaze, look);
             }
         });
-        if (ticks % LOOK_EVERY_TICKS == 0) {
-            standing.forEach(this::lookAround);
-        }
         if (ticks % BUILD_CHECK_TICKS == 0) {
             sweepIfRebuilt();
         }
@@ -616,14 +705,21 @@ final class LobbyNpcs implements Listener {
         }
     }
 
-    private void step(Entity e, Walk walk) {
+    /**
+     * Ein Tick eines Dorfbewohners: stehen und schauen, sich auf der Stelle zum Ziel drehen oder einen Schritt gehen.
+     * Gegangen wird nur geradeaus in Blickrichtung – so dreht Minecraft den Körper genau so, wie wir es für die Tracht
+     * nachrechnen ({@link #bodyAfter}).
+     */
+    private void step(Entity e, Walk walk, boolean look) {
+        Location cur = e.getLocation();
         if (walk.pause > 0) {
             walk.pause--;
+            walk.gaze.home = cur.getYaw();
+            gazeAround(e, walk.gaze, look);
             return;
         }
-        Location cur = e.getLocation();
         if (walk.target == null) {
-            walk.target = pickTarget(walk.home, cur);
+            walk.target = pickTarget(e, walk.home, cur);
             if (walk.target == null) {
                 walk.pause = PAUSE_SHORT;
                 return;
@@ -632,37 +728,79 @@ final class LobbyNpcs implements Listener {
         Vector d = walk.target.toVector().subtract(cur.toVector()).setY(0);
         double dist = d.length();
         if (dist < ARRIVED) {
-            walk.target = null;
-            walk.pause = PAUSE_MIN + rnd.nextInt(PAUSE_SPREAD);
+            arrive(walk);
             return;
         }
-        Location next = cur.clone().add(d.clone().normalize().multiply(Math.min(walk.speed, dist)));
-        float yaw = yawOf(d);
-        next.setYaw(yaw);
+        float want = yawOf(d);
+        float turn = wrap(want - cur.getYaw());
+        if (Math.abs(turn) > TURN_STEP) {
+            face(e, walk, cur.getYaw() + Math.signum(turn) * TURN_STEP);
+            return;
+        }
+        double len = Math.min(walk.speed, dist);
+        Location next = cur.clone().add(d.clone().normalize().multiply(len));
+        next.setYaw(want);
         next.setPitch(0);
         if (!free(next)) {
             walk.target = null;
             walk.pause = PAUSE_SHORT;
             return;
         }
-        // Mit der Tracht (Passagier) zusammen weiterziehen. Den Körper dreht Minecraft langsam in die Laufrichtung –
-        // die Tracht folgt ihm genauso (nicht dem Kopf), damit Rock und Zöpfe am Körper bleiben.
+        if (crowded(e, cur, next)) {
+            // Jemand steht im Weg: kurz warten (und ihn anschauen), nach ein paar Versuchen woanders hin.
+            face(e, walk, want);
+            walk.pause = BLOCKED_WAIT;
+            if (++walk.blocked >= BLOCKED_GIVE_UP) {
+                walk.target = null;
+                walk.blocked = 0;
+            }
+            return;
+        }
+        walk.blocked = 0;
+        // Mit der Tracht (Passagier) zusammen weiterziehen; Kopf und Blick gehen mit (Paper setzt beim Teleport auch
+        // die Kopfdrehung). Die Tracht folgt dem Körper, nicht dem Kopf, damit Rock und Zöpfe am Körper bleiben.
         e.teleport(next, TeleportFlag.EntityState.RETAIN_PASSENGERS);
-        walk.body = followBody(walk.body, yaw);
+        HeadTurn.set(e, want, plugin);
+        walk.gaze.reset(want);
+        walk.body = bodyAfter(walk.body, want, len > MOVING);
+        turnWith(e, walk.body);
+    }
+
+    private void arrive(Walk walk) {
+        walk.target = null;
+        walk.blocked = 0;
+        walk.pause = PAUSE_MIN + rnd.nextInt(PAUSE_SPREAD);
+    }
+
+    /** Auf der Stelle drehen: Blick und Kopf sofort, der Körper erst, wenn der Kopf mehr als 50° voraus ist. */
+    private void face(Entity e, Walk walk, float yaw) {
+        e.setRotation(yaw, 0);
+        HeadTurn.set(e, yaw, plugin);
+        walk.gaze.reset(yaw);
+        walk.body = bodyAfter(walk.body, yaw, false);
         turnWith(e, walk.body);
     }
 
     /** Wie Minecraft den Körper beim Laufen nachdreht: 30 % je Tick, nie mehr als 50° hinter der Blickrichtung. */
     static float followBody(float body, float yaw) {
-        float next = body + wrap(yaw - body) * BODY_FOLLOW;
+        return bodyAfter(body, yaw, true);
+    }
+
+    /**
+     * Körperdrehung nach einem Tick, wie Minecraft sie auf dem Bildschirm des Spielers rechnet: Wer sich bewegt
+     * (mehr als 0,05 Blöcke), dreht den Körper um 30 % in die Laufrichtung; wer steht, behält ihn – außer der Kopf ist
+     * mehr als 50° voraus, dann wird er mitgezogen.
+     */
+    static float bodyAfter(float body, float yaw, boolean moving) {
+        float next = moving ? body + wrap(yaw - body) * BODY_FOLLOW : body;
         float behind = wrap(yaw - next);
         if (Math.abs(behind) > BODY_MAX_BEHIND) {
             next = yaw - Math.signum(behind) * BODY_MAX_BEHIND;
         }
-        return next;
+        return wrap(next);
     }
 
-    private static float wrap(float degrees) {
+    static float wrap(float degrees) {
         float d = degrees % 360;
         if (d >= 180) {
             return d - 360;
@@ -670,7 +808,7 @@ final class LobbyNpcs implements Listener {
         return d < -180 ? d + 360 : d;
     }
 
-    /** Körper und Tracht (Anzeige-Objekt auf der Figur) schauen in dieselbe Richtung wie der Kopf. */
+    /** Körper und Tracht (Anzeige-Objekt auf der Figur) schauen in dieselbe Richtung. */
     private static void turnWith(Entity e, float yaw) {
         if (e instanceof LivingEntity living) {
             living.setBodyYaw(yaw);
@@ -682,13 +820,45 @@ final class LobbyNpcs implements Listener {
         }
     }
 
-    /** Ziel in der Nähe des Platzes, zu dem ein freier, ebener Weg führt. */
-    private Location pickTarget(Location home, Location from) {
+    /**
+     * Platz aus dem Bau: beim ersten Mal am Wesen gemerkt. Ohne das zog jeder Neustart und jedes Nachladen der Gegend
+     * den Platz dorthin, wo die Figur gerade stand – mit der Zeit wanderten sie aus ihrer Gasse.
+     */
+    private Location homeOf(Entity e) {
+        var data = e.getPersistentDataContainer();
+        Location now = e.getLocation();
+        double[] saved = parseHome(data.get(homeKey, PersistentDataType.STRING));
+        if (saved != null) {
+            return new Location(now.getWorld(), saved[0], saved[1], saved[2], now.getYaw(), 0);
+        }
+        data.set(homeKey, PersistentDataType.STRING, now.getX() + ";" + now.getY() + ";" + now.getZ());
+        return now.clone();
+    }
+
+    static double[] parseHome(String text) {
+        if (text == null) {
+            return null;
+        }
+        String[] parts = text.split(";");
+        if (parts.length != 3) {
+            return null;
+        }
+        try {
+            return new double[] {Double.parseDouble(parts[0]), Double.parseDouble(parts[1]),
+                    Double.parseDouble(parts[2])};
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    /** Ziel in der Nähe des Platzes, zu dem ein freier, ebener Weg führt und an dem niemand steht. */
+    private Location pickTarget(Entity self, Location home, Location from) {
         for (int i = 0; i < TARGET_TRIES; i++) {
             double angle = rnd.nextDouble() * Math.PI * 2;
             double r = WANDER_MIN + rnd.nextDouble() * (WANDER_MAX - WANDER_MIN);
             Location to = home.clone().add(Math.cos(angle) * r, 0, Math.sin(angle) * r);
-            if (clearPath(from, to)) {
+            to.setY(from.getY());
+            if (clearPath(from, to) && !occupied(self, to)) {
                 return to;
             }
         }
@@ -706,14 +876,53 @@ final class LobbyNpcs implements Listener {
         return true;
     }
 
-    /** Platz für einen Menschen: Füße und Kopf frei, fester Boden darunter – auch an den Rändern des Körpers. */
+    /** Steht dort, wo wir hinwollen, schon jemand (eine Figur oder ein Spieler)? */
+    private static boolean occupied(Entity self, Location to) {
+        return !to.getWorld().getNearbyEntities(to, TARGET_APART, 1.5, TARGET_APART,
+                o -> blocks(self, o) && flat(o.getLocation(), to) < TARGET_APART).isEmpty();
+    }
+
+    /** Käme der nächste Schritt jemandem zu nah? Wer schon zu nah steht, darf sich entfernen. */
+    private static boolean crowded(Entity self, Location from, Location next) {
+        return !next.getWorld().getNearbyEntities(next, KEEP_APART, 1.5, KEEP_APART, o -> {
+            if (!blocks(self, o)) {
+                return false;
+            }
+            double then = flat(o.getLocation(), next);
+            return then < KEEP_APART && then < flat(o.getLocation(), from);
+        }).isEmpty();
+    }
+
+    /** Figuren (auch sitzende) und Spieler stehen im Weg; Zuschauer, Sitze und Anzeigen nicht. */
+    private static boolean blocks(Entity self, Entity o) {
+        if (o == self || !(o instanceof LivingEntity) || o instanceof ArmorStand) {
+            return false;
+        }
+        return !(o instanceof Player p) || p.getGameMode() != GameMode.SPECTATOR;
+    }
+
+    private static double flat(Location a, Location b) {
+        return Math.hypot(a.getX() - b.getX(), a.getZ() - b.getZ());
+    }
+
+    /**
+     * Platz für einen Menschen: Füße und Kopf frei (kein Wasser, kein Schild, keine Fahne, keine Fackel), fester Boden
+     * darunter – auch an den Rändern des Körpers. Ungeladene Gegend gilt als zu (sonst würde sie nachgeladen).
+     */
     private static boolean free(Location at) {
         double[][] corners = {{0, 0}, {BODY, BODY}, {-BODY, BODY}, {BODY, -BODY}, {-BODY, -BODY}};
+        World w = at.getWorld();
         for (double[] c : corners) {
-            Block feet = at.clone().add(c[0], 0, c[1]).getBlock();
+            double x = at.getX() + c[0];
+            double z = at.getZ() + c[1];
+            if (!w.isChunkLoaded((int) Math.floor(x) >> 4, (int) Math.floor(z) >> 4)) {
+                return false;
+            }
+            Block feet = w.getBlockAt((int) Math.floor(x), (int) Math.floor(at.getY()), (int) Math.floor(z));
             Block below = feet.getRelative(BlockFace.DOWN);
-            if (!feet.isPassable() || !feet.getRelative(BlockFace.UP).isPassable()
-                    || below.isPassable() || below.isLiquid()) {
+            // Nicht unter tief hängende Zweige (z. B. unter den Christbaum im Winter) – der Kopf steckte darin.
+            if (!walkable(feet) || !walkable(feet.getRelative(BlockFace.UP))
+                    || Tag.LEAVES.isTagged(feet.getRelative(BlockFace.UP, 2).getType()) || !ground(below)) {
                 return false;
             }
         }
@@ -721,40 +930,102 @@ final class LobbyNpcs implements Listener {
     }
 
     /**
-     * Stehende Figuren schauen den nächsten Spieler an – nur mit dem Kopf (höchstens 60° zur Seite, wer dahinter
-     * steht, wird nicht angeschaut). Der Körper bleibt, wie er gebaut wurde: so sitzt die Tracht (Rock, Zöpfe) immer.
+     * Fester, ebener Boden: ein (fast) voller Block oben bündig – auf einer halben Stufe, einem Zaun oder einer
+     * Mauer stünde die Figur in der Luft bzw. obendrauf.
      */
-    private void lookAround(UUID uuid, float homeYaw) {
-        Entity e = Bukkit.getEntity(uuid);
-        if (e == null || !e.isValid() || e.isInsideVehicle()) {
+    private static boolean ground(Block below) {
+        if (below.isPassable() || below.isLiquid() || fenceLike(below.getType())) {
+            return false;
+        }
+        double top = below.getBoundingBox().getMaxY() - below.getY();
+        return top >= GROUND_MIN && top <= 1.0 + 1e-6;
+    }
+
+    static boolean fenceLike(Material m) {
+        String name = m.name();
+        return name.endsWith("_FENCE") || name.endsWith("_WALL") || name.endsWith("_FENCE_GATE");
+    }
+
+    private static boolean walkable(Block b) {
+        if (!b.isPassable() || b.isLiquid()) {
+            return false;
+        }
+        return !inTheWay(b.getType());
+    }
+
+    /** Ohne Kollision, aber man läuft trotzdem nicht hindurch (Schilder, Fahnen, Fackeln, hohe Pflanzen). */
+    private static final java.util.Set<Material> IN_THE_WAY = java.util.EnumSet.of(Material.COBWEB,
+            Material.SUGAR_CANE, Material.SWEET_BERRY_BUSH, Material.ROSE_BUSH, Material.LILAC, Material.PEONY,
+            Material.SUNFLOWER);
+
+    static boolean inTheWay(Material m) {
+        String name = m.name();
+        return IN_THE_WAY.contains(m) || name.endsWith("SIGN") || name.endsWith("BANNER") || name.endsWith("TORCH");
+    }
+
+    /**
+     * Figuren schauen den nächsten Spieler an – nur mit dem Kopf (höchstens 60° zur Seite, wer dahinter steht, wird
+     * nicht angeschaut). Der Körper bleibt, wie er steht: so sitzt die Tracht (Rock, Zöpfe) immer. Wohin, wird alle
+     * paar Ticks neu bestimmt; gedreht wird jeden Tick ein Stück – so wandert der Kopf weich statt in Sprüngen.
+     */
+    private void gazeAround(Entity e, Gaze gaze, boolean aim) {
+        if (e.isInsideVehicle()) {
             return;
         }
+        if (aim) {
+            aim(e, gaze);
+        }
+        float yaw = ease(gaze.yaw, gaze.wantYaw);
+        float pitch = ease(gaze.pitch, gaze.wantPitch);
+        boolean pitchChanged = Math.abs(pitch - gaze.pitch) > 0.01f;
+        boolean yawChanged = Math.abs(wrap(yaw - gaze.yaw)) > 0.01f;
+        Location at = e.getLocation();
+        if (pitchChanged || Math.abs(wrap(at.getYaw() - gaze.home)) > 0.5f) {
+            e.setRotation(gaze.home, pitch);
+            yawChanged = true;
+        }
+        gaze.yaw = yaw;
+        gaze.pitch = pitch;
+        if (yawChanged) {
+            HeadTurn.set(e, yaw, plugin);
+        }
+    }
+
+    private static void aim(Entity e, Gaze gaze) {
         Location eye = e.getLocation().add(0, 1.62, 0);
         Player near = null;
         double best = LOOK_RANGE * LOOK_RANGE;
         for (Player p : e.getWorld().getPlayers()) {
+            if (p.getGameMode() == GameMode.SPECTATOR) {
+                continue;
+            }
             double dd = p.getLocation().distanceSquared(e.getLocation());
             if (dd < best) {
                 best = dd;
                 near = p;
             }
         }
-        float head = homeYaw;
-        float pitch = 0;
+        gaze.wantYaw = gaze.home;
+        gaze.wantPitch = 0;
         if (near != null) {
             Vector d = near.getEyeLocation().toVector().subtract(eye.toVector());
-            float turn = wrap(yawOf(d) - homeYaw);
+            float turn = wrap(yawOf(d) - gaze.home);
             if (Math.abs(turn) <= HEAD_TURN) {
-                head = homeYaw + turn;
+                gaze.wantYaw = gaze.home + turn;
                 float up = (float) -Math.toDegrees(Math.atan2(d.getY(), Math.hypot(d.getX(), d.getZ())));
-                pitch = Math.max(-HEAD_PITCH, Math.min(HEAD_PITCH, up));
+                gaze.wantPitch = Math.max(-HEAD_PITCH, Math.min(HEAD_PITCH, up));
             }
         }
-        Location at = e.getLocation();
-        if (Math.abs(wrap(at.getYaw() - homeYaw)) > 0.5f || Math.abs(at.getPitch() - pitch) > 0.5f) {
-            e.setRotation(homeYaw, pitch);
+    }
+
+    /** Ein Stück auf das Ziel zu: höchstens {@link #HEAD_STEP} Grad, zum Ende hin langsamer. */
+    static float ease(float now, float want) {
+        float d = wrap(want - now);
+        if (Math.abs(d) < 0.5f) {
+            return want;
         }
-        HeadTurn.set(e, head, plugin);
+        float step = Math.min(HEAD_STEP, Math.max(0.5f, Math.abs(d) * HEAD_EASE));
+        return now + Math.signum(d) * step;
     }
 
     private static float yawOf(Vector d) {

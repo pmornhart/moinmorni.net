@@ -88,4 +88,32 @@ describe('Spielmodi beim Start', () => {
     expect(again?.description).toEqual(own);
     expect(again?.server).toBe('eigener-name');
   });
+
+  test('Duels 0.2.0: die alte Standard-Beschreibung wird die neue mit 20 Kampfarten, eigene Texte bleiben', () => {
+    const handle = openDatabase(':memory:');
+    const old = {
+      de: '1 gegen 1 und 2 gegen 2: Klassisch mit Suppe, Modern oder mit Fähigkeiten. Gewertet oder locker.',
+      en: '1v1 and 2v2: classic with soup, modern or with abilities. Ranked or casual.',
+    };
+    DEFAULT_MODES.forEach((m) =>
+      handle.db
+        .insert(modes)
+        .values({ id: m.id, data: m.id === 'duels' ? { ...m, description: old, maxPlayers: 40 } : m })
+        .run(),
+    );
+    createStores(handle.db, createEventBus());
+    const duels = handle.db.select().from(modes).where(eq(modes.id, 'duels')).get()?.data;
+    expect(duels?.description).toEqual(DEFAULT_MODES.find((m) => m.id === 'duels')?.description);
+    expect(duels?.description.de).toContain('20 Kampfarten');
+    expect(duels?.maxPlayers).toBe(40);
+
+    const own = { de: 'Unsere Duelle', en: 'Our duels' };
+    handle.db
+      .update(modes)
+      .set({ data: { ...duels!, description: own } })
+      .where(eq(modes.id, 'duels'))
+      .run();
+    createStores(handle.db, createEventBus());
+    expect(handle.db.select().from(modes).where(eq(modes.id, 'duels')).get()?.data.description).toEqual(own);
+  });
 });

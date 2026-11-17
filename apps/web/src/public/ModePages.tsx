@@ -300,7 +300,7 @@ function ModeTopThree({ mode }: { readonly mode: ModeStatus }): ReactElement | n
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 font-pixel text-[13px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           <Medal className="size-4 text-gold" aria-hidden />
-          {t('site.mode.topTitle', { value: stat.label(key.key) })}
+          {t('site.mode.topTitle', { value: stat.label(key.key, mode.id) })}
         </h3>
         <Link
           to={`/statistiken?${MODE_PARAM}=${encodeURIComponent(mode.id)}`}

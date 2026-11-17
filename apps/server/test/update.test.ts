@@ -252,6 +252,21 @@ describe('Updates', () => {
     expect(updates.takeResult()).toBeNull();
   });
 
+  test('Motor: hat MorniHosting main noch nicht alles vom Motor (nur ein Merge-Commit voraus), gibt es kein Update', async () => {
+    // Philips Fall: Der Motor steht auf einem Branch mit mehr als main, main hat nur den Merge eines PRs dazu.
+    gh.refs.set(MOTOR_REPO, new Map([['refs/heads/main', MOTOR_NEW]]));
+    gh.api.set(`${MOTOR_REPO}/compare/${MOTOR_OLD}...${MOTOR_NEW}?per_page=1&page=2`, {
+      ahead_by: 1,
+      status: 'diverged',
+      commits: [],
+    });
+    stores.patchSettings('updates', { motorFollowMain: true }, 'test');
+    const updates = service();
+    agent();
+    const view = await updates.check();
+    expect(view.motor.behind).toBe(0);
+    expect(view.available).toBe(false);
+  });
   test('Motor auf main nur mit Schalter; automatisch zur eingestellten Stunde, nur wenn niemand spielt – auch während GitHub bremst', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     clock.now = Date.parse('2026-11-15T03:10:00Z'); // 04:10 in Berlin

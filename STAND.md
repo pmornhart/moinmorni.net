@@ -245,6 +245,96 @@
 
 - 17.11.: **Spawn durchgeschaut** (Philip: „Laternen in der Luft, Bäume, die durchdecken – jedes Detail“, „Brunnen neu“, „saftig, heller“; Branch `claude/spawn-pruefung`): **Bauplan-Prüfung** (`packages/builder/src/pruefung.ts`, `lobby/pruefen.ts`, auch `npx tsx tools/lobby-entwuerfe/src/pruefen.ts [art]`) prüft den ganzen Bauplan samt allen Saison-Dekos mit Koordinaten – Laternen, Fackeln, Schilder, Falltüren, Töpfe, Teppiche, Kerzen ohne Halt, Ketten ohne Ende, Zaun-Arme ins Leere, Türen ohne Rahmen, Bäume in Bauten/Dächern/Ständen/Wegen (Herkunft je Block über `Canvas.tagged`), auslaufendes Wasser, Pflanzen ohne Boden, schwebende Blöcke, offen liegende Erde (nur wo man sie sieht), Figuren in Wänden; der Test `lobby-pruefung.test.ts` schlägt bei jedem neuen Fund an (bekannte in fremden Teilen: `test/pruefung-offen.ts`). Vorher 1712 Funde (ohne Erd-Prüfung), jetzt 48 im Bauplan – alle in Schloss und Schlossmarkt – und je Saison-Deko 29–41 (alle in `season.ts`). **Behoben:** Biergarten (Laternen an Ketten unter den Kronen statt im Nichts, Kastanien in den Gängen statt in Tischen), Bäume in Häusern/Kapelle/Wegen (`forest` prüft Platz), Zäune und Mauern verbunden (`verbindungen.ts`), Fensterläden an der Wand, Kapelle begehbar, Schilf nur am Wasser, Prachtstraße am Hangfuß auf gemauertem Damm (Philips Erde bei x −8, z −37). **Dorfbrunnen** (`dorfbrunnen.ts`, Handwerkergasse und Oberdorf – dort weg vom Christbaum): achteckiger Trog aus hellem Kalkstein mit Steinziegel-Sockel und Zierfeldern, Säule mit Kupferband und goldenem Zapfen, vier Wasserspeier, Geranien, Eckbeete; ohne Paket/Bedrock ein Becken aus Ersatzblöcken mit Wasser, Säule und Fontäne. **Saftig und hell:** Biom Wald über die ganze Lobby (`fillbiome`) – Gras und Laub sattgrün statt fahl, helles Pflaster ohne Moos, Sandwege, Laub- und Birkenwald am Schlossberg, dichtes Gras mit Blumen, Laternen an der Dorfstraße. Bau-Version = Prüfsumme (zählt von selbst weiter). Tests nach dem Zusammenführen mit Jump and Run, Wartungs-Lobby und den neuen Lobby-Figuren: 67 Baukasten-, 235 Server-Tests, Typen; echt (vor diesem letzten Zusammenführen) Paper 26.1.2 mit dem echten Selbstbau (85 Teile): `lobby-test` **16/16**, `schlossmarkt-test` **31/31**; Bilder vorher/nachher mit Client 26.3 und Paket, Tag und Nacht (nur lokal).
 
+- 17.11.: **Schlossmarkt ohne Funde** (Branch `claude/spawn-pruefung`): zwischen den Ständen ein Tischchen mit Krug statt schwebender Falltüren, Wimpel am Balken des Marktbogens statt eine Reihe darunter in der Luft, Wegweiser auf einem Pfahl aus geschältem Fichtenstamm (das Schild hielt an keinem Zaun), Baumscheibe aus Gras unter den Linden, hinter der Stützmauer keine nackte Erde mehr (ohne Hang zählte `range` rückwärts und legte Erde über den Boden). Tests nach dem Zusammenführen mit Rang-Abzeichen und Versionsanzeige: 67 Baukasten-, 261 Server-Tests, Typen; echt Paper 26.1.2 mit dem echten Selbstbau (85 Teile) und neu gebautem Netzwerk-Plugin: `lobby-test` **30/30**, `schlossmarkt-test` **31/31** (erster Lauf unter Last 29/31: das Wintersport-Schild kam beim Test-Spieler nicht in 2,5 s an); Bilder vorher/nachher mit Client 26.3 und Paket, Tag und Nacht (nur lokal).
+
+- 17.11.: **Duels 0.2.0 und MorniSMP 0.3.0 im Netzwerk** (Branch `claude/duels-katalog`; abgeglichen mit der config.yml auf `origin/main` der beiden Repos, `MM_CHECK_MODE_REPOS=1` grün):
+  - **Duels** (`/duelsconfig`) 13 → 61 Einstellungen: jede der 20 Kampfarten an/aus und mit Runden (1, 3 = Bester aus 3, 5 = Bester aus 5; 2 und 4 rundet Duels auf, die Brücke zählt Tore statt Runden), in drei Abschnitten nach den Gruppen Klassisch / Modern / Spaß, jeweils mit den eigenen Regeln gleich darunter (Suppe, Angel-Zug, Kombo-Pause, Sumo-Tiefe, Boxen-Treffer, Labyrinth-Kompass/-Ziel/-neuer Irrgarten, Brücken-Tore), dazu „Party-Kämpfe“ (größte Party 2–8); acht Abschnitte → Sprungleiste. Im Spiel `/duelsconfig <kampfart> an|aus`, `/duelsconfig <kampfart> runden <1–5>`, `/duelsconfig sumo tiefe 2,5`, `boxen treffer`, `bruecke tore`, `kombo pause`, `angel zug`, `labyrinth kompass|ziel|neu`, `party groesse`. Kampfarten mit Namen de/en als `DUELS_KITS` (`packages/shared`).
+  - **MorniSMP** (`/smpconfig`) 53 → 68: „Händlerhaus: Preise je Abteilung“ (`haendler.faktoren.<abteilung>`, 10 Abteilungen, 0,05–100, `/smpconfig faktor <abteilung> <faktor>`) und „Börse“ (`boerse.an`, `halbieren-nach` 0,25–1000 Tagesmengen, `erholung-stunden` 0,05–1440, `min-prozent` 1–100, `max-prozent` 100–1000; `/smpconfig boerse …`). `haendler.preisliste` (interner Merker) und `haendler.waren` bleiben draußen.
+  - **Webseite:** Duels-Seite mit vier Tipps (Kampfarten in Gruppen, Wertung je Kampfart, Bester aus 3/5, Party-Kämpfe) und den Befehlen `/duel <name> [kampfart] [1|3|5]`, `/partykampf`, `/kit`, `/top [kampfart]`; Befehle-Seite zusätzlich annehmen/ablehnen, `/warteschlange`, `/spectate`, `/verlassen`, `/stats` und fürs Team `/duels neuladen|neubauen` (Recht „Spielmodi verwalten“). MorniSMP-Seite mit Börse und kostbaren Erzen, `/shop`, `/boerse`, `/wert`, `/verkaufen hand|alles`. **Werte je Kampfart/Strecke lesbar** (`stat-format.ts`): „Siege Brücke“, „Kämpfe Sumo“, „Beste Wertung UHC“ (`elo_<kampfart>` kommt als Bestwert, darum „beste“), eigene Wörter je Modus (`site.players.statsIn.<modus>`: in Duels heißt `games` „Kämpfe“, weil „Runden“ dort Bester aus 3/5 meint), Namen für `draws`, `ranked_*`, `streak_best`, `rounds_won`, `hits_boxen`, `goals_*`, `party_*`. **Profil:** Werte einzelner Kampfarten, Spielarten oder Strecken stehen als kleine Tabelle unter den allgemeinen (`stat-groups.tsx`; Kampfart-Spalte bleibt am Handy stehen, ab drei Spalten über die ganze Breite) – vorher wären es bis zu 100 einzelne Kacheln gewesen; gilt genauso für Adlerflug, Gipfelsturm, Party. **Bestenlisten:** dafür eine Auswahl „Kampfart“/„Strecke“ plus Wert statt je ein Knopf. Hauptwert der Duels-Bestenliste bleibt „Siege“ (es gibt keine Gesamt-Wertung mehr, nur je Kampfart). Beschreibung von Duels neu; bestehende Installationen bekommen sie einmal, wenn dort noch der alte Standard-Text steht (`refreshOldTexts` in `panel/stores.ts`). Demo: Duels-Werte wie echt (ohne das erfundene `rating`), Profil von Finn2015 mit Kampfarten, News „Duels: 20 Kampfarten“.
+  - Tests: 107 in @moinmorni/shared (neu: 20 Kampfarten in drei Gruppen, Brücke ohne Runden, Grenzen; MorniSMP-Faktoren und Börse, kein `haendler.preisliste`), 262 Server-Tests (neu: Migration der Duels-Beschreibung; Hub: `/duelsconfig sumo runden 3`, `sumo tiefe 3,5`, `bruecke aus`, `labyrinth ziel aus`, `uhc runden 6` abgelehnt, `/smpconfig faktor erze 2,5`, `boerse aus` – je nur an den richtigen Modus; die bekannte Meldung beim Abbau von `mode-rest.test.ts` kam einmal), Typen, Prettier, Web- und Demo-Bau. Bilder (Playwright gegen den echten Server mit Motor, Computer + Handy, hell/dunkel, de/en; nur Scratchpad `duels-katalog-bilder/`): Panel Duels (Sprungleiste, Klassisch, Spaß, Party, Suche „Brücke“), Panel MorniSMP Börse und Preise je Abteilung, Duels-Seite, Profil mit Kampfarten-Tabelle, Bestenliste „Beste Wertung Sumo“, Befehle-Seite, MorniSMP-Seite, Demo-Profil. Nicht echt mit Minecraft geprüft (Weg über Hub und Netzwerk-Plugin wie bei allen Katalog-Werten).
+
+- 17.11.: **Winter-Wunderland** (Philip, Saison „Winter“ der Lobby, Branch `claude/winter-wunderland`): viel mehr
+  Schnee (Verwehungen, Schneewall neben Wegen und Plätzen, sechs Schneehaufen, dicker Schnee auf den Markisen,
+  Schneeplatten auf den Dächern, Eiszapfen, Schneekappen auf Zäunen, Gras an den Bergen wird Schnee, Teich friert zu);
+  **statt des Maibaums ein riesiger Christbaum** an derselben Stelle (`packages/builder/src/lobby/christbaum.ts`: acht
+  Stufen, gut 36 Blöcke, hängende Zweige, echte Kerzen, 175 Kugeln, warme Lichterkette auf den Zweigen jeder Stufe,
+  großer Stern, Geschenke, Licht ringsum) – der alte Christbaum im Markt ist weg, der Maibaum kommt mit jeder anderen
+  Saison genau zurück; **Weihnachtsmarkt** (`weihnachtsmarkt.ts`): Tannengirlanden mit Lichtern und Eiszapfen an jeder
+  Bude (Dorf- und Schlossmarkt), Lichterketten von Bude zu Bude und zum Marktbogen (Girlande, Stern), Glühwein- und
+  Lebkuchenbude, **Eingangsbogen** von der Ankunft her mit Girlande, Lichtern und Schild „Weihnachtsmarkt“, Krippe
+  (Stall, Maria, Josef, Kind, Ochs, Esel, Schafe, Stern) auf der Wiese westlich, Pferdeschlitten, Rodel, Schneemänner,
+  Eisbahn, Laternen statt Kürbis; die Figuren der Modi bleiben. **Schmuck ohne Hitbox:** alle Anzeige-Wesen der Lobby
+  tragen `"Bukkit.invisible":1b` (Minecraft lässt unsichtbare Wesen beim Zeichnen der F3+B-Rahmen aus, Anzeigen zeichnet
+  es trotzdem), auch die Schilder der Figuren und die Tafel des Jump and Run; Kugeln mit Lobby-Paket als runde Modelle
+  (`schmuck.ts`), ohne Paket schräge Würfel. **Hell:** klares Wetter mit leichtem Flocken-Gestöber, Licht an Baum,
+  Buden und Krippe. Dorfleute laufen nicht unter tief hängende Zweige. „Sommerpause“ nur bei Wintersport (`modePause`).
+  **Saisonwechsel sicher:** „save-all flush“ zwischen Schnee und Merker „Winter liegt“ (vorher: `kill -9` kurz nach dem
+  Wechsel → Merker weg, aber Schnee in einem Teil der Lobby); baut sich die Lobby im Winter neu (eigenes Biom seit dem
+  Spawn-Umbau), macht das Plugin das Biom wieder kalt und merkt sich die neuen Biome für den Rückweg. **Bauplan-Prüfung:
+  alle Saisons ohne Funde** – die Deko sucht sich ihren Platz (`lobby/halt.ts`: Ketten an Wand/Markise/Maibaum, Eier,
+  Kürbisse, Spinnweben auf freien Boden bzw. an die Wand, Kugeln an die Zweige, Sterne und Schlitten herab), Wiesn-Herzen
+  und Halloween-Kürbisse an den heutigen Ständen; die Prüfung rechnet gedrehte Anzeigen und Treppen genau und sieht
+  kleine Teile dicht beieinander als Modell (`pruefung.ts`, zwei neue Tests), `pruefung-offen.ts` ohne Saison-Funde.
+  Tests: 79 Baukasten- (12 Dateien), 106 shared-, 263 Server-Tests, 61 JUnit, Typen, Prettier. Echt (Paper 26.1.2 +
+  Netzwerk-Plugin + Test-Hub, echter Selbstbau): keine Saison → `kill -9` 5 s nach dem Wechsel → Probe aus: 63 503
+  Stellen zurück, Maibaum da, 0 Winter-Wesen, Merker weg; Winter → Probe an **5/5** (63 503 Stellen, 2 242 Wesen,
+  Biom); `lobby-test` **30/30** in beiden Saisons; Neubau mitten im Winter → Biom wieder kalt, Probe **5/5**; dann keine
+  Saison → **5/5** (Biome wie vorher) → wieder Winter **5/5**. Bilder mit echtem Client 26.3 und Lobby-Paket, Tag,
+  Nacht und F3+B (Kugeln ohne Rahmen), nur lokal.
+
+- 17.11. morgens: **Lobby-Figuren laufen sauber** (Philip: „alle Figuren, auch die, die rumlaufen, buggen noch etwas“;
+  Branch `claude/npc-neu`, `LobbyNpcs.java`, Doku `docs/lobby.md`):
+  - **Gefunden** (echter Client 26.3, Videos vorher/nachher nur lokal): Dorfleute liefen durch andere Figuren und
+    Spieler hindurch und standen ineinander; zwei standen von Anfang an fest – eine im Bau in einer Bierbank am
+    Schlossmarkt (stand sichtbar in der Bank), eine in der Brunnenmauer im Oberdorf; bei einem neuen Ziel drehte die
+    Figur mit einem Ruck bis 180° herum – Minecraft drehte den Körper dann kurz rückwärts und der Rock sprang hinterher;
+    jeder Neustart und jedes Nachladen der Gegend machte den aktuellen Standort zum neuen Platz (sie wanderten mit der
+    Zeit aus ihrer Gasse); mehr Dorfleute als im Panel eingestellt blieben mitten im Schritt starr stehen; Köpfe
+    drehten in Sprüngen (alle fünf Ticks); Laufen auf halben Stufen (Füße in der Luft), über Zäune und Mauern, durch
+    Schilder, Fahnen und Wasser war möglich; Figuren am Rand der geladenen Gegend liefen weiter und luden Gelände
+    nach. Nebenbei: die Jump-and-Run-Tafel am Start stand nach Nachladen bis zu fünfmal übereinander (der
+    `lobby-test` las dann eine alte), und `save-all flush` nach dem Lobby-Bau hielt den Server über 10 s an.
+  - **Behoben:** erst auf der Stelle drehen (12° je Tick), dann geradeaus gehen; Körperdrehung für die Tracht genau wie
+    Minecraft (`bodyAfter`: im Gehen 30 %/Tick, im Stehen erst ab 50° Kopf voraus); 0,8 Blöcke Abstand zu Figuren
+    (auch sitzenden) und Spielern (Zuschauer zählen nicht), besetzte Ziele werden nicht gewählt, nach drei Versuchen
+    ein anderes; Platz aus dem Bau an der Figur gemerkt (`moinmorni:home`); nur fester, ebener Boden (voller Block
+    oder Trampelpfad), keine Zäune/Mauern, nicht durch Schilder, Fahnen, Fackeln, Zuckerrohr, hohe Blumen, Wasser;
+    nur in laufender, geladener Gegend; Wartende und überzählige Dorfleute schauen sich um wie stehende Figuren;
+    Köpfe drehen weich (höchstens 9°/Tick, zum Ende langsamer) bei allen Figuren; Startplätze der beiden
+    festsitzenden verlegt (Schlossmarkt −22/−28; die im Oberdorf steht nach dem Umbau der Brunnen
+    im Entwicklungs-Branch ohnehin woanders) + Test, dass jede laufende Figur frei startet; Tafel mit Kennung
+    `mm_jnr_board`, ältere Tafeln am Start werden weggeräumt; nach dem Bau `save-all` ohne „flush“.
+  - Tests (nach dem Zusammenführen mit dem Entwicklungs-Branch): 68 Baukasten- (neu: Startplätze frei; ohne die
+    Änderung rot), 107 Katalog-, 262 Server-Tests, 65 JUnit (4 neu: Körper im Stehen, Platz merken, Hindernisse,
+    weicher Kopf), Typen, Prettier. Echt: Paper 26.1.2 + Netzwerk-Plugin + Test-Hub, Lobby mit dem echten Selbstbau neu
+    gebaut, `lobby-test` **30/30**, `schlossmarkt-test` **31/31** (je ein Lauf davor unter Last mit Ausreißern: einmal
+    zählte das Jump and Run nur 6 statt 13 Sprünge, einmal kam das Wintersport-Schild zu spät beim Test-Spieler an).
+    Probe-Platz mit sieben laufenden Figuren und Hindernissen (Zaun, Treppen, Stufen, Schild, Wasser, halbe Stufen):
+    kleinster Abstand zwischen Figuren in 20 s **0,81** (vorher standen sie ineinander); im Dorf
+    bewegten sich in einer Minute alle Laufenden in der geladenen Gegend (die zwei festsitzenden jetzt auch);
+    Nachladen der Gegend (Kamera 300 Blöcke weg und zurück): 46 Figuren, 13 Trachten, jede Tracht auf ihrer Figur,
+    Schilder 72 (12 × 6) – nichts doppelt, nichts liegen geblieben; ohne Ressourcenpaket nur die Skins, nichts
+    Seltsames. Nicht echt geprüft: Bedrock; Körper-gegen-Rock beim Drehen nur nach Minecrafts Regeln nachgerechnet
+    und in Bildfolgen angesehen (keine Zeitlupe; der Rechner war voll, Videos ruckelten unter Last).
+
+- 17.11.: **Wiesn als eigenes Volksfest** (Philip: „das mit dem Winterwunderland auch für alle anderen Events und
+  Dekos machen“; Branch `claude/winter-wunderland`, `packages/builder/src/lobby/wiesn.ts`): **Kettenkarussell um den
+  Maibaum** (Herzstück: weiß-blaues Dach in 16 Feldern, 16 Sitze an Ketten, Wimpel und Lichter am Rand, darunter frei
+  begehbar, der Maibaum ist der Mast), **Festzelt-Eingang** von der Ankunft her (Giebel mit weiß-blauen Rauten, großes
+  Herz „Wiesn“, Fahnen, Lichter, „Servus auf der Wiesn!“), **Riesenrad** auf der Wiese westlich (Betonring auf einer
+  Stütze am Einstieg, Speichen, Nabe und Stützen als Anzeigen, acht Gondeln, Lichterkranz), Lebkuchenherzen- und
+  Breznbude, Herzen an allen Ständen, weiß-blaue Wimpel und Lichter; Musik wie gehabt die Wiesn-Stücke. **Saisons mit
+  Bauten allgemein** (`saison-plan.ts`, `saison-kit.ts`): jede Saison kann Blöcke setzen und merkt sich den alten Block
+  je Stelle; beim Wechsel räumt jede andere ihre Blöcke weg (nur wenn ihr Merker liegt), dann wird gespeichert und
+  erst danach gebaut (`seasonStepsFor`), Probe für jede Saison `apps/server/scripts/saison-probe.ts` (bei „aus“ zählen
+  Stellen einer gerade liegenden anderen Saison nicht, ebenso in `winter-probe.ts`). Die Bauplan-Prüfung prüft jetzt
+  auch die Blöcke jeder Saison (über dem Bauplan, Herkunft bleibt) – Wiesn 0 Funde, Winter 0 Funde. Tests: 86
+  Baukasten- (neu `saisons.test.ts`: Rückweg, Figuren/Rundgang/Launchpads/Jump and Run frei, Eingang offen, Maibaum
+  bleibt, Karussell, Riesenrad; Saisonwechsel mit zwei Saisons mit Bauten), Typen. Echt (Paper 26.1.2 mit
+  Netzwerk-Plugin und Test-Hub, echter Selbstbau): Wiesn an **3/3**, `lobby-test` **30/30** in der Wiesn, Winter →
+  Wiesn weg, Winter an **5/5**, wieder Wiesn → Winter weg **5/5**, keine Saison → `kill -9` 5 s danach → Wiesn aus
+  **3/3**, Winter aus **5/5**, wieder Wiesn **3/3**. Bilder vorher/nachher mit Client 26.3, Tag und Nacht, nur lokal.
+
 - 17.11.: **Prunkaufgang zum Schloss** (Philip: „richtig schön, edel, wow – jetzt ist hier richtig Party angesagt“,
   „Treppen am Festsaal und vom Schlossmarkt zum Schloss“; Branch `claude/lobby-treppen`, `docs/lobby.md`): Statt der
   Rampe aus ganzen Blöcken führt die **Schlosstreppe** (`packages/builder/src/lobby/schlosstreppe.ts`) vom Schlossmarkt
@@ -255,7 +345,7 @@
   vor den Prunkbrunnen; oben der **Schlossvorplatz** (heller Stein, Stern im Teppich, Beete, Linden, Fahnenallee,
   Lichterketten aus Ketten mit eisernen Knäufen und Laternen), am **Schlosstor** Fahnen, Laternen und ein Kronleuchter.
   Im Schloss Freitreppen vor Festsaal, Bibliothek und Rittersaal und die zweiläufige **Prunktreppe** zur Galerie
-  (Vorgänger-Helfer). Philips Fundstellen: das schwebende Brett zwischen den Ständen weg (Blumenbeet), kein Blumentopf
+  (Vorgänger-Helfer). Philips Fundstellen: das schwebende Brett zwischen den Ständen weg (jetzt ein Tischchen mit Krug vom Spawn-Helfer), kein Blumentopf
   mehr vor einem Gesicht am Markt (Test), die Erdwand bei x −8, z −37 weg (Test `lobby-eingang.test.ts` sucht jede
   sichtbare Erde am Rand von Markt, Treppe und Vorplatz; dabei ein Erdhügel hinter der Stützmauer gefunden – `range`
   zählt auch rückwärts). Marktbogen nach vorn (z −24), damit er das Portal nicht verdeckt. Prüfung „zu Fuß erreichbar“
@@ -264,7 +354,7 @@
   graben nicht mehr in den Hang), schwebende Geländerstäbe der Prunktreppe (jetzt auf einer Marmorwange), Laternen
   unter waagerechten Ketten (wären beim nächsten Block-Update gefallen; jetzt unter eisernen Knäufen), die alte
   Freitreppe des Schlosses lag unsichtbar unter dem Vorplatz (`frontStairs: false`), Kübel, Waren der Blumenfrau, Topf
-  auf dem Komposter am Dorfplatz; `pruefung-offen.ts` ohne Schloss und Treppe. Tests: 83 Baukasten, 261 Server,
+  auf dem Komposter am Dorfplatz; `pruefung-offen.ts` ist leer. Tests: 83 Baukasten, 261 Server,
   Typen, Prettier. Echt mit Paper 26.1.2: echter Selbstbau der Lobby (85 Teile, 100 s, keine Ladefehler),
   `lobby-test` **34/34**, `schlossmarkt-test` **31/31**, `treppen-test` **17/17** (Teil A: alle Treppen nur mit der
   Vorwärts-Taste, kein Sprung; Teil B mit Pathfinder – Anzeige-Objekte des Prunkbrunnens zählen jetzt als passierbar,
@@ -275,13 +365,13 @@
 
 ## Offen
 
-- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schlossmarkt (Falltüren und Wimpel am Marktbogen ohne Wand, Wegweiser-Schild, Linden auf Pflaster, Erde hinter der Stützmauer), Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse), Saison-Dekos in `season.ts` (Ketten-Enden in der Luft, Winter-Christbaum im Stand am Dorfplatz, Ostern/Halloween-Deko in Blöcken bzw. schwebend).
+- **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.; seit der Wiesn auch ihre Blöcke).
 - MorniHosting `plugins/mornicraft/` auf MorniCraft 1.11.1 nachziehen.
 - MorniCraft ist bis zum Einschalten aus (MorniSMP steht für neue Installationen jetzt auf „an“; bestehende im Panel umschalten).
 - **Philip testet.** Morni Party: Burg Weißenstein + Minispiel-Kulissen (Helfer), danach Go fürs Release. MoinMorni selbst (`main`) und MorniHosting-PR #117 brauchen noch ein eigenes Go, danach Submodul wieder auf MorniHosting `main`.
 - **Philip (Discord):** im Developer Portal Bot anlegen (Server Members Intent an, Public Bot aus), Token im Panel unter Discord eintragen, leeren Server anlegen, Bot über den Knopf einladen, „Server einrichten“; für Bewerbungen auf der Webseite OAuth2-Redirect `https://<Domain>/api/public/apply/callback` eintragen und das Client Secret im Panel (Schritt 6). Anleitung `docs/discord.md`. Danach der Owner-Rolle in Discord einmal selbst „Administrator“ geben (darf ein Bot nicht). Die Willkommens-Nachricht nimmt ein Bild aus `/bilder/` der Webseite – werden die Bilder umbenannt, `WELCOME_PICTURE` in `apps/server/src/discord/messages.ts` nachziehen. Neue Rollen werden nur dann zu einer Bewerbungs-Stelle, wenn es für ihre ID eine Vorgabe in `packages/shared/src/team-apply.ts` gibt.
 - Braucht echte Zugänge, in der Sandbox nicht prüfbar: Discord mit echtem Bot-Token (Einrichten mit echten Rechten und Rangfolge, Bewerbungs-Formulare, OAuth, Server-Bild/Banner/Bot-Profil, Sprachchat-Stumm im Sprachkanal), Modpack auf Modrinth (Schlüssel), Proxmox-Einzeiler auf echtem Proxmox, systemd-Update-Helfer, Bedrock-Spieler über Geyser, Sprachchat mit echten Spielern.
-- Einstellungs-Katalog, bewusst nicht im Panel: das **Sortiment des MorniSMP-Händlerhauses** (`haendler.waren` – 257 Waren mit Kauf- und Ankaufspreis, Tagesmenge, Kauf-Grenze, Saison – und `haendler.abteilungen`). MorniSMP liest `haendler.waren` nur als Ganzes: Steht auch nur eine Ware in der config.yml, gilt allein diese Liste – einzelne Werte aus dem Panel würden auf Servern mit einer config.yml aus 0.1 das Sortiment auf diese Waren schrumpfen (ohne Kaufpreis). Dafür bräuchte MorniSMP eigene Werte je Ware, die über die Liste gelegt werden (z. B. `haendler.preise.<sorte>`), oder das Panel einen Sortiments-Editor, der ganze Abteilungen schreibt. Ebenfalls bewusst nicht: Weltnamen (`welt`), MorniSMP-Zeitzone/Inselhöhe, Burgverlies-Startwert, Ankauf-Stufe 1 (setzt der Modus selbst). Nach dem Release von Duels 0.1.2 (Rückbenennung) die Kopie `packages/shared/test/mode-configs/duels.yml` nachziehen – nur die Kopfzeile ändert sich, `MM_CHECK_MODE_REPOS=1` zeigt es.
+- Einstellungs-Katalog, bewusst nicht im Panel: das **Sortiment des MorniSMP-Händlerhauses** (`haendler.waren` – 257 Waren mit Kauf- und Ankaufspreis, Tagesmenge, Kauf-Grenze, Saison – und `haendler.abteilungen`). MorniSMP liest `haendler.waren` nur als Ganzes: Steht auch nur eine Ware in der config.yml, gilt allein diese Liste – einzelne Werte aus dem Panel würden auf Servern mit einer config.yml aus 0.1 das Sortiment auf diese Waren schrumpfen (ohne Kaufpreis). Dafür bräuchte MorniSMP eigene Werte je Ware, die über die Liste gelegt werden (z. B. `haendler.preise.<sorte>`), oder das Panel einen Sortiments-Editor, der ganze Abteilungen schreibt. Ebenfalls bewusst nicht: Weltnamen (`welt`), MorniSMP-Zeitzone/Inselhöhe, Burgverlies-Startwert, Ankauf-Stufe 1 (setzt der Modus selbst). Duels-Kopie ist auf 0.2.0, MorniSMP-Kopie auf 0.3.0 (17.11.). Die Runden einer Kampfart sind im Panel ein Zahlenfeld 1–5 (eine Auswahl 1/3/5 ginge nur mit Zahlen-Auswahllisten im Katalog – Auswahllisten schreiben heute Text in die config.yml).
 - **Philip (Erreichbarkeit):** Go für MorniHosting-PR #123 (danach Submodul auf `main`). In NetBird die Domain `moinmorni.net` anlegen (eigene, nicht die von MorniHosting), bei INWX `moinmorni.net` und `*.moinmorni.net` auf den NetBird-Server, dann im Panel Einstellungen → Erreichbarkeit. **Ports:** Der Adress-Verteiler von MorniHosting hält auf deinem NetBird-Proxy TCP 25565 und 19132 – solange bekommt MoinMorni 25566/19133 (Java ohne Port per SRV-Eintrag, Bedrock mit Port). `moinmorni.net` ohne Port für beide geht nur so: Verteiler in MorniHosting aus (`MH_ROUTER_JAVA_PORT=0`, `MH_ROUTER_BEDROCK_PORT=0` – dann brauchen die MorniHosting-Server wieder ihre Ports) oder ein zweiter NetBird-Proxy mit eigener IP (nicht geprüft). Das Port-Skript auf dem NetBird-Server einmal neu ausführen (UDP auf dem Java-Port für den Sprachchat). Container von vor dem 16.11.: Host-Wächter einmal von Hand einrichten (`docs/proxmox-quickstart.md`, Nützliche Befehle).
 - **Philip (www):** Sobald der Motor in NetBird den Dienst für `www.moinmorni.net` anlegt, bei INWX den alten `www`-A-Eintrag löschen – er zeigt noch auf die Parkseite und überdeckt `*.moinmorni.net`. Danach leitet MoinMorni `www.moinmorni.net` dauerhaft auf `https://moinmorni.net` um.
 - **Philip (Rückbenennung):** Container 103 einmal von Hand aktualisieren (Befehl oben unter „Name wieder MoinMorni“, danach kommen Updates wieder über das Panel); auf GitHub das Duels-Repo wieder `MoinMorni-Duels` nennen (heißt dort noch `Morni-Duels` – bis dahin hält die Weiterleitung von GitHub es am Laufen).
@@ -296,10 +386,9 @@
 - **Lobbymusik (Philip):** Hörproben anhören (`apps/server/musik/*.ogg`). Stücke tauschen oder neu: Noten in `packages/builder/src/musik/lieder/`, Name/Herkunft in `packages/shared/src/lobby-music.ts`, dann `npx tsx tools/lobby-musik/src/render.ts` (braucht fluidsynth, ffmpeg, fluid-soundfont-gm). „Kommet, ihr Hirten“ fehlt bewusst – die Vorlage hatte zweistimmige Akkorde, aus denen die Melodie nicht sicher herauszulesen war. Nicht echt geprüft: Klang im echten Java-Client (Sandbox-Speicher), Bedrock (Notenblöcke über Geyser), echte Spieler mit echten Ohren.
 - **Wartungs-Lobby (17.11.):** Die `try`-Liste in der velocity.toml schreibt weiter der Motor (alle Mitglieder) – das Netzwerk-Plugin übergeht sie; ohne geladenes Netzwerk-Plugin (Proxy nicht eingerichtet) würde Velocity sie wieder durchlaufen. Sauberer wäre in MorniHosting ein Feld „Ausweich-Server“ je Netzwerk (`try` = Lobby, Wartung) – nicht gebaut.
 - **Was ist neu (17.11.):** Die Änderungen sind die Commit-Texte – auch in der englischen Ansicht deutsch, manchmal technisch (sie stehen ohnehin öffentlich auf GitHub). Eine Installation zeigt die Liste erst nach dem ersten Update mit dieser Fassung (vorher nur die Nummer); von Hand gebaut (`docker compose build` ohne install.sh/update.sh) ebenso nur die Nummer. Nicht echt geprüft: Docker-Bau mit der Datei im Image (der update-test baut mit nachgebautem Docker).
-- **Prunkaufgang (17.11.):** Die Wimpel am Marktbogen hängen unter dem Balken statt an ihm (Schlossmarkt, Spawn-Helfer;
-  stehen in `packages/builder/test/pruefung-offen.ts`, jetzt bei z −23/−25, weil der Bogen nach vorn gerückt ist). Die
-  Zufallsfolge des Dorfs hat sich durch die kürzere Prachtstraße verschoben – drei Oster-Funde in `pruefung-offen.ts`
-  tragen darum andere Blocknamen (gleiche Stellen). Nicht echt geprüft: Bedrock (Läufer, Knäufe, Fahnen über Geyser),
-  echte Spieler auf der Treppe. Gesehen beim Test: Wer den Kompass der Lobby in der Hand hält, öffnet mit einem
-  Rechtsklick auf eine Tür das Menü statt der Tür (`LobbyFeatures.onInteract`) – vielleicht Türen dort durchlassen.
+- **Prunkaufgang (17.11.):** Nicht echt geprüft: Bedrock (Läufer, Knäufe, Fahnen über Geyser), echte Spieler auf der
+  Treppe. Gesehen beim Test: Wer den Kompass der Lobby in der Hand hält, öffnet mit einem Rechtsklick auf eine Tür das
+  Menü statt der Tür (`LobbyFeatures.onInteract`) – vielleicht Türen dort durchlassen. Unsichtbares Licht steht im
+  Festsaal auf Kopfhöhe der Galerie (`schloss.ts`, Licht unter der Decke) – im Spiel ohne Kollision, mineflayer hält es
+  für fest.
 - Bausteine siehe Fortschrittsseite (`docs/fortschritt/index.html`, Artefakt https://claude.ai/artifact/FDBGtjXT6fgaY85Z1AvTsR).

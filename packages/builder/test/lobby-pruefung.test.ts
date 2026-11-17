@@ -144,6 +144,39 @@ describe('Bauplan-Prüfung: was sie findet', () => {
   });
 });
 
+describe('Saison-Deko: gedrehte Anzeigen, Treppen und kleine Modelle', () => {
+  /** Dünne Platte, um die x-Achse gekippt (wie Schnee auf einem Treppendach), Mitte bei (x, y, z). */
+  const plate = (y: number, z: number, angle: number): string =>
+    `summon block_display 0.5 ${y} ${z} {block_state:{Name:'minecraft:snow_block',id:'minecraft:snow_block'},transformation:{left_rotation:[${Math.sin(angle / 2)}f,0f,0f,${Math.cos(angle / 2)}f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[1f,0.14f,2.8f]}}`;
+  /** Zwei Treppen wie ein Dach, das nach Süden ansteigt: Stufenkanten auf der Linie y = 66 + (z − 0). */
+  const roof = (): Canvas => {
+    const c = new Canvas();
+    c.set(0, 65, 0, 'spruce_stairs[facing=south,half=bottom]');
+    c.set(0, 66, 1, 'spruce_stairs[facing=south,half=bottom]');
+    return c;
+  };
+
+  it('Schneeplatte auf den Kanten eines Treppendachs steckt nicht – quer durch die Treppe schon', () => {
+    // Kanten bei (z 0, y 65,5), (z 1, y 66,5) …: Linie y = 65,5 + z; Platte liegt darauf (Mitte 0,05 darüber)
+    const on = plate(66.55, 1.0, -Math.PI / 4);
+    expect(lines(checkDecorations(roof(), [on]))).toEqual([]);
+    const through = plate(66.1, 1.0, -Math.PI / 4);
+    expect(lines(checkDecorations(roof(), [through])).join('\n')).toContain('steckt in spruce_stairs');
+  });
+
+  it('kleine Teile dicht beieinander sind ein Modell (Figur), keine Kette – es muss nur aufliegen', () => {
+    const c = new Canvas();
+    const part = (x: number, y: number): string =>
+      `summon block_display ${x} ${y} 0.5 {block_state:{Name:'minecraft:white_wool',id:'minecraft:white_wool'},transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.2f,0.3f,0.2f]}}`;
+    // Schaf auf dem Boden (Gras bis 65): Beine stehen auf, Körper und Kopf darüber berühren sie
+    const sheep = [part(0.4, 65.15), part(0.6, 65.15), part(0.5, 65.45), part(0.7, 65.6)];
+    expect(lines(checkDecorations(c, sheep))).toEqual([]);
+    // dasselbe Schaf schwebend: fällt auf
+    const flying = [part(0.4, 68.15), part(0.6, 68.15), part(0.5, 68.45), part(0.7, 68.6)];
+    expect(lines(checkDecorations(c, flying)).join('\n')).toContain('schwebt in der Luft');
+  });
+});
+
 describe('Bauplan-Prüfung der ganzen Lobby', () => {
   const { plan: found, seasons } = checkLobby();
 

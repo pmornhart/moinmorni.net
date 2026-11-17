@@ -175,3 +175,13 @@ ein; die Bewerbungen selbst stehen dort und unter **Bewerbungen**.
   ⚖・strafen-log bzw. 📋・team-log.
 - **Tickets**: Der Knopf in 🎫・tickets öffnet ein privates Gespräch (Thread) nur für die Person und das Team.
 - **Begrüßung** neuer Mitglieder in 👋・willkommen.
+
+## Wer schreiben darf
+
+- **Info und Hilfe** (Willkommen, Regeln, Ankündigungen, News, Status, Spielmodi, Hilfe, Tickets, Bewerbungen): nur
+  lesen, schreiben tut nur das Team. Knöpfe und `/befehle` gehen für alle.
+- **Offene Kanäle** (Chat, Bilder und Clips, Vorschläge, Sprachkanäle): schreiben und reden nur mit verbundenem
+  Minecraft-Konto (Rolle „✔ Verbunden“) oder fürs Team. Wer nicht verbunden ist, liest mit und hört zu.
+- Stumm (🔇) und Gefängnis (⛓) sperren zusätzlich. Ein schon eingerichteter Server bekommt neue Kanal-Rechte beim
+  nächsten Start des Bots von selbst.
+

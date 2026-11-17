@@ -37,7 +37,21 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
 - Alle Häuser sind **begehbar und eingerichtet** (Küche, Eckbank, Kachelofen, Schlafzimmer, Leiter nach oben; Läden
   mit Theke und Verkäufer). Einrichtung als Daten in `packages/builder/src/village.ts`.
 - **Leute im Dorf**: Figuren mit Tag `mm_walker` schlendern um ihren Platz herum, stehende Figuren schauen Spieler
-  in der Nähe an, Kinder sind kleiner.
+  in der Nähe an, Kinder sind kleiner. So laufen sie (`LobbyNpcs.java`):
+  - erst **auf der Stelle zum Ziel drehen** (12° je Tick), dann geradeaus gehen – ein Ruck um 180° ließ Minecraft den
+    Körper kurz rückwärts drehen, die Tracht sprang hinterher;
+  - **Abstand halten** (0,8 Blöcke) zu anderen Figuren, auch sitzenden, und zu Spielern: wer im Weg steht, wird
+    angeschaut, nach drei Versuchen geht es woanders hin; Ziele, an denen schon jemand steht, werden nicht gewählt;
+  - nur auf **festem, ebenem Boden** (voller Block oder Trampelpfad, kein Zaun, keine Mauer, keine halbe Stufe, kein
+    Wasser) und nicht durch Schilder, Fahnen, Fackeln, Zuckerrohr oder hohe Blumen;
+  - der **Platz aus dem Bau** wird an der Figur gemerkt (`moinmorni:home`) – nach Neustart oder Nachladen der Gegend
+    schlendern sie weiter um denselben Platz statt mit der Zeit auszuwandern;
+  - nur, wo die Welt gerade läuft (am Rand der geladenen Gegend bleiben sie stehen); wer stehen bleibt (Pause, mehr
+    Dorfleute als im Panel eingestellt), schaut sich um wie die anderen Figuren;
+  - der **Kopf dreht sich weich** (höchstens 9° je Tick, zum Ende langsamer) statt alle fünf Ticks einen Sprung;
+  - der **Startplatz** einer laufenden Figur muss im Bau frei sein (Test in
+    `packages/builder/test/lobby-market.test.ts` – vorher stand eine in einer Bierbank am Schlossmarkt, eine in der
+    Brunnenmauer im Oberdorf, beide kamen nie los).
 - **Prunkaufgang zum Schloss** (`schlosstreppe.ts`, Philip: „richtig schön, edel, wow – jetzt ist hier richtig Party
   angesagt“): Der **rote Teppich** beginnt am Rand des Dorfplatzes, läuft mit goldener Borte durch den Marktbogen,
   über die Stufen (Läufer aus rotem Netherziegel – Teppich liegt auf Treppen nicht), über den Vorplatz und durchs
@@ -55,8 +69,8 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
     neben jedem Podest zwei **Fahnenmasten** (Smaragd links, Weiß-Blau rechts), Blumen am Hang, Licht über den Stufen.
   - **Schlossvorplatz** in hellem Stein (Diorit, glatter Stein), Teppich mit Goldborte und einem Stern aus Gold und
     Smaragd darin, Blumenbeete, am Kopf der Treppe zwei hohe Fahnen, am Rand eine **Fahnenallee**, zwischen den ersten
-    beiden Paaren **Lichterketten** über den Platz (goldene und blaue Laternen im Wechsel – weiß-blau; so hoch, dass
-    der Blick aufs Schlosstor frei bleibt), Laternen am Mittelweg, zwei Linden, helle Brüstung (Dioritmauer), wo der
+    beiden Paaren **Lichterketten** über den Platz (Ketten zwischen eisernen Knäufen, darunter goldene und blaue
+    Laternen im Wechsel – weiß-blau; so hoch, dass der Blick aufs Schlosstor frei bleibt), Laternen am Mittelweg, zwei Linden, helle Brüstung (Dioritmauer), wo der
     Platz über dem Hang liegt.
   - **Schlosstor**: zwei Torpfeiler mit Pilastern, Fahnenmasten auf den Pfeilern, Laternen an den Ecken, Rundbogen,
     offene Torflügel, **Kronleuchter** im Torweg, darüber die Attika mit dem Wappen und Banner; nachts angestrahlt.
@@ -111,15 +125,19 @@ Stühle mit Herz-Lehne, Eckbänke, Wirtstische, Hocker, Bierbänke, Biertische u
 (`packages/builder/src/furniture.ts`). Sie hängen an Blöcken, die es in der Lobby **nur als Möbel** gibt – das Paket
 gibt ihnen ein neues Aussehen, Kollision und Sitzhöhe bleiben echt:
 
-| Block                                | Möbel                  |
-| ------------------------------------ | ---------------------- |
-| Mangroven-Treppe unten, gerade/innen | Eckbank (mit Rückwand) |
-| Mangroven-Treppe sonst               | Stuhl                  |
-| Mangroven-Stufe oben / unten         | Wirtstisch / Hocker    |
-| Birken-Stufe oben / unten            | Biertisch / Bierbank   |
-| braune Kerze (1–4, aus)              | 1–4 Steinkrüge         |
+| Block                                                             | Möbel                                            |
+| ----------------------------------------------------------------- | ------------------------------------------------ |
+| Mangroven-Treppe unten, gerade/innen                              | Eckbank (mit Rückwand)                           |
+| Mangroven-Treppe sonst                                            | Stuhl                                            |
+| Mangroven-Stufe oben / unten                                      | Wirtstisch / Hocker                              |
+| Birken-Stufe oben / unten                                         | Biertisch / Bierbank                             |
+| braune Kerze (1–4, aus)                                           | 1–4 Steinkrüge                                   |
+| Trockenbeton rot / gelb / hellgrau / blau (nur als Block-Anzeige) | runde Christbaumkugel rot / gold / silber / blau |
 
-**Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen und keine braunen Kerzen für anderes verbauen.**
+**Darum in der Lobby keine Mangroven-/Birken-Treppen und -Stufen, keine braunen Kerzen und keinen Trockenbeton für
+anderes verbauen** (Test in `winter.test.ts`). Die Kugeln (`packages/builder/src/schmuck.ts`) sind übereinander gestapelte
+Scheiben aus je vier gedrehten Quadraten – von allen Seiten rund; ohne Paket sieht man einen schräg gestellten Würfel in
+der Farbe.
 Die Modelle nutzen nur Minecrafts eigene Texturen (es liegen keine Mojang-Dateien im Paket). Weil Minecraft die Fläche
 unter Treppen/Stufen weglässt, malen die Modelle ein Stück Boden (Dielen bzw. Kies) mit; `fitFurniture` setzt vor einer
 Wand eine Eckbank statt eines Stuhls und Kies unter jede Bierbank (Tests in `packages/builder/test/`).
@@ -185,7 +203,8 @@ Flache malt der Skin selbst (oben). Farben kommen aus der Tracht der Figur (`cas
 - Kopf-Teile stecken im Kopf-Platz der Figur (drehen und nicken mit), Körper-Teile in einem Anzeige-Objekt, das auf
   der Figur mitfährt. **Stehende Figuren drehen nur den Kopf** (höchstens 60° zur Seite; der Körper bleibt, wie er
   gebaut ist – darum sitzen Rock und Zöpfe immer). Laufenden dreht das Lobby-Plugin den Körper-Teil so nach, wie
-  Minecraft den Körper nachdreht; wer einen Rock trägt (Tag `mm_rock`), geht kleinere Schritte, damit die Beine im
+  Minecraft den Körper nachdreht (im Gehen 30 % je Tick in die Laufrichtung, im Stehen erst, wenn der Kopf mehr als 50°
+  voraus ist – `bodyAfter`); wer einen Rock trägt (Tag `mm_rock`), geht kleinere Schritte, damit die Beine im
   Rock bleiben. Sitzende Figuren tragen nur die Kopf-Teile.
 - Alle Teile benutzen das Modell `minecraft:air` – in Minecraft ist es leer. Unser Paket ersetzt
   `assets/minecraft/items/air.json` und wählt über `custom_model_data` die Teile. **Ohne Paket (oder auf Bedrock)
@@ -207,7 +226,7 @@ Blumenfrau Mohn.
 | `mm_npc`                          | Figur der Lobby: nimmt keinen Schaden (nur `/kill` beim Neubau wirkt)                                                                                                                              |
 | `mm_mode_<id>`                    | Anklicken (rechts oder links) → Nachricht `play` an den Hub → Modus beitreten bzw. wecken                                                                                                          |
 | `mm_mode_label`                   | Schild aus dem Bau – das Plugin ersetzt es durch eigene Schilder mit Live-Zahlen                                                                                                                   |
-| `mm_walker`                       | läuft gemütlich in bis zu 8 Blöcken um den Platz herum (nur auf freiem, ebenem Boden)                                                                                                              |
+| `mm_walker`                       | läuft gemütlich in 2–8 Blöcken um den Platz herum (nur auf freiem, ebenem Boden, mit Abstand zu anderen; Platz in `moinmorni:home`)                                                                |
 | `mm_rock`                         | trägt einen 3D-Rock: läuft mit kleineren Schritten (1,2 statt 1,8 Blöcke pro Sekunde)                                                                                                              |
 | `mm_tint_<rrggbb>`                | Farbe des Modus für den Namen über der Figur (wie auf der Webseite); ohne Tag Gold                                                                                                                 |
 | `mm_lobby` + `mm_build_<version>` | alles, was der Lobby-Bau setzt; Wesen aus älteren Bauten entfernt das Plugin, sobald sie geladen werden oder die Version wechselt (Datei `plugins/moinmorni/lobby-world.target`, alle 2 s geprüft) |
@@ -266,7 +285,48 @@ Lobby-Server (bei jeder Änderung neu).
 - **Schutz:** kein Abbauen/Setzen, kein Schaden, kein Hunger, nichts fallen lassen; aus der Welt gefallen → Dorfplatz.
 - **Saison-Deko:** Wiesn, Winter, Ostern, Halloween oder keine (`packages/builder/src/lobby/season.ts`, eigenes
   Datenpaket `moinmorni-lobby-season`). Wechsel im Panel setzt die Deko sofort neu. Anzeige-Blöcke tragen den Block
-  doppelt (`Name` bis 26.2, `id` ab 26.3 – sonst zeigt 26.3 nur Luft).
+  doppelt (`Name` bis 26.2, `id` ab 26.3 – sonst zeigt 26.3 nur Luft). **Alle Anzeige-Wesen der Lobby haben keine
+  Hitbox** (F3+B zeigt dort keine Rahmen und Pfeile): sie tragen `"Bukkit.invisible":1b` – Minecraft lässt unsichtbare
+  Wesen beim Hitbox-Zeichnen aus, zeichnet Anzeigen aber trotzdem (`withoutHitbox` in `lobby/deko.ts`; Schilder des
+  Plugins ebenso). **Die Deko sucht sich ihren Platz** (`lobby/halt.ts`) mit den Regeln der Bauplan-Prüfung
+  (`pruefung.ts`): Ketten rücken mit beiden Enden an die nächste Wand, Markise oder den Maibaum (sonst hängen sie
+  nicht), Eier, Kürbisse und Spinnweben rücken auf den nächsten freien Fleck am Boden bzw. an der Wand, Kugeln an die
+  Zweige des Christbaums, Sterne und Schlitten herab, bis sie aufliegen, Schneeplatten, die in einem Turm stecken
+  würden, werden geteilt. Lebkuchenherzen und Kürbisse hängen an den Ständen, wo sie heute stehen. Test: jede Saison
+  ohne Funde (`test/lobby-pruefung.test.ts`; die Prüfung rechnet gedrehte Anzeigen und Treppen genau, kleine Teile
+  dicht beieinander sind ein Modell, keine Kette).
+- **Winter-Wunderland** (Saison „Winter“, `lobby/winter.ts`, `christbaum.ts`, `weihnachtsmarkt.ts`,
+  `winter-figuren.ts`): Schnee auf allem (Wiesen mit Verwehungen, Schneewall neben Wegen und Plätzen, sechs
+  Schneehaufen, dünne begehbare Schicht auf Wegen, dicker Schnee auf den Markisen, Schneeplatten auf den Dächern,
+  Eiszapfen, Schneekappen auf Zäunen, Gras an den Bergen wird Schnee, Teich friert zu), kaltes Biom (Plugin
+  `LobbyWinter.java` merkt sich jedes Biom und stellt es danach wieder her), klares Wetter mit leichtem Flocken-Gestöber
+  (kein echter Schneefall – der macht den Himmel grau). **Statt des Maibaums ein riesiger Christbaum** (acht Stufen,
+  gut 36 Blöcke, hängende Zweige, echte Kerzen, 177 Kugeln in Rot, Gold, Silber, Blau, warme Lichterkette direkt auf
+  den Zweigen jeder Stufe, großer Stern, Geschenke, unsichtbares Licht ringsum); Dorfleute, die um den Maibaum liefen, gehen ein Stück nach
+  außen und laufen nicht unter tief hängende Zweige. **Weihnachtsmarkt:** jede Bude am Dorfmarkt und am Schlossmarkt mit
+  Tannengirlande und Lichtern vorne und an den Seiten, Eiszapfen und warmem Licht; Lichterketten im Ring von Bude zu Bude
+  und am Schlossmarkt bis zum Marktbogen (Girlande, Stern); Glühwein- und Lebkuchenbude am Eingang von der Ankunft her
+  (Kessel überm Feuer, Krüge, Plätzchen, Lebkuchenherzen), dazwischen das Schild „Weihnachtsmarkt“; Krippe auf der Wiese
+  westlich (Stall, Maria, Josef, Kind in der Krippe, Ochs, Esel, Schafe, Stern), Eisbahn, großer Pferdeschlitten mit
+  Geschenken, Rodel, drei Schneemänner, verschneite Fichten rund ums Dorf; Laternen statt Kürbis an den Marktecken. Die
+  Figuren der Spielmodi bleiben, wie sie sind. Jede geänderte Stelle steht mit ihrem alten Block im Plan – jede andere
+  Saison stellt sie genau wieder her (auch den Maibaum), Merker `moinmorni:season` in der Welt.
+  Probe in einer echten Lobby: `apps/server/scripts/winter-probe.ts <ordner> <rcon> <passwort-datei> an|aus`.
+- **Wiesn** (Saison „Wiesn“, `lobby/wiesn.ts`, Baukasten der Saisons `lobby/saison-kit.ts`): **Kettenkarussell um
+  den Maibaum** (Herzstück: weiß-blaues Dach in 16 Feldern sechs Blöcke über dem Platz, 16 Sitze an Ketten, Wimpel und
+  Lichter am Rand, Licht darunter – darunter läuft man frei durch, der Maibaum bleibt der Mast), **Festzelt-Eingang**
+  von der Ankunft her (Giebel mit weiß-blauen Rauten, großes Herz und „Wiesn“, Fahnen, Laternen, Wimpel, Lichter an
+  den Giebelkanten, Schild „Servus auf der Wiesn!“), **Riesenrad** auf der Wiese westlich vom Platz (Ring aus Beton auf
+  einer Stütze am Einstieg, Bühne mit Laternen, Nabe, Achse, Stützen und Speichen als Anzeigen, acht bunte Gondeln,
+  Lichterkranz, Tafel), **Lebkuchenherzen- und Breznbude** am Eingang, Lebkuchenherzen an allen Marktständen,
+  weiß-blaue Wimpel und Lichter von Stand zu Stand, Wimpel über Dorfstraße und Handwerkergasse, Fässer am Biergarten.
+- **Saisons mit Bauten** (Winter, Wiesn): jede setzt Blöcke über den Bauplan und merkt sich je Stelle den alten Block
+  (`lobby/saison-plan.ts`). Beim Wechsel räumt erst jede andere Saison ihre Blöcke weg (nur, wenn ihr Merker liegt),
+  dann wird gespeichert, die Merker kommen weg, wieder gespeichert, dann setzt die neue Saison Merker, Blöcke und Deko
+  (`seasonStepsFor` in `datapack.ts`) – auch nach einem Absturz mitten im Wechsel passt der Merker zu den Blöcken.
+  Die Bauplan-Prüfung prüft bei diesen Saisons auch ihre Blöcke (über dem Bauplan, `checkLobbyCanvas`). Probe in einer
+  echten Lobby für jede Saison: `apps/server/scripts/saison-probe.ts <ordner> <rcon> <passwort-datei> <saison> an|aus`
+  (Stellen, die gerade eine andere Saison belegt, zählen bei „aus“ nicht).
 - **Dorfleute:** wie viele herumlaufen, stellt das Panel ein.
 
 ## Lobbymusik (`LobbyMusic.java`, Noten in `packages/builder/src/musik/`)
@@ -344,7 +404,7 @@ Saison-Dekos und meldet jeden Fund mit Koordinaten:
 
 Auf der Kommandozeile: `npx tsx tools/lobby-entwuerfe/src/pruefen.ts [art …]`. Der Test
 `packages/builder/test/lobby-pruefung.test.ts` schlägt bei jedem neuen Fund an; Funde in Teilen, an denen gerade
-andere arbeiten (Schloss, Schlossmarkt, Saison-Deko), stehen in `test/pruefung-offen.ts` – ist einer behoben, die
+andere arbeiten (Schloss, Saison-Deko), stehen in `test/pruefung-offen.ts` – ist einer behoben, die
 Zeile dort löschen. Die Lobby baut ohne Block-Updates; `fitConnections` (`verbindungen.ts`) verbindet darum Zäune,
 Mauern und Scheiben wie beim Setzen von Hand.
 

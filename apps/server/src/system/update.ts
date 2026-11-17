@@ -128,7 +128,14 @@ const compareSchema = z.object({
 });
 type Compare = z.infer<typeof compareSchema>;
 /** Nur die Zahl (Motor): `?per_page=1&page=2` kommt ohne die lange Liste der geänderten Dateien. */
-const countSchema = z.object({ ahead_by: z.number() });
+/**
+ * Wie weit MorniHosting main vor dem Motor liegt. `status` sagt GitHub dazu: nur „ahead“ heißt, main hat alles vom Motor
+ * und mehr. „diverged“ (main fehlt noch etwas, z. B. ein offener PR) dreht update.sh nie zurück – dann gibt es nichts.
+ */
+const countSchema = z.object({ ahead_by: z.number(), status: z.string().optional() });
+/** Zählt für „Update verfügbar“: nur was update.sh auch einspielen würde. */
+const motorAhead = (cmp: z.infer<typeof countSchema>): number =>
+  cmp.status === undefined || cmp.status === 'ahead' ? cmp.ahead_by : 0;
 const statusSchema = z.object({
   state: z.enum(['running', 'done', 'failed', 'rolled_back']),
   step: z.string().nullable().optional(),
@@ -337,7 +344,7 @@ export function createUpdateService(
           countSchema,
           { settled: true },
         );
-        state.motorCount = { ...engine, behind: cmp ? cmp.ahead_by : null, steps: null, changes: [] };
+        state.motorCount = { ...engine, behind: cmp ? motorAhead(cmp) : null, steps: null, changes: [] };
       } catch {
         // Die Zahl kommt beim nächsten Nachsehen.
       }

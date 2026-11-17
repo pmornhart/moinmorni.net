@@ -1,3 +1,4 @@
+/* eslint-disable ts-patterns/no-magic-numbers -- tests compare against literal expected values */
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { openDatabase, type Db } from '../src/db/index.js';
@@ -84,6 +85,15 @@ describe('Hub', () => {
     await plugin('lobby', 'backend');
     expect(connected).toEqual(['lobby']);
   });
+
+  /** Wartet, bis `look` etwas findet (höchstens drei Sekunden). */
+  const until = <T>(look: () => T | undefined, left = 150): Promise<T> =>
+    new Promise((resolve, reject) => {
+      const found = look();
+      if (found !== undefined) resolve(found);
+      else if (left <= 0) reject(new Error('nicht eingetreten'));
+      else setTimeout(() => until(look, left - 1).then(resolve, reject), 20);
+    });
 
   /** Proxy + zwei Spielserver, Philip (Owner) und Lena (Spielerin) online. */
   const network = async (): Promise<{ proxy: FakePlugin; lobby: FakePlugin; duels: FakePlugin }> => {
@@ -742,6 +752,47 @@ describe('Hub', () => {
     await lobby.next('lobby', (m) => row(m, 'duels')?.players === 2);
   });
 
+  test('„closed“ ist nur bei Wintersport Sommerpause; ein Modus, der beim Beenden „closed“ meldet, schläft danach', async () => {
+    const { proxy, lobby } = await network();
+    type Row = { id: string; awake: boolean; phase: string | null; pause: string | null };
+    const row = (m: Msg, id: string): Row | undefined => (m['modes'] as Row[]).find((md) => md.id === id);
+    const said = (part: string) =>
+      proxy.next('msg', (m) => m['uuid'] === PHILIP && String(m['text']).includes(part));
+
+    // MorniSMP meldet beim Beenden „closed“ (onDisable) – kein Saison-Modus: „gerade geschlossen“, nicht hin.
+    const smp = await plugin('smp', 'backend');
+    smp.send({ t: 'mode-state', mode: 'mirni', state: 'closed', players: 0 });
+    const closed = await lobby.next('lobby', (m) => row(m, 'mirni')?.phase === 'closed');
+    expect(row(closed, 'mirni')).toMatchObject({ awake: true, pause: 'closed' });
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'mirni' });
+    await said('gerade geschlossen');
+    expect(proxy.received.some((m) => m.t === 'connect' && m['server'] === 'smp')).toBe(false);
+
+    // Server weg (gestoppt, schläft): die alte Meldung gilt nicht mehr – keine Sommerpause, kein „geschlossen“.
+    // (Nur Lobby-Meldungen nach dem Trennen zählen – vor dem Verbinden schlief MorniSMP auch schon.)
+    const from = lobby.received.length;
+    smp.close();
+    const asleep = await until(() =>
+      lobby.received.slice(from).find((m) => m.t === 'lobby' && row(m, 'mirni')?.awake === false),
+    );
+    expect(row(asleep, 'mirni')).toMatchObject({ phase: null, pause: null });
+    lobby.send({ t: 'play', uuid: PHILIP, mode: 'mirni' });
+    await said('wacht gerade auf');
+    expect(woken).toContain('smp');
+
+    // Wacht er wieder auf und meldet „waiting“, ist er offen – auch nach dem alten „closed“.
+    const again = await plugin('smp', 'backend');
+    again.send({ t: 'mode-state', mode: 'mirni', state: 'waiting', players: 0 });
+    const open = await lobby.next('lobby', (m) => row(m, 'mirni')?.phase === 'waiting');
+    expect(row(open, 'mirni')).toMatchObject({ awake: true, pause: null });
+
+    // Wintersport mit „closed“: Sommerpause.
+    const winter = await plugin('wintersport', 'backend');
+    winter.send({ t: 'mode-state', mode: 'wintersport', state: 'closed', players: 0 });
+    const summer = await lobby.next('lobby', (m) => row(m, 'wintersport')?.pause === 'summer');
+    expect(row(summer, 'wintersport')).toMatchObject({ awake: true, phase: 'closed' });
+  });
+
   test('Lobby-Einstellungen: nur die Lobby bekommt sie, Änderungen im Panel kommen sofort an', async () => {
     const { lobby, duels } = await network();
     const first = await lobby.next('lobby-settings');
@@ -941,6 +992,20 @@ describe('Hub', () => {
     });
     await proxy.request({ t: 'command', uuid: PHILIP, command: 'smpconfig', args: ['haendler', 'aus'] });
     expect(await smp.next('mode-settings')).toMatchObject({ values: { 'haendler.an': false } });
+    // MorniSMP 0.3.0: Preis-Faktor je Abteilung und Börse.
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'smpconfig',
+      args: ['faktor', 'erze', '2,5'],
+    });
+    expect(await smp.next('mode-settings')).toMatchObject({
+      values: { 'haendler.faktoren.erze': 2.5, 'haendler.faktoren.holz': 1, 'boerse.an': true },
+    });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'smpconfig', args: ['boerse', 'aus'] });
+    expect(await smp.next('mode-settings')).toMatchObject({
+      values: { 'boerse.an': false, 'boerse.max-prozent': 300 },
+    });
     expect(
       hide.received.filter((m) => m.t === 'mode-settings').every((m) => m['mode'] === 'versteckerl'),
     ).toBe(true);
@@ -949,6 +1014,48 @@ describe('Hub', () => {
     expect(await duels.next('mode-settings')).toMatchObject({
       values: { 'kampf.zeitlimit-sekunden': 300, 'suppe.heilung': 6.5 },
     });
+    // Duels 0.2.0: jede Kampfart an/aus und mit Runden, Regeln der besonderen Kampfarten – die Brücke zählt Tore.
+    expect(first.values).toMatchObject({
+      'kits.sumo.an': true,
+      'kits.sumo.runden': 1,
+      'sumo.aus-tiefe': 2,
+      'bruecke.tore': 3,
+      'labyrinth.ziel': true,
+      'party.max-spieler': 8,
+    });
+    expect(Object.keys(first.values)).not.toContain('kits.bruecke.runden');
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'duelsconfig',
+      args: ['sumo', 'runden', '3'],
+    });
+    expect(await duels.next('mode-settings')).toMatchObject({ values: { 'kits.sumo.runden': 3 } });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'duelsconfig',
+      args: ['sumo', 'tiefe', '3,5'],
+    });
+    expect(await duels.next('mode-settings')).toMatchObject({
+      values: { 'sumo.aus-tiefe': 3.5, 'kits.sumo.an': true },
+    });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'duelsconfig', args: ['bruecke', 'aus'] });
+    expect(await duels.next('mode-settings')).toMatchObject({
+      values: { 'kits.bruecke.an': false, 'bruecke.tore': 3 },
+    });
+    await proxy.request({
+      t: 'command',
+      uuid: PHILIP,
+      command: 'duelsconfig',
+      args: ['labyrinth', 'ziel', 'aus'],
+    });
+    expect(await duels.next('mode-settings')).toMatchObject({
+      values: { 'labyrinth.ziel': false, 'kits.labyrinth.an': true },
+    });
+    // 6 Runden gibt es nicht (1 bis 5).
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'duelsconfig', args: ['uhc', 'runden', '6'] });
+    expect(stores.settings('duels')['kitUhcRounds']).toBe(1);
     // Im Spiel per Befehl (Owner), Komma geht auch.
     await proxy.request({
       t: 'command',

@@ -51,6 +51,7 @@ import { Chip, Cmd, EmptyState, GameButton, LiveDot, LoadError, Panel, RankTag }
 import { PageHero } from './page-hero';
 import { usePageTitle, WRAP } from './parts';
 import { formatTime, MODE_PARAM, NUMBER_LOCALE, readable, TIME_SUFFIX, useStatText } from './stat-format';
+import { groupStats, SubjectPicker, SubjectTable, WIDE_FROM_KINDS } from './stat-groups';
 
 /** Longest name the API takes (Bedrock names carry a dot in front). */
 const NAME_MAX = 17;
@@ -358,7 +359,12 @@ function ModeBoards(): ReactElement | null {
   }, [linked, ready]);
   if (!board || !key) return null;
   const show = stat.value;
-  const label = stat.label;
+  const label = (k: string): string => stat.label(k, board.mode);
+  // Values of single fighting styles or courses: a choice list instead of a button each.
+  const groups = groupStats(
+    board.keys.map((k) => k.key),
+    (k) => stat.named(k, board.mode),
+  );
   const modeName = (id: string): string => {
     const mode = findMode(status.data?.modes, id);
     return mode ? pick(mode.name) : readable(id);
@@ -414,26 +420,29 @@ function ModeBoards(): ReactElement | null {
         })}
       </div>
       <div className="flex flex-wrap gap-2" aria-label={t('site.stats.modeBoardsValues')}>
-        {board.keys.map((k) => {
-          const active = k.key === key.key;
-          return (
-            <button
-              key={k.key}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setChosenKey(k.key)}
-              className={cn(
-                'rounded-[4px] px-2.5 py-1.5 font-pixel text-[13px] font-semibold uppercase tracking-[0.06em] transition-colors',
-                active
-                  ? 'bg-foreground text-background'
-                  : 'bg-muted text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {label(k.key)}
-            </button>
-          );
-        })}
+        {board.keys
+          .filter((k) => groups.general.includes(k.key))
+          .map((k) => {
+            const active = k.key === key.key;
+            return (
+              <button
+                key={k.key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setChosenKey(k.key)}
+                className={cn(
+                  'rounded-[4px] px-2.5 py-1.5 font-pixel text-[13px] font-semibold uppercase tracking-[0.06em] transition-colors',
+                  active
+                    ? 'bg-foreground text-background'
+                    : 'bg-muted text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {label(k.key)}
+              </button>
+            );
+          })}
       </div>
+      <SubjectPicker mode={board.mode} groups={groups} chosen={key.key} onChoose={setChosenKey} />
       <Panel className="overflow-hidden" role="tabpanel">
         <header className="mm-mode-bg relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3 sm:px-5">
           <div className="mm-noise absolute inset-0 opacity-60 mix-blend-overlay" aria-hidden />
@@ -503,13 +512,19 @@ function ModeStats({ stats }: { readonly stats: NonNullable<PublicProfile['modes
       <h2 id="mode-stats" className="font-pixel text-[clamp(1.8rem,4vw,2.3rem)] font-bold leading-none">
         {t('site.players.modeStats')}
       </h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-flow-row-dense gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {entries.map(([modeId, values]) => {
           const mode = findMode(status.data?.modes, modeId);
+          const groups = groupStats(Object.keys(values), (k) => stat.named(k, modeId));
+          // Many columns (Duels: fights, wins, losses, draws, rating per style) need the whole row.
+          const wide = groups.kinds.length >= WIDE_FROM_KINDS;
           return (
             <article
               key={modeId}
-              className="overflow-hidden rounded-[10px] border-2 border-[color-mix(in_srgb,var(--mode-b)_72%,#000)] bg-card shadow-[0_5px_0_color-mix(in_srgb,var(--mode-b)_72%,#000)]"
+              className={cn(
+                'overflow-hidden rounded-[10px] border-2 border-[color-mix(in_srgb,var(--mode-b)_72%,#000)] bg-card shadow-[0_5px_0_color-mix(in_srgb,var(--mode-b)_72%,#000)]',
+                wide && 'sm:col-span-2 lg:col-span-3',
+              )}
               style={modeStyle(modeId)}
             >
               <header className="mm-mode-bg relative flex h-24 items-end overflow-hidden px-4 pb-3">
@@ -521,18 +536,26 @@ function ModeStats({ stats }: { readonly stats: NonNullable<PublicProfile['modes
                   {mode ? pick(mode.name) : readable(modeId)}
                 </h3>
               </header>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 p-4">
-                {Object.entries(values).map(([key, value]) => (
+              <dl
+                className={cn(
+                  'grid grid-cols-2 gap-x-4 gap-y-3 p-4',
+                  wide && 'sm:grid-cols-4 lg:grid-cols-6',
+                )}
+              >
+                {groups.general.map((key) => (
                   <div key={key} className="grid gap-0.5">
                     <dt className="font-pixel text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                      {stat.label(key)}
+                      {stat.label(key, modeId)}
                     </dt>
                     <dd className="tabular font-pixel text-[1.5rem] font-bold leading-none">
-                      {key.endsWith(TIME_SUFFIX) ? formatTime(value, locale) : number.format(value)}
+                      {key.endsWith(TIME_SUFFIX)
+                        ? formatTime(values[key] ?? 0, locale)
+                        : number.format(values[key] ?? 0)}
                     </dd>
                   </div>
                 ))}
               </dl>
+              <SubjectTable mode={modeId} groups={groups} values={values} />
             </article>
           );
         })}

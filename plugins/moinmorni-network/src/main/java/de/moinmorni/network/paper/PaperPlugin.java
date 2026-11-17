@@ -72,6 +72,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private LobbyJail jail;
     /** Tageszeit der Lobby (wie in echt) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyClock clock;
+    private LobbyWinter winter;
+
     /** Wartungs-Lobby (Leiste, Aushang, Sprung-Parcours, Schutz) – nur auf dem Server „wartung“. */
     private WartungLobby wartung;
     private static final String WARTUNG_SERVER = "wartung";
@@ -133,6 +135,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         features = new LobbyFeatures(this, lobby, this::langOf);
         jail = new LobbyJail(this, features, this::langOf);
         clock = new LobbyClock(this);
+        winter = new LobbyWinter(this);
         new LobbyFountain(this).start();
         features.setJail(jail::isJailed);
         // Jump and Run meldet Rekord und Läufe ans Netzwerk (Statistik „lobby“).
@@ -149,6 +152,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         getServer().getScheduler().runTask(this, this::logModeAdmins);
         jail.start();
         features.start();
+        winter.start();
         wartung = new WartungLobby(this, WARTUNG_SERVER.equals(serverName), this::langOf, this::rankRights,
                 () -> hub != null && hub.ready());
         wartung.onLobbyRequest(this::toLobby);
@@ -227,6 +231,9 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         if (clock != null) {
             clock.stop();
         }
+        if (winter != null) {
+            winter.stop();
+        }
         if (hub != null) {
             hub.stop();
         }
@@ -280,6 +287,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             case "lobby-settings" -> {
                 features.onSettings(m);
                 clock.onSettings(m);
+                winter.onSettings(m);
             }
             case "jail" -> jail.onState(m);
             case "wartung" -> wartung.onState(m);

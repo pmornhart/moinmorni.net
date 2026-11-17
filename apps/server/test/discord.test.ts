@@ -242,6 +242,21 @@ describe('Discord-Bot (nachgebautes Discord)', () => {
         VIEW,
     ).toBe(VIEW);
     expect(channelByName('Dorfplatz')).toMatchObject({ type: 2 });
+    // Offene Kanäle: schreiben und reden nur mit verbundenem Minecraft-Konto (oder Team); Info-Kanäle nur lesen.
+    const SEND = 1n << 11n;
+    const SPEAK = 1n << 21n;
+    const rule = (channel: string, role: string | undefined) =>
+      channelByName(channel)?.permission_overwrites?.find((o) => o.id === role) ?? { allow: '0', deny: '0' };
+    const linked = roleByName('✔ Verbunden')?.id;
+    const moderator = roleByName('⚔ Moderator')?.id;
+    expect(BigInt(rule('💬・chat', dc.guild.id).deny) & SEND).toBe(SEND);
+    expect(BigInt(rule('💬・chat', linked).allow) & SEND).toBe(SEND);
+    expect(BigInt(rule('💬・chat', moderator).allow) & SEND).toBe(SEND);
+    expect(BigInt(rule('📸・bilder-und-clips', linked).allow) & SEND).toBe(SEND);
+    expect(BigInt(rule('Dorfplatz', dc.guild.id).deny) & SPEAK).toBe(SPEAK);
+    expect(BigInt(rule('Dorfplatz', linked).allow) & SPEAK).toBe(SPEAK);
+    expect(BigInt(rule('📜・regeln', dc.guild.id).deny) & SEND).toBe(SEND);
+    expect(BigInt(rule('📜・regeln', linked).allow) & SEND).toBe(0n);
 
     // Nachrichten: Begrüßung mit Bild der Webseite und Adresse, Regeln aus dem Panel, Knöpfe, Spielmodi, Status.
     const welcome = JSON.stringify(messagesIn('👋・willkommen'));
