@@ -1643,7 +1643,7 @@
     },
     "servers": {
       "title": "Servers",
-      "text": "The single Minecraft servers with console, files, backups and plugins. Look here when something is stuck."
+      "text": "The single Minecraft servers with console, files, backups and plugins. Look here when something is stuck. At the top right, “Restart servers” restarts single or all servers with a countdown for the players – also on the overview."
     },
     "team": {
       "title": "Team",
@@ -2674,7 +2674,10 @@
     "team_apply_minecraft_name": "That's not a valid Minecraft name.",
     "team_apply_pending": "Your application is already with the team – you'll hear from us soon.",
     "team_position_unknown": "This position doesn't exist (any more). Reload the page.",
-    "player_protected": "Punishments only go to lower ranks: this person has the same or a higher rank than you (nobody punishes the Owner)."
+    "player_protected": "Punishments only go to lower ranks: this person has the same or a higher rank than you (nobody punishes the Owner).",
+    "restart_wartung": "The maintenance lobby doesn't restart by hand – players wait there while the lobby restarts.",
+    "restart_unknown_server": "This server isn't (or no longer) part of the network. Reload the list.",
+    "restart_nothing_running": "None of the chosen servers is running – there's nothing to restart."
   },
   "modeSettings": {
     "title": "Applies after the mode’s next restart",
@@ -2722,5 +2725,42 @@
     "where": "In chat before the name, in the tab list and above heads – on every server of the network. The proxy offers the pack to every Java player when they join (Minecraft 1.20.3 and newer); it stays when they switch servers. Whoever declines, plays Bedrock or has an older version sees symbol and colour. /badges loads it any time. The jail badge stands before messages from the cell (only the team reads them). In Discord the ranks have the same colour – from boost level 2 with the badge as role icon next to the name (Panel → Discord → Ranks).",
     "fromRoles": "Change a role’s name, symbol or colour and everyone gets the new pack right away.",
     "editRoles": "Edit roles"
+  },
+  "restartDialog": {
+    "button": "Restart servers",
+    "title": "Restart servers",
+    "text": "Choose which servers should restart. MoinMorni restarts them one after another and tells the players beforehand.",
+    "all": "All running servers",
+    "chosen": "{{count}} of {{total}} chosen",
+    "players_one": "{{count}} player on it",
+    "players_other": "{{count}} players on it",
+    "proxyHint": "Entrance to the network – everyone has to reconnect briefly",
+    "state": {
+      "running": "running",
+      "starting": "starting",
+      "sleeping": "asleep",
+      "stopped": "off"
+    },
+    "step": {
+      "waiting": "waiting",
+      "countdown": "countdown",
+      "restarting": "restarting",
+      "done": "done",
+      "failed": "stuck",
+      "skipped": "not running"
+    },
+    "countdown": "Players first see a countdown of {{seconds}} seconds (in chat and as a bar at the top) and are moved from the game modes to the lobby for a moment. You set the time under Settings → Updates.",
+    "order": "Order: first the game modes and the build server, one after another – last the lobby and the proxy together. Sleeping or switched-off servers are not woken.",
+    "proxyWarn": "With the proxy the whole network restarts briefly: all players are disconnected after the countdown and can join again in about a minute.",
+    "wartung": "The maintenance lobby never restarts with them – the lobby's players wait there while it restarts and come back on their own.",
+    "busy": "A restart is running right now. Whatever you choose now comes right after it.",
+    "confirm_one": "Restart {{count}} server",
+    "confirm_other": "Restart {{count}} servers",
+    "sending": "Starting …",
+    "started_one": "Restart running – {{count}} server is on it.",
+    "started_other": "Restart running – {{count}} servers are on it.",
+    "queued_one": "A restart was already running – {{count}} server comes right after it.",
+    "queued_other": "A restart was already running – {{count}} servers come right after it.",
+    "close": "Close"
   }
 }

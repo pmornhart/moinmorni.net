@@ -9,11 +9,13 @@ import { cn } from '~/lib/cn';
 import { MODE_STATE_TONE, useNetworkStatus } from '~/lib/status';
 import { usePick } from '~/lib/text';
 import { areaIcon } from './PanelShell';
+import { RestartButton } from './servers/RestartDialog';
 import { useCan, usePanel, useSettingsQuery } from './session';
 
 function NetworkCard(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const status = useNetworkStatus();
+  const canRestart = useCan('servers');
   if (!status.data) return <Skeleton className="h-56 rounded-[16px]" />;
   const { online, players, maxPlayers } = status.data;
   return (
@@ -36,7 +38,10 @@ function NetworkCard(): ReactElement {
           {t('overview.proxyOff')}
         </p>
       )}
-      <p className="text-xs text-muted-foreground">{t('overview.refresh')}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground">{t('overview.refresh')}</p>
+        {canRestart ? <RestartButton /> : null}
+      </div>
     </Card>
   );
 }

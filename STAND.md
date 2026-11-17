@@ -627,6 +627,24 @@
   `~/mm-cache/bilder-weihnachtstor/`). Offen: Wiesn, Ostern und Halloween hängen ihr Schild am Eingangsbogen
   (`gateSign` in `saison-kit.ts`) weiter unter den Balken – dort überlappt die Begrüßung genauso.
 
+- 17.11. abends: **Knopf „Server neu starten“** (Philip: „einen Knopf, dass ich jeden Server rebooten kann außer der
+  Wartungslobby“; Branch `claude/alle-neu-starten`): im Panel auf der Übersicht (Karte Netzwerk) und oben rechts unter
+  Server, für alle mit Bereich „Server“ (Owner, Admin). Fenster mit allen Servern des Netzwerks (Proxy, Lobby,
+  Bau-Server, jeder Modus mit Server) samt Zustand und Spielerzahl, „Alle laufenden Server“ vorausgewählt, Hinweis auf
+  den Countdown (Einstellungen → Updates), die Reihenfolge und – wenn der Proxy dabei ist – dass alle kurz neu
+  verbinden; danach Stand je Server (wartet, Countdown, startet neu, fertig, klemmt, läuft nicht). Schlafende und
+  ausgeschaltete Server sind nicht anwählbar und werden nicht geweckt. Die **Wartungs-Lobby erscheint nicht** und wird
+  auch über die API abgelehnt (`restart_wartung`). Backend `panel/restart-routes.ts` (`GET`/`POST
+  /api/panel/servers/restart`) über die geordnete Neustart-Logik (`network/restart-now.ts`, neuer Grund `manual`: eigene
+  Texte de/en „Neustart durchs Team …“ in Chat und Leiste, Modi nacheinander, Lobby zuletzt – ihre Spieler warten in der
+  Wartungs-Lobby –, Lobby + Proxy zusammen, Wartungs-Lobby nie, kein Warten auf den Hub, keine Warteschlange; läuft
+  schon eine Runde, kommt das Neue gleich danach dran). Nebenbei: ein Neustart, der zwischen zwei Nachfragen fertig
+  war, wurde nicht erkannt (wartete 3 Min.) – jetzt verrät ihn die neue Startzeit des Motors. Kein Spielbefehl
+  (`/neustart`) – das Panel genügt. Tests: 300 Server- (neu 3 in `restart-now.test.ts`, 4 in `restart-routes.test.ts`
+  gegen den echten Motor: Liste ohne Wartungs-Lobby, Ablehnung, 401/403, Neustart mit Fortschritt), 129 shared, Typen,
+  Prettier, Web-Bau. Bilder (Playwright gegen echten Server + Motor, Computer + Handy, hell/dunkel, englisch) nur im
+  Scratchpad `neustart-bilder/`. Nicht echt mit Minecraft-Servern geprüft.
+
 ## Offen
 
 - **Kleidung (17.11.):** Philip: Go für Angelkönig 0.2.1 und diesen Branch zusammen. Nicht echt geprüft: über

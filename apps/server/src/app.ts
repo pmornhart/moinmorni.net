@@ -56,6 +56,7 @@ import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { registerModeRestRoutes } from './panel/mode-rest-routes.js';
+import { registerRestartRoutes } from './panel/restart-routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
 import { ANGEL_MODE, offerAngelPack, registerAngelPackRoutes } from './angelkoenig/pack.js';
@@ -484,6 +485,19 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerBadgeRoutes(app, () => stores.roles());
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
   registerModeRestRoutes(app, auth, stores, motor, createMemberIds(motor), restarts);
+  // Panel → „Server neu starten“: alle oder einzelne Server mit Countdown, nie die Wartungs-Lobby.
+  registerRestartRoutes(app, auth, stores, {
+    motor,
+    hub: {
+      proxyOnline: () => hub.proxyOnline(),
+      playersOn: (member) => hub.presence.on(member).length,
+      everyone: () => hub.presence.all().length,
+    },
+    restartNow,
+    asleep: () => sleep.asleep(),
+    countdown: () => Number(stores.settings('updates')['restartCountdown'] ?? DEFAULT_COUNTDOWN_SECONDS),
+    log: app.log,
+  });
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor);
   teamRef.syncAll = teamAccess.syncAll;
