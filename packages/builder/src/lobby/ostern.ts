@@ -151,6 +151,9 @@ function brunnen(w: Canvas, v: View): string[] {
 
 /** Blühender Kirschbaum voller Eier auf der Wiese westlich vom Platz. */
 export const EIERBAUM = { x: -40, z: -9, height: 12, radius: 4.5 } as const;
+/** Anteil der Blätter mit Ei: am Eierbaum fast jedes, in den anderen blühenden Kirschbäumen ein paar (von unten sichtbar). */
+const EGGS_OWN = 0.7;
+const EGGS_OTHER = 0.12;
 
 function eierbaum(w: Canvas, v: View): string[] {
   const { x, z, height, radius } = EIERBAUM;
@@ -162,11 +165,21 @@ function eierbaum(w: Canvas, v: View): string[] {
   ringCells(x + HALF, z + HALF, 6)
     .filter(([px, pz]) => v.before(px, GROUND, pz) === 'grass_block' && v.now(px, BASE, pz) === 'air')
     .forEach(([px, pz], i) => w.set(px, BASE, pz, tulips[i % tulips.length] ?? 'pink_tulip'));
-  // Eier unter der Krone (unter einem Blatt, das unten frei ist)
+  // Eier unter der Krone (unter einem Blatt, das unten frei ist). `find` sucht im ganzen Dorf – im Frühling blühen
+  // dort Tausende Blätter als Kirschblüte. Vorher hing so unter fast jedem davon ein Ei (~3000, jedes ein eigenes Wesen:
+  // Server-Takt, Netz und Bildrate litten). Jetzt: der Eierbaum voll, die anderen Kirschbäume nur ein paar Eier dort,
+  // wo man sie von unten sieht (unter dem Blatt bis zum Boden nur Luft) – im Inneren der Kronen sah sie ohnehin keiner.
+  const crown = radius + 2;
+  const open = (px: number, py: number, pz: number): boolean =>
+    range(BASE + 1, py - 1).every((y) => v.now(px, y, pz) === 'air');
   const eggs = w
     .find((b) => b.startsWith('cherry_leaves'))
     .filter(([px, py, pz]) => py > BASE + 3 && v.now(px, py - 1, pz) === 'air')
-    .filter(() => rnd() < 0.7)
+    .filter(([px, py, pz]) => {
+      const own = Math.hypot(px - x, pz - z) <= crown;
+      const chance = own ? EGGS_OWN : EGGS_OTHER;
+      return rnd() < chance && (own || open(px, py, pz));
+    })
     .map(([px, py, pz], i) =>
       ei(
         'eierbaum',
