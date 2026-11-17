@@ -39,9 +39,13 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     private static final String TEAM_PREFIX = "mm";
     private static final int TEAM_NAME_MAX = 16;
 
-    /** Was der Hub über einen Spieler sagt (Rang, Sprache, Streamer-Modus). */
+    /**
+     * Was der Hub über einen Spieler sagt (Rang, Sprache, Streamer-Modus). {@code badge}: Schlüssel des Rang-Abzeichens,
+     * null = aus (siehe RankPrefix).
+     */
     private record Profile(String name, String lang, String roleId, String symbol, String colour, int position,
-                           java.util.Set<String> rights, boolean streaming, java.util.Set<String> hides) {
+                           java.util.Set<String> rights, String badge, boolean streaming,
+                           java.util.Set<String> hides) {
     }
 
     /** Name dieses Servers im Netzwerk (aus hub.json), z. B. „lobby“ oder „bau“. */
@@ -247,6 +251,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                         HubClient.str(role, "colour"),
                         role.get("position").getAsInt(),
                         rightsOf(m),
+                        HubClient.str(role, "badge"),
                         streamingOf(m),
                         streamerPartsOf(m)));
                 if (m.has("music") && m.get("music").isJsonObject()) {
@@ -688,14 +693,14 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
             return;
         }
         TextColor colour = TextColor.fromHexString(profile.colour());
-        Component prefix = profile.symbol() == null || profile.symbol().isEmpty()
-                ? Component.empty()
-                : Component.text(profile.symbol() + " ", colour);
-        // Streamer-Modus: die anderen sehen „● LIVE“ hinter dem Namen (wie in MorniCraft).
+        // Symbol – oder mit Abzeichen eine Übersetzung, die jeder Client selbst auflöst (Schild oder Symbol).
+        Component prefix = RankPrefix.of(profile.badge(), profile.symbol(), colour);
+        // Streamer-Modus: die anderen sehen „● LIVE“ hinter dem Namen (wie in MorniCraft) – Abzeichen vorn, Name,
+        // LIVE hinten.
         boolean live = hides(p, "live");
         Component suffix = live ? Component.text(LIVE_SUFFIX, net.kyori.adventure.text.format.NamedTextColor.RED)
                 : Component.empty();
-        p.playerListName(prefix.append(Component.text(p.getName(), colour)).append(suffix));
+        p.playerListName(RankPrefix.listName(prefix, p.getName(), colour).append(suffix));
 
         Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
         // Teams sortieren die Tab-Liste nach Namen: mm00owner vor mm06player; Streamer ein eigenes daneben
@@ -714,10 +719,14 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         if (colour != null) {
             team.color(net.kyori.adventure.text.format.NamedTextColor.nearestTo(colour));
         }
+        // Bukkit liefert für dasselbe Team jedes Mal ein neues Objekt – darum über den Namen vergleichen. Sonst verlässt
+        // ein Streamer beim nächsten Profil sein eigenes LIVE-Team, das dabei verschwindet (Abzeichen und LIVE weg).
         Team old = board.getEntryTeam(p.getName());
-        if (old != null && old != team && old.getName().startsWith(TEAM_PREFIX)) {
+        if (old != null && !old.getName().equals(teamName) && old.getName().startsWith(TEAM_PREFIX)) {
             leaveTeam(old, p.getName());
         }
-        team.addEntry(p.getName());
+        if (!team.hasEntry(p.getName())) {
+            team.addEntry(p.getName());
+        }
     }
 }

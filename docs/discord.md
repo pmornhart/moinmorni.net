@@ -51,9 +51,10 @@ Discord sagt, und das Panel zählt die Sekunden herunter.
 
 Was der Bot anlegt:
 
-- **Rollen** – aus der Rollen-Vorlage des Panels, in Reihenfolge und Farbe der Ränge, mit Symbol im Namen (Discord
-  zeigt Rollen-Symbole erst ab Boost-Stufe 2): ♛ Owner, ✦ Admin, ⚔ Moderator, ✚ Supporter, ⚒ Builder, ▶ Media,
-  ★ VIP – kommt eine Rolle in der Vorlage dazu, legt der nächste Abgleich sie an. Dazu 🤖 Bot, ✔ Verbunden,
+- **Rollen** – aus der Rollen-Vorlage des Panels, in Reihenfolge und Farbe der Ränge, mit Symbol im Namen:
+  ♛ Owner, ✦ Admin, ⚔ Moderator, ✚ Supporter, ⚒ Builder, ▶ Media, ★ VIP. Ab Boost-Stufe 2 bekommt jeder Rang sein
+  Rang-Abzeichen als Rollen-Symbol und heißt schlicht „Moderator“ (siehe „Ränge wie im Spiel“). Kommt eine Rolle
+  in der Vorlage dazu, legt der Bot sie von selbst an. Dazu 🤖 Bot, ✔ Verbunden,
   🔇 Stumm und ⛓ Gefängnis. Die Rechte passen zu den Rängen (Moderator: Nachrichten verwalten und Timeouts,
   Team-Bereich …). Das Recht „Administrator“ darf ein Bot nicht vergeben – das Panel erinnert daran, es der
   Owner-Rolle einmal selbst zu geben.
@@ -77,6 +78,24 @@ Was der Bot anlegt:
   Kanäle gleichen Namens übernimmt er beim ersten Mal.
 - Was du in Discord selbst umbenannt, umgefärbt oder verschoben hast, bleibt so (das Panel nennt es „so gelassen“).
 - Was er nicht selbst angelegt hat, ändert und löscht er nie. Eigene Rechte-Einträge an Kanälen bleiben stehen.
+
+### Ränge wie im Spiel
+
+Die Ränge sehen in Discord aus wie im Spiel (Panel → Discord → **Ränge** zeigt es):
+
+- **Farbe** – die Farbe der Rolle aus dem Panel.
+- **Ab Boost-Stufe 2** (Discord-Funktion „Rollen-Symbole“): das **Rang-Abzeichen als Bild** neben dem Namen – die
+  Kachel aus MorniCraft (goldener Rahmen, Ring in der Rangfarbe, dasselbe Pixel-Symbol wie auf dem Schild im Spiel,
+  108 × 108 Pixel). Das breite Schild mit Namen wäre in Discord zu klein (Rollen-Symbole sind dort etwa 20 Pixel
+  groß und quadratisch); den Namen schreibt Discord ohnehin daneben. Der Rollenname ist dann ohne Symbol.
+- **Ohne Boost-Stufe 2** bleibt das Symbol im Namen („⚔ Moderator“) – ohne Fehler; das Panel sagt, ab welcher Stufe
+  es Bilder gibt. Erreicht der Server Stufe 2 (oder verliert sie), tauscht der Bot das von selbst.
+- **Rang-Abzeichen aus** (Einstellungen → Rang-Abzeichen): auch in Discord wieder das Symbol im Namen, die Bilder,
+  die der Bot gesetzt hat, sind weg.
+- **Änderungen im Panel ziehen nach** – Name, Symbol, Farbe, Reihenfolge, neue Rollen (samt ihren Kanal-Rechten),
+  ein paar Sekunden später, ohne „Server einrichten“. Ein Rollen-Symbol, das jemand in Discord selbst gesetzt hat
+  (eigenes Bild oder Emoji), bleibt; ebenso von Hand umbenannte Rollen. Eine im Panel gelöschte Rolle bleibt in
+  Discord stehen (dort von Hand löschen).
 
 ## 5. Aussehen
 

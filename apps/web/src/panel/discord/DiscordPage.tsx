@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  Award,
   Bot,
   CircleCheck,
   CircleDashed,
@@ -33,6 +34,7 @@ import { PageHead } from '../PanelShell';
 import { Notice } from '../settings/extras/parts';
 import { AccessField } from './AccessField';
 import { AppearanceCard } from './AppearanceCard';
+import { RanksCard } from './RanksCard';
 import { SetupProgressView } from './SetupProgress';
 import { DISCORD_KEY, useDiscordStatus, type BotStatus, type SetupProgress } from './model';
 
@@ -418,7 +420,10 @@ function DiscordSetup(): ReactElement {
         <WhatItCreates />
       </div>
       {guildOk || tokenOk ? (
-        <AppearanceCard ready={tokenOk && s.connected} />
+        <>
+          <AppearanceCard ready={tokenOk && s.connected} />
+          <RanksCard ready={tokenOk && s.connected} />
+        </>
       ) : (
         <Notice tone="neutral" icon={Palette} title={t('discordLook.title')}>
           {t('discordLook.notReady')}
@@ -445,6 +450,12 @@ export function DiscordPage(): ReactElement {
             <a href="#aussehen">
               <Palette />
               {t('discordLook.title')}
+            </a>
+          </Button>
+          <Button asChild variant="secondary" size="sm">
+            <a href="#raenge">
+              <Award />
+              {t('discordRanks.title')}
             </a>
           </Button>
         </nav>

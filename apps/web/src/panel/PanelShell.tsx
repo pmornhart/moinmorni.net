@@ -1,5 +1,6 @@
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
+  Award,
   Bird,
   Castle,
   ClipboardList,
@@ -58,6 +59,7 @@ import { TourProvider, useTour } from './tour/Tour';
 
 /** The catalog names an icon per settings area; these are the ones it uses (others get a cog). */
 const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
+  Award,
   Globe,
   Globe2,
   MessagesSquare,
