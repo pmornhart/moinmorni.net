@@ -331,7 +331,17 @@ Lobby-Server (bei jeder Änderung neu).
   Hasen. Die Eier sind die runden Kugeln aus dem Lobby-Paket (`schmuck.ts`, neue Farben rosa, grün, hellblau, lila,
   orange), in die Höhe gezogen. Biom „Kirschblütenhain“ (helles Grün) und ab und zu eine Blüte in der Luft
   (`LobbyWinter.java`).
-- **Saisons mit Bauten** (Winter, Wiesn, Ostern): jede setzt Blöcke über den Bauplan und merkt sich je Stelle den alten Block
+- **Halloween** (Saison „Halloween“, `lobby/halloween.ts`): **Riesenkürbis statt Maibaum** (Herzstück: runder
+  Kürbis aus Beton und Terrakotta, gut zehn Blöcke hoch, geschnitztes Gesicht nach Süden und Norden, dahinter
+  Pilzlicht – nachts leuchtet das Gesicht –, Stiel mit Blatt; der Maibaum kommt mit jeder anderen Saison genau zurück,
+  Dorfleute gehen ein Stück zur Seite), **Kürbisfeld** auf der Westwiese (Reihen auf grober Erde, Kürbisse und
+  Fratzen, zwei Vogelscheuchen mit Hut), **Schaurige Ruine** neben der Ankunft (zerfallene Kapelle aus bemoostem
+  Stein, Turmstumpf, Seelenlaternen, Seelenfeuer, Grabsteine, Gespenster aus Laken, Tafel „Alte Kapelle“),
+  **Gruselmarkt** am Eingang (Kürbissuppe, Süßes oder Saures), Eingangsbogen mit leuchtenden Kürbissen und Lichtern in
+  Orange, Lila und Grün, Lichter von Stand zu Stand; dazu wie bisher Kürbisse an Türen und Ständen, Spinnweben,
+  Wimpel, Grabsteine an der Dorfstraße. Biom „Blasser Garten“ (grauer Himmel, Nebel, fahles Gras) und Asche in der
+  Luft (`LobbyWinter.java`).
+- **Saisons mit Bauten** (Winter, Wiesn, Ostern, Halloween): jede setzt Blöcke über den Bauplan und merkt sich je Stelle den alten Block
   (`lobby/saison-plan.ts`). Beim Wechsel räumt erst jede andere Saison ihre Blöcke weg (nur, wenn ihr Merker liegt),
   dann wird gespeichert, die Merker kommen weg, wieder gespeichert, dann setzt die neue Saison Merker, Blöcke und Deko
   (`seasonStepsFor` in `datapack.ts`) – auch nach einem Absturz mitten im Wechsel passt der Merker zu den Blöcken.

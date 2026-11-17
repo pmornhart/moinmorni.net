@@ -17,6 +17,7 @@ import { seasonPlan, type Season } from '../src/lobby/season.js';
 import { EINGANG } from '../src/lobby/weihnachtsmarkt.js';
 import { INNER, kindOf } from '../src/lobby/winter-base.js';
 import { EIERBAUM, OSTERBRUNNEN, OSTERHASE } from '../src/lobby/ostern.js';
+import { KUERBISFELD, RIESENKUERBIS, RUINE } from '../src/lobby/halloween.js';
 import { KUGELN } from '../src/schmuck.js';
 import { KARUSSELL, RIESENRAD, riesenradArea } from '../src/lobby/wiesn.js';
 
@@ -70,6 +71,11 @@ const SEAT = /scale:\[0\.6f?,0\.1f?,/;
  * https://regex101.com/?flavor=javascript&regex=%5E(cherry%7Cflowering_azalea)_leaves&testString=cherry_leaves%5Bpersistent%3Dtrue%5D
  */
 const BLOSSOM = /^(cherry|flowering_azalea)_leaves/;
+/**
+ * Kürbis auf dem Feld: "pumpkin", "carved_pumpkin[facing=east]", "jack_o_lantern[facing=east]"; passt nicht: "hay_block".
+ * https://regex101.com/?flavor=javascript&regex=pumpkin%7Cjack_o_lantern&testString=carved_pumpkin%5Bfacing%3Deast%5D
+ */
+const PUMPKIN = /pumpkin|jack_o_lantern/;
 /** Blöcke, durch die man gehen kann (oder die man nicht als Hindernis sieht). */
 const PASSABLE_BLOCKS: ReadonlySet<string> = new Set(['air', 'light', 'snow']);
 const passable = (block: string): boolean =>
@@ -340,6 +346,63 @@ describe('Ostern', () => {
       [...LAUNCHPADS, JUMP_AND_RUN.start].forEach((p) => {
         expect(Math.hypot(p.x - EIERBAUM.x, p.z - EIERBAUM.z)).toBeGreaterThan(12);
         expect(Math.hypot(p.x - OSTERHASE.x, p.z - OSTERHASE.z)).toBeGreaterThan(12);
+      });
+    },
+    SLOW,
+  );
+});
+
+describe('Halloween', () => {
+  sharedRules('halloween', ['feld', 'ruine', 'geist', 'eingang', 'bude', 'kette'], false);
+  const plan = seasonPlan('halloween', canvas);
+  const at = (x: number, y: number, z: number): string | undefined => plan?.blocks.get(x, y, z);
+
+  it(
+    'Riesenkürbis statt Maibaum: mit leuchtendem Gesicht nach Süden und Norden, Stiel oben',
+    () => {
+      const { x, z } = CHRISTBAUM;
+      const shell = (plan?.blocks.find(() => true) ?? []).filter(([, , , b]) => b.startsWith('orange_'));
+      expect(shell.length).toBeGreaterThan(180);
+      shell.forEach(([sx, , sz]) =>
+        expect(Math.hypot(sx - x, sz - z)).toBeLessThanOrEqual(RIESENKUERBIS.r + 0.5),
+      );
+      expect(at(x, BASE, z)).toBe('shroomlight');
+      // Augen offen, dahinter leuchtet es – vorn und hinten
+      [1, -1].forEach((side) =>
+        expect(range(1, 6).some((d) => at(x - 2 * side, BASE + 6, z + side * d) === 'shroomlight')).toBe(
+          true,
+        ),
+      );
+      expect(plan?.blocks.find((b) => b === 'dark_oak_log').length).toBeGreaterThanOrEqual(3);
+      expect(plan?.moves[0]).toContain('tag=mm_walker');
+    },
+    SLOW,
+  );
+
+  it(
+    'Kürbisfeld und Ruine stehen auf freier Wiese, weg von Launchpads und Jump and Run',
+    () => {
+      const { x1, x2, z1, z2 } = KUERBISFELD;
+      const pumpkins = (plan?.blocks.find((b) => PUMPKIN.test(b)) ?? []).filter(
+        ([x, , z]) => x >= x1 && x <= x2 && z >= z1 && z <= z2,
+      );
+      expect(pumpkins.length).toBeGreaterThan(40);
+      // auf dem Feld liegen sie auf grober Erde (die Köpfe der Vogelscheuchen sitzen höher)
+      pumpkins
+        .filter(([, y]) => y === BASE)
+        .forEach(([x, , z]) => expect(at(x, GROUND, z) ?? canvas.get(x, GROUND, z)).not.toBe('grass_block'));
+      const ruin = pairs(range(RUINE.x1, RUINE.x2), range(RUINE.z1, RUINE.z2)).filter(([x, z]) =>
+        range(BASE, BASE + 10).some((y) => {
+          const b = canvas.get(x, y, z) ?? 'air';
+          return b !== 'air' && !passable(b);
+        }),
+      );
+      expect(ruin).toEqual([]);
+      [...LAUNCHPADS, JUMP_AND_RUN.start].forEach((p) => {
+        expect(Math.hypot(p.x - (x1 + x2) / 2, p.z - (z1 + z2) / 2)).toBeGreaterThan(14);
+        expect(Math.hypot(p.x - (RUINE.x1 + RUINE.x2) / 2, p.z - (RUINE.z1 + RUINE.z2) / 2)).toBeGreaterThan(
+          14,
+        );
       });
     },
     SLOW,
