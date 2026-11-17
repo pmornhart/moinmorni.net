@@ -181,13 +181,23 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
   },
   {
     // Rang-Abzeichen (packages/shared/src/badges.ts): das Paket noch einmal anbieten; an/aus/Pflicht für das Team kommt
-    // aus dem Einstellungs-Katalog (`/abzeichen an|aus`, `/abzeichen pflicht an|aus`).
+    // aus dem Einstellungs-Katalog (`/abzeichen an|aus`, Pflicht: `/netzwerk paket an|aus`).
     name: 'abzeichen',
     aliases: ['badges'],
     usage: { de: '/abzeichen', en: '/badges' },
     topic: 'account',
     where: 'hub',
     lines: [line('abzeichen', '/abzeichen', '/badges')],
+  },
+  {
+    // Netzwerk-Paket (Möbel, Brunnen, Fische, Kleidung, Musik): noch einmal anbieten, z. B. nach einem Ablehnen. Pflicht
+    // an/aus für das Team kommt aus dem Einstellungs-Katalog (`/netzwerk paket an|aus`).
+    name: 'paket',
+    aliases: ['pack', 'ressourcenpaket'],
+    usage: { de: '/paket', en: '/pack' },
+    topic: 'account',
+    where: 'hub',
+    lines: [line('paket', '/paket', '/pack')],
   },
   {
     name: 'discord',

@@ -2,25 +2,26 @@
 import type { Canvas } from './canvas.js';
 import { zipOf, type ZipEntry } from './png.js';
 import { airItemDefinition, TRACHT_NS, trachtModels, trachtTextures } from './trachten.js';
-import { BRUNNEN_ERSATZ, brunnenItemCases, brunnenModels } from './brunnen.js';
+import { brunnenItemCases, brunnenModels } from './brunnen.js';
 import { schmuckModels } from './schmuck.js';
 import { dorfbrunnenModels } from './dorfbrunnen.js';
 import { STEP, type Facing } from './shapes.js';
 
 /**
- * Möbel der Lobby als eigene 3D-Modelle (Ressourcenpaket).
+ * Möbel der Lobby als eigene 3D-Modelle (im Netzwerk-Paket).
  *
- * Statt frei schwebender Anzeige-Objekte (die Bedrock über Geyser nicht zeigt) bekommen ein paar Holzblöcke, die es in
- * der Lobby **nur als Möbel** gibt, eine neue Form:
+ * Die Bauten setzen Platzhalter-Blöcke, die es in der Lobby **nur als Möbel** gibt:
  *
  * - Mangrove-Stufen → Wirtshausstuhl mit Herz in der Lehne (Richtung = Lehne); gerade Stufe an der Wand → Eckbank
- *   mit Vertäfelung (deckt die Wandfläche ab, die Minecraft hinter einer Stufe ausblendet)
+ *   mit Vertäfelung
  * - Mangrove-Halbstufe oben → Wirtshaustisch, unten → Hocker
  * - Birken-Halbstufe oben → Biertisch, unten → Bierbank (beide längs der x-Achse, wie im Biergarten)
  * - Braune Kerzen (1–4) → 1–4 Steinkrüge auf dem Tisch
  *
- * Wer das Paket nicht lädt (oder auf Bedrock spielt), sieht die normalen Blöcke – Stufen, Halbstufen, Kerzen – wie
- * vorher, nur in Mangrove/Birke. Die Blöcke bleiben echte Blöcke: man läuft nicht hindurch, Figuren sitzen wie bisher.
+ * Beim Bauen der Lobby (`lobby/moebel.ts`) wird jeder Platzhalter zu einer Item-Anzeige mit eigenem Modell und einem
+ * unsichtbaren Block für die Kollision. Wer das Paket nicht lädt, sieht in der Anzeige die gewohnte Stufe bzw.
+ * Halbstufe (die Krüge fehlen dann). Kein normaler Block bekommt ein anderes Aussehen – das Paket gilt auf allen
+ * Servern, auch dort, wo man Mangrove-Treppen baut.
  *
  * Die Modelle nutzen nur Texturen, die jedes Minecraft schon mitbringt (Holz, Ton, Eisen); im Paket stehen nur unsere
  * eigenen Formen – keine Dateien von Mojang.
@@ -86,9 +87,17 @@ function uvOf(b: Box, face: Face): [number, number, number, number] {
   return [u1 + du, v1 + dv, u2 + du, v2 + dv];
 }
 
+/**
+ * Flächen am Rand des Blocks, die nie zu sehen sind und mit dem Nachbarn flimmern würden: die Unterseite auf dem Boden
+ * und die Rückseite der Eckbank an der Wand (Lehne im Norden, z = 0).
+ */
+function hiddenAtEdge(b: Box, face: Face): boolean {
+  return (face === 'down' && b.from[1] === 0) || (face === 'north' && b.from[2] === 0);
+}
+
 function element(b: Box): Record<string, unknown> {
-  // Eine flache Fläche (Boden) hat nur eine Seite: oben.
-  const faces = b.from[1] === b.to[1] ? (['up'] as const) : FACES;
+  // Eine flache Fläche hat nur eine Seite: oben.
+  const faces = (b.from[1] === b.to[1] ? (['up'] as const) : FACES).filter((f) => !hiddenAtEdge(b, f));
   return {
     from: b.from,
     to: b.to,
@@ -96,13 +105,6 @@ function element(b: Box): Record<string, unknown> {
     faces: Object.fromEntries(faces.map((f) => [f, { uv: uvOf(b, f), texture: `#${b.tex}` }])),
   };
 }
-
-/**
- * Stufen und untere Halbstufen haben unten eine volle Fläche – Minecraft zeichnet darum die Oberseite des Bodens
- * darunter nicht (man sähe durch den Boden). Das Modell zeichnet sie selbst: Fichtendielen in den Häusern, Kies im
- * Biergarten (die Lobby legt genau diesen Boden unter die Möbel, ein Test prüft das).
- */
-const boden = (tex: 'dielen' | 'kies'): Box => box([0, 0, 0], [16, 0, 16], tex);
 
 /** Block-Modell im Minecraft-Format; nur die Texturen, die es wirklich benutzt. */
 export function modelJson(boxes: readonly Box[]): Record<string, unknown> {
@@ -167,7 +169,6 @@ const LEAN: Box['rotation'] = { angle: -22.5, axis: 'x', origin: [8, 8, 2.25] };
 
 /** Stuhl, Lehne im Norden (Drehung je Richtung über den Blockzustand). */
 export const STUHL: readonly Box[] = [
-  boden('dielen'),
   box([2, 6.5, 2], [14, 8, 14], 'brett'),
   box([3, 0, 3], [5, 6.5, 5], 'dunkel'),
   box([11, 0, 3], [13, 6.5, 5], 'dunkel'),
@@ -181,7 +182,6 @@ export const STUHL: readonly Box[] = [
  * Die Vertäfelung füllt die ganze Rückseite – genau die Wandfläche, die Minecraft hinter der Stufe nicht zeichnet.
  */
 export const ECKBANK: readonly Box[] = [
-  boden('dielen'),
   box([0, 0, 0], [16, 16, 1], 'brett'),
   box([0, 15, 0], [16, 16, 2.5], 'dunkel'),
   box([0, 8, 1], [16, 14, 2], 'holz'),
@@ -201,7 +201,6 @@ export const WIRTSTISCH: readonly Box[] = [
 
 /** Hocker: Sitz mit abgeschrägten Ecken, vier Beine. */
 export const HOCKER: readonly Box[] = [
-  boden('dielen'),
   box([4, 6.5, 3], [12, 8, 13], 'brett'),
   box([3, 6.5, 4], [13, 8, 12], 'brett'),
   box([4.5, 0, 4.5], [6, 6.5, 6], 'dunkel'),
@@ -212,7 +211,6 @@ export const HOCKER: readonly Box[] = [
 
 /** Bierbank längs x: schmale Sitzfläche, Klappbein aus Metall in der Mitte jedes Blocks. */
 export const BIERBANK: readonly Box[] = [
-  boden('kies'),
   box([0, 6.5, 5], [16, 8, 11], 'holz'),
   box([0, 5.5, 5.5], [16, 6.5, 6.5], 'dunkel'),
   box([0, 5.5, 9.5], [16, 6.5, 10.5], 'dunkel'),
@@ -284,9 +282,9 @@ const NS = 'moinmorni';
 const model = (name: string): string => `${NS}:block/moebel/${name}`;
 
 /**
- * Feste Kennung des Pakets (server.properties `resource-pack-id`): Der Proxy entfernt genau dieses Paket wieder, wenn
- * jemand die Lobby verlässt – sonst wären z. B. in MorniCraft Mangrove-Stufen plötzlich Stühle. Gleicher Wert in
- * `VelocityPlugin.java`.
+ * Feste Kennung des früheren Möbel-Pakets der Lobby (server.properties `resource-pack-id`). Heute steckt alles im
+ * Netzwerk-Paket (`netzpaket.ts`); MoinMorni räumt die alte Kennung aus der server.properties, und der Proxy lässt ein
+ * Paket mit dieser Kennung nicht mehr durch.
  */
 export const MOEBEL_PACK_ID = '6d6f696e-6d6f-726e-692d-6d6f6562656c';
 
@@ -296,9 +294,8 @@ export const MOEBEL_BODEN = { haus: 'spruce_planks', biergarten: 'gravel' } as c
 /** Blöcke, die in der Lobby Möbel sind – zum Bauen (Richtung des Stuhls = wo die Lehne ist). */
 export const MOEBEL = {
   /**
-   * Freistehender Stuhl; `lehne` = Himmelsrichtung oder ein Platzhalter der Häuser ({F}, {B} …). Als Ecken-Stufe hat
-   * er keine volle Seitenfläche – Nachbarn bleiben sichtbar. Steht er mit der Lehne an einer Wand, macht
-   * `fitFurniture` eine Eckbank daraus.
+   * Freistehender Stuhl; `lehne` = Himmelsrichtung oder ein Platzhalter der Häuser ({F}, {B} …). Steht er mit der
+   * Lehne an einer Wand, macht `fitFurniture` eine Eckbank daraus.
    */
   stuhl: (lehne: string): string => `mangrove_stairs[facing=${lehne},half=bottom,shape=outer_right]`,
   /** Eckbank-Stück mit Vertäfelung, Rückwand an `lehne`. */
@@ -311,66 +308,164 @@ export const MOEBEL = {
 } as const;
 
 const FACINGS = ['north', 'east', 'south', 'west'] as const;
-const HALVES = ['bottom', 'top'] as const;
-const SHAPES = ['straight', 'inner_left', 'inner_right', 'outer_left', 'outer_right'] as const;
 const QUARTER = 90;
 
 /**
- * Blockzustände der Möbel-Blöcke. Untere Stufen gerade oder als Innenecke sind Eckbank-Stücke (Innenecken entstehen,
- * wenn Minecraft die Form einer Bank an der Ecke neu berechnet), Außenecken und obere Stufen sind Stühle; doppelte
- * Halbstufen bleiben normales Holz.
+ * Ein Möbelstück, wie es in der Welt steht: Die Bauten setzen weiter die Platzhalter-Blöcke aus `MOEBEL` (so prüfen
+ * Tests und die Bauplan-Prüfung Sitzhöhe und Wege wie bisher). Beim Bauen der Lobby wird jedes Stück zu einer
+ * Item-Anzeige mit eigenem Modell (`custom_model_data`), darunter steht ein unsichtbarer Block für die Kollision.
+ *
+ * Warum nicht mehr über Blockzustände: Das Paket gilt seit „ein Paket fürs ganze Netzwerk“ auf jedem Server. Ein
+ * neues Aussehen für Mangrove-Treppen wäre dann auch in MorniSMP und MorniCraft eins – dort baut man sie ganz normal.
+ * Eine Anzeige mit unserem Namen gibt es dagegen nur in der Lobby.
  */
-export function furnitureBlockstates(): Readonly<Record<string, unknown>> {
-  const chair = Object.fromEntries(
-    FACINGS.flatMap((facing, i) =>
-      HALVES.flatMap((half) =>
-        SHAPES.map((shape) => [
-          `facing=${facing},half=${half},shape=${shape}`,
-          {
-            model: model(half === 'bottom' && !shape.startsWith('outer') ? 'eckbank' : 'stuhl'),
-            ...(i ? { y: i * QUARTER } : {}),
-          },
-        ]),
-      ),
-    ),
+export interface MoebelStueck {
+  /** Name des Modells (`FURNITURE_MODELS`). */
+  readonly name: string;
+  /** Minecraft-Gegenstand der Anzeige: ohne Paket zeigt er sein gewohntes Aussehen (Luft = unsichtbar). */
+  readonly item: string;
+  /** Drehung wie im früheren Blockzustand (Grad im Uhrzeigersinn von oben, Lehne vorher im Norden). */
+  readonly turn: number;
+  /** Block, der stattdessen in der Welt steht: `barrier` (Kollision wie ein Möbelstück) oder `air`. */
+  readonly block: 'barrier' | 'air';
+  /** Eigener Text für `custom_model_data` (sonst `moinmorni:moebel/<name>`). */
+  readonly key?: string;
+}
+
+// Blockzustand → Teile: "mangrove_stairs[facing=east,half=bottom,shape=straight]" → mangrove_stairs, east, bottom,
+// straight; "birch_slab[type=top]" → type=top; "brown_candle[candles=3,lit=false]" → 3.
+// https://regex101.com/?flavor=javascript&regex=%5E(%5Ba-z_%5D%2B)(%3F%3A%5C%5B(.*)%5C%5D)%3F%24&testString=mangrove_stairs%5Bfacing%3Deast%2Chalf%3Dbottom%2Cshape%3Dstraight%5D
+const BLOCK_STATE = /^([a-z_]+)(?:\[(.*)\])?$/;
+
+function stateOf(block: string): { readonly id: string; readonly props: Readonly<Record<string, string>> } {
+  const m = BLOCK_STATE.exec(block);
+  const id = m?.[1] ?? '';
+  const props = Object.fromEntries(
+    (m?.[2] ?? '')
+      .split(',')
+      .filter(Boolean)
+      .map((kv) => kv.split('=') as [string, string]),
   );
-  const candles = Object.fromEntries(
-    KRUEGE.flatMap((_, i) =>
-      [false, true].map((lit) => [`candles=${i + 1},lit=${lit}`, { model: model(`krug_${i + 1}`) }]),
-    ),
+  return { id, props };
+}
+
+/** Ist dieser Block ein Möbelstück der Lobby – und welches? (Doppelte Halbstufen bleiben normales Holz.) */
+export function moebelOf(block: string): MoebelStueck | null {
+  const { id, props } = stateOf(block);
+  if (id === 'mangrove_stairs') {
+    const turn =
+      Math.max(0, FACINGS.indexOf((props['facing'] ?? 'north') as (typeof FACINGS)[number])) * QUARTER;
+    const bench = props['half'] !== 'top' && !(props['shape'] ?? 'straight').startsWith('outer');
+    return { name: bench ? 'eckbank' : 'stuhl', item: 'mangrove_stairs', turn, block: 'barrier' };
+  }
+  if (id === 'mangrove_slab' || id === 'birch_slab') {
+    const type = props['type'] ?? 'bottom';
+    if (type === 'double') return null;
+    const names =
+      id === 'mangrove_slab'
+        ? { top: 'wirtstisch', bottom: 'hocker' }
+        : { top: 'biertisch', bottom: 'bierbank' };
+    return { name: type === 'top' ? names.top : names.bottom, item: id, turn: 0, block: 'barrier' };
+  }
+  if (id === 'brown_candle') {
+    const n = Math.min(KRUEGE.length, Math.max(1, Number(props['candles'] ?? '1')));
+    // Krüge ohne Paket gar nicht zeigen (eine flache Kerze als Bild sähe seltsam aus); auf dem Tisch ist dann frei.
+    return { name: `krug_${n}`, item: 'air', turn: 0, block: 'air' };
+  }
+  return null;
+}
+
+/** `custom_model_data`-Text eines Möbelstücks (`moinmorni:moebel/stuhl`). */
+export const moebelKey = (name: string): string => `${NS}:moebel/${name}`;
+
+/**
+ * Item-Anzeigen zeichnet Minecraft um 180° gedreht (siehe `ITEM_DISPLAY_TURN` in brunnen.ts); die Blickrichtung dreht
+ * im Uhrzeigersinn. Ein Stück mit Lehne im Osten (früher `y: 90`) bekommt also 270°.
+ */
+const DISPLAY_TURN = 180;
+const FULL_TURN = 360;
+
+/** Gegenstand der Anzeige als SNBT (mit unserem Namen in `custom_model_data`). */
+export function moebelItem(stueck: Pick<MoebelStueck, 'name' | 'item' | 'key'>): string {
+  const model = stueck.item === 'air' ? `'minecraft:item_model':'minecraft:air',` : '';
+  const id = stueck.item === 'air' ? 'paper' : stueck.item;
+  return `{id:'minecraft:${id}',count:1,components:{${model}'minecraft:custom_model_data':{strings:['${stueck.key ?? moebelKey(stueck.name)}']}}}`;
+}
+
+/**
+ * Befehl für die Anzeige eines Möbelstücks im Block (x, y, z) – Mitte des Blocks, Modell wie früher der Block.
+ * `tags` = SNBT-Liste der Tags (mit Lobby- und Bau-Kennung). Erscheint nur einmal an derselben Stelle (Neuversuch).
+ */
+export function moebelCommand(x: number, y: number, z: number, stueck: MoebelStueck, tags: string): string {
+  const yaw = (stueck.turn + DISPLAY_TURN) % FULL_TURN;
+  const at = `${x + 0.5} ${y + 0.5} ${z + 0.5}`;
+  return (
+    `execute positioned ${at} unless entity @e[type=item_display,tag=mm_moebel,distance=..0.1] run ` +
+    `summon item_display ~ ~ ~ {"Bukkit.invisible":1b,Tags:[${tags}],item:${moebelItem(stueck)},item_display:'none',` +
+    `Rotation:[${yaw}f,0f],view_range:0.6f}`
   );
+}
+
+/** Leeres Block-Modell (nur Bruch-Partikel): für Ersatz-Teile, die das Paket ausblendet. */
+const EMPTY_MODEL = { textures: { particle: 'minecraft:block/quartz_block_side' }, elements: [] };
+/** `custom_model_data`-Text: „mit Paket unsichtbar“ (Ersatz-Teile der Brunnen). */
+export const VERSTECKT_KEY = `${NS}:versteckt`;
+
+/** Gewohntes Aussehen eines Gegenstands (genau wie in Minecraft selbst, `assets/minecraft/items/<id>.json`). */
+const VANILLA_ITEM: Readonly<Record<string, string>> = {
+  mangrove_stairs: 'minecraft:block/mangrove_stairs',
+  mangrove_slab: 'minecraft:block/mangrove_slab',
+  birch_slab: 'minecraft:block/birch_slab',
+  tuff_brick_wall: 'minecraft:block/tuff_brick_wall_inventory',
+  end_rod: 'minecraft:block/end_rod',
+};
+
+/** Ein Gegenstand mit Auswahl: unsere Namen → eigenes Modell, alles andere sieht aus wie immer. */
+export function selectItem(
+  vanillaModel: string,
+  cases: Readonly<Record<string, string>>,
+): Record<string, unknown> {
   return {
-    mangrove_stairs: { variants: chair },
-    mangrove_slab: {
-      variants: {
-        'type=top': { model: model('wirtstisch') },
-        'type=bottom': { model: model('hocker') },
-        'type=double': { model: 'minecraft:block/mangrove_planks' },
-      },
+    model: {
+      type: 'minecraft:select',
+      property: 'minecraft:custom_model_data',
+      index: 0,
+      cases: Object.entries(cases).map(([when, m]) => ({
+        when,
+        model: { type: 'minecraft:model', model: m },
+      })),
+      fallback: { type: 'minecraft:model', model: vanillaModel },
     },
-    birch_slab: {
-      variants: {
-        'type=top': { model: model('biertisch') },
-        'type=bottom': { model: model('bierbank') },
-        'type=double': { model: 'minecraft:block/birch_planks' },
-      },
-    },
-    brown_candle: { variants: candles },
   };
 }
 
-/** Leeres Block-Modell (nur Bruch-Partikel): für Blöcke, die das Paket ausblendet. */
-const EMPTY_MODEL = { textures: { particle: 'minecraft:block/quartz_block_side' }, elements: [] };
-
-/**
- * Ersatz-Blöcke des Prunkbrunnens (Tuffziegel-Mauer, Endstab) – mit Paket unsichtbar, dort steht das Modell. Beide
- * haben keine volle Seitenfläche: Minecraft lässt die Flächen daneben stehen, es entstehen keine Löcher.
- */
-function hiddenBlockstates(): Readonly<Record<string, unknown>> {
-  const hidden = { multipart: [{ apply: { model: `${NS}:block/leer` } }] };
-  return Object.fromEntries(
-    Object.values(BRUNNEN_ERSATZ).map((block) => [block.split('[')[0] ?? block, hidden]),
-  );
+/** Gegenstände der Möbel und der Brunnen-Ersatzteile (Dateiname → Inhalt von `assets/minecraft/items/<id>.json`). */
+export function furnitureItems(): Readonly<Record<string, Record<string, unknown>>> {
+  const of = (item: string): Record<string, string> =>
+    Object.fromEntries(
+      [
+        ...FACINGS.flatMap((facing) =>
+          ['straight', 'outer_right'].map(
+            (shape) => `mangrove_stairs[facing=${facing},half=bottom,shape=${shape}]`,
+          ),
+        ),
+        MOEBEL.wirtstisch,
+        MOEBEL.hocker,
+        MOEBEL.bierbank,
+        MOEBEL.biertisch,
+      ]
+        .map(moebelOf)
+        .filter((m): m is MoebelStueck => m !== null && m.item === item)
+        .map((m) => [moebelKey(m.name), model(m.name)]),
+    );
+  const hidden = { [VERSTECKT_KEY]: `${NS}:block/leer` };
+  return {
+    mangrove_stairs: selectItem(VANILLA_ITEM['mangrove_stairs'] ?? '', of('mangrove_stairs')),
+    mangrove_slab: selectItem(VANILLA_ITEM['mangrove_slab'] ?? '', of('mangrove_slab')),
+    birch_slab: selectItem(VANILLA_ITEM['birch_slab'] ?? '', of('birch_slab')),
+    tuff_brick_wall: selectItem(VANILLA_ITEM['tuff_brick_wall'] ?? '', hidden),
+    end_rod: selectItem(VANILLA_ITEM['end_rod'] ?? '', hidden),
+  };
 }
 
 /** Alle Brunnen-Modelle: Prunkbrunnen (Schlosshof, Rotunde) und Dorfbrunnen (Gasse, Oberdorf). */
@@ -378,7 +473,10 @@ function fountainModels(): Record<string, Record<string, unknown>> {
   return { ...brunnenModels(), ...dorfbrunnenModels() };
 }
 
-/** `items/air.json`: erster Text „brunnen“ → Teil eines Brunnens, sonst wie bisher (Trachten). */
+/**
+ * `items/air.json`: erster Text „brunnen“ → Teil eines Brunnens, ein Steinkrug (`moinmorni:moebel/krug_<n>`), sonst
+ * wie bisher (Trachten).
+ */
 function airWithFountain(): Record<string, unknown> {
   const trachten = airItemDefinition() as { readonly model: unknown };
   return {
@@ -386,7 +484,13 @@ function airWithFountain(): Record<string, unknown> {
       type: 'minecraft:select',
       property: 'minecraft:custom_model_data',
       index: 0,
-      cases: [{ when: 'brunnen', model: brunnenItemCases(NS, Object.keys(fountainModels())) }],
+      cases: [
+        { when: 'brunnen', model: brunnenItemCases(NS, Object.keys(fountainModels())) },
+        ...KRUEGE.map((_, i) => ({
+          when: moebelKey(`krug_${i + 1}`),
+          model: { type: 'minecraft:model', model: model(`krug_${i + 1}`) },
+        })),
+      ],
       fallback: trachten.model,
     },
   };
@@ -397,42 +501,51 @@ const PACK_FORMAT = 15;
 const PACK_FORMAT_MAX = 999;
 const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
 
-/**
- * Das Ressourcenpaket der Lobby als ZIP – gleiche Möbel = gleiche Bytes = gleiche SHA-1. `extra` hängt weitere Dateien
- * an (die Lobbymusik, `musik/paket.ts`).
- */
-export function furniturePack(extra: readonly ZipEntry[] = []): Buffer {
-  const meta = {
-    pack: {
-      description: 'MoinMorni – Möbel, Trachten, Brunnen und Christbaumschmuck der Lobby',
-      pack_format: PACK_FORMAT,
-      supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
-      min_format: PACK_FORMAT,
-      max_format: PACK_FORMAT_MAX,
-    },
+/** `pack.mcmeta` mit dieser Beschreibung (gleicher Formatbereich wie alle unsere Pakete). */
+export function packMeta(description: string): ZipEntry {
+  return {
+    name: 'pack.mcmeta',
+    data: json({
+      pack: {
+        description,
+        pack_format: PACK_FORMAT,
+        supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
+        min_format: PACK_FORMAT,
+        max_format: PACK_FORMAT_MAX,
+      },
+    }),
   };
+}
+
+/**
+ * Dateien der Lobby fürs Netzwerk-Paket: Möbel, Trachten, Brunnen, Christbaumkugeln und Ostereier – ohne einen
+ * einzigen Blockzustand. Alles hängt an Gegenständen mit unserem Namen in `custom_model_data` (bzw. am leeren
+ * Luft-Modell); jeder normale Block und jeder normale Gegenstand sieht mit dem Paket genauso aus wie ohne.
+ */
+export function lobbyPackEntries(): ZipEntry[] {
   const schmuck = schmuckModels(NS);
-  const states = { ...furnitureBlockstates(), ...hiddenBlockstates(), ...schmuck.blockstates };
-  return zipOf([
-    { name: 'pack.mcmeta', data: json(meta) },
-    ...Object.keys(states)
+  const items: Readonly<Record<string, Record<string, unknown>>> = {
+    ...furnitureItems(),
+    ...schmuck.items,
+    air: airWithFountain(),
+  };
+  return [
+    ...Object.keys(items)
       .sort()
-      .map((block) => ({ name: `assets/minecraft/blockstates/${block}.json`, data: json(states[block]) })),
+      .map((item) => ({ name: `assets/minecraft/items/${item}.json`, data: json(items[item]) })),
     ...Object.keys(FURNITURE_MODELS)
       .sort()
       .map((name) => ({
         name: `assets/${NS}/models/block/moebel/${name}.json`,
         data: json(modelJson(FURNITURE_MODELS[name] ?? [])),
       })),
-    // Christbaumkugeln (Winter): runde Form für Trockenbeton, siehe schmuck.ts
+    // Christbaumkugeln (Winter) und Ostereier, siehe schmuck.ts
     ...Object.keys(schmuck.models)
       .sort()
       .map((name) => ({
         name: `assets/${NS}/models/block/schmuck/${name}.json`,
         data: json(schmuck.models[name]),
       })),
-    // Trachten und Prunkbrunnen über das (sonst leere) Luft-Modell, siehe trachten.ts und brunnen.ts
-    { name: 'assets/minecraft/items/air.json', data: json(airWithFountain()) },
     { name: `assets/${NS}/models/block/leer.json`, data: json(EMPTY_MODEL) },
     ...Object.entries(fountainModels())
       .sort(([a], [b]) => a.localeCompare(b))
@@ -443,6 +556,14 @@ export function furniturePack(extra: readonly ZipEntry[] = []): Buffer {
     ...Object.entries(trachtTextures())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([name, png]) => ({ name: `assets/${TRACHT_NS}/textures/item/tracht/${name}.png`, data: png })),
+  ];
+}
+
+/** Nur die Lobby-Teile als eigenes ZIP (Tests, Vorschau). `extra` hängt weitere Dateien an. */
+export function furniturePack(extra: readonly ZipEntry[] = []): Buffer {
+  return zipOf([
+    packMeta('MoinMorni – Möbel, Trachten, Brunnen und Christbaumschmuck der Lobby'),
+    ...lobbyPackEntries(),
     ...extra,
   ]);
 }

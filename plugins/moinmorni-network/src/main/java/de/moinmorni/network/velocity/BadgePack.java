@@ -19,6 +19,18 @@ public final class BadgePack {
 
     /** Feste Kennung des Pakets („moinmorni-badges“ als Bytes). */
     public static final UUID ID = UUID.fromString("6d6f696e-6d6f-726e-692d-626164676573");
+    /**
+     * Kennung des Netzwerk-Pakets (Möbel, Brunnen, Fische, Kleidung, Musik; NETZ_PACK_ID in
+     * packages/builder/src/netzpaket.ts). Es folgt denselben Regeln wie das Abzeichen-Paket, geht aber an jeden
+     * Java-Client (auch vor 1.20.3 – dort ist es dann das einzige Paket).
+     */
+    public static final UUID NETZ_ID = UUID.fromString("6d6f696e-6d6f-726e-692d-6e65747a7061");
+    /** Frühere Pakete einzelner Server (Möbel der Lobby, Fische im Angelkönig): der Proxy lässt sie nicht mehr durch. */
+    public static final java.util.Set<UUID> OLD_SERVER_PACKS = java.util.Set.of(
+            UUID.fromString("6d6f696e-6d6f-726e-692d-6d6f6562656c"),
+            UUID.fromString("6d6f696e-6d6f-726e-692d-616e67656c6b"));
+    /** Adressen unserer Pakete auf der Webseite. */
+    private static final String OWN_PATH = "/api/public/packs/";
     /** Protokoll von Minecraft 1.20.3 – ab da mehrere Server-Pakete gleichzeitig. */
     public static final int MIN_PROTOCOL = 765;
     /** So oft versucht der Proxy es nach einem Fehler noch einmal (10 s, 20 s, 40 s). */
@@ -77,7 +89,20 @@ public final class BadgePack {
 
     /** Java ab 1.20.3? Bedrock-Spieler (Floodgate) haben UUIDs, deren erste Hälfte 0 ist. */
     public static boolean capable(int protocol, UUID uuid) {
-        return protocol >= MIN_PROTOCOL && uuid.getMostSignificantBits() != 0;
+        return protocol >= MIN_PROTOCOL && java(uuid);
+    }
+
+    /** Java-Spieler (jede Version)? Für das Netzwerk-Paket. */
+    public static boolean java(UUID uuid) {
+        return uuid.getMostSignificantBits() != 0;
+    }
+
+    /**
+     * Will ein Spielserver selbst ein Paket schicken, das es heute im Netzwerk-Paket gibt (alte server.properties,
+     * ältere Angelkönig-Fassung)? Dann lässt der Proxy es nicht durch – sonst lädt man beim Wechsel wieder neu.
+     */
+    public static boolean oldServerPack(UUID id, String url) {
+        return (id != null && OLD_SERVER_PACKS.contains(id)) || (url != null && url.contains(OWN_PATH));
     }
 
     /**

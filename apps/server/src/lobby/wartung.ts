@@ -40,7 +40,7 @@ export function wartungProperties(): Record<string, string> {
 export function createWartungWorld(
   motor: MotorClient,
   log: FastifyBaseLogger,
-  options: Omit<LobbyWorldOptions, 'pack' | 'properties' | 'label' | 'season' | 'packOffer'> = {},
+  options: Omit<LobbyWorldOptions, 'pack' | 'properties' | 'label' | 'season'> = {},
 ): LobbyWorld {
   return createLobbyWorld(motor, log, {
     ...options,

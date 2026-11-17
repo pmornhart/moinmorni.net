@@ -246,6 +246,43 @@ const TEXTS = {
     de: '<gold><bold>Rang-Abzeichen</bold></gold>\n\n<gray>Auf MoinMorni zeigen kleine Schilder die Ränge – dafür brauchst du unser kleines Paket.\n<gray>So geht’s: Serverliste → MoinMorni → <white>Bearbeiten</white> → <white>Server-Ressourcenpakete: Aktiviert</white>, dann neu verbinden.',
     en: '<gold><bold>Rank badges</bold></gold>\n\n<gray>On MoinMorni little badges show the ranks – you need our small pack for them.\n<gray>How to: server list → MoinMorni → <white>Edit</white> → <white>Server Resource Packs: Enabled</white>, then join again.',
   },
+  'pack.sending': {
+    de: `${P}<gray>Das Netzwerk-Paket kommt gleich – einmal laden, dann gilt es auf allen Servern.`,
+    en: `${P}<gray>The network pack is on its way – load it once and it works on every server.`,
+  },
+  'pack.loaded': {
+    de: `${P}<green>Paket geladen!</green> <gray>Möbel, Brunnen, Fische, Kleidung und Blasmusik – auf allen Servern, ohne neues Laden beim Wechseln.`,
+    en: `${P}<green>Pack loaded!</green> <gray>Furniture, fountains, fish, clothes and brass band – on every server, no reloading when you switch.`,
+  },
+  'pack.declined': {
+    de: `${P}<gray>Ohne unser Paket siehst du einfache Blöcke statt der Möbel und die gewohnten Fische. Doch lieber mit? <yellow>/paket</yellow> (Serverliste → Bearbeiten → Server-Ressourcenpakete: Aktiviert).`,
+    en: `${P}<gray>Without our pack you see simple blocks instead of the furniture and the usual fish. Want it after all? <yellow>/pack</yellow> (server list → Edit → Server Resource Packs: Enabled).`,
+  },
+  'pack.failed': {
+    de: `${P}<red>Das Netzwerk-Paket ließ sich gerade nicht laden.</red> <gray>Probier es später mit <yellow>/paket</yellow> nochmal.`,
+    en: `${P}<red>The network pack couldn't be loaded right now.</red> <gray>Try again later with <yellow>/pack</yellow>.`,
+  },
+  'pack.bedrock': {
+    de: `${P}<gray>Auf Bedrock (Handy, Konsole) gibt es unser Paket nicht – du siehst die einfachen Blöcke.`,
+    en: `${P}<gray>There is no pack on Bedrock (phone, console) – you see the simple blocks.`,
+  },
+  'pack.off': {
+    de: `${P}<gray>Gerade gibt es kein Netzwerk-Paket (dafür braucht MoinMorni seine eigene Domain).`,
+    en: `${P}<gray>There is no network pack right now (MoinMorni needs its own domain for it).`,
+  },
+  // Steht im Fenster, mit dem Minecraft nach dem Paket fragt (einmal beim Betreten, gilt dann auf allen Servern).
+  'pack.prompt': {
+    de: '<gold>MoinMorni-Paket</gold><gray>: Möbel, Brunnen, Fische, Kleidung, Blasmusik und Rang-Abzeichen – einmal laden, dann ohne Ladebildschirm durchs ganze Netzwerk.',
+    en: '<gold>MoinMorni pack</gold><gray>: furniture, fountains, fish, clothes, brass band and rank badges – load once, then roam the whole network without loading screens.',
+  },
+  'pack.prompt_required': {
+    de: '<gold>MoinMorni-Paket</gold><gray>: Auf MoinMorni brauchst du unser Paket (Möbel, Fische, Musik, Rang-Abzeichen) – einmal laden, dann gilt es überall. Ohne Paket geht es hier leider nicht.',
+    en: '<gold>MoinMorni pack</gold><gray>: On MoinMorni you need our pack (furniture, fish, music, rank badges) – load once and it works everywhere. Without it you can’t play here, sorry.',
+  },
+  'pack.required': {
+    de: '<gold><bold>MoinMorni-Paket</bold></gold>\n\n<gray>Auf MoinMorni brauchst du unser Ressourcenpaket – einmal laden, dann gilt es auf allen Servern.\n<gray>So geht’s: Serverliste → MoinMorni → <white>Bearbeiten</white> → <white>Server-Ressourcenpakete: Aktiviert</white>, dann neu verbinden.',
+    en: '<gold><bold>MoinMorni pack</bold></gold>\n\n<gray>On MoinMorni you need our resource pack – load it once and it works on every server.\n<gray>How to: server list → MoinMorni → <white>Edit</white> → <white>Server Resource Packs: Enabled</white>, then join again.',
+  },
   'punish.not_jailed': {
     de: `${P}<gray><white>{name}</white> sitzt nicht im Gefängnis.`,
     en: `${P}<gray><white>{name}</white> is not in jail.`,

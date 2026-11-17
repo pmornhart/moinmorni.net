@@ -4,7 +4,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, describe, expect, test } from 'vitest';
-import { ANGEL_PACK_ID, FISH_ART_IDS, fishPicture } from '@moinmorni/builder';
+import { ANGEL_PACK_ID, FISH_ART_IDS, fishPack, fishPicture } from '@moinmorni/builder';
 import {
   ANGEL_BASE_ITEMS,
   ANGEL_CLOTHES,
@@ -15,12 +15,19 @@ import {
 import {
   ANGEL_MODE,
   ANGEL_PACK_FILE,
+  ANGEL_PACK_JSON,
   ANGEL_PACK_MARKER,
-  angelPackInfo,
-  angelPackProperties,
-  angelPackUrl,
-  offerAngelPack,
+  dropServerPack,
 } from '../src/angelkoenig/pack.js';
+import { withoutOwnPack } from '../src/lobby/world.js';
+import { netzPackInfo } from '../src/packs/netz.js';
+
+/** Nur der Angelkönig-Teil (wie früher das eigene Paket). */
+const angelPackBytes = (): Buffer =>
+  fishPack(
+    ANGEL_FISH.map((f) => ({ id: f.id, base: f.base })),
+    ANGEL_CLOTHES.map((c) => ({ id: c.id, base: c.base })),
+  );
 import { readServerFile, writeServerFile } from '../src/motor/files.js';
 import { createProvisioner } from '../src/network/provision.js';
 import { createHarness, type Harness } from './harness.js';
@@ -84,7 +91,7 @@ describe('Angelkönig: eigene Fisch-Zeichnungen als Paket', () => {
   });
 
   test('Paket: Modell und Textur je Art, Grund-Gegenstände mit Minecraft als Rückfall, Legenden bewegt', () => {
-    const files = zipFiles(angelPackInfo().bytes);
+    const files = zipFiles(angelPackBytes());
     expect(files.has('pack.mcmeta')).toBe(true);
     const bases = [...new Set([...ANGEL_BASE_ITEMS, ...ANGEL_CLOTHES.map((c) => c.base)])];
     bases.forEach((base) => {
@@ -134,7 +141,7 @@ describe('Angelkönig: eigene Fisch-Zeichnungen als Paket', () => {
   });
 
   test('Zeichnungen: nichts abgeschnitten, jede Art sieht anders aus, durchsichtiger Hintergrund', () => {
-    const files = zipFiles(angelPackInfo().bytes);
+    const files = zipFiles(angelPackBytes());
     const seen = new Set<string>();
     ANGEL_FISH.forEach((f) => {
       const png = files.get(`assets/moinmorni/textures/item/fisch/${f.id}.png`) as Buffer;
@@ -175,44 +182,29 @@ describe('Angelkönig: eigene Fisch-Zeichnungen als Paket', () => {
     });
   });
 
-  test('gleiche Zeichnungen = gleiche Bytes (Minecraft lädt nur bei neuer SHA-1 neu)', async () => {
-    const a = angelPackInfo();
-    const { fishPack } = await import('@moinmorni/builder');
-    const again = fishPack(
-      ANGEL_FISH.map((f) => ({ id: f.id, base: f.base })),
-      ANGEL_CLOTHES.map((c) => ({ id: c.id, base: c.base })),
-    );
-    expect(crypto.createHash('sha1').update(again).digest('hex')).toBe(a.sha1);
+  test('gleiche Zeichnungen = gleiche Bytes (Minecraft lädt nur bei neuer SHA-1 neu)', () => {
+    expect(angelPackBytes().equals(angelPackBytes())).toBe(true);
+    // Im Netzwerk-Paket stecken dieselben Gegenstände.
+    const net = zipFiles(netzPackInfo().bytes);
+    const own = zipFiles(angelPackBytes());
+    [...own.keys()]
+      .filter((n) => n.startsWith('assets/moinmorni/'))
+      .forEach((n) => expect(net.get(n)?.equals(own.get(n) as Buffer), n).toBe(true));
   });
 
-  test('server.properties: mit Domain angeboten (nie Pflicht), ohne Domain nur das eigene Paket heraus', () => {
-    const url = angelPackUrl('moinmorni.net');
-    expect(url).toBe('https://moinmorni.net/api/public/packs/angelkoenig.zip');
-    expect(angelPackUrl('  ')).toBeNull();
-    const sha1 = angelPackInfo().sha1;
-    const on = angelPackProperties('motd=Angeln\n', url, sha1);
-    expect(on.changed).toBe(true);
-    expect(on.text).toContain('resource-pack=https://moinmorni.net/api/public/packs/angelkoenig.zip');
-    expect(on.text).toContain(`resource-pack-sha1=${sha1}`);
-    expect(on.text).toContain(`resource-pack-id=${ANGEL_PACK_ID}`);
-    expect(on.text).toContain('require-resource-pack=false');
-    expect(angelPackProperties(on.text, url, sha1).changed).toBe(false);
-    const off = angelPackProperties(on.text, null, sha1);
+  test('server.properties: das frühere Angelkönig-Paket kommt heraus, ein fremdes bleibt', () => {
+    const old = `motd=Angeln\nresource-pack=https\\://moinmorni.net/api/public/packs/angelkoenig.zip\nresource-pack-id=${ANGEL_PACK_ID}\n`;
+    const off = withoutOwnPack(old);
     expect(off.changed).toBe(true);
     expect(off.text).toContain('resource-pack=\n');
     expect(off.text).toContain('motd=Angeln');
-    // Ein von Hand eingetragenes fremdes Paket bleibt.
+    expect(withoutOwnPack(off.text).changed).toBe(false);
     const foreign = 'resource-pack=https://example.org/x.zip\nresource-pack-id=1234\n';
-    expect(angelPackProperties(foreign, null, sha1)).toEqual({ text: foreign, changed: false });
+    expect(withoutOwnPack(foreign)).toEqual({ text: foreign, changed: false });
   });
 
-  test('Webseite liefert das Paket; der Provisioner trägt es beim Angelkönig-Server ein', async () => {
+  test('Provisioner: kein Spielserver bietet ein eigenes Paket an; Angelkönig bekommt paket.json „vom Netzwerk“', async () => {
     h = await createHarness();
-    const res = await h.mm.app.inject({ method: 'GET', url: '/api/public/packs/angelkoenig.zip' });
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toBe('application/zip');
-    expect(crypto.createHash('sha1').update(res.rawPayload).digest('hex')).toBe(angelPackInfo().sha1);
-
     const motor = h.mm.motor;
     const provisioner = createProvisioner(h.mm.config, motor, h.mm.hub, quiet, {
       proxyAddOns: {},
@@ -226,44 +218,35 @@ describe('Angelkönig: eigene Fisch-Zeichnungen als Paket', () => {
             ? { repo, tag: 'v1.0.0', fileName: 'x.jar', bytes: Buffer.from('jar') }
             : null,
       },
-      configureMode: async (serverId, member) =>
-        member === ANGEL_MODE ? offerAngelPack(motor, serverId, 'moinmorni.net') : false,
+      configureMode: (serverId, member) => dropServerPack(motor, serverId, member),
     });
     const first = await provisioner.ensure();
     expect(first.created).toContain(ANGEL_MODE);
     const nets = await motor.request<Net[]>('GET', '/api/networks');
     const members = nets.find((n) => n.name === 'MoinMorni')?.members ?? [];
-    const props = async (name: string): Promise<string> =>
-      (
-        await motor.request<{ content: string }>(
-          'GET',
-          `/api/servers/${members.find((m) => m.name === name)?.serverId ?? ''}/files/content?path=server.properties`,
-        )
-      ).content;
-    expect(await props(ANGEL_MODE)).toContain(`resource-pack-id=${ANGEL_PACK_ID}`);
-    expect(await props('duels')).not.toContain('angelkoenig.zip');
-    const again = await provisioner.ensure();
-    expect(again.restart.map((r) => r.member)).not.toContain(ANGEL_MODE);
-
-    // Angelkönig ab 0.2.1 bietet das Paket selbst an: paket.json statt server.properties, einmal Neustart
     const angelId = members.find((m) => m.name === ANGEL_MODE)?.serverId ?? '';
+    const props = async (): Promise<string> =>
+      (await readServerFile(motor, angelId, 'server.properties')) ?? '';
+    // Wie eine Installation von gestern: Paket in der server.properties, Angelkönig 0.2.1 liest paket.json.
+    await writeServerFile(
+      motor,
+      angelId,
+      'server.properties',
+      `${await props()}resource-pack=https\\://moinmorni.net/api/public/packs/angelkoenig.zip\nresource-pack-id=${ANGEL_PACK_ID}\n`,
+    );
     await writeServerFile(motor, angelId, ANGEL_PACK_MARKER, 'ja\n');
+    await writeServerFile(
+      motor,
+      angelId,
+      ANGEL_PACK_FILE,
+      '{"url":"https://moinmorni.net/api/public/packs/angelkoenig.zip"}\n',
+    );
+    const second = await provisioner.ensure();
+    expect(second.restart.map((r) => r.member)).toContain(ANGEL_MODE);
+    expect(await props()).not.toContain(`resource-pack-id=${ANGEL_PACK_ID}`);
+    expect(await readServerFile(motor, angelId, ANGEL_PACK_FILE)).toBe(ANGEL_PACK_JSON);
+    expect(JSON.parse(ANGEL_PACK_JSON)).toEqual({ netz: true });
     const third = await provisioner.ensure();
-    expect(third.restart.map((r) => r.member)).toContain(ANGEL_MODE);
-    expect(await props(ANGEL_MODE)).not.toContain(`resource-pack-id=${ANGEL_PACK_ID}`);
-    const file = JSON.parse((await readServerFile(motor, angelId, ANGEL_PACK_FILE)) ?? '{}') as Record<
-      string,
-      string
-    >;
-    expect(file).toMatchObject({
-      url: 'https://moinmorni.net/api/public/packs/angelkoenig.zip',
-      sha1: angelPackInfo().sha1,
-      id: ANGEL_PACK_ID,
-    });
-    const fourth = await provisioner.ensure();
-    expect(fourth.restart.map((r) => r.member)).not.toContain(ANGEL_MODE);
-    // Ohne Domain: paket.json leer (kein Paket)
-    expect(await offerAngelPack(motor, angelId, '')).toBe(true);
-    expect(JSON.parse((await readServerFile(motor, angelId, ANGEL_PACK_FILE)) ?? 'null')).toEqual({});
+    expect(third.restart.map((r) => r.member)).not.toContain(ANGEL_MODE);
   });
 });

@@ -179,7 +179,7 @@ describe('Hub: Rang-Abzeichen', () => {
   test('Pflicht: wer ablehnt, fliegt freundlich hinaus – mit Erklärung, wie man das Paket einschaltet', async () => {
     const { proxy, lobby } = await network();
     // Im Spiel umgeschaltet (Owner sieht den Bereich „Rollen“) – genau wie im Panel.
-    await proxy.request({ t: 'command', uuid: PHILIP, command: 'abzeichen', args: ['pflicht', 'an'] });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'netzwerk', args: ['paket', 'an'] });
     const required = await proxy.next('badges', (m) => m['required'] === true);
     expect(required).toMatchObject({ enabled: true });
     // Pflicht steht im Fenster, mit dem Minecraft fragt.

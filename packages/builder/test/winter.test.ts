@@ -4,7 +4,7 @@ import { baseName } from '../src/canvas.js';
 import { furniturePack } from '../src/furniture.js';
 import { GROUND } from '../src/nature.js';
 import { disc, pairs, range } from '../src/range.js';
-import { KUGELN, kugelModel } from '../src/schmuck.js';
+import { KUGELN, kugelAsItem, kugelModel } from '../src/schmuck.js';
 import { MARKET } from '../src/lobby/dorfplatz.js';
 import { SAVE_NOW, SEASON_STORAGE, seasonStepsFor } from '../src/lobby/datapack.js';
 import { NO_HITBOX } from '../src/lobby/deko.js';
@@ -287,8 +287,12 @@ describe('Winter-Wunderland', () => {
       const used = plan.displays.filter((d) => d.includes("'mm_winter_kugel'"));
       expect(used.length).toBeGreaterThan(100);
       used.forEach((d) => expect(blocks).toContain(DISPLAY_BLOCK.exec(d)?.[1]));
+      // Beim Bauen werden sie zu Item-Anzeigen mit unserem Namen (`kugelAsItem`).
+      used.slice(0, 3).forEach((d) => expect(kugelAsItem(d)).toContain("strings:['moinmorni:kugel']"));
       const zip = furniturePack().toString('latin1');
-      blocks.forEach((b) => expect(zip).toContain(`assets/minecraft/blockstates/${b}.json`));
+      // Rund nur als Anzeige mit unserem Namen – gebauter Trockenbeton bleibt überall Trockenbeton.
+      blocks.forEach((b) => expect(zip).toContain(`assets/minecraft/items/${b}.json`));
+      expect(zip).not.toContain('assets/minecraft/blockstates/');
       expect(zip).toContain('assets/moinmorni/models/block/schmuck/kugel_rot.json');
       // Drehungen nur in 22,5°-Schritten, alles im erlaubten Raum
       const elements = kugelModel('gold')['elements'] as ReadonlyArray<{

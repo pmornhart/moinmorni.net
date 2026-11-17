@@ -340,6 +340,27 @@ export const NETWORK_AREA: SettingArea = {
         },
       ],
     },
+    {
+      id: 'paket',
+      title: t('Ressourcenpaket', 'Resource pack'),
+      text: t(
+        'Ein Paket fürs ganze Netzwerk: Möbel, Brunnen und Trachten der Lobby, Fische und Kleidung im Angelkönig, die Blasmusik – dazu das kleine Paket mit den Rang-Abzeichen. Java-Spieler laden beides einmal beim Betreten, danach geht jeder Serverwechsel ohne Ladebildschirm.',
+        'One pack for the whole network: furniture, fountains and costumes in the lobby, fish and clothes in Angler King, the brass band – plus the small pack with the rank badges. Java players load both once when they join; after that every server switch happens without a loading screen.',
+      ),
+      settings: [
+        {
+          key: 'packRequired',
+          type: 'boolean',
+          default: false,
+          label: t('Paket verpflichtend', 'Pack required'),
+          help: t(
+            'An: Wer das Paket ablehnt, kommt nicht ins Netzwerk – mit einer freundlichen Erklärung, wie man es einschaltet. Bedrock-Spieler kommen trotzdem hinein (sie bekommen kein Paket). Aus: Das Paket wird nur angeboten; wer ablehnt, sieht einfache Blöcke statt der Möbel, die gewohnten Minecraft-Fische und die Ränge als Symbole. Braucht die eigene Domain – von dort lädt Minecraft das Paket.',
+            'On: whoever declines the pack can’t join the network – with a friendly explanation of how to switch it on. Bedrock players still get in (they get no pack). Off: the pack is only offered; whoever declines sees simple blocks instead of the furniture, the usual Minecraft fish and ranks as symbols. Needs your own domain – Minecraft downloads the pack from there.',
+          ),
+          command: '/netzwerk paket an|aus',
+        },
+      ],
+    },
     STREAMER_SECTION,
   ],
 };
@@ -481,21 +502,10 @@ export const BADGES_AREA: SettingArea = {
           default: true,
           label: t('Rang-Abzeichen zeigen', 'Show rank badges'),
           help: t(
-            'Java-Spieler bekommen beim Betreten ein kleines Ressourcenpaket angeboten, das auf allen Servern bleibt. Wer es lädt, sieht die Ränge als Schilder wie „OWNER“ mit Krone. Wer ablehnt, auf Bedrock spielt oder Minecraft vor 1.20.3 hat, sieht wie bisher Symbol und Farbe. Änderst du bei den Rollen Name, Symbol oder Farbe, bekommen alle gleich das neue Paket. Braucht die eigene Domain – von dort lädt Minecraft das Paket.',
-            'Java players are offered a small resource pack when they join; it stays on every server. Whoever loads it sees ranks as badges like “OWNER” with a crown. Whoever declines, plays Bedrock or has Minecraft before 1.20.3 sees symbol and colour as before. Change a role’s name, symbol or colour and everyone gets the new pack right away. Needs your own domain – Minecraft downloads the pack from there.',
+            'Java-Spieler bekommen beim Betreten ein kleines Ressourcenpaket angeboten, das auf allen Servern bleibt. Wer es lädt, sieht die Ränge als Schilder wie „OWNER“ mit Krone. Wer ablehnt, auf Bedrock spielt oder Minecraft vor 1.20.3 hat, sieht wie bisher Symbol und Farbe. Änderst du bei den Rollen Name, Symbol oder Farbe, bekommen alle gleich das neue Paket (nur das kleine, nicht die Musik). Ob das Paket Pflicht ist, steht unter Netzwerk → Ressourcenpaket.',
+            'Java players are offered a small resource pack when they join; it stays on every server. Whoever loads it sees ranks as badges like “OWNER” with a crown. Whoever declines, plays Bedrock or has Minecraft before 1.20.3 sees symbol and colour as before. Change a role’s name, symbol or colour and everyone gets the new pack right away (just the small one, not the music). Whether the pack is required is under Network → Resource pack.',
           ),
           command: '/abzeichen an|aus',
-        },
-        {
-          key: 'required',
-          type: 'boolean',
-          default: false,
-          label: t('Abzeichen-Paket verpflichtend', 'Badge pack required'),
-          help: t(
-            'An: Wer das Paket ablehnt, kommt nicht ins Netzwerk – mit einer freundlichen Erklärung, wie man es einschaltet. Bedrock-Spieler und Minecraft vor 1.20.3 kommen trotzdem hinein (sie bekommen kein Paket). Aus: Das Paket wird nur angeboten.',
-            'On: whoever declines the pack can’t join the network – with a friendly explanation of how to switch it on. Bedrock players and Minecraft before 1.20.3 still get in (they get no pack). Off: the pack is only offered.',
-          ),
-          command: '/abzeichen pflicht an|aus',
         },
       ],
     },
@@ -799,23 +809,6 @@ export const LOBBY_AREA: SettingArea = {
             'Like real life: sunrise, sunset and moon phase as today in Bavaria – at 8 pm it is night in winter and still light in summer.',
           ),
           command: '/lobby tageszeit <echt|morgen|mittag|abend|nacht>',
-        },
-      ],
-    },
-    {
-      id: 'moebel',
-      title: t('Möbel-Paket', 'Furniture pack'),
-      settings: [
-        {
-          key: 'packRequired',
-          type: 'boolean',
-          default: false,
-          label: t('Möbel-Paket verpflichtend', 'Furniture pack required'),
-          help: t(
-            'Stühle, Eckbänke, Tische, Bierbänke und Steinkrüge in der Lobby sind eigene 3D-Modelle aus einem kleinen Ressourcenpaket. Aus: Java-Spieler werden beim Betreten gefragt; wer ablehnt (oder auf Bedrock spielt), sieht einfache Holzstufen. An: ohne Paket kein Zutritt zur Lobby. Gilt, sobald die Lobby leer ist und neu startet (macht MoinMorni von selbst).',
-            'Chairs, corner benches, tables, beer benches and stone mugs in the lobby are our own 3D models from a small resource pack. Off: Java players are asked when they join; whoever declines (or plays Bedrock) sees simple wooden stairs. On: no pack, no lobby. Applies once the lobby is empty and restarts (MoinMorni does that by itself).',
-          ),
-          command: '/lobby paket an|aus',
         },
       ],
     },

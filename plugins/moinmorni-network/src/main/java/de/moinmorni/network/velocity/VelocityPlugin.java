@@ -17,6 +17,7 @@ import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.PlayerSettingsChangedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
+import com.velocitypowered.api.event.player.ServerResourcePackSendEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -84,12 +85,6 @@ public final class VelocityPlugin {
             + "<gray>The lobby is restarting – back in a moment, try again in a few seconds.</gray>";
     private static final String LOCAL_BACK =
             "<green>Die Lobby ist wieder da!</green> <gray>/ The lobby is back!</gray>";
-    /** Kennung des Möbel-Pakets der Lobby (gleich wie MOEBEL_PACK_ID in packages/builder/src/furniture.ts). */
-    private static final UUID LOBBY_PACK = UUID.fromString("6d6f696e-6d6f-726e-692d-6d6f6562656c");
-    /** Kennung des Fisch-Pakets von Angelkönig (gleich wie ANGEL_PACK_ID in packages/builder/src/fische/paket.ts). */
-    private static final UUID ANGEL_PACK = UUID.fromString("6d6f696e-6d6f-726e-692d-616e67656c6b");
-    /** Server, auf dem das Fisch-Paket gilt (wie ANGEL_MODE in apps/server/src/angelkoenig/pack.ts). */
-    private static final String ANGEL_SERVER = "angelkoenig";
     /** So lange nach dem Start bekommt die eigene Jar notfalls ihre Datei zurück (siehe retireInterimPlugin). */
     private static final long KEEP_JAR_SECONDS = 10;
     private static final String HUB_AWAY =
@@ -115,6 +110,9 @@ public final class VelocityPlugin {
     /** Rang-Abzeichen: was der Hub sagt, und wem der Proxy das Paket geschickt hat (BadgePack). */
     private volatile BadgePack.Config badges = BadgePack.Config.OFF;
     private final Map<UUID, BadgePack.Sent> badgeSent = new ConcurrentHashMap<>();
+    /** Netzwerk-Paket (Möbel, Brunnen, Fische, Kleidung, Musik): gleiche Regeln wie die Abzeichen, an jeden Java-Client. */
+    private volatile BadgePack.Config netz = BadgePack.Config.OFF;
+    private final Map<UUID, BadgePack.Sent> netzSent = new ConcurrentHashMap<>();
     /** Leiste mit Countdown vor einem Neustart (Hub: „countdown“). */
     private final Countdown countdown;
 
@@ -214,6 +212,12 @@ public final class VelocityPlugin {
                 proxy.getAllPlayers().forEach(p -> offerBadges(p, false));
             }
             case "badges-send" -> player(m).ifPresent(p -> offerBadges(p, true));
+            case "netzpaket" -> {
+                netz = BadgePack.Config.of(m);
+                // Neue Fassung (oder an/aus): gleich für alle, die schon da sind – einmal, nicht bei jedem Wechsel.
+                proxy.getAllPlayers().forEach(p -> offerNetz(p, false));
+            }
+            case "netzpaket-send" -> player(m).ifPresent(p -> offerNetz(p, true));
             case "countdown" -> player(m).ifPresent(p -> countdown.show(p, HubClient.str(m, "text"),
                     m.has("seconds") ? m.get("seconds").getAsInt() : 0));
             default -> log.fine("Unbekannte Nachricht vom Hub: " + type);
@@ -486,44 +490,119 @@ public final class VelocityPlugin {
     }
 
     /**
-     * Das Möbel-Paket gilt nur in der Lobby: Wer sie verlässt, bekommt es wieder abgenommen – sonst wären z. B. in
-     * MorniCraft Mangrove-Stufen plötzlich Stühle. Zurück in der Lobby schickt der Lobby-Server es von selbst wieder.
+     * Ein Paket fürs ganze Netzwerk: Beim ersten Server bekommt jeder Java-Spieler das Netzwerk-Paket (Möbel, Brunnen,
+     * Fische, Kleidung, Musik) und das kleine Abzeichen-Paket – Minecraft fragt einmal und lädt beides in einem Rutsch.
+     * Danach nimmt der Proxy nichts mehr ab und schickt nichts neu: Jeder Wechsel zwischen Lobby und Spielmodi geht ohne
+     * Ladebildschirm.
      */
     @Subscribe
     public void onSwitched(ServerPostConnectEvent event) {
         Player p = event.getPlayer();
         failed.remove(p.getUniqueId());
-        // Rang-Abzeichen: einmal beim Betreten des Netzwerks (das Paket bleibt danach auf allen Servern).
         if (event.getPreviousServer() == null) {
+            offerNetz(p, false);
             offerBadges(p, false);
         }
-        String here = p.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(LOBBY);
-        // Jedes Server-Paket gilt nur auf seinem Server: Möbel in der Lobby, Fische im Angelkönig.
-        dropPackOutside(p, LOBBY_PACK, LOBBY, here);
-        dropPackOutside(p, ANGEL_PACK, ANGEL_SERVER, here);
+        // Aufräumen nach dem Umstieg: Hat jemand noch ein früheres Server-Paket (Möbel, Fische), kommt es weg – der
+        // Inhalt steckt im Netzwerk-Paket.
+        p.getAppliedResourcePacks().stream()
+                .map(ResourcePackInfo::getId)
+                .filter(BadgePack.OLD_SERVER_PACKS::contains)
+                .forEach(p::removeResourcePacks);
     }
 
-    private static void dropPackOutside(Player p, UUID pack, String home, String here) {
-        boolean has = p.getAppliedResourcePacks().stream().anyMatch(i -> pack.equals(i.getId()));
-        if (has && !home.equals(here)) {
-            p.removeResourcePacks(pack);
+    /**
+     * Spielserver bieten kein eigenes Paket mehr an. Steht in einer noch nicht aufgeräumten server.properties (oder in
+     * einer älteren Angelkönig-Fassung) noch eins von uns, lässt der Proxy es nicht durch – der Server bekommt
+     * „abgelehnt“ zurück und der Spieler lädt nichts.
+     */
+    @Subscribe
+    public void onServerPack(ServerResourcePackSendEvent event) {
+        ResourcePackInfo pack = event.getProvidedResourcePack();
+        if (pack != null && BadgePack.oldServerPack(pack.getId(), pack.getUrl())) {
+            event.setResult(ResultedEvent.GenericResult.denied());
         }
     }
 
     /**
-     * Hat jemand das Lobby-Paket geladen (oder abgelehnt, oder wurde es wieder abgenommen)? Der Lobby-Server erfährt
-     * das nicht selbst – Minecraft lädt es schon vor dem Betreten –, der Hub gibt es mit dem Profil weiter: Mit Paket
-     * spielt die Lobbymusik als Klangdatei der Kapelle, ohne mit Notenblöcken.
+     * Was hat der Spieler mit dem Netzwerk-Paket gemacht? Der Hub gibt es mit dem Profil weiter (`pack`): Mit Paket
+     * spielt die Lobbymusik als Klangdatei, Angelkönig zeigt die eigene Kleidung (Metadaten am Spieler). Abgelehnt +
+     * Pflicht → der Hub wirft freundlich hinaus. Nach einem Fehler versucht es der Proxy noch dreimal.
      */
     @Subscribe
     public void onPackStatus(PlayerResourcePackStatusEvent event) {
-        if (hub == null || !LOBBY_PACK.equals(event.getPackId()) || event.getStatus().isIntermediate()) {
+        if (!BadgePack.NETZ_ID.equals(event.getPackId()) || event.getStatus().isIntermediate()) {
+            return;
+        }
+        Player p = event.getPlayer();
+        BadgePack.Config config = netz;
+        BadgePack.Sent sent = netzSent.get(p.getUniqueId());
+        ResourcePackInfo info = event.getPackInfo();
+        // Antwort auf eine ältere Fassung (inzwischen neu geschickt oder ausgeschaltet): zählt nicht.
+        if (sent == null || info == null || !config.enabled() || !Arrays.equals(info.getHash(), config.hash())) {
+            return;
+        }
+        switch (event.getStatus()) {
+            case SUCCESSFUL -> reportNetz(p, true, "loaded");
+            case DECLINED -> {
+                netzSent.put(p.getUniqueId(), new BadgePack.Sent(sent.sha1(), true, sent.tries()));
+                reportNetz(p, false, "declined");
+            }
+            case DISCARDED -> reportNetz(p, false, "discarded");
+            case FAILED_DOWNLOAD, INVALID_URL, FAILED_RELOAD -> {
+                int next = sent.tries() + 1;
+                long delay = BadgePack.retryDelaySeconds(next);
+                if (delay == 0) {
+                    reportNetz(p, false, "failed");
+                    return;
+                }
+                proxy.getScheduler().buildTask(this, () -> {
+                    BadgePack.Config now = netz;
+                    if (p.isActive() && now.enabled() && now.sha1().equals(config.sha1())) {
+                        sendNetz(p, now, next);
+                    }
+                }).delay(delay, TimeUnit.SECONDS).schedule();
+            }
+            default -> {
+            }
+        }
+    }
+
+    /** Netzwerk-Paket schicken, abnehmen (nur wenn es ganz aus ist) oder lassen – Regeln wie bei den Abzeichen. */
+    private void offerNetz(Player p, boolean manual) {
+        BadgePack.Config config = netz;
+        switch (BadgePack.plan(config, netzSent.get(p.getUniqueId()), BadgePack.java(p.getUniqueId()), manual)) {
+            case SEND -> sendNetz(p, config, 0);
+            case REMOVE -> {
+                netzSent.remove(p.getUniqueId());
+                p.removeResourcePacks(BadgePack.NETZ_ID);
+            }
+            default -> {
+            }
+        }
+    }
+
+    /** Nie als „verpflichtend“ an Minecraft (siehe {@link #sendBadges}); Pflicht steht im Text, der Hub wirft hinaus. */
+    private void sendNetz(Player p, BadgePack.Config config, int tries) {
+        ResourcePackInfo info = proxy.createResourcePackBuilder(config.url())
+                .setId(BadgePack.NETZ_ID)
+                .setHash(config.hash())
+                .setShouldForce(false)
+                .setPrompt(MM.deserialize(config.prompt(p.getEffectiveLocale())))
+                .build();
+        netzSent.put(p.getUniqueId(), new BadgePack.Sent(config.sha1(), false, tries));
+        p.sendResourcePackOffer(info);
+    }
+
+    private void reportNetz(Player p, boolean loaded, String status) {
+        if (hub == null || !hub.ready()) {
             return;
         }
         JsonObject body = new JsonObject();
         body.addProperty("t", "pack");
-        body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
-        body.addProperty("loaded", event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFUL);
+        body.addProperty("uuid", p.getUniqueId().toString());
+        body.addProperty("loaded", loaded);
+        body.addProperty("status", status);
         hub.send(body);
     }
 
@@ -546,6 +625,7 @@ public final class VelocityPlugin {
         sending.remove(gone);
         failed.remove(gone);
         badgeSent.remove(gone);
+        netzSent.remove(gone);
         countdown.hide(gone);
         if (hub == null || event.getLoginStatus() != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) {
             return;
@@ -621,7 +701,7 @@ public final class VelocityPlugin {
         hub.send(body);
     }
 
-    /** Antwort auf das Abzeichen-Paket (das Lobby-Paket hat seinen eigenen Empfänger, {@link #onPackStatus}). */
+    /** Antwort auf das Abzeichen-Paket (das Netzwerk-Paket hat seinen eigenen Empfänger, {@link #onPackStatus}). */
     @Subscribe
     public void onBadgePackStatus(PlayerResourcePackStatusEvent event) {
         if (!BadgePack.ID.equals(event.getPackId())) {

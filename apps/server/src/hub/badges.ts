@@ -69,9 +69,11 @@ export interface BadgeOptions {
   /** Wo das Paket gerade liegt; null = keins (keine Domain). */
   readonly offer: () => BadgeOffer | null;
   readonly toProxy: (body: Body) => boolean;
+  /** Ist das Paket Pflicht? (Ein Schalter für beide Pakete: Netzwerk → Ressourcenpaket, `hub/netzpaket.ts`.) */
+  readonly required?: () => boolean;
 }
 
-export function createBadges({ ctx, offer, toProxy }: BadgeOptions): Badges {
+export function createBadges({ ctx, offer, toProxy, required = () => false }: BadgeOptions): Badges {
   const settings = (): Record<string, unknown> => ctx.stores.settings('badges');
   const active = (): boolean => settings()['enabled'] === true && offer() !== null;
   const keyOf = (role: Role): string | null =>
@@ -122,13 +124,10 @@ export function createBadges({ ctx, offer, toProxy }: BadgeOptions): Badges {
         enabled: pack !== null,
         url: pack?.url ?? null,
         sha1: pack?.sha1 ?? null,
-        required: settings()['required'] === true,
+        required: required(),
         // Pflicht steht im Fenster selbst – Minecraft bekommt das Paket nie als „verpflichtend“ (siehe Proxy).
         prompt: Object.fromEntries(
-          LANGS.map((lang) => [
-            lang,
-            text(lang, settings()['required'] === true ? 'badges.prompt_required' : 'badges.prompt'),
-          ]),
+          LANGS.map((lang) => [lang, text(lang, required() ? 'badges.prompt_required' : 'badges.prompt')]),
         ),
       };
     },
@@ -144,7 +143,7 @@ export function createBadges({ ctx, offer, toProxy }: BadgeOptions): Badges {
       if (m.status === 'failed') say(p.uuid, 'badges.failed');
       if (m.status !== 'declined') return;
       // Pflicht: freundlich hinaus, mit Erklärung, wie man das Paket einschaltet.
-      if (settings()['required'] === true) ctx.kick(p.uuid, text(p.lang, 'badges.required'));
+      if (required()) ctx.kick(p.uuid, text(p.lang, 'badges.required'));
       else say(p.uuid, 'badges.declined');
     },
     commands: [command],

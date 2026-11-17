@@ -27,6 +27,7 @@ import type { Db } from '../db/index.js';
 import type { EventBus } from '../lib/events.js';
 import type { Stores } from '../panel/stores.js';
 import { createBadges, type BadgeOffer } from './badges.js';
+import { createNetzPack, type NetzPackOffer } from './netzpaket.js';
 import { createChat, type ChatSettings } from './chat.js';
 import { allowed, createCommands, findCommand, type Actor, type Command } from './commands.js';
 import { hasRight, type HubContext } from './context.js';
@@ -193,6 +194,8 @@ export interface HubOptions {
   readonly allowedIn?: (mode: string, uuid: string, name: string) => boolean;
   /** Rang-Abzeichen: wo das Paket gerade liegt (öffentliche Adresse + SHA-1); ohne = keine Abzeichen. */
   readonly badgePack?: () => BadgeOffer | null;
+  /** Netzwerk-Paket (Möbel, Brunnen, Fische, Kleidung, Musik): wo es liegt; ohne = keins. */
+  readonly netzPack?: () => NetzPackOffer | null;
 }
 
 export interface Hub {
@@ -293,7 +296,9 @@ export function createHub(options: HubOptions): Hub {
     return langOfLocale(locale ?? known?.clientLocale, defaultLang());
   };
   // Erst nach dem Kontext angelegt (createMusic braucht ihn) – das Profil fragt über diesen Verweis.
-  const musicRef: { profileOf: (uuid: string) => unknown } = { profileOf: () => undefined };
+  const musicRef: { profileOf: (uuid: string) => { readonly pack?: boolean } | undefined } = {
+    profileOf: () => undefined,
+  };
   const profile = (uuid: string): Body | null => {
     const p = presence.get(uuid);
     if (!p) return null;
@@ -318,6 +323,8 @@ export function createHub(options: HubOptions): Hub {
       streamer: streamers.active(p.uuid),
       /** Lobbymusik: an/aus, eigene Lautstärke, Lobby-Paket geladen, „weiter“ (hub/music.ts). */
       music: musicRef.profileOf(p.uuid),
+      /** Netzwerk-Paket geladen? Das Plugin hängt es als `moinmorni:paket` an den Spieler (Angelkönig liest es). */
+      pack: musicRef.profileOf(p.uuid)?.pack === true,
     };
   };
   const sendProfile = (uuid: string): void => {
@@ -377,7 +384,13 @@ export function createHub(options: HubOptions): Hub {
     },
     streamer: (uuid) => streamers.parts(uuid),
   };
-  const badges = createBadges({ ctx, offer: () => options.badgePack?.() ?? null, toProxy });
+  const netz = createNetzPack({ ctx, offer: () => options.netzPack?.() ?? null, toProxy });
+  const badges = createBadges({
+    ctx,
+    offer: () => options.badgePack?.() ?? null,
+    toProxy,
+    required: netz.required,
+  });
   /** Wer im Gefängnis sitzt (mit Ende und Grund) und wo die Zelle ist – für das Lobby-Plugin. */
   const jailState = (): Body => ({
     t: 'jail',
@@ -441,6 +454,7 @@ export function createHub(options: HubOptions): Hub {
         ...social.commands,
         ...voice.commands,
         ...badges.commands,
+        ...netz.commands,
         ...rejoin.commands,
         createStreamerCommand(ctx, streamers, { now, changed: sendProfile }),
         ...music.commands,
@@ -909,7 +923,11 @@ export function createHub(options: HubOptions): Hub {
     // Abzeichen-Paket eines Spielers: geladen, abgelehnt (Pflicht → hinaus), ging nicht …
     'badge-status': (_conn, body) => badges.onStatus(body),
     ...rejoin.handlers,
-    pack: music.onPack,
+    // Netzwerk-Paket: geladen → Lobbymusik als Klangdatei, Kleidung im Angelkönig; abgelehnt + Pflicht → hinaus.
+    pack: (conn, body) => {
+      music.onPack(conn, body);
+      netz.onStatus(conn, body);
+    },
   };
 
   const transport = createTransport(hubSecret, log, {
@@ -924,6 +942,7 @@ export function createHub(options: HubOptions): Hub {
         });
         conn.send(network());
         conn.send(bans());
+        conn.send(netz.proxyBody());
         conn.send(badges.proxyBody());
         conn.send(streamers.config());
         return;
@@ -996,6 +1015,9 @@ export function createHub(options: HubOptions): Hub {
     if (mc && MORNICRAFT_AREAS.has(area)) toBackend(mc, morniCraft());
     if (area === 'network') {
       toProxy(network());
+      // Ressourcenpaket Pflicht an/aus: Text im Fenster beider Pakete.
+      toProxy(netz.proxyBody());
+      toProxy(badges.proxyBody());
       wartung.onSettings();
       rejoin.refresh();
       // Streamer-Modus: Adressen zum Verdecken an alle, und was jetzt für jeden gilt (erlaubt, Teile).
