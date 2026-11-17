@@ -6,7 +6,7 @@
  *   Dach (macht `winter.ts`), warmes Licht unter der Markise. Figuren und Stände bleiben, wie sie sind.
  * - **Lichterketten** im Ring von Bude zu Bude (über alle Gassen), am Schlossmarkt von Stand zu Stand und zum
  *   Marktbogen, der Girlande, Lichter und einen Stern bekommt.
- * - **Glühwein- und Lebkuchenbude** am Eingang von der Ankunft her (nur Deko), dazwischen das Schild „Weihnachtsmarkt“.
+ * - **Glühwein- und Lebkuchenbude** am Eingang von der Ankunft her (nur Deko), dazwischen das Weihnachtstor (`weihnachtstor.ts`).
  * - **Krippe** auf der Wiese westlich vom Platz: offener Stall mit Heu, Maria, Josef, dem Kind in der Krippe, Ochs,
  *   Esel und Schafen, Stern über dem Dach.
  * Blöcke (Buden, Stall, Licht) setzt der Winter wie den Schnee – jede andere Saison stellt die Stellen genau wieder her.
@@ -33,6 +33,7 @@ import type { World } from '../pruefung.js';
 import { settle, settleDown } from './halt.js';
 import { esel, josef, krippeMitKind, maria, ochse, schaf, stern } from './winter-figuren.js';
 import { clearPlants, HALF, tags, type View } from './winter-base.js';
+import { weihnachtstor } from './weihnachtstor.js';
 
 // ---------- Stände ----------
 
@@ -381,17 +382,16 @@ function budeDeko(f: Frame, b: Bude): string[] {
   return [sign, ...deko, ...goods, ...hearts];
 }
 
-/** Schild „Weihnachtsmarkt“ zwischen den Buden, an einer Lichterkette über dem Weg. */
 /** Eingangsbogen von der Ankunft her: zwei Pfosten und ein Balken quer über den Platz. */
 export const EINGANG = { x1: -6, x2: 7, z: 19, height: 5 } as const;
 
-/** Eingangsbogen (Blöcke in `w`) mit Girlande, Lichtern und dem Schild „Weihnachtsmarkt“ darunter. */
+/**
+ * Eingangsbogen (Blöcke in `w`): das Weihnachtstor (`weihnachtstor.ts`) mit dicker Girlande, Bögen, Schild oben auf
+ * dem Balken – dazu die Lichterkette unter dem Balken zum Platz hin.
+ */
 function eingang(w: Canvas): string[] {
   const { x1, x2, z, height } = EINGANG;
   const beam = GROUND + height;
-  [x1, x2].forEach((x) => range(GROUND + 1, beam - 1).forEach((y) => w.set(x, y, z, 'spruce_log')));
-  range(x1, x2).forEach((x) => w.set(x, beam, z, 'stripped_spruce_log[axis=x]'));
-  // Lichterkette unter dem Balken (zum Platz hin) von Pfosten zu Pfosten, Girlande oben an der Vorderseite
   const chains = lightChain(
     'eingang',
     [x1 + 1.05, beam - 0.12, z - 0.08],
@@ -399,23 +399,7 @@ function eingang(w: Canvas): string[] {
     0.55,
     CHAIN_LIGHTS,
   );
-  const green = placeModel(
-    tags('eingang'),
-    [0, 0, 0],
-    0,
-    garland([x1 + 0.05, beam + 0.82, z + 1.15], [x2 + 0.95, beam + 0.82, z + 1.15], 0.3, STALL_LIGHTS),
-  );
-  const sign = textSign(
-    tags('eingang'),
-    [HALF, beam - 0.75, z + 1.08],
-    0,
-    [
-      { text: '✦ Weihnachtsmarkt ✦\\n', color: 'gold', bold: true },
-      { text: 'Christmas market', color: 'white' },
-    ],
-    1.25,
-  );
-  return [...chains, ...green, sign];
+  return [...weihnachtstor(w, EINGANG), ...chains];
 }
 
 // ---------- Krippe ----------

@@ -13,6 +13,7 @@ import { pairs, range } from '../range.js';
 import { npc, signText } from '../village.js';
 import { lampPost, MODES, SHARED_STAND, stallAt, type Mode } from './common.js';
 import { buildSportStand, SPORT_HOST } from './sportstand.js';
+import { wegweiser } from './wegweiser.js';
 
 /** So viele Modi stehen am Dorfmarkt um den Maibaum; alle weiteren kommen auf den Schlossmarkt. */
 export const RING_MODES = 7;
@@ -268,30 +269,17 @@ function marketArch(c: Canvas): void {
   signText(c, 0.5, top - 0.75, z - 0.08, 'north', name, 1.3);
 }
 
-/** Wegweiser am Nordausgang des Dorfplatzes: wer die neuen Modi sucht, findet sie. */
+/**
+ * Wegweiser am Nordausgang des Dorfplatzes, wo die Gasse auf den Schlossmarkt trifft: geradeaus die Schlosstreppe,
+ * links am Schlossmarkt vorbei zum Jump and Run, zurück zum Dorfplatz. Den Schlossmarkt selbst nennt der Marktbogen
+ * gleich dahinter – Stände gibt es auf beiden Seiten, ein Pfeil dorthin wäre falsch.
+ */
 function signpost(c: Canvas): void {
-  const [x, z] = [7, -21];
-  // Pfahl aus geschältem Fichtenstamm: an einem Zaun hielte das Schild auf der Rückseite nicht
-  range(GROUND + 1, GROUND + 3).forEach((y) => c.set(x, y, z, 'stripped_spruce_log[axis=y]'));
-  c.set(x, GROUND + 4, z, 'lantern');
-  c.set(x, GROUND + 3, z - 1, 'spruce_wall_sign[facing=north]');
-  signText(
-    c,
-    x + 0.5,
-    GROUND + 2.6,
-    z + 1.02,
-    'south',
-    [
-      { text: '↑ Schlossmarkt\n', color: 'gold', bold: true },
-      {
-        text: STAND_MODES.slice(RING_MODES)
-          .map((m) => (m.id === SPORT_HOST ? 'Wintersport/Sommerspiele' : m.name))
-          .join(' · '),
-        color: 'white',
-      },
-    ],
-    0.8,
-  );
+  wegweiser(c, 4, -20, [
+    { dir: 'north', text: 'Schloss · Castle' },
+    { dir: 'west', text: 'Jump and Run' },
+    { dir: 'south', text: 'Dorfplatz · Village' },
+  ]);
 }
 
 /** Leute am Markt: schauen, kaufen, bummeln (zwei laufen herum). */
