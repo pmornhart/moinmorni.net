@@ -18,7 +18,12 @@ import { ChangeGroups } from './change-groups';
  * green dot says that a newer version is ready; in the panel, whoever may manage updates gets a link to them.
  */
 
-const CHANGELOG_KEY = ['public', 'changelog'] as const;
+/** Players see what they understand; the team (panel) sees every change (apps/server/src/system/changes.ts). */
+export type ChangelogAudience = 'players' | 'team';
+const CHANGELOG_URL: Readonly<Record<ChangelogAudience, string>> = {
+  players: '/api/public/changelog',
+  team: '/api/panel/changelog',
+};
 const MINUTE_MS = 60_000;
 /** The installed version only changes with an update – look again every few minutes for "update ready". */
 const REFRESH_MINUTES = 5;
@@ -26,10 +31,10 @@ const REFRESH_MS = REFRESH_MINUTES * MINUTE_MS;
 /** Versions shown at first; "Ältere Versionen" shows this many more each time. */
 const PAGE = 8;
 
-export function useChangelog(): UseQueryResult<PublicChangelog> {
+export function useChangelog(audience: ChangelogAudience = 'players'): UseQueryResult<PublicChangelog> {
   return useQuery({
-    queryKey: CHANGELOG_KEY,
-    queryFn: () => mmApi<PublicChangelog>('/api/public/changelog'),
+    queryKey: ['changelog', audience],
+    queryFn: () => mmApi<PublicChangelog>(CHANGELOG_URL[audience]),
     staleTime: REFRESH_MS,
     refetchInterval: REFRESH_MS,
     retry: 1,
@@ -143,15 +148,18 @@ function UpdateNote({
  */
 export function VersionPill({
   look,
+  audience = 'players',
   updatesTo,
   className,
 }: {
   readonly look: WhatsNewLook;
+  /** `team`: the signed-in panel – every change, also a newer engine (needs a team login). */
+  readonly audience?: ChangelogAudience;
   readonly updatesTo?: string;
   readonly className?: string;
 }): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
-  const changelog = useChangelog();
+  const changelog = useChangelog(audience);
   const [open, setOpen] = useState(false);
   const [shown, setShown] = useState(PAGE);
   const data = changelog.data;

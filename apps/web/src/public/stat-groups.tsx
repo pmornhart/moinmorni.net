@@ -88,7 +88,7 @@ export function SubjectTable({
             <tr key={s.id}>
               {/* Stays in view while the numbers scroll sideways (phone). */}
               <th scope="row" className="sticky left-0 bg-card px-4 py-2 font-bold">
-                {stat.subject(s.id)}
+                {stat.subject(s.id, mode)}
               </th>
               {groups.kinds.map((kind) => {
                 const key = s.keys[kind];
@@ -156,7 +156,7 @@ export function SubjectPicker({
       >
         {groups.subjects.map((s) => (
           <option key={s.id} value={s.id}>
-            {stat.subject(s.id)}
+            {stat.subject(s.id, mode)}
           </option>
         ))}
       </Select>

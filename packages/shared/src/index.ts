@@ -9,3 +9,4 @@ export * from './streamer.js';
 export * from './commands.js';
 export * from './lobby-music.js';
 export * from './changelog.js';
+export * from './stat-keys.js';

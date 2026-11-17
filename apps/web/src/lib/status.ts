@@ -62,3 +62,11 @@ export function modeLook(mode: ModeStatus): ModeLook {
 export function modeJoinable(mode: ModeStatus): boolean {
   return mode.state === 'on';
 }
+
+/**
+ * Open right now for playing: switched on and not on a break (Winter Games in summer, a mode that says it is closed).
+ * A sleeping mode counts – it wakes up as soon as someone comes.
+ */
+export function modeOpenNow(mode: ModeStatus): boolean {
+  return mode.state === 'on' && modePause(mode) === null;
+}

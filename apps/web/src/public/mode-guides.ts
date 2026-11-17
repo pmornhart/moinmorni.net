@@ -1,4 +1,4 @@
-import type { GameRight } from '@moinmorni/shared';
+import type { GameRight, Text } from '@moinmorni/shared';
 
 /**
  * How each game mode is played: three short tips and the most important commands (texts under
@@ -7,7 +7,8 @@ import type { GameRight } from '@moinmorni/shared';
  */
 export interface GuideCommand {
   readonly key: string;
-  readonly syntax: string;
+  /** One spelling, or German and English where words differ (placeholders, words the mode also takes in English). */
+  readonly syntax: string | Text;
   /** Only for ranks with this right in the game (team tools of the mode). */
   readonly right?: GameRight;
 }
@@ -39,7 +40,7 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
       { key: 'tpahere', syntax: '/tpahere <name>' },
       { key: 'tpaccept', syntax: '/tpaccept' },
       { key: 'tpdeny', syntax: '/tpdeny' },
-      { key: 'clanCreate', syntax: '/clan create <name> [kürzel]' },
+      { key: 'clanCreate', syntax: { de: '/clan create <name> [kürzel]', en: '/clan create <name> [tag]' } },
       { key: 'clanInvite', syntax: '/clan invite <name>' },
       { key: 'clanBase', syntax: '/clan base' },
       { key: 'cc', syntax: '/cc <text>' },
@@ -59,23 +60,32 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
     team: [
       { key: 'ansehen', syntax: '/ansehen <name>', right: 'inspect' },
       { key: 'einfrieren', syntax: '/einfrieren <name>', right: 'inspect' },
-      { key: 'nether', syntax: '/nether [weg]', right: 'inspect' },
-      { key: 'end', syntax: '/end [weg]', right: 'inspect' },
+      { key: 'nether', syntax: { de: '/nether [weg]', en: '/nether [remove]' }, right: 'inspect' },
+      { key: 'end', syntax: { de: '/end [weg]', en: '/end [remove]' }, right: 'inspect' },
       { key: 'mcadmin', syntax: '/mcadmin reload', right: 'ranks' },
     ],
   },
   duels: {
     tips: 4,
     commands: [
-      { key: 'duel', syntax: '/duel <name> [kampfart] [1|3|5]' },
-      { key: 'partykampf', syntax: '/partykampf [kampfart] [teams]' },
-      { key: 'kit', syntax: '/kit [kampfart]' },
-      { key: 'top', syntax: '/top [kampfart]' },
+      { key: 'duel', syntax: { de: '/duel <name> [kampfart] [1|3|5]', en: '/duel <name> [style] [1|3|5]' } },
+      {
+        key: 'partykampf',
+        syntax: { de: '/partykampf [kampfart] [teams]', en: '/partykampf [style] [teams]' },
+      },
+      { key: 'kit', syntax: { de: '/kit [kampfart]', en: '/kit [style]' } },
+      { key: 'top', syntax: { de: '/top [kampfart]', en: '/top [style]' } },
     ],
     more: [
-      { key: 'annehmen', syntax: '/duel annehmen [name]' },
-      { key: 'ablehnen', syntax: '/duel ablehnen [name]' },
-      { key: 'warteschlange', syntax: '/warteschlange <kampfart> <locker|gewertet> <1v1|2v2>' },
+      { key: 'annehmen', syntax: { de: '/duel annehmen [name]', en: '/duel accept [name]' } },
+      { key: 'ablehnen', syntax: { de: '/duel ablehnen [name]', en: '/duel deny [name]' } },
+      {
+        key: 'warteschlange',
+        syntax: {
+          de: '/warteschlange <kampfart> <locker|gewertet> <1v1|2v2>',
+          en: '/warteschlange <style> <casual|ranked> <1v1|2v2>',
+        },
+      },
       { key: 'spectate', syntax: '/spectate <name>' },
       { key: 'verlassen', syntax: '/verlassen' },
       { key: 'stats', syntax: '/stats [name]' },
@@ -124,13 +134,13 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
       { key: 'rtp', syntax: '/rtp' },
       { key: 'ah', syntax: '/ah' },
       { key: 'shop', syntax: '/shop' },
-      { key: 'boerse', syntax: '/boerse [ware]' },
+      { key: 'boerse', syntax: { de: '/boerse [ware]', en: '/boerse [item]' } },
       { key: 'gs', syntax: '/gs sichern' },
       { key: 'geld', syntax: '/geld' },
     ],
     more: [
-      { key: 'wert', syntax: '/wert [alles]' },
-      { key: 'verkaufen', syntax: '/verkaufen [hand|alles]' },
+      { key: 'wert', syntax: { de: '/wert [alles]', en: '/wert [all]' } },
+      { key: 'verkaufen', syntax: { de: '/verkaufen [hand|alles]', en: '/verkaufen [hand|all]' } },
     ],
   },
   wolkenkampf: {
@@ -160,11 +170,12 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
     ],
   },
   adlerflug: {
-    tips: 3,
+    tips: 4,
     commands: [
       { key: 'adlerflug', syntax: '/adlerflug' },
       { key: 'ring', syntax: '/adlerflug ring' },
       { key: 'woche', syntax: '/adlerflug woche' },
+      { key: 'tag', syntax: '/adlerflug tag' },
       { key: 'uebung', syntax: '/adlerflug uebung' },
     ],
   },
@@ -177,3 +188,8 @@ export const MODE_GUIDES: Readonly<Record<string, ModeGuide>> = {
     ],
   },
 };
+
+/** The spelling of a mode command in the reader's language. */
+export function guideSyntax(command: GuideCommand, language: 'de' | 'en'): string {
+  return typeof command.syntax === 'string' ? command.syntax : command.syntax[language];
+}

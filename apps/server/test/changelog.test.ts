@@ -13,7 +13,8 @@ import { createEventBus } from '../src/lib/events.js';
 import { createGithubClient } from '../src/lib/github.js';
 import type { MotorClient } from '../src/motor/client.js';
 import { createStores, type Stores } from '../src/panel/stores.js';
-import { bulletItems, itemsOf, subjectItem } from '../src/system/changes.js';
+import { bulletItems, itemsOf, playerText, subjectItem } from '../src/system/changes.js';
+import type { PanelAuth } from '../src/panel/auth.js';
 import {
   changelogFor,
   installedVersion,
@@ -125,6 +126,71 @@ describe('Was ist neu: Commit-Nachrichten lesen', () => {
     // Die Update-Karte im Panel liest genauso.
     expect(changeOf('1234567890', 'Start ist schneller', null).items).toEqual([
       { kind: 'improved', text: 'Start ist schneller' },
+    ]);
+  });
+});
+
+/** Für die Routen: jeder ist angemeldet und im Team (die Rechte prüft `PanelAuth` selbst, das testen andere). */
+const anyTeam = {
+  resolve: async () => null,
+  require: async () => ({}),
+} as unknown as PanelAuth;
+const signedOut = {
+  resolve: async () => null,
+  require: async () => {
+    throw Object.assign(new Error('nicht angemeldet'), { statusCode: 401 });
+  },
+} as unknown as PanelAuth;
+
+describe('Was ist neu für Spieler: nur, was sie verstehen', () => {
+  test('Code-Spuren, Testzahlen, Branches, Umgebungsvariablen und Team-Themen fallen weg', () => {
+    // Bleibt (Spieler-Text, auch mit Schrägstrich-Befehlen, Zahlen und „Java/Bedrock“).
+    expect(playerText('Jump and Run statt Parkour-Spirale, Doppelsprung in der Lobby')).toBe(
+      'Jump and Run statt Parkour-Spirale, Doppelsprung in der Lobby',
+    );
+    expect(playerText('/musik an|aus für Java/Bedrock, Bester aus 3/5')).toBe(
+      '/musik an|aus für Java/Bedrock, Bester aus 3/5',
+    );
+    // Klammern mit Technik weg, der Rest bleibt.
+    expect(playerText('Sprachchat stummschalten (`hub/voice.ts`, MM_VOICE) auch in Discord')).toBe(
+      'Sprachchat stummschalten auch in Discord',
+    );
+    // Teil nach „;“ mit Technik und alles danach weg – keine Bruchstücke.
+    expect(playerText('Tafel hing doppelt; Ursache war holdSlot; danach wieder gut')).toBe(
+      'Tafel hing doppelt',
+    );
+    // Ganz weg: Dateien, Pfade, Variablen, Testzahlen, Branch, Panel, Proxmox, Versionen von Programmen.
+    for (const technical of [
+      'update.sh räumt den Bau-Zwischenstand nur nach einer Woche weg',
+      'Liste unter apps/server/src/system',
+      'Motor mit MH_BRAND=MoinMorni',
+      'Echt mit Test-Spielern 42/42',
+      'Stand des Entwicklungs-Branchs übernommen, ohne Konflikte',
+      'Panel → Duels: jede Kampfart an/aus',
+      'Einstellungen → Rang-Abzeichen (an/aus, Pflicht)',
+      'Proxmox-Einzeiler fragt nach dem Speicher',
+      'Kopien der config.yml auf Party 0.2.2',
+      'tsx mindestens 4.23.15',
+      'Der Hub nimmt sie von dort',
+      'Abschnitt rueckkehr-sekunden für Versteckerl',
+      'shot.py folgt bewegten Spielern',
+    ]) {
+      expect(playerText(technical), technical).toBeNull();
+    }
+  });
+
+  test('lange Sätze enden am letzten Satzende vor 280 Zeichen, nicht nach „bzw.“ oder „z. B.“', () => {
+    const first = `Die Lobby lädt jetzt deutlich schneller, z. B. nach einem Neustart bzw. nach einem Update ${'und noch mehr '.repeat(8)}hinterher.`;
+    const long = `${first} Danach kommt ein zweiter Satz, ${'der sehr lang ist '.repeat(10)}und abgeschnitten wird.`;
+    expect(playerText(long)).toBe(first);
+  });
+
+  test('Commits ohne etwas für Spieler bleiben für sie leer, fürs Team nicht', () => {
+    const message = `Updates schneller\n\n- Verbessert: update.sh baut nur Geändertes\n- Neu: 5 Tests (12/12)${SIGNATURE}`;
+    expect(itemsOf(message, 'players')).toEqual([]);
+    expect(itemsOf(message).length).toBe(2);
+    expect(itemsOf(`Doppelsprung in der Lobby${SIGNATURE}`, 'players')).toEqual([
+      { kind: 'other', text: 'Doppelsprung in der Lobby' },
     ]);
   });
 });
@@ -312,7 +378,7 @@ describe('Was ist neu: öffentliche Schnittstelle und neue Version', () => {
     const app = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>();
     app.setValidatorCompiler(validatorCompiler);
     app.setSerializerCompiler(serializerCompiler);
-    registerChangelogRoute(app as unknown as Api, {
+    registerChangelogRoute(app as unknown as Api, anyTeam, {
       version: `v0.0.5-0-g${OLD}`,
       file,
       update: () => updates.peek(),
@@ -356,5 +422,63 @@ describe('Was ist neu: öffentliche Schnittstelle und neue Version', () => {
     expect(gh.apiCalls.length).toBe(asked);
     expect(view.moinmorni.latest).toBe(NEW.slice(0, SHORT_SHA));
     await app.close();
+  });
+
+  test('Webseite: nur Spieler-Stichpunkte, „Update bereit“ nur mit neuer Nummer von MoinMorni; Panel: alles', async () => {
+    const repo = path.join(dir, 'repo-team');
+    fs.mkdirSync(repo);
+    const inRepo = gitIn(repo);
+    inRepo.run('init', '-q', '-b', 'main');
+    inRepo.commit(
+      [
+        'Lobby schöner',
+        '',
+        '- Neu: Christbaum im Winter',
+        '- Behoben: Tafel stand doppelt (`LobbyJump.java`)',
+        '- Verbessert: update.sh baut schneller',
+        '- Neu: Panel → Lobby: Saison wählen',
+        SIGNATURE,
+      ].join('\n'),
+    );
+    const file = path.join(dir, 'changelog-team.txt');
+    fs.writeFileSync(file, execFileSync('bash', [SCRIPT, repo], { encoding: 'utf8' }));
+    const head = inRepo.run('rev-parse', '--short', 'HEAD').trim();
+    // Nur der Motor ist neuer: MoinMorni hat keine neue Nummer.
+    const motorOnly = { available: true, version: null };
+    const build = (auth: PanelAuth) => {
+      const app = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>();
+      app.setValidatorCompiler(validatorCompiler);
+      app.setSerializerCompiler(serializerCompiler);
+      registerChangelogRoute(app as unknown as Api, auth, {
+        version: `v0.0.1-0-g${head}`,
+        file,
+        update: () => motorOnly,
+      });
+      return app;
+    };
+    const app = build(anyTeam);
+    const site = (await app.inject({ method: 'GET', url: '/api/public/changelog' })).json<PublicChangelog>();
+    expect(site.versions[0]?.items).toEqual([
+      { kind: 'new', text: 'Christbaum im Winter' },
+      { kind: 'fixed', text: 'Tafel stand doppelt' },
+    ]);
+    expect(site.update).toEqual({ available: false, version: null });
+
+    const res = await app.inject({ method: 'GET', url: '/api/panel/changelog' });
+    expect(res.headers['cache-control']).toBe('private, no-store');
+    const panel = res.json<PublicChangelog>();
+    expect(panel.versions[0]?.items.map((i) => i.text)).toEqual([
+      'Christbaum im Winter',
+      'Tafel stand doppelt (LobbyJump.java)',
+      'update.sh baut schneller',
+      'Panel → Lobby: Saison wählen',
+    ]);
+    expect(panel.update).toEqual(motorOnly);
+    await app.close();
+
+    // Ohne Anmeldung gibt es die ausführliche Liste nicht.
+    const outside = build(signedOut);
+    expect((await outside.inject({ method: 'GET', url: '/api/panel/changelog' })).statusCode).toBe(401);
+    await outside.close();
   });
 });

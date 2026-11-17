@@ -39,7 +39,7 @@ import { useNetworkStatus } from '~/lib/status';
 import { useLanguage, usePick } from '~/lib/text';
 import { modeStyle } from './cards';
 import { Chip, GameButton, LoadError, ModeStateChip, Panel, RankTag } from './kit';
-import { MODE_GUIDES, type GuideCommand } from './mode-guides';
+import { guideSyntax, MODE_GUIDES, type GuideCommand } from './mode-guides';
 import { PageHero } from './page-hero';
 import { WRAP } from './parts';
 
@@ -187,7 +187,7 @@ function SectionTitle({
         <h2
           id={id}
           // Below the sticky header and jump bar when jumped to.
-          className="flex scroll-mt-40 items-center gap-3 font-pixel text-[clamp(1.8rem,4vw,2.5rem)] font-bold leading-none"
+          className="flex scroll-mt-40 items-center gap-3 font-pixel md:scroll-mt-52 text-[clamp(1.8rem,4vw,2.5rem)] font-bold leading-none"
         >
           <span
             className={cn(
@@ -319,9 +319,15 @@ function JumpBar({
   return (
     <nav
       aria-label={t('site.commands.jump')}
-      className="sticky top-[var(--header-h)] z-20 border-b-2 border-border bg-background/92 backdrop-blur-md"
+      className="sticky top-[var(--header-h-small)] z-20 border-b-2 border-border bg-background/92 backdrop-blur-md"
     >
-      <div className={cn(WRAP, 'flex gap-2 overflow-x-auto py-2.5 [scrollbar-width:none]')}>
+      {/* Phones scroll sideways; from tablets on everything wraps into rows, so no mode is out of reach. */}
+      <div
+        className={cn(
+          WRAP,
+          'flex gap-2 overflow-x-auto py-2.5 [scrollbar-width:none] md:flex-wrap md:gap-1.5 md:overflow-x-visible',
+        )}
+      >
         {items.map((item) => (
           <button
             key={item.id}
@@ -352,11 +358,12 @@ function ModeSection({
 }): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
+  const language = useLanguage();
   const guide = MODE_GUIDES[mode.id];
   if (!guide) return null;
   const row = (c: GuideCommand): Row => ({
     id: `${mode.id}-${c.key}`,
-    syntax: c.syntax,
+    syntax: guideSyntax(c, language),
     text: t(`site.guide.${mode.id}.cmd.${c.key}`),
     need: needOf(c.right),
   });
