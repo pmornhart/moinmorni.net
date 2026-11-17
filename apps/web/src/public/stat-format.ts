@@ -1,7 +1,7 @@
-import { DUELS_KITS } from '@moinmorni/shared';
+import { statHasOwnName, statName, statSubjectName, type StatTextLookup } from '@moinmorni/shared';
 import { useTranslation } from 'react-i18next';
 import { MM_NAMESPACE } from '~/i18n';
-import { pick, useLanguage } from '~/lib/text';
+import { useLanguage } from '~/lib/text';
 
 /** Numbers and values of the game modes, the same everywhere on the website (profile, leaderboards, mode pages). */
 
@@ -39,40 +39,15 @@ export function readable(key: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/**
- * Best time of a course or event: "time_almrundflug_ms" → "almrundflug"; not "best_time_ms" or "time_ms".
- * https://regex101.com/?flavor=javascript&regex=%5Etime_(%5Ba-z0-9%5D%5Ba-z0-9_%5D*)_ms%24&testString=time_almrundflug_ms
- */
-const TIME_OF = /^time_([a-z0-9][a-z0-9_]*)_ms$/;
-/**
- * A value of one fighting style, game type or course: "wins_sumo" → wins + sumo, "elo_bruecke" → elo + bruecke,
- * "finishes_klammflug" → finishes + klammflug; not "wins" or "best_streak".
- * https://regex101.com/?flavor=javascript&regex=%5E(games%7Cwins%7Closses%7Cdraws%7Celo%7Cfinishes)_(%5Ba-z0-9%5D%5Ba-z0-9_%5D*)%24&testString=elo_bruecke
- */
-const KIND_OF = /^(games|wins|losses|draws|elo|finishes)_([a-z0-9][a-z0-9_]*)$/;
-/** Kind of a best time: its column is called like the value "best_ms" ("Bestzeit"). */
-const TIME_KIND = 'best_ms';
-
-/** One value split into what it counts and what it belongs to ("wins_sumo" → wins of Sumo). */
-export interface StatPart {
-  readonly kind: string;
-  readonly subject: string;
-}
-
-/** "wins_sumo" → { kind: "wins", subject: "sumo" }, "time_klammflug_ms" → best time of Klammflug; else null. */
-export function statPart(key: string): StatPart | null {
-  const time = TIME_OF.exec(key);
-  if (time?.[1]) return { kind: TIME_KIND, subject: time[1] };
-  const kind = KIND_OF.exec(key);
-  return kind?.[1] && kind[2] ? { kind: kind[1], subject: kind[2] } : null;
-}
+/** Splitting a value into kind and subject lives in the shared package (also used by the name test there). */
+export { statPart, type StatPart } from '@moinmorni/shared';
 
 /** Name of a value ("Siege") and the value itself ("1.234", "1:07,729") in the reader's language. */
 export function useStatText(): {
   /** Name of a value; with the mode, its own words win ("Kämpfe" in Duels instead of "Runden"). */
   readonly label: (key: string, mode?: string) => string;
   /** Name of what a value belongs to: a fighting style, game type or course ("Brücke", "Klammflug"). */
-  readonly subject: (id: string) => string;
+  readonly subject: (id: string, mode?: string) => string;
   /** Has the value its own name (then it is not split into kind and subject, e.g. "wins_hider")? */
   readonly named: (key: string, mode?: string) => boolean;
   readonly value: (key: string, value: number) => string;
@@ -81,31 +56,11 @@ export function useStatText(): {
   const language = useLanguage();
   const locale = NUMBER_LOCALE[language];
   const number = new Intl.NumberFormat(locale);
-  // Own words of the mode first ("site.players.statsIn.duels.games"), then the general ones.
-  const own = (key: string, mode?: string, what = ''): string => {
-    const options = { defaultValue: '', what, course: what };
-    return (
-      (mode ? t(`site.players.statsIn.${mode}.${key}`, options) : '') ||
-      t(`site.players.stats.${key}`, options)
-    );
-  };
-  const subject = (id: string): string => {
-    const kit = DUELS_KITS.find((k) => k.id === id);
-    if (kit) return pick(kit.name, language);
-    return t(`site.players.courses.${id}`, { defaultValue: readable(id) });
-  };
-  const label = (key: string, mode?: string): string => {
-    const named = own(key, mode);
-    if (named) return named;
-    const part = statPart(key);
-    if (!part) return readable(key);
-    const kind = part.kind === TIME_KIND ? 'time' : part.kind;
-    return own(`${kind}Of`, mode, subject(part.subject)) || readable(key);
-  };
+  const text: StatTextLookup = (key, what = '') => t(key, { defaultValue: '', what, course: what });
   return {
-    label,
-    subject,
-    named: (key, mode) => Boolean(own(key, mode)),
+    label: (key, mode) => statName(text, key, mode, language) || readable(key),
+    subject: (id, mode) => statSubjectName(text, id, mode, language) || readable(id),
+    named: (key, mode) => statHasOwnName(text, key, mode),
     value: (key, value) => (key.endsWith(TIME_SUFFIX) ? formatTime(value, locale) : number.format(value)),
   };
 }

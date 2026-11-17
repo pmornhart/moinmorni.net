@@ -9,7 +9,8 @@ import {
   type PublicChangelog,
 } from '@moinmorni/shared';
 import type { Api } from '../app.js';
-import { itemsOf } from './changes.js';
+import type { PanelAuth } from '../panel/auth.js';
+import { itemsOf, type ChangeAudience } from './changes.js';
 import { commitOf } from './update.js';
 
 /**
@@ -84,7 +85,7 @@ const finish = (d: Draft): ChangelogVersion => {
  * Liest die Ausgabe von `scripts/changelog.sh` (neueste Version zuerst). Unbekanntes Format oder kaputte Einträge:
  * leer bzw. übersprungen – „Was ist neu“ zeigt dann nur die Nummer.
  */
-export function parseChangelog(text: string): ChangelogVersion[] {
+export function parseChangelog(text: string, audience: ChangeAudience = 'team'): ChangelogVersion[] {
   const [head = '', ...records] = text.split(RECORD);
   if (head.trim() !== HEADER) return [];
   const drafts = records.map(entryOf).reduce<Draft[]>((acc, entry) => {
@@ -99,14 +100,14 @@ export function parseChangelog(text: string): ChangelogVersion[] {
           sha,
           date: validDate(date),
           merge: parents.length > 1,
-          own: itemsOf(entry.message),
+          own: itemsOf(entry.message, audience),
           merged: [],
         },
       ];
     }
     const last = acc.at(-1);
     if (entry.tag !== MERGED_TAG || !last) return acc;
-    return [...acc.slice(0, -1), { ...last, merged: [...last.merged, ...itemsOf(entry.message)] }];
+    return [...acc.slice(0, -1), { ...last, merged: [...last.merged, ...itemsOf(entry.message, audience)] }];
   }, []);
   return drafts.map(finish);
 }
@@ -119,11 +120,15 @@ export function changelogFile(env: NodeJS.ProcessEnv = process.env): string | nu
 }
 
 /** Die Liste zur installierten Version – nur Einträge bis zu ihr, und nur, wenn die Datei zu ihr passt. */
-export function changelogFor(version: string, file: string | null): readonly ChangelogVersion[] {
+export function changelogFor(
+  version: string,
+  file: string | null,
+  audience: ChangeAudience = 'team',
+): readonly ChangelogVersion[] {
   if (!file) return [];
   const all = (() => {
     try {
-      return parseChangelog(fs.readFileSync(file, 'utf8'));
+      return parseChangelog(fs.readFileSync(file, 'utf8'), audience);
     } catch {
       return [];
     }
@@ -153,14 +158,28 @@ export interface ChangelogDeps {
   readonly update: () => { readonly available: boolean; readonly version: string | null };
 }
 
-/** `GET /api/public/changelog`: installierte Version, ihre Geschichte, ob eine neue bereitsteht. */
-export function registerChangelogRoute(app: Api, deps: ChangelogDeps): void {
+/**
+ * `GET /api/public/changelog` (Webseite, ohne Anmeldung): installierte Version und was Spieler davon verstehen –
+ * ohne Dateinamen, Testzahlen, Branches. „Neue Version steht bereit“ nur, wenn MoinMorni selbst eine neue Nummer hat
+ * (ist nur der Motor neuer, merken Spieler davon nichts).
+ *
+ * `GET /api/panel/changelog` (Team): alles, auch technische Stichpunkte und ein neuerer Motor.
+ */
+export function registerChangelogRoute(app: Api, auth: PanelAuth, deps: ChangelogDeps): void {
   // Einmal gelesen – die Datei ändert sich nur mit einem neuen Image.
-  const versions = changelogFor(deps.version, deps.file);
-  const version = installedVersion(deps.version, versions);
+  const team = changelogFor(deps.version, deps.file, 'team');
+  const players = changelogFor(deps.version, deps.file, 'players');
+  const version = installedVersion(deps.version, team);
   app.get('/api/public/changelog', async (_request, reply): Promise<PublicChangelog> => {
     const update = deps.update();
     reply.header('cache-control', `public, max-age=${CACHE_SECONDS}`);
-    return { version, versions, update: { available: update.available, version: update.version } };
+    const ours = update.available && update.version !== null;
+    return { version, versions: players, update: { available: ours, version: ours ? update.version : null } };
+  });
+  app.get('/api/panel/changelog', async (request, reply): Promise<PublicChangelog> => {
+    await auth.require(request);
+    const update = deps.update();
+    reply.header('cache-control', 'private, no-store');
+    return { version, versions: team, update: { available: update.available, version: update.version } };
   });
 }

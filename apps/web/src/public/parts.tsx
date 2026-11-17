@@ -1,5 +1,5 @@
 import { Camera, Clapperboard, Music2, type LucideIcon } from 'lucide-react';
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -37,6 +37,46 @@ export function usePageTitle(title?: string): void {
 /** Day pictures in the light design, night pictures in the dark one. */
 export function useDayTime(): DayTime {
   return timeOf(useTheme().resolved);
+}
+
+/**
+ * Pictures behind the see-through header (the hero of a page). A page without one – a "not found" page, a page still
+ * loading – starts with a light background: there the white menu would be unreadable, so the header is solid right away.
+ */
+let heroes = 0;
+const heroListeners = new Set<() => void>();
+const heroChanged = (): void => heroListeners.forEach((l) => l());
+const watchHeroes = (listener: () => void): (() => void) => {
+  heroListeners.add(listener);
+  return () => heroListeners.delete(listener);
+};
+
+/** A hero calls this: while it is on the page, the header may stay see-through at the top. */
+export function useHeroUnderHeader(): void {
+  // Before the first paint, so the header never flashes solid on a page with a picture.
+  useLayoutEffect(() => {
+    heroes += 1;
+    heroChanged();
+    return () => {
+      heroes -= 1;
+      heroChanged();
+    };
+  }, []);
+}
+
+/** For a hero drawn inline (news article): put this inside it. */
+export function HeroUnderHeader(): null {
+  useHeroUnderHeader();
+  return null;
+}
+
+/** Is a hero behind the header right now? */
+export function useHeroShown(): boolean {
+  return useSyncExternalStore(
+    watchHeroes,
+    () => heroes > 0,
+    () => false,
+  );
 }
 
 /** True once the page is scrolled further than `threshold` pixels (the header turns solid). */

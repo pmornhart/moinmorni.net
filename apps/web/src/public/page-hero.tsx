@@ -2,7 +2,7 @@ import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { cn } from '~/lib/cn';
 import { modeArt, sceneImage, type Scene } from './art';
 import { Eyebrow, PixelEdge } from './kit';
-import { useDayTime, usePageTitle, WRAP } from './parts';
+import { useDayTime, useHeroUnderHeader, usePageTitle, WRAP } from './parts';
 
 /**
  * The top of every sub page: one of our village renders behind a dark veil, a pixel title, and optionally a mode's
@@ -34,6 +34,7 @@ export function PageHero({
   readonly titleClassName?: string;
 }): ReactElement {
   usePageTitle(title);
+  useHeroUnderHeader();
   const time = useDayTime();
   const figureSrc = figure ? modeArt(figure).figure : null;
   const tintStyle: CSSProperties | undefined = tint

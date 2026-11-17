@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
-import { GROUP_IMAGE, type Scene } from './art';
+import { useNetworkStatus } from '~/lib/status';
+import { GROUP_IMAGE, modeArt, type Scene } from './art';
 import { GameButton, Panel } from './kit';
 import { PageHero } from './page-hero';
 import { WRAP } from './parts';
@@ -39,14 +40,7 @@ export function InfoPage({
             </span>
           ) : null}
           <p className="text-[1.15rem] leading-relaxed text-pretty">{t(`pages.${page}.text`)}</p>
-          {lost ? (
-            <img
-              src={GROUP_IMAGE}
-              alt={t('pages.notFound.figures')}
-              loading="lazy"
-              className="mx-auto mt-2 w-full max-w-[640px] drop-shadow-[0_10px_12px_rgba(0,0,0,0.3)]"
-            />
-          ) : null}
+          {lost ? <LostFigures /> : null}
         </Panel>
         <div>
           <GameButton asChild tone={lost ? 'gold' : 'stone'}>
@@ -58,5 +52,39 @@ export function InfoPage({
         </div>
       </div>
     </>
+  );
+}
+
+/** The figures of all game modes there are right now (the group picture only shows the first seven). */
+function LostFigures(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const modes = useNetworkStatus().data?.modes ?? [];
+  const figures = modes.map((m) => modeArt(m.id).figure).filter((f): f is string => Boolean(f));
+  if (!figures.length) {
+    return (
+      <img
+        src={GROUP_IMAGE}
+        alt={t('pages.notFound.figuresSome')}
+        loading="lazy"
+        className="mx-auto mt-2 w-full max-w-[640px] drop-shadow-[0_10px_12px_rgba(0,0,0,0.3)]"
+      />
+    );
+  }
+  return (
+    <div
+      role="img"
+      aria-label={t('pages.notFound.figures', { count: figures.length })}
+      className="mx-auto mt-2 flex w-full max-w-[720px] flex-wrap items-end justify-center gap-x-1 gap-y-3"
+    >
+      {figures.map((src) => (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          loading="lazy"
+          className="h-24 w-auto drop-shadow-[0_8px_10px_rgba(0,0,0,0.3)] sm:h-32"
+        />
+      ))}
+    </div>
   );
 }

@@ -26,7 +26,7 @@ import { useEffect, useState, type ReactElement, type ReactNode, type SyntheticE
 import { DEFAULT_ROLES, roleBadgeLook } from '@moinmorni/shared';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
-import { NETWORK_COMMANDS } from '@moinmorni/shared';
+import { NETWORK_COMMANDS, type Text } from '@moinmorni/shared';
 import { useCopy } from '~/components/controls';
 import { PixelBadge } from '~/components/pixel-badge';
 import { MM_NAMESPACE } from '~/i18n';
@@ -83,13 +83,21 @@ const COMMANDS = NETWORK_COMMANDS.filter(
   (c) => !c.right && c.topic !== 'lobby' && c.topic !== 'team' && c.where === 'hub',
 ).flatMap((c) => c.lines.slice(0, 1));
 
-/** The parts of streamer mode with the word after /streamer that switches each (texts site.help.streamer.parts.*). */
-const STREAMER_PARTS: readonly { readonly key: string; readonly word: string }[] = [
-  { key: 'ip', word: 'ip' },
-  { key: 'coords', word: 'koordinaten' },
-  { key: 'msg', word: 'nachrichten' },
-  { key: 'live', word: 'live' },
+/**
+ * The parts of streamer mode with the word after /streamer that switches each (texts site.help.streamer.parts.*) – the
+ * hub takes German and English words (apps/server/src/hub/streamer.ts), the page shows the reader's.
+ */
+const STREAMER_PARTS: readonly { readonly key: string; readonly word: Text }[] = [
+  { key: 'ip', word: { de: 'ip', en: 'ip' } },
+  { key: 'coords', word: { de: 'koordinaten', en: 'coords' } },
+  { key: 'msg', word: { de: 'nachrichten', en: 'messages' } },
+  { key: 'live', word: { de: 'live', en: 'live' } },
 ];
+/** /streamer an|aus – the hub also takes on|off. */
+const STREAMER_SWITCH: Readonly<Record<'on' | 'off', Text>> = {
+  on: { de: 'an', en: 'on' },
+  off: { de: 'aus', en: 'off' },
+};
 
 /** In case the website does not know the channels yet (older server version). */
 const VOICE_FALLBACK = ['Dorfplatz', 'Biergarten', 'Turnier'] as const;
@@ -401,17 +409,18 @@ function CommandsBody(): ReactElement {
 /** Streamer mode: what it hides, how to switch it and each part, the F3 tip – on every server of the network. */
 function StreamerBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const pick = usePick();
   return (
     <div className="grid gap-5">
       <p>{t('site.help.streamer.intro')}</p>
       <Steps
         items={[
           <>
-            {t('site.help.streamer.step1')} <Cmd>/streamer an</Cmd>
+            {t('site.help.streamer.step1')} <Cmd>{`/streamer ${pick(STREAMER_SWITCH.on)}`}</Cmd>
           </>,
           t('site.help.streamer.step2'),
           <>
-            {t('site.help.streamer.step3')} <Cmd>/streamer aus</Cmd>
+            {t('site.help.streamer.step3')} <Cmd>{`/streamer ${pick(STREAMER_SWITCH.off)}`}</Cmd>
           </>,
         ]}
       />
@@ -422,7 +431,7 @@ function StreamerBody(): ReactElement {
             className="grid gap-1.5 border-b-2 border-border px-4 py-3 last:border-b-0 even:bg-background-alt/60 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-center sm:gap-4"
           >
             <dt>
-              <Cmd>{`/streamer ${part.word}`}</Cmd>
+              <Cmd>{`/streamer ${pick(part.word)}`}</Cmd>
             </dt>
             <dd className="text-[15px] text-muted-foreground">{t(`site.help.streamer.parts.${part.key}`)}</dd>
           </div>

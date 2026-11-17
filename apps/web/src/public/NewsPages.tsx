@@ -11,7 +11,7 @@ import { useTimeText } from '~/lib/time';
 import { CATEGORY_ICON, CategoryChip, FeaturedNews, NewsCard, NewsImage } from './cards';
 import { EmptyState, GameButton, LoadError, PixelEdge } from './kit';
 import { PageHero } from './page-hero';
-import { Paragraphs, usePageTitle, WRAP } from './parts';
+import { HeroUnderHeader, Paragraphs, usePageTitle, WRAP } from './parts';
 
 const FILTER_PARAM = 'kategorie';
 const MORE_NEWS = 3;
@@ -169,6 +169,7 @@ export function NewsArticlePage(): ReactElement {
   return (
     <>
       <section className="mm-on-dark relative isolate overflow-hidden bg-band text-white">
+        <HeroUnderHeader />
         <NewsImage item={news} eager className="mm-settle absolute inset-0 -z-20" />
         <div
           className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/50 to-black/70"

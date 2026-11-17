@@ -63,7 +63,8 @@
     "notFound": {
       "title": "This page does not exist",
       "text": "Maybe there is a typo. Everything can be found from the start page.",
-      "figures": "The seven game modes' figures"
+      "figures": "The figures of all {{count}} game modes",
+      "figuresSome": "Figures of the game modes"
     }
   },
   "site": {
@@ -157,7 +158,9 @@
       "closed": "Closed right now.",
       "maintenance": "Under maintenance – back soon.",
       "soon": "Coming soon – still being built.",
-      "pause": "Summer break right now – competitions run from 1 December to 31 March. You can still visit the village."
+      "pause": "Summer break right now – competitions run from 1 December to 31 March. You can still visit the village.",
+      "invite": "Invite only – you need a spot on the whitelist. Ask on Discord.",
+      "inviteApply": "Invite only – apply for a spot on the whitelist."
     },
     "mode": {
       "eyebrow": "Game mode",
@@ -205,6 +208,8 @@
       "homeTitle": "MoinMorni in numbers",
       "modesOpen": "Game modes open",
       "modesOpenHint": "Open around the clock – you get in right away.",
+      "modesShutHint": "Closed right now: {{names}}. All others are open around the clock.",
+      "modesShutMany": "{{count}} game modes are closed right now – all others are open around the clock.",
       "modeBoards": "Game mode leaderboards",
       "modeBoardsText": "Who's on top in the modes? Pick a mode and a value.",
       "modeBoardsModes": "Game mode",
@@ -309,7 +314,19 @@
         "lossesOf": "Losses {{what}}",
         "drawsOf": "Draws {{what}}",
         "eloOf": "Best rating {{what}}",
-        "subjectHead": "Course"
+        "subjectHead": "Course",
+        "runs": "Runs",
+        "rooms": "Rooms",
+        "best_score": "Best score",
+        "revives": "Revives",
+        "minigames_won": "Minigames won",
+        "summits": "Summits reached",
+        "earned": "Points banked",
+        "bonus": "Bonus points",
+        "helps": "Helpers bought",
+        "unlocks": "Bought in the shop",
+        "spent": "Spent in the shop",
+        "days": "Days with the course of the day"
       },
       "statsIn": {
         "duels": {
@@ -318,10 +335,50 @@
           "subjectHead": "Style"
         },
         "party": {
-          "subjectHead": "Game type"
+          "subjectHead": "Game type",
+          "games": "Games",
+          "gamesOf": "Games {{what}}",
+          "edelweiss": "Edelweiss collected",
+          "edelweiss_best": "Most edelweiss in one game",
+          "marathon_points_best": "Best Minigame Marathon score",
+          "huette_lives_best": "Most lives left in Hut Climb",
+          "turnier_matches_best": "Most wins in one Summit Cup",
+          "tatzelwurm_stars_best": "Best stars against the Tatzelwurm"
         },
         "wintersport": {
-          "subjectHead": "Event"
+          "subjectHead": "Event",
+          "wins": "Overall wins",
+          "best_points": "Most points in one competition"
+        },
+        "burgverlies": {
+          "runs": "Descents",
+          "wins": "Descents completed",
+          "rooms": "Rooms cleared",
+          "bosses": "Dungeon Master defeated",
+          "best_score": "Best score",
+          "best_time_ms": "Fastest win"
+        },
+        "bollwerk": {
+          "kills": "Enemies defeated",
+          "waves": "Waves held off",
+          "revives": "Teammates revived",
+          "best_wave": "Best wave"
+        },
+        "versteckerl": {
+          "best_points": "Best round (points)",
+          "best_streak": "Longest win streak",
+          "helps": "Helpers from the crate",
+          "unlocks": "Bought at the general store",
+          "spent": "Spent at the general store"
+        },
+        "adlerflug": {
+          "finishes": "Flights finished"
+        },
+        "wolkenkampf": {
+          "deaths": "Knocked out"
+        },
+        "mirni": {
+          "balance": "Coins in the bank"
         }
       },
       "courses": {
@@ -343,7 +400,21 @@
         "felsgrat": "Rocky Ridge",
         "seilbahn": "Cable Car Pylons",
         "eishoehle": "Ice Cave",
-        "wetterturm": "Weather Tower"
+        "wetterturm": "Weather Tower",
+        "gipfelrennen": "Summit Race",
+        "edelweiss_jagd": "Edelweiss Hunt",
+        "marathon": "Minigame Marathon",
+        "seilschaft": "Rope Team",
+        "schnell": "Quick Game",
+        "bergduell": "Mountain Duel",
+        "huette": "Hut Climb",
+        "turnier": "Summit Cup",
+        "tatzelwurm": "The Tatzelwurm"
+      },
+      "coursesIn": {
+        "gipfelsturm": {
+          "gipfelkreuz": "Summit Cross Sprint"
+        }
       }
     },
     "team": {
@@ -734,12 +805,14 @@
       "adlerflug": {
         "tip1": "At the eagle’s eyrie you choose a course and run down the ski jump – the wings open by themselves.",
         "tip2": "Steer with the mouse: down makes you faster, up makes you climb. Fly through all rings in order.",
-        "tip3": "Updrafts lift you, boost rings give you speed – bronze, silver, gold or even eagle?",
+        "tip3": "Updrafts lift you, boost rings give you speed, bonus rings give you time – bronze, silver, gold, eagle or even golden eagle, the medal of the very best?",
+        "tip4": "Every day there is a new course of the day: direction, wind, time of day and weather change, with its own daily leaderboard.",
         "cmd": {
           "adlerflug": "Choose a course.",
           "ring": "Back to the last ring.",
           "woche": "Course of the week.",
-          "uebung": "Practice mode."
+          "uebung": "Practice mode.",
+          "tag": "Course of the day."
         }
       },
       "angelkoenig": {
