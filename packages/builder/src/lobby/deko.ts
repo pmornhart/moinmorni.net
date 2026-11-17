@@ -26,6 +26,43 @@ export function withoutHitbox(command: string): string {
   if (command.includes(NO_HITBOX)) return command;
   return command.replace(DISPLAY_SUMMON, `$1${NO_HITBOX},`);
 }
+/**
+ * Sichtweite kleiner Teile nach ihrer Größe (Leistung, Philip 17.11.: „Performance-Update“): Ohne `view_range` zeichnet
+ * der Client jede Anzeige bis 64 Blöcke weit (bei 100 % „Objektentfernung“) – auch ein Knöpfchen von 0,08 Blöcken, das
+ * dort keinen Bildpunkt mehr hat. Jetzt endet die Sichtweite, wo ein Teil auf einem Full-HD-Bild (Sichtfeld 70°) unter
+ * etwa drei Bildpunkte schrumpft: 4 × Größe (in 64-Blöcke-Einheiten), Leuchtendes doppelt so weit (ein heller Punkt
+ * fällt nachts noch auf). Größere Teile behalten 1 – es verschwindet nichts, was man sieht.
+ * Nur Block- und Item-Anzeigen ohne eigene Sichtweite; Text bleibt, wie er ist.
+ */
+const VIEW_PER_SIZE = 4;
+const VIEW_PER_SIZE_GLOW = 8;
+const VIEW_MIN = 0.25;
+const VIEW_STEP = 20;
+/**
+ * Größe aus der Transformation: "…scale:[0.17f,0.17f,0.17f]…" → 0.17, 0.17, 0.17.
+ * https://regex101.com/?flavor=javascript&regex=scale%3A%5C%5B(-%3F%5B%5Cd.%5D%2B)f%2C(-%3F%5B%5Cd.%5D%2B)f%2C(-%3F%5B%5Cd.%5D%2B)f%5C%5D&testString=translation%3A%5B0f%2C0f%2C0f%5D%2Cscale%3A%5B0.17f%2C0.17f%2C0.17f%5D%7D
+ */
+const SCALE = /scale:\[(-?[\d.]+)f,(-?[\d.]+)f,(-?[\d.]+)f\]/;
+/** Passt: "summon block_display …", "… run summon item_display ~ ~ ~{…}"; nicht: "summon text_display …". */
+const SHAPE_SUMMON = /summon (?:block_display|item_display) /;
+/** Leuchtet selbst (volle Block-Helligkeit): "brightness:{sky:15,block:15}". */
+const GLOWS = 'block:15}';
+
+export function viewRangeFor(size: number, glow: boolean): number | null {
+  const range = size * (glow ? VIEW_PER_SIZE_GLOW : VIEW_PER_SIZE);
+  if (range >= 1) return null;
+  return Math.max(VIEW_MIN, Math.round(range * VIEW_STEP) / VIEW_STEP);
+}
+
+export function withViewRange(command: string): string {
+  if (!SHAPE_SUMMON.test(command) || command.includes('view_range') || !command.endsWith('}')) return command;
+  const m = SCALE.exec(command);
+  if (!m) return command;
+  const size = Math.max(...m.slice(1).map((n) => Math.abs(Number(n))));
+  const view = viewRangeFor(size, command.includes(GLOWS));
+  return view === null ? command : `${command.slice(0, -1)},view_range:${f(view)}}`;
+}
+
 export const NO_TURN: Quat = [0, 0, 0, 1];
 
 export function multiply(a: Quat, b: Quat): Quat {

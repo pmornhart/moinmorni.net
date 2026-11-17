@@ -343,6 +343,14 @@ describe('Ostern', () => {
         (d) => d.includes("'mm_easter_eierbaum'") && !d.startsWith('summon text'),
       );
       expect(eggs?.length).toBeGreaterThan(30);
+      // Voll ist nur der Eierbaum – in den anderen blühenden Kirschbäumen hängen nur ein paar (jedes Ei ist ein Wesen;
+      // vorher waren es ~3000 und die Lobby wurde zu Ostern spürbar langsamer).
+      const own = (eggs ?? []).filter((d) => {
+        const [, , ex = '0', , ez = '0'] = d.split(' ');
+        return Math.hypot(Number(ex) - EIERBAUM.x, Number(ez) - EIERBAUM.z) <= EIERBAUM.radius + 3;
+      });
+      expect(own.length).toBeGreaterThan(30);
+      expect(eggs?.length).toBeLessThan(400);
       [...LAUNCHPADS, JUMP_AND_RUN.start].forEach((p) => {
         expect(Math.hypot(p.x - EIERBAUM.x, p.z - EIERBAUM.z)).toBeGreaterThan(12);
         expect(Math.hypot(p.x - OSTERHASE.x, p.z - OSTERHASE.z)).toBeGreaterThan(12);

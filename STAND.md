@@ -746,7 +746,42 @@
   Bilder mit Client 26.3 + Netzwerk-Paket vorher/nachher, Tag und Nacht, aus Philips Blickwinkeln (Stand x −1/z 10,
   Marktbogen x −4/z −19, Osterbogen x 1/z 27) und Schlossmarkt, dazu Wiesn/Halloween-Eingang (nur lokal).
 
+- 17.11. abends: **Leistung der Lobby gemessen** (Philip: „Performance-Update bitte“; Branch `claude/leistung`):
+  Messwerkzeug `tools/netz-test/leistung-messen.cjs` (Test-Spieler am Dorfplatz: Wesen je Art, Pakete/Bytes je Art und
+  welche Wesen sie auslösen, `/mspt`), dazu Stichproben des Server-Threads. **Befund:** Plugin-Code (Figuren, Musik,
+  Partikel, Schilder) kostet kaum etwas; Tick-Zeit und Netz wachsen mit der **Zahl der Anzeige-Wesen** – Minecraft
+  schickt jedem Spieler für jedes Wesen in Reichweite alle 3 s eine Lage und alle 20 s eine volle Lage, auch wenn es
+  stillsteht (Vanilla, nicht abschaltbar). Paper 26.1.2, ein Test-Spieler, Rechner mit anderen Helfern geteilt:
+
+  | Lobby (Stand)                            | Wesen | Pakete/s an den Spieler | KB/s | Tick (Mittel) |
+  | ---------------------------------------- | ----- | ----------------------- | ---- | ------------- |
+  | keine Saison                             | 1 270 | 476                     | 8    | 3,5 ms        |
+  | Ostern vorher (vor den Girlanden)        | 4 950 | 1 786                   | 32   | 6,5 ms        |
+  | Ostern nachher (vor den Girlanden)       | 2 150 | 842                     | 15   | 5,4 ms        |
+  | Ostern nachher (mit Girlanden)           | 5 360 | 2 189                   | 40   | 10,5 ms       |
+  | Winter (mit Girlanden, unverändert)      | 6 580 | 2 594                   | 46   | 12 ms         |
+
+  - **Behoben:** Zu Ostern hing unter fast jedem blühenden Kirschblatt im ganzen Dorf ein Ei (`eierbaum` suchte Blätter
+    im ganzen Bauplan: ~3000 Wesen statt der ~40 am Eierbaum). Jetzt der Eierbaum voll, die anderen Kirschbäume nur ein
+    paar Eier, wo man sie von unten sieht (238 statt 3010).
+  - **Verbessert:** Kleine Block-/Item-Anzeigen ohne eigene Sichtweite bekommen `view_range` nach Größe (`withViewRange`
+    in `deko.ts`, im Datenpaket für alles): Schluss, wo ein Teil auf Full-HD unter ~3 Bildpunkte fällt, Leuchtendes
+    doppelt so weit. Wirkt nur im Client und wenig (am Dorfplatz 2–4 % weniger gezeichnete Anzeigen) – fast alles steht
+    in der Nähe.
+  - Ausprobiert, nicht übernommen: `entity-broadcast-range-percentage` 75 (nur −10 % Pakete, Tick gleich, Teile mit
+    großer Sichtweite würden früher verschwinden); jeden zweiten Zweig gerader Girlanden nur aus der Nähe (kaum Wirkung).
+  - Tests: 141 Baukasten (neu `sichtweite.test.ts`, Eierbaum-Test), Lobby-Server-Tests 11, Typen, Prettier. Echt:
+    `lobby-test` **50/50** (Ostern mit Girlanden); `schlossmarkt-test` 32/37 – die fünf brauchen Ersatz-Proxy und
+    gemeldete Modi (`proxy-lauschen.ts`, `modus-melden.ts`), die hier nicht liefen (keine Änderung an Figuren/Menü).
+    Keine Bilder (Philip). Größter offener Hebel siehe Offen.
+
 ## Offen
+
+- **Leistung (17.11.):** Im Winter ~6 600 Anzeige-Wesen (davon ~2 200 Girlanden-Teile an den Ständen, 660 am
+  Weihnachtstor) – das kostet ~2 600 Pakete/s je Spieler und 12 ms Tick. Große Hebel, die das Aussehen nicht ändern,
+  aber Umbau brauchen: (1) Girlanden-Stränge als **ein** Modell im Netzwerk-Paket (Item-Anzeige mit custom_model_data
+  statt 30–50 Würfel je Strang; ohne Paket wie heute), (2) unbewegte Deko als Mitfahrer eines Anker-Wesens (Mitfahrer
+  schicken keine Lage alle 3 s). Weniger Zweige (dünnere Girlanden) wäre einfach, ändert aber den Look – Philips Wahl.
 
 - **Ein Paket (17.11.):** Philip: Go für `claude/ein-paket` und Angelkönig 0.2.2 (`claude/netzpaket`). Bedrock sieht
   die Möbel der Lobby nicht mehr (Item-Anzeigen) – falls das stört: Bedrock-Spielern die Platzhalter-Blöcke per
