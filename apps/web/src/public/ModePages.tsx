@@ -51,6 +51,7 @@ import {
   WhitelistChip,
 } from './kit';
 import { PageHero } from './page-hero';
+import { FishGallery } from './fish-gallery';
 import { APPLY_PAGE, EXTERNAL, FALLBACK_ADDRESS, WRAP } from './parts';
 
 const SKELETONS = ['a', 'b', 'c', 'd'];
@@ -606,6 +607,11 @@ export function ModePage(): ReactElement {
         <div className="lg:col-span-2">
           <ModeGuidePanel mode={mode} />
         </div>
+        {mode.id === 'angelkoenig' ? (
+          <div className="lg:col-span-2">
+            <FishGallery />
+          </div>
+        ) : null}
       </div>
       {others.length ? <OtherModes modes={others} /> : null}
     </>

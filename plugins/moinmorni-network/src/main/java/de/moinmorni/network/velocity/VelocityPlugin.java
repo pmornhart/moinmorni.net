@@ -86,6 +86,10 @@ public final class VelocityPlugin {
             "<green>Die Lobby ist wieder da!</green> <gray>/ The lobby is back!</gray>";
     /** Kennung des Möbel-Pakets der Lobby (gleich wie MOEBEL_PACK_ID in packages/builder/src/furniture.ts). */
     private static final UUID LOBBY_PACK = UUID.fromString("6d6f696e-6d6f-726e-692d-6d6f6562656c");
+    /** Kennung des Fisch-Pakets von Angelkönig (gleich wie ANGEL_PACK_ID in packages/builder/src/fische/paket.ts). */
+    private static final UUID ANGEL_PACK = UUID.fromString("6d6f696e-6d6f-726e-692d-616e67656c6b");
+    /** Server, auf dem das Fisch-Paket gilt (wie ANGEL_MODE in apps/server/src/angelkoenig/pack.ts). */
+    private static final String ANGEL_SERVER = "angelkoenig";
     /** So lange nach dem Start bekommt die eigene Jar notfalls ihre Datei zurück (siehe retireInterimPlugin). */
     private static final long KEEP_JAR_SECONDS = 10;
     private static final String HUB_AWAY =
@@ -493,10 +497,16 @@ public final class VelocityPlugin {
         if (event.getPreviousServer() == null) {
             offerBadges(p, false);
         }
-        boolean inLobby = p.getCurrentServer().map(s -> LOBBY.equals(s.getServerInfo().getName())).orElse(true);
-        boolean hasPack = p.getAppliedResourcePacks().stream().anyMatch(i -> LOBBY_PACK.equals(i.getId()));
-        if (!inLobby && hasPack) {
-            p.removeResourcePacks(LOBBY_PACK);
+        String here = p.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(LOBBY);
+        // Jedes Server-Paket gilt nur auf seinem Server: Möbel in der Lobby, Fische im Angelkönig.
+        dropPackOutside(p, LOBBY_PACK, LOBBY, here);
+        dropPackOutside(p, ANGEL_PACK, ANGEL_SERVER, here);
+    }
+
+    private static void dropPackOutside(Player p, UUID pack, String home, String here) {
+        boolean has = p.getAppliedResourcePacks().stream().anyMatch(i -> pack.equals(i.getId()));
+        if (has && !home.equals(here)) {
+            p.removeResourcePacks(pack);
         }
     }
 

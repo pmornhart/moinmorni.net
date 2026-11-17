@@ -878,6 +878,16 @@
           "fischbuch": "What you have caught so far.",
           "turnier": "When the next tournament is.",
           "top": "Leaderboards."
+        },
+        "fishTitle": "Fish in the valley",
+        "fishIntro": "Every fish has its own look – with the Angler King pack you see it like this in your hand, in the fish book and at the fishmonger. Without the pack they stay the usual Minecraft fish.",
+        "fishRarity": {
+          "common": "Common",
+          "uncommon": "Uncommon",
+          "rare": "Rare",
+          "epic": "Epic",
+          "legendary": "Legendary",
+          "junk": "Find"
         }
       },
       "maibaumklau": {

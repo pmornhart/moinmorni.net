@@ -504,7 +504,45 @@
   gegen den echten Server mit Motor, Computer + Handy) nur im Scratchpad `sport-tausch-bilder/`.
 - 17.11.: **Trailer der fünf neuen Modi** (Branch `claude/trailer-neu`, Videos nur lokal unter `~/mm-cache/trailer/<modus>/`, echte Minecraft-Grafik – nie Repo/Webseite): Adlerflug (57 s: Absprung, Ringe in der Ich-Sicht, bewegte Ringe, Tore im Takt, Bonus-Ringe, Felsenlabyrinth, Höllenschlund, Strecke des Tages, Ziel, Party-Rennen; gemeinsame Regie `tools/trailer/drehbuch.py`), Wolkenkampf (62 s), Versteckerl (62 s: drei echte Runden – Gestalt-Fenster und Fass in der Ich-Sicht, Einrasten zwischen echten Attrappen, falscher Treffer, Fund, Pfiff, Kramerkiste, Krämer Wastl, Abrechnung), Wintersport (62 s: Dorf, Sessellift, Riesenslalom – Start, Tore mit Verfolgerkamera, Ich-Sicht im Boot –, Biathlon – Massenstart, Schießstand in der Ich-Sicht mit echtem Bogen, 3 von 3 getroffen, Strafrunde –, Bob in der Ich-Sicht, Zweierbob in der Kehre, Siegerehrung mit Feuerwerk; echte Wettkämpfe, Boote schiebt der Test-Autopilot des Modus), Angelkönig (65 s: Tal, Dorf am See, Anbeißen und Fang in der Ich-Sicht, Darsteller am Steg, Goldforelle am Wasserfall, Fischbuch, Fischhändler Xaver mit echtem Verkauf, Moorweiher bei Nacht, Eisloch, Angel-Turnier mit Leiste, „HanniHof gewinnt mit Waller“). Werkzeug: Darsteller und Aufnahme-Client holen beim echten Biss ein (`trailers/angelkoenig.py` `reeler`: fragt `/angeladmin status` und klickt – feste Zeiten verpassen den Biss, weil Minecraft nach der Wartezeit noch 1–3 s anlockt), `hud.py` erkennt die Anzeige auch als Zuschauer, `ich.py` schließt offene Fenster am Ende. Regie-Plugins nur im Test-Server (Cache). Hinweise aus dem Dreh: Wintersport – Spieler auf dem Sessellift sitzen auf einem Anzeige-Objekt (kein `RootVehicle`); mit gleicher Zeit im Autopiloten stehen alle gemeinsam auf Platz 1 (gewollt: gleiche Zeit = gleicher Platz). Die Anzeige-Prüfung (`hud.py`) liegt als Zuschauer ohne Schnellleiste manchmal falsch – nach einem Neustart des Clients einmal nachsehen.
 
+- 17.11.: **Fische mit eigenem Aussehen im Angelkönig** (Philip: „die fische alle ein custom design“ – ersetzt dort
+  „nur Minecraft-Gegenstände“; Branch `claude/fisch-designs`, Angelkönig 0.2.0 auf gleichnamigem Branch): Alle 20
+  Fische, Steinkrebs und die drei Fundstücke als eigene Pixel-Kunst, 32 × 32, per Code gezeichnet
+  (`packages/builder/src/fische/`: `leinwand.ts` gedrehtes Koordinatensystem, `fisch.ts` Fisch aus Umriss, Flossen,
+  Farben und Mustern – Tupfen mit Ring, Querstreifen, Marmorierung, Seitenlinie, Schuppen, Barteln –, `arten.ts` je
+  Art; zu groß → etwas kleiner, nie abgeschnitten): Rotauge silbern mit roten Augen und Flossen, Flussbarsch mit
+  Streifen und Stachelflosse, Bachforelle mit roten Tupfen im hellen Ring, Karausche hochrückig goldbraun, Renke
+  schlank silbern, Äsche mit bunter Fahne, Schleie olivgrün mit Barteln, Steinkrebs mit Scheren und Fühlern,
+  Seesaibling mit rotem Bauch und weißen Flossensäumen, Hecht mit Entenschnabel und Marmorierung, Zander mit Streifen
+  und Glasaugen, Aal mit Flossensaum, Rutte mit Kinnbartel, Waller mit langen Barteln, Huchen kupferrot, Seeforelle mit
+  x-Tupfen; Legenden bewegt (12 Bilder, `.mcmeta`): Goldforelle mit wanderndem Lichtstreif und Funkeln,
+  Kristallsaibling durchscheinend mit Gräten und Glitzern, Seekönig (Riesenwaller mit Moos, Narbe, Krone, glühenden
+  Augen), Moorkönig (moosiger Riesenhecht, glühende Augen); Fundstücke Stiefel (Flicken, Algen, Loch), Treibholz,
+  Flaschenpost. **Weg:** Angelkönig schreibt `custom_model_data` = `moinmorni:fisch/<art>` in Fang, Fischbuch und
+  Anzeigen; das Paket (`fishPack`, `/api/public/packs/angelkoenig.zip`, `apps/server/src/angelkoenig/pack.ts`)
+  tauscht in `assets/minecraft/items/<gegenstand>.json` per `select` nur für diese Namen das Modell, sonst bleibt der
+  Minecraft-Gegenstand (Lederstiefel mit Leder-Farbe) – ohne Paket, auf älteren Clients und Bedrock sieht nichts
+  kaputt aus. Bewusst nicht `item_model`: ein unbekanntes `item_model` zeigt ohne Paket das Lila-Schwarz-Modell.
+  Provisioner trägt das Paket in die server.properties des Angelkönig-Servers ein (`configureMode` bekommt den Namen
+  des Servers; ohne Domain nimmt er nur das eigene Paket heraus), feste Kennung `ANGEL_PACK_ID`, der Proxy nimmt es
+  außerhalb von Angelkönig ab (`dropPackOutside` in `VelocityPlugin.java`). Liste Name + Gegenstand in
+  `packages/shared/src/angel-fische.ts` = Kopie `packages/shared/test/angel-fische.txt` = `docs/fisch-modelle.txt` in
+  Angelkönig (Tests in beiden Repos, `MM_CHECK_MODE_REPOS=1` vergleicht mit dem Repo daneben). **Webseite:**
+  Angelkönig-Seite mit „Fische im Tal“ (alle 23 Zeichnungen, Seltenheit, Satz de/en; Bilder
+  `apps/web/public/bilder/fisch-<art>.png` aus `apps/server/scripts/fische-bilder.ts`, ausgeschrieben für die Demo, Test: gleich wie im Paket). Legenden ohne Verzauberungs-Glanz (der lila Glanz
+  überdeckte das Gold; ihre Zeichnung schimmert selbst). Tests: 126 shared (3 neu), 128 Baukasten (4 neu), 286 Server
+  (7 neu, `angel-pack.test.ts`: Paket, Rückfall, Zeichnungen nicht abgeschnitten und verschieden, SHA-1 gleich,
+  server.properties, Route, Provisioner mit echtem Motor, Webseiten-Bilder = Paket), 72 JUnit im Netzwerk-Plugin,
+  Angelkönig 53, Typen, Prettier, Web- und Demo-Bau. Echt: Paper 26.3 + Angelkönig 0.2.0, Paket per server.properties
+  von einem lokalen HTTP, echter Client 26.3 – Fänge im Inventar und in der Hand (ganzer Fisch sichtbar, Ich-Sicht
+  etwas kleiner), Fischbuch, Händler-Fenster, Fische an der Theke; ohne Paket die gewohnten Minecraft-Fische (Bilder
+  nur lokal `/home/user/mm-cache/bilder-fische/`, Übersicht der Zeichnungen im Scratchpad `fische-bilder/`).
+
 ## Offen
+
+- **Fische (17.11.):** Philip: Go für Angelkönig 0.2.0 (`claude/fisch-designs` im Angelkönig-Repo) und diesen
+  Branch. Nicht echt geprüft: über das echte Netzwerk (Proxy nimmt das Paket beim Verlassen ab – nur im Code, gleicher
+  Weg wie das Möbel-Paket), Bedrock (Geyser zeigt den Minecraft-Fisch). Neue Art → Zeile in `angel-fische.ts`, Kopie der
+  Liste, Zeichnung in `packages/builder/src/fische/arten.ts`, `npx tsx apps/server/scripts/fische-bilder.ts`.
 
 - **Sommerspiele (17.11.):** bekommt seinen Server erst, wenn `pmornhart/morni-sommerspiele` ein Release hat (heute
   Branch `claude/erster-stand`, Philips Go). Wintersport steht in seiner config.yml auf `saison: immer` und meldet so

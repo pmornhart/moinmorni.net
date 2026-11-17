@@ -1,0 +1,25 @@
+# Fisch-Modelle für das Angelkönig-Paket (MoinMorni): Modell-Name und Minecraft-Gegenstand je Art.
+# Gleich wie FishModels.java und packages/shared/src/angel-fische.ts im Netzwerk-Repo (Tests prüfen beides).
+moinmorni:fisch/rotauge cod
+moinmorni:fisch/barsch cod
+moinmorni:fisch/bachforelle salmon
+moinmorni:fisch/karausche pufferfish
+moinmorni:fisch/renke cod
+moinmorni:fisch/aesche cod
+moinmorni:fisch/schleie cod
+moinmorni:fisch/steinkrebs armadillo_scute
+moinmorni:fisch/seesaibling salmon
+moinmorni:fisch/hecht cod
+moinmorni:fisch/zander cod
+moinmorni:fisch/aal cod
+moinmorni:fisch/rutte cod
+moinmorni:fisch/waller cod
+moinmorni:fisch/huchen salmon
+moinmorni:fisch/seeforelle salmon
+moinmorni:fisch/goldforelle tropical_fish
+moinmorni:fisch/seekoenig cod
+moinmorni:fisch/moorkoenig cod
+moinmorni:fisch/kristallsaibling salmon
+moinmorni:fisch/stiefel leather_boots
+moinmorni:fisch/treibholz stick
+moinmorni:fisch/flaschenpost glass_bottle
