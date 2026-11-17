@@ -1949,13 +1949,6 @@
     "changesCount_other": "{{count}} updates",
     "changesCountDate_one": "{{count}} update · newest from {{date}}",
     "changesCountDate_other": "{{count}} updates · newest from {{date}}",
-    "kinds": {
-      "new": "New",
-      "fixed": "Fixed",
-      "improved": "Improved",
-      "removed": "Removed",
-      "other": "Other changes"
-    },
     "confirm": {
       "title": "Start the update now?",
       "text": "Website and panel are unreachable for 1–2 minutes. The Minecraft servers keep running.",
@@ -2393,5 +2386,31 @@
   },
   "reach": {
     "ownerOnly": "Only the owner sets up NetBird, the website on the domain and “hide the home connection” – they are admin in the engine."
+  },
+  "changes": {
+    "kinds": {
+      "new": "New",
+      "improved": "Improved",
+      "fixed": "Fixed",
+      "removed": "Removed",
+      "other": "Other changes"
+    }
+  },
+  "whatsNew": {
+    "title": "What’s new",
+    "text": "Version {{version}} is running here. Below you can see what changed from version to version – newest first.",
+    "pill": "Version {{version}} – show what’s new",
+    "pillUpdate": "Version {{version}} – a newer version is ready. Show what’s new",
+    "installed": "Running now",
+    "quiet": "Only small things behind the scenes – nothing changes while you play.",
+    "more_one": "… and {{count}} more change",
+    "more_other": "… and {{count}} more changes",
+    "empty": "There is no list of changes for this version yet – it comes with the next update.",
+    "older": "Show older versions",
+    "updateReady": "Version {{version}} is ready",
+    "updateReadyPlain": "A new version is ready",
+    "updateTeam": "Install it under Settings → Updates.",
+    "updateSoon": "The team will install it soon.",
+    "toUpdates": "Go to updates"
   }
 }

@@ -7,17 +7,12 @@ import {
   CloudOff,
   Cog,
   GitBranch,
-  History,
   KeyRound,
   Loader2,
-  Minus,
   PackageCheck,
   Play,
   RefreshCw,
   RotateCcw,
-  Sparkles,
-  TrendingUp,
-  Wrench,
   XCircle,
   type LucideIcon,
 } from 'lucide-react';
@@ -25,6 +20,7 @@ import { useEffect, useRef, useState, type ReactElement, type ReactNode } from '
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
+import { ChangeGroups } from '~/components/change-groups';
 import { Button, Kbd, Pill, Skeleton, type PillTone } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
@@ -32,15 +28,7 @@ import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
 import { useTimeText } from '~/lib/time';
 import { ConfirmDialog } from '../../team/dialogs';
-import {
-  CHANGE_KINDS,
-  UPDATES_KEY,
-  useUpdatesQuery,
-  type ChangeKind,
-  type UpdateChange,
-  type UpdateRun,
-  type UpdateView,
-} from './model';
+import { UPDATES_KEY, useUpdatesQuery, type UpdateChange, type UpdateRun, type UpdateView } from './model';
 import { ExtraCard, Notice, StepList } from './parts';
 
 /** The steps of update.sh in their order (rollback only when something went wrong). */
@@ -52,13 +40,6 @@ const NOT_FOUND = -1;
 const DESCRIBED = /^(v\d+\.\d+\.\d+)-\d+-g([0-9a-f]{7,40})$/;
 const SHORT_SHA = 7;
 const MOTOR_SETTING = 'setting-motorFollowMain';
-
-const KIND_LOOK: Readonly<Record<ChangeKind, { readonly icon: LucideIcon; readonly tone: string }>> = {
-  new: { icon: Sparkles, tone: 'bg-success-soft text-success' },
-  fixed: { icon: Wrench, tone: 'bg-blue-soft text-blue' },
-  improved: { icon: TrendingUp, tone: 'bg-gold-soft text-gold' },
-  removed: { icon: Minus, tone: 'bg-neutral-soft text-muted-foreground' },
-};
 
 type Look = 'updating' | 'failed' | 'available' | 'current' | 'unknown';
 
@@ -156,6 +137,9 @@ function Facts({ view }: { readonly view: UpdateView }): ReactElement {
         <VersionText version={view.version} />
       </Fact>
       <Fact label={t('updatesCard.newest')} foot={newestFoot()}>
+        {moinmorni.latestVersion ? (
+          <span className="font-display text-xl">{moinmorni.latestVersion}</span>
+        ) : null}
         {moinmorni.latest ? (
           <Kbd className="text-[13px] text-foreground">{moinmorni.latest}</Kbd>
         ) : (
@@ -342,19 +326,15 @@ function LastRun({
   );
 }
 
-/** The changes of all new versions together, sorted by Neu / Behoben / Verbessert / Entfernt. */
+/** The changes of all new versions together, sorted by Neu / Verbessert / Behoben / Entfernt. */
 function ChangeList({ view }: { readonly view: UpdateView }): ReactElement | null {
   const { t } = useTranslation(MM_NAMESPACE);
   const time = useTimeText();
   const changes: readonly UpdateChange[] = view.moinmorni.changes;
   if (!changes.length) return null;
-  const groups = CHANGE_KINDS.map((kind) => ({
-    kind,
-    items: changes.flatMap((c) =>
-      c.items.filter((i) => i.kind === kind).map((i) => ({ text: i.text, sha: c.sha })),
-    ),
-  })).filter((g) => g.items.length > 0);
-  const plain = changes.filter((c) => !c.items.length);
+  const entries = changes.flatMap((c) =>
+    c.items.map((item, i) => ({ kind: item.kind, text: item.text, key: `${c.sha}-${i}` })),
+  );
   const newest = changes.find((c) => c.date)?.date;
   return (
     <section className="grid gap-4" aria-labelledby="update-changes">
@@ -368,57 +348,7 @@ function ChangeList({ view }: { readonly view: UpdateView }): ReactElement | nul
             : t('updatesCard.changesCount', { count: changes.length })}
         </span>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {groups.map((g) => {
-          const { icon: Icon, tone } = KIND_LOOK[g.kind];
-          return (
-            <div key={g.kind} className="grid content-start gap-2.5 rounded-[14px] border border-border p-4">
-              <p className="flex items-center gap-2 font-semibold">
-                <span className={cn('grid size-7 place-items-center rounded-[9px]', tone)} aria-hidden>
-                  <Icon className="size-4" />
-                </span>
-                {t(`updatesCard.kinds.${g.kind}`)}
-                <span className="tabular text-sm font-normal text-muted-foreground">{g.items.length}</span>
-              </p>
-              <ul className="grid gap-1.5 pl-1 text-sm leading-relaxed">
-                {g.items.map((item) => (
-                  <li
-                    key={`${item.sha}-${item.text}`}
-                    className="grid grid-cols-[auto_minmax(0,1fr)] gap-2.5 text-pretty [overflow-wrap:anywhere]"
-                  >
-                    <span className="mt-[9px] size-1.5 rounded-full bg-current opacity-40" aria-hidden />
-                    {item.text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
-        {plain.length ? (
-          <div className="grid content-start gap-2.5 rounded-[14px] border border-border p-4">
-            <p className="flex items-center gap-2 font-semibold">
-              <span
-                className="grid size-7 place-items-center rounded-[9px] bg-neutral-soft text-muted-foreground"
-                aria-hidden
-              >
-                <History className="size-4" />
-              </span>
-              {t('updatesCard.kinds.other')}
-            </p>
-            <ul className="grid gap-1.5 pl-1 text-sm leading-relaxed">
-              {plain.map((c) => (
-                <li
-                  key={c.sha}
-                  className="grid grid-cols-[auto_minmax(0,1fr)] gap-2.5 text-pretty [overflow-wrap:anywhere]"
-                >
-                  <span className="mt-[9px] size-1.5 rounded-full bg-current opacity-40" aria-hidden />
-                  {c.title}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </div>
+      <ChangeGroups entries={entries} />
     </section>
   );
 }

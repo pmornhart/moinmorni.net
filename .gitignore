@@ -20,3 +20,6 @@ docs/fortschritt/bilder/
 __pycache__/
 tools/mc-client/logs/
 .claude/worktrees/
+# „Was ist neu“: entsteht beim Bauen aus Git (scripts/changelog.sh), gehört nicht ins Repo
+apps/server/changelog.txt
+apps/server/changelog.txt.*

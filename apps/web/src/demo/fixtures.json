@@ -451,15 +451,7 @@
       "colour": "#aaaaaa"
     }
   },
-  "teamOrder": [
-    "owner",
-    "admin",
-    "moderator",
-    "supporter",
-    "builder",
-    "media",
-    "vip"
-  ],
+  "teamOrder": ["owner", "admin", "moderator", "supporter", "builder", "media", "vip"],
   "players": [
     {
       "name": "Vroni_Baut",
@@ -1485,5 +1477,163 @@
     "positions": ["moderator", "supporter", "builder", "media"],
     "minecraftName": "LenaBaut",
     "cooldownDays": 14
+  },
+  "changelog": {
+    "update": "v1.8.9",
+    "versions": [
+      {
+        "count": 188,
+        "sha": "6d4f7e0",
+        "daysAgo": 0,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Jump and Run am Schlossmarkt: Block für Block hoch über dem Dorf, mit Rekord und Bestenliste"
+          },
+          {
+            "kind": "new",
+            "text": "Doppelsprung in der Lobby – zweimal Leertaste für einen Schwung nach vorn"
+          },
+          {
+            "kind": "fixed",
+            "text": "Discord meldete alle 30 Minuten „Panel neu gestartet“, obwohl alles lief"
+          }
+        ]
+      },
+      {
+        "count": 187,
+        "sha": "276da08",
+        "daysAgo": 0,
+        "items": [
+          {
+            "kind": "improved",
+            "text": "„Zurück ins Spiel“ jetzt auch für Versteckerl, Wintersport, Gipfelsturm und Angelkönig im Panel einstellbar"
+          }
+        ]
+      },
+      {
+        "count": 186,
+        "sha": "b42a2c6",
+        "daysAgo": 1,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Wartungs-Lobby: Ist die Lobby kurz weg, wartest du auf der Alm mit Sprung-Parcours – und kommst von selbst zurück"
+          },
+          {
+            "kind": "new",
+            "text": "Nach einem Update starten die Server der Reihe nach neu, mit Countdown oben am Bildschirm"
+          },
+          {
+            "kind": "fixed",
+            "text": "Lobby und Spielmodi ließen nur 20 Leute gleichzeitig hinein"
+          },
+          {
+            "kind": "improved",
+            "text": "Leere Spielmodi brauchen im Ruhezustand nur noch etwa die Hälfte an Arbeitsspeicher"
+          }
+        ]
+      },
+      {
+        "count": 185,
+        "sha": "cf59fc6",
+        "daysAgo": 1,
+        "items": []
+      },
+      {
+        "count": 184,
+        "sha": "473c305",
+        "daysAgo": 1,
+        "items": [
+          {
+            "kind": "fixed",
+            "text": "Die Begrüßung kam manchmal noch in der alten Sprache"
+          },
+          {
+            "kind": "improved",
+            "text": "Beim Countdown sagt der Aushang „Die Lobby ist wieder da – gleich geht’s zurück!“"
+          }
+        ]
+      },
+      {
+        "count": 183,
+        "sha": "a011303",
+        "daysAgo": 2,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Lobbymusik: Blasmusik im Alltag, an der Wiesn richtig bayerisch, an Weihnachten weihnachtlich – /musik leiser, lauter oder aus"
+          }
+        ]
+      },
+      {
+        "count": 182,
+        "sha": "3d72141",
+        "daysAgo": 2,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Streamer-Modus im ganzen Netzwerk: /streamer verdeckt Adressen, Koordinaten und private Nachrichten"
+          },
+          {
+            "kind": "new",
+            "text": "Befehle-Seite auf der Webseite – mit ?spieler=<Name> nur das, was du wirklich darfst"
+          },
+          {
+            "kind": "fixed",
+            "text": "Wer im Gefängnis war, kam nach einem Neustart der Lobby nicht mehr aus der Zelle"
+          },
+          {
+            "kind": "removed",
+            "text": "Die alte Parkour-Spirale – das Jump and Run ersetzt sie"
+          }
+        ]
+      },
+      {
+        "count": 181,
+        "sha": "3d66b0e",
+        "daysAgo": 3,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Supporter ✚ als neuer Rang zwischen Moderator und Builder"
+          },
+          {
+            "kind": "improved",
+            "text": "Auswahllisten im Panel im Stil der Seite, auch im dunklen Modus gut lesbar"
+          }
+        ]
+      },
+      {
+        "count": 180,
+        "sha": "900a7d2",
+        "daysAgo": 3,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Fünf neue Spielmodi: Wolkenkampf, Versteckerl, Wintersport, Adlerflug und Angelkönig"
+          },
+          {
+            "kind": "new",
+            "text": "Schlossmarkt auf dem Vorplatz mit sechs neuen Ständen und Leuten am Markt"
+          }
+        ]
+      },
+      {
+        "count": 179,
+        "sha": "3add676",
+        "daysAgo": 4,
+        "items": [
+          {
+            "kind": "new",
+            "text": "Eigenes MoinMorni-Wappen in der Serverliste von Minecraft"
+          },
+          {
+            "kind": "other",
+            "text": "Webseite: echte Minecraft-Bilder statt eigener Renderings"
+          }
+        ]
+      }
+    ]
   }
 }

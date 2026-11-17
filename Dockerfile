@@ -31,12 +31,15 @@ COPY vendor/mornihosting/apps/web/package.json vendor/mornihosting/apps/web/
 COPY vendor/mornihosting/apps/server/package.json vendor/mornihosting/apps/server/
 COPY vendor/mornihosting/packages/shared/package.json vendor/mornihosting/packages/shared/
 RUN pnpm --dir vendor/mornihosting install --frozen-lockfile
+# Dabei: apps/server/changelog.txt für „Was ist neu“ (install.sh/update.sh schreiben sie aus Git; fehlt sie, zeigt
+# MoinMorni nur die Versionsnummer).
 COPY . .
 ARG MM_VERSION=dev
 RUN pnpm --filter @moinmorni/web build \
  && pnpm --filter @moinmorni/server build \
  && pnpm --filter @moinmorni/server deploy --prod --legacy /out \
- && cp -r apps/server/dist apps/server/drizzle apps/server/musik /out/
+ && cp -r apps/server/dist apps/server/drizzle apps/server/musik /out/ \
+ && (test ! -f apps/server/changelog.txt || cp apps/server/changelog.txt /out/)
 
 FROM node:22-alpine
 ARG MM_VERSION=dev

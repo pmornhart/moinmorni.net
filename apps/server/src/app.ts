@@ -50,6 +50,7 @@ import { createApplicationService } from './mornicraft/applications.js';
 import { registerApplyRoutes } from './mornicraft/routes.js';
 import { registerWhitelistTeamRoute } from './mornicraft/team.js';
 import { createUpdateService } from './system/update.js';
+import { changelogFile, registerChangelogRoute } from './system/changelog.js';
 import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
@@ -462,6 +463,12 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerNewsRoutes(app, auth, handle.db, events);
   const updates = createUpdateService(config, motor, stores, github);
   registerUpdateRoutes(app, auth, updates);
+  // „Was ist neu“ unten in der Mitte von Webseite und Panel: Version, Änderungen, ob eine neue bereitsteht.
+  registerChangelogRoute(app, {
+    version: config.version,
+    file: changelogFile(),
+    update: () => updates.peek(),
+  });
   // Whitelist im Panel: das Team (kommt über den Rang immer hinein) steht von selbst mit drauf.
   registerWhitelistTeamRoute(app, auth, handle.db, hub.players, applications);
   registerBuildRoutes(app, auth, build);
