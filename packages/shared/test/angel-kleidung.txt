@@ -1,0 +1,11 @@
+# Kleidungs-Modelle für das Angelkönig-Paket (MoinMorni): Modell-Name, Minecraft-Gegenstand und Platz je Stück.
+# Gleich wie ClothingModels.java und packages/shared/src/angel-kleidung.ts im Netzwerk-Repo (Tests prüfen beides).
+moinmorni:kleidung/fischerhut leather_helmet head
+moinmorni:kleidung/strohhut leather_helmet head
+moinmorni:kleidung/trachtenhut leather_helmet head
+moinmorni:kleidung/koenigskrone golden_helmet head
+moinmorni:kleidung/anglerweste leather_chestplate chest
+moinmorni:kleidung/regenjacke leather_chestplate chest
+moinmorni:kleidung/lederhose leather_leggings legs
+moinmorni:kleidung/wathose leather_leggings legs
+moinmorni:kleidung/gummistiefel leather_boots feet

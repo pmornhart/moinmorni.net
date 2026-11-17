@@ -8,6 +8,7 @@
 import { Picture, zipOf, type ZipEntry } from '../png.js';
 import { allFishArt, type FishArt } from './arten.js';
 import { stack } from './leinwand.js';
+import { clothingCase, clothingFiles, type ClothingPackEntry } from '../kleidung/paket.js';
 
 /** Feste Kennung des Pakets (der Proxy nimmt es beim Verlassen von Angelkönig wieder ab). */
 export const ANGEL_PACK_ID = '6d6f696e-6d6f-726e-692d-616e67656c6b';
@@ -42,7 +43,7 @@ export const fishModelName = (id: string): string => `${NS}:fisch/${id}`;
  * Was Minecraft ohne unseren Namen zeigt – genau wie die eingebauten Gegenstände (gleiche Modelle, Lederstiefel mit
  * Leder-Farbe). Steht ein anderer Gegenstand in der Liste, gilt das einfache Modell gleichen Namens.
  */
-const DYED = new Set(['leather_boots']);
+const DYED = new Set(['leather_helmet', 'leather_chestplate', 'leather_leggings', 'leather_boots']);
 const LEATHER_DEFAULT = -6265536;
 
 function vanilla(base: string): unknown {
@@ -55,17 +56,24 @@ function vanilla(base: string): unknown {
     : { type: 'minecraft:model', model: `minecraft:item/${base}` };
 }
 
-/** Aussehen eines Grund-Gegenstands: je Art unser Modell, sonst Minecraft. */
-export function itemDefinition(base: string, ids: readonly string[]): unknown {
+/** Aussehen eines Grund-Gegenstands: je Art (und je Kleidungsstück) unser Modell, sonst Minecraft. */
+export function itemDefinition(
+  base: string,
+  ids: readonly string[],
+  clothes: readonly string[] = [],
+): unknown {
   return {
     model: {
       type: 'minecraft:select',
       property: 'minecraft:custom_model_data',
       index: 0,
-      cases: ids.map((id) => ({
-        when: fishModelName(id),
-        model: { type: 'minecraft:model', model: `${NS}:item/fisch/${id}` },
-      })),
+      cases: [
+        ...ids.map((id) => ({
+          when: fishModelName(id),
+          model: { type: 'minecraft:model', model: `${NS}:item/fisch/${id}` },
+        })),
+        ...clothes.map(clothingCase),
+      ],
       fallback: vanilla(base),
     },
   };
@@ -81,13 +89,18 @@ function textureEntries(art: FishArt): ZipEntry[] {
   ];
 }
 
-/** Das Paket als ZIP. */
-export function fishPack(entries: readonly FishPackEntry[]): Buffer {
+/** Das Paket als ZIP: Fische und (wenn angegeben) Hüte und Kleidung aus dem Kleiderschrank. */
+export function fishPack(
+  entries: readonly FishPackEntry[],
+  clothes: readonly ClothingPackEntry[] = [],
+): Buffer {
   const arts = allFishArt(entries.map((e) => e.id));
-  const bases = [...new Set(entries.map((e) => e.base))].sort();
+  const bases = [...new Set([...entries, ...clothes].map((e) => e.base))].sort();
   const meta = {
     pack: {
-      description: 'MoinMorni – Fische im Angelkönig',
+      description: clothes.length
+        ? 'MoinMorni – Fische und Kleidung im Angelkönig'
+        : 'MoinMorni – Fische im Angelkönig',
       pack_format: PACK_FORMAT,
       supported_formats: { min_inclusive: PACK_FORMAT, max_inclusive: PACK_FORMAT_MAX },
       min_format: PACK_FORMAT,
@@ -104,6 +117,7 @@ export function fishPack(entries: readonly FishPackEntry[]): Buffer {
         itemDefinition(
           base,
           entries.filter((e) => e.base === base).map((e) => e.id),
+          clothes.filter((e) => e.base === base).map((e) => e.id),
         ),
       ),
     })),
@@ -116,6 +130,7 @@ export function fishPack(entries: readonly FishPackEntry[]): Buffer {
       }),
     })),
     ...arts.flatMap(textureEntries),
+    ...clothingFiles(clothes),
   ]);
 }
 

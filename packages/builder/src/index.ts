@@ -37,3 +37,7 @@ export * from './wartung/datapack.js';
 export * from './musik/index.js';
 export * from './fische/paket.js';
 export { allFishArt, fishArt, FISH_ART_IDS, type FishArt } from './fische/arten.js';
+export * from './kleidung/paket.js';
+export { clothingPreview, clothingSheet } from './kleidung/bilder.js';
+export { HAT_BUILDERS } from './kleidung/huete.js';
+export { GARMENT_BUILDERS, garment } from './kleidung/ruestung.js';

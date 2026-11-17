@@ -537,7 +537,49 @@
   etwas kleiner), Fischbuch, Händler-Fenster, Fische an der Theke; ohne Paket die gewohnten Minecraft-Fische (Bilder
   nur lokal `/home/user/mm-cache/bilder-fische/`, Übersicht der Zeichnungen im Scratchpad `fische-bilder/`).
 
+- 17.11. abends: **Hüte und Kleidung im Angelkönig mit eigenem Aussehen** (Philip nach den Fisch-Designs: „für die Hüte
+  auch eigene Designs“; Branch `claude/kleidung-designs`, Angelkönig 0.2.1 auf gleichnamigem Branch): alle neun Stücke
+  aus dem Kleiderschrank, per Code gebaut (`packages/builder/src/kleidung/`): **Hüte als 3D-Modelle** im Stil von
+  Blockbench (`modell.ts`: Quader mit Drehung, je Fläche ein Maler, Atlas-Packer, JSON mit `head`-Darstellung –
+  Minecraft setzt Kopf-Gegenstände 0,625-fach auf den Kopf): Fischerhut (olivgrünes Segeltuch mit Nähten, Luftlöcher,
+  Hutband mit Schnalle, hängende Krempe, vier bunte Fliegen am Band), Strohhut (Flechtmuster, breite Krempe mit
+  dunklerem Rand, rot-weißes Band, Schleife, Margerite und Enzian), Trachtenhut (grüner Filz mit Kniff, hinten
+  aufgestellte Krempe, gedrehte Kordel weiß-rot-grün, Edelweiß, Gamsbart in Silberhülse, Feder), Königskrone (Reif mit
+  Gravur, sieben Zacken mit Perlen, goldener Fisch vorn, Rubin/Saphir/Smaragd, Samtkappe mit Hermelin, Reichsapfel
+  mit Kreuz; **Lichtstreif wandert in 12 Bildern übers Gold**, Steine funkeln); **Weste, Regenjacke, Lederhose,
+  Wathose, Gummistiefel als eigenes Muster am Körper** (`ruestung.ts`, Rüstungs-Raster 64 × 32, Ausrüstungs-Aussehen
+  `moinmorni:kleidung/<stück>` in `humanoid` bzw. `humanoid_leggings`): Weste ärmellos mit Reißverschluss, Taschen,
+  Fliegen-Flicken, Netz und Kescher-Ring hinten; Jacke knallgelb mit Knebelknöpfen, Leuchtstreifen, Kapuze im Rücken;
+  Lederhose kurz mit Hosenträgern (Steg mit Edelweiß, hinten über Kreuz), Latz, grünen Nähten, Kniebund; Wathose bis
+  zur Brust mit Trägern, Schnallen, angesetzten Stiefeln; Gummistiefel mit gelbem Rand, Sohle, Schlammspritzern. Im
+  Inventar kleine 3D-Bilder aus denselben Texturen. Ins **Angelkönig-Paket** (`fishPack(fische, kleidung)`): je
+  Grund-Gegenstand ein `select` auf `custom_model_data` (Fische und Kleidung zusammen, z. B. `leather_boots`), Rückfall
+  Minecraft samt Lederfarbe. Gleiche Bytes = gleiche SHA-1. Liste `packages/shared/src/angel-kleidung.ts` = Kopie
+  `packages/shared/test/angel-kleidung.txt` = `docs/kleidung-modelle.txt` in Angelkönig (Test in beiden Repos).
+  **Paket jetzt von Angelkönig selbst** (Fund im echten Test): beim Paket aus der server.properties erfährt ein Plugin
+  nicht, wer es geladen hat (`getResourcePackStatus()` sagt immer „geladen“), ein zweites Anbieten im Spiel lädt alles
+  noch einmal. Angelkönig 0.2.1 bietet das Paket darum beim Verbinden selbst an und legt `plugins/MorniAngelkoenig/
+  paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, feste Kennung `ANGEL_PACK_ID` – der
+  Proxy nimmt es weiter außerhalb ab) und nimmt unser Paket aus der server.properties (`offerAngelPack`, einmal
+  Neustart); ältere Angelkönig-Fassungen bekommen es wie bisher. **Je Betrachter**: Angelkönig zeigt die neuen Modelle
+  nur, wer das Paket hat; wer nicht, sieht die gewohnte Lederkleidung (sonst flacher Helm vor der Stirn bzw. gar
+  nichts). **Webseite**: Angelkönig-Seite mit „Hüte und Kleidung“ (Holzpuppe trägt je ein Stück, Platz, Preis, Satz
+  de/en; Bilder `apps/web/public/bilder/kleidung-<stück>.png` aus `apps/server/scripts/kleidung-bilder.ts` mit einem
+  eigenen kleinen Strahlen-Zeichner `vorschau.ts`/`bilder.ts`, Test: gleich wie aus dem Paket). Tests: 129 shared
+  (3 neu), 132 Baukasten (4 neu), 292 Server (6 neu in `angel-kleidung.test.ts`: Modelle gültig, Hüte sitzen auf dem
+  Kopf über der zweiten Skin-Ebene, Krone 12 Bilder, Körper-Muster 64 × 32 je Schicht, Rückfall Minecraft,
+  Webseiten-Bilder = Paket; Provisioner-Test um `paket.json` erweitert), Typen, Web- und Demo-Bau. Echt: Paper 26.1.2
+  + zwei Test-Spieler **11/11** (Anna mit Paket, Bert ohne: jeder sieht den anderen in seiner Fassung), Paper 26.3 +
+  echter Client 26.3 mit Paket: alle vier Hüte auf dem Kopf von vorn und hinten, Weste, Jacke, Hosen, Stiefel am
+  Körper, Kleiderschrank mit 3D-Bildern; ohne Paket Lederkleidung und Goldhelm (Bilder nur lokal
+  `/home/user/mm-cache/bilder-kleidung/`, Übersicht der Zeichnungen im Scratchpad `kleidung-bilder/`).
+
 ## Offen
+
+- **Kleidung (17.11.):** Philip: Go für Angelkönig 0.2.1 und diesen Branch zusammen. Nicht echt geprüft: über
+  Velocity (Paket-Angebot beim Verbinden durch den Proxy, Abnehmen außerhalb), Bedrock (sieht Leder). Neues Stück →
+  Zeile in `angel-kleidung.ts` + Kopie der Liste, Modell in `huete.ts` bzw. Muster in `ruestung.ts`,
+  `npx tsx apps/server/scripts/kleidung-bilder.ts`.
 
 - **Fische (17.11.):** Philip: Go für Angelkönig 0.2.0 (`claude/fisch-designs` im Angelkönig-Repo) und diesen
   Branch. Nicht echt geprüft: über das echte Netzwerk (Proxy nimmt das Paket beim Verlassen ab – nur im Code, gleicher

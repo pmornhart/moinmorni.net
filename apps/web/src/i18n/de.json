@@ -881,6 +881,16 @@
         },
         "fishTitle": "Fische im Tal",
         "fishIntro": "Jeder Fisch hat sein eigenes Aussehen – mit dem Angelkönig-Paket siehst du ihn so in der Hand, im Fischbuch und beim Händler. Ohne Paket bleiben es die gewohnten Minecraft-Fische.",
+        "clothesTitle": "Hüte und Kleidung",
+        "clothesIntro": "Beim Fischhändler Xaver gibt es Hüte und Kleidung zum Angeben – jedes Stück mit eigenem Aussehen: Hüte sitzen als 3D-Modell auf dem Kopf, Weste, Jacke, Hosen und Stiefel tragen ihr eigenes Muster. Ohne Angelkönig-Paket siehst du die gewohnte Lederkleidung.",
+        "clothesSlot": {
+          "head": "Kopf",
+          "chest": "Oberkörper",
+          "legs": "Beine",
+          "feet": "Füße"
+        },
+        "clothesPrice": "{{price}} Taler",
+        "clothesCrown": "Nur für Turniersieger",
         "fishRarity": {
           "common": "Gewöhnlich",
           "uncommon": "Ungewöhnlich",

@@ -881,6 +881,16 @@
         },
         "fishTitle": "Fish in the valley",
         "fishIntro": "Every fish has its own look – with the Angler King pack you see it like this in your hand, in the fish book and at the fishmonger. Without the pack they stay the usual Minecraft fish.",
+        "clothesTitle": "Hats and clothes",
+        "clothesIntro": "Xaver the fishmonger sells hats and clothes to show off – every piece with its own look: hats sit on your head as 3D models, the vest, jacket, trousers and boots wear their own pattern. Without the Angler King pack you see the usual leather clothes.",
+        "clothesSlot": {
+          "head": "Head",
+          "chest": "Body",
+          "legs": "Legs",
+          "feet": "Feet"
+        },
+        "clothesPrice": "{{price}} coins",
+        "clothesCrown": "Only for contest winners",
         "fishRarity": {
           "common": "Common",
           "uncommon": "Uncommon",

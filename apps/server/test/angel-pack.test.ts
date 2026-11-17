@@ -5,14 +5,23 @@ import zlib from 'node:zlib';
 import type { FastifyBaseLogger } from 'fastify';
 import { afterEach, describe, expect, test } from 'vitest';
 import { ANGEL_PACK_ID, FISH_ART_IDS, fishPicture } from '@moinmorni/builder';
-import { ANGEL_BASE_ITEMS, ANGEL_FISH, ANGEL_MODEL_NAMES, DEFAULT_MODES } from '@moinmorni/shared';
+import {
+  ANGEL_BASE_ITEMS,
+  ANGEL_CLOTHES,
+  ANGEL_FISH,
+  ANGEL_MODEL_NAMES,
+  DEFAULT_MODES,
+} from '@moinmorni/shared';
 import {
   ANGEL_MODE,
+  ANGEL_PACK_FILE,
+  ANGEL_PACK_MARKER,
   angelPackInfo,
   angelPackProperties,
   angelPackUrl,
   offerAngelPack,
 } from '../src/angelkoenig/pack.js';
+import { readServerFile, writeServerFile } from '../src/motor/files.js';
 import { createProvisioner } from '../src/network/provision.js';
 import { createHarness, type Harness } from './harness.js';
 
@@ -77,7 +86,8 @@ describe('Angelkönig: eigene Fisch-Zeichnungen als Paket', () => {
   test('Paket: Modell und Textur je Art, Grund-Gegenstände mit Minecraft als Rückfall, Legenden bewegt', () => {
     const files = zipFiles(angelPackInfo().bytes);
     expect(files.has('pack.mcmeta')).toBe(true);
-    ANGEL_BASE_ITEMS.forEach((base) => {
+    const bases = [...new Set([...ANGEL_BASE_ITEMS, ...ANGEL_CLOTHES.map((c) => c.base)])];
+    bases.forEach((base) => {
       const def = JSON.parse(files.get(`assets/minecraft/items/${base}.json`)?.toString() ?? '{}') as {
         model: {
           type: string;
@@ -90,14 +100,15 @@ describe('Angelkönig: eigene Fisch-Zeichnungen als Paket', () => {
       expect(def.model.property).toBe('minecraft:custom_model_data');
       expect(def.model.fallback.model).toBe(`minecraft:item/${base}`);
       expect(def.model.cases.map((c) => c.when).sort()).toEqual(
-        ANGEL_FISH.filter((f) => f.base === base)
-          .map((f) => `moinmorni:fisch/${f.id}`)
-          .sort(),
+        [
+          ...ANGEL_FISH.filter((f) => f.base === base).map((f) => `moinmorni:fisch/${f.id}`),
+          ...ANGEL_CLOTHES.filter((c) => c.base === base).map((c) => `moinmorni:kleidung/${c.id}`),
+        ].sort(),
       );
     });
-    // Nur die Gegenstände der Fänge – sonst ändert das Paket nichts.
+    // Nur die Gegenstände der Fänge und der Kleidung – sonst ändert das Paket nichts.
     const items = [...files.keys()].filter((n) => n.startsWith('assets/minecraft/'));
-    expect(items.sort()).toEqual(ANGEL_BASE_ITEMS.map((b) => `assets/minecraft/items/${b}.json`).sort());
+    expect(items.sort()).toEqual(bases.map((b) => `assets/minecraft/items/${b}.json`).sort());
     const leather = JSON.parse(
       files.get('assets/minecraft/items/leather_boots.json')?.toString() ?? '{}',
     ) as {
@@ -167,7 +178,10 @@ describe('Angelkönig: eigene Fisch-Zeichnungen als Paket', () => {
   test('gleiche Zeichnungen = gleiche Bytes (Minecraft lädt nur bei neuer SHA-1 neu)', async () => {
     const a = angelPackInfo();
     const { fishPack } = await import('@moinmorni/builder');
-    const again = fishPack(ANGEL_FISH.map((f) => ({ id: f.id, base: f.base })));
+    const again = fishPack(
+      ANGEL_FISH.map((f) => ({ id: f.id, base: f.base })),
+      ANGEL_CLOTHES.map((c) => ({ id: c.id, base: c.base })),
+    );
     expect(crypto.createHash('sha1').update(again).digest('hex')).toBe(a.sha1);
   });
 
@@ -230,5 +244,26 @@ describe('Angelkönig: eigene Fisch-Zeichnungen als Paket', () => {
     expect(await props('duels')).not.toContain('angelkoenig.zip');
     const again = await provisioner.ensure();
     expect(again.restart.map((r) => r.member)).not.toContain(ANGEL_MODE);
+
+    // Angelkönig ab 0.2.1 bietet das Paket selbst an: paket.json statt server.properties, einmal Neustart
+    const angelId = members.find((m) => m.name === ANGEL_MODE)?.serverId ?? '';
+    await writeServerFile(motor, angelId, ANGEL_PACK_MARKER, 'ja\n');
+    const third = await provisioner.ensure();
+    expect(third.restart.map((r) => r.member)).toContain(ANGEL_MODE);
+    expect(await props(ANGEL_MODE)).not.toContain(`resource-pack-id=${ANGEL_PACK_ID}`);
+    const file = JSON.parse((await readServerFile(motor, angelId, ANGEL_PACK_FILE)) ?? '{}') as Record<
+      string,
+      string
+    >;
+    expect(file).toMatchObject({
+      url: 'https://moinmorni.net/api/public/packs/angelkoenig.zip',
+      sha1: angelPackInfo().sha1,
+      id: ANGEL_PACK_ID,
+    });
+    const fourth = await provisioner.ensure();
+    expect(fourth.restart.map((r) => r.member)).not.toContain(ANGEL_MODE);
+    // Ohne Domain: paket.json leer (kein Paket)
+    expect(await offerAngelPack(motor, angelId, '')).toBe(true);
+    expect(JSON.parse((await readServerFile(motor, angelId, ANGEL_PACK_FILE)) ?? 'null')).toEqual({});
   });
 });
