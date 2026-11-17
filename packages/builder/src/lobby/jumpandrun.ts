@@ -71,7 +71,8 @@ const lanes: readonly JumpLane[] = LANE_CENTRES_X.flatMap((cx) =>
 export const JUMP_AND_RUN: JumpAndRun = {
   start: { x: JX, y: GROUND, z: JZ },
   back: { x: JX + 0.5, y: GROUND + 1, z: JZ + 3.5, yaw: 180, pitch: -10 },
-  board: { x: JX + 0.5, y: GROUND + 1.15, z: BOARD_Z + 0.62, yaw: 0, pitch: 0 },
+  // Knapp vor den Brettern (die Zelle BOARD_Z reicht bis BOARD_Z + 1).
+  board: { x: JX + 0.5, y: GROUND + 1.15, z: BOARD_Z + 1.06, yaw: 0, pitch: 0 },
   lanes,
 };
 

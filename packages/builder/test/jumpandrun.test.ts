@@ -25,7 +25,12 @@ describe('Jump and Run statt Parkour-Spirale', () => {
   });
 
   it('Tafel mit Schrift, Fahnen und Laternen am Start; die Spirale ist weg', () => {
-    expect(canvas.get(Math.floor(board.x), GROUND + 2, Math.floor(board.z))).toBe('spruce_planks');
+    // Die Schrift steht vor den Brettern, nicht darin (sonst sieht man sie nicht).
+    const bx = Math.floor(board.x);
+    const bz = Math.floor(board.z);
+    expect(canvas.get(bx, GROUND + 2, bz - 1)).toBe('spruce_planks');
+    expect(empty(canvas.get(bx, GROUND + 2, bz))).toBe(true);
+    expect(board.z - bz).toBeLessThan(0.2);
     expect(canvas.extra.some((c) => c.startsWith('summon text_display') && c.includes('Jump and Run'))).toBe(
       true,
     );

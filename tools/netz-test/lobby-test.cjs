@@ -304,9 +304,12 @@ async function main() {
       text.slice(0, 160),
     );
   }
-  // Erste Zeilen der Tafel (je Name, dann Punkte) – die ganze Schrift kürzt RCON ab.
-  const boardAt = 'data get entity @e[type=text_display,x=-59.5,y=65,z=-46.4,distance=..1.5,limit=1]';
-  const board = rcon(...[0, 1, 2, 3, 4, 5].map((i) => `${boardAt} text.extra[${i}].text`));
+  // Erste Zeilen der Tafel (je eine Zeile nach einem Zeilenumbruch) – die ganze Schrift kürzt RCON ab.
+  const boardAt = 'data get entity @e[type=text_display,x=-59.5,y=65,z=-45.9,distance=..1,limit=1]';
+  const lines = Array.from({ length: 10 }, (_, k) =>
+    rcon(`${boardAt} text.extra[${2 * k + 1}].text`, `${boardAt} text.extra[${2 * k + 1}].extra[0].text`),
+  );
+  const board = lines.find((l) => l.includes(`. ${NAME} `)) ?? lines.join(' ');
   check(
     'Tafel am Start: Top 10 mit dem Test-Spieler',
     board.includes(`. ${NAME}`) && board.includes(`★ ${made}`),

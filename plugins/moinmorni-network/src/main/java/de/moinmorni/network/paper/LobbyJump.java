@@ -145,7 +145,8 @@ final class LobbyJump implements Listener {
     private static final int TOP = 10;
     /** Ab so vielen Punkten erfahren alle vom neuen Rekord. */
     private static final int ANNOUNCE_FROM = 10;
-    private static final float BOARD_SCALE = 0.8f;
+    /** Schrift der Tafel: elf Zeilen füllen die vier Blöcke hohe Bretterwand. */
+    private static final float BOARD_SCALE = 1.15f;
     private static final int BOARD_WIDTH = 220;
     private static final int BOARD_BACKGROUND = 0xCC1E1408;
     private static final float PLING_LOW = 0.7f;
@@ -760,22 +761,25 @@ final class LobbyJump implements Listener {
             return;
         }
         TextColor[] places = {NamedTextColor.GOLD, TextColor.color(0xD8D8D8), TextColor.color(0xCD8A4B)};
-        Component content = Component.text("Top " + TOP + "\n", NamedTextColor.YELLOW, TextDecoration.BOLD);
+        Component content = Component.text("Top " + TOP, NamedTextColor.YELLOW, TextDecoration.BOLD);
         List<Map.Entry<String, Integer>> list = top();
-        if (list.isEmpty()) {
-            content = content.append(Component.text("\nSei der Erste!\nBe the first!\n", NamedTextColor.WHITE)
-                    .decoration(TextDecoration.BOLD, false));
-        }
-        for (int i = 0; i < Math.min(TOP, list.size()); i++) {
-            TextColor c = i < places.length ? places[i] : NamedTextColor.WHITE;
-            content = content.append(Component.text((i + 1) + ". " + list.get(i).getKey() + "  ", c)
-                    .decoration(TextDecoration.BOLD, false))
-                    .append(Component.text("★ " + list.get(i).getValue() + "\n", NamedTextColor.AQUA)
-                            .decoration(TextDecoration.BOLD, false));
+        // Immer zehn Zeilen – freie Plätze als Punkte, dann sieht die Tafel auch am Anfang voll aus.
+        for (int i = 0; i < TOP; i++) {
+            Component line;
+            if (i < list.size()) {
+                TextColor c = i < places.length ? places[i] : NamedTextColor.WHITE;
+                line = Component.text((i + 1) + ". " + list.get(i).getKey() + "  ", c)
+                        .append(Component.text("★ " + list.get(i).getValue(), NamedTextColor.AQUA));
+            } else if (i == list.size() && list.isEmpty()) {
+                line = Component.text("Sei der Erste! · Be the first!", NamedTextColor.WHITE);
+            } else {
+                line = Component.text((i + 1) + ".  · · ·", NamedTextColor.DARK_GRAY);
+            }
+            content = content.append(Component.newline()).append(line.decoration(TextDecoration.BOLD, false));
         }
         if (!s.on()) {
-            content = content.append(Component.text("\n✖ geschlossen · closed", NamedTextColor.RED)
-                    .decoration(TextDecoration.BOLD, false));
+            content = content.append(Component.newline()).append(Component.text("✖ geschlossen · closed",
+                    NamedTextColor.RED).decoration(TextDecoration.BOLD, false));
         }
         Component text = content;
         board = at.getWorld().spawn(at, TextDisplay.class, d -> {
