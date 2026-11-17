@@ -139,10 +139,19 @@ function profileOf(skin: string): string {
     : `profile:{texture:'moinmorni:npc/${skin}',model:'wide'}`;
 }
 
+/**
+ * Gegenstand als SNBT: „shield“ oder mit Komponenten „shield{'minecraft:base_color':'red'}“ (alles ab der ersten
+ * geschweiften Klammer sind die Komponenten).
+ */
+export function itemSnbtOf(id: string): string {
+  const brace = id.indexOf('{');
+  if (brace < 0) return `{id:'minecraft:${id}',count:1}`;
+  return `{id:'minecraft:${id.slice(0, brace)}',count:1,components:${id.slice(brace)}}`;
+}
+
 /** Hände, Rücken und Kopf (3D-Hut, Bart, Dutt – ohne Paket unsichtbar). */
 function equipmentOf(n: NpcSpec, head: string | null): string[] {
-  const item = (slot: string, id: string | undefined): string[] =>
-    id ? [`${slot}:{id:'minecraft:${id}',count:1}`] : [];
+  const item = (slot: string, id: string | undefined): string[] => (id ? [`${slot}:${itemSnbtOf(id)}`] : []);
   const slots = [
     ...item('mainhand', n.hand),
     ...item('offhand', n.offhand),

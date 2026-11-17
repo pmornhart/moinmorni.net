@@ -198,7 +198,7 @@ Flache malt der Skin selbst (oben). Farben kommen aus der Tracht der Figur (`cas
   die der Skin seinen Hut malt, mit Abstand zur zweiten Ebene (nichts flimmert, nichts schwebt).
 - **Bart** mit Schnurrbart und Lücke für den Mund, **Dutt** am Hinterkopf (mit Hut tiefer im Nacken).
 - **Am Körper:** Dirndl-Rock in Stufen ab der Taille mit Schürze, Bund und Schleife; langes Haar und Zöpfe den Rücken
-  hinunter. Mieder, Westen und Hosenträger malt der Skin (zweite Ebene) – als flache 3D-Teile standen sie vorher
+  hinunter; für die Modus-Figuren Umhang, Seilrolle, Schal, Adlerschwingen, Ski und Schulterstücke (unten). Mieder, Westen und Hosenträger malt der Skin (zweite Ebene) – als flache 3D-Teile standen sie vorher
   schief neben dem Körper, sobald die Figur den Kopf drehte.
 - Kopf-Teile stecken im Kopf-Platz der Figur (drehen und nicken mit), Körper-Teile in einem Anzeige-Objekt, das auf
   der Figur mitfährt. **Stehende Figuren drehen nur den Kopf** (höchstens 60° zur Seite; der Körper bleibt, wie er
@@ -211,13 +211,32 @@ Flache malt der Skin selbst (oben). Farben kommen aus der Tracht der Figur (`cas
   sieht man nichts davon, nur die Skins.** Tests in `packages/builder/test/trachten.test.ts`: nichts liegt auf der
   zweiten Ebene des Skins, Hüte umschließen die Hutreihen, nichts steckt in den Armen.
 
-## Was die Modus-Figuren halten
+## Die zwölf Modus-Figuren (Kostüme)
 
-Wie auf den Figuren-Bildern der Webseite (`holds` in `MODES`, `packages/builder/src/lobby/common.ts`; ohne Angabe das
-Symbol des Kompass-Menüs): MorniCraft Diamant-Spitzhacke, Duels Eisenschwert, Morni Party Notenblock, Gipfelsturm
-Eisen-Spitzhacke als Eispickel, Burgverlies Streitkolben, Bollwerk Schild (links), MorniSMP Truhe, Wolkenkampf Bogen,
-Versteckerl Fernrohr, Wintersport Schneeblock, Adlerflug Flügel auf dem Rücken, Angelkönig Angel; Brezn-Stand Brot,
-Blumenfrau Mohn.
+Seit dem 17.11. trägt jede Modus-Figur ein **Kostüm, das zu ihrem Spielmodus passt** – nicht mehr alle Lederhose
+(Philip: „passender und schöner“). Man erkennt jede am Umriss (eigene Kopfbedeckung, 3D-Teile), an der Hauptfarbe
+(= Farbe des Modus) und am Gegenstand. Gezeichnet in `packages/builder/src/figuren.ts` (`MODE_FIGURES`, ein Kostüm
+malt über die Grundkleidung – `costume` im Outfit; Dorfleute sind unverändert):
+
+| Figur       | Kostüm                                                                 | 3D im Paket                              | Hält (`holds`, `lobby/common.ts`) |
+| ----------- | ---------------------------------------------------------------------- | ---------------------------------------- | --------------------------------- |
+| MorniCraft  | Abenteurerin: grüner Reiseumhang mit Spange, Tasche am Riemen, Stiefel | Hut mit breiter Krempe und Feder         | Diamant-Spitzhacke, Elytra        |
+| Duels       | Kämpfer: roter Wappenrock mit gekreuzten Schwertern, Kettenhemd        | Stirnband mit Enden, Schulterstücke      | Eisenschwert, Schild rot-weiß     |
+| Morni Party | Spielleiterin: Konfetti-Weste, Fliege, Ringelstrümpfe, Rock            | Federhut (drei bunte Federn), Rock       | Kuchen, Feuerwerksrakete          |
+| Gipfelsturm | Kletterer: Klettergurt, Seil über der Brust, Kletterschuhe             | Helm mit Stirnlampe, Seilrolle           | Eispickel                         |
+| Burgverlies | violetter Umhang, Amulett, Schlüsselbund                               | Kapuze, langer Umhang                    | Laterne                           |
+| Bollwerk    | Stadtwache: orangefarbener Wappenrock mit Turm, gesteppte Ärmel        | Eisenhut mit Federbusch                  | Armbrust, Schild mit Mauerwerk    |
+| MorniSMP    | Kaufmann: grauer Gehrock, Smaragd-Weste, Uhrkette, Geldbeutel          | Zylinder                                 | Smaragd, Bündel                   |
+| Wolkenkampf | Ballonfahrerin: Lederjacke mit Fellkragen, türkiser Schal              | Melone mit Fliegerbrille, Schal, Zöpfe   | Bogen                             |
+| Versteckerl | Dorfgendarm: Uniform, Schnauzbart, Bandelier, Trillerpfeife            | Pickelhaube                              | Fernrohr                          |
+| Wintersport | Skifahrerin: Rennanzug mit Startnummer, Skischuhe, rote Handschuhe     | Bommelmütze mit Skibrille, Ski am Rücken | Schneeball                        |
+| Adlerflug   | Flieger: Overall, weißer Schal, Stulpen, gefaltete Schwingen gemalt    | Fliegerhaube, große Adlerschwingen       | Feder                             |
+| Angelkönig  | Fischer: Anglerweste mit Ködern, Karohemd, Wathose                     | Fischerhut mit kleiner Krone             | Angel, Kabeljau                   |
+
+Ohne Paket und auf Bedrock trägt der Skin alles allein (Hüte, Umhänge, Seile, Schals sind gemalt). Ein Gegenstand mit
+Komponenten (z. B. ein Schild mit Muster) steht als `name{komponenten}` in `holds` (`itemSnbtOf` in `village.ts`).
+Brezn-Stand Brot, Blumenfrau Mohn. Test: jede Modus-Figur hat eine eigene Kopfbedeckung und ihr Kostüm
+(`trachten.test.ts`); Schulterstücke liegen oben auf den Armen, nicht darin.
 
 ## Im Netzwerk-Plugin (`LobbyNpcs.java`)
 
