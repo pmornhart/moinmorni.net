@@ -134,6 +134,8 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         returnOffer = new ReturnOffer(this, hub, this::langOf);
         returnOffer.setJail(jail::isJailed);
         returnOffer.start();
+        // Ruhezustand: ist der Server eine Weile leer, gründlich aufräumen und Arbeitsspeicher zurückgeben.
+        new IdleTidy(this).start();
         // Erst verbinden, wenn alles steht – die ersten Nachrichten des Hubs gehen sonst ins Leere.
         if (hub != null) {
             try {

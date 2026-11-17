@@ -203,6 +203,12 @@ describe('Netzwerk richtet sich selbst ein', () => {
     expect(first.created).toEqual(['proxy', 'lobby', 'bau']);
     expect(first.pluginUpdated).toEqual(['proxy', 'lobby', 'bau']);
     expect(first.restart).toEqual([]); // neu angelegt: startet ohnehin frisch
+    // Immer online, ohne Spieler aber wenig Arbeitsspeicher: jeder neue Server gibt im Leerlauf Speicher frei.
+    const created = await h.mm.motor.request<Array<{ readonly releaseIdleMemory?: boolean }>>(
+      'GET',
+      '/api/servers',
+    );
+    expect(created.map((s) => s.releaseIdleMemory)).toEqual(['proxy', 'lobby', 'bau'].map(() => true));
 
     const nets = await h.mm.motor.request<Net[]>('GET', '/api/networks');
     const net = nets.find((n) => n.name === 'MoinMorni');

@@ -2,6 +2,7 @@ import {
   Check,
   ChevronDown,
   ClipboardList,
+  Clock,
   Copy,
   ExternalLink,
   Gamepad2,
@@ -12,7 +13,6 @@ import {
   LogIn,
   MessagesSquare,
   Monitor,
-  Moon,
   Smartphone,
   Sun,
   Terminal,
@@ -390,7 +390,7 @@ function ModesBody(): ReactElement {
         </ul>
       ) : null}
       <p className="flex items-start gap-2.5 text-[15px] text-muted-foreground">
-        <Moon className="mt-1 size-4 shrink-0 text-blue" aria-hidden />
+        <Clock className="mt-1 size-4 shrink-0 text-blue" aria-hidden />
         {t('site.help.modes.sleep')}
       </p>
       <p className="flex items-start gap-2.5 text-[15px] text-muted-foreground">
