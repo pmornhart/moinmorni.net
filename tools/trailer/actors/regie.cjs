@@ -15,6 +15,7 @@
 //   essen · nimm <text> · slot <0-8> · chat <text …> · gruss · springe [n] · schleiche an|aus
 //   bogen <Ziel> [spannen=1.1] · schild [s] · klick x y z [seite] · setze x y z <seite>
 //   bahn x,y,z,t x,y,z,t …                           geführte Bahn (weich, Beine laufen mit)
+//   renne x z [sekunden] [springe]                   stur geradeaus rennen (ohne Wegsuche, z. B. über einen Heuwagen)
 //   physik an|aus                                   eigene Physik aus, wenn der Server den Darsteller führt
 //   * kamera x y z                                   Ort der Kamera (shot.py meldet ihn laufend)
 // Alte Befehle aus actors.cjs/wk-actors.cjs gehen weiter: swing, use, unuse, attack, hit, equip, open, place, take,
@@ -88,6 +89,19 @@ async function handle(line) {
     case 'setze': case 'place': return a.setze(...nums(pos), pos[3] || 'up');
     // Physik aus, wenn der Server den Darsteller selbst führt (z. B. ein Test-Autopilot, der ihn jeden Tick versetzt)
     case 'physik': bot.physicsEnabled = !['aus', 'off'].includes(pos[0]); if (!bot.physicsEnabled) a.stop(); return;
+    case 'renne': {  // renne x z [sekunden] [springe]: stur geradeaus Richtung (x|z), ohne Wegsuche (z. B. auf einen Heuwagen)
+      a.stop();
+      const [x, z, sek] = [Number(pos[0]), Number(pos[1]), Number(pos[2] || 2)];
+      a.look = new Vec3(x, bot.entity.position.y + 1.6, z);  // Kopf (und damit Laufrichtung) erst hindrehen
+      await zeit.wait(450);
+      bot.setControlState('forward', true); bot.setControlState('sprint', true);
+      if (pos.includes('springe')) bot.setControlState('jump', true);
+      await zeit.wait(sek * 1000);
+      for (const c of ['forward', 'sprint', 'jump']) bot.setControlState(c, false);
+      a.look = null;
+      a.log('FERTIG', 'renne');
+      return;
+    }
     case 'bahn': return a.bahn(pos.map((s) => { const v = s.split(',').map(Number); return { p: v.slice(0, 3), t: v[3] || 0 }; }));
     // ältere Befehle
     case 'swing': return a.schwing(pos[0] === 'links' ? 'left' : 'right');

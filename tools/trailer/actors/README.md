@@ -56,6 +56,7 @@ laufend den Ort der Kamera (`* kamera x y z`) – damit klappt `blick kamera`.
 | `chat <text …>` · `gruss [n]` · `springe [n]` · `schleiche an\|aus` | Chat-Zeile · kurz ducken als Gruß · springen · schleichen |
 | `bogen <Ziel> [spannen=1.1]` · `schild [s]` | Bogen spannen, mit Fallkurve zielen, loslassen · Schild hochhalten |
 | `klick x y z [seite]` · `setze x y z <seite>` | Block anklicken (mit Blick) · Block an eine Seite setzen |
+| `renne x z [sekunden] [springe]` | stur geradeaus rennen, ohne Wegsuche (z. B. über einen Heuwagen oder ein Sprungpolster – den Schwung vom Server nehmen Darsteller jetzt an) |
 | `bahn x,y,z,t x,y,z,t …` | geführte Bahn (z. B. schwerer Parkour): weiche Kurve, Beine laufen mit, Kopf schaut voraus |
 | `physik an\|aus` | eigene Physik aus/an – wenn der Server den Darsteller selbst führt (z. B. ein Test-Autopilot, der ihn jeden Tick versetzt) |
 
