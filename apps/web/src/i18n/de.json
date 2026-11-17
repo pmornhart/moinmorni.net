@@ -126,7 +126,7 @@
       "eyebrow": "Spielmodi",
       "title": "Such dir dein Abenteuer aus",
       "pageTitle": "Spielmodi",
-      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Die Modi sind rund um die Uhr offen.",
       "all": "Alle Spielmodi",
       "empty": "Gerade sind noch keine Spielmodi eingetragen.",
       "emptyTitle": "Noch keine Spielmodi",
@@ -204,7 +204,7 @@
       "place": "Platz {{rank}}",
       "homeTitle": "MoinMorni in Zahlen",
       "modesOpen": "Spielmodi offen",
-      "modesOpenHint": "Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "modesOpenHint": "Rund um die Uhr offen – du kommst sofort hinein.",
       "modeBoards": "Bestenlisten der Spielmodi",
       "modeBoardsText": "Wer ist in den Modi ganz vorne? Wähl einen Modus und einen Wert.",
       "modeBoardsModes": "Spielmodus",
@@ -424,7 +424,7 @@
         "title": "Spielmodi",
         "short": "Alle Modi auf einen Blick – und wie du hinkommst",
         "intro": "Alle Spielmodi erreichst du aus der Lobby: Die Figuren am Dorfmarkt um den Maibaum und am Schlossmarkt vor der Schlosstreppe bringen dich mit einem Klick hin. Mit dem Kompass in deiner Leiste geht es noch schneller.",
-        "sleep": "Ist in einem Modus gerade niemand, schläft er. Sobald du kommst, wacht er auf – das dauert einen kleinen Moment.",
+        "sleep": "Die Spielmodi laufen rund um die Uhr – du kommst sofort hinein. Schläft ein Modus doch einmal, wacht er auf, sobald du kommst – das dauert etwa eine halbe Minute.",
         "pause": "Wintersport kann eine Sommerpause machen: Dann gibt es nur im Winter (1. Dezember bis 31. März) Wettkämpfe – das Dorf mit Eisfläche, Lift und Rodelbahn bleibt offen.",
         "more": "Mehr",
         "all": "Alle Spielmodi"
@@ -753,6 +753,9 @@
         "rundgang": "Ein Rundgang durchs Dorf (beenden: /rundgang stop).",
         "parkour": "Die Bestenliste der Parkour-Spirale und deine Bestzeit.",
         "parkourStart": "An den Start der Parkour-Spirale.",
+        "musik": "Lobbymusik für dich aus- und wieder anschalten. Im Alltag spielt Blasmusik, zur Wiesn bayerische Musik, im Winter Weihnachtslieder – mit unserem Lobby-Paket eine echte Kapelle, sonst Notenblöcke.",
+        "musikLauter": "Lobbymusik leiser oder lauter stellen (auch als Zahl von 0 bis 100). Der Regler „Plattenspieler/Notenblöcke“ in den Minecraft-Einstellungen wirkt auch.",
+        "musikWeiter": "Gleich das nächste Stück.",
         "warn": "Jemanden verwarnen – steht in seinem Strafen-Verlauf.",
         "strafen": "Alle Strafen eines Spielers ansehen.",
         "mute": "Im Chat stummschalten, z. B. für 30m, 2h, 7d oder perm.",
@@ -889,7 +892,7 @@
   },
   "modes": {
     "title": "Modi",
-    "text": "Welche Spielmodi es gibt, in welcher Reihenfolge sie in der Lobby und auf der Webseite stehen und wer hinein darf.",
+    "text": "Welche Spielmodi es gibt, in welcher Reihenfolge sie in der Lobby und auf der Webseite stehen, wer hinein darf und was ein Modus tut, wenn niemand drin ist.",
     "state": "Zustand",
     "stateHelp": "„Bald“ zeigt den Modus schon an, man kann aber noch nicht hinein.",
     "access": "Wer darf hinein?",
@@ -900,8 +903,20 @@
     "descDe": "Beschreibung auf Deutsch",
     "descEn": "Beschreibung auf Englisch",
     "maxPlayers": "Spieler höchstens",
-    "sleep": "Schlafen, wenn leer",
-    "sleepHelp": "Ist niemand drin, legt sich der Server schlafen und spart Arbeitsspeicher. Er wacht auf, sobald jemand die Figur anklickt.",
+    "idle": "Wenn niemand drin ist",
+    "idleChoice": {
+      "rest": "Ruhezustand – online und sparsam",
+      "sleep": "Schlafen – ganz aus",
+      "awake": "Wach bleiben – Welt läuft weiter"
+    },
+    "idleHelp": {
+      "rest": "Empfohlen. Der Modus bleibt online, man kommt sofort hinein. Ohne Spieler hält Minecraft nach einer Minute die Welt an und Java gibt Arbeitsspeicher zurück – ein leerer Modus braucht dann etwa die Hälfte.",
+      "sleep": "Ist eine Weile niemand drin, geht der Server ganz aus und braucht gar keinen Arbeitsspeicher. Er wacht auf, sobald jemand die Figur anklickt – das dauert etwa eine halbe Minute.",
+      "awake": "Der Modus bleibt online und hält seinen ganzen Arbeitsspeicher, auch wenn niemand drin ist; die Welt läuft ohne Spieler weiter. Nur nötig, wenn ein Modus ohne Spieler weiterrechnen soll."
+    },
+    "idleRestart": "Gilt nach dem nächsten Neustart des Modus – er startet von selbst neu, sobald niemand drin ist.",
+    "idleRestartPending": "Neustart steht noch aus – der Modus startet neu, sobald niemand drin ist.",
+    "idleNoServer": "Geht erst, wenn der Modus einen Server hat.",
     "up": "Weiter nach vorne",
     "down": "Weiter nach hinten",
     "position": "Platz {{n}}",
@@ -1021,7 +1036,7 @@
     "fixFirst": "Bitte zuerst prüfen: {{names}} (Name, Symbol oder Farbe passt noch nicht).",
     "areaHelp": {
       "overview": "Startseite des Panels mit Netzwerk-Status.",
-      "modes": "Spielmodi an- und ausschalten, Reihenfolge, wer hinein darf.",
+      "modes": "Spielmodi an- und ausschalten, Reihenfolge, wer hinein darf, Ruhezustand.",
       "lobby": "Einstellungen der Lobby (Dorf, Figuren, Deko).",
       "players": "Spieler suchen, Profile ansehen, Ränge vergeben.",
       "punishments": "Strafen verhängen und aufheben.",
@@ -1314,11 +1329,11 @@
     },
     "modes": {
       "title": "Modi",
-      "text": "Hier schaltest du Spielmodi an und aus, setzt sie auf Wartung und legst fest, in welcher Reihenfolge sie in der Lobby stehen."
+      "text": "Hier schaltest du Spielmodi an und aus, setzt sie auf Wartung und legst fest, in welcher Reihenfolge sie in der Lobby stehen. Unter „Wenn niemand drin ist“ wählst du je Modus: Ruhezustand (online, wenig Arbeitsspeicher), Schlafen (ganz aus) oder Wach bleiben."
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter Lobby → Musik stellst du die Lobbymusik ein (je Saison, welche Stücke laufen). Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
     },
     "news": {
       "title": "News",
@@ -2299,6 +2314,8 @@
     "email_unconfirmed": "Bitte bestätige zuerst deine E-Mail-Adresse.",
     "account_pending_approval": "Dein Konto wartet noch auf Freigabe.",
     "not_in_team": "Dein Konto hat noch keine Rolle in MoinMorni.",
+    "mode_no_server": "Dieser Modus hat noch keinen Server.",
+    "motor_without_idle_memory": "Der Motor kennt den Ruhezustand noch nicht – bitte erst MoinMorni aktualisieren.",
     "panel_area_forbidden": "Diesen Bereich darf deine Rolle nicht ändern.",
     "csrf": "Deine Sitzung ist abgelaufen. Lade die Seite neu und versuch es nochmal.",
     "bad_origin": "Die Anfrage kam von einer fremden Seite und wurde abgelehnt.",

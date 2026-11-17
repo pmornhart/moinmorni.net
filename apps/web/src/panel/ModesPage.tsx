@@ -1,13 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ChevronDown, Gamepad2, Save } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Gamepad2, RotateCw, Save } from 'lucide-react';
 import { useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { MODE_ACCESS, MODE_STATES, type Mode, type ModePatch } from '@moinmorni/shared';
+import {
+  MODE_ACCESS,
+  MODE_IDLE,
+  MODE_STATES,
+  modeIdleOf,
+  type Mode,
+  type ModeIdle,
+  type ModePatch,
+  type ModeRest,
+} from '@moinmorni/shared';
 import { FieldBlock } from '~/components/controls';
 import { ModeGlyph } from '~/components/mode-visuals';
 import { Select } from '~/components/select';
-import { Button, Card, Input, Pill, Skeleton, Switch, Textarea } from '~/components/ui';
+import { Button, Card, Input, Pill, Skeleton, Textarea } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { cn } from '~/lib/cn';
 import { useErrorText } from '~/lib/errors';
@@ -17,6 +26,9 @@ import { usePick } from '~/lib/text';
 import { PageHead } from './PanelShell';
 
 const MODES_KEY = ['panel', 'modes'] as const;
+/** Idle memory per mode – kept by the motor, not with the modes. */
+const REST_KEY = ['panel', 'modes', 'rest'] as const;
+const NO_REST: ModeRest = { on: null, restartPending: false };
 const STATUS_KEY = ['status'] as const;
 /** Limits of the mode schema in packages/shared (modes.ts). */
 const NAME_MAX = 32;
@@ -57,6 +69,7 @@ function draftValid(draft: Editable): boolean {
 
 function ModeEditor({
   mode,
+  rest,
   index,
   count,
   onMove,
@@ -64,6 +77,7 @@ function ModeEditor({
   open,
   onToggle,
 }: {
+  readonly rest: ModeRest;
   readonly open: boolean;
   readonly onToggle: () => void;
   readonly mode: Mode;
@@ -78,23 +92,43 @@ function ModeEditor({
   const queryClient = useQueryClient();
   const saved = editableOf(mode);
   const [draft, setDraft] = useState<Editable>(saved);
-  const patch = patchOf(saved, draft);
-  const dirty = Object.keys(patch).length > 0;
   const id = (field: string): string => `mode-${mode.id}-${field}`;
   const set = <K extends keyof Editable>(key: K, value: Editable[K]): void =>
     setDraft((d) => ({ ...d, [key]: value }));
+  // Idle memory of the mode's server (lives in the motor): null = no server yet – then only "rest" or "sleep".
+  const [restOn, setRestOn] = useState<boolean | null>(rest.on);
+  const patch = patchOf(saved, draft);
+  const restChanged = restOn !== rest.on;
+  const dirty = Object.keys(patch).length > 0 || restChanged;
+  const idle = modeIdleOf(draft.sleepWhenEmpty, restOn);
+  const chooseIdle = (choice: ModeIdle): void => {
+    set('sleepWhenEmpty', choice === 'sleep');
+    // Sleeping leaves the idle memory setting as it is (the server is off most of the time anyway).
+    if (choice !== 'sleep' && rest.on !== null) setRestOn(choice === 'rest');
+  };
 
   const save = useMutation({
-    mutationFn: () => mmApi<Mode>(`/api/panel/modes/${mode.id}`, { method: 'PATCH', body: patch }),
+    mutationFn: async (): Promise<Mode> => {
+      const fresh = Object.keys(patch).length
+        ? await mmApi<Mode>(`/api/panel/modes/${mode.id}`, { method: 'PATCH', body: patch })
+        : mode;
+      if (restChanged && restOn !== null)
+        await mmApi<ModeRest>(`/api/panel/modes/${mode.id}/rest`, { method: 'PUT', body: { on: restOn } });
+      return fresh;
+    },
     onSuccess: async (fresh) => {
       setDraft(editableOf(fresh));
       queryClient.setQueryData<Mode[]>(MODES_KEY, (list) =>
         list?.map((m) => (m.id === fresh.id ? fresh : m)),
       );
       await queryClient.invalidateQueries({ queryKey: STATUS_KEY });
+      await queryClient.invalidateQueries({ queryKey: REST_KEY, exact: true });
       toast.success(t('modes.saved', { name: pick(fresh.name) }));
     },
-    onError: (err) => toast.error(errorText(err)),
+    onError: async (err) => {
+      toast.error(errorText(err));
+      await queryClient.invalidateQueries({ queryKey: REST_KEY, exact: true });
+    },
   });
 
   return (
@@ -241,24 +275,51 @@ function ModeEditor({
                 onChange={(e) => set('maxPlayers', e.target.valueAsNumber)}
               />
             </FieldBlock>
-            <div className="grid content-start gap-1.5">
-              <div className="flex items-center justify-between gap-3">
-                <label htmlFor={id('sleep')} className="text-sm font-semibold">
-                  {t('modes.sleep')}
-                </label>
-                <Switch
-                  id={id('sleep')}
-                  checked={draft.sleepWhenEmpty}
-                  onCheckedChange={(v) => set('sleepWhenEmpty', v)}
-                />
-              </div>
-              <p className="text-[13px] leading-snug text-muted-foreground">{t('modes.sleepHelp')}</p>
-            </div>
+            <FieldBlock
+              id={id('idle')}
+              label={t('modes.idle')}
+              help={
+                <>
+                  {t(`modes.idleHelp.${idle}`)}
+                  {restChanged || rest.restartPending ? (
+                    <span className="mt-1.5 flex items-start gap-1.5 text-gold">
+                      <RotateCw className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                      {t(restChanged ? 'modes.idleRestart' : 'modes.idleRestartPending')}
+                    </span>
+                  ) : null}
+                </>
+              }
+            >
+              <Select
+                id={id('idle')}
+                value={idle}
+                onChange={(e) => chooseIdle(MODE_IDLE.find((c) => c === e.target.value) ?? idle)}
+              >
+                {MODE_IDLE.map((c) => (
+                  <option
+                    key={c}
+                    value={c}
+                    // Staying fully awake switches idle memory off in the motor – that needs a server.
+                    disabled={c === 'awake' && rest.on === null}
+                    title={c === 'awake' && rest.on === null ? t('modes.idleNoServer') : undefined}
+                  >
+                    {t(`modes.idleChoice.${c}`)}
+                  </option>
+                ))}
+              </Select>
+            </FieldBlock>
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
             {dirty ? (
-              <Button variant="ghost" onClick={() => setDraft(saved)} disabled={save.isPending}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setDraft(saved);
+                  setRestOn(rest.on);
+                }}
+                disabled={save.isPending}
+              >
                 {t('settings.discard')}
               </Button>
             ) : null}
@@ -273,12 +334,17 @@ function ModeEditor({
   );
 }
 
-/** All game modes: state, who may join, names, descriptions, limits, sleeping, order. */
+/** All game modes: state, who may join, names, descriptions, limits, what happens when empty, order. */
 export function ModesPage(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const errorText = useErrorText();
   const queryClient = useQueryClient();
   const modes = useQuery({ queryKey: MODES_KEY, queryFn: () => mmApi<Mode[]>('/api/panel/modes') });
+  // Asks the motor; if that fails (motor away), the page still shows the modes.
+  const rest = useQuery({
+    queryKey: REST_KEY,
+    queryFn: () => mmApi<Record<string, ModeRest>>('/api/panel/modes/rest'),
+  });
   const list = [...(modes.data ?? [])].sort((a, b) => a.position - b.position);
   // Which modes are unfolded (kept here, so a card stays open when it reloads after saving).
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
@@ -318,8 +384,9 @@ export function ModesPage(): ReactElement {
         {list.map((mode, index) => (
           <ModeEditor
             // A new key when the saved content changes, so the form starts from the fresh values (not on moves).
-            key={`${mode.id}:${JSON.stringify(editableOf(mode))}`}
+            key={`${mode.id}:${JSON.stringify(editableOf(mode))}:${String(rest.data?.[mode.id]?.on)}`}
             mode={mode}
+            rest={rest.data?.[mode.id] ?? NO_REST}
             index={index}
             count={list.length}
             moving={move.isPending}

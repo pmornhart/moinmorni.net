@@ -1,5 +1,11 @@
 # Morni Versteckerl – Einstellungen. Nach Änderungen: /versteckerladmin neuladen (oder Server neu starten).
 
+# Zurück ins Spiel: Verliert jemand mitten in einer Runde die Verbindung (zum Beispiel, weil das Spiel abstürzt), bleibt
+# sein Platz so viele Sekunden frei – Rolle, Gestalt, Versteck und Punkte. Kommt er rechtzeitig wieder (direkt oder über
+# „Zurück ins Spiel“ in der Lobby), geht es genau dort weiter, wo er war; sonst hat er die Runde verlassen. Solange
+# wartet die Runde auf ihn; wer bei Ablauf der Suchzeit noch weg ist, zählt nicht als versteckt. 0 = aus (0–600).
+rueckkehr-sekunden: 90
+
 # Eigene leere Welt für die Gendarmerie (Wartebereich) und die Karten (wird beim ersten Start angelegt und gebaut).
 welt: versteckerl
 

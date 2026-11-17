@@ -6,3 +6,4 @@ export * from './team-apply.js';
 export * from './badges.js';
 export * from './streamer.js';
 export * from './commands.js';
+export * from './lobby-music.js';

@@ -1,5 +1,11 @@
 # Morni Wintersport – Einstellungen. Nach Änderungen: /wsadmin neuladen (oder Server neu starten).
 
+# Zurück ins Spiel: Verliert jemand mitten im Wettkampf die Verbindung (zum Beispiel, weil das Spiel abstürzt), bleibt
+# sein Platz so viele Sekunden frei – Disziplin, Lauf und Zeiten. Kommt er rechtzeitig wieder (direkt oder über „Zurück
+# ins Spiel“ in der Lobby), geht es genau dort weiter, wo er war; die Uhr seines Laufs läuft so lange weiter. Sonst hat
+# er den Wettkampf verlassen. 0 = aus (0–600).
+rueckkehr-sekunden: 90
+
 # Eigene leere Welt für das Bergdorf und alle Strecken (wird beim ersten Start angelegt und gebaut).
 welt: wintersport
 

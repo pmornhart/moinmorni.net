@@ -1,5 +1,6 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the game needs them */
 import { z } from 'zod';
+import { LOBBY_MUSIC_SECTIONS } from './lobby-music.js';
 import { MODE_SETTING_AREAS } from './mode-settings.js';
 import { STREAMER_SECTION } from './streamer.js';
 import { TEAM_APPLY_AREA } from './team-apply.js';
@@ -170,8 +171,8 @@ export const NETWORK_AREA: SettingArea = {
           unit: t('Minuten', 'minutes'),
           label: t('Leere Modi schlafen nach', 'Empty modes sleep after'),
           help: t(
-            'Ist so lange niemand in einem Modus, schläft sein Server und spart Speicher. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute).',
-            'When nobody is in a mode for this long, its server sleeps and saves memory. Whoever wants in wakes it up (takes about half a minute).',
+            'Nur für Modi, die schlafen dürfen (Panel → Modi → „Wenn niemand drin ist“ → Schlafen): Ist so lange niemand drin, geht ihr Server ganz aus. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute). Alle anderen Modi bleiben immer online und brauchen ohne Spieler kaum Arbeitsspeicher.',
+            'Only for modes that may sleep (panel → Modes → “When nobody is inside” → Sleep): when nobody is in them for this long, their server shuts down. Whoever wants in wakes it up (takes about half a minute). All other modes stay online and need hardly any memory without players.',
           ),
           command: '/netzwerk schlaf <minuten>',
         },
@@ -762,6 +763,7 @@ export const LOBBY_AREA: SettingArea = {
         },
       ],
     },
+    ...LOBBY_MUSIC_SECTIONS,
   ],
 };
 
@@ -1426,11 +1428,11 @@ export const BUILD_AREA: SettingArea = {
         {
           key: 'sleepWhenEmpty',
           type: 'boolean',
-          default: true,
+          default: false,
           label: t('Schlafen, wenn niemand baut', 'Sleep when nobody is building'),
           help: t(
-            'Spart Arbeitsspeicher; /bau weckt ihn wieder (dauert ein paar Sekunden).',
-            'Saves memory; /bau wakes it up again (takes a few seconds).',
+            'Aus: Der Bau-Server ist immer online und braucht ohne Spieler kaum Arbeitsspeicher. An: Er geht ganz aus (gar kein Arbeitsspeicher), /bau weckt ihn wieder – das dauert etwa eine halbe Minute.',
+            'Off: the build server is always online and needs hardly any memory without players. On: it shuts down completely (no memory at all), /bau wakes it up again – that takes about half a minute.',
           ),
           command: '/bauserver schlafen an|aus',
         },

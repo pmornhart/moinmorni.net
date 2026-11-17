@@ -10,9 +10,9 @@ Owner-Konto.
 ## Was du brauchst
 
 - **Proxmox VE 8 oder 9** mit Internet (frisch installiert reicht).
-- Platz für den Container – Standard: **32 GB RAM, 8 Kerne, 100 GB Festplatte**. Leere Spielmodi schlafen und
-  brauchen dann nichts. Hat dein Proxmox weniger Kerne, RAM oder freien Platz, nimmt das Skript von selbst weniger und
-  sagt dir, was das bedeutet.
+- Platz für den Container – Standard: **32 GB RAM, 8 Kerne, 100 GB Festplatte**. Damit sind alle Server immer online;
+  ohne Spieler brauchen sie nur etwa die Hälfte davon. Hat dein Proxmox weniger Kerne, RAM oder freien Platz, nimmt das
+  Skript von selbst weniger und sagt dir, was das bedeutet.
 - Deine **Domain** (z. B. `moinmorni.net`) – DNS bei INWX, Verkehr über NetBird.
 - Optional: den **Token deines Discord-Bots** (geht auch später, siehe [Discord einrichten](discord.md)).
 - Optional: einen **NetBird-Setup-Key** (NetBird-Dashboard → _Setup Keys → Create Setup Key_), dann ist der
@@ -233,7 +233,7 @@ MH_GUARD_NAME=moinmorni MH_BRAND=MoinMorni MH_INSTALL_DIR=/opt/moinmorni MH_CT_G
 Mehr Probleme und Lösungen: [Von null zu MoinMorni, Teil 10](schnellstart.md#10-probleme-und-lösungen).
 
 **Das Skript sagt, mein Rechner hat zu wenig RAM.** Das ist nur ein Hinweis. MoinMorni läuft trotzdem – es laufen
-dann nur weniger Spielmodi gleichzeitig. Leere Modi schlafen und brauchen nichts. Später mehr RAM geben: siehe oben.
+dann nur weniger Spielmodi gleichzeitig; die übrigen schlafen, bis jemand kommt. Später mehr RAM geben: siehe oben.
 
 **Docker startet im Container nicht.** Der Container braucht _Nesting_ und _keyctl_ (der Einzeiler setzt beide).
 Hilft das nicht, Proxmox auf den neuesten Stand bringen (`apt update && apt full-upgrade` auf dem Host).

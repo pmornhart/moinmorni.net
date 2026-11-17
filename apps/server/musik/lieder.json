@@ -1,0 +1,127 @@
+{
+  "alle-jahre": {
+    "fingerprint": "d0db520115b43c1c",
+    "seconds": 79.2,
+    "bytes": 511712
+  },
+  "alle-voegel": {
+    "fingerprint": "0aaea8e154f4ebbb",
+    "seconds": 74,
+    "bytes": 486969
+  },
+  "almrausch-walzer": {
+    "fingerprint": "69c85a5133e3e0c8",
+    "seconds": 82.8,
+    "bytes": 601404
+  },
+  "bergkoenig": {
+    "fingerprint": "a94b53828f179c75",
+    "seconds": 66.8,
+    "bytes": 460698
+  },
+  "der-mai": {
+    "fingerprint": "60300dd661ae0330",
+    "seconds": 68,
+    "bytes": 457765
+  },
+  "dorfplatz-polka": {
+    "fingerprint": "90a065c232bdfa5b",
+    "seconds": 69,
+    "bytes": 497956
+  },
+  "geisterwalzer": {
+    "fingerprint": "af555290751c6efb",
+    "seconds": 82.8,
+    "bytes": 602198
+  },
+  "ihr-kinderlein": {
+    "fingerprint": "845fa21db64819de",
+    "seconds": 78.3,
+    "bytes": 539849
+  },
+  "jaeger-kurpfalz": {
+    "fingerprint": "2c322bcf49ea5273",
+    "seconds": 65.3,
+    "bytes": 472092
+  },
+  "kling-gloeckchen": {
+    "fingerprint": "4fa880208cde73de",
+    "seconds": 78,
+    "bytes": 542249
+  },
+  "kuckuck": {
+    "fingerprint": "e5f031325c14f88a",
+    "seconds": 66.2,
+    "bytes": 470361
+  },
+  "kuerbis-polka": {
+    "fingerprint": "2d04c385b4fcb526",
+    "seconds": 61,
+    "bytes": 457152
+  },
+  "leise-rieselt": {
+    "fingerprint": "f5fbefcdc86e906e",
+    "seconds": 63,
+    "bytes": 424426
+  },
+  "masskrug-walzer": {
+    "fingerprint": "f984bd42d32755aa",
+    "seconds": 82.8,
+    "bytes": 598238
+  },
+  "morgenstimmung": {
+    "fingerprint": "a442ac98d68df737",
+    "seconds": 66.6,
+    "bytes": 438099
+  },
+  "morni-laendler": {
+    "fingerprint": "9ffbc3078296b4f7",
+    "seconds": 76.5,
+    "bytes": 488957
+  },
+  "morni-marsch": {
+    "fingerprint": "9082e6f8a3537fa2",
+    "seconds": 102,
+    "bytes": 718515
+  },
+  "muellers-lust": {
+    "fingerprint": "a39c8e32e46ef5cf",
+    "seconds": 70.3,
+    "bytes": 521986
+  },
+  "o-du-froehliche": {
+    "fingerprint": "9ff72996801b9328",
+    "seconds": 88.2,
+    "bytes": 549486
+  },
+  "o-tannenbaum": {
+    "fingerprint": "5c0eb9a7324265d3",
+    "seconds": 64.4,
+    "bytes": 415967
+  },
+  "schlittenfahrt": {
+    "fingerprint": "cb829d4480bacdf1",
+    "seconds": 82.8,
+    "bytes": 607295
+  },
+  "schuhplattler": {
+    "fingerprint": "56efc340a4805e44",
+    "seconds": 61.2,
+    "bytes": 449163
+  },
+  "stille-nacht": {
+    "fingerprint": "23f012cbc7aac017",
+    "seconds": 88.8,
+    "bytes": 579869
+  },
+  "wiesn-einzug": {
+    "fingerprint": "41191f0238b0bb84",
+    "seconds": 70.8,
+    "bytes": 469652
+  },
+  "zum-morni-wirt": {
+    "fingerprint": "8d320f73efdd877e",
+    "seconds": 68,
+    "bytes": 499326
+  }
+}

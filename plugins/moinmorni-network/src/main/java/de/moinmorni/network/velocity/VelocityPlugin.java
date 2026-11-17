@@ -347,6 +347,23 @@ public final class VelocityPlugin {
         }
     }
 
+    /**
+     * Hat jemand das Lobby-Paket geladen (oder abgelehnt, oder wurde es wieder abgenommen)? Der Lobby-Server erfährt
+     * das nicht selbst – Minecraft lädt es schon vor dem Betreten –, der Hub gibt es mit dem Profil weiter: Mit Paket
+     * spielt die Lobbymusik als Klangdatei der Kapelle, ohne mit Notenblöcken.
+     */
+    @Subscribe
+    public void onPackStatus(PlayerResourcePackStatusEvent event) {
+        if (hub == null || !LOBBY_PACK.equals(event.getPackId()) || event.getStatus().isIntermediate()) {
+            return;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "pack");
+        body.addProperty("uuid", event.getPlayer().getUniqueId().toString());
+        body.addProperty("loaded", event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFUL);
+        hub.send(body);
+    }
+
     @Subscribe
     public void onSettings(PlayerSettingsChangedEvent event) {
         if (hub == null) {
@@ -437,8 +454,9 @@ public final class VelocityPlugin {
         hub.send(body);
     }
 
+    /** Antwort auf das Abzeichen-Paket (das Lobby-Paket hat seinen eigenen Empfänger, {@link #onPackStatus}). */
     @Subscribe
-    public void onPackStatus(PlayerResourcePackStatusEvent event) {
+    public void onBadgePackStatus(PlayerResourcePackStatusEvent event) {
         if (!BadgePack.ID.equals(event.getPackId())) {
             return;
         }

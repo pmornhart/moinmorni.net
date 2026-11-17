@@ -37,6 +37,7 @@ import { createModeSettingsSync, type ModeSettingsSync } from './network/mode-se
 import { createRestartQueue } from './network/restart.js';
 import { createSleepService, type SleepService } from './network/sleep.js';
 import { retuneMemory } from './network/memory.js';
+import { idleMemoryOnce, sleepOffOnce } from './network/always-on.js';
 import { ensureServerIcon } from './network/server-icon.js';
 import { registerDiscordRoutes } from './panel/discord-routes.js';
 import { registerNewsRoutes } from './panel/news-routes.js';
@@ -51,6 +52,7 @@ import { bt } from './discord/texts.js';
 import { registerPlayerRoutes } from './panel/player-routes.js';
 import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
+import { registerModeRestRoutes } from './panel/mode-rest-routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { lobbyPackInfo, lobbyPackUrl, registerPackRoutes } from './lobby/packs.js';
 import { badgePackOf, badgePackUrl, registerBadgeRoutes } from './badges/pack.js';
@@ -241,7 +243,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     // Neue Modus-Server starten gleich mit den Einstellungen aus dem Panel.
     prepare: (servers) => modeSettingsRef.prepare(servers),
   });
-  const sleep = createSleepService(motor, hub, stores, app.log);
+  const sleep = createSleepService(motor, hub, stores, app.log, config.dataDir);
   sleepRef.service = sleep;
   const bot = createMoinMorniBot({
     config,
@@ -341,6 +343,17 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
         return [];
       });
       extra.push(...retuned);
+      // Einmal: alle Server im Motor mit „Arbeitsspeicher im Leerlauf freigeben“ (gilt nach dem nächsten Neustart).
+      const idle = await idleMemoryOnce(motor, config.dataDir, result.servers, app.log).catch(
+        (err: unknown) => {
+          app.log.warn(
+            { err },
+            'Netzwerk: Leerlauf-Speicher ließ sich nicht einschalten – nächster Versuch beim Start',
+          );
+          return [];
+        },
+      );
+      extra.push(...idle);
       // Bild in der Serverliste: das Wappen, solange der Proxy keins hat (Velocity liest es beim Neustart).
       const proxy = result.servers.find((s) => s.member === PROXY_MEMBER);
       if (proxy) {
@@ -436,6 +449,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   registerPackRoutes(app);
   registerBadgeRoutes(app, () => stores.roles());
   registerPanelRoutes(app, auth, stores, hub.modeRestarts);
+  registerModeRestRoutes(app, auth, stores, motor, createMemberIds(motor), restarts);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor);
   teamRef.syncAll = teamAccess.syncAll;
@@ -529,6 +543,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     sleep,
     bot,
     start: async () => {
+      // Einmal: Modi und Bau-Server bleiben jetzt immer online („Schlafen, wenn leer“ standardmäßig aus) – wer gerade
+      // schläft, startet wieder, sobald er in den Arbeitsspeicher passt.
+      sleep.remember(sleepOffOnce(stores, config.dataDir, app.log));
       sleep.start();
       bot.start();
       // Neue Rolle oder neues Recht aus der Vorlage (z. B. Supporter nach einem Update): überall nachziehen wie nach

@@ -197,6 +197,18 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
     where: 'hub',
     lines: [line('discord', '/discord')],
   },
+  {
+    name: 'musik',
+    aliases: ['music'],
+    usage: { de: '/musik an|aus|leiser|lauter|weiter|0–100', en: '/music on|off|quieter|louder|next|0–100' },
+    topic: 'lobby',
+    where: 'hub',
+    lines: [
+      line('musik', '/musik an|aus', '/music on|off'),
+      line('musikLauter', '/musik leiser|lauter', '/music quieter|louder'),
+      line('musikWeiter', '/musik weiter', '/music next'),
+    ],
+  },
   // ---------- Nur in der Lobby ----------
   {
     name: 'rundgang',
