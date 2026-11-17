@@ -169,7 +169,7 @@
 
   „Sichtweite im Leerlauf runter“ und „weniger vorgeladene Chunks“ braucht es nicht: ohne Spieler sind in der Lobby 0 Chunks geladen (keine Spawn-Chunks mehr seit 1.21.9, keine erzwungenen), die Sichtweite wirkt nur um Spieler herum.
 
-  Tests: 172 Server (neu: Umstellung einmal, Motor-Schalter einmal und nur wo aus, älterer Motor ohne Schalter, Sicherheitsnetz mit „immer online“-Modi, Wiederstart der Schlafenden, Ruhezustand je Modus im Panel gegen den echten Motor; Provisioner legt mit dem echten Motor alle Server mit dem Schalter an; zwei Tests liefen auf dem überlasteten Rechner erst mit längerer Wartezeit durch), 25 Katalog-, 23 Baukasten-Tests, 21 JUnit im Netzwerk-Plugin (2 neu: Leerlauf-Modus erkennen, „leer“ beim Gehen), Typen, Web- und Demo-Bau; MorniHosting 468 Tests. Bilder der Modi-Seite und des Server-Schalters, Computer + Handy, hell/dunkel, de/en (nur lokal).
+  Tests (nach dem Zusammenführen mit dem Entwicklungs-Branch): 208 Server (neu: Umstellung einmal, Motor-Schalter einmal und nur wo aus, älterer Motor ohne Schalter, Sicherheitsnetz mit „immer online“-Modi, Wiederstart der Schlafenden, Ruhezustand je Modus im Panel gegen den echten Motor; Provisioner legt mit dem echten Motor alle Server mit dem Schalter an; zwei Tests liefen auf dem überlasteten Rechner erst mit längerer Wartezeit durch), 93 Katalog-, 23 Baukasten-Tests, 21 JUnit im Netzwerk-Plugin (2 neu: Leerlauf-Modus erkennen, „leer“ beim Gehen), Typen, Web- und Demo-Bau; MorniHosting 468 Tests. Bilder der Modi-Seite und des Server-Schalters, Computer + Handy, hell/dunkel, de/en (nur lokal).
 
 ## Offen
 
