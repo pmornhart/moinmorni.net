@@ -834,11 +834,11 @@ final class LobbyFeatures implements Listener {
             return;
         }
         commandsRegistered = true;
-        Bukkit.getCommandMap().register("moinmorni", new Command("rundgang", "Rundgang durchs Dorf", "/rundgang [stop]", List.of("tour")) {
+        Bukkit.getCommandMap().register("moinmorni", new Command("rundgang", "Rundgang durchs Dorf", "/rundgang [stopp]", List.of("tour")) {
             @Override
             public boolean execute(CommandSender sender, String label, String[] args) {
                 if (sender instanceof Player p) {
-                    if (args.length > 0 && "stop".equalsIgnoreCase(args[0])) {
+                    if (args.length > 0 && LobbyCommands.STOP.contains(args[0].toLowerCase(java.util.Locale.ROOT))) {
                         stopTour(p, false);
                     } else {
                         startTour(p);
@@ -849,7 +849,7 @@ final class LobbyFeatures implements Listener {
 
             @Override
             public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
-                return args.length == 1 ? List.of("stop") : List.of();
+                return args.length == 1 && sender instanceof Player p ? List.of("en".equals(langOf.apply(p)) ? "stop" : "stopp") : List.of();
             }
         });
         Bukkit.getOnlinePlayers().forEach(Player::updateCommands);

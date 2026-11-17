@@ -202,7 +202,7 @@ export function createVoice(
 
   const commands: Command[] = [
     {
-      ...networkCommand('voice'),
+      ...networkCommand('sprachchat'),
       run: (actor, args) => {
         const word = args[0]?.toLowerCase() ?? '';
         const list = channels();

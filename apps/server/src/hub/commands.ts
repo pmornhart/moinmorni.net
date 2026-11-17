@@ -230,16 +230,16 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: punishArgs,
     },
     {
-      ...networkCommand('unban'),
+      ...networkCommand('entbannen'),
       run: lifting('ban'),
     },
     {
-      ...networkCommand('mute'),
+      ...networkCommand('stumm'),
       run: punishing('mute'),
       complete: punishArgs,
     },
     {
-      ...networkCommand('unmute'),
+      ...networkCommand('entstummen'),
       run: lifting('mute'),
       complete: playerArg,
     },
@@ -254,12 +254,12 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: playerArg,
     },
     {
-      ...networkCommand('voicemute'),
+      ...networkCommand('sprachstumm'),
       run: punishing('voice'),
       complete: punishArgs,
     },
     {
-      ...networkCommand('voiceunmute'),
+      ...networkCommand('sprachfrei'),
       run: lifting('voice'),
       complete: playerArg,
     },
@@ -277,11 +277,11 @@ export function createCommands(ctx: HubContext, mod: Moderation): Command[] {
       complete: playerArg,
     },
     {
-      ...networkCommand('warn'),
+      ...networkCommand('verwarnen'),
       run: (actor, args) => {
         const reason = args.slice(1).join(' ').trim();
         if (!reason) {
-          say(actor, text(actor.lang, 'cmd.usage', { usage: '/warn <spieler> <grund>' }));
+          say(actor, text(actor.lang, 'cmd.usage', { usage: networkCommand('verwarnen').usage[actor.lang] }));
           return;
         }
         const t = culprit(actor, args[0], 'warn');

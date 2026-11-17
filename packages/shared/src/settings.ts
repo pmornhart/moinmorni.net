@@ -557,7 +557,7 @@ export const VOICE_AREA: SettingArea = {
           default: true,
           label: t('Eigene Gruppen erlaubt', 'Own groups allowed'),
           help: t(
-            'Spieler dürfen eigene Gruppen anlegen: mit /voice gruppe <name> [passwort] für alle Server (leer nach 5 Minuten weg), im Sprachchat-Menü nur für den eigenen Server. Aus = auch das Menü legt keine Gruppen mehr an.',
+            'Spieler dürfen eigene Gruppen anlegen: mit /sprachchat gruppe <name> [passwort] für alle Server (leer nach 5 Minuten weg), im Sprachchat-Menü nur für den eigenen Server. Aus = auch das Menü legt keine Gruppen mehr an.',
             'Players may create own groups: with /voice group <name> [password] on every server (removed after 5 minutes empty), in the voice chat menu only on their own server. Off = the menu cannot create groups either.',
           ),
           command: '/voiceconfig gruppen an|aus',
@@ -892,7 +892,7 @@ export const LOBBY_AREA: SettingArea = {
       id: 'doublejump',
       title: t('Doppelsprung', 'Double jump'),
       text: t(
-        'Der klassische Lobby-Doppelsprung: springen, in der Luft noch einmal die Sprungtaste – ein kräftiger Schub wirft dich in Blickrichtung in hohem Bogen davon, mit Funken. Nach der Landung geht es sofort wieder, so hüpft man quer durchs Dorf und auf Dächer. Kein Fallschaden. Ab VIP (Recht „In der Lobby fliegen“) fliegt man stattdessen – /fly wechselt. Nicht im Jump and Run, nicht im Gefängnis und nicht beim Rundgang.',
+        'Der klassische Lobby-Doppelsprung: springen, in der Luft noch einmal die Sprungtaste – ein kräftiger Schub wirft dich in Blickrichtung in hohem Bogen davon, mit Funken. Nach der Landung geht es sofort wieder, so hüpft man quer durchs Dorf und auf Dächer. Kein Fallschaden. Ab VIP (Recht „In der Lobby fliegen“) fliegt man stattdessen – /fliegen wechselt. Nicht im Jump and Run, nicht im Gefängnis und nicht beim Rundgang.',
         'The classic lobby double jump: jump, press the jump key once more in mid-air – a strong boost launches you in a high arc wherever you are looking, with sparks. You can go again right after landing, so you can hop across the village and onto roofs. No fall damage. From VIP up (right “Fly in the lobby”) you fly instead – /fly switches. Not in the jump and run, not in jail and not during the tour.',
       ),
       settings: [

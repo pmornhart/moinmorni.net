@@ -120,6 +120,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
         // Erst wenn alle Plugins laufen: ein Netzwerk-Plugin unter dem Zwischen-Namen abschalten (nie zwei).
         getServer().getScheduler().runTask(this, this::retireInterimPlugin);
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new LobbyCommands(), this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, this::morniCraftPlayers, SUMMARY_TICKS, SUMMARY_TICKS);
         // Schnittstelle für Spielmodi (de.moinmorni.api.MoinMorni) – auch ohne Hub, dann läuft der Modus allein.
         leaveAsk = new LeaveAsk(this, this::langOf, this::answerLobby);

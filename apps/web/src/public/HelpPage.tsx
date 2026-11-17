@@ -204,6 +204,8 @@ function JoinBody(): ReactElement {
 
 function VoiceBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const language = useLanguage();
+  const voice = language === 'de' ? '/sprachchat' : '/voice';
   const site = useSite();
   const live = site.data?.voiceChannels ?? [];
   const channels: readonly string[] = live.length ? live : VOICE_FALLBACK;
@@ -244,8 +246,11 @@ function VoiceBody(): ReactElement {
           ))}
         </div>
         <p className="flex flex-wrap items-center gap-1.5 text-[14px] text-muted-foreground">
-          {t('site.help.voice.channelsText')} <Cmd>/voice</Cmd> ·{' '}
-          <Cmd>/voice {channels[0] ?? 'Dorfplatz'}</Cmd> · <Cmd>/voice raus</Cmd>
+          {t('site.help.voice.channelsText')} <Cmd>{voice}</Cmd> ·{' '}
+          <Cmd>
+            {voice} {channels[0] ?? 'Dorfplatz'}
+          </Cmd>{' '}
+          · <Cmd>{language === 'de' ? '/sprachchat raus' : '/voice leave'}</Cmd>
         </p>
       </div>
       <p className="text-[14px] text-muted-foreground">{t('site.help.voice.bedrock')}</p>
@@ -348,6 +353,7 @@ function MorniCraftBody(): ReactElement {
 /** Jump and run high above the village and the double jump everywhere in the lobby. */
 function LobbyFunBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const language = useLanguage();
   return (
     <div className="grid gap-5">
       <p>{t('site.help.lobbyFun.intro')}</p>
@@ -373,7 +379,7 @@ function LobbyFunBody(): ReactElement {
               t('site.help.lobbyFun.double1'),
               t('site.help.lobbyFun.double2'),
               <>
-                {t('site.help.lobbyFun.fly')} <Cmd>/fly</Cmd>
+                {t('site.help.lobbyFun.fly')} <Cmd>{language === 'de' ? '/fliegen' : '/fly'}</Cmd>
               </>,
             ]}
           />
