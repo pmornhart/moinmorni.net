@@ -13,6 +13,7 @@ import { biomeCommands } from '../shapes.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
 import { SEASONS, seasonCommands, seasonPlans, type Season } from './season.js';
 import { withoutHitbox, withViewRange } from './deko.js';
+import { bundleDeko, newDekoModels, type DekoModels } from './buendel.js';
 import { SPORT_LOOKS, SPORT_STAND, sportPlan, sportShowCommands } from './sportstand.js';
 
 export const LOBBY_NAMESPACE = 'moinmorni_lobby';
@@ -63,6 +64,8 @@ export interface LobbyPack {
   /** Stücke des Deko-Bereichs festhalten bzw. loslassen (für das Umschalten der Saison). */
   readonly seasonLoad: readonly string[];
   readonly seasonUnload: readonly string[];
+  /** Gebündelte Deko-Modelle fürs Netzwerk-Paket (buendel.ts). */
+  readonly deko?: DekoModels;
   /** Andere Welten mit demselben Selbstbau (Wartungs-Lobby): eigener Namensraum und Ordner der Funktionen. */
   readonly namespace?: string;
   readonly packDir?: string;
@@ -257,7 +260,10 @@ export function lobbyPack(): LobbyPack {
   );
   // Christbaumkugeln und Ostereier: aus Block-Anzeigen werden Item-Anzeigen mit unserem Namen (schmuck.ts).
   // Danach kleine Teile nur so weit zeichnen, wie man sie sieht (deko.ts, `withViewRange`).
-  const asItems = (text: string): string => text.split('\n').map(kugelAsItem).map(withViewRange).join('\n');
+  // Kleine Teile (Girlanden, Lichter, Zweige) je Block zu einem Modell bündeln (buendel.ts, Leistung im Client).
+  const deko = newDekoModels();
+  const asItems = (text: string): string =>
+    bundleDeko(text, deko).split('\n').map(kugelAsItem).map(withViewRange).join('\n');
   [files, seasonFiles].forEach((map) =>
     Object.keys(map).forEach((k) => {
       map[k] = asItems(map[k] ?? '');
@@ -288,6 +294,7 @@ export function lobbyPack(): LobbyPack {
     seasonSteps,
     seasonLoad: forceloadCommands(cx, cz, 'add', SEASON_RADIUS, LOAD_SPAN),
     seasonUnload: forceloadCommands(cx, cz, 'remove', SEASON_RADIUS),
+    deko,
   };
   return cached;
 }

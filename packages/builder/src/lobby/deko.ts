@@ -34,8 +34,8 @@ export function withoutHitbox(command: string): string {
  * fällt nachts noch auf). Größere Teile behalten 1 – es verschwindet nichts, was man sieht.
  * Nur Block- und Item-Anzeigen ohne eigene Sichtweite; Text bleibt, wie er ist.
  */
-const VIEW_PER_SIZE = 4;
-const VIEW_PER_SIZE_GLOW = 8;
+const VIEW_PER_SIZE = 3;
+const VIEW_PER_SIZE_GLOW = 6;
 const VIEW_MIN = 0.25;
 const VIEW_STEP = 20;
 /**

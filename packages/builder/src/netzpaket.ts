@@ -1,6 +1,8 @@
 import { lobbyPackEntries, packMeta } from './furniture.js';
 import { angelPackEntries, packIcon, type FishPackEntry } from './fische/paket.js';
 import type { ClothingPackEntry } from './kleidung/paket.js';
+import { lobbyPack } from './lobby/datapack.js';
+import { dekoPackEntries } from './lobby/buendel.js';
 import { zipOf, type ZipEntry } from './png.js';
 
 /**
@@ -77,6 +79,11 @@ export function netzPack(parts: NetzPackParts): Buffer {
   return zipOf([
     packMeta('MoinMorni – Möbel, Brunnen, Trachten, Fische, Kleidung und Blasmusik'),
     ...packIcon(),
-    ...mergeEntries([lobbyPackEntries(), angelPackEntries(parts.fish, parts.clothes), parts.extra ?? []]),
+    ...mergeEntries([
+      lobbyPackEntries(),
+      dekoPackEntries('moinmorni', lobbyPack().deko),
+      angelPackEntries(parts.fish, parts.clothes),
+      parts.extra ?? [],
+    ]),
   ]);
 }
