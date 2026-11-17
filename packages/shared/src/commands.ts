@@ -367,6 +367,37 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
     where: 'hub',
     lines: [line('bau', '/bau', '/build')],
   },
+  {
+    // Wartung (apps/server/src/hub/wartung-commands.ts): Recht wie im Panel (Einstellungen ändern) – der Befehl prüft
+    // es selbst; text/bis/lobby/zurueck kommen aus dem Einstellungs-Katalog. Auf der Befehle-Seite beim Owner/Admin.
+    name: 'wartung',
+    aliases: ['maintenance'],
+    usage: {
+      de: '/wartung an|aus|neustart|status|abbrechen [zeit] [grund]',
+      en: '/maintenance on|off|restart|status|cancel [time] [reason]',
+    },
+    topic: 'team',
+    where: 'hub',
+    lines: [
+      line('wartungAn', '/wartung an [zeit] [grund]', '/maintenance on [time] [reason]', 'modes-admin'),
+      line('wartungAus', '/wartung aus', '/maintenance off', 'modes-admin'),
+      line(
+        'wartungNeustart',
+        '/wartung neustart [zeit] [grund] [--proxy]',
+        '/maintenance restart [time] [reason] [--proxy]',
+        'modes-admin',
+      ),
+      line('wartungStatus', '/wartung status|abbrechen', '/maintenance status|cancel', 'modes-admin'),
+    ],
+  },
+  {
+    name: 'wartung-restart',
+    aliases: ['wartungrestart', 'maintenance-restart'],
+    usage: { de: '/wartung-restart [zeit] [grund]', en: '/maintenance-restart [time] [reason]' },
+    topic: 'team',
+    where: 'hub',
+    lines: [],
+  },
 ];
 
 /** Name, Aliase, Schreibweise und Recht eines Hub-Befehls aus der Liste – der Hub nimmt sie von hier. */

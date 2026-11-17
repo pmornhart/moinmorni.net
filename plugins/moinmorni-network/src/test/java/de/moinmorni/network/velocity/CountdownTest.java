@@ -16,6 +16,14 @@ class CountdownTest {
     }
 
     @Test
+    void clockForLongCountdowns() {
+        assertEquals("0:45", Countdown.clock(45));
+        assertEquals("10:00", Countdown.clock(600));
+        assertEquals("1:02:03", Countdown.clock(3723));
+        assertEquals("Wartung in 9:59", Countdown.withSeconds("Wartung in {t}", 599));
+    }
+
+    @Test
     void barEmptiesWithTheSeconds() {
         assertEquals(1f, Countdown.progress(30, 30));
         assertEquals(0.5f, Countdown.progress(15, 30));

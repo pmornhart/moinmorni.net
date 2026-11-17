@@ -12,6 +12,7 @@ import { Notice } from './parts';
 import { ReachCard } from './ReachCard';
 import { UpdatesCard } from './UpdatesCard';
 import { WhitelistCard } from './WhitelistCard';
+import { WartungCard } from '../../servers/WartungCard';
 
 /** MorniCraft: applications and whitelist belong to the area "Spieler" (the settings to "Modi"). */
 function MorniCraftExtras({ entry }: { readonly entry: SettingsEntry }): ReactElement {
@@ -62,6 +63,7 @@ function TeamApplyExtras(): ReactElement {
 
 const EXTRAS: Readonly<Record<string, (props: { readonly entry: SettingsEntry }) => ReactElement>> = {
   updates: () => <UpdatesCard />,
+  network: () => <WartungCard />,
   'team-apply': () => <TeamApplyExtras />,
   reach: () => <ReachCard />,
   mornicraft: MorniCraftExtras,

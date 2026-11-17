@@ -65,7 +65,8 @@ import { createLobbyWorld, seasonOf } from './lobby/world.js';
 import { createWartungWorld } from './lobby/wartung.js';
 import { registerPublicRoutes } from './public/routes.js';
 import { registerSiteRoutes } from './public/site-routes.js';
-import { createStatusService } from './public/status.js';
+import { createStatusService, isOurNetwork } from './public/status.js';
+import { registerWartungRoutes } from './panel/wartung-routes.js';
 import { registerWwwRedirect } from './public/www.js';
 import { knownPage, registerCrawlRoutes } from './public/crawl.js';
 import { registerSetupRoutes } from './setup/routes.js';
@@ -322,6 +323,40 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     countdown: () => Number(stores.settings('updates')['restartCountdown'] ?? DEFAULT_COUNTDOWN_SECONDS),
     log: app.log,
   });
+  // Wartungs-Neustart (/wartung neustart, Panel → Netzwerk → Wartung): alle Server außer der Wartungs-Lobby, den Proxy
+  // nur auf Wunsch – geordnet wie beim Neustart von Hand (Spielmodi je drei, dann Lobby, zuletzt Proxy).
+  hub.wartungPlan.attach({
+    restarter: {
+      run: async (proxy) => {
+        const networks = await motor.request<
+          Array<{
+            name: string;
+            proxy: { serverId: string };
+            members: Array<{ serverId: string; name: string }>;
+          }>
+        >('GET', '/api/networks');
+        const net = networks.find(isOurNetwork);
+        if (!net) return;
+        const targets: Target[] = [
+          ...net.members
+            .filter((m) => m.name !== WARTUNG_MEMBER)
+            .map((m) => ({ serverId: m.serverId, member: m.name })),
+          ...(proxy ? [{ serverId: net.proxy.serverId, member: PROXY_MEMBER }] : []),
+        ];
+        await restartNow.run(targets, 'manual');
+      },
+      progress: () => {
+        const list = restartNow.progress().servers;
+        return {
+          done: list.filter((x) => ['done', 'failed', 'skipped'].includes(x.step)).length,
+          total: list.length,
+        };
+      },
+    },
+    teamLog: (line) => {
+      bot.teamLog(line).catch(() => undefined);
+    },
+  });
   /** Welche Fassung jeder Spielmodus gerade hat („duels@v0.1.2,…“) – aus dem Zwischenspeicher, ohne GitHub. */
   const releaseTags = async (): Promise<string> => {
     const found = await Promise.all(
@@ -498,6 +533,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     countdown: () => Number(stores.settings('updates')['restartCountdown'] ?? DEFAULT_COUNTDOWN_SECONDS),
     log: app.log,
   });
+  registerWartungRoutes(app, auth, hub.wartungPlan);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor);
   teamRef.syncAll = teamAccess.syncAll;

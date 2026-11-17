@@ -20,9 +20,16 @@ final class Countdown {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final String SECONDS = "{s}";
+    /** „{t}“ = Restzeit lesbar: „9:59“, „1:02:03“ (für lange Ankündigungen wie eine Wartung in einer Stunde). */
+    private static final String CLOCK = "{t}";
+    private static final int MINUTE = 60;
+    private static final int HOUR = 3600;
+    private static final java.time.Duration TITLE_IN = java.time.Duration.ofMillis(300);
+    private static final java.time.Duration TITLE_STAY = java.time.Duration.ofSeconds(4);
+    private static final java.time.Duration TITLE_OUT = java.time.Duration.ofMillis(700);
     private static final long TICK_SECONDS = 1;
-    /** Länger als zehn Minuten zählt keine Leiste. */
-    private static final int MAX_SECONDS = 600;
+    /** Länger als sechs Stunden zählt keine Leiste (angekündigte Wartung höchstens sechs Stunden). */
+    private static final int MAX_SECONDS = 6 * HOUR;
 
     private record Running(BossBar bar, ScheduledTask task) {
     }
@@ -38,7 +45,21 @@ final class Countdown {
 
     /** Text mit den verbleibenden Sekunden. */
     static String withSeconds(String text, int seconds) {
-        return text.replace(SECONDS, Integer.toString(seconds));
+        return text.replace(SECONDS, Integer.toString(seconds)).replace(CLOCK, clock(seconds));
+    }
+
+    /** Restzeit als Uhr: 45 → „0:45“, 600 → „10:00“, 3723 → „1:02:03“. */
+    static String clock(int seconds) {
+        int h = seconds / HOUR;
+        int m = (seconds % HOUR) / MINUTE;
+        int s = seconds % MINUTE;
+        return h > 0 ? String.format("%d:%02d:%02d", h, m, s) : String.format("%d:%02d", m, s);
+    }
+
+    /** Großer Titel auf dem Bildschirm (Hub: „title“, z. B. angekündigte Wartung). */
+    static net.kyori.adventure.title.Title title(Component title, Component subtitle) {
+        return net.kyori.adventure.title.Title.title(title, subtitle,
+                net.kyori.adventure.title.Title.Times.times(TITLE_IN, TITLE_STAY, TITLE_OUT));
     }
 
     /** Wie voll die Leiste noch ist (1 = gerade begonnen, 0 = vorbei). */

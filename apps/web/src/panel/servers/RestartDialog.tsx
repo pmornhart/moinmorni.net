@@ -18,6 +18,7 @@ import { cn } from '~/lib/cn';
 import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
 import { usePick } from '~/lib/text';
+import { useWartung, WartungForm, WartungRunning } from './WartungCard';
 
 /**
  * Panel → „Server neu starten“: pick servers of the network (all running ones are ticked), confirm, then watch the
@@ -74,6 +75,75 @@ function ServerGlyph({ kind, modeId, index }: { kind: RestartKind; modeId: strin
   );
 }
 
+const PERCENT = 100;
+
+/** „5 von 16 fertig“ mit Balken – wie weit die laufende Runde ist. */
+function RoundProgress({
+  servers,
+}: {
+  readonly servers: ReadonlyArray<{ readonly step: RestartStepView }>;
+}): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const done = servers.filter((x) => FINISHED_STEPS.includes(x.step)).length;
+  const total = servers.length;
+  return (
+    <div className="grid gap-2 rounded-[12px] bg-gold-soft px-3.5 py-2.5 text-sm" role="status">
+      <p className="flex items-start gap-2">
+        <RotateCcw
+          className="mt-0.5 size-4 shrink-0 animate-spin text-gold [animation-duration:2.4s]"
+          aria-hidden
+        />
+        {t('restartDialog.busy', { done, total })}
+      </p>
+      <div className="h-2 overflow-hidden rounded-full bg-background/60">
+        <div
+          className="h-full rounded-full bg-gold transition-[width] duration-700"
+          style={{ width: `${total ? Math.round((done / total) * PERCENT) : 0}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Wartungs-Neustart im selben Fenster: alle in die Wartungs-Lobby, alles neu, mit Zeit und Grund. */
+function WartungRestartBody(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const query = useWartung();
+  if (!query.data) return <Skeleton className="h-40 rounded-[16px]" />;
+  return (
+    <div className="grid gap-4">
+      <p className="text-sm text-muted-foreground">{t('restartDialog.wartungMode')}</p>
+      <WartungRunning view={query.data} />
+      {query.data.plan ? null : <WartungForm kind="restart" view={query.data} />}
+    </div>
+  );
+}
+
+/** Oben im Fenster: normaler Neustart oder Wartungs-Neustart. */
+function RestartModes({ onDone }: { readonly onDone: () => void }): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  const [mode, setMode] = useState<'normal' | 'wartung'>('normal');
+  return (
+    <div className="grid gap-4">
+      <div className="grid grid-cols-2 gap-1 rounded-[12px] bg-secondary p-1" role="tablist">
+        {(['normal', 'wartung'] as const).map((m) => (
+          <Button
+            key={m}
+            size="sm"
+            role="tab"
+            aria-selected={mode === m}
+            variant={mode === m ? 'primary' : 'ghost'}
+            onClick={() => setMode(m)}
+          >
+            {t(`restartDialog.mode.${m}`)}
+          </Button>
+        ))}
+      </div>
+      {mode === 'normal' ? <RestartBody onDone={onDone} /> : <WartungRestartBody />}
+    </div>
+  );
+}
+
 function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const pick = usePick();
@@ -123,18 +193,7 @@ function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement 
   const list = [...picked].filter((m) => running.includes(m));
   return (
     <div className="grid gap-4">
-      {progress?.running ? (
-        <p className="flex items-start gap-2 rounded-[12px] bg-gold-soft px-3.5 py-2.5 text-sm" role="status">
-          <RotateCcw
-            className="mt-0.5 size-4 shrink-0 animate-spin text-gold [animation-duration:2.4s]"
-            aria-hidden
-          />
-          {t('restartDialog.busy', {
-            done: (progress.servers ?? []).filter((x) => FINISHED_STEPS.includes(x.step)).length,
-            total: (progress.servers ?? []).length,
-          })}
-        </p>
-      ) : null}
+      {progress?.running ? <RoundProgress servers={progress.servers ?? []} /> : null}
       <label
         htmlFor={`${baseId}-all`}
         className="flex cursor-pointer items-center gap-3 rounded-[12px] border border-border px-3 py-2.5"
@@ -162,8 +221,9 @@ function RestartBody({ onDone }: { readonly onDone: () => void }): ReactElement 
               <label
                 htmlFor={id}
                 className={cn(
-                  'flex items-center gap-3 rounded-[12px] px-2 py-1.5',
+                  'flex items-center gap-3 rounded-[12px] px-2 py-1.5 transition-colors',
                   can ? 'cursor-pointer hover:bg-secondary' : 'opacity-60',
+                  step === 'restarting' || step === 'countdown' ? 'bg-gold-soft ring-1 ring-gold/40' : '',
                 )}
               >
                 <input
@@ -266,7 +326,7 @@ export function RestartButton({
               <X />
             </Button>
           </DialogPrimitive.Close>
-          {open ? <RestartBody onDone={() => setOpen(false)} /> : null}
+          {open ? <RestartModes onDone={() => setOpen(false)} /> : null}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

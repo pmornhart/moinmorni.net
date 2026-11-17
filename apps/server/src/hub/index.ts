@@ -58,6 +58,8 @@ import { createMusic } from './music.js';
 import { lobbyMusicBody } from '../lobby/music.js';
 import { createVoice } from './voice.js';
 import { createWartung, type Wartung } from './wartung.js';
+import { createWartungCommands } from './wartung-commands.js';
+import { createWartungPlan, type WartungPlan } from './wartung-plan.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
 
@@ -237,6 +239,8 @@ export interface Hub {
   readonly modeRestarts: () => string[];
   /** Server, auf denen gerade ein Platz freigehalten wird (Verbindung mitten im Spiel weg) – sie schlafen nicht. */
   readonly heldServers: () => string[];
+  /** Angekündigte Wartung und Wartungs-Neustart (hub/wartung-plan.ts) – Panel und MoinMorni hängen sich dran. */
+  readonly wartungPlan: WartungPlan;
   /** Wartungs-Lobby – für den Neustart nach einem Update (network/restart-now.ts). */
   readonly wartung: {
     /** Kann gerade jemand dort warten (Schalter an, Server hängt am Hub)? */
@@ -409,6 +413,20 @@ export function createHub(options: HubOptions): Hub {
   });
   wartungRef.service = wartung;
   wartung.start();
+  // Angekündigte Wartung und Wartungs-Neustart (/wartung an 10m …, /wartung neustart …, Panel).
+  const wartungPlan = createWartungPlan({
+    ctx,
+    now,
+    wartung,
+    title: (uuid, title, subtitle) => {
+      toProxy({ t: 'title', uuid: normalUuid(uuid), title, subtitle });
+    },
+    countdown: (uuid, line, seconds) => {
+      toProxy({ t: 'countdown', uuid: normalUuid(uuid), text: line, seconds });
+    },
+    log,
+  });
+  wartungPlan.start();
   const voiceRef: { broadcast: () => void } = { broadcast: () => undefined };
   const music = createMusic(ctx, db);
   musicRef.profileOf = music.profileOf;
@@ -460,6 +478,9 @@ export function createHub(options: HubOptions): Hub {
         ...rejoin.commands,
         createStreamerCommand(ctx, streamers, { now, changed: sendProfile }),
         ...music.commands,
+        ...createWartungCommands(ctx, wartungPlan, () =>
+          createSettingCommands(ctx).find((c) => c.name === 'wartung'),
+        ),
         ...(options.extraCommands?.(ctx) ?? []),
       ],
       createSettingCommands(ctx),
@@ -808,6 +829,8 @@ export function createHub(options: HubOptions): Hub {
       }
       // Erst jetzt ist der Spieler wirklich da: Freunde erfahren es, offene Anfragen kommen an.
       if (first) social.joined(normalUuid(m.uuid));
+      // Wartung angekündigt: wer gerade ankommt, sieht Titel und Countdown-Leiste auch.
+      if (first) wartungPlan.onJoin(normalUuid(m.uuid));
       social.switched(normalUuid(m.uuid), m.server);
     },
     leave: (_conn, body) => {
@@ -1058,6 +1081,7 @@ export function createHub(options: HubOptions): Hub {
     close: async () => {
       voice.stop();
       wartung.stop();
+      wartungPlan.stop();
       rejoin.stop();
       // Sonst feuert die verzögerte Lobby-Meldung noch nach dem Schließen (Datenbank schon zu).
       closed = true;
@@ -1086,6 +1110,7 @@ export function createHub(options: HubOptions): Hub {
     sport: () => sportOfStand(),
     modeRestarts: () => [...restartPending.keys()],
     heldServers: rejoin.heldServers,
+    wartungPlan,
     wartung: {
       open: wartung.open,
       park: (uuid) => wartung.park(normalUuid(uuid)),

@@ -1052,7 +1052,11 @@
         "unban": "Lift the ban.",
         "rang": "Give or take a rank – only ranks below your own.",
         "bau": "To the build server.",
-        "rueckkehr": "Lost your connection mid-game? While your spot is still free, this takes you back to your round (the item in the lobby does the same)."
+        "rueckkehr": "Lost your connection mid-game? While your spot is still free, this takes you back to your round (the item in the lobby does the same).",
+        "wartungAn": "Turn on maintenance – without a time right away, with a time (30s, 10m, 1h) announced: big title, chat and countdown bar for everyone.",
+        "wartungAus": "End maintenance (also calls off an announced one) – everyone returns to the lobby.",
+        "wartungNeustart": "Maintenance restart: everyone waits in the maintenance lobby, all servers restart, then everyone goes back by themselves. With --proxy the proxy too. Short: /maintenance-restart 10m Update.",
+        "wartungStatus": "What’s going on, or call off an announcement."
       }
     }
   },
@@ -1620,7 +1624,7 @@
     },
     "settings": {
       "title": "Settings",
-      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – MoinMorni does that by itself as soon as nobody is playing. Under Lobby → Music you set up the lobby music (which pieces play in each season). Under “Reachability” you connect NetBird: website and game right on the domain, and your home address stays hidden. Under “Network” you set up maintenance: whoever may not get in – or can’t reach the lobby while it restarts – waits in the maintenance lobby and comes back on their own afterwards."
+      "text": "Everything for the network, sorted by area – chat, voice chat, lobby and below them every game mode (Duels, Morni Party …). Each settings page has a search at the top, and every field shows the matching command in case you prefer changing it in the game. A game mode’s settings apply after its next restart – MoinMorni does that by itself as soon as nobody is playing. Under Lobby → Music you set up the lobby music (which pieces play in each season). Under “Reachability” you connect NetBird: website and game right on the domain, and your home address stays hidden. Under “Network” you set up maintenance: whoever may not get in – or can’t reach the lobby while it restarts – waits in the maintenance lobby and comes back on their own afterwards. Under “Network” you announce maintenance or start a maintenance restart (everyone to the maintenance lobby, all servers restart) – with time and reason; players see a big title and a bar counting down. The same works in the “Restart servers” window and with /maintenance in game."
     },
     "news": {
       "title": "News",
@@ -2678,7 +2682,12 @@
     "player_protected": "Punishments only go to lower ranks: this person has the same or a higher rank than you (nobody punishes the Owner).",
     "restart_wartung": "The maintenance lobby doesn't restart by hand – players wait there while the lobby restarts.",
     "restart_unknown_server": "This server isn't (or no longer) part of the network. Reload the list.",
-    "restart_nothing_running": "None of the chosen servers is running – there's nothing to restart."
+    "restart_nothing_running": "None of the chosen servers is running – there's nothing to restart.",
+    "wartung_busy": "Something is already announced or a restart is running.",
+    "wartung_no_restart": "Restarting isn’t possible right now.",
+    "wartung_already_on": "Maintenance is already on.",
+    "wartung_nothing": "Nothing is announced.",
+    "wartung_restarting": "The maintenance restart is running – maintenance ends by itself afterwards."
   },
   "modeSettings": {
     "title": "Applies after the mode’s next restart",
@@ -2762,6 +2771,46 @@
     "started_other": "Restart running – {{count}} servers are on it.",
     "queued_one": "A restart was already running – {{count}} server comes right after it.",
     "queued_other": "A restart was already running – {{count}} servers come right after it.",
-    "close": "Close"
+    "close": "Close",
+    "mode": {
+      "normal": "Normal restart",
+      "wartung": "Maintenance restart"
+    },
+    "wartungMode": "All players – the team too – wait in the maintenance lobby, every server except it restarts (game modes three at a time, then the lobby). Once all are back, maintenance ends and everyone returns by themselves. Beforehand everyone sees a big title, the reason in chat and a bar counting down."
+  },
+  "wartung": {
+    "title": "Maintenance now",
+    "text": "Right away or announced – with a big title and a countdown bar in game.",
+    "isOn": "Maintenance on",
+    "isOff": "Maintenance off",
+    "kind": {
+      "on": "Maintenance",
+      "restart": "Maintenance restart"
+    },
+    "when": "When",
+    "now": "Right away",
+    "in": "in {{time}}",
+    "reason": "Reason (everyone sees it in the title and chat)",
+    "reasonPlaceholder": "e.g. Big update",
+    "proxy": "Restart the proxy too.",
+    "proxyText": "Then everyone is briefly disconnected at the end and reconnects in about a minute.",
+    "onExplain": "When the time is up, maintenance starts: players without “Always gets in” wait in the maintenance lobby, the team goes everywhere. End it with “Maintenance off”.",
+    "restartExplain": "When the time is up, everyone waits in the maintenance lobby and all servers restart; maintenance then ends by itself.",
+    "noRestart": "Restarting isn’t possible right now – MoinMorni can’t reach the servers.",
+    "goNow": "Turn on maintenance now",
+    "goAnnounce": "Announce maintenance",
+    "goRestart": "Start maintenance restart",
+    "sentNow": "Done.",
+    "sentAnnounced": "Announced – all players now see the countdown.",
+    "announced": "{{what}} in",
+    "reasonShown": "Reason: {{reason}}",
+    "by": "Announced by {{by}}",
+    "cancel": "Call off",
+    "cancelled": "Called off.",
+    "restarting": "Maintenance restart running – {{done}} of {{total}} servers done",
+    "restartingText": "Everyone waits in the maintenance lobby and returns by themselves once everything runs again.",
+    "off": "Maintenance off",
+    "offDone": "Maintenance is off – everyone returns to the lobby.",
+    "ingame": "In game: /maintenance on [time] [reason], /maintenance off, /maintenance restart [time] [reason], /maintenance status, /maintenance cancel."
   }
 }

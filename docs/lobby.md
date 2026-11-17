@@ -654,3 +654,11 @@ bleibt). Der Server übernimmt es beim nächsten Neustart (nach einem Update gle
 
 Echt geprüft: `tools/netz-test/wartung-test.cjs` (Velocity 4.3.1, Lobby, Wartungs-Lobby, Bau-Server, Test-Hub mit
 Steuerung).
+
+### Wartung ankündigen, Wartungs-Neustart
+
+`/wartung an 10m Grund` kündigt die Wartung an (großer Titel, Chat, Leiste oben mit Countdown – auch für alle, die
+während des Countdowns kommen), `/wartung neustart 10m Grund` (kurz `/wartung-restart 10m Grund`) schickt bei Ablauf
+jeden in die Wartungs-Lobby und startet alle anderen Server neu; die Leiste und der Aushang der Wartungs-Lobby zeigen
+„Server starten neu – 5 von 16 fertig“. Sind alle wieder da, geht die Wartung aus und alle kommen zurück. Im Panel:
+Einstellungen → Netzwerk → „Wartung jetzt“ und im Fenster „Server neu starten“ → „Wartungs-Neustart“.
