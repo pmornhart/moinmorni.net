@@ -1,3 +1,4 @@
+import { networkCommand } from '@moinmorni/shared';
 import crypto from 'node:crypto';
 import { eq, like } from 'drizzle-orm';
 import type { FastifyBaseLogger } from 'fastify';
@@ -13,6 +14,7 @@ import { mm } from '../hub/texts.js';
 import type { EventBus } from '../lib/events.js';
 import type { ApplicationService } from '../mornicraft/applications.js';
 import type { Stores } from '../panel/stores.js';
+import { publicAuthor } from '../public/author.js';
 import type { StatusService } from '../public/status.js';
 import { createAppearance, type Appearance } from './appearance.js';
 import { APPLY_BUTTON, APPLY_FORM, createApplicationBot } from './applications.js';
@@ -514,7 +516,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
           url: `https://${config.domain}/news/${row.slug}`,
           color: EMERALD,
           timestamp: row.publishedAt,
-          footer: { text: row.author },
+          footer: { text: publicAuthor(db, row.author) },
         },
       ],
     });
@@ -567,9 +569,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
 
   const commands = (ctx: HubContext): Command[] => [
     {
-      name: 'discord',
-      aliases: ['dc', 'verbinden'],
-      usage: { de: '/discord', en: '/discord' },
+      ...networkCommand('discord'),
       run: (actor) => {
         // Erst die Einladung (aus dem Panel, sonst die des Bots), dann – mit Bot – der Code zum Verbinden.
         const invite = gameInvite();

@@ -38,17 +38,28 @@ export interface UpdateView {
   readonly moinmorni: {
     readonly current: string | null;
     readonly latest: string | null;
-    readonly behind: number;
+    /** null = newer, but how much is not known yet (GitHub still has to send the list). */
+    readonly behind: number | null;
     readonly changes: readonly UpdateChange[];
   };
   readonly motor: {
     readonly current: string | null;
     readonly latest: string | null;
-    readonly behind: number;
+    /** null = MorniHosting is newer, how much is not known yet. */
+    readonly behind: number | null;
   };
   readonly available: boolean;
   readonly checkedAt: string | null;
+  /** GitHub could not be reached at all (not even Git) – whether there is something new is open. */
   readonly checkFailed: boolean;
+  /** The branch the updates follow does not exist on GitHub (yet). */
+  readonly branchMissing: boolean;
+  /** There is a new version, only its list of changes is still missing (GitHub slows us down or hiccupped). */
+  readonly changesPending: boolean;
+  /** Until then GitHub takes no more questions (ISO) – the list comes afterwards. */
+  readonly limitedUntil: string | null;
+  /** GitHub key from the .env: none, set, or GitHub turned it down (never the key itself). */
+  readonly githubKey: 'none' | 'set' | 'rejected';
   /** The update helper on the machine is set up (install.sh). */
   readonly canUpdate: boolean;
   /** Order is waiting or the script runs. */

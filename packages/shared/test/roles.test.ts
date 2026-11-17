@@ -4,7 +4,11 @@ import {
   DEFAULT_ROLES,
   GAME_RIGHTS,
   mayAssign,
+  higherRole,
+  mayLiftFor,
   mayPunish,
+  mayPunishPlayer,
+  punishersOf,
   ROLE_IDS,
   roleSchema,
 } from '../src/index.js';
@@ -70,5 +74,57 @@ describe('Rollen-Vorlage: Supporter, Spielmodi verwalten, immer hinein', () => {
       'builder',
       'media',
     ]);
+  });
+});
+
+describe('Strafen nur nach unten (mayPunishPlayer)', () => {
+  /** Wer wen bestrafen darf – Zeile = wer straft, Spalte = wer bestraft wird (Reihenfolge wie ROLE_IDS). */
+  const EXPECTED: Readonly<Record<string, readonly string[]>> = {
+    owner: ['admin', 'moderator', 'supporter', 'builder', 'media', 'vip', 'player'],
+    admin: ['moderator', 'supporter', 'builder', 'media', 'vip', 'player'],
+    moderator: ['supporter', 'builder', 'media', 'vip', 'player'],
+    supporter: ['builder', 'media', 'vip', 'player'],
+    builder: ['media', 'vip', 'player'],
+    media: ['vip', 'player'],
+    vip: ['player'],
+    player: [],
+  };
+
+  test.each(ROLE_IDS.flatMap((a) => ROLE_IDS.map((t) => [a, t] as const)))('%s gegen %s', (actor, target) => {
+    expect(mayPunishPlayer(role(actor), role(target))).toBe(EXPECTED[actor]?.includes(target) ?? false);
+  });
+
+  test('den Owner bestraft niemand – auch kein anderer Owner, auch nicht mit verschobener Position', () => {
+    expect(mayPunishPlayer(role('owner'), role('owner'))).toBe(false);
+    expect(mayPunishPlayer({ id: 'chef', position: -1 }, role('owner'))).toBe(false);
+    // Der Owner straft alle anderen, auch wenn Philip eine Rolle über ihn geschoben hätte.
+    expect(mayPunishPlayer(role('owner'), { id: 'chef', position: -1 })).toBe(true);
+  });
+
+  test('wer jemanden so bestrafen darf: nur höhere Ränge mit dem Recht', () => {
+    const names = (target: string, kind: Parameters<typeof punishersOf>[2]) =>
+      punishersOf(DEFAULT_ROLES, role(target), kind).map((r) => r.id);
+    expect(names('admin', 'jail')).toEqual(['owner']);
+    expect(names('admin', 'mute')).toEqual(['owner']);
+    expect(names('owner', 'warn')).toEqual([]);
+    expect(names('moderator', 'ban')).toEqual(['owner', 'admin']);
+    expect(names('supporter', 'mute')).toEqual(['owner', 'admin', 'moderator']);
+    // Supporter verwarnen, aber nicht einsperren.
+    expect(names('player', 'jail')).toEqual(['owner', 'admin', 'moderator']);
+    expect(names('player', 'warn')).toEqual(['owner', 'admin', 'moderator', 'supporter']);
+  });
+
+  test('aufheben wie verhängen – nur der Owner hebt alles auf, auch alte Strafen auf einem Owner', () => {
+    expect(mayLiftFor(role('owner'), role('owner'))).toBe(true);
+    expect(mayLiftFor(role('admin'), role('owner'))).toBe(false);
+    expect(mayLiftFor(role('moderator'), role('admin'))).toBe(false);
+    expect(mayLiftFor(role('moderator'), role('supporter'))).toBe(true);
+    expect(mayLiftFor(role('admin'), role('admin'))).toBe(false);
+  });
+
+  test('der höhere Rang zählt (eigener Rang oder Team-Konto)', () => {
+    expect(higherRole(role('moderator'), role('admin')).id).toBe('admin');
+    expect(higherRole(role('admin'), role('moderator')).id).toBe('admin');
+    expect(higherRole(role('player'), undefined).id).toBe('player');
   });
 });

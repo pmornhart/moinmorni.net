@@ -1,3 +1,4 @@
+import './lib/zod-jitless';
 import { StrictMode, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 import './i18n';

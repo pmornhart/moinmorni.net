@@ -130,6 +130,15 @@ export function registerDiscordRoutes(
   });
 
   // ---------- Aussehen ----------
+  /**
+   * Bilder dürfen groß sein (bis 15 MB als Text) – darum erst schauen, wer fragt, und dann lesen: Unangemeldete
+   * bekommen ihr „nein“, bevor der Server 15 MB annimmt und auswertet.
+   */
+  const signedInFirst = {
+    onRequest: async (request: Parameters<PanelAuth['require']>[0]): Promise<void> => {
+      await auth.require(request, 'discord');
+    },
+  };
   const appearance = async <T>(job: () => Promise<T>): Promise<T> => {
     try {
       return await job();
@@ -147,6 +156,7 @@ export function registerDiscordRoutes(
   app.put(
     '/api/panel/discord/appearance/icon',
     {
+      ...signedInFirst,
       schema: { body: iconBody },
       bodyLimit: IMAGE_BODY_LIMIT,
       config: { rateLimit: { max: APPEARANCE_LIMIT, timeWindow: '1 minute' } },
@@ -160,6 +170,7 @@ export function registerDiscordRoutes(
   app.put(
     '/api/panel/discord/appearance/banner',
     {
+      ...signedInFirst,
       schema: { body: bannerBody },
       bodyLimit: IMAGE_BODY_LIMIT,
       config: { rateLimit: { max: APPEARANCE_LIMIT, timeWindow: '1 minute' } },
@@ -173,6 +184,7 @@ export function registerDiscordRoutes(
   app.put(
     '/api/panel/discord/appearance/bot',
     {
+      ...signedInFirst,
       schema: { body: botBody },
       bodyLimit: IMAGE_BODY_LIMIT,
       config: { rateLimit: { max: APPEARANCE_LIMIT, timeWindow: '1 minute' } },

@@ -6,6 +6,8 @@ import { createHub, type Hub } from '../src/hub/index.js';
 import { createEventBus } from '../src/lib/events.js';
 import { createStores, type Stores } from '../src/panel/stores.js';
 import { audioFrame, groupId } from '../src/hub/voice.js';
+import { SETTING_ROOTS } from '../src/hub/setting-commands.js';
+import { NETWORK_COMMANDS } from '@moinmorni/shared';
 import { connectPlugin, type FakePlugin, type Msg } from './fake-plugin.js';
 
 const SECRET = 'test-geheimnis-test-geheimnis-test-geheimnis-1234';
@@ -188,6 +190,21 @@ describe('Hub', () => {
     await duels.next('chat', (m) => JSON.stringify(m).includes('echt'));
   });
 
+  test('Befehle des Hubs = Liste der Befehle-Seite (Name, Aliase, Recht) – nichts doppelt gepflegt', async () => {
+    const proxy = await plugin('proxy', 'proxy');
+    const welcome = proxy.received[0] as unknown as { commands: Array<{ name: string; aliases: string[] }> };
+    const listed = NETWORK_COMMANDS.filter((c) => c.where === 'hub');
+    // /discord bringt der Discord-Bot mit (hier ohne Bot), die Einstellungen kommen aus dem Katalog.
+    const expected = [
+      ...listed.filter((c) => c.name !== 'discord').map((c) => c.name),
+      ...SETTING_ROOTS.filter((r) => !listed.some((c) => c.name === r)),
+    ].sort();
+    expect(welcome.commands.map((c) => c.name).sort()).toEqual(expected);
+    welcome.commands
+      .filter((c) => listed.some((l) => l.name === c.name))
+      .forEach((c) => expect(c.aliases).toEqual(listed.find((l) => l.name === c.name)?.aliases));
+  });
+
   test('veränderter oder wiederholter Rahmen → Verbindung zu', async () => {
     const lobby = await plugin('lobby', 'backend');
     lobby.send({ t: 'chat', uuid: PHILIP, text: 'hallo' });
@@ -321,6 +338,16 @@ describe('Hub', () => {
     await lobby.next('jail', jailedNow(0));
     expect(await go(LENA, 'duels')).toMatchObject({ data: { allow: true } });
 
+    // Mitten im Wechsel eingesperrt und doch auf einem Modus angekommen: zurück in die Lobby.
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'jail', args: ['Lena', '5m', 'Wechsel'] });
+    await lobby.next('jail', jailedNow(1));
+    proxy.send({ t: 'switch', uuid: LENA, server: 'duels' });
+    expect(await proxy.next('connect', (m) => m['uuid'] === LENA)).toMatchObject({ server: 'lobby' });
+    await said(LENA, 'in jail');
+    proxy.send({ t: 'switch', uuid: LENA, server: 'lobby' });
+    await proxy.request({ t: 'command', uuid: PHILIP, command: 'frei', args: ['Lena'] });
+    await lobby.next('jail', jailedNow(0));
+
     // Dauer läuft ab.
     await proxy.request({ t: 'command', uuid: PHILIP, command: 'jail', args: ['Lena', '5m', 'Spam'] });
     await lobby.next('jail', jailedNow(1));
@@ -340,8 +367,89 @@ describe('Hub', () => {
     await proxy.request({ t: 'login', uuid: MODI, name: 'Modi', locale: 'de_de', bedrock: false });
     await proxy.request({ t: 'command', uuid: MODI, command: 'mute', args: ['Philip'] });
     expect(await proxy.next('msg', (m) => m['uuid'] === MODI)).toMatchObject({
-      text: expect.stringContaining('höherer Rang'),
+      text: expect.stringContaining('diesen Rang darf niemand bestrafen'),
     });
+  });
+
+  test('Strafen nur nach unten: Moderator nicht gegen Admin, Owner schaltet Admin stumm, Admin bannt keinen Owner', async () => {
+    const { proxy } = await network();
+    const ANNA = '55555555-5555-5555-5555-555555555555';
+    const OWEN = '66666666-6666-6666-6666-666666666666';
+    const SUSI = '77777777-7777-7777-7777-777777777777';
+    const people: Array<[string, string, string]> = [
+      [MODI, 'Modi', 'moderator'],
+      [ANNA, 'Anna', 'admin'],
+      [OWEN, 'Owen', 'owner'],
+      [SUSI, 'Susi', 'supporter'],
+    ];
+    for (const [uuid, name, role] of people) {
+      hub.players.seen({ uuid, name, bedrock: false });
+      hub.players.setRole(uuid, role);
+      await proxy.request({ t: 'login', uuid, name, locale: 'de_de', bedrock: false });
+    }
+    const run = (uuid: string, command: string, args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    // Nur die Absage – Team-Hinweise über andere Strafen kommen dazwischen.
+    const answer = (uuid: string) =>
+      proxy.next('msg', (m) => m['uuid'] === uuid && /– (das|diesen)|selbst/.test(String(m['text'])));
+    const kinds = ['ban', 'mute', 'jail', 'voice', 'warn', 'kick'] as const;
+    const none = () => kinds.every((k) => !hub.punish.active(ANNA, k) && !hub.punish.active(OWEN, k));
+
+    // Moderator gegen Admin: einsperren, stumm, Sprachchat, verwarnen, rauswerfen, bannen – nichts geht.
+    for (const [command, args] of [
+      ['gefaengnis', ['Anna', '10m']],
+      ['mute', ['Anna']],
+      ['voicemute', ['Anna']],
+      ['warn', ['Anna', 'Spam']],
+      ['kick', ['Anna']],
+    ] as const) {
+      await run(MODI, command, [...args]);
+      expect((await answer(MODI))['text']).toContain(
+        'ist <#ff9f43>Admin</#ff9f43> – das darf nur der <#ff5555>Owner</#ff5555>.',
+      );
+    }
+    expect(none()).toBe(true);
+    expect(hub.punish.history(ANNA)).toEqual([]);
+    // Supporter gegen Moderator: das dürfen Owner und Admin.
+    await run(SUSI, 'warn', ['Modi', 'Spam']);
+    expect((await answer(SUSI))['text']).toContain(
+      'das dürfen nur <#ff5555>Owner</#ff5555> und <#ff9f43>Admin</#ff9f43>.',
+    );
+
+    // Owner schaltet Admin stumm (Chat und Sprachchat) und hebt es wieder auf.
+    await run(PHILIP, 'mute', ['Anna', '10m', 'Test']);
+    await proxy.next('msg', (m) => m['uuid'] === ANNA && String(m['text']).includes('stumm'));
+    expect(hub.punish.active(ANNA, 'mute')).toBeDefined();
+    await run(PHILIP, 'voicemute', ['Anna', '10m']);
+    expect(hub.punish.active(ANNA, 'voice')).toBeDefined();
+    // Aufheben nur von oben: der Moderator nicht, der Owner schon.
+    await run(MODI, 'unmute', ['Anna']);
+    expect((await answer(MODI))['text']).toContain('das darf nur der');
+    expect(hub.punish.active(ANNA, 'mute')).toBeDefined();
+    await run(PHILIP, 'unmute', ['Anna']);
+    await run(PHILIP, 'voiceunmute', ['Anna']);
+    expect(hub.punish.active(ANNA, 'mute')).toBeUndefined();
+    expect(hub.punish.active(ANNA, 'voice')).toBeUndefined();
+
+    // Admin bannt keinen Owner; auch ein Owner keinen anderen Owner.
+    await run(ANNA, 'ban', ['Owen', 'perm']);
+    expect((await answer(ANNA))['text']).toContain(
+      'ist <#ff5555>Owner</#ff5555> – diesen Rang darf niemand bestrafen.',
+    );
+    await run(PHILIP, 'gefaengnis', ['Owen']);
+    expect((await answer(PHILIP))['text']).toContain('diesen Rang darf niemand bestrafen');
+    expect(none()).toBe(true);
+
+    // Alte Strafe auf einem Owner (von früher) bleibt – aufheben kann sie nur ein Owner, auch der Owner selbst.
+    hub.punish.add({ uuid: OWEN, kind: 'jail', reason: 'alt', by: 'früher', minutes: 60 });
+    await run(ANNA, 'frei', ['Owen']);
+    expect((await answer(ANNA))['text']).toContain('diesen Rang darf niemand bestrafen');
+    expect(hub.punish.active(OWEN, 'jail')).toBeDefined();
+    await run(OWEN, 'frei', ['Owen']);
+    expect(hub.punish.active(OWEN, 'jail')).toBeUndefined();
+    // Bestrafen von sich selbst geht weiter nicht.
+    await run(OWEN, 'mute', ['Owen']);
+    expect((await answer(OWEN))['text']).toContain('nicht bei dir selbst');
   });
 
   test('/rang: Owner gibt VIP, Moderator darf keine Ränge', async () => {

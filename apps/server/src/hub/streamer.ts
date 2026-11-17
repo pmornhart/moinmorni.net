@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import {
+  networkCommand,
   STREAMER_OFF,
   STREAMER_PARTS,
   mayStream,
@@ -254,12 +255,7 @@ export function createStreamerCommand(
   };
 
   return {
-    name: 'streamer',
-    aliases: ['streamermodus', 'stream'],
-    usage: {
-      de: '/streamer [an|aus|ip|koordinaten|nachrichten|live]',
-      en: '/streamer [on|off|ip|coords|messages|live]',
-    },
+    ...networkCommand('streamer'),
     run: (actor, args) => {
       const net = network();
       const word = args[0]?.toLowerCase() ?? '';

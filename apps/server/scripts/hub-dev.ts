@@ -7,7 +7,10 @@
  * Neustart (RCON „stop“, dann neu starten), Dateien im Ordner – so laufen „Neustart, sobald leer“ und die
  * Einstellungen schlafender Spielmodi wie im echten Netzwerk.
  * --steuer=<port>: POST / {area, values} ändert Einstellungen wie das Panel, GET /status zeigt verbundene Server,
- * offene Neustarts und wie oft jeder Server gestartet wurde; POST /stop {server} hält einen Server an (Schlaf).
+ * offene Neustarts und wie oft jeder Server gestartet wurde; POST /stop {server} hält einen Server an (Schlaf);
+ * POST /strafe {action: punish|lift, player, kind, minutes?, reason?} verhängt oder hebt eine Strafe auf wie das Panel.
+ * POST /neustart {servers, why} startet wie nach einem Update gleich neu (Countdown, Lobby, nacheinander –
+ * network/restart-now.ts).
  * Daten unter MM_HUB_DEV_DIR (Standard ~/mm-hub-dev).
  */
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -25,6 +28,7 @@ import { MotorError } from '../src/motor/client.js';
 import { createStores } from '../src/panel/stores.js';
 import { createModeSettingsSync } from '../src/network/mode-settings.js';
 import { createRestartQueue } from '../src/network/restart.js';
+import { createRestartNow } from '../src/network/restart-now.js';
 
 const PORT = Number(process.env['MM_HUB_DEV_PORT'] ?? 8090);
 const DIR = process.env['MM_HUB_DEV_DIR'] ?? path.join(os.homedir(), 'mm-hub-dev');
@@ -125,6 +129,7 @@ const rcon = (dir: string, command: string): Promise<string> => {
     });
   });
 };
+const DEFAULT_COUNTDOWN_SECONDS = 30;
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 const stopServer = async (server: string): Promise<void> => {
   const spec = wakeable.get(server);
@@ -194,6 +199,21 @@ const restarts = createRestartQueue(
   log,
   Number(process.env['MM_HUB_DEV_RESTART_MS'] ?? 5000),
 );
+const restartNow = createRestartNow({
+  motor: motor as never,
+  hub: {
+    playersOn: (member) => hub.presence.on(member),
+    everyone: () => hub.presence.all(),
+    tell: hub.tell,
+    countdown: hub.countdown,
+    connect: hub.connect,
+    kick: hub.kick,
+  },
+  queue: restarts,
+  modes: () => stores.modes(),
+  countdown: () => Number(stores.settings('updates')['restartCountdown'] ?? DEFAULT_COUNTDOWN_SECONDS),
+  log,
+});
 const modeSync = createModeSettingsSync({
   motor: motor as never,
   hub,
@@ -228,14 +248,36 @@ if (control) {
                 pendingRestarts: restarts.pending(),
                 modeRestarts: hub.modeRestarts(),
                 starts: Object.fromEntries(starts),
+                restartNowBusy: restartNow.busy(),
+                online: hub.presence.all().map((p) => ({ name: p.name, server: p.server })),
               }),
             );
           } else if (req.url === '/stop') {
             await stopServer(String(body['server']));
             res.end('{}');
+          } else if (req.url === '/neustart') {
+            const servers = (body['servers'] as string[]).map((s) => ({ serverId: s, member: s }));
+            void restartNow.run(servers, body['why'] === 'release' ? 'release' : 'update');
+            res.end('{}');
           } else if (req.url === '/start') {
             await wake(String(body['server']));
             res.end('{}');
+          } else if (req.url === '/strafe') {
+            // Wie im Panel (Strafe verhängen / Aufheben) – dieselbe Moderation, ohne Rang-Prüfung des Panels.
+            const t = hub.moderation.target(String(body['player']));
+            if (!t) throw new Error('player_unknown');
+            const kind = String(body['kind']) as 'jail';
+            const done =
+              body['action'] === 'lift'
+                ? hub.moderation.lift(t, kind, 'panel')
+                : hub.moderation.punish(
+                    t,
+                    kind,
+                    (body['minutes'] as number | null | undefined) ?? null,
+                    String(body['reason'] ?? ''),
+                    'panel',
+                  );
+            res.end(JSON.stringify({ ok: Boolean(done) }));
           } else {
             const values = stores.patchSettings(String(body['area']), body['values'] as never, 'steuerung');
             res.end(JSON.stringify(values));
