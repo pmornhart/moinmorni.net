@@ -32,8 +32,6 @@ const SECONDS_PER_MINUTE = 60;
 const MINUTE_MS = SECONDS_PER_MINUTE * SECOND_MS;
 /** Antwort des Servers, wenn es eine Funktion (ein Stück des Datenpakets) nicht gibt. */
 const UNKNOWN_FUNCTION = 'Unknown function';
-/** Welt speichern (Blöcke und Merker der Saison), ohne auf das Schreiben zu warten. */
-const SAVE_WORLD = 'save-all';
 const SETTLE_SECONDS = 5;
 const GAP_MS = 300;
 const READY_MINUTES = 15;
@@ -425,9 +423,6 @@ export function createLobbyWorld(
     }, Promise.resolve([]));
     if (missing.length > 0)
       log.error({ steps: missing }, 'Lobby: Teile der Saison-Deko ließen sich nicht laden');
-    // Gleich speichern: Der Merker „Winter liegt“ steht sonst bis zum nächsten Autosave nur im Arbeitsspeicher – stürzt
-    // der Server vorher ab, wüsste die nächste Saison nichts vom Schnee (oder räumte ihn ein zweites Mal weg).
-    await run(serverId, `minecraft:${SAVE_WORLD}`);
     await runAll(serverId, pack.seasonUnload);
     log.info({ season: current }, `${name}: Saison-Deko gesetzt`);
   };

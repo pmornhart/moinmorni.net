@@ -244,8 +244,17 @@ export function winterPart(way: 'on' | 'off', i: number): string {
 }
 
 /**
- * Schritte je Saison bei `onParts` Stücken „Winter an“ und `offParts` Stücken „Winter weg“: Winter = Merker setzen,
- * Stücke, dann die Deko; jede andere Saison = ihre Deko, dann die alten Blöcke zurück (nur wenn Winter lag), Merker weg.
+ * Welt sofort und vollständig speichern (Blöcke und Merker). Ohne `flush` schreibt Minecraft die Stücke nach und nach –
+ * stürzt der Server kurz danach ab, passen Merker und Blöcke nicht mehr zusammen (im echten Test mit `kill -9`
+ * gesehen: Merker weg, aber Schnee in einem Teil der Lobby).
+ */
+export const SAVE_NOW = 'save-all flush';
+
+/**
+ * Schritte je Saison bei `onParts` Stücken „Winter an“ und `offParts` Stücken „Winter weg“: Winter = Merker setzen
+ * (gleich gespeichert), Stücke, Deko, speichern; jede andere Saison = ihre Deko, die alten Blöcke zurück (nur wenn
+ * Winter lag), speichern, erst dann Merker weg und noch einmal speichern. So liegt der Merker nach einem Absturz
+ * immer, solange noch Schnee liegen könnte.
  */
 export function seasonStepsFor(onParts: number, offParts: number): Record<Season, readonly string[]> {
   const fnCall = (name: string): string => `function ${SEASON_NAMESPACE}:${name}`;
@@ -256,13 +265,17 @@ export function seasonStepsFor(onParts: number, offParts: number): Record<Season
       ? [
           // Merker zuerst: bricht das Setzen ab, räumt die nächste Saison trotzdem alles weg.
           `data modify storage ${SEASON_STORAGE} winter set value 1b`,
+          SAVE_NOW,
           ...parts(onParts).map((i) => fnCall(winterPart('on', i))),
           fnCall('winter'),
+          SAVE_NOW,
         ]
       : [
           fnCall(season),
           ...parts(offParts).map((i) => `${winterLies} ${fnCall(winterPart('off', i))}`),
+          SAVE_NOW,
           `data remove storage ${SEASON_STORAGE} winter`,
+          SAVE_NOW,
         ];
   return {
     none: stepsOf('none'),

@@ -6,7 +6,7 @@ import { GROUND } from '../src/nature.js';
 import { disc, pairs, range } from '../src/range.js';
 import { KUGELN, kugelModel } from '../src/schmuck.js';
 import { MARKET } from '../src/lobby/dorfplatz.js';
-import { SEASON_STORAGE, seasonStepsFor } from '../src/lobby/datapack.js';
+import { SAVE_NOW, SEASON_STORAGE, seasonStepsFor } from '../src/lobby/datapack.js';
 import { NO_HITBOX } from '../src/lobby/deko.js';
 import { BAUM_RADIUS, BAUM_SPITZE, CHRISTBAUM, maibaumBlocks } from '../src/lobby/christbaum.js';
 import { LAUNCHPADS, TOUR } from '../src/lobby/features.js';
@@ -308,12 +308,15 @@ describe('Winter-Wunderland', () => {
 describe('Saison wechseln', () => {
   const steps = seasonStepsFor(7, 3);
 
-  it('Winter setzt den Merker zuerst, dann die Stücke, dann die Deko', () => {
-    expect(steps.winter[0]).toBe(`data modify storage ${SEASON_STORAGE} winter set value 1b`);
-    expect(steps.winter.slice(1, 8)).toEqual(
+  it('Winter setzt den Merker zuerst (gleich gespeichert), dann die Stücke, die Deko, und speichert', () => {
+    expect(steps.winter.slice(0, 2)).toEqual([
+      `data modify storage ${SEASON_STORAGE} winter set value 1b`,
+      SAVE_NOW,
+    ]);
+    expect(steps.winter.slice(2, 9)).toEqual(
       range(0, 6).map((i) => `function moinmorni_season:winter/on_${String(i).padStart(3, '0')}`),
     );
-    expect(steps.winter[steps.winter.length - 1]).toBe('function moinmorni_season:winter');
+    expect(steps.winter.slice(-2)).toEqual(['function moinmorni_season:winter', SAVE_NOW]);
   });
 
   it('jede andere Saison räumt Winter-Blöcke weg – nur wenn Winter lag – und nimmt den Merker weg', () => {
@@ -326,7 +329,8 @@ describe('Saison wechseln', () => {
             `execute if data storage ${SEASON_STORAGE} {winter:1b} run function moinmorni_season:winter/off_${String(i).padStart(3, '0')}`,
         ),
       );
-      expect(list[list.length - 1]).toBe(`data remove storage ${SEASON_STORAGE} winter`);
+      // erst die Blöcke sicher auf der Platte, dann der Merker weg (nach einem Absturz liegt er sonst falsch)
+      expect(list.slice(-3)).toEqual([SAVE_NOW, `data remove storage ${SEASON_STORAGE} winter`, SAVE_NOW]);
     });
   });
 });
