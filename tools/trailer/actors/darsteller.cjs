@@ -66,6 +66,11 @@ class Darsteller {
       hideErrors: true, checkTimeoutInterval: 120000, viewDistance: 'short', mainHand: this.opts.hand || 'right' });
     this.bot = bot;
     zeit.follow(bot);
+    // Pakete ablehnen. mineflayer schreibt die Paket-Kennung sonst manchmal als Objekt statt als Text – dann hängt die
+    // Anmeldung, wenn der Server ein Paket anbietet (z. B. die Lobby ihr Möbel-Paket): Kennung geradeziehen.
+    const write = bot._client.write.bind(bot._client);
+    bot._client.write = (packet, data) => (packet === 'resource_pack_receive'
+      ? write(packet, { ...data, uuid: data.uuid?.ascii ?? data.uuid }) : write(packet, data));
     bot._client.on('add_resource_pack', (p) => bot._client.write('resource_pack_receive', { uuid: p.uuid, result: 1 }));
     // Schwung vom Server (Sprungpolster, Heuwagen, Rückstoß) auf den eigenen Körper: mineflayer (bis 26.1) teilt den
     // Wert wie früher durch 8000 – beim eigenen Spieler bleibt dann nichts übrig. Erst nach der Anmeldung anhängen,
