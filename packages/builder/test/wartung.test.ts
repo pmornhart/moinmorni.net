@@ -36,6 +36,8 @@ describe('Wartungs-Lobby', () => {
     });
     expect(last).toBeDefined();
     WARTUNG_PARKOUR_STEPS.forEach((s) => {
+      // jeder Sprung landet auf seinem Block – nicht auf einem Zaunpfosten (1,5 hoch, vom Boden nicht erreichbar)
+      expect(canvas.get(s.x, s.y, s.z), `Block bei ${s.x} ${s.z}`).toBe(s.block);
       expect(free(s.x, s.y + 1, s.z) && free(s.x, s.y + 2, s.z), `frei über ${s.x} ${s.z}`).toBe(true);
     });
     expect(canvas.get(top.x, top.y + 1, top.z)).toBe('heavy_weighted_pressure_plate');

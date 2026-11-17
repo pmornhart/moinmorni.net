@@ -388,8 +388,9 @@ function parkour(c: Canvas): void {
   c.set(s.x, G, s.z, 'polished_andesite');
   c.set(s.x, s.y, s.z, 'light_weighted_pressure_plate');
   WARTUNG_PARKOUR_STEPS.forEach((st) => {
+    // range zählt auch rückwärts – ein Sprung direkt auf dem Boden braucht keinen Pfosten (sonst Zaun statt Block)
+    if (st.y > G + 1) range(G + 1, st.y - 1).forEach((y) => c.set(st.x, y, st.z, 'spruce_fence'));
     c.set(st.x, st.y, st.z, st.block);
-    range(G + 1, st.y - 1).forEach((y) => c.set(st.x, y, st.z, 'spruce_fence'));
   });
   const t = WARTUNG_PARKOUR_TOP;
   c.fill(t.x - 1, t.y, t.z - 1, t.x + 1, t.y, t.z + 1, 'spruce_planks');
