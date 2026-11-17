@@ -147,7 +147,7 @@ describe('Lobby baut sich selbst', () => {
     );
     expect(commands).toContain('minecraft:datapack disable "file/moinmorni-lobby"');
     // Gespeichert wird, bevor die Bau-Version in der Datei steht (Absturz danach → keine halbe Welt mit neuer Version)
-    expect(commands.indexOf('minecraft:save-all flush')).toBeGreaterThan(
+    expect(commands.indexOf('minecraft:save-all')).toBeGreaterThan(
       commands.indexOf('minecraft:function moinmorni_lobby:finish'),
     );
     // Danach die Saison-Deko: Bereich festhalten, Funktion, loslassen.

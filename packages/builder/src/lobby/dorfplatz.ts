@@ -118,7 +118,7 @@ const WALKERS: readonly (readonly [number, number, Facing, string, string, boole
   [-1, 70, 'north', 'gast8', 'dorfstrasse'],
   [-70, 7, 'east', 'gast1', 'gasse'],
   [-92, 6, 'west', 'gast5', 'gasse'],
-  [76, -36, 'south', 'gast2', 'oberdorf'],
+  [79, -34, 'south', 'gast2', 'oberdorf'],
   [44, 8, 'north', 'kellnerin', 'biergarten'],
   [2, -27, 'north', 'gast3', 'prachtstrasse'],
 ];

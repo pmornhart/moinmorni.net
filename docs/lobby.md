@@ -32,7 +32,21 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
 - Alle Häuser sind **begehbar und eingerichtet** (Küche, Eckbank, Kachelofen, Schlafzimmer, Leiter nach oben; Läden
   mit Theke und Verkäufer). Einrichtung als Daten in `packages/builder/src/village.ts`.
 - **Leute im Dorf**: Figuren mit Tag `mm_walker` schlendern um ihren Platz herum, stehende Figuren schauen Spieler
-  in der Nähe an, Kinder sind kleiner.
+  in der Nähe an, Kinder sind kleiner. So laufen sie (`LobbyNpcs.java`):
+  - erst **auf der Stelle zum Ziel drehen** (12° je Tick), dann geradeaus gehen – ein Ruck um 180° ließ Minecraft den
+    Körper kurz rückwärts drehen, die Tracht sprang hinterher;
+  - **Abstand halten** (0,8 Blöcke) zu anderen Figuren, auch sitzenden, und zu Spielern: wer im Weg steht, wird
+    angeschaut, nach drei Versuchen geht es woanders hin; Ziele, an denen schon jemand steht, werden nicht gewählt;
+  - nur auf **festem, ebenem Boden** (voller Block oder Trampelpfad, kein Zaun, keine Mauer, keine halbe Stufe, kein
+    Wasser) und nicht durch Schilder, Fahnen, Fackeln, Zuckerrohr oder hohe Blumen;
+  - der **Platz aus dem Bau** wird an der Figur gemerkt (`moinmorni:home`) – nach Neustart oder Nachladen der Gegend
+    schlendern sie weiter um denselben Platz statt mit der Zeit auszuwandern;
+  - nur, wo die Welt gerade läuft (am Rand der geladenen Gegend bleiben sie stehen); wer stehen bleibt (Pause, mehr
+    Dorfleute als im Panel eingestellt), schaut sich um wie die anderen Figuren;
+  - der **Kopf dreht sich weich** (höchstens 9° je Tick, zum Ende langsamer) statt alle fünf Ticks einen Sprung;
+  - der **Startplatz** einer laufenden Figur muss im Bau frei sein (Test in
+    `packages/builder/test/lobby-market.test.ts` – vorher stand eine in einer Bierbank am Schlossmarkt, eine in der
+    Brunnenmauer im Oberdorf, beide kamen nie los).
 - Schloss auf dem Hügel, Prachtstraße, Obstgarten, Felder, Teich, Alpengipfel ringsum.
 
 ## Möbel (Ressourcenpaket)
@@ -102,7 +116,8 @@ Flache malt der Skin selbst (oben). Farben kommen aus der Tracht der Figur (`cas
 - Kopf-Teile stecken im Kopf-Platz der Figur (drehen und nicken mit), Körper-Teile in einem Anzeige-Objekt, das auf
   der Figur mitfährt. **Stehende Figuren drehen nur den Kopf** (höchstens 60° zur Seite; der Körper bleibt, wie er
   gebaut ist – darum sitzen Rock und Zöpfe immer). Laufenden dreht das Lobby-Plugin den Körper-Teil so nach, wie
-  Minecraft den Körper nachdreht; wer einen Rock trägt (Tag `mm_rock`), geht kleinere Schritte, damit die Beine im
+  Minecraft den Körper nachdreht (im Gehen 30 % je Tick in die Laufrichtung, im Stehen erst, wenn der Kopf mehr als 50°
+  voraus ist – `bodyAfter`); wer einen Rock trägt (Tag `mm_rock`), geht kleinere Schritte, damit die Beine im
   Rock bleiben. Sitzende Figuren tragen nur die Kopf-Teile.
 - Alle Teile benutzen das Modell `minecraft:air` – in Minecraft ist es leer. Unser Paket ersetzt
   `assets/minecraft/items/air.json` und wählt über `custom_model_data` die Teile. **Ohne Paket (oder auf Bedrock)
@@ -124,7 +139,7 @@ Blumenfrau Mohn.
 | `mm_npc`                          | Figur der Lobby: nimmt keinen Schaden (nur `/kill` beim Neubau wirkt)                                                                                                                              |
 | `mm_mode_<id>`                    | Anklicken (rechts oder links) → Nachricht `play` an den Hub → Modus beitreten bzw. wecken                                                                                                          |
 | `mm_mode_label`                   | Schild aus dem Bau – das Plugin ersetzt es durch eigene Schilder mit Live-Zahlen                                                                                                                   |
-| `mm_walker`                       | läuft gemütlich in bis zu 8 Blöcken um den Platz herum (nur auf freiem, ebenem Boden)                                                                                                              |
+| `mm_walker`                       | läuft gemütlich in 2–8 Blöcken um den Platz herum (nur auf freiem, ebenem Boden, mit Abstand zu anderen; Platz in `moinmorni:home`)                                                                |
 | `mm_rock`                         | trägt einen 3D-Rock: läuft mit kleineren Schritten (1,2 statt 1,8 Blöcke pro Sekunde)                                                                                                              |
 | `mm_tint_<rrggbb>`                | Farbe des Modus für den Namen über der Figur (wie auf der Webseite); ohne Tag Gold                                                                                                                 |
 | `mm_lobby` + `mm_build_<version>` | alles, was der Lobby-Bau setzt; Wesen aus älteren Bauten entfernt das Plugin, sobald sie geladen werden oder die Version wechselt (Datei `plugins/moinmorni/lobby-world.target`, alle 2 s geprüft) |
