@@ -1,5 +1,11 @@
 # Morni Wolkenkampf – Einstellungen. Nach Änderungen: /wolkenkampf neuladen (oder Server neu starten).
 
+# Zurück ins Spiel: Verliert jemand mitten in einer Runde die Verbindung (zum Beispiel, weil das Spiel abstürzt), bleibt
+# sein Platz so viele Sekunden frei – Insel, Sachen und Team. Kommt er rechtzeitig wieder (direkt oder über „Zurück ins
+# Spiel“ in der Lobby), geht es genau dort weiter, wo er war; sonst scheidet er aus. Wer gerade von einem Gegner
+# getroffen wurde, scheidet beim Verlassen sofort aus (sonst rettete ein Abbruch aus jedem Kampf). 0 = aus (0–600).
+rueckkehr-sekunden: 90
+
 # Eigene leere Welt für den Wolkenhafen und die Karten (wird beim ersten Start angelegt und gebaut).
 welt: wolkenkampf
 

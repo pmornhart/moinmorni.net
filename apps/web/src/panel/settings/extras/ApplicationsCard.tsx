@@ -23,6 +23,7 @@ import { cn } from '~/lib/cn';
 import { useErrorText } from '~/lib/errors';
 import { mmApi } from '~/lib/mm-api';
 import { useTimeText } from '~/lib/time';
+import { usePanel } from '../../session';
 import { ConfirmDialog } from '../../team/dialogs';
 import {
   APPLICATION_STATUSES,
@@ -144,6 +145,9 @@ function Decision({ app }: { readonly app: Application }): ReactElement | null {
 /** Annehmen / Ablehnen – each asks once more and takes an optional note. */
 function DecideButtons({ app }: { readonly app: Application }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  // Like the buttons in Discord: only who may kick in the game – the owner always.
+  const me = usePanel();
+  const mayDecide = me.role.id === 'owner' || me.role.game.includes('kick');
   const errorText = useErrorText();
   const queryClient = useQueryClient();
   const noteId = useId();
@@ -177,6 +181,7 @@ function DecideButtons({ app }: { readonly app: Application }): ReactElement {
     },
   });
   const accept = choice === 'accept';
+  if (!mayDecide) return <p className="text-sm text-muted-foreground">{t('applicationsCard.noRight')}</p>;
   return (
     <div className="flex flex-wrap gap-2">
       <Button size="sm" onClick={() => setChoice('accept')}>

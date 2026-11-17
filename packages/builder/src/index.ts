@@ -23,3 +23,4 @@ export * from './lobby/deko.js';
 export * from './lobby/christbaum.js';
 export * from './lobby/weihnachtsmarkt.js';
 export * from './schmuck.js';
+export * from './musik/index.js';

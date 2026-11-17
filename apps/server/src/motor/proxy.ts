@@ -46,6 +46,8 @@ export function motorPathAllowed(path: string): boolean {
   // Kodierte Zeichen (%72egister = register) dekodiert der Motor erst hinter dieser Prüfung – die Oberfläche braucht
   // sie im Pfad nie, also gar nicht erst durchlassen. Doppelte Schrägstriche ebenso nicht.
   if (path.includes('..') || path.includes('%') || path.includes('//')) return false;
+  // „/api/auth/./register“ hieße beim Motor „/api/auth/register“, ein „\“ wird dort zu „/“ – beides schon hier ab.
+  if (path.includes('\\') || path.split('/').includes('.')) return false;
   if (DENY.some((p) => path === p || path.startsWith(`${p}/`))) return false;
   return ALLOW.some((p) => (p.endsWith('/') ? path.startsWith(p) : path === p || path.startsWith(`${p}/`)));
 }

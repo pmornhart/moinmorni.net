@@ -126,7 +126,7 @@
       "eyebrow": "Spielmodi",
       "title": "Such dir dein Abenteuer aus",
       "pageTitle": "Spielmodi",
-      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Die Modi sind rund um die Uhr offen.",
       "all": "Alle Spielmodi",
       "empty": "Gerade sind noch keine Spielmodi eingetragen.",
       "emptyTitle": "Noch keine Spielmodi",
@@ -204,7 +204,7 @@
       "place": "Platz {{rank}}",
       "homeTitle": "MoinMorni in Zahlen",
       "modesOpen": "Spielmodi offen",
-      "modesOpenHint": "Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "modesOpenHint": "Rund um die Uhr offen – du kommst sofort hinein.",
       "modeBoards": "Bestenlisten der Spielmodi",
       "modeBoardsText": "Wer ist in den Modi ganz vorne? Wähl einen Modus und einen Wert.",
       "modeBoardsModes": "Spielmodus",
@@ -413,7 +413,7 @@
         "title": "Spielmodi",
         "short": "Alle Modi auf einen Blick – und wie du hinkommst",
         "intro": "Alle Spielmodi erreichst du aus der Lobby: Die Figuren am Dorfmarkt um den Maibaum und am Schlossmarkt vor der Schlosstreppe bringen dich mit einem Klick hin. Mit dem Kompass in deiner Leiste geht es noch schneller.",
-        "sleep": "Ist in einem Modus gerade niemand, schläft er. Sobald du kommst, wacht er auf – das dauert einen kleinen Moment.",
+        "sleep": "Die Spielmodi laufen rund um die Uhr – du kommst sofort hinein. Schläft ein Modus doch einmal, wacht er auf, sobald du kommst – das dauert etwa eine halbe Minute.",
         "pause": "Wintersport kann eine Sommerpause machen: Dann gibt es nur im Winter (1. Dezember bis 31. März) Wettkämpfe – das Dorf mit Eisfläche, Lift und Rodelbahn bleibt offen.",
         "more": "Mehr",
         "all": "Alle Spielmodi"
@@ -433,18 +433,23 @@
         "short": "Die wichtigsten Befehle im Chat",
         "intro": "Befehle tippst du in den Chat (Taste T) – mit einem Schrägstrich davor.",
         "tab": "Tipp: Mit der Tab-Taste ergänzt Minecraft Befehle und Namen von selbst.",
-        "list": {
-          "freunde": "Freunde hinzufügen und Anfragen annehmen. Ohne Namen siehst du, wer von deinen Freunden online ist.",
-          "party": "Freunde in deine Party einladen – die Party folgt dir in jeden Spielmodus.",
-          "pc": "Eine Nachricht nur an deine Party schreiben.",
-          "msg": "Jemandem eine private Nachricht schreiben.",
-          "r": "Auf die letzte private Nachricht antworten.",
-          "sprache": "Sprache wechseln: Deutsch oder Englisch.",
-          "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
-          "voice": "Sprachkanäle anzeigen, einem beitreten oder ihn verlassen.",
-          "lobby": "Zurück in die Lobby.",
-          "discord": "Einen Code holen, um dein Konto mit Discord zu verbinden."
-        }
+        "all": "Alle Befehle ansehen"
+      },
+      "streamer": {
+        "title": "Streamer-Modus",
+        "short": "Streamen, ohne zu viel zu zeigen",
+        "intro": "Du streamst oder nimmst ein Video auf? Mit dem Streamer-Modus siehst nur du weniger: IP-Adressen und unsere Adressen werden zu •••, private Nachrichten und Koordinaten liest du nur mit der Maus, und alle anderen sehen ● LIVE an deinem Namen. Er gilt auf jedem Server – in der Lobby, in allen Spielmodi und in MorniCraft.",
+        "step1": "Tippe im Chat",
+        "step2": "Im Menü, das dann kommt, schaltest du jeden Teil einzeln an oder aus – einfach anklicken.",
+        "step3": "Fertig mit dem Stream? Tippe",
+        "parts": {
+          "ip": "IP-Adressen und die Adressen des Netzwerks werden im Chat und in Nachrichten zu •••.",
+          "coords": "Wo ein Spielmodus Koordinaten zeigt (z. B. MorniCraft bei /getpos und deinen Zuhause), siehst du sie nur mit der Maus.",
+          "msg": "Private Nachrichten (/msg, /r, in MorniCraft auch die Post) liest du nur mit der Maus.",
+          "live": "Die anderen sehen ● LIVE an deinem Namen – im Chat, in der Tab-Liste und über deinem Kopf."
+        },
+        "f3": "Tipp: Die Koordinaten im F3-Bildschirm blendest du in Minecraft selbst aus – Optionen → Chat → „Reduzierte Debug-Infos“.",
+        "who": "Ob alle den Streamer-Modus benutzen dürfen oder nur das Media-Team, stellt das Team ein."
       },
       "rules": {
         "title": "Regeln & Strafen",
@@ -524,7 +529,34 @@
           "home": "Zu deinem Zuhause (mit /sethome speichern).",
           "tpa": "Fragen, ob du zu jemandem darfst.",
           "clan": "Clan-Menü: gründen, einladen, Basis, Farbe.",
-          "spawn": "Zurück zur Spawn-Insel."
+          "spawn": "Zurück zur Spawn-Insel.",
+          "sethome": "Merkt sich, wo du gerade stehst, als Zuhause.",
+          "homes": "Deine Zuhause als Betten zum Anklicken.",
+          "delhome": "Ein Zuhause löschen.",
+          "back": "Zurück zum letzten Ort – auch nach dem Tod.",
+          "tpahere": "Fragen, ob jemand zu dir kommt.",
+          "tpaccept": "Eine Anfrage annehmen.",
+          "tpdeny": "Eine Anfrage ablehnen.",
+          "clanCreate": "Einen eigenen Clan gründen, mit Kürzel (2–4 Zeichen).",
+          "clanInvite": "Jemanden in deinen Clan einladen.",
+          "clanBase": "Zur Clan-Basis.",
+          "cc": "Im Clan-Chat schreiben.",
+          "mail": "Eine Nachricht für später – auch an Leute, die offline sind.",
+          "mailRead": "Deine Post lesen.",
+          "ignore": "Jemanden im Chat ausblenden.",
+          "afk": "Allen zeigen, dass du kurz weg bist.",
+          "seen": "Wann jemand zuletzt da war.",
+          "near": "Wer in deiner Nähe ist.",
+          "getpos": "Deine Koordinaten.",
+          "ping": "Deine Verbindung zum Server.",
+          "info": "Alle Befehle von MorniCraft im Spiel.",
+          "leiste": "Die Leiste rechts ein- oder ausblenden.",
+          "streamer": "Streamer-Modus: Adressen, Koordinaten und Nachrichten verstecken.",
+          "ansehen": "Team-Menü eines Spielers (auch Ducken + Rechtsklick).",
+          "einfrieren": "Jemanden einfrieren oder wieder auftauen.",
+          "nether": "Das Netherportal am Spawn bauen (oder mit „weg“ abbauen).",
+          "end": "Den Weg zum Endportal im Spawn bauen (oder abbauen).",
+          "mcadmin": "MorniCraft neu laden (Einstellungen kommen sonst von selbst aus dem Panel)."
         }
       },
       "duels": {
@@ -640,6 +672,92 @@
           "turnier": "Wann das nächste Turnier ist.",
           "top": "Bestenlisten."
         }
+      }
+    },
+    "commands": {
+      "eyebrow": "Im Chat mit /",
+      "title": "Befehle",
+      "titleFor": "Befehle für {{name}}",
+      "text": "Alles, was du im Chat tippen kannst: für alle im Netzwerk, für jeden Spielmodus und fürs Team. Ein Klick auf einen Befehl kopiert ihn.",
+      "textFor": "Nur, was {{name}} als {{rank}} wirklich darf. Ein Klick auf einen Befehl kopiert ihn.",
+      "mine": {
+        "label": "Nur meine Befehle zeigen",
+        "placeholder": "Dein Minecraft-Name",
+        "go": "Meine Befehle",
+        "clear": "Alle Befehle"
+      },
+      "unknown": "Einen Spieler „{{name}}“ kennen wir noch nicht – hier stehen alle Befehle.",
+      "jump": "Springe zu",
+      "jumpEveryone": "Für alle",
+      "jumpTeam": "Team",
+      "everyoneTitle": "Für alle",
+      "everyoneText": "Diese Befehle gehen auf jedem Server im Netzwerk – in der Lobby und in jedem Spielmodus.",
+      "modeText": "Nur auf {{name}}. Die Befehle für alle gehen dort natürlich auch.",
+      "modeLink": "Zum Spielmodus",
+      "modeTeam": "Team-Werkzeuge",
+      "teamTitle": "Team",
+      "teamText": "Wer was darf, hängt vom Rang ab – die Ränge stehen neben jedem Befehl. Strafen gehen nur an niedrigere Ränge.",
+      "teamTextFor": "Das darfst du als {{rank}}. Strafen gehen nur an niedrigere Ränge.",
+      "settingsTitle": "Einstellungen im Spiel",
+      "settingsText": "Jede Einstellung aus dem Panel geht auch als Befehl. Ohne Wert zeigt der Befehl alle Einstellungen des Bereichs und wie man sie ändert.",
+      "settingLine_one": "{{area}}: {{count}} Einstellung",
+      "settingLine_other": "{{area}}: {{count}} Einstellungen",
+      "copy": "Kopieren: {{command}}",
+      "whoMay": "Diese Ränge dürfen das",
+      "topics": {
+        "travel": "Unterwegs",
+        "friends": "Freunde & Party",
+        "chat": "Nachrichten",
+        "voice": "Sprachchat",
+        "account": "Dein Konto",
+        "lobby": "Nur in der Lobby",
+        "team": "Team-Befehle"
+      },
+      "lines": {
+        "lobby": "Zurück in die Lobby – von überall. Mitten in einer Runde fragen wir lieber noch einmal nach, ein zweites /lobby gilt als Ja.",
+        "server": "Direkt in einen Spielmodus, z. B. /server duels.",
+        "freunde": "Wer von deinen Freunden gerade online ist – und wo.",
+        "freundeAdd": "Eine Freundschaftsanfrage schicken.",
+        "freundeAnnehmen": "Eine Anfrage annehmen (ablehnen: /freunde ablehnen <name>).",
+        "freundeEntfernen": "Jemanden aus deiner Freundesliste nehmen.",
+        "party": "Freunde in deine Party einladen – die Party folgt dir in jeden Spielmodus.",
+        "partyAnnehmen": "Eine Einladung in eine Party annehmen.",
+        "partyVerlassen": "Die Party verlassen.",
+        "partyLeiter": "Die Leitung der Party abgeben (nur als Leiter).",
+        "partyAufloesen": "Die Party auflösen (nur als Leiter).",
+        "pc": "Eine Nachricht nur an deine Party schreiben.",
+        "msg": "Jemandem eine private Nachricht schreiben.",
+        "r": "Auf die letzte private Nachricht antworten.",
+        "voice": "Alle Sprachkanäle mit der Zahl der Leute darin.",
+        "voiceKanal": "Einem Sprachkanal oder einer Gruppe beitreten.",
+        "voiceRaus": "Den Sprachkanal verlassen.",
+        "voiceGruppe": "Eine eigene Sprachgruppe für alle Server aufmachen – mit Passwort nur für Eingeladene.",
+        "voiceZu": "Zu einem Spieler in seine Sprachgruppe – ohne Passwort.",
+        "sprache": "Sprache wechseln: Deutsch oder Englisch.",
+        "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
+        "streamer": "Streamer-Modus an oder aus – verdeckt Adressen, Koordinaten und private Nachrichten auf jedem Server, die anderen sehen ● LIVE an deinem Namen.",
+        "streamerTeil": "Einen Teil des Streamer-Modus für dich an- oder ausschalten (ohne Wort kommt das Menü zum Anklicken).",
+        "discord": "Einladung in unseren Discord – und ein Code, um dein Konto zu verbinden.",
+        "rundgang": "Ein Rundgang durchs Dorf (beenden: /rundgang stop).",
+        "parkour": "Die Bestenliste der Parkour-Spirale und deine Bestzeit.",
+        "parkourStart": "An den Start der Parkour-Spirale.",
+        "musik": "Lobbymusik für dich aus- und wieder anschalten. Im Alltag spielt Blasmusik, zur Wiesn bayerische Musik, im Winter Weihnachtslieder – mit unserem Lobby-Paket eine echte Kapelle, sonst Notenblöcke.",
+        "musikLauter": "Lobbymusik leiser oder lauter stellen (auch als Zahl von 0 bis 100). Der Regler „Plattenspieler/Notenblöcke“ in den Minecraft-Einstellungen wirkt auch.",
+        "musikWeiter": "Gleich das nächste Stück.",
+        "warn": "Jemanden verwarnen – steht in seinem Strafen-Verlauf.",
+        "strafen": "Alle Strafen eines Spielers ansehen.",
+        "mute": "Im Chat stummschalten, z. B. für 30m, 2h, 7d oder perm.",
+        "unmute": "Wieder schreiben lassen.",
+        "voicemute": "Im Sprachchat stummschalten.",
+        "voiceunmute": "Im Sprachchat wieder sprechen lassen.",
+        "kick": "Vom Netzwerk werfen (darf gleich wieder kommen).",
+        "gefaengnis": "In die Zelle unter dem Rathaus der Lobby – ohne Dauer zehn Minuten.",
+        "frei": "Aus dem Gefängnis holen.",
+        "ban": "Aus dem ganzen Netzwerk aussperren – auch im Discord.",
+        "unban": "Den Bann aufheben.",
+        "rang": "Einen Rang geben oder wegnehmen – nur Ränge unter dem eigenen.",
+        "bau": "Auf den Bau-Server.",
+        "rueckkehr": "Verbindung mitten im Spiel weg? Solange dein Platz frei ist, bringt dich das zurück in deine Runde (geht auch mit dem Gegenstand in der Lobby)."
       }
     }
   },
@@ -762,7 +880,7 @@
   },
   "modes": {
     "title": "Modi",
-    "text": "Welche Spielmodi es gibt, in welcher Reihenfolge sie in der Lobby und auf der Webseite stehen und wer hinein darf.",
+    "text": "Welche Spielmodi es gibt, in welcher Reihenfolge sie in der Lobby und auf der Webseite stehen, wer hinein darf und was ein Modus tut, wenn niemand drin ist.",
     "state": "Zustand",
     "stateHelp": "„Bald“ zeigt den Modus schon an, man kann aber noch nicht hinein.",
     "access": "Wer darf hinein?",
@@ -773,8 +891,20 @@
     "descDe": "Beschreibung auf Deutsch",
     "descEn": "Beschreibung auf Englisch",
     "maxPlayers": "Spieler höchstens",
-    "sleep": "Schlafen, wenn leer",
-    "sleepHelp": "Ist niemand drin, legt sich der Server schlafen und spart Arbeitsspeicher. Er wacht auf, sobald jemand die Figur anklickt.",
+    "idle": "Wenn niemand drin ist",
+    "idleChoice": {
+      "rest": "Ruhezustand – online und sparsam",
+      "sleep": "Schlafen – ganz aus",
+      "awake": "Wach bleiben – Welt läuft weiter"
+    },
+    "idleHelp": {
+      "rest": "Empfohlen. Der Modus bleibt online, man kommt sofort hinein. Ohne Spieler hält Minecraft nach einer Minute die Welt an und Java gibt Arbeitsspeicher zurück – ein leerer Modus braucht dann etwa die Hälfte.",
+      "sleep": "Ist eine Weile niemand drin, geht der Server ganz aus und braucht gar keinen Arbeitsspeicher. Er wacht auf, sobald jemand die Figur anklickt – das dauert etwa eine halbe Minute.",
+      "awake": "Der Modus bleibt online und hält seinen ganzen Arbeitsspeicher, auch wenn niemand drin ist; die Welt läuft ohne Spieler weiter. Nur nötig, wenn ein Modus ohne Spieler weiterrechnen soll."
+    },
+    "idleRestart": "Gilt nach dem nächsten Neustart des Modus – er startet von selbst neu, sobald niemand drin ist.",
+    "idleRestartPending": "Neustart steht noch aus – der Modus startet neu, sobald niemand drin ist.",
+    "idleNoServer": "Geht erst, wenn der Modus einen Server hat.",
     "up": "Weiter nach vorne",
     "down": "Weiter nach hinten",
     "position": "Platz {{n}}",
@@ -894,7 +1024,7 @@
     "fixFirst": "Bitte zuerst prüfen: {{names}} (Name, Symbol oder Farbe passt noch nicht).",
     "areaHelp": {
       "overview": "Startseite des Panels mit Netzwerk-Status.",
-      "modes": "Spielmodi an- und ausschalten, Reihenfolge, wer hinein darf.",
+      "modes": "Spielmodi an- und ausschalten, Reihenfolge, wer hinein darf, Ruhezustand.",
       "lobby": "Einstellungen der Lobby (Dorf, Figuren, Deko).",
       "players": "Spieler suchen, Profile ansehen, Ränge vergeben.",
       "punishments": "Strafen verhängen und aufheben.",
@@ -1030,7 +1160,10 @@
     "act": {
       "title": "Strafe verhängen",
       "help": "Wirkt sofort im ganzen Netzwerk. Das Team bekommt einen Hinweis.",
-      "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – bestrafen kann hier nur jemand mit höherem Rang."
+      "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – bestrafen kann hier nur jemand mit höherem Rang.",
+      "protectedOne": "{{name}} ist {{rank}} – das darf nur der {{who}}. Strafen gehen nur an niedrigere Ränge.",
+      "protectedMany": "{{name}} ist {{rank}} – das dürfen nur {{who}}. Strafen gehen nur an niedrigere Ränge.",
+      "protectedNobody": "{{name}} ist {{rank}} – diesen Rang darf niemand bestrafen."
     },
     "active": {
       "title": "Gerade aktiv",
@@ -1167,7 +1300,8 @@
     "noMatch": "Keine Strafe passt zu deiner Auswahl.",
     "reset": "Filter zurücksetzen",
     "count": "{{count}} von {{total}} Strafen",
-    "latest": "Die letzten {{count}} Strafen, neueste zuerst."
+    "latest": "Die letzten {{count}} Strafen, neueste zuerst.",
+    "liftHigher": "Aufheben kann das nur jemand mit höherem Rang als {{name}}."
   },
   "tour": {
     "step": "Schritt {{n}} von {{total}}",
@@ -1182,11 +1316,11 @@
     },
     "modes": {
       "title": "Modi",
-      "text": "Hier schaltest du Spielmodi an und aus, setzt sie auf Wartung und legst fest, in welcher Reihenfolge sie in der Lobby stehen."
+      "text": "Hier schaltest du Spielmodi an und aus, setzt sie auf Wartung und legst fest, in welcher Reihenfolge sie in der Lobby stehen. Unter „Wenn niemand drin ist“ wählst du je Modus: Ruhezustand (online, wenig Arbeitsspeicher), Schlafen (ganz aus) oder Wach bleiben."
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter Lobby → Musik stellst du die Lobbymusik ein (je Saison, welche Stücke laufen). Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
     },
     "news": {
       "title": "News",
@@ -1712,12 +1846,14 @@
     "behind_one": "{{count}} Änderung neuer als deine",
     "behind_other": "{{count}} Änderungen neuer als deine",
     "isNewest": "Das ist deine Fassung.",
+    "newer": "Neuer als deine – wie viel, sagt die Liste der Änderungen.",
     "notChecked": "Noch nicht nachgesehen",
     "motor": "Motor (MorniHosting)",
     "motorUnknown": "Ob es Neues gibt, ist gerade nicht bekannt.",
     "motorCurrent": "Auf dem neuesten Stand.",
     "motorBehind_one": "MorniHosting hat {{count}} neuere Änderung ({{latest}}). Sie kommt mit, wenn",
     "motorBehind_other": "MorniHosting hat {{count}} neuere Änderungen ({{latest}}). Sie kommen mit, wenn",
+    "motorNewer": "MorniHosting hat Neues ({{latest}}). Es kommt mit, wenn",
     "motorSetting": "„Motor immer auf den neuesten Stand“ an ist.",
     "unknown": "unbekannt",
     "dev": "Entwickler-Fassung",
@@ -1731,6 +1867,17 @@
     "checkFailedTitle": "GitHub ist gerade nicht erreichbar",
     "checkFailedText": "Wir konnten nicht nachsehen, ob es etwas Neues gibt. Meist liegt das an GitHub oder am Internet des Rechners – MoinMorni läuft ganz normal weiter. Versuch es in ein paar Minuten noch mal.",
     "checkFailedToast": "GitHub antwortet gerade nicht – versuch es später noch mal.",
+    "branchMissingToast": "Den Kanal „{{branch}}“ gibt es auf GitHub nicht.",
+    "branchMissingTitle": "Den Kanal „{{branch}}“ gibt es auf GitHub (noch) nicht",
+    "branchMissingText": "MoinMorni folgt diesem Zweig auf GitHub, findet ihn dort aber nicht – vielleicht wurde er zusammengeführt oder umbenannt. Den Kanal legt MM_UPDATE_BRANCH in der .env auf dem Rechner fest (sonst main). MoinMorni läuft ganz normal weiter.",
+    "pendingTitle": "Die Liste der Änderungen kommt gleich",
+    "pendingText": "Es gibt eine neue Fassung – nur die Liste, was sich geändert hat, hat GitHub gerade nicht geschickt. MoinMorni fragt in ein paar Minuten noch mal.",
+    "pendingCanStart": "Update starten geht trotzdem schon.",
+    "limitedTitle": "GitHub lässt uns gerade nicht öfter fragen – die Änderungsliste kommt um {{time}}",
+    "limitedText": "Ohne Anmeldung beantwortet GitHub nur 60 Fragen pro Stunde je Internet-Adresse, und die teilen sich alle Rechner bei dir. Ob es etwas Neues gibt, sieht MoinMorni trotzdem – dafür fragt es GitHub auf einem anderen Weg.",
+    "limitedKeyTip": "Tipp: Mit einem GitHub-Schlüssel, der nur lesen darf (MM_GITHUB_TOKEN in der .env), sind es 5000 Fragen pro Stunde. Wie das geht, steht in der Schnellstart-Anleitung, Teil 8 „Updates“.",
+    "keyRejectedTitle": "GitHub nimmt den Schlüssel aus der .env nicht an",
+    "keyRejectedText": "MM_GITHUB_TOKEN ist abgelaufen, gelöscht oder falsch kopiert. MoinMorni fragt so lange ohne ihn (60 Fragen pro Stunde). Neuen Schlüssel in die .env auf dem Rechner eintragen und MoinMorni neu starten – oder die Zeile löschen.",
     "foundToast": "Es gibt ein Update!",
     "currentToast": "Alles aktuell – nichts zu tun.",
     "startedToast": "Update gestartet. Hier kannst du zusehen.",
@@ -1801,6 +1948,7 @@
     }
   },
   "applicationsCard": {
+    "noRight": "Entscheiden darf, wer im Spiel kicken darf (Moderator und darüber) – wie mit den Knöpfen in Discord.",
     "title": "Bewerbungen",
     "text": "Wer auf MorniCraft möchte. Bewerben geht auf der Webseite (mit Discord-Anmeldung) und im Discord mit /bewerben. Eine Zusage setzt den Namen auf die Whitelist.",
     "open": "Bewerbungen offen",
@@ -1928,6 +2076,7 @@
     "toList": "Zu den Bewerbungen"
   },
   "whitelistCard": {
+    "noRight": "Eintragen und Austragen darf, wer im Spiel kicken darf (Moderator und darüber) – wie beim Annehmen von Bewerbungen.",
     "title": "Whitelist",
     "text": "Wer auf MorniCraft darf. Das Team kommt immer hinein und steht hier von selbst: alle, deren Rang „Kommt immer rein“ hat. Angenommene Bewerbungen landen hier auch von selbst; du kannst Namen auch direkt eintragen.",
     "count_one": "{{count}} Spieler",
@@ -2134,6 +2283,8 @@
     "email_unconfirmed": "Bitte bestätige zuerst deine E-Mail-Adresse.",
     "account_pending_approval": "Dein Konto wartet noch auf Freigabe.",
     "not_in_team": "Dein Konto hat noch keine Rolle in MoinMorni.",
+    "mode_no_server": "Dieser Modus hat noch keinen Server.",
+    "motor_without_idle_memory": "Der Motor kennt den Ruhezustand noch nicht – bitte erst MoinMorni aktualisieren.",
     "panel_area_forbidden": "Diesen Bereich darf deine Rolle nicht ändern.",
     "csrf": "Deine Sitzung ist abgelaufen. Lade die Seite neu und versuch es nochmal.",
     "bad_origin": "Die Anfrage kam von einer fremden Seite und wurde abgelehnt.",
@@ -2156,6 +2307,7 @@
     "punishment_none": "Da gibt es gerade nichts aufzuheben – vielleicht ist die Strafe schon abgelaufen.",
     "role_unknown": "Diesen Rang gibt es nicht (mehr). Lade die Seite neu.",
     "role_too_high": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher (VIP vergibt nur der Owner).",
+    "mornicraft_no_right": "Die Whitelist von MorniCraft pflegt und Bewerbungen dafür entscheidet, wer im Spiel kicken darf (Moderator und darüber) – im Panel genauso wie in Discord.",
     "rank_no_right": "Ränge vergeben darfst du nicht – dafür braucht deine Rolle das Recht „Ränge vergeben“.",
     "role_owner_only": "Owner und Admin darf nur der Owner ändern.",
     "role_duplicate": "Zwei Rollen haben dieselbe Kennung. Gib einer einen anderen Namen.",
@@ -2211,7 +2363,8 @@
     "team_apply_link_required": "Verbinde zuerst dein Minecraft-Konto mit Discord (/discord im Spiel).",
     "team_apply_minecraft_name": "Das ist kein gültiger Minecraft-Name.",
     "team_apply_pending": "Deine Bewerbung liegt schon beim Team – du hörst bald von uns.",
-    "team_position_unknown": "Diese Stelle gibt es nicht (mehr). Lade die Seite neu."
+    "team_position_unknown": "Diese Stelle gibt es nicht (mehr). Lade die Seite neu.",
+    "player_protected": "Strafen gehen nur an niedrigere Ränge: Diese Person hat den gleichen oder einen höheren Rang als du (den Owner bestraft niemand)."
   },
   "modeSettings": {
     "title": "Gilt nach dem nächsten Neustart des Modus",

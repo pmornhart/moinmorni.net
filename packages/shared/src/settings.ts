@@ -1,6 +1,8 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a settings catalog: defaults and limits as the game needs them */
 import { z } from 'zod';
+import { LOBBY_MUSIC_SECTIONS } from './lobby-music.js';
 import { MODE_SETTING_AREAS } from './mode-settings.js';
+import { STREAMER_SECTION } from './streamer.js';
 import { TEAM_APPLY_AREA } from './team-apply.js';
 import type { PanelArea } from './roles.js';
 
@@ -115,8 +117,8 @@ export const NETWORK_AREA: SettingArea = {
   id: 'network',
   title: t('Netzwerk', 'Network'),
   text: t(
-    'Was für das ganze Netzwerk gilt: Name, Begrüßung, Wartung.',
-    'What applies to the whole network: name, welcome, maintenance.',
+    'Was für das ganze Netzwerk gilt: Name, Begrüßung, Wartung, Streamer-Modus.',
+    'What applies to the whole network: name, welcome, maintenance, streamer mode.',
   ),
   icon: 'Globe',
   panel: 'settings',
@@ -169,8 +171,8 @@ export const NETWORK_AREA: SettingArea = {
           unit: t('Minuten', 'minutes'),
           label: t('Leere Modi schlafen nach', 'Empty modes sleep after'),
           help: t(
-            'Ist so lange niemand in einem Modus, schläft sein Server und spart Speicher. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute).',
-            'When nobody is in a mode for this long, its server sleeps and saves memory. Whoever wants in wakes it up (takes about half a minute).',
+            'Nur für Modi, die schlafen dürfen (Panel → Modi → „Wenn niemand drin ist“ → Schlafen): Ist so lange niemand drin, geht ihr Server ganz aus. Wer hinein will, weckt ihn auf (dauert etwa eine halbe Minute). Alle anderen Modi bleiben immer online und brauchen ohne Spieler kaum Arbeitsspeicher.',
+            'Only for modes that may sleep (panel → Modes → “When nobody is inside” → Sleep): when nobody is in them for this long, their server shuts down. Whoever wants in wakes it up (takes about half a minute). All other modes stay online and need hardly any memory without players.',
           ),
           command: '/netzwerk schlaf <minuten>',
         },
@@ -228,6 +230,39 @@ export const NETWORK_AREA: SettingArea = {
         },
       ],
     },
+    {
+      id: 'in-game',
+      title: t('Mitten im Spiel', 'In the middle of a game'),
+      text: t(
+        'Damit niemand aus Versehen seine Runde verlässt – und wer rausfliegt, schnell wieder hineinkommt.',
+        'So nobody leaves a round by accident – and whoever drops out gets back in quickly.',
+      ),
+      settings: [
+        {
+          key: 'lobbyConfirm',
+          type: 'boolean',
+          default: true,
+          label: t('Vor /lobby nachfragen', 'Ask before /lobby'),
+          help: t(
+            'Wer gerade eine Runde spielt und /lobby eingibt (oder im Spielmodus auf „Zur Lobby“ klickt), wird erst gefragt: ein kleines Fenster mit „Ja, zur Lobby“ und „Weiterspielen“ (Java und Bedrock), auf Java zusätzlich Knöpfe im Chat. Ein zweites /lobby innerhalb von 10 Sekunden gilt als Ja. Wer gerade nicht spielt (wartet, zuschaut, ausgeschieden), geht sofort.',
+            'Whoever is playing a round and types /lobby (or clicks “To the lobby” in a game mode) is asked first: a small window with “Yes, to the lobby” and “Keep playing” (Java and Bedrock), on Java also buttons in chat. A second /lobby within 10 seconds counts as yes. Whoever is not playing right now (waiting, watching, knocked out) goes straight away.',
+          ),
+          command: '/netzwerk nachfragen an|aus',
+        },
+        {
+          key: 'rejoinOffer',
+          type: 'boolean',
+          default: true,
+          label: t('„Zurück ins Spiel“ anbieten', 'Offer “Back to the game”'),
+          help: t(
+            'Fliegt jemand mitten in einer Runde raus (Verbindung weg, Spiel abgestürzt), hält der Spielmodus seinen Platz eine Weile frei. Kommt er in der Zeit wieder, bietet ihm die Lobby „Zurück ins Spiel“ an – im Chat, über der Schnellleiste und als Gegenstand in der Mitte der Leiste (auch auf Bedrock); ein Klick bringt ihn auf genau diesen Server zurück. Wie lange der Platz frei bleibt, steht bei den Einstellungen des jeweiligen Spielmodus.',
+            'If someone drops out in the middle of a round (connection lost, game crashed), the game mode keeps their spot for a while. If they come back in time, the lobby offers “Back to the game” – in chat, above the hotbar and as an item in the middle of the hotbar (Bedrock too); one click takes them back to exactly that server. How long the spot is kept is in the settings of each game mode.',
+          ),
+          command: '/netzwerk rueckkehr an|aus',
+        },
+      ],
+    },
+    STREAMER_SECTION,
   ],
 };
 
@@ -683,6 +718,7 @@ export const LOBBY_AREA: SettingArea = {
         },
       ],
     },
+    ...LOBBY_MUSIC_SECTIONS,
   ],
 };
 
@@ -1347,11 +1383,11 @@ export const BUILD_AREA: SettingArea = {
         {
           key: 'sleepWhenEmpty',
           type: 'boolean',
-          default: true,
+          default: false,
           label: t('Schlafen, wenn niemand baut', 'Sleep when nobody is building'),
           help: t(
-            'Spart Arbeitsspeicher; /bau weckt ihn wieder (dauert ein paar Sekunden).',
-            'Saves memory; /bau wakes it up again (takes a few seconds).',
+            'Aus: Der Bau-Server ist immer online und braucht ohne Spieler kaum Arbeitsspeicher. An: Er geht ganz aus (gar kein Arbeitsspeicher), /bau weckt ihn wieder – das dauert etwa eine halbe Minute.',
+            'Off: the build server is always online and needs hardly any memory without players. On: it shuts down completely (no memory at all), /bau wakes it up again – that takes about half a minute.',
           ),
           command: '/bauserver schlafen an|aus',
         },
@@ -1443,6 +1479,72 @@ export const UPDATES_AREA: SettingArea = {
             'If players are online, the update waits until the next day.',
           ),
           command: '/updates leer an|aus',
+        },
+      ],
+    },
+    {
+      id: 'restart',
+      title: t('Neustart der Server', 'Restarting the servers'),
+      text: t(
+        'Neues gilt auf einem Server erst nach seinem Neustart. Spieler sehen vorher einen Countdown; wer in einem Spielmodus ist, kommt erst in die Lobby.',
+        'Something new only applies on a server after it restarts. Players see a countdown first; anyone in a game mode is moved to the lobby first.',
+      ),
+      settings: [
+        {
+          key: 'restartAfterUpdate',
+          type: 'boolean',
+          default: true,
+          label: t('Nach einem Update gleich neu starten', 'Restart right after an update'),
+          help: t(
+            'Nach einem Update von MoinMorni starten alle Server, die etwas Neues haben (Netzwerk-Plugin, Spielmodus, Einstellungen), gleich neu – nacheinander und mit Countdown: erst die Spielmodi, dann der Bau-Server und die Lobby, zuletzt der Proxy. Aus: jeder Server erst, wenn gerade niemand drauf ist.',
+            'After a MoinMorni update, every server with something new (network plugin, game mode, settings) restarts right away – one after another and with a countdown: game modes first, then the build server and the lobby, the proxy last. Off: each server only when nobody is on it.',
+          ),
+          command: '/updates neustart an|aus',
+        },
+        {
+          key: 'restartCountdown',
+          type: 'number',
+          default: 30,
+          min: 10,
+          max: 300,
+          unit: seconds,
+          label: t('Countdown vor dem Neustart', 'Countdown before the restart'),
+          help: t(
+            'So lange sehen die Spieler vorher den Hinweis „Update eingespielt – Duels startet in 30 s neu“ (oben als Leiste und im Chat).',
+            'How long players see the notice “Update installed – Duels restarts in 30 s” beforehand (as a bar at the top and in chat).',
+          ),
+          command: '/updates countdown <sekunden>',
+        },
+        {
+          key: 'modeUpdatesNow',
+          type: 'boolean',
+          default: false,
+          label: t(
+            'Neue Fassung eines Spielmodus gleich einspielen',
+            'Install a new game-mode version right away',
+          ),
+          help: t(
+            'An: Kommt eine neue Fassung eines Spielmodus heraus, startet sein Server gleich mit Countdown neu. Aus: sobald gerade niemand darin spielt. MoinMorni schaut alle 10 Minuten nach neuen Fassungen.',
+            'On: when a new version of a game mode comes out, its server restarts right away with a countdown. Off: as soon as nobody is playing in it. MoinMorni looks for new versions every 10 minutes.',
+          ),
+          command: '/updates modi-sofort an|aus',
+        },
+      ],
+    },
+    {
+      id: 'modes',
+      title: t('Neue Spielmodi', 'New game modes'),
+      settings: [
+        {
+          key: 'addModes',
+          type: 'boolean',
+          default: true,
+          label: t('Neue Spielmodi automatisch hinzufügen', 'Add new game modes automatically'),
+          help: t(
+            'Hat ein neuer Spielmodus seine erste fertige Fassung (ein Release auf GitHub), bekommt er von selbst seinen Server und eine Figur in der Lobby. Aus: neue Modi warten, bis du das wieder anschaltest – Modi, die schon da sind, bekommen ihre neuen Fassungen trotzdem.',
+            'When a new game mode has its first finished version (a release on GitHub), it gets its own server and a figure in the lobby by itself. Off: new modes wait until you switch this back on – modes that are already there still get their new versions.',
+          ),
+          command: '/updates neue-modi an|aus',
         },
       ],
     },

@@ -8,7 +8,7 @@ import { MotorError, type MotorClient } from '../motor/client.js';
 import { readServerFile, removeServerFiles, writeServerFile } from '../motor/files.js';
 import { isOurNetwork, NETWORK_NAME } from '../public/status.js';
 import { INTERIM_MODE_JARS, INTERIM_NETWORK_JAR, renamedServer } from '../lib/rename.js';
-import { MODE_MEMORY_MB, MODE_REPOS, type Mode } from '@moinmorni/shared';
+import { MODE_JARS, MODE_MEMORY_MB, MODE_REPOS, type Mode } from '@moinmorni/shared';
 import type { ReleaseSource } from './mode-releases.js';
 
 /**
@@ -37,6 +37,8 @@ const WORLDEDIT = { source: 'modrinth', projectId: 'worldedit' } as const;
 export const MODE_DEFAULT_MEMORY_MB = 1536;
 const MODE_PORT_BASE = 25570;
 const MODE_STAMP_FILE = 'plugins/moinmorni/mode-release.txt';
+/** hub.json eingerückt wie bisher (sonst sähe jede Datei „geändert“ aus und alle Server starteten neu). */
+const JSON_INDENT = 2;
 /** Falls der Motor gerade keine Versionsliste bekommt (PaperMC nicht erreichbar). */
 const FALLBACK_VERSION: Readonly<Record<'paper' | 'velocity', string>> = { paper: '26.3', velocity: '4.3.1' };
 
@@ -87,11 +89,17 @@ export interface ProvisionOptions {
   readonly modes?: () => readonly Mode[];
   /** Woher die Jars der Spielmodi kommen (GitHub-Releases). */
   readonly releases?: ReleaseSource;
+  /** Neue Spielmodi bekommen von selbst ihren Server, sobald es ein Release gibt (Panel → Updates). Ohne = ja. */
+  readonly addModes?: () => boolean;
   /** Neu angelegte Server vor dem ersten Start vorbereiten (z. B. Einstellungen der Spielmodi). */
   readonly prepare?: (
     servers: ReadonlyArray<{ readonly serverId: string; readonly member: string }>,
   ) => Promise<void>;
 }
+
+/** Spielmodi, die ein Repo mit Releases haben und einen eigenen Server bekommen (nicht „bald“). */
+export const releaseModes = (modes: readonly Mode[]): Mode[] =>
+  modes.filter((m) => m.server && m.state !== 'soon' && MODE_REPOS[m.id]);
 
 const PROXY_ADD_ONS = { geyser: true, via: true, voice: true };
 /** Spielserver brauchen Simple Voice Chat, damit die Sprachkanäle über alle Server gehen. */
@@ -138,6 +146,8 @@ export function createProvisioner(
       eula: true,
       autoStart: true,
       startNow: false,
+      // Immer online, ohne Spieler aber kaum Arbeitsspeicher (kleiner Start, Java gibt zurück, die Welt pausiert).
+      releaseIdleMemory: true,
       addOns:
         software === 'velocity'
           ? (options.proxyAddOns ?? PROXY_ADD_ONS)
@@ -189,7 +199,7 @@ export function createProvisioner(
     const hubJson = `${JSON.stringify(
       { url: config.hubUrl, server: member, kind, key: hub.keyFor(member, kind) },
       null,
-      2,
+      JSON_INDENT,
     )}\n`;
     const hubChanged = (await readFile(serverId, HUB_FILE)) !== hubJson;
     if (hubChanged) await writeFile(serverId, HUB_FILE, hubJson);
@@ -230,9 +240,12 @@ export function createProvisioner(
   > => {
     const releases = options.releases;
     if (!releases || !options.modes) return [];
-    const wanted = options.modes().filter((m) => m.server && m.state !== 'soon' && MODE_REPOS[m.id]);
+    const wanted = releaseModes(options.modes());
     const found = await Promise.all(
-      wanted.map(async (mode) => ({ mode, release: await releases.latest(MODE_REPOS[mode.id] ?? '') })),
+      wanted.map(async (mode) => ({
+        mode,
+        release: await releases.latest(MODE_REPOS[mode.id] ?? '', MODE_JARS[mode.id]),
+      })),
     );
     return found.flatMap((f) => (f.release ? [{ mode: f.mode, release: f.release }] : []));
   };
@@ -289,6 +302,13 @@ export function createProvisioner(
         await prev;
         const member = mode.server ?? '';
         if (network.members.some((m) => m.name === member)) return;
+        if (options.addModes && !options.addModes()) {
+          log.info(
+            { mode: mode.id },
+            'Neuer Spielmodus hat ein Release – kommt dazu, sobald es im Panel erlaubt ist',
+          );
+          return;
+        }
         const server = await createServer(
           `MoinMorni ${mode.name.de}`,
           'paper',
