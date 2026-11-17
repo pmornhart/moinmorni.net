@@ -112,7 +112,7 @@ export const MODE_CAST: Readonly<Record<string, Outfit>> = {
     hair: HAIR.black,
     hairStyle: 'short',
     eyes: EYES.brown,
-    hat: { kind: 'helmet', colour: 0xe07b24, accent: 0x8a4a14 },
+    hat: { kind: 'helmet', colour: 0x8e959b, accent: 0x5d6369 },
     top: { colour: 0xe07b24, sleeves: 'long' },
     vest: 0x6b3a12,
     bottom: { kind: 'trousers', colour: 0x3b3530 },
@@ -297,9 +297,9 @@ export const VILLAGE_CAST: Readonly<Record<string, Outfit>> = {
 export const CAST: Readonly<Record<string, Outfit>> = { ...MODE_CAST, ...VILLAGE_CAST };
 
 /**
- * Neue Figuren (16.11.: die Modi vom Schlossmarkt und die Blumenfrau), deren Skins noch nicht von Mojang signiert
- * sind. Bis dahin tragen sie die Tracht einer bestehenden Figur (`STAND_IN`); sobald
- * `tsx tools/lobby-entwuerfe/src/sign-skins.ts` sie signiert hat, tragen sie von selbst ihre eigene.
+ * Neue Figuren (16.11.: die Modi vom Schlossmarkt und die Blumenfrau; seit dem 16.11. nachts signiert). Solange eine
+ * neue Figur noch nicht von Mojang signiert ist, trägt sie die Tracht einer bestehenden Figur (`STAND_IN`); sobald
+ * `tsx tools/lobby-entwuerfe/src/sign-skins.ts` sie signiert hat, trägt sie von selbst ihre eigene.
  */
 export const PENDING_CAST: Readonly<Record<string, Outfit>> = {
   wolkenkampf: {
@@ -341,7 +341,7 @@ export const PENDING_CAST: Readonly<Record<string, Outfit>> = {
     skin: SKIN.tan,
     hair: HAIR.black,
     eyes: EYES.brown,
-    hat: { kind: 'helmet', colour: 0x7a4a24, accent: 0xd9b45a },
+    hat: { kind: 'aviator', colour: 0x7a4a24, accent: 0xd9b45a },
     top: { colour: 0xb83f9e, sleeves: 'long', accent: 0xf2c230 },
     vest: 0x5a3a22,
     braces: undefined,
