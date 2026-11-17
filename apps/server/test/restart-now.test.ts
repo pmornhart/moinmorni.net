@@ -67,12 +67,19 @@ function fakeMotor(
   return { log, request: request as MotorClient['request'] };
 }
 
-/** Wartungs-Lobby im Test: aus – oder da, mit festgehaltenen Spielern (Wartung). */
+/**
+ * Wartungs-Lobby im Test: aus – oder da, mit festgehaltenen Spielern (Wartung). Wer dort geparkt wurde, kommt wie beim
+ * echten Hub von selbst in die Lobby zurück, sobald sie wieder läuft (`running id-lobby` im Protokoll) – außer mit
+ * `stuck` (kommt nie zurück, z. B. „automatisch zurück“ hängt).
+ */
 function fakeHub(
   players: Player[],
   log: string[],
-  wartungLobby: { readonly open: boolean; readonly parked?: readonly string[] } = { open: false },
+  wartungLobby: { readonly open: boolean; readonly parked?: readonly string[]; readonly stuck?: boolean } = {
+    open: false,
+  },
 ): RestartHub {
+  const waiting = new Set<string>();
   return {
     playersOn: (member) => players.filter((p) => p.server === member),
     everyone: () => players,
@@ -92,10 +99,21 @@ function fakeHub(
         const p = players.find((x) => x.uuid === uuid);
         if (!wartungLobby.open || !p) return false;
         p.server = 'wartung';
+        waiting.add(uuid);
         log.push(`park ${uuid}`);
         return true;
       },
       parked: (uuid) => wartungLobby.parked?.includes(uuid) ?? false,
+      returning: () => {
+        const back = players.filter((p) => p.server === 'wartung' && waiting.has(p.uuid));
+        if (back.length && log.includes('running id-lobby') && !wartungLobby.stuck)
+          back.forEach((p) => {
+            p.server = 'lobby';
+            waiting.delete(p.uuid);
+            log.push(`back ${p.uuid}`);
+          });
+        return back.length;
+      },
     },
   };
 }
@@ -200,7 +218,7 @@ describe('Gleich neu starten (nach einem Update)', () => {
     expect(waited).toBe(120_000);
   });
 
-  test('Countdown, Spieler in die Lobby, Modi nacheinander, Lobby und Proxy zuletzt – zusammen', async () => {
+  test('Countdown, Spieler in die Lobby, Modi nacheinander, dann die Lobby, ganz zuletzt der Proxy', async () => {
     const log: string[] = [];
     const motor = fakeMotor([sleeping.serverId], log);
     const players: Player[] = [
@@ -261,15 +279,22 @@ describe('Gleich neu starten (nach einem Update)', () => {
     ]);
     expect(motor.log.indexOf('running id-duels')).toBeLessThan(motor.log.indexOf('restart id-party'));
     expect(motor.log.indexOf('running id-wolken')).toBeLessThan(motor.log.indexOf('restart id-lobby'));
-    // Lobby und Proxy zusammen: ein Countdown für alle, dann ein freundlicher Rauswurf mit „gleich wieder da“.
+    // Der Proxy erst, wenn die Lobby wieder läuft – nie beide zugleich.
+    expect(motor.log.indexOf('running id-lobby')).toBeLessThan(motor.log.indexOf('restart id-proxy'));
+    // Ohne Wartungs-Lobby müssen die Spieler der Lobby kurz raus (mit Nachricht).
+    const restartLobby = log.indexOf('restart id-lobby');
+    const lobbyKicks = log.slice(0, restartLobby).filter((l) => l.startsWith('kick'));
+    expect(lobbyKicks.map((l) => l.split(' ')[1])).toEqual(['anna', 'bob', 'carl']);
+    expect(lobbyKicks.join('\n')).toContain('Die Lobby startet neu');
+    // Zuletzt der Proxy: ein Countdown für alle, dann ein freundlicher Abschied mit „gleich wieder da“.
     const network = log.filter((l) => l.startsWith('tell') && l.includes('das Netzwerk startet'));
     expect(network.map((l) => l.split(' ')[1])).toEqual(['anna', 'carl']);
-    expect(log.filter((l) => l.startsWith('kick')).map((l) => l.split(' ')[1])).toEqual([
-      'anna',
-      'bob',
-      'carl',
-    ]);
-    expect(log.find((l) => l.startsWith('kick bob'))).toContain('you can join again in about a minute');
+    const restartProxy = log.indexOf('restart id-proxy');
+    const proxyKicks = log.slice(restartLobby, restartProxy).filter((l) => l.startsWith('kick'));
+    expect(proxyKicks.map((l) => l.split(' ')[1])).toEqual(['anna', 'bob', 'carl']);
+    expect(log.find((l, i) => i > restartLobby && l.startsWith('kick bob'))).toContain(
+      'you can join again in about a minute',
+    );
     expect(removed).toEqual(
       expect.arrayContaining(['id-duels', 'id-party', 'id-bau', 'id-wolken', 'id-lobby', 'id-proxy']),
     );
@@ -306,7 +331,7 @@ describe('Gleich neu starten (nach einem Update)', () => {
     expect(log.find((l) => l.startsWith('kick carl'))).toContain('The lobby is restarting');
   });
 
-  test('Wartungs-Lobby nie als Erste: nach den Modi, vor der Lobby – und nimmt deren Spieler auf', async () => {
+  test('Wartungs-Lobby nach der Lobby: deren Spieler warten dort, kommen zurück – erst dann startet sie neu', async () => {
     const log: string[] = [];
     const motor = fakeMotor([], log);
     const players: Player[] = [
@@ -328,20 +353,10 @@ describe('Gleich neu starten (nach einem Update)', () => {
     await restartNow.run([wartung, lobby, duels], 'update');
     expect(motor.log.filter((l) => l.startsWith('restart'))).toEqual([
       'restart id-duels',
-      'restart id-wartung',
       'restart id-lobby',
+      'restart id-wartung',
     ]);
-    // Sie läuft wieder, bevor die Lobby neu startet.
-    expect(motor.log.indexOf('running id-wartung')).toBeLessThan(motor.log.indexOf('restart id-lobby'));
-    // Vor ihrem Neustart: wer darf, in die Lobby; wen die Wartung festhält, der muss kurz raus.
-    const restartWartung = log.indexOf('restart id-wartung');
-    expect(log.find((l) => l.startsWith('tell dora'))).toContain('maintenance lobby');
-    expect(log.indexOf('connect dora lobby')).toBeLessThan(restartWartung);
-    expect(log.find((l) => l.startsWith('tell eva'))).toContain('In etwa einer Minute kannst du wieder rein');
-    expect(
-      log.findIndex((l) => l.startsWith('kick eva') && l.includes('Wartungs-Lobby startet neu')),
-    ).toBeLessThan(restartWartung);
-    // Die Lobby startet allein neu: ihre Spieler warten in der Wartungs-Lobby statt rauszufliegen.
+    // Die Lobby startet, solange die Wartungs-Lobby läuft: ihre Spieler warten dort statt rauszufliegen.
     const restartLobby = log.indexOf('restart id-lobby');
     expect(log.filter((l) => l.startsWith('tell carl')).join('\n')).toContain(
       'So lange wartest du in der Wartungs-Lobby',
@@ -349,13 +364,55 @@ describe('Gleich neu starten (nach einem Update)', () => {
     expect(log.indexOf('park carl')).toBeLessThan(restartLobby);
     expect(log.indexOf('park anna')).toBeLessThan(restartLobby);
     expect(log.some((l) => l.startsWith('kick carl') || l.startsWith('kick anna'))).toBe(false);
-    expect(players.find((p) => p.uuid === 'carl')?.server).toBe('wartung');
+    // Nie beide zugleich weg: die Wartungs-Lobby erst, wenn die Lobby läuft und die Wartenden zurück sind.
+    const restartWartung = log.indexOf('restart id-wartung');
+    expect(log.indexOf('running id-lobby')).toBeLessThan(restartWartung);
+    expect(log.indexOf('back carl')).toBeLessThan(restartWartung);
+    expect(log.indexOf('back anna')).toBeLessThan(restartWartung);
+    // Vor ihrem Neustart: wer darf, in die Lobby; wen die Wartung festhält, der muss kurz raus.
+    expect(log.find((l) => l.startsWith('tell dora'))).toContain('maintenance lobby');
+    expect(log.indexOf('connect dora lobby')).toBeLessThan(restartWartung);
+    expect(log.find((l) => l.startsWith('tell eva'))).toContain('In etwa einer Minute kannst du wieder rein');
+    expect(
+      log.findIndex((l) => l.startsWith('kick eva') && l.includes('Wartungs-Lobby startet neu')),
+    ).toBeLessThan(restartWartung);
+    expect(players.find((p) => p.uuid === 'carl')?.server).toBe('lobby');
   });
 
-  test('Neues Netzwerk-Plugin: Wartungs-Lobby startet mit Lobby und Proxy zusammen – zuletzt', async () => {
+  test('Kommen die Wartenden nicht zurück, startet die Wartungs-Lobby nach zwei Minuten trotzdem – nie vor der Lobby', async () => {
     const log: string[] = [];
     const motor = fakeMotor([], log);
-    const players: Player[] = [{ uuid: 'dora', lang: 'de', server: 'wartung' }];
+    const players: Player[] = [{ uuid: 'carl', lang: 'de', server: 'lobby' }];
+    const waited: number[] = [];
+    const restartNow = createRestartNow({
+      motor,
+      hub: fakeHub(players, log, { open: true, stuck: true }),
+      queue: { entries: () => [], remove: () => undefined },
+      modes: () => DEFAULT_MODES,
+      countdown: () => COUNTDOWN_SECONDS,
+      log: quiet,
+      pause: async (ms) => {
+        if (log.includes('running id-lobby') && !log.includes('restart id-wartung')) waited.push(ms);
+      },
+    });
+    await restartNow.run([lobby, wartung], 'update');
+    expect(motor.log.filter((l) => l.startsWith('restart'))).toEqual([
+      'restart id-lobby',
+      'restart id-wartung',
+    ]);
+    expect(waited.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(120_000);
+    // Wer dann noch dort ist, kommt vor dem Neustart in die Lobby – niemand wird getrennt.
+    expect(log.indexOf('connect carl lobby')).toBeLessThan(log.indexOf('restart id-wartung'));
+    expect(log.some((l) => l.startsWith('kick'))).toBe(false);
+  });
+
+  test('Neues Netzwerk-Plugin für den Proxy: Lobby, dann Wartungs-Lobby, ganz zuletzt der Proxy', async () => {
+    const log: string[] = [];
+    const motor = fakeMotor([], log);
+    const players: Player[] = [
+      { uuid: 'carl', lang: 'de', server: 'lobby' },
+      { uuid: 'dora', lang: 'de', server: 'wartung' },
+    ];
     const restartNow = createRestartNow({
       motor,
       hub: fakeHub(players, log, { open: true }),
@@ -369,13 +426,19 @@ describe('Gleich neu starten (nach einem Update)', () => {
     expect(motor.log.filter((l) => l.startsWith('restart'))).toEqual([
       'restart id-duels',
       'restart id-lobby',
-      'restart id-proxy',
       'restart id-wartung',
+      'restart id-proxy',
     ]);
-    // Ein Countdown fürs ganze Netzwerk, einmal neu verbinden – kein eigener Umzug aus der Wartungs-Lobby.
-    expect(log.find((l) => l.startsWith('tell dora'))).toContain('das Netzwerk startet');
-    expect(log.filter((l) => l.startsWith('kick dora'))).toHaveLength(1);
-    expect(log.some((l) => l.startsWith('connect dora') || l.startsWith('park dora'))).toBe(false);
+    expect(motor.log.indexOf('running id-lobby')).toBeLessThan(motor.log.indexOf('restart id-wartung'));
+    expect(motor.log.indexOf('running id-wartung')).toBeLessThan(motor.log.indexOf('restart id-proxy'));
+    // Bis zum Proxy wird niemand getrennt; dann ein Countdown für alle und genau ein freundlicher Abschied je Spieler.
+    const restartProxy = log.indexOf('restart id-proxy');
+    const kicks = log.filter((l) => l.startsWith('kick'));
+    expect(kicks.map((l) => l.split(' ')[1])).toEqual(['carl', 'dora']);
+    expect(kicks.every((l) => l.includes('Das Netzwerk startet kurz neu'))).toBe(true);
+    expect(log.indexOf(kicks[0] ?? '')).toBeGreaterThan(log.indexOf('running id-wartung'));
+    expect(log.indexOf(kicks[1] ?? '')).toBeLessThan(restartProxy);
+    expect(log.find((l) => l.startsWith('tell dora') && l.includes('das Netzwerk startet'))).toBeDefined();
   });
 
   test('Wer während des Wartens wieder in einen Modus geht, kommt vor dessen Neustart noch einmal in die Lobby', async () => {
@@ -433,7 +496,7 @@ describe('Gleich neu starten (nach einem Update)', () => {
 });
 
 describe('Von Hand neu starten (Panel → „Server neu starten“)', () => {
-  test('Alle: Modi nacheinander, Lobby + Proxy zuletzt zusammen, nie die Wartungs-Lobby, eigene Texte', async () => {
+  test('Alle: Modi nacheinander, dann die Lobby, ganz zuletzt der Proxy, nie die Wartungs-Lobby, eigene Texte', async () => {
     const log: string[] = [];
     const motor = fakeMotor([sleeping.serverId], log);
     const players: Player[] = [
@@ -462,8 +525,13 @@ describe('Von Hand neu starten (Panel → „Server neu starten“)', () => {
     expect(log.find((l) => l.startsWith('tell anna'))).toContain('Neustart durchs Team');
     expect(log.find((l) => l.startsWith('bar anna'))).toContain('<gold>Neustart</gold>');
     // Proxy startet mit: ein Countdown für alle mit Team-Text, dann Rauswurf ohne „Update“.
-    expect(log.find((l) => l.startsWith('tell carl'))).toContain('The team is restarting the network');
+    expect(log.filter((l) => l.startsWith('tell carl')).join('\n')).toContain(
+      'The team is restarting the network',
+    );
     expect(log.find((l) => l.startsWith('kick carl'))).toContain('The team is restarting it');
+    // Carl wartete während des Lobby-Neustarts in der Wartungs-Lobby; getrennt wird erst vor dem Proxy.
+    expect(log.indexOf('park carl')).toBeLessThan(log.indexOf('restart id-lobby'));
+    expect(log.findIndex((l) => l.startsWith('kick carl'))).toBeGreaterThan(log.indexOf('running id-lobby'));
     expect(log.join('\n')).not.toContain('Update');
     // Auch ohne Hub-Verbindung kein Warten von zwei Minuten (das gilt nur gleich nach einem Update).
     const progress = restartNow.progress();

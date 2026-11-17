@@ -644,6 +644,28 @@
   gegen den echten Motor: Liste ohne Wartungs-Lobby, Ablehnung, 401/403, Neustart mit Fortschritt), 129 shared, Typen,
   Prettier, Web-Bau. Bilder (Playwright gegen echten Server + Motor, Computer + Handy, hell/dunkel, englisch) nur im
   Scratchpad `neustart-bilder/`. Nicht echt mit Minecraft-Servern geprüft.
+- 17.11. abends: **Wartungs-Lobby zuletzt, Proxy nur wenn nötig** (Philip nach einem Update: „es muss immer der
+  Wartungsserver gehen – erst werden alle anderen geupdatet und dann der Wartungsserver“; er bekam im Spiel
+  „Verbindungsaufbau fehlgeschlagen / Verbindung getrennt“; Branch `claude/wartung-zuletzt`). **Ursache:** Das
+  Netzwerk-Plugin ist eine Jar für Proxy und Spielserver – fast jedes Update ändert Paper-Teile (Lobby, Jump and Run …),
+  darum stand der Proxy nach jedem Update auf der Neustart-Liste, und Lobby, Wartungs-Lobby und Proxy starteten
+  zusammen: alle wurden getrennt (mit Nachricht, die ein Reconnect-Mod sofort mit einem gescheiterten Neuverbinden auf
+  den gerade startenden Proxy überdeckt – das ist der Bildschirm). Motor und MorniHosting starten keine Container von
+  selbst neu (geprüft: `reconcile` übernimmt laufende Container, Jars werden per Umbenennen ersetzt) – kein Fix dort.
+  **Neu:** Reihenfolge immer Spielmodi + Bau-Server (nacheinander) → Lobby (Spieler warten in der Wartungs-Lobby) →
+  erst wenn die Lobby wieder am Hub hängt und die Wartenden zurück sind (`hub.wartung.returning()`, höchstens 2 Min.):
+  Wartungs-Lobby → ganz zuletzt der Proxy (Countdown für alle, freundlicher Abschied); nie Lobby und Wartungs-Lobby
+  gleichzeitig weg; gilt auch für den Knopf „Server neu starten“. **Proxy nur, wenn nötig:** Fingerabdruck der Teile,
+  die Velocity lädt (`network/plugin-parts.ts`, liest nur das ZIP-Inhaltsverzeichnis; ohne Paper-Teile, Modus-API,
+  plugin.yml, Maven-Angaben), gemerkt in `plugins/moinmorni/proxy-parts.sha256` (fehlt er, liest MoinMorni die Jar auf
+  dem Proxy) – gleich → Jar liegt schon da, gilt beim nächsten Neustart, kein Neustart deswegen. Panel-Text der
+  Reihenfolge angepasst, `docs/lobby.md`. Tests: 305 Server- (neu `plugin-parts.test.ts` 3, Provisioner mit echtem Motor
+  „nur Paper-Teile → Proxy nicht“, `restart-now.test.ts` neu/umgebaut: Wartungs-Lobby nach der Lobby, Wartende hängen
+  → nach 2 Min. trotzdem, Proxy zuletzt; Hub `returning`), Typen, Prettier. Echt: Velocity 4.3.1 + Lobby + Duels +
+  Wartungs-Lobby (Paper 26.1.2, Netzwerk-Plugin aus dem Branch) + Test-Hub (`hub-dev.ts` jetzt mit `connected`/`wartung`),
+  `tools/netz-test/wartung-zuletzt-test.cjs` **16/16** – Duels zuerst, beide Spieler warten in der Wartungs-Lobby,
+  kommen von selbst zurück, erst dann startet die Wartungs-Lobby, nie beide weg, niemand getrennt, jeder Server einmal.
+  Nicht echt geprüft: Proxy-Neustart mit echten Spielern über NetBird, echtes Update mit Docker.
 - 17.11. abends: **Jump and Run aus dem Inventar, Start in der Luft** (Philip: „Jump and Run soll im Inventar
   aktivierbar sein und man spawnt in der Luft“; Branch `claude/jnr-inventar`): In der Schnellleiste der Lobby liegt
   neben dem Kompass (Platz 1) eine **Feder „Jump and Run“** – Rechtsklick (Bedrock: antippen) und man steht sofort hoch

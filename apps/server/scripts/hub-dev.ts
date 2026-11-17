@@ -233,6 +233,8 @@ const restartNow = createRestartNow({
     countdown: hub.countdown,
     connect: hub.connect,
     kick: hub.kick,
+    connected: (member) => (member === 'proxy' ? hub.proxyOnline() : hub.connectedServers().includes(member)),
+    wartung: hub.wartung,
   },
   queue: restarts,
   modes: () => stores.modes(),

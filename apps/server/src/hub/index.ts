@@ -242,6 +242,8 @@ export interface Hub {
     readonly park: (uuid: string) => boolean;
     /** Hält die Wartung diesen Spieler fest (darf nicht in die Lobby)? */
     readonly parked: (uuid: string) => boolean;
+    /** Wie viele dort warten und gleich von selbst in die Lobby zurückkommen? */
+    readonly returning: () => number;
   };
 }
 
@@ -1066,6 +1068,7 @@ export function createHub(options: HubOptions): Hub {
       open: wartung.open,
       park: (uuid) => wartung.park(normalUuid(uuid)),
       parked: (uuid) => wartung.parked(normalUuid(uuid)),
+      returning: wartung.returning,
     },
   };
 }

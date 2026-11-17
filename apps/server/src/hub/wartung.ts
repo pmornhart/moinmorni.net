@@ -62,6 +62,11 @@ export interface Wartung {
    * selbst zurück, sobald die Lobby wieder am Hub hängt. false = geht nicht (Wartungs-Lobby aus, nicht da, Proxy weg).
    */
   readonly park: (uuid: string) => boolean;
+  /**
+   * Wie viele in der Wartungs-Lobby warten und von selbst in die Lobby zurückkommen (automatisch zurück an, nicht von
+   * der Wartung festgehalten)? Der Neustart nach einem Update startet die Wartungs-Lobby erst, wenn das 0 ist.
+   */
+  readonly returning: () => number;
   readonly onSwitch: (uuid: string, server: string) => void;
   readonly onLeave: (uuid: string) => void;
   /** Nach dem (Wieder-)Verbinden des Proxys: wer in der Wartungs-Lobby ist, wartet. */
@@ -239,6 +244,10 @@ export function createWartung(deps: WartungDeps): Wartung {
       cancel();
       return ctx.connect(uuid, WARTUNG_SERVER);
     },
+    returning: () =>
+      settings().returnAuto
+        ? ctx.presence.on(WARTUNG_SERVER).filter((p) => waitingSet.has(p.uuid) && !parked(p.uuid)).length
+        : 0,
     onSwitch: (uuid, server) => {
       if (server === WARTUNG_SERVER) return;
       waitingSet.delete(uuid);

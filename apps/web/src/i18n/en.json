@@ -2750,7 +2750,7 @@
       "skipped": "not running"
     },
     "countdown": "Players first see a countdown of {{seconds}} seconds (in chat and as a bar at the top) and are moved from the game modes to the lobby for a moment. You set the time under Settings → Updates.",
-    "order": "Order: first the game modes and the build server, one after another – last the lobby and the proxy together. Sleeping or switched-off servers are not woken.",
+    "order": "Order: first the game modes and the build server, one after another – then the lobby (its players wait in the maintenance lobby meanwhile), the proxy last of all. Sleeping or switched-off servers are not woken.",
     "proxyWarn": "With the proxy the whole network restarts briefly: all players are disconnected after the countdown and can join again in about a minute.",
     "wartung": "The maintenance lobby never restarts with them – the lobby's players wait there while it restarts and come back on their own.",
     "busy": "A restart is running right now. Whatever you choose now comes right after it.",

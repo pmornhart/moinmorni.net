@@ -8,6 +8,7 @@ import { INTERIM_ID, INTERIM_MODE_JARS, INTERIM_NETWORK_JAR, INTERIM_TITLE } fro
 import { MotorError } from '../src/motor/client.js';
 import { createProvisioner } from '../src/network/provision.js';
 import { DEFAULT_MODES } from '@moinmorni/shared';
+import { zipOf } from '@moinmorni/builder';
 import { createHarness, type Harness } from './harness.js';
 
 const quiet = {
@@ -292,6 +293,44 @@ describe('Netzwerk richtet sich selbst ein', () => {
     // Neues Plugin auf laufenden Servern → Neustart, sobald niemand drauf ist.
     expect(third.restart.map((r) => r.member)).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
     expect((await h.mm.motor.request<Net[]>('GET', '/api/networks')).length).toBe(1);
+  });
+  test('Neue Jar nur mit Paper-Teilen: der Proxy startet deswegen nicht neu, die Spielserver schon', async () => {
+    h = await createHarness();
+    const jar = path.join(h.mmDir, 'MoinMorni-Network.jar');
+    const write = (velocity: string, paper: string): void =>
+      fs.writeFileSync(
+        jar,
+        zipOf([
+          { name: 'velocity-plugin.json', data: Buffer.from('{"id":"moinmorni"}') },
+          { name: 'de/moinmorni/network/velocity/VelocityPlugin.class', data: Buffer.from(velocity) },
+          { name: 'de/moinmorni/network/paper/PaperPlugin.class', data: Buffer.from(paper) },
+        ]),
+      );
+    write('velocity-1', 'paper-1');
+    const provisioner = createProvisioner({ ...h.mm.config, pluginFile: jar }, h.mm.motor, h.mm.hub, quiet, {
+      proxyAddOns: {},
+      lobbyAddOns: {},
+      buildContent: false,
+      versions: { paper: '1.21.4', velocity: '3.4.0' },
+    });
+    await provisioner.ensure();
+    // Nur die Lobby (Paper) ist neu: Jar liegt überall, der Proxy liest sie aber erst beim nächsten Neustart.
+    write('velocity-1', 'paper-2');
+    const paperOnly = await provisioner.ensure();
+    expect(paperOnly.pluginUpdated).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
+    expect(paperOnly.restart.map((r) => r.member)).toEqual(['lobby', 'wartung', 'bau']);
+    // Etwas für Velocity neu → auch der Proxy.
+    write('velocity-2', 'paper-2');
+    const velocity = await provisioner.ensure();
+    expect(velocity.restart.map((r) => r.member)).toEqual(['proxy', 'lobby', 'wartung', 'bau']);
+    // Fehlt der Merker (Installation von vor dieser Fassung), liest MoinMorni die Jar auf dem Proxy selbst.
+    const [net] = await h.mm.motor.request<Net[]>('GET', '/api/networks');
+    await h.mm.motor.request('POST', `/api/servers/${net!.proxy.serverId}/files/delete`, {
+      paths: ['plugins/moinmorni/proxy-parts.sha256'],
+    });
+    write('velocity-2', 'paper-3');
+    const known = await provisioner.ensure();
+    expect(known.restart.map((r) => r.member)).toEqual(['lobby', 'wartung', 'bau']);
   });
   test('Bau-Server: Kreativ und flach, Bauten (Schematics) per Knopf in die Lobby kopieren', async () => {
     h = await createHarness();
