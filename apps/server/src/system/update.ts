@@ -2,34 +2,49 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 import type { Config } from '../config.js';
+import { GithubLimited, type GithubClient, type GithubKeyState } from '../lib/github.js';
 import type { MotorClient } from '../motor/client.js';
 import type { Stores } from '../panel/stores.js';
 
 /**
- * Updates: MoinMorni folgt dem Branch `main` auf GitHub. MoinMorni kennt den Commit, aus dem es gebaut wurde, und
- * fragt GitHub, was seitdem dazukam. Den eigenen Container kann es nicht tauschen – es legt eine Auftrags-Datei
- * in seinen Datenordner (`update/request.json`); der Updater auf dem Rechner (systemd aus install.sh) startet
- * dann `update.sh`: Code holen, bauen, Sicherung, neu starten, prüfen – und wenn etwas schiefgeht, zurück auf den
- * alten Stand. Den Fortschritt schreibt das Skript nach `update/status.json` und `update/log.txt`.
- * Automatisch: einmal am Tag zur eingestellten Stunde (auf Wunsch nur, wenn niemand spielt).
+ * Updates: MoinMorni folgt seinem Branch auf GitHub (`MM_UPDATE_BRANCH`, sonst `main`). MoinMorni kennt den Commit,
+ * aus dem es gebaut wurde, und schaut, was seitdem dazukam. Den eigenen Container kann es nicht tauschen – es legt
+ * eine Auftrags-Datei in seinen Datenordner (`update/request.json`); der Updater auf dem Rechner (systemd aus
+ * install.sh) startet dann `update.sh`: Code holen, bauen, Sicherung, neu starten, prüfen – und wenn etwas
+ * schiefgeht, zurück auf den alten Stand. Den Fortschritt schreibt das Skript nach `update/status.json` und
+ * `update/log.txt`. Automatisch: einmal am Tag zur eingestellten Stunde (auf Wunsch nur, wenn niemand spielt).
+ *
+ * Sparsam mit GitHub (ohne Schlüssel 60 API-Fragen pro Stunde, geteilt mit allem hinter derselben Adresse):
+ * - Ob es etwas Neues gibt, sagt Git selbst (Smart HTTP, `lib/github.ts`) – für MoinMorni und für den Motor
+ *   (MorniHosting `main`). Welchen Stand der Motor hat, sagt er selbst (`/api/system/status`), ohne GitHub zu fragen.
+ * - Nur wenn es einen neuen Commit gibt, holt MoinMorni die Liste der Änderungen über die API: ein Vergleich zweier
+ *   fester Commits, der auf der Platte bleibt (auch nach einem Neustart) und nie zweimal gefragt wird.
+ * - Bremst GitHub, kommt die Liste nach der Zeit, die GitHub nennt – „Update starten“ geht trotzdem schon.
  */
 
 const REPO = 'pmornhart/moinmorni.net';
+const MOTOR_REPO = 'pmornhart/MorniHosting';
+/** Der Motor folgt MorniHosting `main` (Submodul, `.gitmodules`; update.sh: `git submodule update --remote`). */
+const MOTOR_BRANCH = 'main';
 const SHORT_SHA = 7;
 const MAX_CHANGES = 30;
 const LOG_LINES = 40;
 const MINUTE_MS = 60_000;
-/** GitHub erlaubt ohne Anmeldung 60 Fragen pro Stunde – höchstens alle 30 Minuten von selbst. */
-const CHECK_EVERY_MINUTES = 30;
+/** Git fragen kostet nichts von der API-Grenze – trotzdem höchstens alle 10 Minuten von selbst. */
+const CHECK_EVERY_MINUTES = 10;
 const CHECK_EVERY_MS = CHECK_EVERY_MINUTES * MINUTE_MS;
-const FAILED_RETRY_MINUTES = 10;
+/** War GitHub nicht zu erreichen, von selbst erst nach 5 Minuten wieder (der Knopf fragt sofort). */
+const FAILED_RETRY_MINUTES = 5;
 const FAILED_RETRY_MS = FAILED_RETRY_MINUTES * MINUTE_MS;
+/** Hakte die Liste der Änderungen (nicht wegen der Grenze), von selbst nach 10 Minuten noch mal. */
+const LIST_RETRY_MINUTES = 10;
+const LIST_RETRY_MS = LIST_RETRY_MINUTES * MINUTE_MS;
 /** Der Updater nimmt den Auftrag in Sekunden weg; liegt er länger, hört niemand zu. */
 const STUCK_MINUTES = 2;
 const STUCK_MS = STUCK_MINUTES * MINUTE_MS;
 const AUTO_EVERY_MINUTES = 5;
 const AUTO_EVERY_MS = AUTO_EVERY_MINUTES * MINUTE_MS;
-const TIMEOUT_MS = 15_000;
+const MERGE_PREFIX = 'Merge ';
 // Gebaute Version → Commit: "v0.1.2-0-gabc1234" → "abc1234"; "dev" passt nicht.
 // https://regex101.com/?flavor=javascript&regex=-g(%5B0-9a-f%5D%7B7%2C40%7D)%24&testString=v0.1.2-0-gabc1234
 const DESCRIBED = /-g([0-9a-f]{7,40})$/;
@@ -61,7 +76,8 @@ export interface UpdateChange {
 export interface UpdateComponent {
   readonly current: string | null;
   readonly latest: string | null;
-  readonly behind: number;
+  /** So viele Änderungen ist die neueste Fassung weiter; null = sie ist neuer, wie viel steht noch nicht fest. */
+  readonly behind: number | null;
   readonly changes: readonly UpdateChange[];
 }
 
@@ -81,11 +97,21 @@ export interface UpdateView {
   readonly motor: {
     readonly current: string | null;
     readonly latest: string | null;
-    readonly behind: number;
+    /** null = MorniHosting ist neuer, wie viel steht noch nicht fest. */
+    readonly behind: number | null;
   };
   readonly available: boolean;
   readonly checkedAt: string | null;
+  /** GitHub war gar nicht zu erreichen (auch Git nicht) – ob es etwas Neues gibt, ist offen. */
   readonly checkFailed: boolean;
+  /** Den Branch, dem die Updates folgen, gibt es auf GitHub (noch) nicht. */
+  readonly branchMissing: boolean;
+  /** Es gibt eine neue Fassung, nur ihre Liste der Änderungen fehlt noch (GitHub bremst oder hakte). */
+  readonly changesPending: boolean;
+  /** Bis dahin nimmt GitHub keine Fragen an (ISO) – danach kommt die Liste. null = MoinMorni darf fragen. */
+  readonly limitedUntil: string | null;
+  /** GitHub-Schlüssel aus der .env: keiner, eingetragen, von GitHub abgelehnt (den Schlüssel selbst nie). */
+  readonly githubKey: GithubKeyState;
   /** Der Updater auf dem Rechner ist eingerichtet (install.sh schreibt update/agent.json). */
   readonly canUpdate: boolean;
   /** Auftrag liegt bereit oder Skript läuft. */
@@ -100,6 +126,9 @@ const commitSchema = z.object({
   commit: z.object({ message: z.string(), committer: z.object({ date: z.string() }).nullable() }),
 });
 const compareSchema = z.object({ ahead_by: z.number(), commits: z.array(commitSchema) });
+type Compare = z.infer<typeof compareSchema>;
+/** Nur die Zahl (Motor): `?per_page=1&page=2` kommt ohne die lange Liste der geänderten Dateien. */
+const countSchema = z.object({ ahead_by: z.number() });
 const statusSchema = z.object({
   state: z.enum(['running', 'done', 'failed', 'rolled_back']),
   step: z.string().nullable().optional(),
@@ -108,11 +137,8 @@ const statusSchema = z.object({
   to: z.string().nullable().optional(),
 });
 const requestSchema = z.object({ at: z.string() });
-const motorUpdateSchema = z.object({
-  current: z.string(),
-  latest: z.string().nullable(),
-  behind: z.number(),
-});
+/** Was der Motor über sich selbst sagt (öffentlich, ohne GitHub): `version` z. B. „v0.9.4-0-g0ab0370“. */
+const motorStatusSchema = z.object({ version: z.string() });
 
 /** Stichpunkte aus der Commit-Nachricht (Neu/Behoben/Verbessert/Entfernt); ohne Stichpunkte die erste Zeile. */
 export function changeOf(sha: string, message: string, date: string | null): UpdateChange {
@@ -131,6 +157,44 @@ export function commitOf(version: string): string | null {
   return COMMIT.test(version) ? version : null;
 }
 
+/** Neuer als der laufende Stand? null heißt: neuer, nur wie viel steht noch nicht fest. */
+const isNewer = (behind: number | null): boolean => behind === null || behind > 0;
+
+/** Was zu vergleichen ist: laufender Commit → neuester. null, wenn es nichts Neues gibt (oder einer fehlt). */
+function pairOf(base: string | null, head: string | null): { base: string; head: string } | null {
+  return base && head && !head.startsWith(base) ? { base, head } : null;
+}
+
+/** Für die Platte reicht, was angezeigt wird: die neuesten Änderungen ohne Merge-Commits. */
+const keepChanges = (cmp: Compare): Compare => ({
+  ahead_by: cmp.ahead_by,
+  commits: cmp.commits.filter((c) => !c.commit.message.startsWith(MERGE_PREFIX)).slice(-MAX_CHANGES),
+});
+
+const changesOf = (cmp: Compare): UpdateChange[] =>
+  cmp.commits
+    .filter((c) => !c.commit.message.startsWith(MERGE_PREFIX))
+    .slice(-MAX_CHANGES)
+    .reverse()
+    .map((c) => changeOf(c.sha, c.commit.message, c.commit.committer?.date ?? null));
+
+/** Ein Vergleich zweier fester Commits: `behind` null = GitHub kennt den laufenden Commit nicht. */
+interface Compared {
+  readonly base: string;
+  readonly head: string;
+  readonly behind: number | null;
+  readonly changes: readonly UpdateChange[];
+}
+
+const matches = (known: Compared | null, pair: { base: string; head: string } | null): known is Compared =>
+  known !== null && pair !== null && known.base === pair.base && known.head === pair.head;
+
+/** Wie viel neuer: 0 ohne neuen Commit, sonst die Zahl aus dem Vergleich – null, solange er fehlt. */
+function behindOf(pair: { base: string; head: string } | null, known: Compared | null): number | null {
+  if (!pair) return 0;
+  return matches(known, pair) ? known.behind : null;
+}
+
 export interface UpdateService {
   readonly view: () => Promise<UpdateView>;
   /** Jetzt bei GitHub nachsehen (Knopf „Nach Updates suchen“). */
@@ -142,13 +206,11 @@ export interface UpdateService {
   readonly startAuto: (online: () => number, onRequested: (by: string) => void) => () => void;
 }
 
-type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
-
 export function createUpdateService(
   config: Config,
   motor: MotorClient,
   stores: Stores,
-  fetchImpl: FetchLike = fetch,
+  github: GithubClient,
   now: () => number = Date.now,
 ): UpdateService {
   const dir = path.join(config.dataDir, 'update');
@@ -169,62 +231,106 @@ export function createUpdateService(
 
   const current = commitOf(config.version);
   const state: {
-    component: UpdateComponent;
-    motor: UpdateView['motor'];
+    /** Neuester Commit des Branches (laut Git), null = unbekannt oder Branch fehlt. */
+    head: string | null;
+    branchMissing: boolean;
     checkedAt: number | null;
     failedAt: number | null;
+    list: Compared | null;
+    listFailedAt: number | null;
+    motorVersion: string | null;
+    motorHead: string | null;
+    motorCount: Compared | null;
+    /** Läuft gerade ein Nachsehen, warten weitere darauf (statt doppelt zu fragen). */
+    busy: Promise<void> | null;
   } = {
-    component: { current, latest: null, behind: 0, changes: [] },
-    motor: { current: null, latest: null, behind: 0 },
+    head: null,
+    branchMissing: false,
     checkedAt: null,
     failedAt: null,
+    list: null,
+    listFailedAt: null,
+    motorVersion: null,
+    motorHead: null,
+    motorCount: null,
+    busy: null,
   };
+  const motorCommit = (): string | null => (state.motorVersion ? commitOf(state.motorVersion) : null);
 
-  const github = async <T>(urlPath: string, schema: z.ZodType<T>): Promise<T> => {
-    const res = await fetchImpl(`${config.githubApi}/repos/${REPO}${urlPath}`, {
-      headers: { accept: 'application/vnd.github+json', 'user-agent': 'moinmorni-updater' },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-    if (!res.ok) throw new Error(`GitHub ${res.status}`);
-    return schema.parse(await res.json());
-  };
-
-  const fetchNow = async (): Promise<void> => {
-    const branch = encodeURIComponent(config.updateBranch);
-    if (current) {
-      const cmp = await github(`/compare/${current}...${branch}`, compareSchema);
-      const commits = cmp.commits.filter((c) => !c.commit.message.startsWith('Merge '));
-      state.component = {
-        current,
-        latest: (cmp.commits.at(-1)?.sha ?? current).slice(0, SHORT_SHA),
-        behind: cmp.ahead_by,
-        changes: commits
-          .slice(-MAX_CHANGES)
-          .reverse()
-          .map((c) => changeOf(c.sha, c.commit.message, c.commit.committer?.date ?? null)),
-      };
+  /** Neueste Commits über Git (keine API-Frage) und den Stand des Motors (fragt GitHub nicht). */
+  const lookAtHeads = async (): Promise<void> => {
+    const [own, engine, status] = await Promise.allSettled([
+      github.refs(REPO),
+      github.refs(MOTOR_REPO),
+      motor.request<unknown>('GET', '/api/system/status'),
+    ]);
+    if (own.status === 'fulfilled') {
+      state.head = own.value.get(`refs/heads/${config.updateBranch}`) ?? null;
+      state.branchMissing = state.head === null;
+      state.checkedAt = now();
+      state.failedAt = null;
     } else {
-      const head = await github(`/commits/${branch}`, commitSchema);
-      state.component = { current: null, latest: head.sha.slice(0, SHORT_SHA), behind: 0, changes: [] };
+      state.failedAt = now();
     }
-    // Der Motor kennt seinen Stand selbst (und fragt bei MorniHosting nach).
-    try {
-      const m = motorUpdateSchema.safeParse(await motor.request('GET', '/api/system/update'));
-      if (m.success) state.motor = { current: m.data.current, latest: m.data.latest, behind: m.data.behind };
-    } catch {
-      // Motor gerade nicht erreichbar: alter Stand bleibt stehen.
-    }
-    state.checkedAt = now();
-    state.failedAt = null;
+    if (engine.status === 'fulfilled')
+      state.motorHead = engine.value.get(`refs/heads/${MOTOR_BRANCH}`) ?? null;
+    const version = status.status === 'fulfilled' ? motorStatusSchema.safeParse(status.value) : null;
+    if (version?.success) state.motorVersion = version.data.version;
   };
-  const refresh = async (force: boolean): Promise<void> => {
+
+  /** Liste der Änderungen (und beim Motor die Zahl) – nur wenn es einen neuen Commit gibt und sie noch fehlt. */
+  const loadLists = async (force: boolean): Promise<void> => {
+    const own = pairOf(current, state.head);
+    const retryLater = !force && state.listFailedAt !== null && now() - state.listFailedAt < LIST_RETRY_MS;
+    if (own && !matches(state.list, own) && !retryLater) {
+      try {
+        const cmp = await github.api(`/repos/${REPO}/compare/${own.base}...${own.head}`, compareSchema, {
+          settled: true,
+          keep: keepChanges,
+        });
+        state.list = cmp
+          ? { ...own, behind: cmp.ahead_by, changes: changesOf(cmp) }
+          : { ...own, behind: null, changes: [] };
+        state.listFailedAt = null;
+      } catch (err) {
+        // Bremst GitHub, steht die Zeit im Client; sonst später noch mal.
+        if (!(err instanceof GithubLimited)) state.listFailedAt = now();
+      }
+    }
+    const engine = pairOf(motorCommit(), state.motorHead);
+    if (engine && !matches(state.motorCount, engine)) {
+      try {
+        const cmp = await github.api(
+          `/repos/${MOTOR_REPO}/compare/${engine.base}...${engine.head}?per_page=1&page=2`,
+          countSchema,
+          { settled: true },
+        );
+        state.motorCount = { ...engine, behind: cmp ? cmp.ahead_by : null, changes: [] };
+      } catch {
+        // Die Zahl kommt beim nächsten Nachsehen.
+      }
+    }
+  };
+
+  const refreshNow = async (force: boolean): Promise<void> => {
     const fresh = state.checkedAt !== null && now() - state.checkedAt < CHECK_EVERY_MS;
     const failedRecently = state.failedAt !== null && now() - state.failedAt < FAILED_RETRY_MS;
-    if (!force && (fresh || failedRecently)) return;
+    if (force || !(fresh || failedRecently)) await lookAtHeads();
+    await loadLists(force);
+  };
+  const refresh = async (force: boolean): Promise<void> => {
+    const running = state.busy;
+    if (running) {
+      await running;
+      // Der Knopf will wirklich neu nachsehen – erst nach dem laufenden.
+      if (!force) return;
+    }
+    const mine = refreshNow(force);
+    state.busy = mine;
     try {
-      await fetchNow();
-    } catch {
-      state.failedAt = now();
+      await mine;
+    } finally {
+      if (state.busy === mine) state.busy = null;
     }
   };
 
@@ -246,15 +352,33 @@ export function createUpdateService(
     const request = readJson('request.json', requestSchema);
     const r = run();
     const waiting = request !== null;
-    const available = state.component.behind > 0 || (followMotor() && state.motor.behind > 0);
+    const own = pairOf(current, state.head);
+    const list = matches(state.list, own) ? state.list : null;
+    const engine = pairOf(motorCommit(), state.motorHead);
+    const moinmorni: UpdateComponent = {
+      current,
+      latest: state.head?.slice(0, SHORT_SHA) ?? null,
+      behind: behindOf(own, state.list),
+      changes: list?.changes ?? [],
+    };
+    const motorBehind = behindOf(engine, state.motorCount);
+    const limited = github.limitedUntil();
     return {
       version: config.version,
       branch: config.updateBranch,
-      moinmorni: state.component,
-      motor: state.motor,
-      available,
+      moinmorni,
+      motor: {
+        current: state.motorVersion,
+        latest: state.motorHead?.slice(0, SHORT_SHA) ?? null,
+        behind: motorBehind,
+      },
+      available: isNewer(moinmorni.behind) || (followMotor() && isNewer(motorBehind)),
       checkedAt: state.checkedAt === null ? null : new Date(state.checkedAt).toISOString(),
       checkFailed: state.failedAt !== null,
+      branchMissing: state.branchMissing,
+      changesPending: own !== null && list === null,
+      limitedUntil: limited === null ? null : new Date(limited).toISOString(),
+      githubKey: github.key(),
       canUpdate: fs.existsSync(file('agent.json')),
       updating: waiting || r?.state === 'running',
       stuck: waiting && now() - Date.parse(request.at) > STUCK_MS,
@@ -303,7 +427,7 @@ export function createUpdateService(
           }).format(t),
         );
       const last: { day: string | null } = { day: null };
-      const tick = async (): Promise<void> => {
+      const tickNow = async (): Promise<void> => {
         const s = stores.settings('updates');
         const t = now();
         if (s['auto'] !== true || hourNow(t) !== Number(s['hour']) || last.day === day(t)) return;
@@ -317,8 +441,15 @@ export function createUpdateService(
         start('automatisch');
         onRequested('automatisch');
       };
+      const tick = async (): Promise<void> => {
+        try {
+          await tickNow();
+        } catch {
+          // Nächster Versuch in fünf Minuten.
+        }
+      };
       const timer = setInterval(() => {
-        tick().catch(() => undefined);
+        void tick();
       }, AUTO_EVERY_MS);
       timer.unref();
       return () => clearInterval(timer);

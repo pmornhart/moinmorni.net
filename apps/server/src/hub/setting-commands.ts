@@ -30,8 +30,10 @@ interface Pattern {
   readonly choices: readonly string[];
 }
 
+/** Listen: „hinzu|weg <wort>“ – zwei Teile am Ende statt einem („an|aus“, „<zahl>“). */
+const LIST_VALUE_PARTS = 2;
 /** Wie viele Teile am Ende den Wert beschreiben: „an|aus“, „<zahl>“ oder „hinzu|weg <wort>“. */
-const valueParts = (def: SettingDef): number => (def.type === 'list' ? 2 : 1);
+const valueParts = (def: SettingDef): number => (def.type === 'list' ? LIST_VALUE_PARTS : 1);
 
 function patternsOf(area: SettingArea): Pattern[] {
   return area.sections
@@ -105,6 +107,9 @@ function parseValue(p: Pattern, args: readonly string[], current: unknown): unkn
 /** Darf diese Person den Bereich ändern? Wie im Panel – plus das Spiel-Recht „admin“ für alles. */
 const mayChange = (actor: Actor, area: SettingArea): boolean =>
   actor.role.panel.includes(area.panel) || actor.role.game.includes('admin' satisfies GameRight);
+/** Manche Einstellungen ändert nur der Owner (z. B. die Admin-Stelle öffnen). */
+const mayChangeSetting = (actor: Actor, p: Pattern): boolean =>
+  mayChange(actor, p.area) && (!p.def.ownerOnly || actor.role.id === 'owner');
 
 export function createSettingCommands(ctx: HubContext): Command[] {
   const valueOf = (p: Pattern): unknown => ctx.stores.settings(p.area.id)[p.def.key];
@@ -160,6 +165,10 @@ export function createSettingCommands(ctx: HubContext): Command[] {
           );
           return;
         }
+        if (!mayChangeSetting(actor, p)) {
+          say(actor, text(actor.lang, 'cmd.no_right'));
+          return;
+        }
         const value = parseValue(p, rest, valueOf(p));
         if (value === undefined) {
           say(actor, text(actor.lang, 'set.invalid', { label, usage: mm(p.usage) }));
@@ -187,14 +196,19 @@ export function createSettingCommands(ctx: HubContext): Command[] {
   });
 }
 
-/** Ein Befehl mit gleichem Namen (z. B. /lobby): ohne Wörter das Original, mit Wörtern die Einstellung. */
+/**
+ * Ein Befehl mit gleichem Namen (z. B. /lobby): ohne Wörter das Original, mit Wörtern die Einstellung – außer den
+ * Wörtern, die das Original selbst kennt (`own`, z. B. `/lobby ja`).
+ */
 export function mergeCommands(base: readonly Command[], settings: readonly Command[]): Command[] {
   const merged = base.map((c): Command => {
     const s = settings.find((x) => x.name === c.name);
     if (!s) return c;
+    const mine = (args: readonly string[]): boolean =>
+      !args.length || (c.own?.includes(args[0]?.toLowerCase() ?? '') ?? false);
     return {
       ...c,
-      run: (actor, args) => (args.length ? s.run(actor, args) : c.run(actor, args)),
+      run: (actor, args) => (mine(args) ? c.run(actor, args) : s.run(actor, args)),
       complete: s.complete,
     };
   });

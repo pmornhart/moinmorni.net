@@ -1,4 +1,11 @@
-import { MODE_HEADLINE_STATS, type ModeStatus, type NetworkStatus, type Text } from '@moinmorni/shared';
+import {
+  DEFAULT_ROLES,
+  MODE_HEADLINE_STATS,
+  TEAM_POSITION_DEFAULTS,
+  type ModeStatus,
+  type NetworkStatus,
+  type Text,
+} from '@moinmorni/shared';
 import type {
   ModeBoard,
   ModeTopEntry,
@@ -53,6 +60,22 @@ interface Fixtures {
     readonly discordLogin: boolean;
     readonly demoDiscordName: string;
   };
+  /** Team applications: open positions (role ids) and the demo person's Minecraft account. */
+  readonly teamApply: {
+    readonly positions: readonly string[];
+    readonly minecraftName: string;
+    readonly cooldownDays: number;
+  };
+}
+
+interface MyTeamApplication {
+  readonly id: number;
+  readonly position: string;
+  readonly status: 'pending' | 'accepted' | 'rejected';
+  readonly minecraftName: string;
+  readonly createdAt: string;
+  readonly decidedAt: string | null;
+  readonly note: string | null;
 }
 
 interface MyApplication {
@@ -350,13 +373,116 @@ function applyLogout(): DemoResponse {
   return { status: HTTP_NO_CONTENT };
 }
 
-const site = (): DemoResponse => ({ status: HTTP_OK, body: DATA.site });
+interface DemoPosition {
+  readonly id: string;
+  readonly role: PublicRole;
+  readonly text: Text;
+  readonly questions: { readonly de: readonly string[]; readonly en: readonly string[] };
+}
+
+/** Open team positions with the default texts and questions (the panel can change them in a real network). */
+function teamPositions(): readonly DemoPosition[] {
+  return DATA.teamApply.positions.flatMap((id) => {
+    const preset = TEAM_POSITION_DEFAULTS.find((p) => p.id === id);
+    const role = DATA.roles[id];
+    if (!preset || !role) return [];
+    return [
+      {
+        id,
+        role,
+        text: preset.text,
+        questions: { de: preset.questions.map((q) => q.de), en: preset.questions.map((q) => q.en) },
+      },
+    ];
+  });
+}
+
+/** The demo person's team application of this visit. */
+const teamState: { application: MyTeamApplication | null } = { application: null };
+
+function teamApplyView(): DemoResponse {
+  const me = applyState.me;
+  const mine = me ? teamState.application : null;
+  return {
+    status: HTTP_OK,
+    body: {
+      positions: teamPositions(),
+      discordLogin: DATA.apply.discordLogin,
+      rules: { cooldownDays: DATA.teamApply.cooldownDays, linkedRequired: true, onePending: true },
+      me: me ? { name: me.name, minecraft: { name: DATA.teamApply.minecraftName } } : null,
+      blocked: mine?.status === 'pending' ? { code: 'team_apply_pending', until: null } : null,
+      applications: mine ? [mine] : [],
+    },
+  };
+}
+
+function isTeamBody(
+  body: unknown,
+): body is { readonly position: string; readonly answers: readonly unknown[] } {
+  if (typeof body !== 'object' || body === null) return false;
+  const record = body as { position?: unknown; answers?: unknown };
+  return typeof record.position === 'string' && Array.isArray(record.answers);
+}
+
+function teamApplySend(request: DemoRequest): DemoResponse {
+  if (!applyState.me) return { status: HTTP_UNAUTHORIZED, body: { error: 'apply_login_required' } };
+  const body = request.body;
+  const position = isTeamBody(body) ? teamPositions().find((p) => p.id === body.position) : undefined;
+  if (!position) return { status: HTTP_BAD_REQUEST, body: { error: 'team_position_unknown' } };
+  teamState.application = {
+    id: 1,
+    position: position.id,
+    status: 'pending',
+    minecraftName: DATA.teamApply.minecraftName,
+    createdAt: new Date().toISOString(),
+    decidedAt: null,
+    note: null,
+  };
+  return { status: HTTP_OK, body: teamState.application };
+}
+
+const site = (): DemoResponse => ({
+  status: HTTP_OK,
+  body: {
+    ...DATA.site,
+    teamSearch: teamPositions().map((p) => ({
+      id: p.id,
+      name: p.role.name,
+      symbol: p.role.symbol,
+      colour: p.role.colour,
+    })),
+  },
+});
 const newsList = (request: DemoRequest): DemoResponse => ({
   status: HTTP_OK,
   body: NEWS.slice(0, limitOf(request.params)),
 });
 
+/**
+ * Commands page: the ranks of the demo with the rights of the template (DEFAULT_ROLES), and – with ?spieler= – that
+ * made-up player and their rank.
+ */
+function commands(request: DemoRequest): DemoResponse {
+  const roles = DEFAULT_ROLES.map((r) => ({
+    ...(DATA.roles[r.id] ?? { id: r.id, name: r.name, symbol: r.symbol, colour: r.colour }),
+    position: r.position,
+    fallback: r.fallback,
+    game: r.game,
+    panel: r.panel,
+  }));
+  const wanted = (request.params.get('spieler') ?? '').toLowerCase();
+  const found = wanted ? DATA.players.find((p) => p.name.toLowerCase() === wanted) : undefined;
+  return {
+    status: HTTP_OK,
+    body: {
+      roles,
+      player: found ? { name: found.name, uuid: uuidOf(found.name), role: roleOf(found.role).id } : null,
+    },
+  };
+}
+
 const EXACT: Readonly<Record<string, Handler>> = {
+  'GET /api/commands': commands,
   'GET /api/status': status,
   'GET /api/site': site,
   'GET /api/news': newsList,
@@ -366,6 +492,8 @@ const EXACT: Readonly<Record<string, Handler>> = {
   'GET /api/public/apply': applyView,
   'POST /api/public/apply': applySend,
   'POST /api/public/apply/logout': applyLogout,
+  'GET /api/public/team-apply': teamApplyView,
+  'POST /api/public/team-apply': teamApplySend,
 };
 
 const PREFIXED: readonly (readonly [method: string, prefix: string, handler: Handler])[] = [

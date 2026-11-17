@@ -110,6 +110,24 @@ export const friendRequests = sqliteTable(
 export const discordObjects = sqliteTable('discord_objects', {
   key: text('key').primaryKey(),
   discordId: text('discord_id').notNull(),
+  /** Hat der Bot es selbst angelegt? Nur dann darf er es später auch wieder entfernen (z. B. alte Sprachkanäle). */
+  created: integer('created', { mode: 'boolean' }).notNull().default(false),
+  /**
+   * Was der Bot zuletzt gesetzt hat (Name, Farbe, Kategorie, Thema …). Steht in Discord etwas anderes, hat es jemand
+   * dort geändert – dann bleibt seine Änderung beim nächsten Einrichten stehen.
+   */
+  applied: text('applied', { mode: 'json' }).$type<Record<string, unknown>>(),
+  updatedAt: text('updated_at').notNull().default(now),
+});
+
+/**
+ * Geheimnisse, die im Panel eingetragen wurden (Bot-Token, Client-Secret von Discord) – versiegelt mit einem Schlüssel
+ * aus MM_SECRET (lib/secret-box.ts), nie im Klartext. Ein Wert in der .env gilt vor dem hier.
+ */
+export const storedSecrets = sqliteTable('stored_secrets', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedBy: text('updated_by'),
   updatedAt: text('updated_at').notNull().default(now),
 });
 
@@ -152,12 +170,21 @@ export const whitelist = sqliteTable(
   (t) => [uniqueIndex('whitelist_mode_name').on(t.mode, t.name)],
 );
 
-/** Bewerbungen für MorniCraft (Webseite mit Discord-Anmeldung oder Discord-Knopf). */
+/**
+ * Bewerbungen: für MorniCraft (`mode` = "mornicraft") und ins Team (`mode` = "team", `position` = Rolle wie
+ * „moderator“) – über die Webseite mit Discord-Anmeldung oder im Discord.
+ */
 export const applications = sqliteTable(
   'applications',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     mode: text('mode').notNull(),
+    /** Nur Team-Bewerbungen: die Stelle (Rolle der Vorlage, nie Owner oder VIP). */
+    position: text('position'),
+    /** Team-Bewerbungen: Minecraft-Konto aus der Verbindung mit Discord (sonst später beim Annehmen gesucht). */
+    minecraftUuid: text('minecraft_uuid'),
+    /** Sprache der Person (für die Antwort per Direktnachricht und im Spiel). */
+    lang: text('lang').$type<'de' | 'en'>(),
     minecraftName: text('minecraft_name').notNull(),
     discordId: text('discord_id'),
     discordName: text('discord_name'),
@@ -173,6 +200,38 @@ export const applications = sqliteTable(
     createdAt: createdAt(),
   },
   (t) => [index('applications_status').on(t.status)],
+);
+
+/** Interne Notizen des Teams zu einer Bewerbung (nur im Panel, die Person sieht sie nie). */
+export const applicationNotes = sqliteTable(
+  'application_notes',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    applicationId: integer('application_id')
+      .notNull()
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    author: text('author').notNull(),
+    text: text('text').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('application_notes_application').on(t.applicationId)],
+);
+
+/** Daumen hoch/runter des Teams: eine Stimme pro Team-Konto und Bewerbung. */
+export const applicationVotes = sqliteTable(
+  'application_votes',
+  {
+    applicationId: integer('application_id')
+      .notNull()
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    /** Konto im Motor. */
+    voterId: integer('voter_id').notNull(),
+    voterName: text('voter_name').notNull(),
+    /** 1 = dafür, -1 = dagegen. */
+    vote: integer('vote').notNull(),
+    updatedAt: text('updated_at').notNull().default(now),
+  },
+  (t) => [primaryKey({ columns: [t.applicationId, t.voterId] })],
 );
 
 /**

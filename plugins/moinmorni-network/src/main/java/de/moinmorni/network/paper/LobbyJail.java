@@ -1,9 +1,6 @@
 package de.moinmorni.network.paper;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import de.moinmorni.network.common.HubClient;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -11,7 +8,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
@@ -37,89 +33,71 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Gefängnis in der Lobby: Der Hub schickt, wer eingesperrt ist (mit Ende und Grund) und wo die Zelle steht
  * ({@code jail}). Eingesperrte bleiben in der Zelle, sehen eine Leiste mit der Restzeit, dürfen nur dem Team schreiben
  * und kommen nach Ablauf (oder wenn das Team sie freilässt) zurück auf den Dorfplatz.
+ *
+ * <p>Raus kommt man immer: Wer nicht (mehr) eingesperrt ist und trotzdem in der Zelle steht – nach einem Neustart der
+ * Lobby, einer Freilassung, während man weg war, oder wenn ein Teleport nicht geklappt hat –, wird jede Sekunde und
+ * beim Betreten an den Dorfplatz gesetzt (nur Zuschauer- und Kreativmodus dürfen hinein, z. B. das Team zum Reden).
+ * Der Stand liegt zusätzlich auf der Platte ({@link JailBook}), damit die Lobby ihn nach einem Neustart schon kennt.
  */
 final class LobbyJail implements Listener {
-
-    private record Cell(Location spawn, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
-        boolean contains(Location l) {
-            return l.getX() >= minX && l.getX() < maxX + 1 && l.getY() >= minY - 1 && l.getY() < maxY + 1
-                    && l.getZ() >= minZ && l.getZ() < maxZ + 1;
-        }
-    }
-
-    private record Entry(Instant until, String reason) {
-        boolean over(Instant now) {
-            return until != null && !now.isBefore(until);
-        }
-    }
 
     /** Befehle, die auch in der Zelle gehen: Nachrichten (der Hub lässt nur das Team zu), Regeln, Hilfe, Sprache. */
     private static final Set<String> ALLOWED = Set.of("msg", "tell", "w", "m", "whisper", "r", "reply", "regeln",
             "rules", "hilfe", "help", "sprache", "language", "lang");
     private static final long TICK = 20L;
     private static final long JOIN_DELAY = 3L;
+    private static final double CENTER = 0.5;
 
     private final JavaPlugin plugin;
     private final LobbyFeatures features;
     private final Function<Player, String> langOf;
-    private final Map<UUID, Entry> jailed = new ConcurrentHashMap<>();
+    private final JailBook book;
     private final Map<UUID, BossBar> held = new HashMap<>();
-    private volatile Cell cell;
 
     LobbyJail(JavaPlugin plugin, LobbyFeatures features, Function<Player, String> langOf) {
         this.plugin = plugin;
         this.features = features;
         this.langOf = langOf;
+        this.book = new JailBook(plugin.getDataFolder().toPath().getParent().resolve("moinmorni"), plugin.getLogger());
     }
 
     void start() {
+        book.load();
         Bukkit.getPluginManager().registerEvents(this, plugin);
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, TICK, TICK);
     }
 
     /** Sitzt gerade im Gefängnis (laut Hub, Zeit noch nicht um)? */
     boolean isJailed(UUID id) {
-        Entry e = jailed.get(id);
-        return e != null && !e.over(Instant.now()) && cell != null;
+        return book.isJailed(id, Instant.now());
     }
 
     // ---------- Stand vom Hub ----------
 
-    /** Hub-Thread: Liste und Zelle lesen, auf dem Hauptthread anwenden. */
+    /** Hub-Thread: auf dem Hauptthread übernehmen (und merken), dann alle Spieler prüfen. */
     void onState(JsonObject m) {
-        JsonObject c = m.getAsJsonObject("cell");
-        Map<UUID, Entry> next = new HashMap<>();
-        JsonArray list = m.getAsJsonArray("players");
-        if (list != null) {
-            for (JsonElement el : list) {
-                JsonObject o = el.getAsJsonObject();
-                String until = HubClient.str(o, "until");
-                next.put(UUID.fromString(HubClient.str(o, "uuid")),
-                        new Entry(until == null ? null : Instant.parse(until), HubClient.str(o, "reason")));
-            }
-        }
         Bukkit.getScheduler().runTask(plugin, () -> {
-            if (c != null) {
-                cell = parseCell(c);
-            }
-            jailed.clear();
-            jailed.putAll(next);
+            book.apply(m);
             Bukkit.getOnlinePlayers().forEach(this::check);
         });
     }
 
-    private static Cell parseCell(JsonObject c) {
-        World w = Bukkit.getWorlds().get(0);
-        JsonObject s = c.getAsJsonObject("spawn");
-        JsonObject min = c.getAsJsonObject("min");
-        JsonObject max = c.getAsJsonObject("max");
-        Location spawn = new Location(w, s.get("x").getAsDouble(), s.get("y").getAsDouble(), s.get("z").getAsDouble(),
-                s.get("yaw").getAsFloat(), s.get("pitch").getAsFloat());
-        return new Cell(spawn, min.get("x").getAsInt(), min.get("y").getAsInt(), min.get("z").getAsInt(),
-                max.get("x").getAsInt(), max.get("y").getAsInt(), max.get("z").getAsInt());
+    private Location spawnOf(World w, JailBook.Spot s) {
+        return new Location(w, s.x(), s.y(), s.z(), s.yaw(), s.pitch());
     }
 
-    /** Einsperren, wer es sein soll; freilassen, wer es nicht mehr ist. */
+    private boolean inCell(Player p) {
+        JailBook.Cell c = book.cell();
+        Location l = p.getLocation();
+        return c != null && l.getWorld().equals(Bukkit.getWorlds().get(0)) && c.contains(l.getX(), l.getY(), l.getZ());
+    }
+
+    /** Zuschauer und Kreativ (Team, das hinein will) dürfen in der Zelle stehen, ohne eingesperrt zu sein. */
+    private static boolean visitor(Player p) {
+        return p.getGameMode() == GameMode.SPECTATOR || p.getGameMode() == GameMode.CREATIVE;
+    }
+
+    /** Einsperren, wer es sein soll; freilassen, wer es nicht mehr ist; wer frei ist, aber in der Zelle steht, raus. */
     private void check(Player p) {
         boolean should = isJailed(p.getUniqueId());
         boolean is = held.containsKey(p.getUniqueId());
@@ -127,6 +105,10 @@ final class LobbyJail implements Listener {
             lock(p);
         } else if (!should && is) {
             free(p, false);
+        } else if (!should && inCell(p) && !visitor(p)) {
+            p.sendMessage(text(p, "Du bist nicht im Gefängnis – zurück auf den Dorfplatz.",
+                    "You are not in jail – back to the village square.", NamedTextColor.GREEN));
+            release(p);
         }
     }
 
@@ -134,7 +116,7 @@ final class LobbyJail implements Listener {
         features.stopActivities(p);
         p.getInventory().clear();
         p.setGameMode(GameMode.ADVENTURE);
-        p.teleport(cell.spawn());
+        p.teleport(spawnOf(Bukkit.getWorlds().get(0), book.cell().spawn()));
         p.setFallDistance(0);
         BossBar bar = BossBar.bossBar(Component.empty(), 1f, BossBar.Color.RED, BossBar.Overlay.PROGRESS);
         held.put(p.getUniqueId(), bar);
@@ -147,11 +129,35 @@ final class LobbyJail implements Listener {
         if (bar != null) {
             p.hideBossBar(bar);
         }
-        if (timeUp) {
-            p.sendMessage(text(p, "Deine Zeit im Gefängnis ist um – du bist wieder frei!",
-                    "Your time in jail is up – you are free again!", NamedTextColor.GREEN));
+        p.sendMessage(timeUp
+                ? text(p, "Deine Zeit im Gefängnis ist um – du bist wieder frei!",
+                        "Your time in jail is up – you are free again!", NamedTextColor.GREEN)
+                : text(p, "Du bist wieder frei!", "You are free again!", NamedTextColor.GREEN));
+        release(p);
+    }
+
+    /**
+     * Raus aus der Zelle auf den Dorfplatz. Ohne Lobby-Einstellungen (Hub noch nicht da) an den Spawn der Welt; steht
+     * man einen Tick später noch in der Zelle (Teleport abgefangen), noch einmal direkt an den Spawn der Welt.
+     */
+    private void release(Player p) {
+        if (!features.welcomeBack(p)) {
+            toWorldSpawn(p);
         }
-        features.welcomeBack(p);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (p.isOnline() && !held.containsKey(p.getUniqueId()) && inCell(p)) {
+                plugin.getLogger().warning("Gefängnis: " + p.getName() + " stand nach dem Freilassen noch in der Zelle"
+                        + " – an den Spawn der Welt gesetzt.");
+                toWorldSpawn(p);
+            }
+        }, 1L);
+    }
+
+    private static void toWorldSpawn(Player p) {
+        World w = Bukkit.getWorlds().get(0);
+        Location s = w.getSpawnLocation();
+        p.teleport(new Location(w, s.getBlockX() + CENTER, s.getBlockY(), s.getBlockZ() + CENTER, s.getYaw(), 0f));
+        p.setFallDistance(0);
     }
 
     private void tick() {
@@ -159,12 +165,14 @@ final class LobbyJail implements Listener {
         for (Player p : Bukkit.getOnlinePlayers()) {
             BossBar bar = held.get(p.getUniqueId());
             if (bar == null) {
+                // Neu eingesperrt, freigelassen oder trotzdem in der Zelle: dieselbe Prüfung wie beim Stand vom Hub.
+                check(p);
                 continue;
             }
-            Entry e = jailed.get(p.getUniqueId());
+            JailBook.Entry e = book.entry(p.getUniqueId());
             if (e == null || e.over(now)) {
-                jailed.remove(p.getUniqueId());
-                free(p, true);
+                book.forget(p.getUniqueId());
+                free(p, e != null);
             } else {
                 update(p, bar);
             }
@@ -172,7 +180,7 @@ final class LobbyJail implements Listener {
     }
 
     private void update(Player p, BossBar bar) {
-        Entry e = jailed.get(p.getUniqueId());
+        JailBook.Entry e = book.entry(p.getUniqueId());
         if (e == null) {
             return;
         }
@@ -220,17 +228,19 @@ final class LobbyJail implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
-        Cell c = cell;
-        if (c == null || !held.containsKey(event.getPlayer().getUniqueId()) || c.contains(event.getTo())) {
+        JailBook.Cell c = book.cell();
+        Location to = event.getTo();
+        if (c == null || !held.containsKey(event.getPlayer().getUniqueId()) || c.contains(to.getX(), to.getY(), to.getZ())) {
             return;
         }
-        event.setTo(c.spawn());
+        event.setTo(spawnOf(to.getWorld(), c.spawn()));
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
-        Cell c = cell;
-        if (c != null && held.containsKey(event.getPlayer().getUniqueId()) && !c.contains(event.getTo())) {
+        JailBook.Cell c = book.cell();
+        Location to = event.getTo();
+        if (c != null && held.containsKey(event.getPlayer().getUniqueId()) && !c.contains(to.getX(), to.getY(), to.getZ())) {
             event.setCancelled(true);
         }
     }

@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { streamerHosts } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import { modePlayers } from '../db/schema.js';
 import type { Stores } from '../panel/stores.js';
@@ -97,8 +98,9 @@ export function morniCraftSettings(stores: Stores, ctx: MorniCraftContext): Body
         crystals: b('dragonCrystals'),
         egg: b('dragonEgg'),
       },
-      // Im Streamer-Modus verdeckt: die Adresse des Netzwerks.
-      streamer: { hide: [ctx.domain] },
+      // Im Streamer-Modus verdeckt: die Adressen aus dem Panel (Netzwerk → Streamer-Modus), wie auf allen Servern.
+      // Ob jemand streamt, kommt nicht von hier: das Netzwerk-Plugin hängt es an den Spieler (moinmorni:streamer).
+      streamer: { hide: streamerHosts(net, ctx.domain) },
       network: {
         // Dieselben Regeln wie auf der Webseite und im Discord.
         'rules-de': lines(site['rulesDe']),
@@ -144,7 +146,9 @@ export const morniCraftPlayerSchema = z.object({
       leader: z.boolean(),
       members: z.number().int().min(1).max(MEMBERS_MAX),
     })
-    .nullable(),
+    .nullable()
+    // Ohne Clan schreibt MorniCraft (Gson) das Feld gar nicht – fehlt es, gilt „kein Clan“.
+    .default(null),
   graves: z
     .array(
       z.object({ ...place, items: z.number().int().min(0).max(ITEMS_MAX), since: z.number().int().min(0) }),

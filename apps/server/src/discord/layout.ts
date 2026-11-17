@@ -2,14 +2,18 @@
 import type { DiscordRight, Role } from '@moinmorni/shared';
 
 /**
- * So sieht der MoinMorni-Discord aus: Rollen aus der Rollen-Vorlage (+ „Verbunden“, „Stumm“, „Gefängnis“),
- * Kategorien und Kanäle mit Rechten. Der Bot legt fehlendes an und lässt Vorhandenes stehen (gleicher Name).
+ * So sieht der MoinMorni-Discord aus: Rollen aus der Rollen-Vorlage (+ „Bot“, „Verbunden“, „Stumm“, „Gefängnis“),
+ * Kategorien und Kanäle mit Emoji und Rechten. Der Bot legt fehlendes an, übernimmt Vorhandenes gleichen Namens und
+ * lässt stehen, was jemand in Discord selbst umbenannt oder verschoben hat (discord/setup.ts).
  * Rechte: https://docs.discord.com/developers/topics/permissions
  */
 
 const bit = (n: number): bigint => 1n << BigInt(n);
 export const PERM = {
+  createInvite: bit(0),
+  banMembers: bit(2),
   administrator: bit(3),
+  manageChannels: bit(4),
   manageGuild: bit(5),
   addReactions: bit(6),
   viewChannel: bit(10),
@@ -20,17 +24,19 @@ export const PERM = {
   readHistory: bit(16),
   connect: bit(20),
   speak: bit(21),
-  useCommands: bit(31),
+  manageRoles: bit(28),
   manageThreads: bit(34),
   createPrivateThreads: bit(36),
   sendInThreads: bit(38),
   moderateMembers: bit(40),
 } as const;
+export type PermName = keyof typeof PERM;
 
 export const CHANNEL_TEXT = 0;
 export const CHANNEL_VOICE = 2;
 export const CHANNEL_CATEGORY = 4;
-const OVERWRITE_ROLE = 0;
+export const OVERWRITE_ROLE = 0;
+export const OVERWRITE_MEMBER = 1;
 
 /** Rechte, die eine Rolle server-weit bekommt (Bereiche wie „team-area“ wirken über die Kanäle). */
 const RIGHT_PERMS: Partial<Record<DiscordRight, bigint>> = {
@@ -40,8 +46,8 @@ const RIGHT_PERMS: Partial<Record<DiscordRight, bigint>> = {
   timeout: PERM.moderateMembers,
 };
 
-export const rolePermissions = (role: Role): string =>
-  role.discord.reduce((acc, r) => acc | (RIGHT_PERMS[r] ?? 0n), 0n).toString();
+export const rolePermissions = (role: Role): bigint =>
+  role.discord.reduce((acc, r) => acc | (RIGHT_PERMS[r] ?? 0n), 0n);
 
 /** Name in Discord: Rollen-Symbole gibt es erst ab Boost-Stufe 2 – darum steht das Symbol im Namen. */
 export const discordRoleName = (role: Role): string =>
@@ -52,10 +58,12 @@ export const colourInt = (hex: string): number => Number.parseInt(hex.slice(1), 
 /** Team-Rollen stehen in der Mitgliederliste getrennt (alles mit Panel-Zugang). */
 export const isTeam = (role: Role): boolean => role.panel.length > 0;
 
+/** Rollen neben den Rängen, in dieser Reihenfolge unter den Rängen. */
 export const EXTRA_ROLES = [
-  { key: 'linked', name: '✔ Verbunden', colour: 0x3ddc84 },
-  { key: 'muted', name: '🔇 Stumm', colour: 0x6b7280 },
-  { key: 'jail', name: '⛓ Gefängnis', colour: 0x4b5563 },
+  { key: 'bot', name: '🤖 Bot', colour: 0x10b981, hoist: true },
+  { key: 'linked', name: '✔ Verbunden', colour: 0x3ddc84, hoist: false },
+  { key: 'muted', name: '🔇 Stumm', colour: 0x6b7280, hoist: false },
+  { key: 'jail', name: '⛓ Gefängnis', colour: 0x4b5563, hoist: false },
 ] as const;
 export type ExtraRole = (typeof EXTRA_ROLES)[number]['key'];
 
@@ -84,6 +92,9 @@ const text = (key: string, name: string, topic: string, audience: Audience = 'ev
 const voice = (key: string, name: string, audience: Audience = 'everyone') =>
   ({ key, name, type: CHANNEL_VOICE, audience }) as const;
 
+/** Sprachkanäle aus den Sprachchat-Einstellungen haben Schlüssel „voice-0“, „voice-1“ … */
+export const VOICE_KEY_PREFIX = 'voice-';
+
 /** Die Kanäle. Sprachkanäle kommen aus den Voice-Einstellungen (gleiche Namen wie im Spiel). */
 export function layout(voiceChannels: readonly string[]): CategorySpec[] {
   return [
@@ -92,9 +103,10 @@ export function layout(voiceChannels: readonly string[]): CategorySpec[] {
       name: '📢 Info',
       audience: 'everyone',
       channels: [
-        text('welcome', '👋・willkommen', 'Servus! Hier geht es los.', 'everyone', true),
+        text('welcome', '👋・willkommen', 'Servus! Adresse, Regeln und wie du loslegst.', 'everyone', true),
         text('rules', '📜・regeln', 'Unsere Regeln – im Spiel und hier.', 'everyone', true),
-        text('news', '📣・ankündigungen', 'Neuigkeiten aus MoinMorni.', 'everyone', true),
+        text('announcements', '📣・ankündigungen', 'Ankündigungen vom Team.', 'everyone', true),
+        text('news', '📰・news', 'Neuigkeiten von der Webseite – kommen von selbst.', 'everyone', true),
         text(
           'status',
           '🟢・status',
@@ -102,6 +114,7 @@ export function layout(voiceChannels: readonly string[]): CategorySpec[] {
           'everyone',
           true,
         ),
+        text('modes', '🎮・spielmodi', 'Alle Spielmodi – mit Link zur Webseite.', 'everyone', true),
       ],
     },
     {
@@ -109,9 +122,8 @@ export function layout(voiceChannels: readonly string[]): CategorySpec[] {
       name: '💬 Community',
       audience: 'everyone',
       channels: [
-        text('general', '💬・allgemein', 'Plaudern über alles.'),
-        text('screenshots', '📸・bilder', 'Zeig deine schönsten Bauten und Momente.'),
-        text('lfg', '🎮・mitspieler-suche', 'Wer spielt mit? Duels, Party, Burgverlies …'),
+        text('general', '💬・chat', 'Plaudern über alles.'),
+        text('screenshots', '📸・bilder-und-clips', 'Zeig deine schönsten Bauten, Bilder und Clips.'),
         text('ideas', '💡・vorschläge', 'Ideen für das Netzwerk.'),
       ],
     },
@@ -119,13 +131,23 @@ export function layout(voiceChannels: readonly string[]): CategorySpec[] {
       key: 'support',
       name: '🎫 Hilfe',
       audience: 'everyone',
-      channels: [text('help', '🎫・hilfe', 'Frag uns – oder öffne ein Ticket.', 'everyone', true)],
+      channels: [
+        text('help', '❓・hilfe', 'Fragen? Schreib /hilfe – oder öffne ein Ticket.', 'everyone', true),
+        text(
+          'tickets',
+          '🎫・tickets',
+          'Knopf drücken: ein privater Kanal nur für dich und das Team.',
+          'everyone',
+          true,
+        ),
+        text('apply', '📝・bewerbungen', 'Bewirb dich fürs Team oder für MorniCraft.', 'everyone', true),
+      ],
     },
     {
       key: 'voice',
-      name: '🔊 Sprachkanäle',
+      name: '🔊 Sprache',
       audience: 'everyone',
-      channels: voiceChannels.map((name, i) => voice(`voice-${i}`, name)),
+      channels: voiceChannels.map((name, i) => voice(`${VOICE_KEY_PREFIX}${i}`, name)),
     },
     {
       key: 'vip',
@@ -148,8 +170,9 @@ export function layout(voiceChannels: readonly string[]): CategorySpec[] {
       audience: 'team',
       channels: [
         text('team', '🛡・team-chat', 'Nur fürs Team.', 'team'),
-        text('teamlog', '📋・team-log', 'Strafen, Meldungen und was im Netzwerk passiert.', 'team'),
-        text('applications', '📝・bewerbungen', 'Bewerbungen für MorniCraft.', 'team'),
+        text('teamlog', '📋・team-log', 'Meldungen und was im Netzwerk passiert.', 'team'),
+        text('applications', '📥・bewerbungs-eingang', 'Neue Bewerbungen – annehmen oder ablehnen.', 'team'),
+        text('punishlog', '⚖・strafen-log', 'Alle Strafen – im Spiel und hier.', 'team'),
         voice('team-voice', '🛡 Team', 'team'),
       ],
     },
@@ -173,6 +196,49 @@ const VIEW = PERM.viewChannel;
 const WRITE = PERM.sendMessages | PERM.addReactions | PERM.sendInThreads | PERM.createPrivateThreads;
 const VOICE = PERM.connect | PERM.speak;
 
+/** Was der Bot selbst tut: Rollen und Kanäle anlegen, Server-Bild, Einladung, Bann, Timeout, Nachrichten, Tickets. */
+const BOT_NEEDS =
+  PERM.manageRoles |
+  PERM.manageChannels |
+  PERM.manageGuild |
+  PERM.createInvite |
+  PERM.banMembers |
+  PERM.moderateMembers |
+  PERM.viewChannel |
+  PERM.sendMessages |
+  PERM.embedLinks |
+  PERM.readHistory |
+  PERM.addReactions |
+  PERM.manageThreads |
+  PERM.createPrivateThreads |
+  PERM.sendInThreads;
+
+/** Der Bot selbst in jedem seiner Kanäle (auch in denen, die @everyone nicht sieht). */
+const BOT_IN_CHANNEL =
+  VIEW |
+  WRITE |
+  PERM.embedLinks |
+  PERM.readHistory |
+  PERM.manageThreads |
+  PERM.manageRoles |
+  PERM.manageChannels |
+  VOICE;
+
+/**
+ * Genau die Rechte, die der Bot für die Einrichtung braucht: was er selbst tut, was in den Kanal-Rechten steht und was
+ * die Rollen der Vorlage in Discord bekommen (Discord lässt einen Bot nur Rechte vergeben, die er selbst hat).
+ * „Administrator“ nie – den bekommt eine Rolle nur, wenn du ihn in Discord selbst setzt.
+ */
+export function invitePermissions(roles: readonly Role[]): bigint {
+  const fromRoles = roles.reduce((acc, r) => acc | rolePermissions(r), 0n) & ~PERM.administrator;
+  return BOT_NEEDS | VIEW | WRITE | VOICE | PERM.readHistory | fromRoles;
+}
+
+/** Die Namen der Rechte in einem Bitfeld (fürs Panel: welche Rechte, welche fehlen). */
+export function permNames(bits: bigint): PermName[] {
+  return (Object.keys(PERM) as PermName[]).filter((name) => (bits & PERM[name]) === PERM[name]);
+}
+
 export interface RoleIds {
   readonly everyone: string;
   /** Rollen, die eine Zielgruppe sehen darf (z. B. team → Owner, Admin, Moderator). */
@@ -180,9 +246,11 @@ export interface RoleIds {
   readonly team: readonly string[];
   readonly muted: string;
   readonly jail: string;
+  /** Der Bot selbst (Nutzer-ID): sieht und schreibt in jedem seiner Kanäle. */
+  readonly bot: string | null;
 }
 
-/** Rechte eines Kanals: wer sieht ihn, wer schreibt, Stumm/Gefängnis gesperrt. */
+/** Rechte eines Kanals: wer sieht ihn, wer schreibt, Stumm/Gefängnis gesperrt, der Bot immer dabei. */
 export function overwritesFor(audience: Audience, readOnly: boolean, ids: RoleIds): Overwrite[] {
   const allow = (id: string, perms: bigint): Overwrite => ({
     id,
@@ -196,8 +264,15 @@ export function overwritesFor(audience: Audience, readOnly: boolean, ids: RoleId
     allow: '0',
     deny: perms.toString(),
   });
-  if (audience === 'jail')
-    return [deny(ids.everyone, VIEW), allow(ids.jail, VIEW | PERM.sendMessages | PERM.readHistory)];
+  const bot: Overwrite[] = ids.bot
+    ? [{ id: ids.bot, type: OVERWRITE_MEMBER, allow: BOT_IN_CHANNEL.toString(), deny: '0' }]
+    : [];
+  // Gefängnis: nur die Gefängnis-Rolle (und das Team, das nach dem Rechten schaut).
+  const jail = [
+    deny(ids.everyone, VIEW),
+    allow(ids.jail, VIEW | PERM.sendMessages | PERM.readHistory),
+    ...ids.team.map((id) => allow(id, VIEW | PERM.sendMessages | PERM.readHistory)),
+  ];
   const visible =
     audience === 'everyone'
       ? [deny(ids.jail, VIEW)]
@@ -206,16 +281,31 @@ export function overwritesFor(audience: Audience, readOnly: boolean, ids: RoleId
     ? [deny(ids.everyone, WRITE), ...ids.team.map((id) => allow(id, VIEW | WRITE))]
     : [];
   const muted = deny(ids.muted, WRITE | VOICE);
+  const all = audience === 'jail' ? jail : [...visible, ...writing, muted];
   // Gleiche Rolle zweimal → zusammenfassen (Discord nimmt pro Rolle nur einen Eintrag).
-  const merged = new Map<string, { allow: bigint; deny: bigint }>();
-  [...visible, ...writing, muted].forEach((o) => {
-    const before = merged.get(o.id) ?? { allow: 0n, deny: 0n };
-    merged.set(o.id, { allow: before.allow | BigInt(o.allow), deny: before.deny | BigInt(o.deny) });
+  const merged = new Map<string, { type: number; allow: bigint; deny: bigint }>();
+  [...all, ...bot].forEach((o) => {
+    const before = merged.get(o.id) ?? { type: o.type, allow: 0n, deny: 0n };
+    merged.set(o.id, {
+      type: o.type,
+      allow: before.allow | BigInt(o.allow),
+      deny: before.deny | BigInt(o.deny),
+    });
   });
   return [...merged.entries()].map(([id, p]) => ({
     id,
-    type: OVERWRITE_ROLE,
+    type: p.type,
     allow: p.allow.toString(),
     deny: p.deny.toString(),
+  }));
+}
+
+/** Nur Rechte, die der Bot selbst hat (Discord lehnt sonst die ganze Änderung ab). */
+export function withinBot(overwrites: readonly Overwrite[], botPerms: bigint): Overwrite[] {
+  if ((botPerms & PERM.administrator) !== 0n) return [...overwrites];
+  return overwrites.map((o) => ({
+    ...o,
+    allow: (BigInt(o.allow) & botPerms).toString(),
+    deny: (BigInt(o.deny) & botPerms).toString(),
   }));
 }

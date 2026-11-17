@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ClipboardList,
   Gamepad2,
   Gavel,
   LayoutDashboard,
@@ -50,6 +51,7 @@ type StepId =
   | 'settings'
   | 'news'
   | 'players'
+  | 'applications'
   | 'punishments'
   | 'roles'
   | 'team'
@@ -69,6 +71,7 @@ const STEPS: readonly TourStep[] = [
   { id: 'settings', icon: Settings2, area: null },
   { id: 'news', icon: Newspaper, area: 'content' },
   { id: 'players', icon: UsersRound, area: 'players' },
+  { id: 'applications', icon: ClipboardList, area: 'players' },
   { id: 'punishments', icon: Gavel, area: 'punishments' },
   { id: 'roles', icon: ShieldHalf, area: 'roles' },
   { id: 'team', icon: UserCog, area: 'roles' },

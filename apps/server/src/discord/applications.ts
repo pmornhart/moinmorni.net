@@ -1,9 +1,12 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { AppError } from '../lib/errors.js';
 import type { Hub } from '../hub/index.js';
-import { hasRight } from '../hub/context.js';
 import { mm } from '../hub/texts.js';
-import type { Application, ApplicationService } from '../mornicraft/applications.js';
+import {
+  mayDecideMornicraft,
+  type Application,
+  type ApplicationService,
+} from '../mornicraft/applications.js';
 import { bt, type BotLang } from './texts.js';
 
 /**
@@ -178,7 +181,7 @@ export function createApplicationBot(deps: ApplicationBotDeps): ApplicationBot {
       const id = Number(customId.slice((accept ? ACCEPT : REJECT).length));
       const user = userOf(d);
       const player = deps.hub.players.byDiscord(user.id);
-      if (!player || !hasRight(deps.hub.players.roleOf(player.uuid), 'kick')) {
+      if (!player || !mayDecideMornicraft(deps.hub.players.roleOf(player.uuid))) {
         await say(d, bt(lang, 'applyNoRight'));
         return true;
       }

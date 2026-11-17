@@ -7,6 +7,7 @@ import type { Hub } from '../hub/index.js';
 import { normalUuid } from '../hub/players.js';
 import { notFound } from '../lib/errors.js';
 import type { Stores } from '../panel/stores.js';
+import { publicAuthor } from './author.js';
 
 /**
  * Öffentlich, ohne Anmeldung: News, Ranglisten, Spielerprofile (außer privat), Team, Regeln und Links – alles, was
@@ -40,14 +41,25 @@ export const newsView = (n: NewsRow) => ({
   author: n.author,
 });
 
+/** Eine offene Stelle im Team („Wir suchen …“ auf der Team-Seite). */
+export interface OpenPosition {
+  readonly id: string;
+  readonly name: { readonly de: string; readonly en: string };
+  readonly symbol: string;
+  readonly colour: string;
+}
+
 export function registerSiteRoutes(
   app: Api,
   db: Db,
   stores: Stores,
   hub: Hub,
   discordInvite: () => string | null,
+  openPositions: () => readonly OpenPosition[] = () => [],
 ): void {
   const published = () => and(isNotNull(news.publishedAt), lte(news.publishedAt, new Date().toISOString()));
+  /** Für Besucher: statt des Anmeldenamens fürs Panel der Minecraft-Name (oder „MoinMorni-Team“). */
+  const publicNews = (n: NewsRow) => ({ ...newsView(n), author: publicAuthor(db, n.author) });
 
   app.get('/api/news', { schema: { querystring: newsQuery } }, async (request) =>
     db
@@ -57,7 +69,7 @@ export function registerSiteRoutes(
       .orderBy(desc(news.pinned), desc(news.publishedAt))
       .limit(request.query.limit)
       .all()
-      .map(newsView),
+      .map(publicNews),
   );
 
   app.get(
@@ -70,7 +82,7 @@ export function registerSiteRoutes(
         .where(and(eq(news.slug, request.params.slug), published()))
         .get();
       if (!row) throw notFound('news_unknown');
-      return newsView(row);
+      return publicNews(row);
     },
   );
 
@@ -168,11 +180,13 @@ export function registerSiteRoutes(
         .where(eq(players.roleId, role.id))
         .all()
         .map((p) => ({ uuid: p.uuid, name: p.name }));
+      // Nur wer schon im Netzwerk war (sonst kennen wir keinen Minecraft-Namen) – nie der Anmeldename fürs Panel.
       const team = linked
         .filter((m) => m.roleId === role.id && m.minecraftUuid)
-        .map((m) => {
+        .flatMap((m) => {
           const uuid = normalUuid(m.minecraftUuid ?? '');
-          return { uuid, name: hub.players.get(uuid)?.name ?? m.username };
+          const name = hub.players.get(uuid)?.name;
+          return name ? [{ uuid, name }] : [];
         });
       const members = [...new Map([...own, ...team].map((m) => [m.uuid, m])).values()];
       return {
@@ -182,6 +196,33 @@ export function registerSiteRoutes(
     });
     return byRole.filter((r) => r.members.length > 0);
   });
+
+  /**
+   * Befehle-Seite (`/befehle`): welche Ränge es gibt und was sie dürfen (Rechte im Spiel, Bereiche des Panels – für die
+   * Einstellungs-Befehle), dazu mit `?spieler=<name>` dessen Rang wie im Spiel. Den Rang sieht im Spiel ohnehin jeder
+   * vor dem Namen, darum auch bei privatem Profil; Statistiken gibt es hier keine.
+   */
+  app.get(
+    '/api/commands',
+    { schema: { querystring: z.object({ spieler: z.string().trim().min(1).max(NAME_MAX).optional() }) } },
+    async (request) => {
+      const name = request.query.spieler;
+      const row = name ? hub.players.byName(name) : undefined;
+      return {
+        roles: stores.roles().map((r) => ({
+          id: r.id,
+          name: r.name,
+          symbol: r.symbol,
+          colour: r.colour,
+          position: r.position,
+          fallback: r.fallback,
+          game: r.game,
+          panel: r.panel,
+        })),
+        player: row ? { name: row.name, uuid: row.uuid, role: hub.players.roleOf(row.uuid).id } : null,
+      };
+    },
+  );
 
   /** Regeln, Discord-Einladung, Kanäle. */
   app.get('/api/site', async () => {
@@ -200,6 +241,8 @@ export function registerSiteRoutes(
         (c) => typeof c === 'string' && c.trim() !== '',
       ),
       discordInvite: link(s['discordInvite']) ?? discordInvite(),
+      // Offene Stellen im Team (Bewerben unter /team/bewerben).
+      teamSearch: openPositions(),
       socials: {
         youtube: link(s['youtube']),
         tiktok: link(s['tiktok']),

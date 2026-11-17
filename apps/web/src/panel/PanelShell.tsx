@@ -2,6 +2,7 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
   Bird,
   Castle,
+  ClipboardList,
   Cloud,
   Compass,
   Dices,
@@ -50,6 +51,7 @@ import { cn } from '~/lib/cn';
 import { usePick } from '~/lib/text';
 import { useLogout } from './PanelGate';
 import { RoleBadge } from '~/components/role-visuals';
+import { usePendingCount } from './applications/model';
 import { usePanel, useSettingsQuery, type SettingsEntry } from './session';
 import { TourProvider, useTour } from './tour/Tour';
 
@@ -62,6 +64,7 @@ const AREA_ICONS: Readonly<Record<string, LucideIcon>> = {
   Newspaper,
   Users,
   Castle,
+  ClipboardList,
   Pickaxe,
   Hammer,
   RefreshCw,
@@ -105,6 +108,7 @@ function Item({
   label,
   end,
   tour,
+  badge,
   onNavigate,
 }: {
   readonly to: string;
@@ -113,6 +117,8 @@ function Item({
   readonly end?: boolean;
   /** Step of the panel tour that lights up this entry. */
   readonly tour?: string;
+  /** A number in gold at the right (e.g. open applications). */
+  readonly badge?: number;
   readonly onNavigate?: () => void;
 }): ReactElement {
   return (
@@ -125,6 +131,11 @@ function Item({
     >
       <Icon className="size-[18px] shrink-0 opacity-80 group-hover:opacity-100" aria-hidden />
       <span className="truncate">{label}</span>
+      {badge ? (
+        <span className="tabular ml-auto rounded-full bg-gold px-1.5 text-[11px] font-bold leading-[18px] text-[#1f1503]">
+          {badge}
+        </span>
+      ) : null}
     </NavLink>
   );
 }
@@ -145,6 +156,7 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
   const { logout, busy } = useLogout();
   const tour = useTour();
   const can = (area: (typeof me.areas)[number]): boolean => me.areas.includes(area);
+  const openApplications = usePendingCount(can('players'));
   const areas = settings.data ?? [];
   const modeAreas = areas.filter(({ area }) => area.panel === MODE_PANEL);
   const settingsLink = ({ area }: SettingsEntry): ReactElement => (
@@ -196,6 +208,16 @@ function SidebarContent({ onNavigate }: { readonly onNavigate?: () => void }): R
             icon={UsersRound}
             label={t('shell.players')}
             tour="players"
+            onNavigate={onNavigate}
+          />
+        ) : null}
+        {can('players') ? (
+          <Item
+            to="/bewerbungen"
+            icon={ClipboardList}
+            label={t('shell.applications')}
+            tour="applications"
+            badge={openApplications}
             onNavigate={onNavigate}
           />
         ) : null}

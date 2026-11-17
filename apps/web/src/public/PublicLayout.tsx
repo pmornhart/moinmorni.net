@@ -62,7 +62,7 @@ const NAV: readonly NavItem[] = [
   { to: '/statistiken', key: 'nav.stats', icon: BarChart3, also: ['/spieler'] },
   { to: '/team', key: 'nav.team', icon: Users },
   { to: '/regeln', key: 'nav.rules', icon: ScrollText },
-  { to: '/hilfe', key: 'nav.help', icon: LifeBuoy },
+  { to: '/hilfe', key: 'nav.help', icon: LifeBuoy, also: ['/befehle', '/commands'] },
 ];
 
 const HOME = '/';
@@ -419,7 +419,8 @@ const FOOTER_COLUMNS: readonly { readonly key: string; readonly links: readonly 
       { to: '/hilfe#sprachchat', key: 'site.help.voice.title' },
       { to: '/hilfe#discord', key: 'site.help.discord.title' },
       { to: APPLY_PAGE, key: 'site.help.mornicraft.title' },
-      { to: '/hilfe#befehle', key: 'site.help.commands.title' },
+      { to: '/team/bewerben', key: 'site.footer.teamApply' },
+      { to: '/befehle', key: 'site.help.commands.title' },
       { to: '/regeln', key: 'nav.rules' },
     ],
   },

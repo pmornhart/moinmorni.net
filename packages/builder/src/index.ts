@@ -21,3 +21,4 @@ export * from './lobby/season.js';
 export * from './pruefung.js';
 export * from './verbindungen.js';
 export * from './lobby/pruefen.js';
+export * from './musik/index.js';

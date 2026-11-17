@@ -1,5 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import type { Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import { applications, whitelist } from '../db/schema.js';
 import { conflict, notFound } from '../lib/errors.js';
@@ -41,6 +42,13 @@ export const decideSchema = z.object({
   note: z.string().trim().max(NOTE_MAX).default(''),
 });
 
+/**
+ * Wer MorniCraft-Bewerbungen entscheidet und die Whitelist pflegt: wer im Spiel kicken darf (Moderator und darüber) –
+ * im Panel genauso wie mit den Knöpfen in Discord, der Owner immer. Der Bereich „Spieler“ allein reicht nicht: den hat
+ * auch der Supporter, der sonst Leute an der Bewerbung vorbei in einen Modus „nur auf Einladung“ holen könnte.
+ */
+export const mayDecideMornicraft = (role: Role): boolean => role.id === 'owner' || role.game.includes('kick');
+
 export type Application = typeof applications.$inferSelect;
 export type WhitelistEntry = typeof whitelist.$inferSelect;
 
@@ -71,8 +79,13 @@ export interface ApplicationService {
 
 export function createApplicationService(db: Db, stores: Stores, events: EventBus): ApplicationService {
   const settings = (): Record<string, unknown> => stores.settings('mornicraft');
+  // Nur MorniCraft – Team-Bewerbungen (mode „team“) hat applications/team.ts.
   const get = (id: number): Application | undefined =>
-    db.select().from(applications).where(eq(applications.id, id)).get();
+    db
+      .select()
+      .from(applications)
+      .where(and(eq(applications.id, id), eq(applications.mode, APPLY_MODE)))
+      .get();
   const entryOf = (mode: string, name: string): WhitelistEntry | undefined =>
     db
       .select()
@@ -127,7 +140,7 @@ export function createApplicationService(db: Db, stores: Stores, events: EventBu
       db
         .select()
         .from(applications)
-        .where(status ? eq(applications.status, status) : undefined)
+        .where(and(eq(applications.mode, APPLY_MODE), status ? eq(applications.status, status) : undefined))
         .orderBy(desc(applications.id))
         .all(),
     get,
@@ -135,7 +148,7 @@ export function createApplicationService(db: Db, stores: Stores, events: EventBu
       db
         .select()
         .from(applications)
-        .where(eq(applications.discordId, discordId))
+        .where(and(eq(applications.mode, APPLY_MODE), eq(applications.discordId, discordId)))
         .orderBy(desc(applications.id))
         .get(),
     decide: (id, accept, by, note) => {

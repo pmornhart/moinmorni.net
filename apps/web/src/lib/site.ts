@@ -1,5 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import type { ModeStatus, Text } from '@moinmorni/shared';
+import type { GameRight, ModeStatus, PanelArea, Text } from '@moinmorni/shared';
 import { mmApi, MmApiError } from './mm-api';
 
 /**
@@ -74,6 +74,8 @@ export interface SiteInfo {
   readonly socials: Readonly<Record<Social, string | null>>;
   /** Everyone who has ever played on MoinMorni. */
   readonly players: number;
+  /** Open team positions ("Wir suchen …", apply under /team/bewerben). */
+  readonly teamSearch?: readonly Pick<PublicRole, 'id' | 'name' | 'symbol' | 'colour'>[];
 }
 
 const HTTP_NOT_FOUND = 404;
@@ -153,11 +155,7 @@ export function useModeBoards(): UseQueryResult<ModeBoard[]> {
   });
 }
 
-export function useModeTop(
-  mode: string,
-  key: string,
-  order: 'asc' | 'desc',
-): UseQueryResult<ModeTopEntry[]> {
+export function useModeTop(mode: string, key: string, order: 'asc' | 'desc'): UseQueryResult<ModeTopEntry[]> {
   return useQuery({
     queryKey: ['mode-top', mode, key, order],
     queryFn: () =>
@@ -184,4 +182,27 @@ export function useTeam(): UseQueryResult<TeamGroup[]> {
 /** Modes by id, e.g. for a mode's own page. */
 export function findMode(modes: readonly ModeStatus[] | undefined, id: string): ModeStatus | undefined {
   return modes?.find((m) => m.id === id);
+}
+
+/** A rank with what it may do – for the commands page (team commands by rank). */
+export interface CommandRole extends PublicRole {
+  readonly position: number;
+  readonly fallback: boolean;
+  readonly game: readonly GameRight[];
+  readonly panel: readonly PanelArea[];
+}
+
+export interface CommandsInfo {
+  readonly roles: readonly CommandRole[];
+  /** With ?spieler=: the player and their rank (id) as in the game; null = nobody asked or not known. */
+  readonly player: { readonly name: string; readonly uuid: string; readonly role: string } | null;
+}
+
+export function useCommandsInfo(player: string): UseQueryResult<CommandsInfo> {
+  return useQuery({
+    queryKey: ['commands', player.toLowerCase()],
+    queryFn: () =>
+      mmApi<CommandsInfo>(player ? `/api/commands?spieler=${encodeURIComponent(player)}` : '/api/commands'),
+    staleTime: MINUTE_MS,
+  });
 }

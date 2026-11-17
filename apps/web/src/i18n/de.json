@@ -126,7 +126,7 @@
       "eyebrow": "Spielmodi",
       "title": "Such dir dein Abenteuer aus",
       "pageTitle": "Spielmodi",
-      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "text": "In der Lobby sprichst du einfach eine Figur im Dorf an – schon bist du im Spiel. Die Modi sind rund um die Uhr offen.",
       "all": "Alle Spielmodi",
       "empty": "Gerade sind noch keine Spielmodi eingetragen.",
       "emptyTitle": "Noch keine Spielmodi",
@@ -204,7 +204,7 @@
       "place": "Platz {{rank}}",
       "homeTitle": "MoinMorni in Zahlen",
       "modesOpen": "Spielmodi offen",
-      "modesOpenHint": "Leere Modi schlafen und wachen auf, sobald jemand kommt.",
+      "modesOpenHint": "Rund um die Uhr offen – du kommst sofort hinein.",
       "modeBoards": "Bestenlisten der Spielmodi",
       "modeBoardsText": "Wer ist in den Modi ganz vorne? Wähl einen Modus und einen Wert.",
       "modeBoardsModes": "Spielmodus",
@@ -322,7 +322,10 @@
       "soon": "Das Team stellt sich bald vor.",
       "helpText": "Du brauchst Hilfe oder willst etwas melden? Am schnellsten geht's mit einem Ticket im Discord.",
       "helpLink": "So bekommst du Hilfe",
-      "homeTitle": "Das Team"
+      "homeTitle": "Das Team",
+      "search": "Wir suchen Verstärkung",
+      "searchText": "Lust, MoinMorni mitzugestalten? Bewirb dich – mit Discord-Anmeldung, in ein paar Minuten.",
+      "apply": "Jetzt bewerben"
     },
     "rules": {
       "eyebrow": "Fair spielen",
@@ -354,7 +357,8 @@
       "help": "Hilfe",
       "legal": "Rechtliches",
       "panel": "Team-Panel",
-      "follow": "MoinMorni im Netz"
+      "follow": "MoinMorni im Netz",
+      "teamApply": "Fürs Team bewerben"
     },
     "help": {
       "eyebrow": "Fragen & Antworten",
@@ -409,7 +413,7 @@
         "title": "Spielmodi",
         "short": "Alle Modi auf einen Blick – und wie du hinkommst",
         "intro": "Alle Spielmodi erreichst du aus der Lobby: Die Figuren am Dorfmarkt um den Maibaum und am Schlossmarkt vor der Schlosstreppe bringen dich mit einem Klick hin. Mit dem Kompass in deiner Leiste geht es noch schneller.",
-        "sleep": "Ist in einem Modus gerade niemand, schläft er. Sobald du kommst, wacht er auf – das dauert einen kleinen Moment.",
+        "sleep": "Die Spielmodi laufen rund um die Uhr – du kommst sofort hinein. Schläft ein Modus doch einmal, wacht er auf, sobald du kommst – das dauert etwa eine halbe Minute.",
         "pause": "Wintersport kann eine Sommerpause machen: Dann gibt es nur im Winter (1. Dezember bis 31. März) Wettkämpfe – das Dorf mit Eisfläche, Lift und Rodelbahn bleibt offen.",
         "more": "Mehr",
         "all": "Alle Spielmodi"
@@ -429,18 +433,23 @@
         "short": "Die wichtigsten Befehle im Chat",
         "intro": "Befehle tippst du in den Chat (Taste T) – mit einem Schrägstrich davor.",
         "tab": "Tipp: Mit der Tab-Taste ergänzt Minecraft Befehle und Namen von selbst.",
-        "list": {
-          "freunde": "Freunde hinzufügen und Anfragen annehmen. Ohne Namen siehst du, wer von deinen Freunden online ist.",
-          "party": "Freunde in deine Party einladen – die Party folgt dir in jeden Spielmodus.",
-          "pc": "Eine Nachricht nur an deine Party schreiben.",
-          "msg": "Jemandem eine private Nachricht schreiben.",
-          "r": "Auf die letzte private Nachricht antworten.",
-          "sprache": "Sprache wechseln: Deutsch oder Englisch.",
-          "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
-          "voice": "Sprachkanäle anzeigen, einem beitreten oder ihn verlassen.",
-          "lobby": "Zurück in die Lobby.",
-          "discord": "Einen Code holen, um dein Konto mit Discord zu verbinden."
-        }
+        "all": "Alle Befehle ansehen"
+      },
+      "streamer": {
+        "title": "Streamer-Modus",
+        "short": "Streamen, ohne zu viel zu zeigen",
+        "intro": "Du streamst oder nimmst ein Video auf? Mit dem Streamer-Modus siehst nur du weniger: IP-Adressen und unsere Adressen werden zu •••, private Nachrichten und Koordinaten liest du nur mit der Maus, und alle anderen sehen ● LIVE an deinem Namen. Er gilt auf jedem Server – in der Lobby, in allen Spielmodi und in MorniCraft.",
+        "step1": "Tippe im Chat",
+        "step2": "Im Menü, das dann kommt, schaltest du jeden Teil einzeln an oder aus – einfach anklicken.",
+        "step3": "Fertig mit dem Stream? Tippe",
+        "parts": {
+          "ip": "IP-Adressen und die Adressen des Netzwerks werden im Chat und in Nachrichten zu •••.",
+          "coords": "Wo ein Spielmodus Koordinaten zeigt (z. B. MorniCraft bei /getpos und deinen Zuhause), siehst du sie nur mit der Maus.",
+          "msg": "Private Nachrichten (/msg, /r, in MorniCraft auch die Post) liest du nur mit der Maus.",
+          "live": "Die anderen sehen ● LIVE an deinem Namen – im Chat, in der Tab-Liste und über deinem Kopf."
+        },
+        "f3": "Tipp: Die Koordinaten im F3-Bildschirm blendest du in Minecraft selbst aus – Optionen → Chat → „Reduzierte Debug-Infos“.",
+        "who": "Ob alle den Streamer-Modus benutzen dürfen oder nur das Media-Team, stellt das Team ein."
       },
       "rules": {
         "title": "Regeln & Strafen",
@@ -452,7 +461,7 @@
       "team": {
         "title": "Hilfe vom Team",
         "short": "Ticket im Discord – oder im Spiel fragen",
-        "intro": "Du steckst fest, hast einen Fehler gefunden oder willst jemanden melden? Wir helfen dir gern.",
+        "intro": "Du steckst fest, hast einen Fehler gefunden oder willst jemanden melden? Wir helfen dir gern. Das Team erkennst du im Spiel am Symbol vor dem Namen, z. B. ✚ Supporter oder ⚔ Moderator.",
         "step1": "Geh in unserem Discord in den Kanal „hilfe“.",
         "step2": "Klick auf den Knopf, um ein Ticket zu öffnen – das sehen nur du und das Team.",
         "step3": "Beschreib kurz, was los ist. Jemand aus dem Team meldet sich bei dir.",
@@ -520,7 +529,34 @@
           "home": "Zu deinem Zuhause (mit /sethome speichern).",
           "tpa": "Fragen, ob du zu jemandem darfst.",
           "clan": "Clan-Menü: gründen, einladen, Basis, Farbe.",
-          "spawn": "Zurück zur Spawn-Insel."
+          "spawn": "Zurück zur Spawn-Insel.",
+          "sethome": "Merkt sich, wo du gerade stehst, als Zuhause.",
+          "homes": "Deine Zuhause als Betten zum Anklicken.",
+          "delhome": "Ein Zuhause löschen.",
+          "back": "Zurück zum letzten Ort – auch nach dem Tod.",
+          "tpahere": "Fragen, ob jemand zu dir kommt.",
+          "tpaccept": "Eine Anfrage annehmen.",
+          "tpdeny": "Eine Anfrage ablehnen.",
+          "clanCreate": "Einen eigenen Clan gründen, mit Kürzel (2–4 Zeichen).",
+          "clanInvite": "Jemanden in deinen Clan einladen.",
+          "clanBase": "Zur Clan-Basis.",
+          "cc": "Im Clan-Chat schreiben.",
+          "mail": "Eine Nachricht für später – auch an Leute, die offline sind.",
+          "mailRead": "Deine Post lesen.",
+          "ignore": "Jemanden im Chat ausblenden.",
+          "afk": "Allen zeigen, dass du kurz weg bist.",
+          "seen": "Wann jemand zuletzt da war.",
+          "near": "Wer in deiner Nähe ist.",
+          "getpos": "Deine Koordinaten.",
+          "ping": "Deine Verbindung zum Server.",
+          "info": "Alle Befehle von MorniCraft im Spiel.",
+          "leiste": "Die Leiste rechts ein- oder ausblenden.",
+          "streamer": "Streamer-Modus: Adressen, Koordinaten und Nachrichten verstecken.",
+          "ansehen": "Team-Menü eines Spielers (auch Ducken + Rechtsklick).",
+          "einfrieren": "Jemanden einfrieren oder wieder auftauen.",
+          "nether": "Das Netherportal am Spawn bauen (oder mit „weg“ abbauen).",
+          "end": "Den Weg zum Endportal im Spawn bauen (oder abbauen).",
+          "mcadmin": "MorniCraft neu laden (Einstellungen kommen sonst von selbst aus dem Panel)."
         }
       },
       "duels": {
@@ -637,6 +673,92 @@
           "top": "Bestenlisten."
         }
       }
+    },
+    "commands": {
+      "eyebrow": "Im Chat mit /",
+      "title": "Befehle",
+      "titleFor": "Befehle für {{name}}",
+      "text": "Alles, was du im Chat tippen kannst: für alle im Netzwerk, für jeden Spielmodus und fürs Team. Ein Klick auf einen Befehl kopiert ihn.",
+      "textFor": "Nur, was {{name}} als {{rank}} wirklich darf. Ein Klick auf einen Befehl kopiert ihn.",
+      "mine": {
+        "label": "Nur meine Befehle zeigen",
+        "placeholder": "Dein Minecraft-Name",
+        "go": "Meine Befehle",
+        "clear": "Alle Befehle"
+      },
+      "unknown": "Einen Spieler „{{name}}“ kennen wir noch nicht – hier stehen alle Befehle.",
+      "jump": "Springe zu",
+      "jumpEveryone": "Für alle",
+      "jumpTeam": "Team",
+      "everyoneTitle": "Für alle",
+      "everyoneText": "Diese Befehle gehen auf jedem Server im Netzwerk – in der Lobby und in jedem Spielmodus.",
+      "modeText": "Nur auf {{name}}. Die Befehle für alle gehen dort natürlich auch.",
+      "modeLink": "Zum Spielmodus",
+      "modeTeam": "Team-Werkzeuge",
+      "teamTitle": "Team",
+      "teamText": "Wer was darf, hängt vom Rang ab – die Ränge stehen neben jedem Befehl. Strafen gehen nur an niedrigere Ränge.",
+      "teamTextFor": "Das darfst du als {{rank}}. Strafen gehen nur an niedrigere Ränge.",
+      "settingsTitle": "Einstellungen im Spiel",
+      "settingsText": "Jede Einstellung aus dem Panel geht auch als Befehl. Ohne Wert zeigt der Befehl alle Einstellungen des Bereichs und wie man sie ändert.",
+      "settingLine_one": "{{area}}: {{count}} Einstellung",
+      "settingLine_other": "{{area}}: {{count}} Einstellungen",
+      "copy": "Kopieren: {{command}}",
+      "whoMay": "Diese Ränge dürfen das",
+      "topics": {
+        "travel": "Unterwegs",
+        "friends": "Freunde & Party",
+        "chat": "Nachrichten",
+        "voice": "Sprachchat",
+        "account": "Dein Konto",
+        "lobby": "Nur in der Lobby",
+        "team": "Team-Befehle"
+      },
+      "lines": {
+        "lobby": "Zurück in die Lobby – von überall. Mitten in einer Runde fragen wir lieber noch einmal nach, ein zweites /lobby gilt als Ja.",
+        "server": "Direkt in einen Spielmodus, z. B. /server duels.",
+        "freunde": "Wer von deinen Freunden gerade online ist – und wo.",
+        "freundeAdd": "Eine Freundschaftsanfrage schicken.",
+        "freundeAnnehmen": "Eine Anfrage annehmen (ablehnen: /freunde ablehnen <name>).",
+        "freundeEntfernen": "Jemanden aus deiner Freundesliste nehmen.",
+        "party": "Freunde in deine Party einladen – die Party folgt dir in jeden Spielmodus.",
+        "partyAnnehmen": "Eine Einladung in eine Party annehmen.",
+        "partyVerlassen": "Die Party verlassen.",
+        "partyLeiter": "Die Leitung der Party abgeben (nur als Leiter).",
+        "partyAufloesen": "Die Party auflösen (nur als Leiter).",
+        "pc": "Eine Nachricht nur an deine Party schreiben.",
+        "msg": "Jemandem eine private Nachricht schreiben.",
+        "r": "Auf die letzte private Nachricht antworten.",
+        "voice": "Alle Sprachkanäle mit der Zahl der Leute darin.",
+        "voiceKanal": "Einem Sprachkanal oder einer Gruppe beitreten.",
+        "voiceRaus": "Den Sprachkanal verlassen.",
+        "voiceGruppe": "Eine eigene Sprachgruppe für alle Server aufmachen – mit Passwort nur für Eingeladene.",
+        "voiceZu": "Zu einem Spieler in seine Sprachgruppe – ohne Passwort.",
+        "sprache": "Sprache wechseln: Deutsch oder Englisch.",
+        "profil": "Dein Profil auf der Webseite privat oder öffentlich stellen.",
+        "streamer": "Streamer-Modus an oder aus – verdeckt Adressen, Koordinaten und private Nachrichten auf jedem Server, die anderen sehen ● LIVE an deinem Namen.",
+        "streamerTeil": "Einen Teil des Streamer-Modus für dich an- oder ausschalten (ohne Wort kommt das Menü zum Anklicken).",
+        "discord": "Einladung in unseren Discord – und ein Code, um dein Konto zu verbinden.",
+        "rundgang": "Ein Rundgang durchs Dorf (beenden: /rundgang stop).",
+        "parkour": "Die Bestenliste der Parkour-Spirale und deine Bestzeit.",
+        "parkourStart": "An den Start der Parkour-Spirale.",
+        "musik": "Lobbymusik für dich aus- und wieder anschalten. Im Alltag spielt Blasmusik, zur Wiesn bayerische Musik, im Winter Weihnachtslieder – mit unserem Lobby-Paket eine echte Kapelle, sonst Notenblöcke.",
+        "musikLauter": "Lobbymusik leiser oder lauter stellen (auch als Zahl von 0 bis 100). Der Regler „Plattenspieler/Notenblöcke“ in den Minecraft-Einstellungen wirkt auch.",
+        "musikWeiter": "Gleich das nächste Stück.",
+        "warn": "Jemanden verwarnen – steht in seinem Strafen-Verlauf.",
+        "strafen": "Alle Strafen eines Spielers ansehen.",
+        "mute": "Im Chat stummschalten, z. B. für 30m, 2h, 7d oder perm.",
+        "unmute": "Wieder schreiben lassen.",
+        "voicemute": "Im Sprachchat stummschalten.",
+        "voiceunmute": "Im Sprachchat wieder sprechen lassen.",
+        "kick": "Vom Netzwerk werfen (darf gleich wieder kommen).",
+        "gefaengnis": "In die Zelle unter dem Rathaus der Lobby – ohne Dauer zehn Minuten.",
+        "frei": "Aus dem Gefängnis holen.",
+        "ban": "Aus dem ganzen Netzwerk aussperren – auch im Discord.",
+        "unban": "Den Bann aufheben.",
+        "rang": "Einen Rang geben oder wegnehmen – nur Ränge unter dem eigenen.",
+        "bau": "Auf den Bau-Server.",
+        "rueckkehr": "Verbindung mitten im Spiel weg? Solange dein Platz frei ist, bringt dich das zurück in deine Runde (geht auch mit dem Gegenstand in der Lobby)."
+      }
     }
   },
   "login": {
@@ -708,7 +830,8 @@
     "team": "Team",
     "myAccount": "Mein Konto",
     "accountShort": "Konto",
-    "modeSettings": "Spielmodi"
+    "modeSettings": "Spielmodi",
+    "applications": "Bewerbungen"
   },
   "overview": {
     "greeting": "Servus, {{name}}!",
@@ -751,11 +874,13 @@
     "missing": "Diesen Bereich gibt es nicht – oder du darfst ihn nicht sehen.",
     "default": "Standard: {{value}}",
     "savedMode": "Gespeichert – gilt nach dem nächsten Neustart des Modus (sobald gerade niemand spielt).",
-    "sections": "Abschnitte"
+    "sections": "Abschnitte",
+    "ownerOnly": "Nur der Owner kann das ändern.",
+    "ownerOnlyLocked": "Das kann nur der Owner ändern – du siehst den Stand."
   },
   "modes": {
     "title": "Modi",
-    "text": "Welche Spielmodi es gibt, in welcher Reihenfolge sie in der Lobby und auf der Webseite stehen und wer hinein darf.",
+    "text": "Welche Spielmodi es gibt, in welcher Reihenfolge sie in der Lobby und auf der Webseite stehen, wer hinein darf und was ein Modus tut, wenn niemand drin ist.",
     "state": "Zustand",
     "stateHelp": "„Bald“ zeigt den Modus schon an, man kann aber noch nicht hinein.",
     "access": "Wer darf hinein?",
@@ -766,8 +891,20 @@
     "descDe": "Beschreibung auf Deutsch",
     "descEn": "Beschreibung auf Englisch",
     "maxPlayers": "Spieler höchstens",
-    "sleep": "Schlafen, wenn leer",
-    "sleepHelp": "Ist niemand drin, legt sich der Server schlafen und spart Arbeitsspeicher. Er wacht auf, sobald jemand die Figur anklickt.",
+    "idle": "Wenn niemand drin ist",
+    "idleChoice": {
+      "rest": "Ruhezustand – online und sparsam",
+      "sleep": "Schlafen – ganz aus",
+      "awake": "Wach bleiben – Welt läuft weiter"
+    },
+    "idleHelp": {
+      "rest": "Empfohlen. Der Modus bleibt online, man kommt sofort hinein. Ohne Spieler hält Minecraft nach einer Minute die Welt an und Java gibt Arbeitsspeicher zurück – ein leerer Modus braucht dann etwa die Hälfte.",
+      "sleep": "Ist eine Weile niemand drin, geht der Server ganz aus und braucht gar keinen Arbeitsspeicher. Er wacht auf, sobald jemand die Figur anklickt – das dauert etwa eine halbe Minute.",
+      "awake": "Der Modus bleibt online und hält seinen ganzen Arbeitsspeicher, auch wenn niemand drin ist; die Welt läuft ohne Spieler weiter. Nur nötig, wenn ein Modus ohne Spieler weiterrechnen soll."
+    },
+    "idleRestart": "Gilt nach dem nächsten Neustart des Modus – er startet von selbst neu, sobald niemand drin ist.",
+    "idleRestartPending": "Neustart steht noch aus – der Modus startet neu, sobald niemand drin ist.",
+    "idleNoServer": "Geht erst, wenn der Modus einen Server hat.",
     "up": "Weiter nach vorne",
     "down": "Weiter nach hinten",
     "position": "Platz {{n}}",
@@ -824,8 +961,9 @@
       "bigger-party": "Größere Party",
       "lobby-extras": "Extras in der Lobby",
       "chat-colour": "Farbe im Chat",
-      "maintenance-join": "Rein trotz Wartung",
+      "maintenance-join": "Kommt immer rein",
       "ranks": "Ränge vergeben",
+      "modes-admin": "Spielmodi verwalten",
       "admin": "Alles (Verwaltung)"
     },
     "discordRights": {
@@ -886,7 +1024,7 @@
     "fixFirst": "Bitte zuerst prüfen: {{names}} (Name, Symbol oder Farbe passt noch nicht).",
     "areaHelp": {
       "overview": "Startseite des Panels mit Netzwerk-Status.",
-      "modes": "Spielmodi an- und ausschalten, Reihenfolge, wer hinein darf.",
+      "modes": "Spielmodi an- und ausschalten, Reihenfolge, wer hinein darf, Ruhezustand.",
       "lobby": "Einstellungen der Lobby (Dorf, Figuren, Deko).",
       "players": "Spieler suchen, Profile ansehen, Ränge vergeben.",
       "punishments": "Strafen verhängen und aufheben.",
@@ -914,17 +1052,18 @@
       "voice-mute": "Andere im Sprachchat stummschalten.",
       "build": "Blöcke setzen und abbauen, wo sonst geschützt ist.",
       "worldedit": "Große Bau-Werkzeuge (ganze Bereiche auf einmal).",
-      "lobby-edit": "Die Lobby umbauen.",
-      "gamemode": "Den Spielmodus wechseln (Überleben, Zuschauer …).",
+      "lobby-edit": "In der Lobby bauen (im Kreativmodus).",
+      "gamemode": "Den Spielmodus wechseln (Überleben, Abenteuer, Zuschauer) – Kreativ nur mit „Kreativmodus“.",
       "creative": "In den Kreativmodus wechseln.",
       "streamer": "Streamer-Modus: versteckt Adressen und Koordinaten.",
       "reserved-slot": "Darf auch bei vollem Netzwerk rein.",
       "bigger-party": "Größere Party mit mehr Freunden.",
       "lobby-extras": "Extras in der Lobby, z. B. Partikel oder Hüte.",
       "chat-colour": "Farben im eigenen Chat-Text.",
-      "maintenance-join": "Darf auch während der Wartung rein.",
+      "maintenance-join": "Kommt auch während der Wartung rein und in Modi nur auf Einladung (MorniCraft) ohne Whitelist – steht dort von selbst auf der Liste.",
       "ranks": "Anderen im Spiel Ränge geben (nur unter dem eigenen).",
-      "admin": "Alles im Spiel – nur für ganz wenige."
+      "modes-admin": "Die Verwaltungs-Befehle der Spielmodi auf jedem Server, z. B. Runde starten, neu laden, neu bauen (/mparty, /duels, /smpadmin …).",
+      "admin": "Alles im Spiel auf jedem Server, wie ein Operator – nur für ganz wenige."
     },
     "discordHelp": {
       "administrator": "Darf im Discord wirklich alles.",
@@ -1021,7 +1160,10 @@
     "act": {
       "title": "Strafe verhängen",
       "help": "Wirkt sofort im ganzen Netzwerk. Das Team bekommt einen Hinweis.",
-      "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – bestrafen kann hier nur jemand mit höherem Rang."
+      "higher": "{{name}} hat den gleichen oder einen höheren Rang als du – bestrafen kann hier nur jemand mit höherem Rang.",
+      "protectedOne": "{{name}} ist {{rank}} – das darf nur der {{who}}. Strafen gehen nur an niedrigere Ränge.",
+      "protectedMany": "{{name}} ist {{rank}} – das dürfen nur {{who}}. Strafen gehen nur an niedrigere Ränge.",
+      "protectedNobody": "{{name}} ist {{rank}} – diesen Rang darf niemand bestrafen."
     },
     "active": {
       "title": "Gerade aktiv",
@@ -1158,7 +1300,8 @@
     "noMatch": "Keine Strafe passt zu deiner Auswahl.",
     "reset": "Filter zurücksetzen",
     "count": "{{count}} von {{total}} Strafen",
-    "latest": "Die letzten {{count}} Strafen, neueste zuerst."
+    "latest": "Die letzten {{count}} Strafen, neueste zuerst.",
+    "liftHigher": "Aufheben kann das nur jemand mit höherem Rang als {{name}}."
   },
   "tour": {
     "step": "Schritt {{n}} von {{total}}",
@@ -1173,11 +1316,11 @@
     },
     "modes": {
       "title": "Modi",
-      "text": "Hier schaltest du Spielmodi an und aus, setzt sie auf Wartung und legst fest, in welcher Reihenfolge sie in der Lobby stehen."
+      "text": "Hier schaltest du Spielmodi an und aus, setzt sie auf Wartung und legst fest, in welcher Reihenfolge sie in der Lobby stehen. Unter „Wenn niemand drin ist“ wählst du je Modus: Ruhezustand (online, wenig Arbeitsspeicher), Schlafen (ganz aus) oder Wach bleiben."
     },
     "settings": {
       "title": "Einstellungen",
-      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
+      "text": "Alles fürs Netzwerk, nach Bereichen sortiert – Chat, Sprachchat, Lobby und darunter jeder Spielmodus (Duels, Morni Party …). Oben auf jeder Einstellungs-Seite ist eine Suche, und bei jedem Feld steht der passende Befehl, falls du lieber im Spiel umstellst. Einstellungen eines Spielmodus gelten nach seinem nächsten Neustart – den macht MoinMorni von selbst, sobald gerade niemand spielt. Unter Lobby → Musik stellst du die Lobbymusik ein (je Saison, welche Stücke laufen). Unter „Erreichbarkeit“ verbindest du NetBird: Webseite und Spiel direkt auf der Domain, und deine Adresse zu Hause bleibt versteckt."
     },
     "news": {
       "title": "News",
@@ -1193,11 +1336,11 @@
     },
     "roles": {
       "title": "Rollen",
-      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel, im Panel und im Discord. Eine Änderung gilt überall gleichzeitig."
+      "text": "Symbol, Farbe und Rechte jeder Rolle – im Spiel auf jedem Server (bis zu den Verwaltungs-Befehlen der Spielmodi), im Panel und im Discord. Eine Änderung gilt überall gleichzeitig."
     },
     "discord": {
       "title": "Discord",
-      "text": "Den eigenen Discord-Bot verbinden und den Discord-Server Schritt für Schritt einrichten lassen."
+      "text": "Den eigenen Discord-Bot verbinden (Token direkt hier eintragen), den Discord-Server Schritt für Schritt einrichten lassen und unter „Aussehen“ Server-Bild, Banner und das Profil des Bots ändern."
     },
     "servers": {
       "title": "Server",
@@ -1206,6 +1349,10 @@
     "team": {
       "title": "Team",
       "text": "Hier legst du Konten fürs Panel an, gibst jeder Person eine Rolle und hilfst, wenn jemand sein Passwort vergessen hat. Dein eigenes Konto findest du unten links bei deinem Namen."
+    },
+    "applications": {
+      "title": "Bewerbungen",
+      "text": "Bewerbungen fürs Team (Moderator, Supporter, Builder …) und für MorniCraft – von der Webseite und aus dem Discord. Lies die Antworten, gib Daumen, schreib Notizen fürs Team und nimm an oder lehn ab. Welche Stellen offen sind, stellst du unter Einstellungen → Team-Bewerbungen ein."
     }
   },
   "newsAdmin": {
@@ -1268,8 +1415,11 @@
   },
   "discordAdmin": {
     "title": "Discord",
-    "text": "MoinMorni hat einen eigenen Discord-Bot. Hier verbindest du ihn und lässt ihn deinen Discord-Server einrichten – Schritt für Schritt.",
+    "text": "MoinMorni hat einen eigenen Discord-Bot. Hier verbindest du ihn, lässt ihn deinen Discord-Server einrichten und stellst ein, wie alles aussieht.",
     "refresh": "Neu prüfen",
+    "jump": "Springen zu",
+    "jumpSetup": "Einrichten",
+    "optional": "Optional",
     "overall": {
       "missing": {
         "pill": "Kein Bot verbunden",
@@ -1277,7 +1427,7 @@
       },
       "tokenInvalid": {
         "pill": "Token stimmt nicht",
-        "text": "Discord kennt den hinterlegten Token nicht. Erzeuge im Entwicklerportal einen neuen und trag ihn ein (Schritt 1)."
+        "text": "Discord kennt den hinterlegten Token nicht. Erzeuge im Entwicklerportal einen neuen und trag ihn in Schritt 1 ein."
       },
       "connecting": {
         "pill": "Verbindet sich …",
@@ -1287,27 +1437,34 @@
         "pill": "Online, ohne Server",
         "text": "Der Bot ist online, aber noch auf keinem Discord-Server. Leg einen an und lade den Bot ein (Schritte 3 und 4)."
       },
+      "running": {
+        "pill": "Richtet gerade ein …",
+        "text": "Der Bot richtet „{{guild}}“ gerade ein. Unten in Schritt 5 siehst du, wie weit er ist."
+      },
       "intent": {
         "pill": "Ein Schalter fehlt",
         "text": "Der Bot ist auf „{{guild}}“, aber der Schalter „Server Members Intent“ ist aus. Ohne ihn kann er neue Mitglieder nicht begrüßen (Schritt 2)."
       },
       "ready": {
         "pill": "Bereit zum Einrichten",
-        "text": "Der Bot ist auf „{{guild}}“ und bereit. Ein Klick in Schritt 5 legt Rollen und Kanäle an."
+        "text": "Der Bot ist auf „{{guild}}“ und bereit. Ein Klick in Schritt 5 legt Rollen, Kanäle und Nachrichten an."
       },
       "done": {
         "pill": "Alles eingerichtet",
-        "text": "Der Bot läuft auf „{{guild}}“: Status, Ränge, Strafen und Tickets sind verbunden."
+        "text": "Der Bot läuft auf „{{guild}}“: Status, Ränge, Strafen, Tickets und Bewerbungen sind verbunden."
       }
     },
     "check": {
       "token": "Bot-Token hinterlegt",
       "tokenInvalid": "Der Token stimmt nicht – bitte im Entwicklerportal einen neuen erzeugen.",
+      "botName": "Bot: {{name}}",
       "online": "Mit Discord verbunden",
       "intent": "„Server Members Intent“ an",
       "guild": "Auf einem Discord-Server",
       "noGuild": "Noch auf keinem Server",
-      "setup": "Server eingerichtet"
+      "setup": "Server eingerichtet",
+      "login": "„Mit Discord anmelden“ auf der Webseite",
+      "loginOptional": "Optional – für Bewerbungen auf der Webseite (Schritt 6)"
     },
     "stepN": "Schritt {{n}}:",
     "stepDone": "Erledigt",
@@ -1315,17 +1472,18 @@
       "title": "So richtest du den Discord ein",
       "text": "Einmal durchgehen – danach erledigt der Bot den Rest allein. Diese Seite prüft alle 10 Sekunden, was schon geklappt hat.",
       "s1": {
-        "title": "Bot im Discord-Entwicklerportal anlegen",
+        "title": "Bot anlegen und Token eintragen",
         "a": "Öffne das",
         "portal": "Discord-Entwicklerportal",
         "b": "Klicke auf „New Application“ und nenne sie „MoinMorni“.",
         "c": "Links auf „Bot“, dann auf „Reset Token“ und den Token kopieren.",
-        "d": "Gib ihn bei der Installation an (das Skript fragt danach) – oder trag ihn auf dem Server in die .env ein und starte MoinMorni neu:",
-        "secret": "Der Token ist wie ein Passwort: niemals in einen Chat posten oder weitergeben."
+        "d": "Füge ihn hier ein. MoinMorni fragt sofort bei Discord nach, ob er stimmt, und speichert ihn verschlüsselt."
       },
       "s2": {
-        "title": "„Server Members Intent“ einschalten",
-        "text": "Auf derselben Seite („Bot“) unter „Privileged Gateway Intents“ den Schalter „Server Members Intent“ einschalten und speichern. Damit kann der Bot neue Mitglieder begrüßen und Ränge vergeben."
+        "title": "Zwei Schalter im Entwicklerportal",
+        "intent": "Unter „Bot“ → „Privileged Gateway Intents“ den Schalter „Server Members Intent“ einschalten.",
+        "public": "Ebenfalls unter „Bot“ den Schalter „Public Bot“ ausschalten – dann kann nur ihr den Bot einladen.",
+        "why": "Mit dem ersten Schalter begrüßt der Bot neue Mitglieder und vergibt Ränge. Danach unten auf „Save Changes“ klicken."
       },
       "s3": {
         "title": "Leeren Discord-Server anlegen",
@@ -1333,62 +1491,225 @@
       },
       "s4": {
         "title": "Bot einladen",
-        "text": "Klick auf den Knopf, wähle deinen neuen Server und bestätige. Der Bot bekommt dabei Administrator-Rechte, damit er Rollen und Kanäle anlegen kann.",
+        "text": "Klick auf den Knopf, wähle deinen neuen Server und bestätige.",
         "done": "Der Bot ist auf „{{guild}}“.",
-        "button": "Bot einladen",
+        "rights": "Der Bot fragt nur nach diesen Rechten:",
+        "noAdmin": "Kein Administrator-Recht – nur, was er für Rollen, Kanäle, Server-Bild, Strafen und Tickets braucht.",
+        "button": "Bot auf deinen Discord-Server holen",
         "noLink": "Der Knopf erscheint, sobald der Bot-Token stimmt (Schritt 1)."
       },
       "s5": {
         "title": "Server einrichten",
-        "text": "Ein Klick – der Bot legt Rollen, Kanäle und Befehle an. Das dauert etwa eine halbe Minute.",
-        "again": "Schon eingerichtet. „Nochmal abgleichen“ legt nur an, was fehlt (z. B. neue Rollen oder Sprachkanäle) – Vorhandenes bleibt.",
+        "text": "Ein Klick – der Bot legt Rollen, Kanäle, Nachrichten und Befehle an und setzt das Server-Bild. Du siehst hier jeden Schritt.",
+        "again": "Schon eingerichtet. „Nochmal abgleichen“ bringt alles auf den neuesten Stand. Was du in Discord umbenannt oder verschoben hast, bleibt so – nichts wird doppelt angelegt oder gelöscht.",
         "button": "Server einrichten",
         "buttonAgain": "Nochmal abgleichen",
-        "busy": "Richtet ein …"
+        "busy": "Richtet ein …",
+        "started": "Der Bot legt los …",
+        "roleTip": "Tipp: Die Rolle des Bots (sie heißt wie der Bot) muss in Discord unter Servereinstellungen → Rollen über allen Rängen stehen, die er vergeben soll."
+      },
+      "s6": {
+        "title": "Mit Discord anmelden (Webseite)",
+        "text": "Wer sich auf der Webseite bewirbt, meldet sich mit Discord an. Dafür braucht MoinMorni das „Client Secret“ deiner Anwendung.",
+        "a": "Öffne deine Anwendung im",
+        "b": "Links auf „OAuth2“, unter „Redirects“ auf „Add Redirect“, diese Adresse einfügen und „Save Changes“:",
+        "c": "Auf derselben Seite bei „Client Secret“ auf „Reset Secret“, kopieren und hier einfügen:"
       }
     },
     "result": {
-      "title": "Discord-Server eingerichtet!",
-      "counts": "{{roles}} Rollen und {{channels}} Kanäle und Kategorien sind da.",
-      "communityOk": "Der Community-Modus ist an (Regel- und Update-Kanal).",
       "communityFailed": "Den Community-Modus konnte der Bot nicht einschalten – das geht in Discord unter Servereinstellungen → Community. Alles andere läuft."
     },
-    "errors": {
-      "discord_no_guild": "Der Bot ist noch auf keinem Discord-Server. Lade ihn zuerst ein (Schritt 4).",
-      "discord_not_configured": "Es ist noch kein Bot-Token hinterlegt. Fang mit Schritt 1 an."
+    "perm": {
+      "createInvite": "Einladungen erstellen",
+      "banMembers": "Mitglieder bannen",
+      "administrator": "Administrator",
+      "manageChannels": "Kanäle verwalten",
+      "manageGuild": "Server verwalten (Server-Bild)",
+      "addReactions": "Reaktionen hinzufügen",
+      "viewChannel": "Kanäle ansehen",
+      "sendMessages": "Nachrichten senden",
+      "manageMessages": "Nachrichten verwalten",
+      "embedLinks": "Links einbetten",
+      "attachFiles": "Dateien anhängen",
+      "readHistory": "Verlauf lesen",
+      "connect": "Sprachkanälen beitreten",
+      "speak": "Sprechen",
+      "manageRoles": "Rollen verwalten",
+      "manageThreads": "Threads verwalten",
+      "createPrivateThreads": "Private Threads erstellen",
+      "sendInThreads": "In Threads schreiben",
+      "moderateMembers": "Mitglieder timeouten"
     },
     "creates": {
       "title": "Was der Bot anlegt",
-      "text": "Rollen und Kanäle mit gleichem Namen übernimmt er – nichts wird doppelt angelegt.",
+      "text": "Alles mit Symbol und in euren Farben. Was es schon gibt, übernimmt er – nichts wird doppelt angelegt, und was er nicht selbst angelegt hat, rührt er nicht an.",
       "roles": {
         "title": "Rollen",
-        "text": "Alle Ränge aus deiner Rollen-Vorlage mit Symbol, Farbe und Rechten – dazu „Verbunden“, „Stumm“ und „Gefängnis“."
+        "text": "Alle Ränge aus deiner Rollen-Vorlage in Reihenfolge und Farbe, mit Symbol im Namen (♛ Owner, ⚔ Moderator …) – dazu „🤖 Bot“, „✔ Verbunden“, „🔇 Stumm“ und „⛓ Gefängnis“."
       },
       "info": {
-        "title": "Info",
-        "text": "Willkommen, Regeln, Ankündigungen (hier landen deine News) und ein Status-Kanal, der zeigt, wer gerade spielt."
+        "title": "📢 Info",
+        "text": "Willkommen mit Bild und Adresse, Regeln aus dem Panel, Ankündigungen, News von der Webseite, ein Status-Kanal mit einer Live-Nachricht je Modus und die Spielmodi mit Link."
       },
       "community": {
-        "title": "Community",
-        "text": "Allgemein, Bilder, Mitspieler-Suche und Vorschläge."
+        "title": "💬 Community",
+        "text": "Chat, Bilder & Clips und Vorschläge."
       },
       "help": {
-        "title": "Hilfe",
-        "text": "Ein Kanal mit Ticket-Knopf: Ein Ticket sehen nur die Person und das Team."
+        "title": "🎫 Hilfe",
+        "text": "Hilfe mit /hilfe und Knöpfen, Tickets (ein Knopf öffnet ein privates Gespräch nur für dich und das Team) und Bewerbungen fürs Team und für MorniCraft."
       },
       "voice": {
-        "title": "Sprachkanäle",
-        "text": "Die gleichen Kanäle wie im Spiel – von jedem Modus aus erreichbar."
+        "title": "🔊 Sprache",
+        "text": "Die gleichen Sprachkanäle wie im Spiel – von jedem Modus aus erreichbar."
       },
       "team": {
-        "title": "Team, Bauteam und VIP",
-        "text": "Eigene Bereiche, die nur die passenden Ränge sehen – mit Team-Log und Bewerbungen."
+        "title": "🛡 Team",
+        "text": "Team-Chat, Team-Log, Bewerbungs-Eingang (mit Annehmen/Ablehnen) und Strafen-Log – nur fürs Team. Dazu Bereiche fürs Bauteam und VIPs."
       },
       "extras": {
-        "title": "Befehle und Community-Modus",
-        "text": "/verbinden, /hilfe und /status, der Community-Modus mit Regel-Kanal und ein Gefängnis-Kanal für Strafen."
+        "title": "⛓ Gefängnis und Befehle",
+        "text": "Wer im Gefängnis sitzt, sieht nur den Gefängnis-Kanal. Dazu /verbinden, /hilfe, /status und /bewerben."
       },
-      "safe": "Tipp: „Server einrichten“ kannst du jederzeit nochmal drücken, z. B. nach neuen Rollen."
+      "look": {
+        "title": "🎨 Aussehen",
+        "text": "Das MoinMorni-Logo als Server-Bild und als Profilbild des Bots – unter „Aussehen“ tauschst du beides aus."
+      },
+      "safe": "Tipp: „Server einrichten“ kannst du jederzeit nochmal drücken, z. B. nach neuen Rollen oder Sprachkanälen."
+    }
+  },
+  "discordAccess": {
+    "savedBot": "Gespeichert – verbunden als „{{name}}“.",
+    "fromEnv": "aus der .env",
+    "set": "gesetzt",
+    "notSet": "noch nicht gesetzt",
+    "connectedAs": "Verbunden als „{{name}}“",
+    "envHint": "Dieser Wert steht in der .env auf dem Server und gilt. Ändern oder entfernen geht nur dort (danach MoinMorni neu starten).",
+    "ownerOnly": "Nur der Owner kann das ändern.",
+    "hide": "Verbergen",
+    "show": "Anzeigen",
+    "checking": "Prüfe bei Discord …",
+    "save": "Prüfen und speichern",
+    "cancel": "Abbrechen",
+    "privacy": "Wird verschlüsselt gespeichert und danach nie wieder angezeigt – auch dir nicht.",
+    "replace": "Ersetzen",
+    "remove": "Entfernen",
+    "token": {
+      "label": "Bot-Token",
+      "help": "Den Token aus dem Entwicklerportal (Bot → Reset Token) hier einfügen:",
+      "placeholder": "Bot-Token einfügen",
+      "saved": "Bot-Token gespeichert.",
+      "removed": "Bot-Token entfernt – der Bot ist jetzt offline.",
+      "removeTitle": "Bot-Token entfernen?",
+      "removeText": "Der Bot geht offline, bis du einen neuen Token einträgst. Rollen und Kanäle in Discord bleiben, wie sie sind."
+    },
+    "clientSecret": {
+      "label": "Client Secret",
+      "help": "Das Client Secret (OAuth2 → Reset Secret) hier einfügen:",
+      "placeholder": "Client Secret einfügen",
+      "saved": "Client Secret gespeichert – „Mit Discord anmelden“ ist an.",
+      "removed": "Client Secret entfernt – „Mit Discord anmelden“ ist aus.",
+      "removeTitle": "Client Secret entfernen?",
+      "removeText": "Dann kann sich auf der Webseite niemand mehr mit Discord anmelden – Bewerbungen gehen nur noch über den Discord-Bot."
+    }
+  },
+  "discordSetup": {
+    "step": {
+      "check": "Rechte prüfen",
+      "roles": "Rollen",
+      "channels": "Kategorien und Kanäle",
+      "messages": "Nachrichten (Willkommen, Regeln, Knöpfe)",
+      "commands": "Befehle (/hilfe, /bewerben …)",
+      "community": "Community-Modus",
+      "icon": "Server-Bild"
+    },
+    "count": "{{done}} / {{total}}",
+    "state": {
+      "waiting": "wartet",
+      "running": "läuft",
+      "done": "fertig",
+      "skipped": "übersprungen",
+      "failed": "fehlgeschlagen"
+    },
+    "waitTitle": "Discord bremst kurz",
+    "waitText": "Discord erlaubt nur eine bestimmte Zahl an Änderungen pro Minute. In {{seconds}} s geht es von selbst weiter.",
+    "failedTitle": "Die Einrichtung hat nicht geklappt",
+    "error": {
+      "discord_missing_permissions": "Dem Bot fehlen Rechte. Lade ihn mit dem Knopf in Schritt 4 nochmal ein (Discord fragt dann nach den fehlenden) und starte die Einrichtung neu.",
+      "discord_no_guild": "Der Bot ist auf keinem Discord-Server mehr. Lade ihn zuerst ein (Schritt 4).",
+      "discord_not_configured": "Es ist kein Bot-Token mehr hinterlegt (Schritt 1).",
+      "discord_unreachable": "Discord ist gerade nicht erreichbar. Versuch es gleich nochmal – was schon steht, bleibt.",
+      "discord_failed": "Discord hat eine Änderung abgelehnt. Versuch es nochmal – was schon steht, bleibt.",
+      "other": "Da ist etwas schiefgegangen. Versuch es nochmal – was schon steht, bleibt."
+    },
+    "missing": "Es fehlen: {{rights}}",
+    "doneTitle": "Fertig – dein Discord ist eingerichtet!",
+    "doneText": "{{roles}} Rollen, {{channels}} Kanäle und Kategorien und {{messages}} Nachrichten sind da – {{created}} davon neu.",
+    "kept": "So gelassen, weil du sie in Discord geändert hast: {{names}}",
+    "iconKept": "Euer eigenes Server-Bild bleibt. Das MoinMorni-Logo setzt du unter „Aussehen“, wenn du willst.",
+    "iconFailed": "Das Server-Bild ließ sich nicht setzen – das geht auch unter „Aussehen“.",
+    "ownerAdminTitle": "Owner-Rolle: ein Handgriff",
+    "ownerAdminText": "Das Recht „Administrator“ darf ein Bot nicht vergeben. Gib es der Owner-Rolle einmal selbst: Servereinstellungen → Rollen → Owner → Berechtigungen → Administrator.",
+    "someMissingTitle": "Ein paar Rechte fehlen",
+    "someMissing": "Das Wichtigste steht, aber dem Bot fehlen: {{rights}}. Lade ihn über Schritt 4 nochmal ein, dann klappt beim nächsten Abgleich alles."
+  },
+  "discordLook": {
+    "title": "Aussehen",
+    "text": "So sieht euer Discord aus: Server-Bild, Banner und das Profil des Bots. Am Anfang steht überall das MoinMorni-Logo.",
+    "notReady": "Sobald der Bot verbunden ist (Schritt 1), änderst du hier Server-Bild, Banner und das Profil des Bots.",
+    "upload": "Bild hochladen",
+    "useLogo": "MoinMorni-Logo",
+    "noGuild": "Der Bot ist noch auf keinem Discord-Server (Schritt 4).",
+    "noBot": "Der Bot ist gerade nicht verbunden.",
+    "saved": {
+      "icon": "Server-Bild geändert.",
+      "banner": "Banner geändert.",
+      "bot": "Profil des Bots geändert."
+    },
+    "icon": {
+      "title": "Server-Bild",
+      "text": "Das runde Bild in der Server-Liste. PNG, JPG oder GIF bis 10 MB – du schneidest es gleich hier zu.",
+      "preview": "Server-Bild von {{name}}",
+      "isLogo": "MoinMorni-Logo",
+      "animatedOk": "Bewegte GIFs gehen bei euch (Boost-Stufe 1).",
+      "animatedNo": "Bewegte GIFs gehen erst ab Boost-Stufe 1 – sonst wird ein GIF zum stehenden Bild."
+    },
+    "banner": {
+      "title": "Server-Banner",
+      "text": "Das breite Bild oben über der Kanalliste (16:9).",
+      "preview": "Server-Banner",
+      "empty": "Noch kein Banner",
+      "locked": "Banner gibt es erst ab Boost-Stufe {{need}} – euer Server hat Stufe {{tier}}.",
+      "remove": "Banner entfernen"
+    },
+    "bot": {
+      "title": "Profil des Bots",
+      "text": "Profilbild und Name, mit denen der Bot in Discord schreibt.",
+      "preview": "Profilbild von {{name}}",
+      "name": "Name des Bots",
+      "saveName": "Namen speichern",
+      "limit": "Discord erlaubt Änderungen am Bot nur ein paar Mal pro Stunde (den Namen nur zweimal). Kommt „zu oft“, versuch es einfach später nochmal."
+    },
+    "crop": {
+      "title": {
+        "square": "Bild zuschneiden",
+        "banner": "Banner zuschneiden"
+      },
+      "text": "Verschieben mit Maus, Finger oder Pfeiltasten, größer und kleiner mit dem Regler.",
+      "wrongType": "Das geht nur mit PNG-, JPG- oder GIF-Bildern.",
+      "tooBig": "Das Bild ist zu groß – bis 10 MB geht es.",
+      "unreadable": "Das Bild ließ sich nicht öffnen. Versuch ein anderes.",
+      "movingTitle": "Bewegtes GIF",
+      "movingOk": "Euer Server darf bewegte Bilder. Nimmst du es unverändert, bleibt es bewegt – beim Zuschneiden wird es zum stehenden Bild.",
+      "movingNo": {
+        "square": "Bewegte Server-Bilder gibt es erst ab Boost-Stufe 1 – das GIF wird als stehendes Bild gespeichert.",
+        "banner": "Bewegte Banner gibt es erst ab Boost-Stufe 3 – das GIF wird als stehendes Bild gespeichert."
+      },
+      "area": "Bildausschnitt",
+      "zoom": "Größe",
+      "hint": "Zum Verschieben ziehen",
+      "keepMoving": "Unverändert nehmen (bewegt)",
+      "use": "Übernehmen"
     }
   },
   "teamAdmin": {
@@ -1525,12 +1846,14 @@
     "behind_one": "{{count}} Änderung neuer als deine",
     "behind_other": "{{count}} Änderungen neuer als deine",
     "isNewest": "Das ist deine Fassung.",
+    "newer": "Neuer als deine – wie viel, sagt die Liste der Änderungen.",
     "notChecked": "Noch nicht nachgesehen",
     "motor": "Motor (MorniHosting)",
     "motorUnknown": "Ob es Neues gibt, ist gerade nicht bekannt.",
     "motorCurrent": "Auf dem neuesten Stand.",
     "motorBehind_one": "MorniHosting hat {{count}} neuere Änderung ({{latest}}). Sie kommt mit, wenn",
     "motorBehind_other": "MorniHosting hat {{count}} neuere Änderungen ({{latest}}). Sie kommen mit, wenn",
+    "motorNewer": "MorniHosting hat Neues ({{latest}}). Es kommt mit, wenn",
     "motorSetting": "„Motor immer auf den neuesten Stand“ an ist.",
     "unknown": "unbekannt",
     "dev": "Entwickler-Fassung",
@@ -1544,6 +1867,17 @@
     "checkFailedTitle": "GitHub ist gerade nicht erreichbar",
     "checkFailedText": "Wir konnten nicht nachsehen, ob es etwas Neues gibt. Meist liegt das an GitHub oder am Internet des Rechners – MoinMorni läuft ganz normal weiter. Versuch es in ein paar Minuten noch mal.",
     "checkFailedToast": "GitHub antwortet gerade nicht – versuch es später noch mal.",
+    "branchMissingToast": "Den Kanal „{{branch}}“ gibt es auf GitHub nicht.",
+    "branchMissingTitle": "Den Kanal „{{branch}}“ gibt es auf GitHub (noch) nicht",
+    "branchMissingText": "MoinMorni folgt diesem Zweig auf GitHub, findet ihn dort aber nicht – vielleicht wurde er zusammengeführt oder umbenannt. Den Kanal legt MM_UPDATE_BRANCH in der .env auf dem Rechner fest (sonst main). MoinMorni läuft ganz normal weiter.",
+    "pendingTitle": "Die Liste der Änderungen kommt gleich",
+    "pendingText": "Es gibt eine neue Fassung – nur die Liste, was sich geändert hat, hat GitHub gerade nicht geschickt. MoinMorni fragt in ein paar Minuten noch mal.",
+    "pendingCanStart": "Update starten geht trotzdem schon.",
+    "limitedTitle": "GitHub lässt uns gerade nicht öfter fragen – die Änderungsliste kommt um {{time}}",
+    "limitedText": "Ohne Anmeldung beantwortet GitHub nur 60 Fragen pro Stunde je Internet-Adresse, und die teilen sich alle Rechner bei dir. Ob es etwas Neues gibt, sieht MoinMorni trotzdem – dafür fragt es GitHub auf einem anderen Weg.",
+    "limitedKeyTip": "Tipp: Mit einem GitHub-Schlüssel, der nur lesen darf (MM_GITHUB_TOKEN in der .env), sind es 5000 Fragen pro Stunde. Wie das geht, steht in der Schnellstart-Anleitung, Teil 8 „Updates“.",
+    "keyRejectedTitle": "GitHub nimmt den Schlüssel aus der .env nicht an",
+    "keyRejectedText": "MM_GITHUB_TOKEN ist abgelaufen, gelöscht oder falsch kopiert. MoinMorni fragt so lange ohne ihn (60 Fragen pro Stunde). Neuen Schlüssel in die .env auf dem Rechner eintragen und MoinMorni neu starten – oder die Zeile löschen.",
     "foundToast": "Es gibt ein Update!",
     "currentToast": "Alles aktuell – nichts zu tun.",
     "startedToast": "Update gestartet. Hier kannst du zusehen.",
@@ -1614,6 +1948,7 @@
     }
   },
   "applicationsCard": {
+    "noRight": "Entscheiden darf, wer im Spiel kicken darf (Moderator und darüber) – wie mit den Knöpfen in Discord.",
     "title": "Bewerbungen",
     "text": "Wer auf MorniCraft möchte. Bewerben geht auf der Webseite (mit Discord-Anmeldung) und im Discord mit /bewerben. Eine Zusage setzt den Namen auf die Whitelist.",
     "open": "Bewerbungen offen",
@@ -1663,9 +1998,87 @@
     "noteShown": "Notiz: {{note}}",
     "noAccess": "Bewerbungen und Whitelist sieht, wer den Panel-Bereich „Spieler“ hat. Frag den Owner, wenn du sie brauchst."
   },
+  "applications": {
+    "title": "Bewerbungen",
+    "text": "Wer ins Team möchte oder auf MorniCraft spielen will. Die Antworten, die Daumen und Notizen des Teams – und deine Entscheidung.",
+    "status": {
+      "pending": "Offen",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "all": "Alle"
+    },
+    "via": {
+      "website": "über die Webseite",
+      "discord": "über Discord"
+    },
+    "lang": {
+      "de": "Deutsch",
+      "en": "Englisch"
+    },
+    "filterPosition": "Nach Stelle filtern",
+    "filterStatus": "Nach Stand filtern",
+    "allPositions": "Alle Stellen",
+    "unknownPosition": "Stelle",
+    "empty": {
+      "pending": "Keine offenen Bewerbungen – alles erledigt.",
+      "accepted": "Noch keine angenommenen Bewerbungen.",
+      "rejected": "Keine abgelehnten Bewerbungen.",
+      "all": "Noch keine Bewerbungen."
+    },
+    "stillOpen": "Bewerbungen sind noch offen.",
+    "openPositions": "Wir suchen gerade: {{list}}",
+    "noOpenPositions": "Gerade ist keine Team-Stelle offen.",
+    "openPositionsHint": "Offene Stellen stehen auf der Webseite unter Team und im Discord bei „/bewerben“.",
+    "positionsSettings": "Stellen einstellen",
+    "publicPage": "Seite „Team → Bewerben“",
+    "mornicraftPage": "MorniCraft-Bewerbung",
+    "notesCount_one": "{{count}} Notiz",
+    "notesCount_other": "{{count}} Notizen",
+    "votesLabel": "{{up}} dafür, {{down}} dagegen",
+    "back": "Alle Bewerbungen",
+    "discord": "Discord: {{name}}",
+    "noDiscord": "ohne Discord",
+    "answers": "Antworten",
+    "noAnswers": "Keine Antworten.",
+    "votes": "Daumen des Teams",
+    "votesText": "Was meint das Team? Nur das Team sieht die Daumen – die Person nicht.",
+    "voteUp": "Dafür",
+    "voteDown": "Dagegen",
+    "notes": "Notizen fürs Team",
+    "notesText": "Nur fürs Team – die Person sieht sie nie.",
+    "notePlaceholder": "Notiz schreiben …",
+    "noteSave": "Notiz speichern",
+    "decision": "Entscheidung",
+    "messageLabel": "Nachricht an {{name}}",
+    "messagePlaceholder": "z. B. „Willkommen im Team! Schau gleich in #team-chat vorbei.“",
+    "messageHelp": "Optional. Kommt per Discord-Nachricht, im Spiel und auf der Webseite an.",
+    "account": "Team-Konto fürs Panel anlegen",
+    "accountText": "Mit Startpasswort und der Rolle {{role}} – beim ersten Anmelden setzt die Person ein eigenes Passwort.",
+    "username": "Benutzername",
+    "email": "E-Mail (optional)",
+    "accept": "Annehmen",
+    "reject": "Ablehnen",
+    "acceptTitle": "{{name}} annehmen?",
+    "rejectTitle": "{{name}} ablehnen?",
+    "acceptText": "{{name}} bekommt den Rang {{role}} – im Spiel, im Discord und überall im Netzwerk – und deine Nachricht per Discord und im Spiel.",
+    "acceptTextMornicraft": "{{name}} kommt auf die MorniCraft-Whitelist und bekommt deine Nachricht per Discord und im Spiel.",
+    "rejectText": "{{name}} bekommt deine Nachricht per Discord. Eine neue Bewerbung geht erst nach der Wartezeit.",
+    "accountConfirm": "Dazu wird das Panel-Konto „{{username}}“ angelegt. Das Startpasswort siehst du gleich danach.",
+    "acceptedToast": "{{name}} ist angenommen.",
+    "rejectedToast": "{{name}} ist abgelehnt.",
+    "acceptedBy": "Angenommen von {{name}} {{time}}",
+    "rejectedBy": "Abgelehnt von {{name}} {{time}}",
+    "message": "Nachricht: „{{note}}“",
+    "noRight": "Über diese Stelle entscheidet nur, wer den Rang {{role}} vergeben darf. Du kannst Daumen geben und Notizen schreiben.",
+    "noRightMornicraft": "Darüber entscheidest du nicht. Du kannst Daumen geben und Notizen schreiben.",
+    "settingsTitle": "Wo die Bewerbungen ankommen",
+    "settingsText": "Bewerbungen kommen über die Webseite (Team → Bewerben) und den Discord (/bewerben, Knopf im Kanal „Bewerbungen“). Lesen und entscheiden kannst du sie im Panel unter „Bewerbungen“ und im Discord im Bewerbungs-Eingang. VIP und Owner gibt es nie per Bewerbung.",
+    "toList": "Zu den Bewerbungen"
+  },
   "whitelistCard": {
+    "noRight": "Eintragen und Austragen darf, wer im Spiel kicken darf (Moderator und darüber) – wie beim Annehmen von Bewerbungen.",
     "title": "Whitelist",
-    "text": "Wer auf MorniCraft darf. Angenommene Bewerbungen landen hier von selbst; du kannst Namen auch direkt eintragen. Das Team kommt immer hinein.",
+    "text": "Wer auf MorniCraft darf. Das Team kommt immer hinein und steht hier von selbst: alle, deren Rang „Kommt immer rein“ hat. Angenommene Bewerbungen landen hier auch von selbst; du kannst Namen auch direkt eintragen.",
     "count_one": "{{count}} Spieler",
     "count_other": "{{count}} Spieler",
     "addLabel": "Name hinzufügen",
@@ -1685,7 +2098,14 @@
     "remove": "Entfernen",
     "empty": "Noch niemand auf der Whitelist. Nimm eine Bewerbung an oder trag einen Namen ein.",
     "search": "Whitelist durchsuchen",
-    "noMatch": "Kein Name passt zur Suche."
+    "noMatch": "Kein Name passt zur Suche.",
+    "teamTitle": "Team – kommt immer hinein",
+    "ownTitle": "Eingetragen",
+    "team": "Gehört zum Team",
+    "teamHelp": "Kommt über den Rang hinein, auch ohne Eintrag. Wer dazugehört, legst du unter „Rollen“ fest (Recht „Kommt immer rein“).",
+    "alsoListed": "steht auch von Hand auf der Liste",
+    "notSeen": "war noch nicht im Netzwerk – Name des Panel-Kontos",
+    "alreadyTeam": "{{name}} gehört zum Team und kommt sowieso hinein."
   },
   "buildCard": {
     "title": "Gespeicherte Bauten",
@@ -1796,6 +2216,63 @@
     },
     "fair": "Jede Bewerbung wird von echten Menschen aus dem Team gelesen. Bewerben kostet nichts – einen Platz kann man nicht kaufen."
   },
+  "teamApply": {
+    "eyebrow": "Mach mit",
+    "title": "Bewirb dich fürs Team",
+    "text": "Du willst MoinMorni mitgestalten – als Moderator, Supporter, Builder oder Media? Melde dich mit Discord an, such dir eine Stelle aus und erzähl uns von dir.",
+    "search": "Wir suchen",
+    "signIn": {
+      "title": "Mit Discord anmelden",
+      "text": "So wissen wir, wem wir antworten: Unsere Antwort kommt per Discord-Nachricht. Danach siehst du die offenen Stellen und das Formular."
+    },
+    "noLogin": "Bewerbungen gehen gerade über unseren Discord-Bot: Schreib dort",
+    "closed": {
+      "title": "Gerade suchen wir niemanden",
+      "text": "Im Moment ist keine Stelle im Team offen. Schau später wieder vorbei – offene Stellen stehen auch auf der Team-Seite und im Discord."
+    },
+    "pending": {
+      "title": "Deine Bewerbung liegt beim Team",
+      "text": "Danke! Das Team schaut sie sich an. Du bekommst die Antwort per Discord-Nachricht – und hier auf dieser Seite."
+    },
+    "cooldown": {
+      "title": "Noch kurz warten",
+      "text": "Nach einer Absage kannst du dich ab dem {{date}} wieder bewerben. Bis dahin: viel Spaß auf dem Netzwerk!"
+    },
+    "link": {
+      "title": "Verbinde zuerst dein Minecraft-Konto",
+      "text": "Für eine Bewerbung ins Team brauchen wir dein Minecraft-Konto – verbunden mit deinem Discord. So geht's:",
+      "step1": "Im Spiel eingeben:",
+      "step2": "Im Discord den Code eingeben:",
+      "step3": "Diese Seite neu laden – dann geht's los."
+    },
+    "form": {
+      "title": "Deine Bewerbung",
+      "position": "Welche Stelle?",
+      "linked": "Dein Minecraft-Konto: {{name}} (verbunden mit Discord).",
+      "nameHelp": "Mit dem Namen spielst du bei uns. Am besten verbindest du dein Konto im Spiel mit /discord.",
+      "answerProblem": "Bitte beantworte diese Frage.",
+      "notReady": "Da fehlt noch etwas – schau dir die rot markierten Felder an.",
+      "who": "Gesendet als {{name}} (Discord). Das Team sieht deinen Discord-Namen, deinen Minecraft-Namen und deine Antworten."
+    },
+    "mine": {
+      "title": "Deine Bewerbungen",
+      "pending": "{{position}}: wartet auf das Team",
+      "accepted": "{{position}}: angenommen – willkommen im Team!",
+      "rejected": "{{position}}: diesmal leider nicht",
+      "sent": "Gesendet am {{date}} als {{name}}",
+      "note": "Nachricht vom Team: „{{note}}“"
+    },
+    "how": {
+      "step1": "Anmelden und Stelle wählen",
+      "step1Text": "Mit Discord anmelden, Stelle aussuchen, ehrlich antworten – es gibt keine falschen Antworten.",
+      "step2": "Das Team liest mit",
+      "step2Text": "Das Team schaut sich deine Bewerbung an. Meist dauert das ein paar Tage.",
+      "step3": "Antwort per Discord",
+      "step3Text": "Bei einer Zusage bekommst du deinen Rang gleich im Spiel und im Discord. Nach einer Absage kannst du dich nach {{days}} Tagen wieder bewerben."
+    },
+    "meetTeam": "Das Team kennenlernen",
+    "fair": "VIP und Owner gibt es nie per Bewerbung – und nichts davon lässt sich kaufen. Wir entscheiden nach dem, was du schreibst und wie du auf dem Netzwerk spielst."
+  },
   "errors": {
     "generic": "Da ist etwas schiefgegangen. Versuch es bitte gleich nochmal.",
     "network": "Keine Verbindung zum Server. Prüf dein Internet und versuch es nochmal.",
@@ -1806,6 +2283,8 @@
     "email_unconfirmed": "Bitte bestätige zuerst deine E-Mail-Adresse.",
     "account_pending_approval": "Dein Konto wartet noch auf Freigabe.",
     "not_in_team": "Dein Konto hat noch keine Rolle in MoinMorni.",
+    "mode_no_server": "Dieser Modus hat noch keinen Server.",
+    "motor_without_idle_memory": "Der Motor kennt den Ruhezustand noch nicht – bitte erst MoinMorni aktualisieren.",
     "panel_area_forbidden": "Diesen Bereich darf deine Rolle nicht ändern.",
     "csrf": "Deine Sitzung ist abgelaufen. Lade die Seite neu und versuch es nochmal.",
     "bad_origin": "Die Anfrage kam von einer fremden Seite und wurde abgelehnt.",
@@ -1828,6 +2307,7 @@
     "punishment_none": "Da gibt es gerade nichts aufzuheben – vielleicht ist die Strafe schon abgelaufen.",
     "role_unknown": "Diesen Rang gibt es nicht (mehr). Lade die Seite neu.",
     "role_too_high": "Diesen Rang darfst du nicht vergeben – er ist so hoch wie deiner oder höher (VIP vergibt nur der Owner).",
+    "mornicraft_no_right": "Die Whitelist von MorniCraft pflegt und Bewerbungen dafür entscheidet, wer im Spiel kicken darf (Moderator und darüber) – im Panel genauso wie in Discord.",
     "rank_no_right": "Ränge vergeben darfst du nicht – dafür braucht deine Rolle das Recht „Ränge vergeben“.",
     "role_owner_only": "Owner und Admin darf nur der Owner ändern.",
     "role_duplicate": "Zwei Rollen haben dieselbe Kennung. Gib einer einen anderen Namen.",
@@ -1853,7 +2333,38 @@
     "applications_closed": "Gerade nehmen wir keine Bewerbungen an. Schau später wieder vorbei.",
     "application_already_listed": "Dieser Name steht schon auf der Whitelist – du kannst direkt losspielen!",
     "application_pending": "Für dich oder diesen Minecraft-Namen liegt schon eine Bewerbung beim Team. Wir melden uns!",
-    "apply_login_required": "Deine Anmeldung ist abgelaufen. Melde dich bitte noch mal mit Discord an – deine Antworten merkt sich die Seite."
+    "apply_login_required": "Deine Anmeldung ist abgelaufen. Melde dich bitte noch mal mit Discord an – deine Antworten merkt sich die Seite.",
+    "application_no_right": "Diese Stelle darfst du nicht vergeben – nur, wer den Rang vergeben darf (und nie über dem eigenen).",
+    "application_player_unknown": "Diesen Minecraft-Namen kennt das Netzwerk noch nicht. Die Person muss einmal auf MoinMorni gewesen sein, dann klappt es.",
+    "application_rank_not_higher": "Die Person hat schon diesen oder einen höheren Rang – Annehmen würde sie herabstufen.",
+    "discord_animated_needs_boost": "Bewegte Bilder gibt es erst mit Boost – nimm ein stehendes Bild (PNG oder JPG).",
+    "discord_banner_needs_boost": "Banner gibt es erst ab Boost-Stufe 2.",
+    "discord_credential_from_env": "Dieser Wert steht in der .env auf dem Server – ändern geht nur dort.",
+    "discord_failed": "Discord hat das abgelehnt. Versuch es gleich nochmal.",
+    "discord_image_invalid": "Discord hat das Bild nicht angenommen. Nimm ein PNG, JPG oder GIF.",
+    "discord_image_too_big": "Das Bild ist zu groß für Discord – bis 10 MB geht es.",
+    "discord_missing_permissions": "Dem Bot fehlt dafür ein Recht (z. B. „Server verwalten“). Lade ihn unter Discord → Schritt 4 nochmal ein.",
+    "discord_name_invalid": "Der Name geht so nicht: 2 bis 32 Zeichen, ohne @ # : und `.",
+    "discord_owner_only": "Bot-Token und Client Secret ändert nur der Owner.",
+    "discord_rate_limited": "Das hat Discord in kurzer Zeit zu oft gesehen. Warte ein paar Minuten und versuch es dann nochmal.",
+    "discord_secret_format": "Das sieht nicht wie ein Client Secret aus. Kopier es nochmal im Entwicklerportal (OAuth2 → Reset Secret).",
+    "discord_secret_invalid": "Das Client Secret gehört nicht zu diesem Bot. Kopier es aus derselben Anwendung im Entwicklerportal.",
+    "discord_token_first": "Trag zuerst den Bot-Token ein (Schritt 1).",
+    "discord_token_format": "Das sieht nicht wie ein Bot-Token aus. Kopier ihn nochmal im Entwicklerportal (Bot → Reset Token).",
+    "discord_token_invalid": "Discord kennt diesen Token nicht. Erzeuge im Entwicklerportal einen neuen (Bot → Reset Token).",
+    "discord_token_not_bot": "Das ist kein Bot-Token. Den richtigen findest du im Entwicklerportal unter „Bot“.",
+    "discord_unreachable": "Discord ist gerade nicht erreichbar. Versuch es gleich nochmal.",
+    "note_invalid": "Die Notiz ist leer oder zu lang.",
+    "setting_owner_only": "Das kann nur der Owner ändern.",
+    "team_account_no_right": "Ein Panel-Konto mit dieser Rolle darfst du nicht anlegen. Nimm die Bewerbung ohne Konto an.",
+    "team_apply_answers": "Bitte beantworte alle Fragen (jede bis 1000 Zeichen).",
+    "team_apply_closed": "Diese Stelle ist gerade nicht offen. Lade die Seite neu.",
+    "team_apply_cooldown": "Nach einer Absage geht eine neue Bewerbung erst nach der Wartezeit.",
+    "team_apply_link_required": "Verbinde zuerst dein Minecraft-Konto mit Discord (/discord im Spiel).",
+    "team_apply_minecraft_name": "Das ist kein gültiger Minecraft-Name.",
+    "team_apply_pending": "Deine Bewerbung liegt schon beim Team – du hörst bald von uns.",
+    "team_position_unknown": "Diese Stelle gibt es nicht (mehr). Lade die Seite neu.",
+    "player_protected": "Strafen gehen nur an niedrigere Ränge: Diese Person hat den gleichen oder einen höheren Rang als du (den Owner bestraft niemand)."
   },
   "modeSettings": {
     "title": "Gilt nach dem nächsten Neustart des Modus",
