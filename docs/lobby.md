@@ -618,12 +618,20 @@ Spielmodi. Gibt es auch sie nicht, trennt der Proxy freundlich („Die Lobby sta
   einem Rauswurf selbst (`PlayerChooseInitialServerEvent`, `KickedFromServerEvent`) – die `try`-Liste in der
   velocity.toml (vom Motor: alle Mitglieder) spielt keine Rolle mehr. Ohne Hub: Lobby, dann Wartungs-Lobby (bei
   Wartung nur sie); antwortet die Lobby wieder, holt der Proxy die Wartenden selbst zurück.
-- **Neustart nach einem Update** (`network/restart-now.ts`): Die Wartungs-Lobby startet nie als Erste neu – erst die
-  Spielmodi und der Bau-Server, dann sie, zuletzt die Lobby. Vor ihrem Neustart kommt, wer darf, in die Lobby; wen die
-  Wartung festhält, der muss kurz raus („in etwa einer Minute wieder rein“). Startet danach die Lobby allein neu,
-  warten ihre Spieler in der Wartungs-Lobby und kommen von selbst zurück, sobald sie wieder läuft (vorher flogen sie
-  raus). Startet auch der Proxy neu (neues Netzwerk-Plugin), starten Lobby, Wartungs-Lobby und Proxy zusammen mit einem
-  Countdown für alle – jeder verbindet nur einmal neu.
+- **Neustart nach einem Update** (`network/restart-now.ts`, auch der Knopf „Server neu starten“ im Panel): Es bleibt
+  immer ein Ort zum Warten (Philip: „erst werden alle anderen geupdatet und dann der Wartungsserver“).
+  1. Spielmodi und Bau-Server, einer nach dem anderen (Spieler vorher mit Countdown in die Lobby).
+  2. Die Lobby – ihre Spieler warten mit Countdown in der Wartungs-Lobby (ist die aus oder fehlt: kurz raus mit
+     Nachricht „in etwa einer Minute wieder rein“).
+  3. Erst wenn die Lobby wieder läuft, am Hub hängt und die Wartenden zurück sind (höchstens zwei Minuten): die
+     Wartungs-Lobby. Wer dann noch dort ist, kommt vorher in die Lobby; wen die Wartung festhält, der muss kurz raus.
+     Lobby und Wartungs-Lobby sind nie gleichzeitig weg. Von Hand startet die Wartungs-Lobby nie mit.
+  4. Ganz zuletzt der Proxy – nur, wenn er wirklich muss: neuer Velocity-Teil des Netzwerk-Plugins, neuer Hub-Schlüssel,
+     neues Bild, Speicher. Das Netzwerk-Plugin ist eine Jar für Proxy und Spielserver; für den Proxy zählt nur ein
+     Fingerabdruck der Teile, die Velocity lädt (`network/plugin-parts.ts`, gemerkt in
+     `plugins/moinmorni/proxy-parts.sha256`). Ändern sich nur Paper-Teile (Lobby, Jump and Run …), liegt die neue Jar
+     schon da und gilt beim nächsten Neustart des Proxys – er startet deswegen nicht neu. Muss er doch: Countdown für
+     alle, dann ein freundlicher Abschied („in etwa einer Minute wieder rein“).
 
 ### Höchstzahl hinter dem Proxy
 
