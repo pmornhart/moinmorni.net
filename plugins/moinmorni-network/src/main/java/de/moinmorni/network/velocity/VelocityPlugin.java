@@ -31,6 +31,7 @@ import com.velocitypowered.api.proxy.server.ServerPing;
 import de.moinmorni.network.common.DataFolder;
 import de.moinmorni.network.common.HubClient;
 import de.moinmorni.network.common.HubConfig;
+import de.moinmorni.network.common.StreamerMask;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,16 +83,21 @@ public final class VelocityPlugin {
     /** Banns aus der letzten Liste des Hubs: gelten auch, wenn der Hub kurz weg ist. */
     private final Map<UUID, Instant> bans = new ConcurrentHashMap<>();
     private volatile JsonObject network;
+    /** Streamer-Modus: was der Hub an Streamer schickt, mit „•••“ statt IP-Adressen und eigenen Adressen. */
+    private final StreamerMask streamerMask = new StreamerMask();
     private HubClient hub;
     /** Rang-Abzeichen: was der Hub sagt, und wem der Proxy das Paket geschickt hat (BadgePack). */
     private volatile BadgePack.Config badges = BadgePack.Config.OFF;
     private final Map<UUID, BadgePack.Sent> badgeSent = new ConcurrentHashMap<>();
+    /** Leiste mit Countdown vor einem Neustart (Hub: „countdown“). */
+    private final Countdown countdown;
 
     @Inject
     public VelocityPlugin(ProxyServer proxy, @DataDirectory Path dataDir) {
         this.proxy = proxy;
         this.log = Logger.getLogger("MoinMorni");
         this.dataDir = dataDir.getParent().resolve(HUB_DIR);
+        this.countdown = new Countdown(proxy, this);
         // Vor allem anderen: Datenordner vom Zwischen-Namen zurückholen.
         DataFolder.adoptInterim(dataDir.getParent(), log);
     }
@@ -152,6 +158,7 @@ public final class VelocityPlugin {
 
     @Subscribe
     public void onShutdown(ProxyShutdownEvent event) {
+        countdown.hideAll();
         if (hub != null) {
             hub.stop();
         }
@@ -168,7 +175,8 @@ public final class VelocityPlugin {
             case "welcome" -> registerCommands(m.getAsJsonArray("commands"));
             case "network" -> network = m;
             case "bans" -> updateBans(m.getAsJsonArray("list"));
-            case "msg" -> player(m).ifPresent(p -> p.sendMessage(MM.deserialize(HubClient.str(m, "text"))));
+            case "msg" -> player(m).ifPresent(p -> p.sendMessage(message(m)));
+            case "streamer-config" -> streamerMask.hosts(m.getAsJsonArray("hosts"));
             case "kick" -> player(m).ifPresent(p -> p.disconnect(MM.deserialize(HubClient.str(m, "text"))));
             case "connect" -> player(m).ifPresent(p -> proxy.getServer(HubClient.str(m, "server"))
                     .ifPresent(s -> p.createConnectionRequest(s).fireAndForget()));
@@ -178,8 +186,16 @@ public final class VelocityPlugin {
                 proxy.getAllPlayers().forEach(p -> offerBadges(p, false));
             }
             case "badges-send" -> player(m).ifPresent(p -> offerBadges(p, true));
+            case "countdown" -> player(m).ifPresent(p -> countdown.show(p, HubClient.str(m, "text"),
+                    m.has("seconds") ? m.get("seconds").getAsInt() : 0));
             default -> log.fine("Unbekannte Nachricht vom Hub: " + type);
         }
+    }
+
+    /** Nachricht vom Hub; an Streamer (Feld „mask“) mit verdeckten Adressen. */
+    private Component message(JsonObject m) {
+        Component text = MM.deserialize(HubClient.str(m, "text"));
+        return m.has("mask") && m.get("mask").getAsBoolean() ? streamerMask.apply(text) : text;
     }
 
     private Optional<Player> player(JsonObject m) {
@@ -346,6 +362,7 @@ public final class VelocityPlugin {
     @Subscribe
     public void onDisconnect(DisconnectEvent event) {
         badgeSent.remove(event.getPlayer().getUniqueId());
+        countdown.hide(event.getPlayer().getUniqueId());
         if (hub == null || event.getLoginStatus() != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) {
             return;
         }

@@ -12,6 +12,7 @@ import { errorCode, useErrorText } from '~/lib/errors';
 import { INVALID_FIELD } from '~/lib/minecraft-name';
 import { mmApi } from '~/lib/mm-api';
 import { useTimeText } from '~/lib/time';
+import { usePanel } from '../../session';
 import { ConfirmDialog } from '../../team/dialogs';
 import { NameHead } from './ApplicationsCard';
 import {
@@ -71,7 +72,8 @@ function Entry({
   onRemove,
 }: {
   readonly entry: WhitelistEntry;
-  readonly onRemove: () => void;
+  /** Missing = this person may not take names off the list. */
+  readonly onRemove?: (() => void) | undefined;
 }): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
   const time = useTimeText();
@@ -93,15 +95,17 @@ function Entry({
           {t('whitelistCard.added', { name: entry.addedBy, time: time.relative(entry.createdAt) })}
         </p>
       </div>
-      <Button
-        variant="danger"
-        size="iconSm"
-        onClick={onRemove}
-        aria-label={t('whitelistCard.removeLabel', { name })}
-        title={t('whitelistCard.removeLabel', { name })}
-      >
-        <Trash2 />
-      </Button>
+      {onRemove ? (
+        <Button
+          variant="danger"
+          size="iconSm"
+          onClick={onRemove}
+          aria-label={t('whitelistCard.removeLabel', { name })}
+          title={t('whitelistCard.removeLabel', { name })}
+        >
+          <Trash2 />
+        </Button>
+      ) : null}
     </li>
   );
 }
@@ -145,6 +149,9 @@ export function WhitelistCard(): ReactElement {
   const [problem, setProblem] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [removing, setRemoving] = useState<WhitelistEntry | null>(null);
+  // Like accepting applications (also in Discord): only who may kick – the owner always.
+  const me = usePanel();
+  const mayEdit = me.role.id === 'owner' || me.role.game.includes('kick');
   const teamRows = team.data ?? [];
   // Someone in the team who was also added by hand shows up once – as team member.
   const inTeam = new Set(teamRows.flatMap((row) => (row.listed === null ? [] : [row.listed])));
@@ -212,7 +219,8 @@ export function WhitelistCard(): ReactElement {
         ) : null
       }
     >
-      <form onSubmit={submit} noValidate className="grid gap-1.5">
+      {mayEdit ? null : <p className="text-sm text-muted-foreground">{t('whitelistCard.noRight')}</p>}
+      <form onSubmit={submit} noValidate className={mayEdit ? 'grid gap-1.5' : 'hidden'}>
         <label htmlFor={inputId} className="text-sm font-semibold">
           {t('whitelistCard.addLabel')}
         </label>
@@ -295,7 +303,7 @@ export function WhitelistCard(): ReactElement {
       {shown.length ? (
         <Group title={teamRows.length ? t('whitelistCard.ownTitle') : null}>
           {shown.map((entry) => (
-            <Entry key={entry.id} entry={entry} onRemove={() => setRemoving(entry)} />
+            <Entry key={entry.id} entry={entry} onRemove={mayEdit ? () => setRemoving(entry) : undefined} />
           ))}
         </Group>
       ) : null}

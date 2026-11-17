@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { createBrowserRouter, createHashRouter, RouterProvider, type RouteObject } from 'react-router';
 import { ApplyPage } from './ApplyPage';
+import { CommandsPage } from './CommandsPage';
 import { HelpPage } from './HelpPage';
 import { HomePage } from './HomePage';
 import { InfoPage } from './InfoPage';
@@ -38,6 +39,11 @@ const routes: RouteObject[] = [
       { path: 'team/bewerben', element: <TeamApplyPage /> },
       { path: 'regeln', element: <RulesPage /> },
       { path: 'hilfe', element: <HelpPage /> },
+      // Befehle: allgemein, mit ?spieler=<name> persönlich, mit dem Modus vorn (MorniCraft verlinkt dorthin).
+      { path: 'befehle', element: <CommandsPage /> },
+      { path: 'befehle/:mode', element: <CommandsPage /> },
+      { path: 'commands', element: <CommandsPage /> },
+      { path: 'commands/:mode', element: <CommandsPage /> },
       { path: 'impressum', element: <InfoPage page="imprint" /> },
       { path: 'datenschutz', element: <InfoPage page="privacy" /> },
       { path: '*', element: <InfoPage page="notFound" follows={false} /> },

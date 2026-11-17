@@ -1,5 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import type { Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import { applications, whitelist } from '../db/schema.js';
 import { conflict, notFound } from '../lib/errors.js';
@@ -40,6 +41,13 @@ export const decideSchema = z.object({
   accept: z.boolean(),
   note: z.string().trim().max(NOTE_MAX).default(''),
 });
+
+/**
+ * Wer MorniCraft-Bewerbungen entscheidet und die Whitelist pflegt: wer im Spiel kicken darf (Moderator und darüber) –
+ * im Panel genauso wie mit den Knöpfen in Discord, der Owner immer. Der Bereich „Spieler“ allein reicht nicht: den hat
+ * auch der Supporter, der sonst Leute an der Bewerbung vorbei in einen Modus „nur auf Einladung“ holen könnte.
+ */
+export const mayDecideMornicraft = (role: Role): boolean => role.id === 'owner' || role.game.includes('kick');
 
 export type Application = typeof applications.$inferSelect;
 export type WhitelistEntry = typeof whitelist.$inferSelect;

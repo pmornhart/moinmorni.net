@@ -1,4 +1,5 @@
 import {
+  DEFAULT_ROLES,
   MODE_HEADLINE_STATS,
   TEAM_POSITION_DEFAULTS,
   type ModeStatus,
@@ -457,7 +458,31 @@ const newsList = (request: DemoRequest): DemoResponse => ({
   body: NEWS.slice(0, limitOf(request.params)),
 });
 
+/**
+ * Commands page: the ranks of the demo with the rights of the template (DEFAULT_ROLES), and – with ?spieler= – that
+ * made-up player and their rank.
+ */
+function commands(request: DemoRequest): DemoResponse {
+  const roles = DEFAULT_ROLES.map((r) => ({
+    ...(DATA.roles[r.id] ?? { id: r.id, name: r.name, symbol: r.symbol, colour: r.colour }),
+    position: r.position,
+    fallback: r.fallback,
+    game: r.game,
+    panel: r.panel,
+  }));
+  const wanted = (request.params.get('spieler') ?? '').toLowerCase();
+  const found = wanted ? DATA.players.find((p) => p.name.toLowerCase() === wanted) : undefined;
+  return {
+    status: HTTP_OK,
+    body: {
+      roles,
+      player: found ? { name: found.name, uuid: uuidOf(found.name), role: roleOf(found.role).id } : null,
+    },
+  };
+}
+
 const EXACT: Readonly<Record<string, Handler>> = {
+  'GET /api/commands': commands,
   'GET /api/status': status,
   'GET /api/site': site,
   'GET /api/news': newsList,

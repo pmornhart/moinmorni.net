@@ -1,6 +1,14 @@
 import { desc, like, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { mayAssign, mayPunish } from '@moinmorni/shared';
+import {
+  higherRole,
+  mayAssign,
+  mayLiftFor,
+  mayPunish,
+  mayPunishPlayer,
+  punishersOf,
+  type Role,
+} from '@moinmorni/shared';
 import type { Api } from '../app.js';
 import type { Db } from '../db/index.js';
 import { players, punishments } from '../db/schema.js';
@@ -45,6 +53,32 @@ const punishBody = z.object({
 const liftParams = z.object({ uuid: z.string().min(1).max(40), kind: z.enum(LIFT_KINDS) });
 
 export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, hub: Hub, db: Db): void {
+  /**
+   * Rang im Panel wie im Spiel: Team-Rolle oder Rang des verbundenen Minecraft-Kontos, der höhere zählt – so darf
+   * jemand hier genau das, was er mit /ban & Co. im Spiel dürfte.
+   */
+  const rankOf = (user: PanelUser): Role =>
+    higherRole(user.role, user.minecraftUuid ? hub.players.roleOf(user.minecraftUuid) : undefined);
+
+  /**
+   * Strafen nur nach unten, für die Knöpfe im Panel: darf ich diese Person bestrafen, und wer dürfte es sonst
+   * (Namen der Ränge, höchste zuerst – „das darf nur der Owner“)? Je Strafe, weil Supporter z. B. verwarnen, aber
+   * nicht einsperren.
+   */
+  const guard = (user: PanelUser, uuid: string) => {
+    const me = rankOf(user);
+    const target = hub.players.roleOf(uuid);
+    return {
+      punishable: mayPunishPlayer(me, target),
+      liftable: mayLiftFor(me, target),
+      punishers: punishersOf(stores.roles(), target, 'warn').map((r) => ({
+        id: r.id,
+        name: r.name,
+        colour: r.colour,
+      })),
+    };
+  };
+
   const view = (row: typeof players.$inferSelect) => {
     const online = hub.presence.get(row.uuid);
     const role = hub.players.roleOf(row.uuid);
@@ -101,11 +135,12 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
   });
 
   app.get('/api/panel/players/:uuid', { schema: { params: uuidParams } }, async (request) => {
-    await auth.require(request, 'players');
+    const user = await auth.require(request, 'players');
     const row = hub.players.get(normalUuid(request.params.uuid));
     if (!row) throw notFound('player_unknown');
     return {
       ...view(row),
+      ...guard(user, row.uuid),
       // Was MorniCraft über den Spieler meldet (nur lesen); null = nie auf MorniCraft gewesen.
       mornicraft: morniCraftPlayer(db, row.uuid),
       history: hub.punish.history(row.uuid).map((p) => ({
@@ -137,11 +172,14 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
   );
 
   app.get('/api/panel/punishments', async (request) => {
-    await auth.require(request, 'punishments');
+    const user = await auth.require(request, 'punishments');
     const rows = db.select().from(punishments).orderBy(desc(punishments.id)).limit(HISTORY_MAX).all();
+    const me = rankOf(user);
     return rows.map((p) => ({
       ...p,
       playerName: hub.players.get(p.playerUuid)?.name ?? p.playerUuid,
+      // Aufheben nur bei niedrigerem Rang (der Owner hebt alles auf) – sonst bleibt der Knopf aus.
+      liftable: mayLiftFor(me, hub.players.roleOf(p.playerUuid)),
       // Nur was dauert, kann „aktiv“ sein – Verwarnung und Rauswurf sind einmalig.
       active: isLasting(p.kind) && hub.punish.active(p.playerUuid, p.kind)?.id === p.id,
     }));
@@ -149,11 +187,13 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
 
   app.post('/api/panel/punishments', { schema: { body: punishBody } }, async (request) => {
     const user = await auth.require(request, 'punishments');
+    const me = rankOf(user);
     // Wie der Befehl im Spiel: /ban braucht das Recht „ban“, /voicemute „voice-mute“ … (Owner darf alles).
-    if (!mayPunish(user.role, request.body.kind)) throw forbidden('punish_no_right');
+    if (!mayPunish(me, request.body.kind)) throw forbidden('punish_no_right');
     const t = hub.moderation.target(request.body.player);
     if (!t) throw notFound('player_unknown');
-    if (!higher(user, t.uuid)) throw forbidden('player_higher');
+    // Strafen nur nach unten: den Owner niemand, Admins nur der Owner, … (auch nicht sich selbst).
+    if (!mayPunishPlayer(me, hub.players.roleOf(t.uuid))) throw forbidden('player_protected');
     if (request.body.kind === 'kick' && !t.online) throw badRequest('player_offline');
     return hub.moderation.punish(
       t,
@@ -166,10 +206,12 @@ export function registerPlayerRoutes(app: Api, auth: PanelAuth, stores: Stores, 
 
   app.delete('/api/panel/punishments/:uuid/:kind', { schema: { params: liftParams } }, async (request) => {
     const user = await auth.require(request, 'punishments');
-    if (!mayPunish(user.role, request.params.kind)) throw forbidden('punish_no_right');
+    const me = rankOf(user);
+    if (!mayPunish(me, request.params.kind)) throw forbidden('punish_no_right');
     const t = hub.moderation.target(request.params.uuid);
     if (!t) throw notFound('player_unknown');
-    if (!higher(user, t.uuid)) throw forbidden('player_higher');
+    // Aufheben wie verhängen – alte Strafen auf Höheren bleiben, bis jemand Höheres (oder der Owner) sie aufhebt.
+    if (!mayLiftFor(me, hub.players.roleOf(t.uuid))) throw forbidden('player_protected');
     if (!hub.moderation.lift(t, request.params.kind, user.username)) throw notFound('punishment_none');
     return { ok: true };
   });

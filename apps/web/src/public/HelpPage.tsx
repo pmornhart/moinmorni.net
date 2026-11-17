@@ -17,12 +17,14 @@ import {
   Smartphone,
   Sun,
   Terminal,
+  Video,
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 import { DEFAULT_ROLES, roleBadgeLook } from '@moinmorni/shared';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
+import { NETWORK_COMMANDS } from '@moinmorni/shared';
 import { useCopy } from '~/components/controls';
 import { PixelBadge } from '~/components/pixel-badge';
 import { MM_NAMESPACE } from '~/i18n';
@@ -46,6 +48,7 @@ type SectionId =
   | 'discord'
   | 'mornicraft'
   | 'befehle'
+  | 'streamer'
   | 'regeln'
   | 'team-hilfe';
 
@@ -63,23 +66,25 @@ const SECTIONS: readonly HelpSection[] = [
   { id: 'discord', key: 'discord', icon: Link2 },
   { id: 'mornicraft', key: 'mornicraft', icon: ClipboardList },
   { id: 'befehle', key: 'commands', icon: Terminal },
+  { id: 'streamer', key: 'streamer', icon: Video },
   { id: 'regeln', key: 'rules', icon: Gavel },
   { id: 'team-hilfe', key: 'team', icon: LifeBuoy },
 ];
 
-/** In-game commands for everyone, with what they do (texts under site.help.commands.list.*). */
-const COMMANDS: readonly { readonly key: string; readonly syntax: string }[] = [
-  { key: 'freunde', syntax: '/freunde <name>' },
-  { key: 'party', syntax: '/party <name>' },
-  { key: 'pc', syntax: '/pc <…>' },
-  { key: 'msg', syntax: '/msg <name> <…>' },
-  { key: 'r', syntax: '/r <…>' },
-  { key: 'sprache', syntax: '/sprache <de|en>' },
-  { key: 'profil', syntax: '/profil [privat|öffentlich]' },
-  { key: 'voice', syntax: '/voice [kanal|raus]' },
-  { key: 'lobby', syntax: '/lobby' },
-  { key: 'rueckkehr', syntax: '/rueckkehr' },
-  { key: 'discord', syntax: '/discord' },
+/**
+ * The most important commands for everyone: the first line of each network command a player has (from the hub's
+ * list, texts under site.commands.lines.*); all of them – modes and team too – are on /befehle.
+ */
+const COMMANDS = NETWORK_COMMANDS.filter(
+  (c) => !c.right && c.topic !== 'lobby' && c.topic !== 'team' && c.where === 'hub',
+).flatMap((c) => c.lines.slice(0, 1));
+
+/** The parts of streamer mode with the word after /streamer that switches each (texts site.help.streamer.parts.*). */
+const STREAMER_PARTS: readonly { readonly key: string; readonly word: string }[] = [
+  { key: 'ip', word: 'ip' },
+  { key: 'coords', word: 'koordinaten' },
+  { key: 'msg', word: 'nachrichten' },
+  { key: 'live', word: 'live' },
 ];
 
 /** In case the website does not know the channels yet (older server version). */
@@ -330,6 +335,7 @@ function MorniCraftBody(): ReactElement {
 
 function CommandsBody(): ReactElement {
   const { t } = useTranslation(MM_NAMESPACE);
+  const language = useLanguage();
   return (
     <div className="grid gap-5">
       <p>{t('site.help.commands.intro')}</p>
@@ -340,13 +346,55 @@ function CommandsBody(): ReactElement {
             className="grid gap-1.5 border-b-2 border-border px-4 py-3 last:border-b-0 even:bg-background-alt/60 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-center sm:gap-4"
           >
             <dt>
-              <Cmd>{c.syntax}</Cmd>
+              <Cmd>{c.syntax[language]}</Cmd>
             </dt>
-            <dd className="text-[15px] text-muted-foreground">{t(`site.help.commands.list.${c.key}`)}</dd>
+            <dd className="text-[15px] text-muted-foreground">{t(`site.commands.lines.${c.key}`)}</dd>
           </div>
         ))}
       </dl>
       <p className="text-[14px] text-muted-foreground">{t('site.help.commands.tab')}</p>
+      <GameButton asChild tone="stone" className="justify-self-start">
+        <Link to="/befehle">
+          <Terminal />
+          {t('site.help.commands.all')}
+        </Link>
+      </GameButton>
+    </div>
+  );
+}
+
+/** Streamer mode: what it hides, how to switch it and each part, the F3 tip – on every server of the network. */
+function StreamerBody(): ReactElement {
+  const { t } = useTranslation(MM_NAMESPACE);
+  return (
+    <div className="grid gap-5">
+      <p>{t('site.help.streamer.intro')}</p>
+      <Steps
+        items={[
+          <>
+            {t('site.help.streamer.step1')} <Cmd>/streamer an</Cmd>
+          </>,
+          t('site.help.streamer.step2'),
+          <>
+            {t('site.help.streamer.step3')} <Cmd>/streamer aus</Cmd>
+          </>,
+        ]}
+      />
+      <dl className="grid overflow-hidden rounded-[8px] border-2 border-border">
+        {STREAMER_PARTS.map((part) => (
+          <div
+            key={part.key}
+            className="grid gap-1.5 border-b-2 border-border px-4 py-3 last:border-b-0 even:bg-background-alt/60 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-center sm:gap-4"
+          >
+            <dt>
+              <Cmd>{`/streamer ${part.word}`}</Cmd>
+            </dt>
+            <dd className="text-[15px] text-muted-foreground">{t(`site.help.streamer.parts.${part.key}`)}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-[14px] text-muted-foreground">{t('site.help.streamer.f3')}</p>
+      <p className="text-[14px] text-muted-foreground">{t('site.help.streamer.who')}</p>
     </div>
   );
 }
@@ -449,6 +497,7 @@ const BODIES: Readonly<Record<SectionId, () => ReactElement>> = {
   discord: DiscordBody,
   mornicraft: MorniCraftBody,
   befehle: CommandsBody,
+  streamer: StreamerBody,
   regeln: RulesBody,
   'team-hilfe': TeamBody,
 };

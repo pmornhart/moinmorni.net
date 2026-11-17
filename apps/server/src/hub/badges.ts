@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { JAIL_BADGE, badgeKeys, type Role } from '@moinmorni/shared';
+import { JAIL_BADGE, badgeKeys, networkCommand, type Role } from '@moinmorni/shared';
 import type { Command } from './commands.js';
 import type { HubContext } from './context.js';
 import type { Body } from './transport.js';
@@ -84,9 +84,7 @@ export function createBadges({ ctx, offer, toProxy }: BadgeOptions): Badges {
   };
 
   const command: Command = {
-    name: 'abzeichen',
-    aliases: ['badges'],
-    usage: { de: '/abzeichen', en: '/badges' },
+    ...networkCommand('abzeichen'),
     run: (actor) => {
       if (!active()) {
         ctx.msg(actor.uuid, text(actor.lang, 'badges.off'));

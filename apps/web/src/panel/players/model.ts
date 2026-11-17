@@ -87,8 +87,21 @@ export interface MorniCraftPlayer {
   readonly updatedAt: string;
 }
 
+/** A rank that may punish this player (for "only the Owner may do that"). */
+export interface Punisher {
+  readonly id: string;
+  readonly name: Text;
+  readonly colour: string;
+}
+
 export interface PlayerDetail extends PlayerView {
   readonly history: readonly Punishment[];
+  /** Punishments only go down: may I punish this player (my rank is higher)? Older servers: not sent. */
+  readonly punishable?: boolean;
+  /** May I lift their punishments (the Owner lifts everything)? */
+  readonly liftable?: boolean;
+  /** Ranks that may punish this player, highest first – empty: nobody (the Owner). */
+  readonly punishers?: readonly Punisher[];
   /** null: never played MorniCraft. */
   readonly mornicraft: MorniCraftPlayer | null;
 }
@@ -96,6 +109,8 @@ export interface PlayerDetail extends PlayerView {
 export interface PunishmentRow extends Punishment {
   readonly playerName: string;
   readonly active: boolean;
+  /** Lifting only from above (older servers: not sent = allowed). */
+  readonly liftable?: boolean;
 }
 
 export interface PlayerList {

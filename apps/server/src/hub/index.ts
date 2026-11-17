@@ -31,6 +31,7 @@ import { createRejoin } from './rejoin.js';
 import { createSettingCommands, mergeCommands } from './setting-commands.js';
 import { createSocial } from './social.js';
 import { createModeStats, statsSchema, type ModeStatsService } from './stats.js';
+import { createStreamerCommand, createStreamers } from './streamer.js';
 import { createVoice } from './voice.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
@@ -130,6 +131,8 @@ const LOBBY_SERVER = 'lobby';
 const CLOCK_LATITUDE = 48.137;
 const CLOCK_LONGITUDE = 11.575;
 const BUILD_SERVER = 'bau';
+/** So oft bekommt die Lobby den Stand des Gefängnisses auch ohne Änderung. */
+const JAIL_RESEND_MS = 60_000;
 /** So lange darf ein Modus zum Aufwachen brauchen, dann gibt es eine Meldung. */
 const WAKE_TIMEOUT_MS = 180_000;
 
@@ -165,6 +168,15 @@ export interface Hub {
   readonly moderation: Moderation;
   /** Nachricht an einen Spieler, egal wo er ist (MiniMessage). */
   readonly tell: (uuid: string, text: string) => void;
+  /** Spieler auf einen Server schicken (über den Proxy); false = Server nicht da oder Proxy weg. */
+  readonly connect: (uuid: string, server: string) => boolean;
+  /** Spieler mit einer Nachricht aus dem Netzwerk nehmen (MiniMessage). */
+  readonly kick: (uuid: string, text: string) => void;
+  /**
+   * Leiste oben, die herunterzählt („… startet in {s} s neu“ – {s} zählt das Netzwerk-Plugin selbst). Ältere Plugins
+   * kennen sie nicht und überhören sie – darum steht derselbe Hinweis immer auch im Chat.
+   */
+  readonly countdown: (uuid: string, text: string, seconds: number) => void;
   /** Rang eines Spielers hat sich geändert (Panel) → Spielserver informieren. */
   readonly refreshProfile: (uuid: string) => void;
   /** Ist der Proxy gerade mit dem Hub verbunden? */
@@ -195,6 +207,7 @@ export function createHub(options: HubOptions): Hub {
   const presence = createPresence(now);
   const players = createPlayerService(db, stores);
   const punish = createPunishService(db, () => new Date(now()));
+  const streamers = createStreamers(db, stores, players, options.domain ?? 'moinmorni.net');
 
   const conns = { proxy: null as Connection | null, backends: new Map<string, Connection>() };
   const toProxy = (body: Body): boolean => {
@@ -244,6 +257,8 @@ export function createHub(options: HubOptions): Hub {
       },
       /** Rechte im Spiel (das Plugin gibt z. B. auf dem Bau-Server Kreativ und WorldEdit). */
       rights: role.game,
+      /** Streamer-Modus: an/aus und was verdeckt wird (das Plugin verdeckt beim Empfänger, zeigt ● LIVE). */
+      streamer: streamers.active(p.uuid),
     };
   };
   const sendProfile = (uuid: string): void => {
@@ -266,9 +281,13 @@ export function createHub(options: HubOptions): Hub {
     timeZone: options.timeZone,
     domain: options.domain ?? 'moinmorni.net',
     msg: (uuid, line) => {
-      if (toProxy({ t: 'msg', uuid, text: line })) return;
+      // Streamer: IP-Adressen und eigene Adressen verdeckt das Plugin beim Ausliefern („•••“).
+      const body: Body = streamers.parts(uuid).includes('ip')
+        ? { t: 'msg', uuid, text: line, mask: true }
+        : { t: 'msg', uuid, text: line };
+      if (toProxy(body)) return;
       const server = presence.get(uuid)?.server;
-      if (server) toBackend(server, { t: 'msg', uuid, text: line });
+      if (server) toBackend(server, body);
     },
     kick: (uuid, line) => {
       toProxy({ t: 'kick', uuid, text: line });
@@ -294,6 +313,7 @@ export function createHub(options: HubOptions): Hub {
     syncBans: () => {
       toProxy(bans());
     },
+    streamer: (uuid) => streamers.parts(uuid),
   };
   const badges = createBadges({ ctx, offer: () => options.badgePack?.() ?? null, toProxy });
   /** Wer im Gefängnis sitzt (mit Ende und Grund) und wo die Zelle ist – für das Lobby-Plugin. */
@@ -347,6 +367,7 @@ export function createHub(options: HubOptions): Hub {
         ...voice.commands,
         ...badges.commands,
         ...rejoin.commands,
+        createStreamerCommand(ctx, streamers, { now, changed: sendProfile }),
         ...(options.extraCommands?.(ctx) ?? []),
       ],
       createSettingCommands(ctx),
@@ -511,6 +532,10 @@ export function createHub(options: HubOptions): Hub {
     morniCraftSettings(stores, { domain: ctx.domain, timeZone: options.timeZone });
   let lobbyTimer: ReturnType<typeof setTimeout> | null = null;
   let closed = false;
+  // Gefängnis: die Lobby bekommt den Stand jede Minute noch einmal – geht eine Freilassung unterwegs verloren, kommt
+  // trotzdem jeder heraus (das Lobby-Plugin setzt Freie, die noch in der Zelle stehen, an den Dorfplatz).
+  const jailTimer = setInterval(() => toBackend(LOBBY_SERVER, jailState()), JAIL_RESEND_MS);
+  jailTimer.unref();
   const lobbySoon = (): void => {
     if (lobbyTimer || closed) return;
     lobbyTimer = setTimeout(() => {
@@ -600,6 +625,19 @@ export function createHub(options: HubOptions): Hub {
       presence.move(m.uuid, m.server);
       sendProfile(m.uuid);
       rejoin.moved(m.uuid, from, m.server);
+      // Eingesperrt, aber auf einem anderen Server angekommen (mitten im Wechsel eingesperrt): zurück in die Zelle.
+      const jail = m.server === LOBBY_SERVER ? undefined : punish.active(normalUuid(m.uuid), 'jail');
+      if (jail && ctx.connect(normalUuid(m.uuid), LOBBY_SERVER)) {
+        const lang = presence.get(m.uuid)?.lang ?? defaultLang();
+        ctx.msg(
+          normalUuid(m.uuid),
+          text(lang, 'jail.blocked', {
+            until: jail.expiresAt
+              ? text(lang, 'punish.until', { date: dateText(lang, jail.expiresAt, ctx.timeZone) })
+              : text(lang, 'punish.forever'),
+          }),
+        );
+      }
       // Erst jetzt ist der Spieler wirklich da: Freunde erfahren es, offene Anfragen kommen an.
       if (first) social.joined(normalUuid(m.uuid));
       social.switched(normalUuid(m.uuid), m.server);
@@ -724,12 +762,14 @@ export function createHub(options: HubOptions): Hub {
         conn.send(network());
         conn.send(bans());
         conn.send(badges.proxyBody());
+        conn.send(streamers.config());
         return;
       }
       conns.backends.set(conn.server, conn);
       events.emit('server.connected', { server: conn.server });
       conn.send({ t: 'welcome', server: conn.server, kind: conn.kind });
       conn.send(voice.config());
+      conn.send(streamers.config());
       conn.send(lobbyState());
       if (conn.server === LOBBY_SERVER) {
         conn.send(lobbySettings());
@@ -785,6 +825,11 @@ export function createHub(options: HubOptions): Hub {
     if (area === 'network') {
       toProxy(network());
       rejoin.refresh();
+      // Streamer-Modus: Adressen zum Verdecken an alle, und was jetzt für jeden gilt (erlaubt, Teile).
+      const config = streamers.config();
+      toProxy(config);
+      conns.backends.forEach((c) => c.send(config));
+      presence.all().forEach((p) => sendProfile(p.uuid));
     }
     if (area === 'lobby') toBackend(LOBBY_SERVER, lobbySettings());
     if (area === 'voice') voice.broadcast();
@@ -813,6 +858,7 @@ export function createHub(options: HubOptions): Hub {
       rejoin.stop();
       // Sonst feuert die verzögerte Lobby-Meldung noch nach dem Schließen (Datenbank schon zu).
       closed = true;
+      clearInterval(jailTimer);
       if (lobbyTimer) clearTimeout(lobbyTimer);
       lobbyTimer = null;
       await transport.close();
@@ -823,6 +869,11 @@ export function createHub(options: HubOptions): Hub {
     punish,
     moderation,
     tell: (uuid, line) => ctx.msg(normalUuid(uuid), line),
+    connect: (uuid, server) => ctx.connect(normalUuid(uuid), server),
+    kick: (uuid, line) => ctx.kick(normalUuid(uuid), line),
+    countdown: (uuid, line, seconds) => {
+      toProxy({ t: 'countdown', uuid: normalUuid(uuid), text: line, seconds });
+    },
     refreshProfile: refresh,
     proxyOnline: () => conns.proxy !== null,
     connectedServers: () => [...conns.backends.keys()],

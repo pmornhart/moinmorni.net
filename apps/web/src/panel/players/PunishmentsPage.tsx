@@ -112,7 +112,9 @@ function PunishmentItem({ row }: { readonly row: PunishmentRow }): ReactElement 
           <Button
             variant="secondary"
             size="sm"
-            disabled={lift.isPending}
+            // Lifting only from above: the button stays, but off – with who may.
+            disabled={lift.isPending || row.liftable === false}
+            title={row.liftable === false ? t('punishments.liftHigher', { name: row.playerName }) : undefined}
             onClick={() => lift.mutate({ uuid: row.playerUuid, kind: liftKind, name: row.playerName })}
           >
             <Undo2 />
