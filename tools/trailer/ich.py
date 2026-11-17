@@ -10,6 +10,8 @@ SLOW 12 für 24 echte Sekunden; die Maus dreht entsprechend langsam. Danach wird
 
 Einstellung (JSON), alle Zeiten in Spielsekunden:
   slow, dim, setup, after, fifo-Ereignisse wie bei shot.py („events“ mit actor/act oder cmd)
+             In „setup“ wartet „#sleep 2.5“ so viele echte Sekunden (z. B. einen Flug erst anlaufen lassen, dann
+             die Zeitlupe einschalten).
   start      {"p":[x,y,z], "yaw":Grad, "pitch":Grad} – Spieler vorher dorthin (Teleport, danach nicht mehr)
   gamemode   survival (Standard) | adventure
   duration   Länge
@@ -74,7 +76,10 @@ def main():
         return (v[-2], v[-1]) if len(v) >= 2 else (0.0, 0.0)
 
     for c in spec.get('setup', []):
-        rc(c)
+        if c.startswith('#sleep '):
+            time.sleep(float(c.split()[1]))
+        else:
+            rc(c)
     rc('minecraft:spectate')
     rc('kill @e[tag=mmcam]')
     rc(f"gamemode {spec.get('gamemode', 'survival')} {me}")
@@ -157,6 +162,8 @@ def main():
     ff = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'x11grab', '-draw_mouse', '0', '-video_size',
                            spec.get('size', '1600x900'), '-framerate', str(rate), '-i', display, '-c:v', 'libx264',
                            '-preset', 'ultrafast', '-crf', '12', '-pix_fmt', 'yuv420p', raw], stdin=subprocess.PIPE)
+    import atexit  # bricht die Aufnahme mit einem Fehler ab, soll ffmpeg nicht weiterlaufen
+    atexit.register(lambda: ff.poll() is None and ff.kill())
     time.sleep(0.3)
     t0 = time.time()
     k, ti = 0, 0

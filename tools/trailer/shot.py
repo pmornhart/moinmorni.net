@@ -10,13 +10,17 @@ MM_HUD_CHECK=0 (Anzeige nicht prüfen; sonst wird sie vorher sicher ausgeschalte
 
 Einstellung (JSON):
   slow      Zeitlupe (Server läuft 20/slow Ticks pro Sekunde), Standard 6
-  setup     Befehle vorher in normaler Geschwindigkeit
+  setup     Befehle vorher in normaler Geschwindigkeit („#sleep 2.5“ wartet so viele echte Sekunden)
   camera    [{"p":[x,y,z], "look":[x,y,z], "t": Sekunden ab dem vorigen Punkt, "ease":1, "hold": s}]
   track     Name eines Darstellers: die Kamera schaut immer auf ihn ("look" kann dann fehlen)
   follow    Name oder Liste von Spielern (z. B. physikalische Darsteller aus actors/regie.cjs): die Kamera schaut
             auf ihre Mitte (Brusthöhe), weich nachgeführt – Ort der Spieler kommt per RCON („look“ kann fehlen)
   actors    {"Anna": [{"p":[x,y,z], "t": s, "look":[x,y,z] oder "yaw": Grad, "pitch": Grad, "hold": s}]}
   events    [{"at": s, "cmd": "..."} oder {"at": s, "actor": "Anna", "act": "swing"}]
+  chase     {"who": Name, "back": 7, "side": 2.5, "up": 1.2, "ease": 0.35} – Verfolgerkamera: hinter einem schnellen
+            Spieler (z. B. einem Flieger) her, seitlich versetzt, schaut auf ihn; Ort per RCON jeden Tick, Richtung aus
+            seiner Bewegung. „camera“ gibt dann nur den Anfang (erster Punkt) und die Dauer vor.
+  tpd       Gleitdauer der Kamera in Ticks (Standard 1; bei „chase“ 3 – so lange gleitet der Client auch Spieler)
   after     Befehle danach
   dim       Dimension der Welt, z. B. "minecraft:duels" (optional; sonst die Hauptwelt). RCON läuft in der Hauptwelt –
             ohne "dim" landen Kamera und Darsteller dort.
@@ -107,7 +111,10 @@ def main():
         return f'execute in {dim} run {c}' if dim else c
 
     for c in spec.get('setup', []):
-        rc(c)
+        if c.startswith('#sleep '):
+            time.sleep(float(c.split()[1]))
+        else:
+            rc(c)
     cam = Path(spec['camera'], True)
     actors = {n: Path(p, False) for n, p in spec.get('actors', {}).items()}
     last_yaw = {}
@@ -149,7 +156,13 @@ def main():
     rc(f'gamemode spectator {cam_player}')
     rc(at(f'tp {cam_player} {p0[0]} {p0[1]} {p0[2]} {yaw0:.2f} {pitch0:.2f}'))
     time.sleep(1.5)
-    rc(at(f'summon item_display {p0[0]} {p0[1]} {p0[2]} {{Tags:["mmcam"],teleport_duration:1,Rotation:[{yaw0:.2f}f,{pitch0:.2f}f]}}'))
+    chase = spec.get('chase')
+    if chase:
+        for c in spec['camera']:
+            c.setdefault('look', spec['camera'][0]['look'])
+        cam = Path(spec['camera'], True)
+    tpd = int(spec.get('tpd', 3 if chase else 1))
+    rc(at(f'summon item_display {p0[0]} {p0[1]} {p0[2]} {{Tags:["mmcam"],teleport_duration:{tpd},Rotation:[{yaw0:.2f}f,{pitch0:.2f}f]}}'))
     time.sleep(0.5)
     # Mit Namensraum: Spielmodi (Duels, Party) haben ein eigenes /spectate, das sonst den Befehl abfängt.
     rc(f'minecraft:spectate @e[tag=mmcam,limit=1] {cam_player}')
@@ -164,16 +177,41 @@ def main():
     ff = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'x11grab', '-draw_mouse', '0', '-video_size',
                            spec.get('size', '1600x900'), '-framerate', str(rate), '-i', display, '-c:v', 'libx264',
                            '-preset', 'ultrafast', '-crf', '12', '-pix_fmt', 'yuv420p', raw], stdin=subprocess.PIPE)
+    import atexit  # bricht die Aufnahme mit einem Fehler ab, soll ffmpeg nicht weiterlaufen
+    atexit.register(lambda: ff.poll() is None and ff.kill())
     time.sleep(0.3)
     t0 = time.time()
     k, ei = 0, 0
     track_aim = None
+    ch_cam, ch_dir, ch_prev = list(p0), None, None
     while True:
         t = k * TICK
         if t > duration:
             break
         pos = cam.pos(t)
-        if spec.get('track') in actors:  # Kamera schaut auf einen Darsteller (Brusthöhe), sanft nachgeführt
+        if chase:  # Verfolgerkamera: Ort des Spielers, Richtung aus seiner Bewegung, weich nachgeführt
+            v = [float(x) for x in __import__('re').findall(r'-?\d+(?:\.\d+)?(?:E-?\d+)?', rc(at(f"data get entity {chase['who']} Pos")))]
+            if len(v) >= 3:
+                w = v[-3:]
+                if ch_prev:
+                    d = [a - b for a, b in zip(w, ch_prev)]
+                    if math.hypot(*d) > 0.05:
+                        n_ = math.hypot(*d)
+                        d = [x / n_ for x in d]
+                        ch_dir = d if ch_dir is None else [a + (b - a) * 0.25 for a, b in zip(ch_dir, d)]
+                ch_prev = w
+                if ch_dir:
+                    hl = math.hypot(ch_dir[0], ch_dir[2]) or 1
+                    sx, sz = -ch_dir[2] / hl, ch_dir[0] / hl
+                    want = [w[0] - ch_dir[0] * chase.get('back', 7) + sx * chase.get('side', 2.5),
+                            w[1] - ch_dir[1] * chase.get('back', 7) + chase.get('up', 1.2),
+                            w[2] - ch_dir[2] * chase.get('back', 7) + sz * chase.get('side', 2.5)]
+                    ch_cam = [a + (b - a) * chase.get('ease', 0.35) for a, b in zip(ch_cam, want)]
+                    look = [w[0] + ch_dir[0] * 2, w[1] + 1.0 + ch_dir[1] * 2, w[2] + ch_dir[2] * 2]
+                    track_aim = look if track_aim is None else [a + (b - a) * 0.5 for a, b in zip(track_aim, look)]
+            pos = ch_cam
+            look = track_aim or cam.pos(t, 'look')
+        elif spec.get('track') in actors:  # Kamera schaut auf einen Darsteller (Brusthöhe), sanft nachgeführt
             ap = actors[spec['track']].pos(t)
             aim = [ap[0], ap[1] + 1.2, ap[2]]
             prev = track_aim or aim

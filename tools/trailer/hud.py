@@ -29,6 +29,26 @@ def grey_fraction(display, gui=3, size=(1600, 900)):
     return grey / max(1, n)
 
 
+def red_fraction(display, gui=3, size=(1600, 900)):
+    """Anteil kräftig roter Bildpunkte dort, wo die Herzen stehen (links über der Schnellleiste). Herzen gibt es im
+    Überleben/Abenteuer – sie zeigen zuverlässiger als die grauen Felder, ob die Anzeige an ist (grauer Fels oder
+    Schnee im Hintergrund täuschen die Schnellleisten-Prüfung)."""
+    w, h = 81 * gui, 9 * gui
+    x, y = (size[0] - 182 * gui) // 2, size[1] - 39 * gui
+    png = subprocess.run(['import', '-window', 'root', '-crop', f'{w}x{h}+{x}+{y}', 'png:-'],
+                         env=dict(os.environ, DISPLAY=display), capture_output=True, check=True).stdout
+    im = Image.open(BytesIO(png)).convert('RGB')
+    px = im.load()
+    n = red = 0
+    for j in range(0, im.height, 2):
+        for i in range(0, im.width, 2):
+            r, g, b = px[i, j]
+            n += 1
+            if r > 170 and g < 90 and b < 90:
+                red += 1
+    return red / max(1, n)
+
+
 def client_alive(display):
     """Läuft der echte Client auf dieser Anzeige noch? (Ist er weg, bleibt der virtuelle Bildschirm schwarz.)"""
     env = dict(os.environ, DISPLAY=display)
@@ -74,11 +94,15 @@ def set_hud(display, on, gui=3):
         st = {}
     shown = st.get('shown', True) if st.get('pid') == pid else True
     if shown != on:
-        before = grey_fraction(display, gui)
+        before, red_before = grey_fraction(display, gui), red_fraction(display, gui)
         subprocess.run(['xdotool', 'key', 'F1'], env=dict(os.environ, DISPLAY=display), check=False)
-        time.sleep(0.8)
-        after = grey_fraction(display, gui)
-        if max(before, after) > 0.2 and (after > before + 0.1) != on:  # Bild widerspricht: noch einmal umschalten
+        time.sleep(1.2)
+        after, red_after = grey_fraction(display, gui), red_fraction(display, gui)
+        if max(red_before, red_after) > 0.05:  # Herzen auf einem der Bilder: daran entscheiden
+            wrong = (red_after > 0.05) != on
+        else:
+            wrong = max(before, after) > 0.2 and (after > before + 0.1) != on
+        if wrong:  # Bild widerspricht: noch einmal umschalten
             subprocess.run(['xdotool', 'key', 'F1'], env=dict(os.environ, DISPLAY=display), check=False)
             time.sleep(0.5)
     json.dump({'pid': pid, 'shown': on}, open(path, 'w'))
