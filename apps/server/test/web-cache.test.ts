@@ -27,11 +27,9 @@ describe('Webseite: Zwischenspeichern im Browser', () => {
     return res.headers['cache-control']?.toString();
   };
 
-  test('Bausteine mit Prüfsumme im Namen für immer, Bilder einen Tag, die Seite selbst immer frisch', async () => {
+  test('Bausteine mit Prüfsumme im Namen für immer, Bilder fragen jedes Mal nach (nach einem Update gleich die neuen), die Seite selbst immer frisch', async () => {
     expect(await cacheOf('/assets/app-1a2b3c.js')).toContain('immutable');
-    expect(await cacheOf('/bilder/dorfplatz-tag.webp')).toBe(
-      'public, max-age=86400, stale-while-revalidate=604800',
-    );
+    expect(await cacheOf('/bilder/dorfplatz-tag.webp')).toBe('public, no-cache');
     expect(await cacheOf('/index.html')).toBe('no-cache');
   });
 

@@ -131,8 +131,12 @@ const CLIENT_ERRORS: Readonly<Record<number, string>> = {
 const ASSETS = '/assets/';
 const API = '/api/';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
-/** Bilder der Webseite ändern sich nur mit Updates: einen Tag frisch, danach im Hintergrund prüfen (bis eine Woche). */
-const PICTURE_CACHE = 'public, max-age=86400, stale-while-revalidate=604800';
+/**
+ * Bilder der Webseite behalten bei einem Update ihren Namen (figur-duels.webp …). Darum fragt der Browser jedes Mal
+ * kurz nach (ETag → meist „304 unverändert“, ohne das Bild neu zu laden) – sonst zeigte er nach einem Update noch bis zu
+ * einer Woche die alten Bilder.
+ */
+const PICTURE_CACHE = 'public, no-cache';
 const PICTURES = `${path.sep}bilder${path.sep}`;
 
 export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
