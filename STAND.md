@@ -275,12 +275,13 @@
     festsitzenden verlegt (Schlossmarkt −22/−28; die im Oberdorf steht nach dem Umbau der Brunnen
     im Entwicklungs-Branch ohnehin woanders) + Test, dass jede laufende Figur frei startet; Tafel mit Kennung
     `mm_jnr_board`, ältere Tafeln am Start werden weggeräumt; nach dem Bau `save-all` ohne „flush“.
-  - Tests: 49 Baukasten- (1 neu: Startplätze frei; ohne die Änderung rot), 95 Katalog-, 235 Server-Tests, 55 JUnit
-    (4 neu: Körper im Stehen, Platz merken, Hindernisse, weicher Kopf), Typen, Prettier. Echt: Paper 26.1.2 +
-    Netzwerk-Plugin + Test-Hub, Lobby mit dem echten Selbstbau neu gebaut, `lobby-test` **30/30**,
-    `schlossmarkt-test` **31/31** (erster Lauf 28/31: Wintersport-Schild kam unter Last zu spät beim Test-Spieler an,
-    zweiter Lauf grün). Probe-Platz mit sieben laufenden Figuren und Hindernissen (Zaun, Treppen, Stufen, Schild,
-    Wasser, halbe Stufen): kleinster Abstand zwischen Figuren in 20 s **0,81** (vorher standen sie ineinander); im Dorf
+  - Tests (nach dem Zusammenführen mit dem Entwicklungs-Branch): 68 Baukasten- (neu: Startplätze frei; ohne die
+    Änderung rot), 107 Katalog-, 262 Server-Tests, 65 JUnit (4 neu: Körper im Stehen, Platz merken, Hindernisse,
+    weicher Kopf), Typen, Prettier. Echt: Paper 26.1.2 + Netzwerk-Plugin + Test-Hub, Lobby mit dem echten Selbstbau neu
+    gebaut, `lobby-test` **30/30**, `schlossmarkt-test` **31/31** (je ein Lauf davor unter Last mit Ausreißern: einmal
+    zählte das Jump and Run nur 6 statt 13 Sprünge, einmal kam das Wintersport-Schild zu spät beim Test-Spieler an).
+    Probe-Platz mit sieben laufenden Figuren und Hindernissen (Zaun, Treppen, Stufen, Schild, Wasser, halbe Stufen):
+    kleinster Abstand zwischen Figuren in 20 s **0,81** (vorher standen sie ineinander); im Dorf
     bewegten sich in einer Minute alle Laufenden in der geladenen Gegend (die zwei festsitzenden jetzt auch);
     Nachladen der Gegend (Kamera 300 Blöcke weg und zurück): 46 Figuren, 13 Trachten, jede Tracht auf ihrer Figur,
     Schilder 72 (12 × 6) – nichts doppelt, nichts liegen geblieben; ohne Ressourcenpaket nur die Skins, nichts
