@@ -12,7 +12,7 @@ import { BUILD_PLACEHOLDER, BUILD_TAG_PREFIX, LOBBY_TAG } from '../village.js';
 import { biomeCommands } from '../shapes.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
 import { SEASONS, seasonCommands, seasonPlans, type Season } from './season.js';
-import { withoutHitbox } from './deko.js';
+import { withoutHitbox, withViewRange } from './deko.js';
 import { SPORT_LOOKS, SPORT_STAND, sportPlan, sportShowCommands } from './sportstand.js';
 
 export const LOBBY_NAMESPACE = 'moinmorni_lobby';
@@ -256,7 +256,8 @@ export function lobbyPack(): LobbyPack {
     Object.fromEntries(built.map(({ season, on, off }) => [season, { on: on.length, off: off.length }])),
   );
   // Christbaumkugeln und Ostereier: aus Block-Anzeigen werden Item-Anzeigen mit unserem Namen (schmuck.ts).
-  const asItems = (text: string): string => text.split('\n').map(kugelAsItem).join('\n');
+  // Danach kleine Teile nur so weit zeichnen, wie man sie sieht (deko.ts, `withViewRange`).
+  const asItems = (text: string): string => text.split('\n').map(kugelAsItem).map(withViewRange).join('\n');
   [files, seasonFiles].forEach((map) =>
     Object.keys(map).forEach((k) => {
       map[k] = asItems(map[k] ?? '');
