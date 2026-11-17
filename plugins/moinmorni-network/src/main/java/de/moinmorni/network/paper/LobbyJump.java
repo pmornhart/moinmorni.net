@@ -884,7 +884,7 @@ final class LobbyJump implements Listener {
     private void registerCommands() {
         commandsRegistered = true;
         Bukkit.getCommandMap().register("moinmorni",
-                new Command("jumpandrun", "Jump and Run der Lobby", "/jnr [top|stop]", List.of("jnr")) {
+                new Command("jnr", "Jump and Run der Lobby", "/jnr [top|stopp]", List.of("jumpandrun")) {
                     @Override
                     public boolean execute(CommandSender sender, String label, String[] args) {
                         if (sender instanceof Player p) {
@@ -895,7 +895,8 @@ final class LobbyJump implements Listener {
 
                     @Override
                     public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
-                        return args.length == 1 ? List.of("top", "stop") : List.of();
+                        return args.length == 1 && sender instanceof Player p
+                                ? List.of("top", "en".equals(langOf.apply(p)) ? "stop" : "stopp") : List.of();
                     }
                 });
         // Der alte Befehl leitet um.
@@ -913,7 +914,8 @@ final class LobbyJump implements Listener {
 
                     @Override
                     public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
-                        return args.length == 1 ? List.of("top", "stop") : List.of();
+                        return args.length == 1 && sender instanceof Player p
+                                ? List.of("top", "en".equals(langOf.apply(p)) ? "stop" : "stopp") : List.of();
                     }
                 });
         Bukkit.getOnlinePlayers().forEach(Player::updateCommands);
@@ -935,7 +937,7 @@ final class LobbyJump implements Listener {
                     : text(p, "Dein Rekord: " + mine, "Your record: " + mine, NamedTextColor.AQUA));
             return;
         }
-        if ("stop".equals(what) || "aus".equals(what)) {
+        if (LobbyCommands.STOP.contains(what)) {
             if (run != null) {
                 end(p, run, End.STOP);
             }

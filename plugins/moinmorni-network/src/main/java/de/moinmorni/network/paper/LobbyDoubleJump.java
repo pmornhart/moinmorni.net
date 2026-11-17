@@ -309,7 +309,7 @@ final class LobbyDoubleJump implements Listener {
         }
         commandsRegistered = true;
         Bukkit.getCommandMap().register("moinmorni",
-                new Command("fly", "In der Lobby fliegen oder doppelt springen", "/fly [an|aus]", List.of("fliegen")) {
+                new Command("fliegen", "In der Lobby fliegen oder doppelt springen", "/fliegen [an|aus]", List.of("fly")) {
                     @Override
                     public boolean execute(CommandSender sender, String label, String[] args) {
                         if (sender instanceof Player p) {
@@ -320,7 +320,7 @@ final class LobbyDoubleJump implements Listener {
 
                     @Override
                     public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
-                        return args.length == 1 ? List.of("an", "aus", "on", "off") : List.of();
+                        return args.length == 1 && sender instanceof Player p ? (en(p) ? List.of("on", "off") : List.of("an", "aus")) : List.of();
                     }
                 });
         Bukkit.getOnlinePlayers().forEach(Player::updateCommands);
@@ -335,7 +335,7 @@ final class LobbyDoubleJump implements Listener {
         }
         Boolean fly = wantFly(arg, !prefersJump.contains(p.getUniqueId()));
         if (fly == null) {
-            say(p, "/fly an|aus – Fliegen oder Doppelsprung.", "/fly on|off – flying or double jump.",
+            say(p, "/fliegen an|aus – Fliegen oder Doppelsprung.", "/fly on|off – flying or double jump.",
                     NamedTextColor.GRAY);
             return;
         }
@@ -347,11 +347,11 @@ final class LobbyDoubleJump implements Listener {
         save();
         refresh(p);
         if (fly) {
-            say(p, "✈ Fliegen an – zweimal Leertaste hebt ab und landet wieder. /fly aus: Doppelsprung.",
+            say(p, "✈ Fliegen an – zweimal Leertaste hebt ab und landet wieder. /fliegen aus: Doppelsprung.",
                     "✈ Flying on – press space twice to take off and to land. /fly off: double jump.",
                     NamedTextColor.GREEN);
         } else {
-            say(p, "⤴ Doppelsprung an – in der Luft noch einmal springen. /fly an: wieder fliegen.",
+            say(p, "⤴ Doppelsprung an – in der Luft noch einmal springen. /fliegen an: wieder fliegen.",
                     "⤴ Double jump on – jump again in mid-air. /fly on: fly again.", NamedTextColor.GREEN);
         }
         if (fly && !here(p)) {

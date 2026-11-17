@@ -12,6 +12,7 @@ import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
+import com.velocitypowered.api.event.command.PlayerAvailableCommandsEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
@@ -94,6 +95,8 @@ public final class VelocityPlugin {
     private final ProxyServer proxy;
     private final Logger log;
     private final Path dataDir;
+    /** Aliase der Netzwerk-Befehle – sie gehen, stehen aber nicht im Befehlsbaum (siehe onAvailableCommands). */
+    private final Set<String> hiddenAliases = ConcurrentHashMap.newKeySet();
     private final List<String> commands = new ArrayList<>();
     /** Banns aus der letzten Liste des Hubs: gelten auch, wenn der Hub kurz weg ist. */
     private final Map<UUID, Instant> bans = new ConcurrentHashMap<>();
@@ -749,6 +752,7 @@ public final class VelocityPlugin {
     private void registerCommands(JsonArray list) {
         commands.forEach(name -> proxy.getCommandManager().unregister(name));
         commands.clear();
+        hiddenAliases.clear();
         for (JsonElement e : list) {
             JsonObject c = e.getAsJsonObject();
             String name = HubClient.str(c, "name");
@@ -760,7 +764,18 @@ public final class VelocityPlugin {
                     .build();
             proxy.getCommandManager().register(meta, new HubCommand(name));
             commands.add(name);
+            aliases.forEach(a -> hiddenAliases.add(a.toLowerCase(Locale.ROOT)));
         }
+    }
+
+    /**
+     * Im Befehlsbaum (Tab-Vorschläge, Hervorhebung) steht je Netzwerk-Befehl nur der Hauptname (/fliegen, /stumm,
+     * /sprachchat). Aliase wie /fly, /mute, /voice gehen weiter, wenn man sie tippt – sie stehen nur nicht doppelt
+     * in der Liste. Nimmt auch gleichnamige Befehle des Spielservers heraus (z. B. Minecrafts /tell neben /msg).
+     */
+    @Subscribe
+    public void onAvailableCommands(PlayerAvailableCommandsEvent event) {
+        hiddenAliases.forEach(name -> event.getRootNode().removeChildByName(name));
     }
 
     private final class HubCommand implements SimpleCommand {
