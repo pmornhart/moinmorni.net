@@ -49,6 +49,14 @@ export const T = {
     de: '✅ Verbunden mit **{name}**. Dein Rang gilt jetzt auch hier.',
     en: '✅ Linked to **{name}**. Your rank applies here too now.',
   },
+  linkTeamOk: {
+    de: '✅ Dein Panel-Konto **{name}** ist jetzt mit Discord verbunden. Deine Team-Rolle gilt auch hier.',
+    en: '✅ Your panel account **{name}** is now linked to Discord. Your team role applies here too.',
+  },
+  linkSlow: {
+    de: 'Zu viele falsche Codes – bitte in ein paar Minuten noch einmal.',
+    en: 'Too many wrong codes – please try again in a few minutes.',
+  },
   linkWrong: {
     de: 'Der Code stimmt nicht oder ist abgelaufen. Im Spiel `/discord` eingeben, dann den neuen Code hier nutzen.',
     en: 'That code is wrong or expired. Type `/discord` in game and use the new code here.',

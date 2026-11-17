@@ -22,6 +22,7 @@ import { createGithubClient } from './lib/github.js';
 import { createMotorClient, MotorError, type FetchLike, type MotorClient } from './motor/client.js';
 import { startAlertRelay, type AlertRelay } from './motor/alerts.js';
 import { MOTOR_PREFIX, registerMotorProxy } from './motor/proxy.js';
+import { createAccountLinks, createLinkCommand, registerAccountLinkRoutes } from './panel/account-links.js';
 import { createPanelAuth } from './panel/auth.js';
 import { githubReleases, RELEASE_CHECK_MS } from './network/mode-releases.js';
 import {
@@ -200,7 +201,9 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     return reply.code(HTTP_SERVER_ERROR).send({ error: 'internal' });
   });
 
-  const auth = createPanelAuth(handle.db, motor, stores);
+  const auth = createPanelAuth(handle.db, motor, stores, events);
+  // Verbindungen der Team-Konten (Minecraft per Code im Spiel, Discord per Code beim Bot).
+  const accounts = createAccountLinks(handle.db, events);
   // Der Hub weckt schlafende Modi über den Schlaf-Dienst (der wiederum den Hub fragt, wer wo ist).
   const sleepRef: { service: SleepService | null } = { service: null };
   const botRef: { bot: MoinMorniBot | null } = { bot: null };
@@ -210,7 +213,11 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const hub = createHub({
     wake: (server) => sleepRef.service?.wake(server) ?? Promise.resolve(false),
     allowedIn: applications.allowed,
-    extraCommands: (ctx) => botRef.bot?.commands(ctx) ?? [],
+    extraCommands: (ctx) => {
+      const botCommands = botRef.bot?.commands(ctx) ?? [];
+      const discord = botCommands.find((c) => c.name === 'discord');
+      return [...botCommands, createLinkCommand(ctx, accounts, (actor) => discord?.run(actor, []))];
+    },
     secret: config.secret,
     db: handle.db,
     stores,
@@ -279,6 +286,7 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     status,
     applications,
     team,
+    accounts,
     log: app.log,
     ...(options.discordFetch ? { fetchImpl: options.discordFetch } : {}),
   });
@@ -499,7 +507,11 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     log: app.log,
   });
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
-  const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor);
+  const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor, accounts);
+  registerAccountLinkRoutes(app, auth, accounts, {
+    nameOf: (uuid) => hub.players.get(uuid)?.name,
+    discordReady: () => credentials.token() !== null,
+  });
   teamRef.syncAll = teamAccess.syncAll;
   registerDiscordRoutes(app, auth, bot, credentials);
   registerNewsRoutes(app, auth, handle.db, events);

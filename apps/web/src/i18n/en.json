@@ -1031,6 +1031,7 @@
         "paket": "Load the network pack again – furniture, fountains, fish, clothes and brass band (load once, works on every server).",
         "abzeichen": "Load the badge pack again – then ranks show as little badges before the names.",
         "discord": "An invitation to our Discord – and a code to link your account.",
+        "verbinden": "Links your panel account to your Minecraft account – you get the code in the panel under My account. Without a code it works like /discord.",
         "rundgang": "A tour through the village (stop: /tour stop).",
         "jnr": "Start the jump and run: you are high above the village right away, block after block appears – every jump scores a point (or the feather in the hotbar, the compass menu or the emerald at the start; /parkour works too).",
         "jnrTop": "The jump and run leaderboard and your record.",
@@ -2116,7 +2117,11 @@
       "title": "Remove {{name}}'s account?",
       "text": "The account is deleted – with password, passkeys and 2FA. {{name}} can no longer sign in, and the team role no longer counts in the game either. This can't be undone.",
       "confirm": "Remove for good"
-    }
+    },
+    "minecraftOk": "Minecraft ✓ {{name}}",
+    "minecraftUnconfirmed": "Minecraft: {{name}} (not confirmed in game yet)",
+    "discordOk": "Discord ✓ {{name}}",
+    "noDiscord": "No Discord linked"
   },
   "account": {
     "title": "My account",
@@ -2125,7 +2130,7 @@
     "roleText": "Your role decides what you see in the panel and may do in the game. Someone with a higher role can change it.",
     "toTeam": "To the team",
     "minecraftTitle": "Link your Minecraft account",
-    "minecraftText": "Enter your Minecraft name (Java Edition) below. Then MoinMorni recognises you in the game, and your team role counts there too – with its symbol in the chat and the rights of your role.",
+    "minecraftText": "Under “Connections” you get a code. Type it in game with /link – then MoinMorni knows for sure that the Minecraft account is yours, and your team role applies there too: with a badge in chat and the rights of your role.",
     "minecraftLinkedTitle": "Your Minecraft account is linked",
     "minecraftLinked": "MoinMorni recognises you in the game: your team role counts there too – with its symbol in the chat and the rights of your role.",
     "terms": {
@@ -2763,5 +2768,32 @@
     "queued_one": "A restart was already running – {{count}} server comes right after it.",
     "queued_other": "A restart was already running – {{count}} servers come right after it.",
     "close": "Close"
+  },
+  "connections": {
+    "title": "Connections",
+    "text": "Link your Minecraft and your Discord account to this panel account. Then you are on the team everywhere: rank, badge and rights in game, role on Discord – and when your role in the panel changes, both follow right away.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "unlink": "Unlink",
+    "expired": "The code has expired.",
+    "newCode": "New code",
+    "validFor": "Valid for {{time}} more minutes, once.",
+    "everywhere": "If you unlink an account, or your panel account is locked or removed, your team rank and role stop applying there. Ranks someone gave you in game stay.",
+    "minecraft": {
+      "title": "Minecraft",
+      "link": "Link",
+      "none": "Not linked yet",
+      "confirmed": "Confirmed in game",
+      "unconfirmed": "Not confirmed in game yet – link it again once with a code",
+      "how": "Join moinmorni.net and type in chat:"
+    },
+    "discord": {
+      "title": "Discord",
+      "link": "Link",
+      "none": "Not linked yet",
+      "linked": "Linked",
+      "noBot": "The Discord bot is not set up yet",
+      "how": "On our Discord server (or in a chat with the bot) use the /verbinden command and enter this code:"
+    }
   }
 }

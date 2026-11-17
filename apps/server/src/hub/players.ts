@@ -2,6 +2,7 @@ import { desc, eq, isNotNull, sql } from 'drizzle-orm';
 import type { Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import { players, teamMembers } from '../db/schema.js';
+import { disabledMembers } from '../panel/account-links.js';
 import type { Stores } from '../panel/stores.js';
 import type { Lang } from './texts.js';
 
@@ -120,12 +121,14 @@ export function createPlayerService(db: Db, stores: Stores): PlayerService {
     roleOf: (uuid) => {
       const id = normalUuid(uuid);
       const own = get(id)?.roleId;
+      // Gesperrte Team-Konten zählen nirgends.
+      const off = disabledMembers(db);
       const team = db
         .select()
         .from(teamMembers)
         .where(isNotNull(teamMembers.minecraftUuid))
         .all()
-        .filter((m) => m.minecraftUuid && normalUuid(m.minecraftUuid) === id)
+        .filter((m) => !off.has(m.motorUserId) && m.minecraftUuid && normalUuid(m.minecraftUuid) === id)
         .map((m) => m.roleId);
       const candidates = [own, ...team]
         .map((roleId) => (roleId ? stores.role(roleId) : undefined))

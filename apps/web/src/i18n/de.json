@@ -1031,6 +1031,7 @@
         "paket": "Das Netzwerk-Paket noch einmal laden – Möbel, Brunnen, Fische, Kleidung und Blasmusik (einmal laden, gilt auf allen Servern).",
         "abzeichen": "Das Abzeichen-Paket noch einmal laden – dann stehen die Ränge als kleine Schilder vor den Namen.",
         "discord": "Einladung in unseren Discord – und ein Code, um dein Konto zu verbinden.",
+        "verbinden": "Verbindet dein Panel-Konto mit deinem Minecraft-Konto – den Code findest du im Panel unter Mein Konto. Ohne Code wie /discord.",
         "rundgang": "Ein Rundgang durchs Dorf (beenden: /rundgang stop).",
         "jnr": "Jump and Run starten: du stehst sofort hoch über dem Dorf, Block für Block erscheint – jeder Sprung ein Punkt (oder die Feder in der Schnellleiste, das Kompass-Menü oder der Smaragd am Startplatz; /parkour geht auch).",
         "jnrTop": "Die Bestenliste des Jump and Run und dein Rekord.",
@@ -2116,7 +2117,11 @@
       "title": "Konto von {{name}} entfernen?",
       "text": "Das Konto wird gelöscht – mit Passwort, Passkeys und 2FA. {{name}} kann sich nicht mehr anmelden, und die Team-Rolle gilt auch im Spiel nicht mehr. Das lässt sich nicht rückgängig machen.",
       "confirm": "Endgültig entfernen"
-    }
+    },
+    "minecraftOk": "Minecraft ✓ {{name}}",
+    "minecraftUnconfirmed": "Minecraft: {{name}} (noch nicht im Spiel bestätigt)",
+    "discordOk": "Discord ✓ {{name}}",
+    "noDiscord": "Kein Discord verbunden"
   },
   "account": {
     "title": "Mein Konto",
@@ -2125,7 +2130,7 @@
     "roleText": "Deine Rolle bestimmt, was du im Panel siehst und im Spiel darfst. Ändern kann sie jemand mit einer höheren Rolle.",
     "toTeam": "Zum Team",
     "minecraftTitle": "Verbinde dein Minecraft-Konto",
-    "minecraftText": "Trag unten deinen Minecraft-Namen (Java Edition) ein. Dann erkennt MoinMorni dich im Spiel, und deine Team-Rolle gilt dort auch – mit Symbol im Chat und den Rechten deiner Rolle.",
+    "minecraftText": "Unter „Verbindungen“ bekommst du einen Code. Tipp ihn im Spiel mit /verbinden ein – dann weiß MoinMorni sicher, dass das Minecraft-Konto dir gehört, und deine Team-Rolle gilt dort auch: mit Abzeichen im Chat und den Rechten deiner Rolle.",
     "minecraftLinkedTitle": "Dein Minecraft-Konto ist verbunden",
     "minecraftLinked": "MoinMorni erkennt dich im Spiel: Deine Team-Rolle gilt dort auch – mit Symbol im Chat und den Rechten deiner Rolle.",
     "terms": {
@@ -2763,5 +2768,32 @@
     "queued_one": "Es lief schon ein Neustart – {{count}} Server kommt gleich danach dran.",
     "queued_other": "Es lief schon ein Neustart – {{count}} Server kommen gleich danach dran.",
     "close": "Schließen"
+  },
+  "connections": {
+    "title": "Verbindungen",
+    "text": "Verbinde dein Minecraft- und dein Discord-Konto mit diesem Panel-Konto. Dann bist du überall im Team: Rang, Abzeichen und Rechte im Spiel, Rolle in Discord – und ändert sich deine Rolle im Panel, zieht beides sofort nach.",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "unlink": "Trennen",
+    "expired": "Der Code ist abgelaufen.",
+    "newCode": "Neuer Code",
+    "validFor": "Gilt noch {{time}} Minuten, nur einmal.",
+    "everywhere": "Trennst du ein Konto, wird dein Panel-Konto gesperrt oder entfernt, gelten Team-Rang und Team-Rolle dort nicht mehr. Ränge, die dir jemand im Spiel vergeben hat, bleiben.",
+    "minecraft": {
+      "title": "Minecraft",
+      "link": "Verbinden",
+      "none": "Noch nicht verbunden",
+      "confirmed": "Im Spiel bestätigt",
+      "unconfirmed": "Noch nicht im Spiel bestätigt – verbinde es einmal neu mit Code",
+      "how": "Geh auf moinmorni.net und tippe im Chat:"
+    },
+    "discord": {
+      "title": "Discord",
+      "link": "Verbinden",
+      "none": "Noch nicht verbunden",
+      "linked": "Verbunden",
+      "noBot": "Der Discord-Bot ist noch nicht eingerichtet",
+      "how": "Tippe auf unserem Discord-Server (oder im Chat mit dem Bot) den Befehl /verbinden und gib diesen Code ein:"
+    }
   }
 }

@@ -10,7 +10,9 @@ export interface TeamMember {
   readonly username: string;
   readonly roleId: string;
   readonly email: string | null;
-  readonly minecraft: { readonly uuid: string; readonly name: string } | null;
+  readonly minecraft: { readonly uuid: string; readonly name: string; readonly confirmed: boolean } | null;
+  /** Discord account linked to this team account (team role there too). */
+  readonly discord: { readonly id: string; readonly name: string } | null;
   readonly disabled: boolean;
   readonly twoFactor: boolean;
   /** Still signed in with (or never used) the start password. */

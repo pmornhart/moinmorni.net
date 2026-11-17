@@ -4,6 +4,9 @@ import type { FastifyRequest } from 'fastify';
 import type { PanelArea, Role } from '@moinmorni/shared';
 import type { Db } from '../db/index.js';
 import { teamMembers } from '../db/schema.js';
+import { normalUuid } from '../hub/players.js';
+import type { EventBus } from '../lib/events.js';
+import { linkOf } from './account-links.js';
 import { forbidden, unauthorized } from '../lib/errors.js';
 import type { MotorClient } from '../motor/client.js';
 import type { Stores } from './stores.js';
@@ -53,7 +56,7 @@ export interface PanelAuth {
   readonly require: (request: FastifyRequest, area?: PanelArea) => Promise<PanelUser>;
 }
 
-export function createPanelAuth(db: Db, motor: MotorClient, stores: Stores): PanelAuth {
+export function createPanelAuth(db: Db, motor: MotorClient, stores: Stores, events?: EventBus): PanelAuth {
   const cache = new Map<string, { at: number; user: PanelUser | null; signedIn: boolean }>();
 
   /** Merken, aber nie unbegrenzt: Abgelaufenes fliegt raus, und bei zu vielen Einträgen die ältesten. */
@@ -96,10 +99,33 @@ export function createPanelAuth(db: Db, motor: MotorClient, stores: Stores): Pan
           minecraftUuid: me.user.minecraftUuid ?? null,
         })
         .run();
-    // Verbundenes Minecraft-Konto merken: dort gilt die Team-Rolle auch im Spiel (Hub).
-    const minecraftUuid = me.user.minecraftUuid ?? null;
-    if (member && member.minecraftUuid !== minecraftUuid)
+    // Minecraft-Konto: im Spiel bestätigt (Mein Konto → Verbindungen) zählt vor allem. Sonst gilt eine alte
+    // Verknüpfung aus dem Motor weiter – außer sie wurde im Panel getrennt oder jemand hat diese UUID im Spiel
+    // für sich bestätigt.
+    const link = linkOf(db, me.user.id);
+    const fromMotor = me.user.minecraftUuid ? normalUuid(me.user.minecraftUuid) : null;
+    const takenElsewhere = (uuid: string): boolean =>
+      db
+        .select()
+        .from(teamMembers)
+        .all()
+        .some(
+          (o) =>
+            o.motorUserId !== me.user.id &&
+            o.minecraftUuid !== null &&
+            normalUuid(o.minecraftUuid) === uuid &&
+            linkOf(db, o.motorUserId).confirmed !== undefined,
+        );
+    const legacy = fromMotor && fromMotor !== link.ignored && !takenElsewhere(fromMotor) ? fromMotor : null;
+    const current = member?.minecraftUuid ? normalUuid(member.minecraftUuid) : null;
+    const minecraftUuid = link.confirmed !== undefined ? current : legacy;
+    if (member && current !== minecraftUuid) {
       db.update(teamMembers).set({ minecraftUuid }).where(eq(teamMembers.motorUserId, me.user.id)).run();
+      events?.emit('team.changed', {
+        uuids: [current, minecraftUuid].filter((u): u is string => Boolean(u)),
+        discordIds: [],
+      });
+    }
     const roleId = member?.roleId ?? (bootstrap ? OWNER : null);
     const role = roleId ? stores.role(roleId) : undefined;
     const user: PanelUser | null = role

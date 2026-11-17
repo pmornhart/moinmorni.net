@@ -1051,6 +1051,8 @@ export function createHub(options: HubOptions): Hub {
     // Name, Symbol oder Farbe geändert → neues Abzeichen-Paket (neue SHA-1), der Proxy schickt es allen gleich.
     toProxy(badges.proxyBody());
   });
+  // Team-Konto verbunden/geändert: Rang im Spiel sofort neu (refresh meldet es auch Discord).
+  events.on('team.changed', ({ uuids }) => uuids.forEach((uuid) => refresh(uuid)));
   events.on('modes.changed', lobbySoon);
 
   return {
