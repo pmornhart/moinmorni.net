@@ -289,6 +289,8 @@
         "jump_best": "Jump and Run – Rekord",
         "jump_runs": "Jump-and-Run-Läufe",
         "jumps": "Sprünge",
+        "golden_eagles": "Steinadler-Medaillen",
+        "bonus_rings": "Bonus-Ringe",
         "timeOf": "Bestzeit {{course}}",
         "finishesOf": "Ziele {{course}}"
       },
@@ -299,6 +301,9 @@
         "gletscherspalte": "Gletscherspalte",
         "stollenflug": "Stollenflug",
         "gipfelkreuz": "Gipfelkreuz",
+        "tagesflug": "Strecke des Tages",
+        "hoellenschlund": "Höllenschlund",
+        "felsenlabyrinth": "Felsenlabyrinth",
         "slalom": "Riesenslalom",
         "biathlon": "Biathlon",
         "bob": "Bobbahn",
