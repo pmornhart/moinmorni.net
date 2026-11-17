@@ -317,6 +317,32 @@
     Seltsames. Nicht echt geprüft: Bedrock; Körper-gegen-Rock beim Drehen nur nach Minecrafts Regeln nachgerechnet
     und in Bildfolgen angesehen (keine Zeitlupe; der Rechner war voll, Videos ruckelten unter Last).
 
+- 17.11.: **Modus-Figuren neu eingekleidet** (Philip: „die zwölf Figuren nochmal komplett überarbeiten, passender und
+  schöner“ – auf der Webseite sahen fast alle gleich aus, Lederhose mit Hosenträgern; Branch `claude/figuren-schoener`):
+  Jede Modus-Figur trägt jetzt ein **Kostüm zu ihrem Spielmodus** (`packages/builder/src/figuren.ts`, Tabelle in
+  `docs/lobby.md`) – eigene Kopfbedeckung und Umriss, Hauptfarbe des Modus, passender Gegenstand: MorniCraft
+  Abenteurerin (Krempenhut mit Feder, grüner Reiseumhang, Elytra, Diamant-Spitzhacke), Duels Kämpfer (roter
+  Wappenrock mit gekreuzten Schwertern, Kettenhemd, Stirnband, Schulterstücke, Schwert + rot-weißes Schild), Morni
+  Party Spielleiterin (Federhut, Konfetti-Weste, Fliege, Ringelstrümpfe, Rakete + Horn), Gipfelsturm Kletterer (Helm
+  mit Stirnlampe, Klettergurt, Seil über der Brust, Seilrolle), Burgverlies (Kapuze, langer violetter Umhang,
+  Schlüsselbund, Laterne + Schädel), Bollwerk Stadtwache (Eisenhut mit Federbusch, Wappenrock mit Turm, Armbrust +
+  Schild mit Mauerwerk), MorniSMP Kaufmann (Zylinder, grauer Gehrock, Smaragd-Weste, Uhrkette, Geldbeutel, Smaragd +
+  Kiste), Wolkenkampf Ballonfahrerin (Melone mit Fliegerbrille, Lederjacke mit Fellkragen, langer türkiser Schal,
+  Bogen), Versteckerl Dorfgendarm (Pickelhaube, Uniform, Schnauzbart, Bandelier, Trillerpfeife, Fernrohr),
+  Wintersport Skifahrerin (Bommelmütze mit Skibrille, Rennanzug mit Startnummer, Ski über Kreuz am Rücken), Adlerflug
+  Flieger (Fliegerhaube, Overall, weißer Schal, große Adlerschwingen), Angelkönig Fischer (Fischerhut mit kleiner
+  Krone, Anglerweste mit Ködern, Karohemd, Wathose, Angel + Kabeljau). Technik: `Outfit.costume` malt über die
+  Grundkleidung (Dorfleute unverändert, ihre Signaturen bleiben), `Outfit.gear` für neue 3D-Teile im Lobby-Paket
+  (`trachten.ts`: zehn neue Kopfbedeckungen, Umhang, Seilrolle, Schal, Adlerschwingen, Ski, Schulterstücke; ohne
+  Paket/Bedrock trägt der Skin alles allein), Gegenstände mit Komponenten in `holds` (`itemSnbtOf`). Zwölf Skins neu
+  über MineSkin signiert. Webseite: zwölf `figur-*.webp` und `gruppe.webp` (jetzt alle zwölf) neu aus dem echten
+  Client 26.3, gleicher Ausschnitt, Figuren etwas kleiner (Platz für hohe Hüte und Federbusch). Tests: 81 Baukasten-
+  (neu: jede Modus-Figur mit eigener Kopfbedeckung und Kostüm, 3D-Teile, Schulterstücke nur oben auf den Armen),
+  266 Server-Tests, Typen. Echt: Paper 26.1.2 + Netzwerk-Plugin + Test-Hub,
+  Lobby mit dem echten Selbstbau neu gebaut, `lobby-test` **30/30**, `schlossmarkt-test` **31/31** (ein Lauf davor
+  28/31: Sommerpause-Schild kam zu spät, bekannt). Bilder mit Client 26.3 nur lokal (vorher/nachher, 3 und 15
+  Blöcke, mit/ohne Paket, Tag/Nacht).
+
 ## Offen
 
 - **Spawn-Prüfung, Funde in fremden Teilen** (Liste im Test `packages/builder/test/pruefung-offen.ts`): Schloss (Quarz-Treppen schweben, Rüstungsständer in der Wand, Erde/Hohlraum am Berg hinter der Terrasse). Die Saison-Dekos haben keine Funde mehr (Winter-Wunderland, 17.11.).

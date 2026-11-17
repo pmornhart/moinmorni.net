@@ -32,6 +32,13 @@ export function modeIcon(id: string): string {
   return MODES.find((m) => m.id === id)?.icon ?? 'compass';
 }
 
+/** Schild der Duels-Figur: rot mit weißem Kreuz und goldenem Rand. */
+const DUELS_SHIELD =
+  "shield{'minecraft:base_color':'red','minecraft:banner_patterns':[{pattern:'minecraft:straight_cross',color:'white'},{pattern:'minecraft:border',color:'yellow'}]}";
+/** Schild der Stadtwache (Bollwerk): orange mit weißem Mauerwerk und dunklem Rand. */
+const BOLLWERK_SHIELD =
+  "shield{'minecraft:base_color':'orange','minecraft:banner_patterns':[{pattern:'minecraft:bricks',color:'white'},{pattern:'minecraft:border',color:'black'}]}";
+
 /** Spielmodi wie im Entwurf (Spielerzahlen sind Beispiele). */
 export const MODES: readonly Mode[] = [
   {
@@ -43,7 +50,7 @@ export const MODES: readonly Mode[] = [
     skin: 'mornicraft',
     icon: 'grass_block',
     tint: '#6cc644',
-    holds: { hand: 'diamond_pickaxe' },
+    holds: { hand: 'diamond_pickaxe', back: 'elytra' },
     goods: ['hay_block', 'pumpkin', 'melon', 'potted_oak_sapling'],
   },
   {
@@ -55,7 +62,7 @@ export const MODES: readonly Mode[] = [
     skin: 'duels',
     icon: 'iron_sword',
     tint: '#ef4b3f',
-    holds: { hand: 'iron_sword' },
+    holds: { hand: 'iron_sword', offhand: DUELS_SHIELD },
     goods: ['target', 'anvil', 'iron_block', 'potted_cactus'],
   },
   {
@@ -67,7 +74,7 @@ export const MODES: readonly Mode[] = [
     skin: 'party',
     icon: 'cake',
     tint: '#ffc93c',
-    holds: { hand: 'note_block' },
+    holds: { hand: 'firework_rocket', offhand: 'goat_horn' },
     goods: ['cake', 'yellow_candle[candles=4,lit=true]', 'note_block', 'jukebox'],
   },
   {
@@ -91,7 +98,7 @@ export const MODES: readonly Mode[] = [
     skin: 'burgverlies',
     icon: 'skeleton_skull',
     tint: '#a660f2',
-    holds: { hand: 'mace' },
+    holds: { hand: 'lantern', offhand: 'skeleton_skull' },
     goods: ['skeleton_skull', 'chest', 'iron_bars', 'soul_lantern'],
   },
   {
@@ -103,7 +110,7 @@ export const MODES: readonly Mode[] = [
     skin: 'bollwerk',
     icon: 'shield',
     tint: '#ff9a2e',
-    holds: { offhand: 'shield' },
+    holds: { hand: 'crossbow', offhand: BOLLWERK_SHIELD },
     goods: ['dispenser[facing=up]', 'redstone_block', 'target', 'iron_block'],
   },
   {
@@ -115,7 +122,7 @@ export const MODES: readonly Mode[] = [
     skin: 'mirni',
     icon: 'oak_sapling',
     tint: '#9fb0ba',
-    holds: { hand: 'chest' },
+    holds: { hand: 'emerald', offhand: 'chest' },
     goods: ['grass_block', 'oak_log', 'crafting_table', 'potted_poppy'],
   },
   {
@@ -151,7 +158,7 @@ export const MODES: readonly Mode[] = [
     skin: 'wintersport',
     icon: 'oak_boat',
     tint: '#cfe6ff',
-    holds: { hand: 'snow_block' },
+    holds: { hand: 'snowball' },
     goods: ['snow_block', 'blue_ice', 'powder_snow_cauldron[level=3]', 'potted_spruce_sapling'],
   },
   {
@@ -163,7 +170,7 @@ export const MODES: readonly Mode[] = [
     skin: 'adlerflug',
     icon: 'elytra',
     tint: '#f070dc',
-    holds: { back: 'elytra' },
+    holds: { hand: 'feather' },
     goods: ['bell[attachment=floor,facing=south]', 'yellow_concrete', 'orange_concrete', 'potted_dandelion'],
   },
   {
@@ -175,7 +182,7 @@ export const MODES: readonly Mode[] = [
     skin: 'angelkoenig',
     icon: 'fishing_rod',
     tint: '#5b93ff',
-    holds: { hand: 'fishing_rod' },
+    holds: { hand: 'fishing_rod', offhand: 'cod' },
     goods: [
       'barrel[facing=up]',
       'dried_kelp_block',

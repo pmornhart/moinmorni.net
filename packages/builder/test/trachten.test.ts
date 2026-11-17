@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { CAST, PENDING_CAST } from '../src/cast.js';
+import { MODE_FIGURES } from '../src/figuren.js';
 import { airItemDefinition, bodyParts, trachtItems, trachtModels } from '../src/trachten.js';
 
 interface Element {
@@ -60,7 +61,24 @@ describe('Trachten in 3D', () => {
 
   test('Hüte umschließen die gemalten Hutreihen (Wände außerhalb der zweiten Ebene, bis unter die dritte Reihe)', () => {
     const models = trachtModels();
-    ['tyrol', 'straw', 'chef', 'beanie', 'cap', 'helmet', 'aviator'].forEach((hat) => {
+    [
+      'tyrol',
+      'straw',
+      'chef',
+      'beanie',
+      'cap',
+      'helmet',
+      'aviator',
+      'ranger',
+      'feather',
+      'climb',
+      'kettle',
+      'tophat',
+      'bowler',
+      'pickel',
+      'skibeanie',
+      'bucket',
+    ].forEach((hat) => {
       const shell = elementsOf(models[`hut_${hat}`]!).find(
         (e) =>
           e.from[0]! < 0.8 &&
@@ -87,8 +105,23 @@ describe('Trachten in 3D', () => {
           .forEach((e) => {
             const behind = e.from[2]! >= 9.9;
             const between = e.from[0]! >= 3.85 && e.to[0]! <= 12.15;
-            expect(behind || between, `${name} ${JSON.stringify(e)}`).toBe(true);
+            // Schulterstücke liegen oben auf den Armen (über der zweiten Ebene bei 24,25), neben dem Kopf
+            const onTop = e.from[1]! >= 24.3 && (e.to[0]! <= 3.45 || e.from[0]! >= 12.55);
+            expect(behind || between || onTop, `${name} ${JSON.stringify(e)}`).toBe(true);
           }),
       );
+  });
+
+  test('Modus-Figuren: jede hat eine eigene Kopfbedeckung, ein Kostüm und ihre 3D-Teile', () => {
+    const figures = Object.entries(MODE_FIGURES);
+    const hats = figures.map(([, o]) => o.hat?.kind);
+    expect(new Set(hats).size, hats.join(',')).toBe(figures.length);
+    figures.forEach(([id, o]) => expect(o.costume, id).toBeDefined());
+    expect(bodyParts(MODE_FIGURES.burgverlies)).toContain('umhang');
+    expect(bodyParts(MODE_FIGURES.gipfelsturm)).toContain('seil');
+    expect(bodyParts(MODE_FIGURES.adlerflug)).toEqual(expect.arrayContaining(['fluegel', 'schal']));
+    expect(bodyParts(MODE_FIGURES.wintersport)).toContain('skier');
+    expect(bodyParts(MODE_FIGURES.duels)).toContain('schulter');
+    expect(bodyParts(MODE_FIGURES.wolkenkampf)).toEqual(expect.arrayContaining(['schal', 'zoepfe']));
   });
 });

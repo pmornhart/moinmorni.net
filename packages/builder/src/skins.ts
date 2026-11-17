@@ -18,7 +18,52 @@ import { random } from './noise.js';
 
 export type HairStyle = 'short' | 'long' | 'braids' | 'bun' | 'bald';
 export type HatKind =
-  'tyrol' | 'straw' | 'party' | 'beanie' | 'helmet' | 'hood' | 'chef' | 'cap' | 'scarf' | 'crown' | 'aviator';
+  | 'tyrol'
+  | 'straw'
+  | 'party'
+  | 'beanie'
+  | 'helmet'
+  | 'hood'
+  | 'chef'
+  | 'cap'
+  | 'scarf'
+  | 'crown'
+  | 'aviator'
+  // Modus-Figuren (17.11.): eigene Kopfbedeckungen, damit man jede Figur am Umriss erkennt
+  | 'ranger'
+  | 'band'
+  | 'feather'
+  | 'climb'
+  | 'kettle'
+  | 'tophat'
+  | 'bowler'
+  | 'pickel'
+  | 'skibeanie'
+  | 'bucket';
+
+/**
+ * Kostüm einer Modus-Figur (`figuren.ts`): zeichnet Pixel über die Grundkleidung – `base` auf die erste Ebene,
+ * `overlay` auf die zweite. undefined = wie ohne Kostüm, `CLEAR` = auf der zweiten Ebene durchsichtig.
+ */
+export interface Costume {
+  readonly base?: Paint;
+  readonly overlay?: Paint;
+}
+/** Was über die Figur hinausragt (3D im Lobby-Paket, `trachten.ts`): Farbe je Teil. */
+export interface Gear {
+  /** Langer Umhang auf dem Rücken. */
+  readonly cape?: number;
+  /** Seilrolle auf dem Rücken. */
+  readonly rope?: number;
+  /** Schal mit langem Ende vorn. */
+  readonly scarf?: number;
+  /** Große Adlerschwingen auf dem Rücken. */
+  readonly wings?: number;
+  /** Ski über Kreuz auf dem Rücken (Farbe der Bretter). */
+  readonly skis?: number;
+  /** Schulterstücke aus Metall. */
+  readonly pauldrons?: number;
+}
 
 export interface Outfit {
   readonly skin: number;
@@ -42,12 +87,18 @@ export interface Outfit {
   readonly belt?: number;
   /** Rucksack-Gurte (Bergsteiger), hinten ein kleiner Rucksack. */
   readonly straps?: number;
+  /** Kostüm (nur Modus-Figuren). */
+  readonly costume?: Costume;
+  /** 3D-Teile am Körper (nur Modus-Figuren). */
+  readonly gear?: Gear;
 }
 
-type Face = 'top' | 'bottom' | 'right' | 'front' | 'left' | 'back';
-type Part = 'head' | 'body' | 'armR' | 'armL' | 'legR' | 'legL';
+type Face = SkinFace;
+export type SkinFace = 'top' | 'bottom' | 'right' | 'front' | 'left' | 'back';
+type Part = SkinPart;
+export type SkinPart = 'head' | 'body' | 'armR' | 'armL' | 'legR' | 'legL';
 /** Farbe für ein Pixel: `y` von oben, `x` von links (von außen auf die Fläche geschaut); undefined = durchsichtig. */
-type Paint = (part: Part, face: Face, x: number, y: number) => number | undefined;
+export type Paint = (part: Part, face: Face, x: number, y: number) => number | undefined;
 
 interface Cuboid {
   readonly part: Part;
@@ -95,14 +146,14 @@ export function shade(rgb: number, f: number): number {
 }
 
 /** Zwei Farben mischen (t = 0 → a, t = 1 → b). */
-function mix(a: number, b: number, t: number): number {
+export function mix(a: number, b: number, t: number): number {
   const ch = (s: number): number => Math.round(((a >> s) & 255) * (1 - t) + ((b >> s) & 255) * t);
   return (ch(16) << 16) | (ch(8) << 8) | ch(0);
 }
 
 /** Stoff, Haar, Leder: bekommt beim Zeichnen ein feines Korn (Haut, Augen und Knöpfe bleiben glatt). */
 const GRAIN = 1 << 24;
-const cloth = (c: number): number => c | GRAIN;
+export const cloth = (c: number): number => c | GRAIN;
 
 const EYE_WHITE = 0xf4f1ea;
 const EYE_SHADE = 0xd6d0c4;
@@ -113,17 +164,19 @@ const BLOUSE = 0xf3efe6;
 const LIPS = 0xa04a44;
 const LIPS_WOMAN = 0xc0505e;
 const ROSE = 0xd9776a;
-const GOGGLE_GLASS = 0x7fbfd6;
-const GOGGLE_SHINE = 0xd8f1f8;
+export const GOGGLE_GLASS = 0x7fbfd6;
+export const GOGGLE_SHINE = 0xd8f1f8;
+/** Kostüm: hier ist die zweite Ebene durchsichtig (auch wenn die Grundkleidung dort etwas malt). */
+export const CLEAR = -1;
 
 /** Hell, Grund, Schatten, tiefer Schatten einer Farbe. */
-interface Tones {
+export interface Tones {
   readonly hi: number;
   readonly base: number;
   readonly lo: number;
   readonly deep: number;
 }
-const tones = (c: number): Tones => ({
+export const tones = (c: number): Tones => ({
   hi: shade(c, 1.14),
   base: c,
   lo: shade(c, 0.82),
@@ -131,7 +184,7 @@ const tones = (c: number): Tones => ({
 });
 
 /** Abstand zur Vorderkante auf einer Seitenfläche (0 = vorn): rechts liegt vorn bei x = Breite − 1. */
-const fromFront = (face: Face, x: number, w: number): number => (face === 'right' ? w - 1 - x : x);
+export const fromFront = (face: Face, x: number, w: number): number => (face === 'right' ? w - 1 - x : x);
 
 // ---------------------------------------------------------------------------------------------------------------
 // Kopf
@@ -342,6 +395,77 @@ const HATS: Readonly<Record<HatKind, (p: HatPixel) => number | undefined>> = {
     if (!side || y > 1 || (y === 0 && x % 2 === 1)) return undefined;
     if (x === 3 && y === 1) return accent;
     return y === 0 ? shade(colour, 1.1) : colour;
+  },
+  // Abenteurer-Hut mit breiter Krempe (das Paket gibt Krempe und Feder dazu)
+  ranger: ({ face, side, y, colour, accent }) => {
+    if (face === 'top') return cloth(shade(colour, 1.1));
+    if (side && y < 2) return cloth(y === 0 ? shade(colour, 1.06) : colour);
+    if (side && y === 2) return cloth(accent);
+    return undefined;
+  },
+  // Stirnband: nur die dritte Reihe, darüber das eigene Haar
+  band: ({ side, face, y, colour }) => (side && face !== 'bottom' && y === 2 ? cloth(colour) : undefined),
+  feather: ({ face, side, x, y, colour, accent }) => {
+    if (face === 'top') return cloth((x + y) % 4 === 0 ? shade(colour, 1.15) : colour);
+    if (side && y < 2) return cloth(y === 0 ? shade(colour, 1.08) : colour);
+    if (side && y === 2) return cloth(accent);
+    return undefined;
+  },
+  // Kletterhelm mit hellem Streifen und Stirnlampe
+  climb: ({ face, side, x, y, colour, accent }) => {
+    if (face === 'top') return x === 3 || x === 4 ? 0xf2f2f2 : shade(colour, 1.08);
+    if (face === 'front' && y === 1 && (x === 3 || x === 4)) return 0xfff2a0;
+    if (side && y < 2) return y === 0 ? shade(colour, 1.08) : colour;
+    if (side && y === 2) return shade(accent, 0.9);
+    return undefined;
+  },
+  // Eisenhut der Stadtwache
+  kettle: ({ face, side, x, y, colour, accent }) => {
+    if (face === 'top') return (x + y) % 5 === 0 ? shade(colour, 1.18) : shade(colour, 1.06);
+    if (side && y < 2) return y === 0 ? shade(colour, 1.1) : colour;
+    if (side && y === 2) return accent;
+    return undefined;
+  },
+  tophat: ({ face, side, y, colour, accent }) => {
+    if (face === 'top') return cloth(shade(colour, 1.12));
+    if (side && y < 2) return cloth(colour);
+    if (side && y === 2) return cloth(accent);
+    return undefined;
+  },
+  // Melone mit Fliegerbrille um den Hut
+  bowler: ({ face, side, x, y, colour, accent }) => {
+    if (face === 'top') return cloth(shade(colour, 1.1));
+    if (face === 'front' && y === 2 && (x === 1 || x === 5)) return GOGGLE_GLASS;
+    if (face === 'front' && y === 2 && (x === 2 || x === 6)) return GOGGLE_SHINE;
+    if (side && y === 2) return accent;
+    if (side && y < 2) return cloth(y === 0 ? shade(colour, 1.08) : colour);
+    return undefined;
+  },
+  // Pickelhaube: schwarzes Leder, vorn ein goldenes Schild, oben der Spitz
+  pickel: ({ face, side, x, y, colour, accent }) => {
+    if (face === 'top') return (x === 3 || x === 4) && (y === 3 || y === 4) ? accent : shade(colour, 1.2);
+    if (face === 'front' && y < 2 && x > 1 && x < 6)
+      return y === 0 && (x === 2 || x === 5) ? shade(accent, 0.8) : accent;
+    if (side && y < 2) return y === 0 ? shade(colour, 1.25) : colour;
+    if (side && y === 2) return face === 'front' ? shade(colour, 0.8) : shade(accent, 0.7);
+    return undefined;
+  },
+  // Bommelmütze mit Skibrille auf der Stirn
+  skibeanie: ({ face, side, x, y, colour, accent }) => {
+    if (face === 'top') return cloth(x % 2 === 0 ? colour : shade(colour, 0.92));
+    if (face === 'front' && y === 2 && x > 0 && x < 7) return x === 1 || x === 4 ? 0xffe2a6 : 0xf2a03a;
+    if (side && y === 2) return 0x26262c;
+    if (side && y === 1) return cloth(accent);
+    if (side && y === 0) return cloth(x % 2 === 0 ? colour : shade(colour, 0.92));
+    return undefined;
+  },
+  // Fischerhut mit Hutband und einem bunten Köder
+  bucket: ({ face, side, x, y, colour, accent }) => {
+    if (face === 'top') return cloth(shade(colour, 1.08));
+    if (face === 'front' && y === 2 && x === 6) return 0xe0402a;
+    if (side && y < 2) return cloth(y === 0 ? shade(colour, 1.05) : colour);
+    if (side && y === 2) return cloth(accent);
+    return undefined;
   },
 };
 
@@ -717,6 +841,20 @@ function legOverlay(o: Outfit, part: Part, face: Face, x: number, y: number): nu
 }
 
 function painter(o: Outfit): { base: Paint; overlay: Paint } {
+  const plain = plainPainter(o);
+  const costume = o.costume;
+  if (!costume) return plain;
+  return {
+    base: (part, face, x, y) => costume.base?.(part, face, x, y) ?? plain.base(part, face, x, y),
+    overlay: (part, face, x, y) => {
+      const own = costume.overlay?.(part, face, x, y);
+      if (own === CLEAR) return undefined;
+      return own ?? plain.overlay(part, face, x, y);
+    },
+  };
+}
+
+function plainPainter(o: Outfit): { base: Paint; overlay: Paint } {
   return {
     base: (part, face, x, y) => {
       if (part === 'head') return headBase(o, face, x, y);

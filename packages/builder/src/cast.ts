@@ -6,6 +6,7 @@
  */
 import crypto from 'node:crypto';
 import { CAST_TEXTURES } from './cast-textures.js';
+import { MODE_FIGURES } from './figuren.js';
 import { zipOf } from './png.js';
 import { skinPicture, type Outfit } from './skins.js';
 
@@ -52,81 +53,15 @@ function dirndl(extra: Partial<Outfit> & Pick<Outfit, 'hair' | 'bodice' | 'botto
   };
 }
 
-/** Modus-Figuren: Farbe wie der Modus, damit man sie auf dem Dorfplatz gleich zuordnet. */
+/** Modus-Figuren (Kostüme in `figuren.ts`): die sieben am Maibaum. */
 export const MODE_CAST: Readonly<Record<string, Outfit>> = {
-  mornicraft: bua({
-    hair: HAIR.brown,
-    beard: 0x6b4a2a,
-    hat: { kind: 'straw', colour: 0xe2c76a, accent: 0x6fbf3a },
-    top: { colour: 0x6fbf3a, sleeves: 'short' },
-    bottom: { kind: 'trousers', colour: 0x3d4f2a },
-    socks: undefined,
-    shoes: BROWN_SHOES,
-  }),
-  duels: {
-    skin: SKIN.warm,
-    hair: HAIR.black,
-    hairStyle: 'short',
-    eyes: EYES.brown,
-    hat: { kind: 'helmet', colour: 0xa7afb6, accent: 0x6f777e },
-    top: { colour: 0xb3262d, sleeves: 'long', accent: 0xe0b83a },
-    belt: 0x4a2f1c,
-    bottom: { kind: 'trousers', colour: 0x3a3a40 },
-    shoes: BLACK_SHOES,
-  },
-  party: {
-    skin: SKIN.fair,
-    hair: HAIR.blond,
-    hairStyle: 'long',
-    eyes: EYES.green,
-    hat: { kind: 'party', colour: 0xf2c230, accent: 0xe0457b },
-    top: { colour: 0xf2c230, sleeves: 'short', accent: 0xe0457b },
-    bottom: { kind: 'trousers', colour: 0x3a5fb0 },
-    shoes: 0xe0457b,
-  },
-  gipfelsturm: {
-    skin: SKIN.light,
-    hair: HAIR.auburn,
-    hairStyle: 'short',
-    eyes: EYES.blue,
-    beard: 0x7a3b1e,
-    hat: { kind: 'beanie', colour: 0x5aa9e6, accent: 0xf0ede4 },
-    top: { colour: 0x4f97d6, sleeves: 'long', accent: 0x2f6fae },
-    straps: 0xc23b2e,
-    bottom: { kind: 'trousers', colour: 0x55585e },
-    shoes: BROWN_SHOES,
-  },
-  burgverlies: {
-    skin: SKIN.tan,
-    hair: HAIR.black,
-    hairStyle: 'short',
-    eyes: EYES.green,
-    hat: { kind: 'hood', colour: 0x5b2a86, accent: 0x2a1540 },
-    top: { colour: 0x5b2a86, sleeves: 'long', accent: 0x3d1c5c },
-    belt: 0x2a1f1a,
-    bottom: { kind: 'trousers', colour: 0x2b2430 },
-    shoes: BLACK_SHOES,
-  },
-  bollwerk: {
-    skin: SKIN.dark,
-    hair: HAIR.black,
-    hairStyle: 'short',
-    eyes: EYES.brown,
-    hat: { kind: 'helmet', colour: 0x8e959b, accent: 0x5d6369 },
-    top: { colour: 0xe07b24, sleeves: 'long' },
-    vest: 0x6b3a12,
-    bottom: { kind: 'trousers', colour: 0x3b3530 },
-    shoes: BLACK_SHOES,
-  },
-  mirni: {
-    skin: SKIN.warm,
-    hair: HAIR.brown,
-    hairStyle: 'bun',
-    eyes: EYES.brown,
-    top: { colour: 0x8a8f99, sleeves: 'long', accent: 0xd8d8d8 },
-    bottom: { kind: 'trousers', colour: 0x4a4e57 },
-    shoes: BLACK_SHOES,
-  },
+  mornicraft: MODE_FIGURES.mornicraft,
+  duels: MODE_FIGURES.duels,
+  party: MODE_FIGURES.party,
+  gipfelsturm: MODE_FIGURES.gipfelsturm,
+  burgverlies: MODE_FIGURES.burgverlies,
+  bollwerk: MODE_FIGURES.bollwerk,
+  mirni: MODE_FIGURES.mirni,
 };
 
 /** Die Leute im Dorf. */
@@ -302,61 +237,11 @@ export const CAST: Readonly<Record<string, Outfit>> = { ...MODE_CAST, ...VILLAGE
  * `tsx tools/lobby-entwuerfe/src/sign-skins.ts` sie signiert hat, trägt sie von selbst ihre eigene.
  */
 export const PENDING_CAST: Readonly<Record<string, Outfit>> = {
-  wolkenkampf: {
-    skin: SKIN.fair,
-    hair: HAIR.red,
-    hairStyle: 'long',
-    eyes: EYES.green,
-    hat: { kind: 'cap', colour: 0x7a4a24, accent: 0x3e2410 },
-    top: { colour: 0x3fc6cf, sleeves: 'long', accent: 0xf0ede4 },
-    vest: 0x6b4426,
-    belt: 0x3e2410,
-    bottom: { kind: 'trousers', colour: 0x4a3a30 },
-    shoes: BROWN_SHOES,
-  },
-  versteckerl: bua({
-    skin: SKIN.warm,
-    hair: HAIR.brown,
-    beard: 0x4a2f1c,
-    eyes: EYES.brown,
-    hat: { kind: 'tyrol', colour: 0x24412f, accent: 0xd9b45a },
-    top: { colour: 0x2f6b46, sleeves: 'long', accent: 0xd9b45a },
-    belt: 0x2a1f1a,
-    braces: undefined,
-    bottom: { kind: 'trousers', colour: 0x26282e },
-    socks: undefined,
-  }),
-  wintersport: {
-    skin: SKIN.light,
-    hair: HAIR.blond,
-    hairStyle: 'braids',
-    eyes: EYES.blue,
-    hat: { kind: 'beanie', colour: 0xf0ede4, accent: 0xc23b2e },
-    top: { colour: 0xc23b2e, sleeves: 'long', accent: 0xf0ede4 },
-    belt: 0xf0ede4,
-    bottom: { kind: 'trousers', colour: 0x2f4a78 },
-    shoes: 0x2b2622,
-  },
-  adlerflug: bua({
-    skin: SKIN.tan,
-    hair: HAIR.black,
-    eyes: EYES.brown,
-    hat: { kind: 'aviator', colour: 0x7a4a24, accent: 0xd9b45a },
-    top: { colour: 0xb83f9e, sleeves: 'long', accent: 0xf2c230 },
-    vest: 0x5a3a22,
-    braces: undefined,
-    bottom: { kind: 'trousers', colour: 0x4a3a30 },
-    socks: undefined,
-    shoes: BROWN_SHOES,
-  }),
-  angelkoenig: bua({
-    hair: HAIR.grey,
-    beard: 0xd8d4ce,
-    eyes: EYES.blue,
-    hat: { kind: 'tyrol', colour: 0x3d5a3a, accent: 0x5a8fd0 },
-    top: { colour: 0xf0ede4, sleeves: 'long' },
-    vest: 0x2f5d8a,
-  }),
+  wolkenkampf: MODE_FIGURES.wolkenkampf,
+  versteckerl: MODE_FIGURES.versteckerl,
+  wintersport: MODE_FIGURES.wintersport,
+  adlerflug: MODE_FIGURES.adlerflug,
+  angelkoenig: MODE_FIGURES.angelkoenig,
   blumenfrau: dirndl({
     skin: SKIN.fair,
     hair: HAIR.auburn,
