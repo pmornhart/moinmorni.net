@@ -51,8 +51,11 @@ export const TIERS: readonly Tier[] = range(0, TIER_COUNT - 1).map((i) => ({
   r: RADIUS - i * RADIUS_STEP,
 }));
 
+/** Kleinster Radius einer Lage: 3 × 3 Zweige – darunter sähe man oben am Baum den Stamm. */
+const MIN_LAYER = 1.45;
+
 /** Radius einer Lage j (0 = unterste) in einer Stufe. */
-const layerRadius = (t: Tier, j: number): number => Math.max(0.7, t.r - j * LAYER_STEP);
+const layerRadius = (t: Tier, j: number): number => Math.max(MIN_LAYER, t.r - j * LAYER_STEP);
 
 /** Alle Blöcke des Maibaums (über dem Pflaster) – die nimmt der Winter weg. */
 export function maibaumBlocks(): Array<readonly [number, number, number, string]> {
@@ -165,7 +168,8 @@ function kugeln(): string[] {
     const upper = Math.max(4, Math.round((2 * Math.PI * mid) / 2.4));
     const between = range(0, upper - 1).map((i) => {
       const a = ((i + HALF + (k % 2) * HALF) / upper) * Math.PI * 2;
-      const r = mid + 0.62;
+      // oben, wo die Lage nur noch 3 × 3 Zweige hat, reichen deren Ecken weiter hinaus
+      const r = mid + (mid <= MIN_LAYER ? 0.95 : 0.62);
       return kugel(
         [cx + HALF + Math.cos(a) * r, BASE + t.h + 2.35, cz + HALF + Math.sin(a) * r],
         size * 0.85,
