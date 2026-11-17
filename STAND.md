@@ -722,6 +722,30 @@
   Erweiterung nicht – Bedrock sieht die Möbel nicht mehr, vorher Holzstufen; Kollision bleibt), Client vor 1.20.3,
   Kugeln/Eier im echten Client, Brunnen-Ersatz ohne Paket.
 
+- 17.11. abends: **Stände wie das Weihnachtstor + Ostern im selben Stil** (Philip: „an den Ständen bitte das gleiche wie
+  bei dem Eingang“, „und hier auch“ – Marktbogen „Schlossmarkt“ –, „bei Ostern das gleiche wie bei Weihnachten, nur mehr
+  im Osterstyle“; Branch `claude/weihnachtsstaende`): Die Bausteine des Weihnachtstors liegen jetzt in
+  `packages/builder/src/lobby/girlanden.ts` mit einem **Stil** (`WEIHNACHT`: Tannengrün, rote Schleifen, Kugeln,
+  Tannenzapfen; `OSTERN`: Kirsch- und Azaleenblüten mit Grün, Pastell-Schleifen, Ostereier, Weidenkätzchen) – das
+  Weihnachtstor bleibt byte-gleich. `standschmuck.ts`: **jeder Marktstand** (Dorf- und Schlossmarkt) bekommt dicken
+  Strang an der Markisenkante, Seitenstränge, wo kein Nachbarstand dicht daneben steht, zwei Bögen mit Schleifen und
+  Kugel/Ei, Lichter, Zapfen/Kätzchen, umwundene Vorderpfosten (unter den Laternen; was in Tischchen, Zaun oder Theke
+  stäke oder danach nicht mehr hielte, fällt weg – geprüft mit der Bauplan-Prüfung selbst); Name des Stands und
+  Schild über der Figur bleiben frei. **Glühwein-/Lebkuchenbude** und Osterbuden ebenso. **Marktbogen:** Strang oben auf
+  dem Balken (vorn und hinten, über den Wimpeln), Bögen mit Schleifen nur zwischen den Wimpeln über der Schrift,
+  umwundene Pfosten. **Ostern:** Eingangsbogen = `geschmuecktesTor` mit Thema `OSTER_TOR` (Birke, Blütenkrone, Schild
+  „✿ Frohe Ostern! ✿ / Happy Easter!“ oben auf dem Balken, großes Osterei, Osterbäumchen im Kübel, Kränze), dazu alle
+  Stände, Buden und Marktbogen. **Wiesn/Halloween:** Gruß nicht mehr unter dem Balken (überlappte die Begrüßung) – Wiesn
+  oben im Giebel, Halloween oben auf dem Balken (Kürbisse rücken zur Seite). Kugeln/Eier sind Block-Anzeigen aus
+  Trockenbeton und werden beim Bau wie alle anderen zu Item-Anzeigen mit `moinmorni:kugel` (Netzwerk-Paket,
+  zusammengeführt mit `claude/ein-paket`). Sport-Stand bewusst ohne Schmuck (wechselt per Plugin zwischen Skihütte und
+  Bootshaus, auch außerhalb der Saison). Winter-Anzeigen jetzt 5288 (vorher 2890), Testgrenze 6500. Tests: 138
+  Baukasten-Tests, `lobby-world` 5/5, Typen, Prettier; Bauplan-Prüfung **alle Saisons 0 Funde**. Echt: Paper 26.1.2 +
+  Netzwerk-Plugin (aus diesem Branch) + Test-Hub, echter Selbstbau: Winter-Probe an **5/5** (5288 Wesen), keine Saison
+  → aus **5/5**, wieder Winter **5/5**, Ostern an **4/4**, keine Saison → Ostern aus **4/4**, `lobby-test` **42/42**.
+  Bilder mit Client 26.3 + Netzwerk-Paket vorher/nachher, Tag und Nacht, aus Philips Blickwinkeln (Stand x −1/z 10,
+  Marktbogen x −4/z −19, Osterbogen x 1/z 27) und Schlossmarkt, dazu Wiesn/Halloween-Eingang (nur lokal).
+
 ## Offen
 
 - **Ein Paket (17.11.):** Philip: Go für `claude/ein-paket` und Angelkönig 0.2.2 (`claude/netzpaket`). Bedrock sieht

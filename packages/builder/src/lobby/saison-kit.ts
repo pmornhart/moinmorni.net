@@ -187,14 +187,17 @@ export function gateFrame(
   return { x1, x2, z, beam };
 }
 
-/** Schild am Eingangsbogen, unter dem Balken zur Ankunft hin. */
+/**
+ * Schild am Eingangsbogen, oben auf dem Balken zur Ankunft hin. Unter dem Balken lag es genau dort, wo man beim
+ * Ankommen hinschaut und der Begrüßungstitel erscheint – beide Schriften überlappten (wie früher am Weihnachtstor).
+ */
 export function gateSign(
   season: DekoSeason,
   beam: number,
   z: number,
   lines: readonly { readonly text: string; readonly color: string; readonly bold?: boolean }[],
 ): string {
-  return textSign(seasonTags(season, 'eingang'), [HALF, beam - 0.75, z + 1.08], 0, lines, 1.25);
+  return textSign(seasonTags(season, 'eingang'), [HALF, beam + 1.08, z + 0.62], 0, lines, 1.25);
 }
 
 // ---------- Buden am Eingang ----------

@@ -22,25 +22,27 @@ import type { World } from '../pruefung.js';
 import { disc, pairs, range } from '../range.js';
 import { KUGELN, type KugelFarbe } from '../schmuck.js';
 import { ellipsoid } from '../shapes.js';
-import { aroundY, blockDisplay, itemDisplay, textSign, type Vec } from './deko.js';
+import { aroundY, blockDisplay, itemDisplay, textSign, type ModelPart, type Vec } from './deko.js';
 import { CHRISTBAUM } from './christbaum.js';
 import { LAUNCHPADS } from './features.js';
 import { anchorEnd, settle, stands } from './halt.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
 import { seasonPlanOf, type SeasonPlan } from './saison-plan.js';
 import {
-  budeGarland,
+  BUDE_POSTS,
   budeGeruest,
   budeSign,
-  gateFrame,
-  gateSign,
   pennants,
   ringCells,
   ringPairs,
   seasonTags,
   segment,
 } from './saison-kit.js';
-import { pointAt } from './weihnachtsmarkt.js';
+import { budeSchmuecken, EINGANG, pointAt, staendeSchmuecken } from './weihnachtsmarkt.js';
+import { OSTERN } from './girlanden.js';
+import { bogenSchmuck } from './standschmuck.js';
+import { geschmuecktesTor, type TorThema } from './weihnachtstor.js';
+import { MARKET_ARCH_Z } from './schlossmarkt.js';
 import { BASE, clearPlants, HALF, INNER, viewOf, type View } from './winter-base.js';
 
 const S = 'easter' as const;
@@ -372,30 +374,51 @@ function blumen(w: Canvas, v: View, base: Canvas): void {
 
 // ---------- Ostermarkt und Eingang ----------
 
-function eingang(w: Canvas): string[] {
-  const { x1, x2, z, beam } = gateFrame(w, { post: 'stripped_birch_log', beam: 'birch_planks', height: 5 });
-  [x1, x2].forEach((x) => w.set(x, beam + 1, z, 'potted_pink_tulip'));
-  // Blütengirlande vorne am Balken (Stück für Stück, sonst zieht sich das Laub in Streifen), Eier davor
-  const gy = beam + 0.35;
-  const garland = range(x1, x2).map((x) =>
-    segment(S, 'eingang', [x, gy, z + 1.2], [x + 1, gy, z + 1.2], 0.36, 'flowering_azalea_leaves'),
-  );
-  const eggs = range(0, (x2 - x1) * 2).map((k) =>
-    ei('eingang', [x1 + 0.5 + k * HALF, gy - 0.05 + (k % 2) * 0.1, z + 1.42 + EI.w / 2], k),
-  );
-  const flags = pennants(
-    S,
-    'eingang',
-    [x1 + 1.05, beam + 1.02, z + 1.06],
-    [x2 - 0.05, beam + 1.02, z + 1.06],
-    0.3,
-    PASTELL,
-  );
-  const sign = gateSign(S, beam, z, [
-    { text: 'Frohe Ostern!\\n', color: 'light_purple', bold: true },
+/** Großes Osterei obenauf (statt des Sterns im Winter): rosa Ei mit gelbem Band, zwei kleine daneben. */
+function osterEi(size: number): ModelPart[] {
+  const h = size * 0.85;
+  const w = size * 0.6;
+  return [
+    { at: [0, 0, 0], block: KUGELN.rosa, scale: [w, h, w], light: { sky: 15, block: 12 } },
+    {
+      at: [-w * 0.75, -h * 0.25, 0],
+      block: KUGELN.hellblau,
+      scale: [w * 0.5, h * 0.5, w * 0.5],
+      light: { sky: 15, block: 12 },
+    },
+    {
+      at: [w * 0.75, -h * 0.25, 0],
+      block: KUGELN.gold,
+      scale: [w * 0.5, h * 0.5, w * 0.5],
+      light: { sky: 15, block: 12 },
+    },
+  ];
+}
+
+/** Eingangsbogen wie das Weihnachtstor, im Osterstil (Philip, 17.11.: „das gleiche wie bei Weihnachten, nur mehr
+ * im Osterstyle“): Blütenzweige mit Grün, Pastell-Schleifen, Ostereier, Weidenkätzchen, Osterbäumchen im Kübel,
+ * Schild oben auf dem Balken (die Begrüßung bleibt frei). */
+const OSTER_TOR: TorThema = {
+  tags: tag('eingang'),
+  stil: OSTERN,
+  pfosten: 'stripped_birch_log',
+  balken: 'stripped_birch_log[axis=x]',
+  krone: 'flowering_azalea_leaves[persistent=true]',
+  drauf: null,
+  vorne: [
+    { text: '✿ Frohe Ostern! ✿\\n', color: 'light_purple', bold: true },
     { text: 'Happy Easter!', color: 'white' },
-  ]);
-  return [...garland, ...eggs, ...flags, sign];
+  ],
+  hinten: [
+    { text: '✿ Frühlingsfest ✿\\n', color: 'light_purple', bold: true },
+    { text: 'Spring festival', color: 'white' },
+  ],
+  spitze: osterEi,
+  busch: 'flowering_azalea_leaves[persistent=true]',
+};
+
+function eingang(w: Canvas): string[] {
+  return geschmuecktesTor(w, EINGANG, OSTER_TOR);
 }
 
 function buden(w: Canvas, v: View): string[] {
@@ -413,8 +436,9 @@ function buden(w: Canvas, v: View): string[] {
   const zopf = [1.4, 3.6].map((u) =>
     itemDisplay(tag('bude'), pointAt(lamm, u, 3.04, 0.5), 'bread', 0.4, aroundY(Math.PI / 2)),
   );
-  const girlanden = [eier, lamm].flatMap((f) =>
-    budeGarland(S, f, { block: 'flowering_azalea_leaves' }, [KUGELN.rosa, KUGELN.gold, KUGELN.hellblau]),
+  const world: World = (x, y, z) => v.now(x, y, z);
+  const girlanden = [eier, lamm].flatMap((f, i) =>
+    budeSchmuecken(world, f, tag('bude'), OSTERN, BUDE_POSTS, i),
   );
   return [
     budeSign(S, eier, [
@@ -499,6 +523,8 @@ export function osternPlan(base: Canvas): SeasonPlan {
     ...osterhase(w, v, world),
     ...eingang(w),
     ...buden(w, v),
+    ...staendeSchmuecken(world, tag('stand'), OSTERN),
+    ...bogenSchmuck(tag('bogen'), [HALF, GROUND + 7, MARKET_ARCH_Z + HALF], OSTERN),
   ];
   // Blumen erst, wenn alles steht (nicht in Bauten, Buden, Beeten)
   blumen(w, v, base);

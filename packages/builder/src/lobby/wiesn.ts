@@ -33,7 +33,6 @@ import {
   budeSign,
   bulbs,
   gateFrame,
-  gateSign,
   inWorld,
   pennants,
   ringCells,
@@ -153,10 +152,17 @@ function festzelt(w: Canvas): string[] {
     [{ text: 'Wiesn', color: 'white', bold: true }],
     2.2,
   );
-  const sign = gateSign(S, beam, z, [
-    { text: 'Servus auf der Wiesn!\\n', color: 'gold', bold: true },
-    { text: 'Welcome to the fair', color: 'white' },
-  ]);
+  // Gruß oben im Giebel über dem Herz (unter dem Balken überlappte er den Begrüßungstitel bei der Ankunft)
+  const sign = textSign(
+    tag('eingang'),
+    [HALF, beam + 3.75, z + 1.08],
+    0,
+    [
+      { text: 'Servus auf der Wiesn!\\n', color: 'gold', bold: true },
+      { text: 'Welcome to the fair', color: 'white' },
+    ],
+    1,
+  );
   const flags = pennants(
     S,
     'eingang',

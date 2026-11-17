@@ -417,10 +417,15 @@ Lobby-Server (bei jeder Änderung neu).
   (kein echter Schneefall – der macht den Himmel grau). **Statt des Maibaums ein riesiger Christbaum** (acht Stufen,
   gut 36 Blöcke, hängende Zweige, echte Kerzen, 177 Kugeln in Rot, Gold, Silber, Blau, warme Lichterkette direkt auf
   den Zweigen jeder Stufe, großer Stern, Geschenke, unsichtbares Licht ringsum); Dorfleute, die um den Maibaum liefen, gehen ein Stück nach
-  außen und laufen nicht unter tief hängende Zweige. **Weihnachtsmarkt:** jede Bude am Dorfmarkt und am Schlossmarkt mit
-  Tannengirlande und Lichtern vorne und an den Seiten, Eiszapfen und warmem Licht; Lichterketten im Ring von Bude zu Bude
-  und am Schlossmarkt bis zum Marktbogen (Girlande, Stern); Glühwein- und Lebkuchenbude am Eingang von der Ankunft her
-  (Kessel überm Feuer, Krüge, Plätzchen, Lebkuchenherzen), dazwischen das **Weihnachtstor** (`weihnachtstor.ts`: dicke
+  außen und laufen nicht unter tief hängende Zweige. **Weihnachtsmarkt:** jeder Stand am Dorfmarkt und am Schlossmarkt trägt
+  den Schmuck des Weihnachtstors (`standschmuck.ts`, Bausteine in `girlanden.ts`): dicker Tannenstrang an der
+  Vorderkante der Markise und an freien Seiten des Dachs, links und rechts je ein Bogen zwischen roten Schleifen mit
+  Kugel, warme Lichter, Tannenzapfen, die Vorderpfosten unter den Laternen umwunden (nur wo nichts daneben steht);
+  die Mitte der Markise bleibt frei für den Namen, darunter sieht man das Schild über der Figur. Dazu Eiszapfen und
+  warmes Licht; Lichterketten im Ring von Bude zu Bude und am Schlossmarkt bis zum **Marktbogen** – der trägt den
+  Tannenstrang oben auf dem Balken (vorn und hinten, über den Wimpeln), Bögen mit Schleifen nur zwischen den Wimpeln
+  über der Schrift „Schlossmarkt“, umwundene Pfosten und einen Stern; Glühwein- und Lebkuchenbude am Eingang von der Ankunft her
+  (Kessel überm Feuer, Krüge, Plätzchen, Lebkuchenherzen; Schmuck wie an den Ständen), dazwischen das **Weihnachtstor** (`weihnachtstor.ts`: dicke
   Tannengirlande vorne und hinten am Balken, vier Bögen mit roten Schleifen, Lichtern, Kugeln und Tannenzapfen,
   Girlande um beide Pfosten gewunden, Holzschild „✦ Weihnachtsmarkt ✦ / Christmas Market“ (hinten „Frohe
   Weihnachten!“) mit Goldrahmen und Stern **oben** auf dem Balken – unter dem Balken lag es genau hinter dem
@@ -435,7 +440,7 @@ Lobby-Server (bei jeder Änderung neu).
   den Maibaum** (Herzstück: weiß-blaues Dach in 16 Feldern sechs Blöcke über dem Platz, 16 Sitze an Ketten, Wimpel und
   Lichter am Rand, Licht darunter – darunter läuft man frei durch, der Maibaum bleibt der Mast), **Festzelt-Eingang**
   von der Ankunft her (Giebel mit weiß-blauen Rauten, großes Herz und „Wiesn“, Fahnen, Laternen, Wimpel, Lichter an
-  den Giebelkanten, Schild „Servus auf der Wiesn!“), **Riesenrad** auf der Wiese westlich vom Platz (Ring aus Beton auf
+  den Giebelkanten, Gruß „Servus auf der Wiesn!“ oben im Giebel über dem Herz – die Begrüßung bei der Ankunft bleibt frei), **Riesenrad** auf der Wiese westlich vom Platz (Ring aus Beton auf
   einer Stütze am Einstieg, Bühne mit Laternen, Nabe, Achse, Stützen und Speichen als Anzeigen, acht bunte Gondeln,
   Lichterkranz, Tafel), **Lebkuchenherzen- und Breznbude** am Eingang, Lebkuchenherzen an allen Marktständen,
   weiß-blaue Wimpel und Lichter von Stand zu Stand, Wimpel über Dorfstraße und Handwerkergasse, Fässer am Biergarten.
@@ -446,7 +451,11 @@ Lobby-Server (bei jeder Änderung neu).
   Eiern, bemaltes Riesen-Ei, „Frohe Ostern!“), **Frühling überall**: die Laubbäume im Dorf blühen (je Krone
   Kirschblüte, Azaleenblüte oder grün – Kirschblüten lassen von selbst Blüten fallen), Frühlingsblumen in Flecken auf
   den Wiesen (nicht vor Figuren, Launchpads, Jump and Run), **Ostermarkt** am Eingang (Ostereier, Osterlamm &
-  Hefezopf, Blütengirlanden), Eingangsbogen mit Blütengirlande und Eiern, Wimpel in Pastell, Eier in den Vorgärten,
+  Hefezopf), **Eingangsbogen wie das Weihnachtstor im Osterstil** (`geschmuecktesTor` mit `OSTER_TOR`): dicker
+  Strang aus Kirsch- und Azaleenblüten mit Grün, Bögen mit Schleifen in Pastell, Ostereier, Weidenkätzchen, umwundene
+  Pfosten, zwei blühende Osterbäumchen im Kübel, Kränze und Holzschild „✿ Frohe Ostern! ✿ / Happy Easter!“ (hinten
+  „Frühlingsfest“) mit großem Osterei **oben** auf dem Balken; derselbe Schmuck an allen Ständen, beiden Buden und am
+  Marktbogen (Stil `OSTERN` in `girlanden.ts`), Wimpel in Pastell, Eier in den Vorgärten,
   Hasen. Die Eier sind die runden Kugeln aus dem Netzwerk-Paket (`schmuck.ts`, neue Farben rosa, grün, hellblau, lila,
   orange), in die Höhe gezogen. Biom „Kirschblütenhain“ (helles Grün) und ab und zu eine Blüte in der Luft
   (`LobbyWinter.java`).
@@ -456,7 +465,7 @@ Lobby-Server (bei jeder Änderung neu).
   Dorfleute gehen ein Stück zur Seite), **Kürbisfeld** auf der Westwiese (Reihen auf grober Erde, Kürbisse und
   Fratzen, zwei Vogelscheuchen mit Hut), **Schaurige Ruine** neben der Ankunft (zerfallene Kapelle aus bemoostem
   Stein, Turmstumpf, Seelenlaternen, Seelenfeuer, Grabsteine, Gespenster aus Laken, Tafel „Alte Kapelle“),
-  **Gruselmarkt** am Eingang (Kürbissuppe, Süßes oder Saures), Eingangsbogen mit leuchtenden Kürbissen und Lichtern in
+  **Gruselmarkt** am Eingang (Kürbissuppe, Süßes oder Saures), Eingangsbogen mit leuchtenden Kürbissen, Schild oben auf dem Balken und Lichtern in
   Orange, Lila und Grün, Lichter von Stand zu Stand; dazu wie bisher Kürbisse an Türen und Ständen, Spinnweben,
   Wimpel, Grabsteine an der Dorfstraße. Biom „Blasser Garten“ (grauer Himmel, Nebel, fahles Gras) und Asche in der
   Luft (`LobbyWinter.java`).
