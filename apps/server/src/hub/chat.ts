@@ -2,6 +2,7 @@ import type { Lang } from './texts.js';
 import { dateText, mm, text } from './texts.js';
 import type { HubContext } from './context.js';
 import { hasRight } from './context.js';
+import type { BadgeTags } from './badges.js';
 
 /**
  * Chat im ganzen Netzwerk: Der Spielserver schickt, was jemand schreibt; der Hub prüft (stumm, Langsam-Modus,
@@ -61,7 +62,7 @@ export interface Chat {
   readonly handle: (uuid: string, message: string, now?: number, tag?: ChatTag) => void;
 }
 
-export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat {
+export function createChat(ctx: HubContext, settings: () => ChatSettings, badges: BadgeTags): Chat {
   const serverName = (server: string, lang: Lang): string => {
     if (server === LOBBY) return 'Lobby';
     const mode = ctx.stores.modes().find((m) => m.server === server);
@@ -86,7 +87,11 @@ export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat 
       // Im Gefängnis: nur das Team (wer einsperren darf) und die anderen Eingesperrten lesen mit.
       if (ctx.punish.active(sender.uuid, 'jail') && !team) {
         const jailLine = (lang: Lang): string =>
-          text(lang, 'jail.chat', { name: mm(sender.name), text: mm(censor(raw.trim(), s.badWords)) });
+          text(lang, 'jail.chat', {
+            tag: badges.jailTag(lang),
+            name: mm(sender.name),
+            text: mm(censor(raw.trim(), s.badWords)),
+          });
         const jailed = new Set(ctx.punish.activeAll('jail').map((p) => p.playerUuid));
         ctx.presence
           .all()
@@ -109,16 +114,18 @@ export function createChat(ctx: HubContext, settings: () => ChatSettings): Chat 
       if (!body) return;
       const calm = !team && tooLoud(body, s.capsLimit) ? body.toLowerCase() : body;
       const clean = mm(censor(calm, s.badWords));
-      const symbol = role.symbol ? `<${role.colour}>${mm(role.symbol)}</${role.colour}> ` : '';
+      // Rang vor dem Namen: Symbol und Farbe – oder (mit Paket) das Abzeichen, Leerzeichen schon dabei.
+      const symbol = badges.rankTag(role);
       // Nach dem Rang, vor dem Namen: "♛ [MC] Philip".
       const own = tag ? `<${tag.colour}>[${mm(tag.text)}]</${tag.colour}> ` : '';
-      // Streamer-Modus: alle sehen „● LIVE“ vor dem Namen (wie in MorniCraft).
-      const live = ctx.streamer(uuid).includes('live') ? '<red>● LIVE</red> ' : '';
+      // Streamer-Modus: alle sehen „● LIVE“ hinter dem Namen – wie in Tab-Liste und über dem Kopf: Rang bzw. Abzeichen
+      // vorn, Name, „● LIVE“ hinten.
+      const live = ctx.streamer(uuid).includes('live') ? ' <red>● LIVE</red>' : '';
       const line = (lang: Lang): string => {
         const server = s.showServer
           ? `<dark_gray>[</dark_gray><gray>${mm(serverName(sender.server ?? '', lang))}</gray><dark_gray>]</dark_gray> `
           : '';
-        return `${server}${live}${symbol}${own}<${role.colour}>${mm(sender.name)}</${role.colour}> <dark_gray>»</dark_gray> <white>${clean}`;
+        return `${server}${symbol}${own}<${role.colour}>${mm(sender.name)}</${role.colour}>${live} <dark_gray>»</dark_gray> <white>${clean}`;
       };
       ctx.chat(s.global || shout ? 'all' : sender.server, { de: line('de'), en: line('en') });
     },

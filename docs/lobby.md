@@ -6,9 +6,11 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
 ## Was drin ist
 
 - **Dorfmarkt** um den Maibaum: acht Stände eng im Kreis, je zwei an jeder Ecke, Gassen in alle vier Richtungen –
-  je Spielmodus ein Stand mit Markise in der Farbe des Modus und einer Figur (Name, Spielerzahl bzw. Zustand,
-  „Klick: Mitspielen“), dazu ein Brezn- und Lebkuchenstand. Ankunft in der Gasse südlich vom Markt. Hier stehen
-  die ersten sieben Modi (`RING_MODES` in `packages/builder/src/lobby/schlossmarkt.ts`).
+  je Spielmodus ein Stand mit Markise in der Farbe des Modus, Banner hinten außen und einer Figur mit einem passenden
+  Gegenstand (siehe unten), dazu ein Brezn- und Lebkuchenstand. Innen bleibt die Rückwand frei (ein Banner direkt
+  hinter der Figur sah aus wie ein Brett am Rücken, und das Schild ist vor dem dunklen Holz gut zu lesen). Ankunft in
+  der Gasse südlich vom Markt. Hier stehen die ersten sieben Modi (`RING_MODES` in
+  `packages/builder/src/lobby/schlossmarkt.ts`).
 - **Schlossmarkt** (16.11., `schlossmarkt.ts`): alle weiteren Modi in einer Marktzeile auf dem Vorplatz vor der
   Schlosstreppe – je drei Stände links und rechts der Prachtstraße (innen zuerst: Wolkenkampf, Versteckerl,
   Wintersport, Adlerflug, Angelkönig, dazu die Blumenfrau mit Blumen und Kräutern), Marktbogen über der Straße mit
@@ -23,12 +25,15 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   Skilehrerin, Flieger, Fischer, Blumenfrau). Bis sie bei MineSkin signiert sind
   (`tsx tools/lobby-entwuerfe/src/sign-skins.ts`), trägt jede die Tracht einer passenden bestehenden Figur
   (`STAND_IN`); danach von selbst die eigene – Skin und 3D-Tracht passen immer zusammen.
-- **Dorfstraße** nach Süden: Bäckerei, Krämerladen, Apotheke, Wohnhäuser, Kapelle; am Platz Rathaus und Gäste-Info.
+- **Dorfstraße** nach Süden (heller Sandweg, Laternen zwischen den Häusern): Bäckerei, Krämerladen, Apotheke,
+  Wohnhäuser mit Gärten und Obstbaum, Kapelle (begehbar: Turmtür, Vorhalle, Bänke, Altar); am Platz Rathaus und
+  Gäste-Info.
 - **Handwerkergasse** nach Westen (zwischen den Ständen hindurch): Schmiede, Trachten, Schreinerei, Wohnhäuser,
-  Vorgärten, Brunnen am Ende.
-- **Oberdorf** im Nordosten: kleiner Platz mit Brunnen und Linde, vier Häuser.
+  Vorgärten, **Dorfbrunnen** am Ende.
+- **Oberdorf** im Nordosten: kleiner Platz mit Dorfbrunnen und Dorflinde (Rundbank), vier Häuser.
 - **Wirtshaus „Zum Morni“** mit Wirt hinterm Tresen, Stammtisch und Gästen; davor der **Biergarten** mit Ausschank
-  (Wirt), Kastanien, Lampions und Gästen an den Tischen.
+  (Wirt, Laternen unter der Markise), Kastanien in den Gängen zwischen den Tischen, Laternen an Ketten unter den
+  Kronen, Laternenmasten an den Ecken und Gäste an den Tischen.
 - Alle Häuser sind **begehbar und eingerichtet** (Küche, Eckbank, Kachelofen, Schlafzimmer, Leiter nach oben; Läden
   mit Theke und Verkäufer). Einrichtung als Daten in `packages/builder/src/village.ts`.
 - **Leute im Dorf**: Figuren mit Tag `mm_walker` schlendern um ihren Platz herum, stehende Figuren schauen Spieler
@@ -66,9 +71,7 @@ Dorf, begehbare eingerichtete Häuser, Biergarten mit Wirt und Gästen.
   Laternen und Blumen zur Tür (die Säle liegen zwei Blöcke über dem Hof; vorher kam man nicht hinein, und vor jeder
   Tür stand ein Pilaster). Im Festsaal die **Prunktreppe** zur Galerie: zweiläufig links und rechts der Rotunde,
   Marmor mit rotem Läufer, schmiedeeisernes Geländer, Goldpfosten mit Laternen, Teppich unten und oben.
-- Obstgarten, Felder, Teich, Alpengipfel ringsum. Die **Gärten** hinter den Häusern der Dorfstraße haben ein
-  Gartentor zur Gasse (vorher lief ihr Zaun quer durch die Häuser – hinten und oben kam man nicht hin), die
-  **Kapelle** ist innen begehbar (durch den Turm: Bänke, Teppich, Altar, goldenes Kreuz).
+- Obstgarten, Felder, Teich, Alpengipfel ringsum.
 
 ## Zu Fuß erreichbar (Prüfung ohne Server)
 
@@ -83,8 +86,8 @@ Stockwerk, Säle, Galerie, Stände, Gärten, Plätze, Podeste …).
   zusammenhängende Boden, den man nicht erreicht (Deko wie Dächer, Baumkronen, Markisen, Möbel-Oberseiten, Hänge und
   Hohlräume unter dem Gelände zusammengefasst).
 - Test `packages/builder/test/lobby-walk.test.ts`: jeder Ort ist zu Fuß erreichbar **ohne einen einzigen Sprung**,
-  kein anderer Boden bleibt unerreichbar, und die gewollten Ausnahmen bleiben zu (`ON_PURPOSE`: Arrestzelle,
-  Brunnenbecken der Handwerkergasse). Kommt etwas Neues dazu, das man nicht erreicht, schlägt er an.
+  kein anderer Boden bleibt unerreichbar, und die gewollten Ausnahmen bleiben zu (`ON_PURPOSE`: die
+  Arrestzelle). Kommt etwas Neues dazu, das man nicht erreicht, schlägt er an.
 - Echt: `tools/netz-test/treppen-test.cjs` (Test-Spieler, Paper 26.1.2) läuft die Treppen nur mit der Vorwärts-Taste
   hinauf (an einer ganzen Blockstufe bliebe er stehen) und findet mit Pathfinder ohne Launchpads vom Ankunftspunkt
   ins Schloss.
@@ -94,6 +97,13 @@ den Hof nur mit 26 Sprüngen über die Prachtstraße (Rampe aus ganzen Blöcken)
 Galerie-Treppe fehlte, die Gartenzäune der Dorfstraße liefen durch acht Häuser (hintere Hälfte des Erdgeschosses und
 alle oberen Stockwerke unerreichbar), sieben Gärten waren rundum zu. Die Bastei hinter dem Schloss liegt unter dem
 Berghang (Hohlraum, kein Platz).
+
+- **Saftig und hell** (16.11., Philip: „Wir sind in Bayern für schön saftigen Boden bekannt“): Die Lobby setzt beim
+  Bau das Biom **Wald** (`LOBBY_BIOME` in `datapack.ts`, `fillbiome` über die ganze Fläche) – Gras, Blätter und Wiesen
+  werden saftig grün, egal welches Biom die Welt dort erzeugt hatte (bei Philip „bewaldete Tafelberge“ mit fahlem,
+  bräunlichem Gras). Helles Pflaster (Steinziegel, polierter Andesit, Stein, etwas Diorit statt Moos-Kopfstein),
+  Sandwege auf Dorfstraße, Gasse und Feldwegen, am Schlossberg Laubbäume und Birken statt nur Fichten und dichtes
+  Gras mit Blumen über den Erdstufen, Dächer an der Dorfstraße im Wechsel hell und dunkel.
 
 ## Möbel (Ressourcenpaket)
 
@@ -120,37 +130,75 @@ Ausgeliefert unter `/api/public/packs/lobby.zip`; die Lobby bietet es per `serve
 Bedrock) sieht man die normalen Blöcke – nichts fehlt. Echt geprüft mit Client 26.3 in der Docker-Lobby: angeboten,
 geladen, `/bau` → weg, `/lobby` → wieder da.
 
-## Trachten in 3D (Ressourcenpaket)
+## Dorfbrunnen (Ressourcenpaket)
 
-Die Bewohner tragen 3D-Frisuren (kurz, lang, Zöpfe, Dutt), Bärte und Hüte (Trachtenhut mit Gamsbart, Strohhut,
-Kochmütze, Mütze, Kappe, Kopftuch, Krone, Helm, Kapuze) und am Körper Dirndl (Rock, Schürze, Mieder mit Schnürung und
-Bluse), Westen und Hosenträger (`packages/builder/src/trachten.ts`). Farben kommen aus der Tracht der Figur
-(`cast.ts`).
+Am Ende der Handwerkergasse und im Oberdorf steht je ein **Dorfbrunnen** (`packages/builder/src/dorfbrunnen.ts`) – so
+fein gearbeitet wie der Prunkbrunnen im Schlosshof (`brunnen.ts`), aber kleiner und ländlicher: achteckiger Trog aus
+hellem Kalkstein mit Steinziegel-Sockel, glatter Abdeckung und Zierfeldern, in der Mitte die Brunnensäule mit
+Kupferband, Kapitell und goldenem Zapfen, vier Wasserspeier aus Kupfer mit Wasserstrahlen ins Becken, Geranien auf dem
+Rand, Blumenbeete an den Ecken. Wie beim Prunkbrunnen sind es Item-Anzeigen mit dem leeren Modell `minecraft:air` (Teile `dorf_*` im
+Möbel-Paket), Spritzer und Plätschern kommen vom Lobby-Plugin.
 
-- Kopf-Teile stecken im Kopf-Platz der Figur (drehen und nicken mit), Körper-Teile in einem Anzeige-Objekt, das auf der
-  Figur mitfährt; das Lobby-Plugin dreht es mit, wenn die Figur sich umschaut oder läuft. Sitzende Figuren tragen nur
-  die Kopf-Teile.
-- Alle Teile benutzen das Modell `minecraft:air` – in Minecraft ist es leer. Unser Paket ersetzt
-  `assets/minecraft/items/air.json` und wählt über `custom_model_data` die Teile. **Ohne Paket (oder auf Bedrock)
-  sieht man nichts davon, nur die gewohnten Skins.**
+**Ohne Paket und auf Bedrock** steht ein schlichter Brunnen aus Blöcken da: niedrige Tuffziegel-Mauer als Becken mit
+echtem Wasser, Säule aus Mauer-Pfosten mit einem Endstab als Fontäne, dieselben Blumen. Tuffziegel-Mauern und
+Endstäbe gibt es in der Lobby nur an den Brunnen – das Paket blendet sie aus.
 
 ## Figuren und Skins
 
 Die Figuren sind Mannequins (Minecraft 1.21.9+) mit **eigenen Pixel-Skins** – gezeichnet in
-`packages/builder/src/skins.ts`, die Leute stehen in `cast.ts` (27 Stück: Modus-Figuren, Wirt, Kellnerinnen, Bäcker,
-Schmied, Bürgermeister, Gäste, Kinder).
+`packages/builder/src/skins.ts`, die Leute stehen in `cast.ts` (33 Stück: zwölf Modus-Figuren, Wirt, Kellnerinnen,
+Bäcker, Schmied, Bürgermeister, Gäste, Kinder, Blumenfrau). Gezeichnet mit Licht von oben vorn:
 
-Die Skins sind **von Mojang signiert** (Philips Go, 15.11.): `tools/lobby-entwuerfe/src/sign-skins.ts` lädt jede Tracht
-einmal bei [MineSkin](https://docs.mineskin.org) hoch (ohne Schlüssel, nicht öffentlich gelistet) und schreibt Adresse
+- **Gesicht:** Brauen, Augen mit Weiß und Pupille (2 × 2), Nase, rote Wangen, Mund; Bart mit Schnurrbart und Mund.
+- **Haare** mit Strähnen und Schatten; Volumen und Pony auf der zweiten Ebene.
+- **Kleidung** mit Kragen, Knopfleiste, Falten, Seitennaht, Gürtel mit Schnalle, Bündchen, Händen mit Daumen und
+  Fingern, Schuhen mit Sohle und Schnürung (Dirndl: Schnalle), Lederhose mit Latz, Naht und Hirschhornknöpfen,
+  Wadlstrümpfe mit Zopfmuster.
+- **Zweite Ebene:** Westen mit Revers und Knöpfen, Hosenträger mit Steg (hinten über Kreuz), Arbeitsschürzen mit Latz,
+  Rucksack-Gurte und Rucksack, Puffärmel mit Spitze, Ärmel-Bündchen, Rock und Schürze, Stutzen, Hüte.
 
-- Signatur nach `packages/builder/src/cast-textures.ts` (öffentliche Daten, keine Geheimnisse). Die Figur trägt sie als
-  `profile:{properties:[{name:'textures',value:…,signature:…}]}` – so sieht **jeder Java-Spieler die Trachten ohne
-  Texturpaket** (echt geprüft mit Client 26.3 ohne Paket), und Geyser kann sie an Bedrock weitergeben (ohne
-  Bedrock-Client nicht prüfbar). Ändert sich eine Tracht, schlägt der Test `packages/builder/test/cast.test.ts` an:
-  dann `npx tsx tools/lobby-entwuerfe/src/sign-skins.ts` (lädt nur Geändertes neu hoch, ~10 pro Minute).
+Die Skins sind **von Mojang signiert** (`tools/lobby-entwuerfe/src/sign-skins.ts` lädt jede Tracht einmal bei
+[MineSkin](https://docs.mineskin.org) hoch – ohne Schlüssel, nicht öffentlich gelistet – und schreibt Adresse +
+Signatur nach `packages/builder/src/cast-textures.ts`, öffentliche Daten, keine Geheimnisse). Die Figur trägt sie als
+`profile:{properties:[{name:'textures',value:…,signature:…}]}` – so sieht **jeder Java-Spieler die Trachten ohne
+Texturpaket**, und Geyser kann sie an Bedrock weitergeben (ohne Bedrock-Client nicht prüfbar). Ändert sich eine
+Tracht, schlägt der Test `packages/builder/test/cast.test.ts` an: dann `npx tsx tools/lobby-entwuerfe/src/sign-skins.ts`
+(lädt nur Geändertes neu hoch, etwa 10 pro Minute). Neue Figuren (`PENDING_CAST`) tragen bis zur Signatur die Tracht
+einer passenden Figur (`STAND_IN`).
 
 `castPack()` / `tools/lobby-entwuerfe/src/pack.ts` bauen weiterhin ein Texturpaket mit allen Trachten – nur noch für
 Vorschaubilder.
+
+## Trachten in 3D (Ressourcenpaket)
+
+Was über die Figur hinausragt, kommt mit dem Möbel-Paket in 3D dazu (`packages/builder/src/trachten.ts`); alles
+Flache malt der Skin selbst (oben). Farben kommen aus der Tracht der Figur (`cast.ts`).
+
+- **Hüte** (Trachtenhut mit Gamsbart, Strohhut, Kochmütze, Mütze mit Bommel, Kappe mit Schirm, Kopftuch, Krone,
+  Partyhut, Helm mit kurzem Nasenschutz zwischen den Augen, Fliegerhaube mit Brille und Ohrenklappen, Kapuze) sitzen
+  auf dem Kopf: Ihre Wände umschließen die drei obersten Reihen, auf
+  die der Skin seinen Hut malt, mit Abstand zur zweiten Ebene (nichts flimmert, nichts schwebt).
+- **Bart** mit Schnurrbart und Lücke für den Mund, **Dutt** am Hinterkopf (mit Hut tiefer im Nacken).
+- **Am Körper:** Dirndl-Rock in Stufen ab der Taille mit Schürze, Bund und Schleife; langes Haar und Zöpfe den Rücken
+  hinunter. Mieder, Westen und Hosenträger malt der Skin (zweite Ebene) – als flache 3D-Teile standen sie vorher
+  schief neben dem Körper, sobald die Figur den Kopf drehte.
+- Kopf-Teile stecken im Kopf-Platz der Figur (drehen und nicken mit), Körper-Teile in einem Anzeige-Objekt, das auf
+  der Figur mitfährt. **Stehende Figuren drehen nur den Kopf** (höchstens 60° zur Seite; der Körper bleibt, wie er
+  gebaut ist – darum sitzen Rock und Zöpfe immer). Laufenden dreht das Lobby-Plugin den Körper-Teil so nach, wie
+  Minecraft den Körper nachdreht; wer einen Rock trägt (Tag `mm_rock`), geht kleinere Schritte, damit die Beine im
+  Rock bleiben. Sitzende Figuren tragen nur die Kopf-Teile.
+- Alle Teile benutzen das Modell `minecraft:air` – in Minecraft ist es leer. Unser Paket ersetzt
+  `assets/minecraft/items/air.json` und wählt über `custom_model_data` die Teile. **Ohne Paket (oder auf Bedrock)
+  sieht man nichts davon, nur die Skins.** Tests in `packages/builder/test/trachten.test.ts`: nichts liegt auf der
+  zweiten Ebene des Skins, Hüte umschließen die Hutreihen, nichts steckt in den Armen.
+
+## Was die Modus-Figuren halten
+
+Wie auf den Figuren-Bildern der Webseite (`holds` in `MODES`, `packages/builder/src/lobby/common.ts`; ohne Angabe das
+Symbol des Kompass-Menüs): MorniCraft Diamant-Spitzhacke, Duels Eisenschwert, Morni Party Notenblock, Gipfelsturm
+Eisen-Spitzhacke als Eispickel, Burgverlies Streitkolben, Bollwerk Schild (links), MorniSMP Truhe, Wolkenkampf Bogen,
+Versteckerl Fernrohr, Wintersport Schneeblock, Adlerflug Flügel auf dem Rücken, Angelkönig Angel; Brezn-Stand Brot,
+Blumenfrau Mohn.
 
 ## Im Netzwerk-Plugin (`LobbyNpcs.java`)
 
@@ -160,10 +208,24 @@ Vorschaubilder.
 | `mm_mode_<id>`                    | Anklicken (rechts oder links) → Nachricht `play` an den Hub → Modus beitreten bzw. wecken                                                                                                          |
 | `mm_mode_label`                   | Schild aus dem Bau – das Plugin ersetzt es durch eigene Schilder mit Live-Zahlen                                                                                                                   |
 | `mm_walker`                       | läuft gemütlich in bis zu 8 Blöcken um den Platz herum (nur auf freiem, ebenem Boden)                                                                                                              |
+| `mm_rock`                         | trägt einen 3D-Rock: läuft mit kleineren Schritten (1,2 statt 1,8 Blöcke pro Sekunde)                                                                                                              |
+| `mm_tint_<rrggbb>`                | Farbe des Modus für den Namen über der Figur (wie auf der Webseite); ohne Tag Gold                                                                                                                 |
 | `mm_lobby` + `mm_build_<version>` | alles, was der Lobby-Bau setzt; Wesen aus älteren Bauten entfernt das Plugin, sobald sie geladen werden oder die Version wechselt (Datei `plugins/moinmorni/lobby-world.target`, alle 2 s geprüft) |
 
-Der Hub schickt allen Spielservern `lobby` mit Zustand und Spielerzahl je Modus (`docs/hub-protokoll.md`). Das Plugin
-hält je Figur zwei Schilder (Deutsch/Englisch); jeder Spieler sieht nur das in seiner Sprache (`/sprache` gilt sofort).
+Der Hub schickt allen Spielservern `lobby` mit Zustand und Spielerzahl je Modus (`docs/hub-protokoll.md`). Über jeder
+Modus-Figur stehen drei Zeilen, jede ein eigenes kleines Schild – unten anfangend 2,38 Blöcke über den Füßen, also
+über jedem Hut:
+
+1. **Name** fett in der Farbe des Modus (Größe 0,9 – so groß wie der Name über einem Spieler),
+2. **Zustand** (0,75): „● 12 spielen“ / „● 1 spielt“ (grün), „☾ schläft – Klick weckt“ (türkis), „● geschlossen“ (rot),
+   „⚒ Wartung“ (gold), „○ bald“ (grau), „☀ Sommerpause“ (gelb),
+3. **Hinweis** klein (0,6): „Rechtsklick: Mitspielen“, „Rechtsklick: Dorf anschauen“ oder „Nur auf Einladung“.
+
+Die Schilder drehen sich nur seitlich zum Betrachter (bleiben aufrecht, nichts rutscht ineinander), leuchten immer
+(nachts so lesbar wie am Tag) und haben einen leicht dunklen Grund. Je Sprache gibt es eigene Schilder; jeder Spieler
+sieht nur die in seiner Sprache (`/sprache` gilt sofort). Gleiche Maße im Baukasten (`LABEL_LAYOUT` in `village.ts`)
+für die Stände ohne Modus (Brezn, Blumen). Beim Anklicken: kurzer Klang, ein paar Funken in der Farbe des Modus, die
+Figur winkt.
 
 ## Leben in der Lobby (`LobbyFeatures.java`, Einstellungen im Panel unter „Lobby“)
 
@@ -265,6 +327,27 @@ Die Strafe gilt im ganzen Netzwerk:
 - Discord: Rolle „⛓ Gefängnis“ (sieht nur den Gefängnis-Kanal), wird nach Ablauf wieder abgenommen; Eintrag im
   Team-Log.
 
+## Bauplan-Prüfung
+
+`packages/builder/src/pruefung.ts` prüft den fertigen Bauplan (`checkLobby()` in `lobby/pruefen.ts`) samt aller
+Saison-Dekos und meldet jeden Fund mit Koordinaten:
+
+- Laternen, Fackeln, Schilder, Banner, Falltüren, Blumentöpfe, Teppiche, Kerzen, Glocken, Knöpfe ohne Halt;
+- Ketten, die oben bzw. an einem Ende im Leeren enden; Zäune, Mauern und Scheiben mit Armen ins Leere;
+- Türen ohne Boden, Rahmen oder Sturz oder in eine Wand hinein;
+- Bäume, die in Häuser, Dächer, Stände oder Wege wachsen, auf Pflaster stehen oder auf Kopfhöhe über den Weg hängen;
+  zwei Bauten an derselben Stelle (an der Herkunft, die `Canvas.tagged` vergibt);
+- auslaufendes Wasser, Pflanzen ohne passenden Boden, schwebende Blöcke (ausgenommen der bunte Bogen über dem Start des Jump and Run);
+- **offen liegende Erde** dort, wo man herumläuft – nur, was man auch sieht: unter freiem Himmel oder wenige Schritte
+  davon (Hohlräume im Berg, die das Gelände lässt, zählen nicht);
+- Figuren in Wänden oder in der Luft, Saison-Deko in Blöcken oder ohne Halt, Wimpel- und Lichterketten ohne Ende.
+
+Auf der Kommandozeile: `npx tsx tools/lobby-entwuerfe/src/pruefen.ts [art …]`. Der Test
+`packages/builder/test/lobby-pruefung.test.ts` schlägt bei jedem neuen Fund an; Funde in Teilen, an denen gerade
+andere arbeiten (Schloss, Schlossmarkt, Saison-Deko), stehen in `test/pruefung-offen.ts` – ist einer behoben, die
+Zeile dort löschen. Die Lobby baut ohne Block-Updates; `fitConnections` (`verbindungen.ts`) verbindet darum Zäune,
+Mauern und Scheiben wie beim Setzen von Hand.
+
 ## Die Lobby baut sich selbst
 
 Beim Einrichten (und nach jedem Update, wenn sich der Bauplan geändert hat) baut MoinMorni die Welt auf dem
@@ -276,12 +359,12 @@ Lobby-Server auf – ohne RCON von außen, nur über den Motor (`apps/server/src
    `packages/builder/src/lobby/datapack.ts`, ~83 Funktionen à 3000 Befehle).
 3. `minecraft:reload`, Welt-Stücke in kleinen Portionen festhalten (`forceload`, 4×4 Stücke pro Befehl – alles auf
    einmal ließ den Server minutenlang hängen), warten bis geladen, `clean` (alte Wesen weg), Bau-Funktionen
-   nacheinander, `finish` (Spielregeln, Ankunftspunkt, Weltgrenze, Reste älterer Bauten), Stücke loslassen,
+   nacheinander, `finish` (Spielregeln, Ankunftspunkt, Weltgrenze, Reste älterer Bauten), `save-all flush` (stürzt
+   der Server gleich danach ab, steht sonst eine halb gebaute Welt mit neuer Version da), Stücke loslassen,
    Datenpaket wieder ausschalten. Minecraft lädt die Wesen eines Stücks erst nach den Blöcken – was dabei noch nicht
    geladen war, räumt das Lobby-Plugin über die Bau-Version weg.
-4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun. Die **Bau-Version** ist die
-   Prüfsumme des Datenpakets (`lobbyPack()`): jede Änderung am Bauplan zählt sie von selbst weiter, das nächste
-   Update baut die Lobby neu (von Hand muss nichts hochgezählt werden).
+4. Version in `plugins/moinmorni/lobby-world.version` – gleicher Plan = nichts zu tun. Die Bau-Version ist die Prüfsumme
+   des Datenpakets: Jede Änderung am Bauplan zählt sie von selbst weiter, die Lobby baut sich beim nächsten Start neu.
 
 Echt geprüft mit einem frischen Paper 26.3 (`apps/server/scripts/lobby-selbstbau.ts`, Brücke statt Motor):
 Welt-Stücke erzeugen ~4 Min., Bau 55 s, keine Ladefehler, kein Hänger.

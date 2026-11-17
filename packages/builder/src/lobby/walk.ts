@@ -22,6 +22,7 @@ import { GROUND } from '../nature.js';
 import { range } from '../range.js';
 import { OPPOSITE, STEP as DIRECTION, type Facing } from '../shapes.js';
 import type { LobbyPoint } from './features.js';
+import { BELFRY } from '../bavaria.js';
 
 /** Sechzehntel pro Block. */
 const PX = 16;
@@ -444,9 +445,12 @@ export const DECOR_REASONS: Readonly<Record<Exclude<FloorKind, 'boden'>, string>
  * Bewusst unerreichbare Orte (Name wie gemeldet → Grund). Alles andere muss man zu Fuß erreichen – kommt etwas Neues
  * dazu, schlägt der Test an.
  */
+/** Name des Wasserbeckens der Dorfbrunnen (Handwerkergasse, Oberdorf) als Ort. */
+export const FOUNTAIN_BASIN = 'Becken eines Dorfbrunnens';
 export const ON_PURPOSE: Readonly<Record<string, string>> = {
   Arrestzelle: 'Gefängnis – nur das Lobby-Plugin bringt Eingesperrte hinein und wieder hinaus',
-  'Brunnenbecken der Handwerkergasse': 'Wasserbecken des Brunnens hinter seiner Brüstung',
+  [FOUNTAIN_BASIN]: 'Wasser im Becken der Dorfbrunnen, hinter dem Rand',
+  [BELFRY]: 'Glockenstube mit Schallöffnungen oben im Kapellenturm – zum Anschauen, ohne Leiter',
 };
 
 /** Material eines Raum- oder Platz-Bodens (sonst ist es Dach, Laub, Möbel …). */

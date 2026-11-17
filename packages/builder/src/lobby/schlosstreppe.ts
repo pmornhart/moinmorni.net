@@ -19,6 +19,7 @@ import { range } from '../range.js';
 import { stairs } from '../shapes.js';
 import { signText } from '../village.js';
 import { lampPost } from './common.js';
+import { MARKET_WALL_Z } from './schlossmarkt.js';
 
 /** Ein Lauf: so viele Stufen, danach ein Podest dieser Länge (der letzte endet am Vorplatz). */
 const RUNS: readonly (readonly [steps: number, landing: number])[] = [
@@ -82,12 +83,24 @@ const SLOPE_FLOWERS = ['poppy', 'cornflower', 'oxeye_daisy', 'allium', 'red_tuli
 /** Fahnenallee am Rand des Vorplatzes (je ein Paar Masten), über den ersten beiden Paaren Lichterketten. */
 const FLAG_ALLEY_Z = [-77, -84, -91];
 const LIGHT_CHAINS = 2;
+/** Kleiner eiserner Knauf (halber Block, unten fest): hält Ketten und Laternen. */
+const KNOB = 'heavy_core';
 /** So hoch sind die Masten der Fahnenallee; die Lichterkette hängt oben an ihnen. */
 const ALLEY_POLE = 7;
 
 /** Stern aus Gold und Smaragd in der Mitte des Teppichs. */
 const STAR_Z = -82;
 const inStar = (x: number, z: number): boolean => Math.abs(x) + Math.abs(z - STAR_Z) <= 1;
+
+/** Das Schlosstor ragt eine Reihe auf den Vorplatz (Pfeiler bis 8 neben der Mitte, goldene Borte bei 3). */
+const GATE_HALF = 8;
+const GATE_TRIM = 3;
+const underGate = (x: number, z: number): boolean => z === VORPLATZ.z1 && Math.abs(x) <= GATE_HALF;
+
+/** Laternen am Mittelweg des Vorplatzes. */
+const LAMP_X = [-4, 4];
+const LAMP_Z = [-73, -80, -87, -93];
+const isLamp = (x: number, z: number): boolean => LAMP_X.includes(x) && LAMP_Z.includes(z);
 
 /** Linke Seite Smaragd, rechte Weiß-Blau (wie am Schlosstor). */
 const flagOf = (side: number): Flag => (side < 0 ? FLAG_SMARAGD : FLAG_WEISSBLAU);
@@ -119,33 +132,36 @@ export function buildSchlosstreppe(c: Canvas, height: (x: number, z: number) => 
       }
     });
     // Wangen aus Marmor; darauf die Blütenhecke, alle paar Stufen ein Pfosten mit Laterne, an den Podesten Goldkugeln
-    [-WALL, WALL].forEach((x) => {
-      const out = outside(x, row.z);
-      const wallTop = Math.max(top, out);
-      const bottom = Math.min(top, out) - 1;
-      range(bottom, wallTop).forEach((y) => c.set(x, y, row.z, y === bottom ? 'quartz_bricks' : MARBLE));
-      range(wallTop + 1, wallTop + 6).forEach((y) => c.set(x, y, row.z, 'air'));
-      if (ends.has(row.z)) {
-        c.set(x, wallTop + 1, row.z, 'chiseled_quartz_block');
-        c.set(x, wallTop + 2, row.z, 'gold_block');
-        c.set(x, wallTop + 3, row.z, 'lantern');
-      } else if (i % POST_EVERY === 0) {
-        c.set(x, wallTop + 1, row.z, 'quartz_pillar');
-        c.set(x, wallTop + 2, row.z, 'lantern');
-      } else c.set(x, wallTop + 1, row.z, GARLAND);
-      // Blumen am Hang neben der Treppe
-      if (row.z < PLAZA_EDGE - 1)
-        [x + Math.sign(x), x + 2 * Math.sign(x)].forEach((fx) => {
-          const h = outside(fx, row.z);
-          c.set(fx, h, row.z, 'grass_block');
-          c.set(fx, h + 1, row.z, pick(rnd, SLOPE_FLOWERS));
-        });
-    });
+    // (wo die Stützmauer des Schlossmarkts anschließt, steht ihr Pfeiler mit Laterne – dort keine Wange)
+    [-WALL, WALL]
+      .filter(() => row.z !== MARKET_WALL_Z)
+      .forEach((x) => {
+        const out = outside(x, row.z);
+        const wallTop = Math.max(top, out);
+        const bottom = Math.min(top, out) - 1;
+        range(bottom, wallTop).forEach((y) => c.set(x, y, row.z, y === bottom ? 'quartz_bricks' : MARBLE));
+        range(wallTop + 1, wallTop + 6).forEach((y) => c.set(x, y, row.z, 'air'));
+        if (ends.has(row.z)) {
+          c.set(x, wallTop + 1, row.z, 'chiseled_quartz_block');
+          c.set(x, wallTop + 2, row.z, 'gold_block');
+          c.set(x, wallTop + 3, row.z, 'lantern');
+        } else if (i % POST_EVERY === 0) {
+          c.set(x, wallTop + 1, row.z, 'quartz_pillar');
+          c.set(x, wallTop + 2, row.z, 'lantern');
+        } else c.set(x, wallTop + 1, row.z, GARLAND);
+        // Blumen am Hang neben der Treppe
+        if (row.z < PLAZA_EDGE - 1)
+          [x + Math.sign(x), x + 2 * Math.sign(x)].forEach((fx) => {
+            const h = outside(fx, row.z);
+            c.set(fx, h, row.z, 'grass_block');
+            c.set(fx, h + 1, row.z, pick(rnd, SLOPE_FLOWERS));
+          });
+      });
     // Blumenkübel an den Enden jedes Podests, an die Wange gerückt
     if (row.landing !== undefined && ends.has(row.z))
       [-HALF, HALF].forEach((x) => {
         c.set(x, row.y, row.z, 'composter[level=8]');
-        c.set(x, row.y + 1, row.z, 'flowering_azalea');
+        c.set(x, row.y + 1, row.z, 'flowering_azalea_leaves[persistent=true]');
       });
     // Über den Stufen etwas Licht für die Nacht
     if (i % 4 === 2) [-3, 3].forEach((x) => c.soft(x, row.y + 4, row.z, GLOW));
@@ -267,17 +283,19 @@ function portal(c: Canvas): void {
   wappen((x, row, block) => c.set(x, y + 15 - row, front, block));
   // … und hinten (zur Treppe hin) noch einmal, von dort gesehen ebenso links Smaragd
   wappen((x, row, block) => c.set(-x, y + 15 - row, back - 1, block));
-  // Kronleuchter im Bogen: Kette, goldene Mitte, vier Laternen an kurzen Armen
+  // Kronleuchter im Bogen: Kette, goldene Mitte, vier eiserne Knäufe ringsum, darunter je eine Laterne (eine Laterne
+  // hängt nur unter etwas Festem – unter einer waagerechten Kette fiele sie beim nächsten Block-Update herunter)
   c.set(0, y + 6, back, 'iron_chain[axis=y]');
   c.set(0, y + 5, back, 'gold_block');
+  c.set(0, y + 4, back, 'lantern[hanging=true]');
   [
-    [-1, back, 'iron_chain[axis=x]'],
-    [1, back, 'iron_chain[axis=x]'],
-    [0, front, 'iron_chain[axis=z]'],
-    [0, back - 1, 'iron_chain[axis=z]'],
-  ].forEach(([x = 0, z = 0, arm = '']) => {
-    c.set(Number(x), y + 5, Number(z), String(arm));
-    c.set(Number(x), y + 4, Number(z), 'lantern[hanging=true]');
+    [-1, back],
+    [1, back],
+    [0, front],
+    [0, back - 1],
+  ].forEach(([x = 0, z = 0]) => {
+    c.set(x, y + 5, z, KNOB);
+    c.set(x, y + 4, z, 'lantern[hanging=true]');
   });
   // Inschrift am Gebälk
   signText(
@@ -322,8 +340,14 @@ function vorplatz(c: Canvas, height: (x: number, z: number) => number, rnd: () =
     range(z1, z2).forEach((z) => {
       const ground = Math.round(height(x, z));
       range(Math.min(ground, y) - 1, y - 1).forEach((fy) => c.set(x, fy, z, 'stone_bricks'));
+      // Die vorderste Reihe unter dem Schlosstor gehört dem Tor (Pfeiler, Teppich, goldene Borte): dort nur der Boden
+      if (underGate(x, z)) {
+        if (Math.abs(x) !== GATE_TRIM) c.set(x, y, z, plazaTile(x, z));
+        return;
+      }
       range(y + 1, y + ALLEY_POLE + 1).forEach((fy) => c.set(x, fy, z, 'air'));
-      c.set(x, y, z, plazaTile(x, z));
+      // (wo eine Laterne steht, legt sie ihren Fuß selbst)
+      if (!isLamp(x, z)) c.set(x, y, z, plazaTile(x, z));
       if (Math.abs(x) <= RUNNER_HALF && !inStar(x, z)) c.set(x, y + 1, z, CARPET);
       const bed = Math.abs(x) >= 5 && Math.abs(x) <= 10 && z <= z2 - 4 && z >= z1 + 4;
       if (bed) {
@@ -347,7 +371,7 @@ function vorplatz(c: Canvas, height: (x: number, z: number) => number, rnd: () =
     ),
   );
   // Laternen am Mittelweg, Linden an der Treppe, zwei hohe Fahnen am Kopf der Treppe
-  [-4, 4].forEach((x) => [-73, -80, -87, -93].forEach((z) => lampPost(c, x, y, z)));
+  LAMP_X.forEach((x) => LAMP_Z.forEach((z) => lampPost(c, x, y, z)));
   [-11, 11].forEach((x) => {
     c.set(x, y, z2 - 2, 'grass_block');
     roundTree(c, x, y + 1, z2 - 2, { height: 9, radius: 3.2, leaves: 'oak_leaves', rnd });
@@ -357,11 +381,16 @@ function vorplatz(c: Canvas, height: (x: number, z: number) => number, rnd: () =
   // Wechsel (weiß-blau), hoch genug, dass sie den Blick aufs Schlosstor frei lassen
   FLAG_ALLEY_Z.forEach((z, row) => {
     [-11, 11].forEach((x) => flagpole(c, x, y, z, ALLEY_POLE, row === 1 ? FLAG_GOLD : flagOf(x)));
+    // Glieder: Kette zwischen eisernen Knäufen, unter jedem Knauf eine Laterne (eine Laterne braucht etwas Festes
+    // über sich, eine Kette braucht an jedem Ende etwas Festes – sonst fielen sie im Spiel herunter)
     if (row < LIGHT_CHAINS)
       range(-10, 10).forEach((x) => {
-        c.set(x, y + ALLEY_POLE, z, 'iron_chain[axis=x]');
-        if (x % 2 === 0)
-          c.set(x, y + ALLEY_POLE - 1, z, `${x % 4 === 0 ? '' : 'soul_'}lantern[hanging=true]`);
+        if (x % 2 !== 0) {
+          c.set(x, y + ALLEY_POLE, z, 'iron_chain[axis=x]');
+          return;
+        }
+        c.set(x, y + ALLEY_POLE, z, KNOB);
+        c.set(x, y + ALLEY_POLE - 1, z, `${x % 4 === 0 ? '' : 'soul_'}lantern[hanging=true]`);
       });
   });
   c.place('Schlossvorplatz', x1, y + 1, z1, x2, z2);

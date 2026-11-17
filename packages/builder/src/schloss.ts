@@ -122,6 +122,9 @@ function prunktreppe(r: Room, mid: number): void {
         if (i > 0) f.set(u, 1 + i, v, stairs(MARBLE, up, 'top'));
         if (i < STAIR_STEPS - 1) f.set(u, GALLERY_Y, v, 'air');
       });
+      // Wange zur Saalseite, darauf die Geländerstäbe (vorher schwebte jeder Stab einzeln über der Untersicht)
+      f.set(u, 2 + i, open, stairs(MARBLE, up));
+      if (i > 0) f.set(u, 1 + i, open, stairs(MARBLE, up, 'top'));
       if (3 + i < GALLERY_Y) f.set(u, 3 + i, open, `iron_bars[${along}]`);
       if (i < STAIR_STEPS - 1) f.set(u, top, open, `iron_bars[${along}]`);
     });
@@ -374,6 +377,9 @@ function bibliothek(r: Room): void {
   });
 }
 
+/** So viele Blöcke reicht der vordere Eckturm in den Rittersaal hinein (Turm mit Radius 5 an der Ecke der Bastei). */
+const TOWER_END = 6;
+
 function rittersaal(r: Room): void {
   const { f, w, d, top } = r;
   const door = Math.floor(w / 2);
@@ -396,7 +402,8 @@ function rittersaal(r: Room): void {
       f.set(u, 6, d - 1, `${u % 8 === 0 ? 'red' : 'white'}_wall_banner[facing=${f.dir('front')}]`);
       armour(r, u, d - 2, f.dir('front'));
     });
-  range(3, w - 4)
+  // (vorne ragt der Eckturm in den Saal – dort keine Rüstung, sie stünde in seiner Mauer)
+  range(3, w - TOWER_END)
     .filter((u) => u % 4 === 2 && Math.abs(u - door) > 2)
     .forEach((u) => armour(r, u, 1, f.dir('back')));
   chandelier(r, Math.floor(w / 3), centre, top - 1);

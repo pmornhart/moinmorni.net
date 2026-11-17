@@ -34,6 +34,16 @@ import {
   type BoardContext,
   type Body,
 } from './messages.js';
+import {
+  badgesOn,
+  rankIconOf,
+  rankLook,
+  ROLE_ICONS_FEATURE,
+  ROLE_ICONS_KEY,
+  type RankIcon,
+  type RankLook,
+  type RankLookReason,
+} from './rank-icons.js';
 import { positionChanges, roleOrder } from './role-order.js';
 import type { DiscordStore } from './store.js';
 
@@ -56,6 +66,9 @@ interface DRole {
   readonly hoist: boolean;
   readonly mentionable: boolean;
   readonly managed?: boolean;
+  /** Rollen-Symbol (Bild, nur mit Boost-Stufe 2) – Kennung bei Discord. */
+  readonly icon?: string | null;
+  readonly unicode_emoji?: string | null;
 }
 interface DChannel {
   readonly id: string;
@@ -101,6 +114,17 @@ export interface SetupReport {
   readonly missing: readonly PermName[];
   /** Die Owner-Rolle bekommt „Administrator“ nur von Hand in Discord (der Bot darf das nicht vergeben). */
   readonly ownerAdminManual: boolean;
+  /** Wie Discord die Ränge zeigt: Abzeichen als Rollen-Symbol oder Symbol im Namen (und warum). */
+  readonly ranks: RanksReport;
+}
+
+export interface RanksReport {
+  readonly look: RankLook;
+  readonly reason: RankLookReason;
+  /** Rollen-Symbole, die in diesem Lauf neu hochgeladen (oder entfernt) wurden. */
+  readonly icons: number;
+  /** Rollen mit einem Symbol, das jemand in Discord selbst gesetzt hat – bleibt. */
+  readonly iconsKept: readonly string[];
 }
 
 export interface SetupProgress {
@@ -136,6 +160,11 @@ export interface DiscordSetup {
   /** Im Hintergrund starten (läuft schon einer, bleibt es bei dem). */
   readonly start: () => SetupProgress;
   readonly progress: () => SetupProgress;
+  /**
+   * Ränge nach einer Änderung im Panel nachziehen (Name, Farbe, Abzeichen als Rollen-Symbol, Reihenfolge, neue Rollen
+   * und ihre Kanal-Rechte) – nur wenn der Server schon eingerichtet ist; null = nichts zu tun.
+   */
+  readonly syncRanks: () => Promise<RanksReport | null>;
   /** Feste Nachrichten neu schreiben (nach Änderungen im Panel) – nur die, die es schon gibt. */
   readonly refreshMessages: (
     which: 'rules' | 'apply' | 'modes' | 'welcome' | 'help' | 'all',
@@ -198,11 +227,21 @@ const denied = (err: unknown): boolean =>
 
 export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
   const { rest, store, stores, log } = deps;
-  const state: { progress: SetupProgress; job: Promise<SetupReport> | null } = {
+  const state: { progress: SetupProgress; job: Promise<SetupReport> | null; tracking: boolean } = {
     progress: idle(),
     job: null,
+    tracking: true,
+  };
+  /** Einrichten und Nachziehen der Ränge laufen nacheinander, nie gleichzeitig (beide merken sich IDs). */
+  const queue: { tail: Promise<unknown> } = { tail: Promise.resolve() };
+  const serial = <T>(job: () => Promise<T>): Promise<T> => {
+    const next = queue.tail.then(job, job);
+    queue.tail = next.catch(() => undefined);
+    return next;
   };
   const step = (key: SetupStepKey, change: Partial<SetupStep>): void => {
+    // Beim Nachziehen der Ränge im Hintergrund bleibt der Fortschritt der letzten Einrichtung stehen.
+    if (!state.tracking) return;
     state.progress = {
       ...state.progress,
       steps: state.progress.steps.map((s) => (s.key === key ? { ...s, ...change } : s)),
@@ -231,16 +270,26 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
     readonly permissions: bigint;
     readonly hoist: boolean;
     readonly mentionable: boolean;
+    /** Rollen-Symbol: Bild des Abzeichens, null = keins; fehlt = der Bot fasst es nicht an (Rollen neben den Rängen). */
+    readonly icon?: RankIcon | null;
   }
-  const roleWants = (): RoleWant[] => [
-    ...templateRoles().map((r) => ({
-      key: `role:${r.id}`,
-      name: discordRoleName(r),
-      color: colourInt(r.colour),
-      permissions: rolePermissions(r),
-      hoist: isTeam(r) || r.discord.includes('vip-area') || r.discord.includes('media-area'),
-      mentionable: isTeam(r),
-    })),
+  /**
+   * Die Rollen, wie Discord sie zeigen soll. Ränge mit Abzeichen als Rollen-Symbol (Boost-Stufe 2 und Abzeichen an)
+   * heißen schlicht „Moderator“ – das Bild steht daneben; sonst steht das Symbol im Namen („⚔ Moderator“).
+   */
+  const roleWants = (icons: boolean): RoleWant[] => [
+    ...templateRoles().map((r) => {
+      const icon = icons ? rankIconOf(r) : null;
+      return {
+        key: `role:${r.id}`,
+        name: icon ? r.name.de : discordRoleName(r),
+        color: colourInt(r.colour),
+        permissions: rolePermissions(r),
+        hoist: isTeam(r) || r.discord.includes('vip-area') || r.discord.includes('media-area'),
+        mentionable: isTeam(r),
+        icon,
+      };
+    }),
     ...EXTRA_ROLES.map((r) => ({
       key: `role:${r.key}`,
       name: r.name,
@@ -255,6 +304,8 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
     readonly g: string;
     readonly botId: string;
     readonly botPerms: bigint;
+    /** Der Server darf Rollen-Symbole haben (Funktion „ROLE_ICONS“, Boost-Stufe 2). */
+    readonly roleIcons: boolean;
   }
   /** Was im laufenden Durchgang passiert (wird bei jedem Lauf neu angelegt). */
   const tally = {
@@ -262,7 +313,27 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
     created: 0,
     kept: [] as string[],
     ownerAdminManual: false,
+    icons: 0,
+    iconsKept: [] as string[],
   };
+  const resetTally = (): void => {
+    tally.claimed = claimedIds();
+    tally.created = 0;
+    tally.kept = [];
+    tally.ownerAdminManual = false;
+    tally.icons = 0;
+    tally.iconsKept = [];
+  };
+  /** Kann der Server Rollen-Symbole? (Fehlt die Antwort, lieber nicht – dann bleibt das Symbol im Namen.) */
+  const guildHasRoleIcons = async (g: string): Promise<boolean> => {
+    const guild = await rest<{ features?: readonly string[] }>('GET', `/guilds/${g}`).catch(() => null);
+    return Boolean(guild?.features?.includes(ROLE_ICONS_FEATURE));
+  };
+  const ranksReport = (run: Run): RanksReport => ({
+    ...rankLook(run.roleIcons, badgesOn(stores)),
+    icons: tally.icons,
+    iconsKept: [...new Set(tally.iconsKept)],
+  });
 
   const claimedIds = (): Set<string> =>
     new Set(['role:', 'cat:', 'ch:'].flatMap((prefix) => store.withPrefix(prefix).map((e) => e.id)));
@@ -279,6 +350,49 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
     const remembered = Object.fromEntries(keys.map((k) => [k, free.includes(k) ? want[k] : applied?.[k]]));
     const kept = keys.some((k) => !free.includes(k) && found[k] !== want[k]);
     return { body, applied: remembered, kept };
+  };
+
+  /**
+   * Rollen-Symbol einer Rolle: das Abzeichen hochladen, wenn es fehlt oder sich geändert hat; entfernen, wenn es keins
+   * mehr sein soll (Abzeichen aus) – aber nur ein Bild, das der Bot selbst gesetzt hat. Ein Symbol, das jemand in
+   * Discord selbst gesetzt hat, bleibt. Ohne Boost-Stufe 2 nimmt Discord keine Rollen-Symbole an: dann nichts anfassen.
+   * Gibt zurück, was sich der Bot merken soll (Kennung bei Discord und Fingerabdruck des Bilds).
+   */
+  const ensureRoleIcon = async (
+    run: Run,
+    role: DRole,
+    want: RoleWant,
+    applied: Readonly<Record<string, unknown>> | null,
+  ): Promise<Record<string, unknown>> => {
+    const before = {
+      ...(applied && 'icon' in applied ? { icon: applied['icon'] } : {}),
+      ...(applied && 'iconFor' in applied ? { iconFor: applied['iconFor'] } : {}),
+    };
+    if (want.icon === undefined || !run.roleIcons) return before;
+    const ours = typeof applied?.['icon'] === 'string' ? applied['icon'] : null;
+    const current = role.icon ?? null;
+    // Von Hand in Discord gesetzt (anderes Bild oder ein Emoji): bleibt, wie es ist.
+    if ((current !== null && current !== ours) || role.unicode_emoji) {
+      if (want.icon || current !== null) tally.iconsKept.push(role.name);
+      return before;
+    }
+    const target = want.icon;
+    if (target && current !== null && applied?.['iconFor'] === target.fingerprint) return before;
+    if (!target && current === null) return {};
+    try {
+      const after = await rest<DRole>(
+        'PATCH',
+        `/guilds/${run.g}/roles/${role.id}`,
+        { icon: target ? target.dataUri : null },
+        target ? 'MoinMorni: Abzeichen als Rollen-Symbol' : 'MoinMorni: Rollen-Symbol entfernt',
+      );
+      tally.icons += 1;
+      return target ? { icon: after.icon ?? null, iconFor: target.fingerprint } : {};
+    } catch (err) {
+      // Rolle über dem Bot, Discord nimmt das Bild nicht: Name und Farbe gelten trotzdem, das Bild bleibt, wie es war.
+      log.warn({ err, role: role.name }, 'Discord: Rollen-Symbol nicht gesetzt');
+      return before;
+    }
   };
 
   const ensureRole = async (run: Run, existing: readonly DRole[], want: RoleWant): Promise<boolean> => {
@@ -301,7 +415,8 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
         { ...look, permissions: grantable.toString() },
         'MoinMorni: Rolle anlegen',
       );
-      store.put(want.key, role.id, { created: true, applied: look });
+      const icon = await ensureRoleIcon(run, role, want, null);
+      store.put(want.key, role.id, { created: true, applied: { ...look, ...icon } });
       tally.claimed.add(role.id);
       tally.created += 1;
       return true;
@@ -327,12 +442,13 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
       tally.kept.push(found.name);
     }
     if (change.kept) tally.kept.push(found.name);
-    store.put(want.key, found.id, { applied: change.applied });
+    const icon = await ensureRoleIcon(run, found, want, byId ? (known?.applied ?? null) : null);
+    store.put(want.key, found.id, { applied: { ...change.applied, ...icon } });
     return false;
   };
 
   const ensureRoles = async (run: Run): Promise<number> => {
-    const wants = roleWants();
+    const wants = roleWants(run.roleIcons && badgesOn(stores));
     step('roles', { state: 'running', total: wants.length + 1 });
     const before = await rest<DRole[]>('GET', `/guilds/${run.g}/roles`);
     const fresh = new Set<string>();
@@ -367,6 +483,7 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
         },
       );
     store.put(ROLE_ORDER_KEY, '-', { applied: { order } });
+    store.put(ROLE_ICONS_KEY, run.roleIcons ? 'on' : 'off');
     // Der Bot trägt selbst die Rolle „🤖 Bot“ (eigene Gruppe in der Mitgliederliste).
     const botRole = store.get('role:bot');
     if (botRole)
@@ -645,11 +762,8 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
       if (missing.includes('manageRoles') || missing.includes('manageChannels'))
         throw new SetupError('discord_missing_permissions', missing);
       step('check', { state: 'done', done: 1 });
-      const r: Run = { g, botId, botPerms };
-      tally.claimed = claimedIds();
-      tally.created = 0;
-      tally.kept = [];
-      tally.ownerAdminManual = false;
+      const r: Run = { g, botId, botPerms, roleIcons: await guildHasRoleIcons(g) };
+      resetTally();
       const roleCount = await ensureRoles(r);
       const channelCount = await ensureChannels(r);
       const messageCount = await ensureMessages();
@@ -676,6 +790,7 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
         icon,
         missing,
         ownerAdminManual: tally.ownerAdminManual,
+        ranks: ranksReport(r),
       };
       log.info({ guild: g, created: tally.created }, 'Discord: Server eingerichtet');
       state.progress = {
@@ -720,12 +835,45 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
     if (which === 'modes' || which === 'all') await writeModes(ctx, false);
   };
 
+  /**
+   * Ränge nachziehen, ohne den ganzen Server neu einzurichten: Rollen (Name, Farbe, Abzeichen, Reihenfolge, neue) und
+   * die Rechte der Kanäle (eine neue Rolle braucht ihre Team-Kanäle). Nur wenn eingerichtet und der Bot Rollen
+   * verwalten darf; Fortschritt und Bericht der letzten Einrichtung bleiben stehen.
+   */
+  const syncRanks = (): Promise<RanksReport | null> =>
+    serial(async () => {
+      const g = deps.guildId();
+      if (!g || !store.get(SETUP_KEY)) return null;
+      const botId = await deps.botUserId();
+      const roles = await rest<DRole[]>('GET', `/guilds/${g}/roles`);
+      const botPerms = await botPermissions(g, botId, roles);
+      const may = (bit: bigint): boolean => botPerms === ALL_PERMS || (botPerms & bit) !== NO_PERMS;
+      if (!may(PERM.manageRoles)) {
+        log.warn('Discord: Ränge nicht nachgezogen – dem Bot fehlt „Rollen verwalten“');
+        return null;
+      }
+      const r: Run = { g, botId, botPerms, roleIcons: await guildHasRoleIcons(g) };
+      state.tracking = false;
+      try {
+        resetTally();
+        await ensureRoles(r);
+        if (may(PERM.manageChannels)) await ensureChannels(r);
+        const report = ranksReport(r);
+        log.info({ ...report }, 'Discord: Ränge nachgezogen');
+        return report;
+      } finally {
+        state.tracking = true;
+      }
+    });
+
   /** Ein Lauf zur Zeit: läuft schon einer, bekommt jeder denselben. */
   const launch = (): Promise<SetupReport> => {
     if (state.job) return state.job;
+    // Gleich als „läuft“ zeigen – auch wenn erst noch ein Nachziehen der Ränge fertig wird.
+    state.progress = { ...idle(), running: true, startedAt: new Date().toISOString() };
     const job = (async (): Promise<SetupReport> => {
       try {
-        return await run();
+        return await serial(run);
       } finally {
         state.job = null;
       }
@@ -748,6 +896,7 @@ export function createDiscordSetup(deps: SetupDeps): DiscordSetup {
       return state.progress;
     },
     progress: () => state.progress,
+    syncRanks,
     refreshMessages,
   };
 }

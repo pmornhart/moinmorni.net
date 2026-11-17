@@ -22,6 +22,8 @@ const FRONT_Z = -31;
 const SLOTS: readonly number[] = [-20, 20, -30, 30, -40, 40];
 /** Nordrand des Vorplatzes: dahinter steigt der Schlossberg an (Stützmauer mit Hecke). */
 const WALL_Z = -39;
+/** Stützmauer am Nordrand: ihre Pfeiler an der Straße bleiben stehen, die Schlosstreppe schließt an sie an. */
+export const MARKET_WALL_Z = WALL_Z;
 const PLAZA = { x1: -50, x2: 50, z1: -38, z2: -23 };
 /** Prachtstraße x −5 … 5 (bleibt frei, steigt zum Schloss an); daneben stehen Mauerpfeiler und Bogen. */
 const STREET = 5;
@@ -30,8 +32,9 @@ export const MARKET_ARCH_Z = -24;
 const ARCH_POST = STREET + 1;
 
 /**
- * Der sechste Stand gehört keinem Modus: Blumen und Kräuter aus dem Schlossgarten. Neben der Blumenfrau liegen flache
- * Blüten auf der Theke (Töpfe dort verdeckten von der Seite ihr Gesicht), Töpfe nur außen.
+ * Der sechste Stand gehört keinem Modus: Blumen und Kräuter aus dem Schlossgarten. Neben der Blumenfrau liegen nur
+ * flache Sachen auf der Theke – Kräuter (Moos) und Kerzen (Töpfe dort verdeckten von der Seite ihr Gesicht, Blüten
+ * wachsen nicht auf einem Fass), Töpfe nur außen.
  */
 const FLOWER_STAND: Mode = {
   id: 'blumen',
@@ -41,12 +44,7 @@ const FLOWER_STAND: Mode = {
   status: 'Grüß Gott!',
   skin: 'blumenfrau',
   icon: 'poppy',
-  goods: [
-    'potted_red_tulip',
-    'pink_petals[flower_amount=4,facing=south]',
-    'wildflowers[flower_amount=4,facing=north]',
-    'potted_oxeye_daisy',
-  ],
+  goods: ['potted_red_tulip', 'moss_carpet', 'pink_candle[candles=3,lit=false]', 'potted_oxeye_daisy'],
 };
 /** Niedrige Blumen für die Beete zwischen den Ständen (reichen nicht bis in Kopfhöhe). */
 const GAP_FLOWERS = ['pink_tulip', 'red_tulip', 'cornflower', 'allium', 'oxeye_daisy', 'azure_bluet'];

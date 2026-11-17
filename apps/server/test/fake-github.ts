@@ -159,7 +159,14 @@ export function createFakeGithub(): FakeGithub {
 }
 
 /** Ein Commit in der Form, in der die API ihn liefert. */
-export const apiCommit = (commitSha: string, message: string, date: string | null = null): unknown => ({
+/** Ein Commit wie in GitHubs Vergleich; `parents` (erst der Branch, dann was ein Merge hereinholt) wie dort. */
+export const apiCommit = (
+  commitSha: string,
+  message: string,
+  date: string | null = null,
+  parents?: readonly string[],
+): unknown => ({
   sha: commitSha,
   commit: { message, committer: date ? { date } : null },
+  ...(parents ? { parents: parents.map((p) => ({ sha: p })) } : {}),
 });

@@ -10,7 +10,7 @@
 import type { Canvas } from './canvas.js';
 import { MOEBEL } from './furniture.js';
 import { castFor, signedSkin } from './cast.js';
-import { trachtItems } from './trachten.js';
+import { bodyParts, trachtItems } from './trachten.js';
 import { Frame, type Local } from './frame.js';
 import { STEP, YAW, type Facing } from './shapes.js';
 
@@ -58,16 +58,37 @@ export interface NpcSpec {
   readonly z: number;
   readonly look: Facing;
   readonly skin: string;
+  /** Gegenstand in der rechten Hand, in der linken (`offhand`) und auf dem Rücken (`back`, z. B. Flügel). */
   readonly hand?: string;
+  readonly offhand?: string;
+  readonly back?: string;
   readonly sit?: boolean;
   /** Kind (kleiner). */
   readonly small?: boolean;
   readonly tags?: readonly string[];
-  /** Text über dem Kopf (Name, Spielerzahl, Status …). */
-  readonly label?: readonly TextPart[];
+  /** Schild über dem Kopf: Zeilen von oben nach unten (Name groß, dann Zustand, unten klein der Hinweis). */
+  readonly label?: readonly LabelLine[];
   /** Zusätzliche Tags für das Schild (z. B. `mm_mode_label`: das Lobby-Plugin ersetzt es durch Live-Zahlen). */
   readonly labelTags?: readonly string[];
 }
+
+/** Eine Zeile des Schilds über einer Figur: `name` groß, `state` mittel, `hint` klein. */
+export interface LabelLine {
+  readonly size: 'name' | 'state' | 'hint';
+  readonly parts: readonly TextPart[];
+}
+
+/**
+ * So stehen die Zeilen über einer Figur (gleich im Lobby-Plugin, `LobbyNpcs.java`): jede Zeile ein eigenes
+ * Schild mit eigener Größe, die unterste 2,38 Blöcke über den Füßen (über jedem Hut), dazwischen ein kleiner Abstand.
+ * Eine Zeile ist 10 Schrift-Pixel hoch, ein Schrift-Pixel 1/40 Block mal Größe.
+ */
+export const LABEL_LAYOUT = {
+  bottom: 2.38,
+  gap: 0.03,
+  line: 0.25,
+  scale: { name: 0.9, state: 0.75, hint: 0.6 },
+} as const;
 
 const HALF = 0.5;
 /** Sitz: Anzeige-Block 0,55 über dem Sitz-Block – die Figur sitzt dann auf der Stufe (wie MorniCraft-Sitze). */
@@ -82,8 +103,10 @@ const SKIN_SCALE = 0.9375;
 const MODEL_MIDDLE = 0.5;
 /** Schild knapp vor der Markise, damit es nicht in der Wolle steckt. */
 const AHEAD = 0.52;
-const LABEL_STANDING = 2.15;
-const LABEL_SITTING = 1.6;
+/** Sitzende stecken tiefer: das Schild rückt entsprechend nach unten. */
+const LABEL_SITTING_DROP = 0.55;
+/** Schilder über Figuren: immer hell (auch nachts), leicht dunkler Grund (ARGB als vorzeichenbehaftete Zahl). */
+const LABEL_BACKDROP = { name: 0x58000000, state: 0x58000000, hint: 0x40000000 } as const;
 
 function snbtText(parts: readonly TextPart[]): string {
   // Zeilenumbruch als \n: in einer Datenpaket-Funktion steht jeder Befehl auf genau einer Zeile.
@@ -116,10 +139,14 @@ function profileOf(skin: string): string {
     : `profile:{texture:'moinmorni:npc/${skin}',model:'wide'}`;
 }
 
-/** Hand und Kopf (3D-Frisur, Hut, Bart – ohne Paket unsichtbar). */
+/** Hände, Rücken und Kopf (3D-Hut, Bart, Dutt – ohne Paket unsichtbar). */
 function equipmentOf(n: NpcSpec, head: string | null): string[] {
+  const item = (slot: string, id: string | undefined): string[] =>
+    id ? [`${slot}:{id:'minecraft:${id}',count:1}`] : [];
   const slots = [
-    ...(n.hand ? [`mainhand:{id:'minecraft:${n.hand}',count:1}`] : []),
+    ...item('mainhand', n.hand),
+    ...item('offhand', n.offhand),
+    ...item('chest', n.back),
     ...(head ? [`head:${head}`] : []),
   ];
   return slots.length > 0 ? [`equipment:{${slots.join(',')}}`] : [];
@@ -152,7 +179,9 @@ export function decoEntity(
 export function npc(c: Canvas, n: NpcSpec): void {
   const { id: wears, outfit } = castFor(n.skin);
   const tracht = outfit ? trachtItems(outfit, n.sit === true) : { head: null, body: null };
-  const tags = tagList(['mm_npc', `mm_skin_${n.skin}`, ...(n.tags ?? [])]);
+  // Im Rock gehen sie langsamer (kleinere Schritte – die Beine bleiben im Rock)
+  const rock = outfit !== undefined && !n.sit && bodyParts(outfit).includes('rock');
+  const tags = tagList(['mm_npc', `mm_skin_${n.skin}`, ...(rock ? ['mm_rock'] : []), ...(n.tags ?? [])]);
   const parts = [
     `Tags:[${tags}]`,
     `Rotation:[${YAW[n.look]}f,0f]`,
@@ -173,13 +202,21 @@ export function npc(c: Canvas, n: NpcSpec): void {
       ? `summon block_display ${x} ${n.y + SEAT_Y} ${z} {Tags:[${tagList(['mm_seat'])}],Passengers:[${body}]}`
       : `summon mannequin ${x} ${n.y} ${z} {${parts.join(',')}}`,
   );
-  if (n.label) {
-    const scale = n.small ? SMALL : 1;
-    const up = (n.sit ? LABEL_SITTING : LABEL_STANDING) * scale;
+  if (n.label) labelAbove(c, n, x, z);
+}
+
+/** Schild über einer Figur: je Zeile ein eigenes Schild, von unten (Hinweis, klein) nach oben (Name, groß). */
+function labelAbove(c: Canvas, n: NpcSpec, x: number, z: number): void {
+  const size = n.small ? SMALL : 1;
+  const base = n.y + (LABEL_LAYOUT.bottom - (n.sit ? LABEL_SITTING_DROP : 0)) * size;
+  const tags = tagList(['mm_npc_label', `mm_label_${n.skin}`, ...(n.labelTags ?? [])]);
+  [...(n.label ?? [])].reverse().reduce((y, line) => {
+    const scale = LABEL_LAYOUT.scale[line.size];
     c.extra.push(
-      `summon text_display ${x} ${n.y + up} ${z} {Tags:[${tagList(['mm_npc_label', `mm_label_${n.skin}`, ...(n.labelTags ?? [])])}],billboard:'center',text:${snbtText(n.label)},background:1073741824,shadow:true}`,
+      `summon text_display ${x} ${y.toFixed(3)} ${z} {Tags:[${tags}],billboard:'vertical',text:${snbtText(line.parts)},background:${LABEL_BACKDROP[line.size] | 0},shadow:true,brightness:{block:15,sky:15},transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[${scale}f,${scale}f,${scale}f]}}`,
     );
-  }
+    return y + (LABEL_LAYOUT.line * scale + LABEL_LAYOUT.gap) * size;
+  }, base);
 }
 
 /** Schild als schwebender Text vor einer Wand (fest ausgerichtet). */
@@ -246,9 +283,10 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
       [-5, 2, -4, 'brewing_stand'],
       [-2, 2, -4, 'cake'],
       [-3, 2, -4, 'candle[candles=2,lit=true]'],
-      [1, 2, 2, 'light_blue_wall_banner[facing={R}]'],
-      [1, 2, 5, 'white_wall_banner[facing={R}]'],
-      [1, 2, 8, 'light_blue_wall_banner[facing={R}]'],
+      // Fahnen an der Seitenwand zwischen den Fenstern (die sitzen bei 2, 5, 8)
+      [1, 2, 3, 'light_blue_wall_banner[facing={R}]'],
+      [1, 2, 6, 'white_wall_banner[facing={R}]'],
+      [1, 2, 9, 'light_blue_wall_banner[facing={R}]'],
       [-6, 1, -1, 'barrel[facing={F}]', -3, -1],
       [-6, 2, -1, 'barrel[facing={F}]', -3, -1],
       [-6, 3, -1, 'barrel[facing={F}]', -4, -1],
@@ -299,7 +337,9 @@ const GROUND_FLOORS: Readonly<Record<RoomKind, Room>> = {
       [-1, 1, 2, 'grindstone[face=floor,facing={L}]'],
       [-1, 1, 3, 'chest[facing={L}]'],
       [-1, 1, 4, 'barrel[facing=up]'],
+      // Kette von der Decke bis aufs Fass
       [-1, 2, 4, 'iron_chain[axis=y]'],
+      [-1, 3, 4, 'iron_chain[axis=y]'],
       [1, 1, 2, 'stonecutter[facing={R}]'],
       [1, 1, 3, 'iron_block'],
       [2, 3, -1, LANTERN_HANGING],
@@ -486,7 +526,21 @@ export interface StallSpec {
   readonly goods: readonly string[];
   /** Eigene Kennungen der Figur (z. B. ein Marktstand ohne Modus); sonst die eines Modus-Standes. */
   readonly npcTags?: readonly string[];
+  /** Schriftfarbe des Namens über der Figur (#rrggbb). */
+  readonly tint?: string;
+  /** Was die Figur hält bzw. trägt. */
+  readonly holds?: Holds;
 }
+
+/** Was eine Figur in den Händen hält bzw. auf dem Rücken trägt (Minecraft-Gegenstände). */
+export interface Holds {
+  readonly hand?: string;
+  readonly offhand?: string;
+  readonly back?: string;
+}
+
+/** Farbe als Kennung am Wesen: „#ff9a2e“ → „mm_tint_ff9a2e“ (das Lobby-Plugin liest daraus die Schriftfarbe). */
+export const tintTag = (hex: string): string => `mm_tint_${hex.replace('#', '').toLowerCase()}`;
 
 /** Marktstand mit Markise in der Farbe des Modus, Figur in der Mitte (anklickbar), Name über dem Kopf. */
 export function marketStall(c: Canvas, s: StallSpec): void {
@@ -496,7 +550,8 @@ export function marketStall(c: Canvas, s: StallSpec): void {
   f.fill(0, 0, 0, 6, 0, 3, 'spruce_planks');
   [0, 6].forEach((u) => [0, 3].forEach((v) => f.fill(u, 1, v, u, 4, v, 'stripped_spruce_log[axis=y]')));
   f.fill(0, 1, 3, 6, 3, 3, 'spruce_planks');
-  f.set(3, 2, 2, `${s.colour}_wall_banner[facing=${f.dir('front')}]`);
+  // Innen keine Banner (hinter der Figur sahen sie aus wie ein Brett am Rücken) – die dunkle Rückwand bleibt frei,
+  // davor ist das Schild über der Figur gut zu lesen. Die Farbe des Standes tragen Markise und Banner hinten.
   // Rückwand von außen: Banner in der Farbe des Standes und eine Laterne
   f.set(3, 2, 4, `${s.colour}_wall_banner[facing=${f.dir('back')}]`);
   [1, 5].forEach((u) => f.set(u, 1, 4, `lantern[hanging=false]`));
@@ -524,18 +579,21 @@ export function marketStall(c: Canvas, s: StallSpec): void {
     1.1,
   );
   const [nx, ny, nz] = f.at(3, 1, 1);
+  const tint = s.tint ?? '#ffaa00';
   npc(c, {
     x: nx,
     y: ny,
     z: nz,
     look: f.dir('front'),
     skin: s.skin,
-    tags: s.npcTags ?? ['mm_mode_npc', `mm_mode_${s.mode}`],
+    ...s.holds,
+    tags: [...(s.npcTags ?? ['mm_mode_npc', `mm_mode_${s.mode}`]), tintTag(tint)],
     labelTags: s.npcTags ? [] : ['mm_mode_label'],
     label: [
-      { text: `${s.name}\n`, color: 'gold', bold: true },
-      { text: `${s.line}\n`, color: 'green' },
-      { text: s.status, color: 'gray', italic: true },
+      { size: 'name', parts: [{ text: s.name, color: tint, bold: true }] },
+      // Modus-Stände: Platzhalter (das Lobby-Plugin setzt den Live-Zustand); andere Stände: warmes Weiß
+      { size: 'state', parts: [{ text: s.line, color: s.npcTags ? '#eadcbc' : 'green' }] },
+      { size: 'hint', parts: [{ text: s.status, color: '#c8c8c8' }] },
     ],
   });
 }

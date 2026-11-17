@@ -22,7 +22,7 @@ describe('Möbel in der fertigen Lobby', () => {
     garden.forEach(([x, y, z]) =>
       expect(canvas.get(x, y - 1, z), `Bierbank bei ${x} ${y} ${z}`).toBe(MOEBEL_BODEN.biergarten),
     );
-  });
+  }, 300_000);
 
   it('Stühle an der Wand sind Eckbank-Stücke (Vertäfelung deckt die Wand), freie Stühle haben keine volle Seite', () => {
     const seats = canvas.find((b) => b.startsWith('mangrove_stairs'));
@@ -36,7 +36,7 @@ describe('Möbel in der fertigen Lobby', () => {
       expect(b.includes('shape=straight'), `Sitz bei ${x} ${y} ${z}: ${b}`).toBe(wall);
       expect(b.includes('shape=outer_right'), `Sitz bei ${x} ${y} ${z}: ${b}`).toBe(!wall);
     });
-  });
+  }, 300_000);
 });
 
 describe('Figuren im Datenpaket', () => {

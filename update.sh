@@ -238,6 +238,22 @@ wait_healthy() {
   return 1
 }
 
+# „Was ist neu“ (Versionsanzeige unten in der Mitte von Webseite und Panel): die Liste der Änderungen aus Git kommt
+# mit ins Image (scripts/changelog.sh). Fehlt das Skript (ältere Fassung) oder klappt es nicht, zeigt MoinMorni nur
+# die Versionsnummer – gebaut wird trotzdem.
+write_changelog() {
+  local tmp
+  rm -f apps/server/changelog.txt
+  [[ -f scripts/changelog.sh && -d apps/server ]] || return 0
+  tmp="$(mktemp apps/server/changelog.txt.XXXXXX)" || return 0
+  # Lesbar für MoinMorni im Container (läuft nicht als root); mktemp legt die Datei nur für root an.
+  if bash scripts/changelog.sh . >"${tmp}" 2>/dev/null && chmod 644 "${tmp}" &&
+    mv -f "${tmp}" apps/server/changelog.txt; then
+    return 0
+  fi
+  rm -f "${tmp}"
+}
+
 # Bauen mit zweitem und drittem Versuch (BuildKit bricht bei wenig Speicher gern ab), zuletzt ohne BuildKit.
 build_all() {
   local attempt
@@ -504,6 +520,7 @@ rollback() {
       # Fassung unter dem Zwischen-Namen nähme sonst sie statt ihrer eigenen aus der Sicherung.
       if ((MIGRATE)) && [[ -n "${VOLUME_DIR}" ]]; then rm -f "${VOLUME_DIR}/${APP}.db"{,-wal,-shm}; fi
     fi
+    write_changelog
     if build_all && docker compose up -d >/dev/null && wait_healthy; then
       MM_UPDATE_TO="${MM_UPDATE_FROM}"
       STEP="null"
@@ -528,6 +545,7 @@ trap rollback ERR
 # ---------- 2. Bauen (die alte Fassung läuft so lange weiter) ----------
 step "build"
 msg_info "Neue Fassung wird gebaut (dauert ein paar Minuten)"
+write_changelog
 build_all
 msg_ok "Gebaut"
 

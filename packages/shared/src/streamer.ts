@@ -189,8 +189,8 @@ export const STREAMER_SECTION: SettingSection = {
       default: true,
       label: t('● LIVE für die anderen', '● LIVE for the others'),
       help: t(
-        'Die anderen sehen „● LIVE“ am Namen: im Chat davor, in der Tab-Liste und über dem Kopf dahinter.',
-        'The others see “● LIVE” at the name: in front of it in chat, behind it in the tab list and above the head.',
+        'Die anderen sehen „● LIVE“ hinter dem Namen: im Chat, in der Tab-Liste und über dem Kopf.',
+        'The others see “● LIVE” behind the name: in chat, in the tab list and above the head.',
       ),
       command: '/netzwerk streamer live an|aus',
     },

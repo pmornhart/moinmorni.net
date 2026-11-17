@@ -29,6 +29,9 @@ const SNOW_SEED_OFFSET = 7;
 
 export type Height = (x: number, z: number) => number;
 
+/** Herkunft für die Bauplan-Prüfung (`Canvas.tagged`): Gelände und Bäume; alles andere gilt als gebaut. */
+export const ORIGIN = { terrain: 'gelaende', tree: 'baum' } as const;
+
 export interface TerrainSpec {
   readonly x1: number;
   readonly z1: number;
@@ -73,6 +76,10 @@ function fillBlock(depth: number, top: string, rock: string): string {
  * knapp unter den niedrigsten Nachbarn – so sind Felswände geschlossen, das unsichtbare Innere bleibt leer.
  */
 export function terrain(c: Canvas, t: TerrainSpec): void {
+  c.tagged(ORIGIN.terrain, () => drawTerrain(c, t));
+}
+
+function drawTerrain(c: Canvas, t: TerrainSpec): void {
   const seed = t.seed ?? 1;
   const snow = t.snowLine ?? Number.POSITIVE_INFINITY;
   const water = t.waterLevel ?? Number.NEGATIVE_INFINITY;
@@ -113,6 +120,16 @@ export function roundTree(
   z: number,
   opts: { height: number; radius: number; log?: string; leaves?: string; rnd: () => number },
 ): void {
+  c.tagged(ORIGIN.tree, () => drawRoundTree(c, x, y, z, opts));
+}
+
+function drawRoundTree(
+  c: Canvas,
+  x: number,
+  y: number,
+  z: number,
+  opts: { height: number; radius: number; log?: string; leaves?: string; rnd: () => number },
+): void {
   const log = opts.log ?? 'oak_log';
   const leaves = `${opts.leaves ?? 'oak_leaves'}[persistent=true]`;
   const trunk = Math.round(opts.height * TREE_TRUNK_SHARE);
@@ -130,6 +147,10 @@ export function roundTree(
 
 /** Fichte: Stamm und Kegel aus Ringen, die nach oben schmaler werden. */
 export function spruce(c: Canvas, x: number, y: number, z: number, height: number): void {
+  c.tagged(ORIGIN.tree, () => drawSpruce(c, x, y, z, height));
+}
+
+function drawSpruce(c: Canvas, x: number, y: number, z: number, height: number): void {
   const leaves = 'spruce_leaves[persistent=true]';
   range(y, y + height - SPRUCE_TOP).forEach((ty) => c.set(x, ty, z, 'spruce_log'));
   const crownStart = y + Math.round(height * SPRUCE_BASE);
@@ -174,14 +195,17 @@ export function meadow(
   density: number,
   rnd: () => number,
   flowers: readonly string[] = MEADOW,
+  only: (x: number, z: number) => boolean = () => true,
 ): void {
-  pairs(range(x1, x2), range(z1, z2)).forEach(([x, z]) => {
-    if (rnd() > density) return;
-    const h = Math.round(height(x, z));
-    const ground = c.get(x, h, z) ?? (h === GROUND ? 'grass_block' : undefined);
-    if (ground !== 'grass_block' || c.get(x, h + 1, z) !== undefined) return;
-    const plant = pick(rnd, flowers);
-    c.set(x, h + 1, z, plant);
-    if (plant.startsWith('tall_grass')) c.set(x, h + TWICE, z, 'tall_grass[half=upper]');
-  });
+  c.tagged(ORIGIN.terrain, () =>
+    pairs(range(x1, x2), range(z1, z2)).forEach(([x, z]) => {
+      if (!only(x, z) || rnd() > density) return;
+      const h = Math.round(height(x, z));
+      const ground = c.get(x, h, z) ?? (h === GROUND ? 'grass_block' : undefined);
+      if (ground !== 'grass_block' || c.get(x, h + 1, z) !== undefined) return;
+      const plant = pick(rnd, flowers);
+      c.set(x, h + 1, z, plant);
+      if (plant.startsWith('tall_grass')) c.set(x, h + TWICE, z, 'tall_grass[half=upper]');
+    }),
+  );
 }

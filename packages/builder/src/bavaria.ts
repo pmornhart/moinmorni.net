@@ -1,7 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- a building plan: block offsets as the build needs them */
 /**
  * Bayerische Bauteile im MoinMorni-Stil (eigene Entwürfe, keine Nachbauten echter Gebäude):
- * Alpenhaus, Maibaum, Biergarten, Schloss-Teile (Flügel, Turm mit Zwiebelhaube), Portal-Bogen, Launchpad, Brunnen.
+ * Alpenhaus, Maibaum, Biergarten, Schloss-Teile (Flügel, Turm mit Zwiebelhaube), Portal-Bogen, Launchpad, Kapelle.
  * Alle Maße stehen als Bauplan in `D` bzw. direkt an der Stelle, an der der Bau sie braucht.
  */
 import type { Canvas } from './canvas.js';
@@ -130,26 +130,34 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
     ),
   );
   const pane = `glass_pane[${f.dir('left')}=true,${f.dir('right')}=true]`;
-  const windowsAt = range(1, w - 1).filter((u) => u % D.windowGap === 1 && u + 1 < w);
+  const door = Math.floor(w / 2);
+  // Fenster gleichmäßig um die Tür-Achse, je mit Platz für beide Läden – im Erdgeschoss sitzt dort die Tür, daneben
+  // bleibt Platz für die Laternen.
+  const windowsAt = range(1, w - 1).filter((u) => (u - door) % D.windowGap === 0);
+  // Offene Läden liegen flach an der Wand: eine offene Falltür liegt an der Seite gegenüber ihrer Richtung.
+  const openShutter = `${shutter}[facing=${f.dir('front')},open=true,half=top]`;
   range(0, h.floors - 1).forEach((fl) => {
     const y0 = fl * D.floor + D.windowFrom;
     windowsAt.forEach((u) => {
-      if (fl === 0 && Math.abs(u - w / 2) < 1) return;
+      if (fl === 0 && u === door) return;
       f.fill(u, y0, 0, u, y0 + D.windowHigh - 1, 0, pane);
       range(y0, y0 + D.windowHigh - 1).forEach((y) => {
-        f.set(u - 1, y, -1, `${shutter}[facing=${f.dir('back')},open=true,half=top]`);
-        f.set(u + 1, y, -1, `${shutter}[facing=${f.dir('back')},open=true,half=top]`);
+        f.set(u - 1, y, -1, openShutter);
+        f.set(u + 1, y, -1, openShutter);
       });
       // Fensterbank (schmales Brett) mit einem Blumentopf davor
       f.set(u, y0 - 1, -1, `${wood}_trapdoor[facing=${f.dir('back')},half=top,open=false]`);
       f.soft(u, y0, -1, pick(h.rnd, WINDOW_FLOWERS));
     });
   });
-  const door = Math.floor(w / 2);
   f.set(door, 1, 0, `${wood}_door[facing=${f.dir('front')},half=lower,hinge=left]`);
   f.set(door, 2, 0, `${wood}_door[facing=${f.dir('front')},half=upper,hinge=left]`);
+  // Laternen links und rechts der Tür, jede auf einem Wandbrett (geschlossene Falltür oben an der Wand)
+  [door - 1, door + 1].forEach((u) => {
+    f.set(u, D.floor - 2, -1, `dark_oak_trapdoor[facing=${f.dir('back')},half=top,open=false]`);
+    f.set(u, D.floor - 1, -1, 'lantern');
+  });
   if (h.sign) {
-    [door - 1, door + 1].forEach((u) => f.set(u, D.floor - 1, -1, 'lantern'));
     const [sx, , sz] = f.at(door, 0, 0);
     const [fx, fz] = STEP[h.front];
     signText(
@@ -161,7 +169,7 @@ export function alpineHouse(c: Canvas, h: HouseSpec): void {
       [{ text: h.sign, color: 'gold', bold: true }],
       D.signScale,
     );
-  } else f.set(door, D.floor - 1, -1, 'lantern');
+  }
   if (h.interior) {
     furnish(f, { kind: h.interior, w, d, floors: h.floors, storey: D.floor, wood, door });
     const [dx, , dz] = f.at(door, 0, 0);
@@ -224,10 +232,10 @@ function chimney(f: Frame, w: number, d: number, top: number): void {
   f.set(u, roofY + 2, v, 'campfire[lit=true,signal_fire=false]');
 }
 
-/** Hausbank an der Vorderwand: zwei Treppen, Lehne zur Wand, wo weder Tür noch Fensterbank ist. */
+/** Hausbank an der Vorderwand neben der Tür: zwei Treppen, Lehne zur Wand, wo weder Tür noch Fensterbank ist. */
 function houseBench(f: Frame, w: number, door: number, windowsAt: readonly number[], wood: string): void {
-  const busy = new Set([...windowsAt, door - 1, door, door + 1]);
-  const spot = range(1, w - 2)
+  const busy = new Set([...windowsAt, door]);
+  const spot = range(0, w - 1)
     .filter((u) => !busy.has(u) && !busy.has(u + 1))
     .sort((a, b) => Math.abs(a - door) - Math.abs(b - door))[0];
   if (spot === undefined) return;
@@ -295,13 +303,38 @@ export function maypole(c: Canvas, x: number, y: number, z: number, height: numb
   lathe(c, x, y + height + 1, z, [2, 2, 1, 1, 0], 'spruce_leaves[persistent=true]');
 }
 
-/** Biergarten: Kies, Kastanien, lange Tische mit Bänken, Lampions, Ausschank mit weiß-blauer Markise. */
 /** 1 bis 4 Krüge auf einem Tischstück. */
 function mugCount(rnd: () => number): 1 | 2 | 3 | 4 {
   const MUGS = [1, 2, 3, 4] as const;
   return MUGS[Math.floor(rnd() * MUGS.length)] ?? 1;
 }
 
+/** Kastanie im Biergarten: hoher Stamm, damit unter der Krone Platz für die Laternen ist. */
+const BEER_TREE = { height: 14, radius: 4.5, log: 'dark_oak_log', leaves: 'oak_leaves' } as const;
+/** Laternen unter jeder Krone: so weit vom Stamm, so hoch über dem Kies. */
+const BEER_LIGHTS = { reach: 2, up: 5, search: 8 } as const;
+const AROUND: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
+/** Laterne an einer Kette unter dem nächsten Blatt bzw. Ast darüber (gibt es keins, bleibt die Stelle leer). */
+function hangFromCrown(c: Canvas, x: number, y: number, z: number): void {
+  const hook = range(y + 1, y + BEER_LIGHTS.search).find((yy) => {
+    const b = c.get(x, yy, z);
+    return b !== undefined && b !== 'air';
+  });
+  if (hook === undefined) return;
+  range(y + 1, hook - 1).forEach((yy) => c.set(x, yy, z, 'iron_chain[axis=y]'));
+  c.set(x, y, z, 'lantern[hanging=true]');
+}
+
+/**
+ * Biergarten: Kies, lange Tische mit Bänken, Kastanien in den Gängen (nie in Tisch oder Bank), Laternen an Ketten
+ * unter den Kronen, Laternenmasten an den Ecken, Ausschank mit weiß-blauer Markise.
+ */
 export function biergarten(
   c: Canvas,
   x1: number,
@@ -328,17 +361,32 @@ export function biergarten(
       if (rnd() < D.mugChance) c.set(x, y + 2, tz, MOEBEL.krug(mugCount(rnd)));
     });
   });
-  const trees = pairs(range(x1, x2), range(z1, z2)).filter(
-    ([x, z]) => (x - x1) % 9 === 0 && (z - z1) % 9 === 0 && x > x1 && z > z1 && x < x2 && z < z2,
-  );
-  trees.forEach(([x, z]) => {
+  // Kastanien in den Gängen zwischen den Tischgruppen (und hinter der letzten), auf jedem zweiten Weg zwischen
+  // den Bankreihen – dort steht nichts.
+  const lastEnd = (cols[cols.length - 1] ?? x1) + D.tableLen;
+  const aisleX = [...cols.slice(1).map((x) => x - 2), Math.round((lastEnd + x2) / 2)];
+  const aisleZ = rows
+    .slice(1)
+    .map((z) => z - 2)
+    .filter((_, i) => i % 2 === 1);
+  pairs(aisleX, aisleZ).forEach(([x, z]) => {
     c.set(x, y, z, 'grass_block');
-    roundTree(c, x, y + 1, z, { height: 11, radius: 4.5, log: 'dark_oak_log', leaves: 'oak_leaves', rnd });
+    roundTree(c, x, y + 1, z, { ...BEER_TREE, rnd });
+    AROUND.forEach(([dx, dz]) =>
+      hangFromCrown(c, x + dx * BEER_LIGHTS.reach, y + BEER_LIGHTS.up, z + dz * BEER_LIGHTS.reach),
+    );
   });
-  range(x1 + 1, x2 - 1)
-    .filter((x) => x % 3 === 0)
-    .forEach((x) => rows.forEach((z) => c.set(x, y + 6, z, 'lantern[hanging=true]')));
-  range(x1 + 1, x2 - 1).forEach((x) => rows.forEach((z) => c.soft(x, y + 7, z, 'iron_chain[axis=x]')));
+  // Laternenmasten an den Ecken
+  [
+    [x1 + 1, z1 + 1],
+    [x2 - 1, z1 + 1],
+    [x1 + 1, z2 - 1],
+    [x2 - 1, z2 - 1],
+  ].forEach(([x = 0, z = 0]) => {
+    c.set(x, y, z, 'polished_andesite');
+    range(y + 1, y + 3).forEach((py) => c.set(x, py, z, 'dark_oak_fence'));
+    c.set(x, y + 4, z, 'lantern');
+  });
   const bx = x2 - 6;
   const bz = z1 - 1;
   range(bx, bx + 5).forEach((x) => {
@@ -348,6 +396,8 @@ export function biergarten(
     c.set(x, y + 4, bz, x % 2 === 0 ? 'white_wool' : 'light_blue_wool');
     c.set(x, y + 4, bz - 2, x % 2 === 0 ? 'white_wool' : 'light_blue_wool');
   });
+  // Laternen unter der Markise
+  [bx, bx + 5].forEach((x) => c.set(x, y + 3, bz, 'lantern[hanging=true]'));
 }
 
 /** Rundturm mit weißer Wand, Gold-Gesims und grüner Zwiebelhaube mit goldener Spitze. */
@@ -503,6 +553,11 @@ export interface CastleSpec {
   /** Wie tief die Bastei-Mauer nach unten reicht. */
   readonly wallDrop: number;
   readonly rnd: () => number;
+  /**
+   * Freitreppe vor dem Tor die Bastei hinunter (Standard). Aus, wenn davor ein eigener Platz liegt – in der Lobby der
+   * Schlossvorplatz, unter dem sie sonst unsichtbar begraben läge.
+   */
+  readonly frontStairs?: boolean;
 }
 
 /**
@@ -518,11 +573,15 @@ export function castle(c: Canvas, s: CastleSpec): void {
     .filter(([u, v]) => u === -W || u === W || v === 0 || v === DEPTH)
     .forEach(([u, v]) => {
       f.fill(u, -s.wallDrop, v, u, 0, v, s.rnd() < 0.15 ? 'mossy_stone_bricks' : 'stone_bricks');
-      f.set(u, 1, v, (u + v) % 2 === 0 ? 'stone_brick_wall' : 'air');
+      // Zinnen; die Lücken bleiben, wie sie sind – hinten, wo der Berg über die Bastei wächst, blieb sonst ein Loch
+      // unter dem Hang, durch das man auf nackte Erde sah
+      if ((u + v) % 2 === 0) f.set(u, 1, v, 'stone_brick_wall');
     });
-  range(1, s.wallDrop).forEach((i) => f.fill(-4, -i, -i, 4, -i, -i, stairs('stone_brick', f.dir('back'))));
-  range(1, s.wallDrop).forEach((i) => f.fill(-4, -i - 1, -i, 4, -i - 1, -i, 'stone_bricks'));
-  [-5, 5].forEach((u) => f.fill(u, -s.wallDrop, -s.wallDrop, u, -1, 0, 'stone_bricks'));
+  if (s.frontStairs !== false) {
+    range(1, s.wallDrop).forEach((i) => f.fill(-4, -i, -i, 4, -i, -i, stairs('stone_brick', f.dir('back'))));
+    range(1, s.wallDrop).forEach((i) => f.fill(-4, -i - 1, -i, 4, -i - 1, -i, 'stone_bricks'));
+    [-5, 5].forEach((u) => f.fill(u, -s.wallDrop, -s.wallDrop, u, -1, 0, 'stone_bricks'));
+  }
   castleGate(c, f);
   // Ehrenhof: Kies-Wege (Mittelweg 5 breit, Querweg zu Bibliothek und Rittersaal 3 breit wie deren Türen), Beete,
   // Brunnen
@@ -611,31 +670,37 @@ function wingOrigin(
   return { x, y: wy, z, front: f.dir(face) };
 }
 
+/** Glockenstube oben im Kapellenturm als Ort (zu Fuß gewollt nicht – keine Leiter). */
+export const BELFRY = 'Kapelle: Glockenstube';
+
 /**
- * Dorfkapelle: weißes Schiff, Satteldach, Turm mit grüner Zwiebelhaube und goldener Kugel. Innen begehbar (durch den
- * Turm hinein): Bänke links und rechts eines Teppichs, Altar mit Kerzen und goldenem Kreuz an der Rückwand.
+ * Dorfkapelle: weißes Schiff mit Bänken, Mittelgang und Altar, Satteldach; Turm mit Vorhalle (Tür in der Turmwand),
+ * offener Glockenstube und grüner Zwiebelhaube mit goldener Kugel. Begehbar: Turmtür → Vorhalle → Kirchentür.
  */
 export function chapel(c: Canvas, x: number, y: number, z: number, front: Facing): void {
   const f = new Frame(c, x, y, z, front);
+  const door = (u: number, v: number): void => {
+    f.set(u, 1, v, `spruce_door[facing=${f.dir('front')},half=lower]`);
+    f.set(u, 2, v, `spruce_door[facing=${f.dir('front')},half=upper]`);
+  };
   f.fill(0, 0, 0, 8, 0, 14, 'stone_bricks');
   pairs(range(0, 8), range(0, 14))
     .filter(([u, v]) => u === 0 || u === 8 || v === 0 || v === 14)
     .forEach(([u, v]) => f.fill(u, 1, v, u, 6, v, 'white_concrete'));
-  f.fill(1, 0, 1, 7, 0, 13, 'polished_andesite');
   f.fill(1, 1, 1, 7, 6, 13, 'air');
-  f.fill(4, 1, 1, 4, 1, 11, 'red_carpet');
-  range(3, 10)
-    .filter((v) => v % 2 === 1)
-    .forEach((v) => [1, 2, 3, 5, 6, 7].forEach((u) => f.set(u, 1, v, stairs('spruce', f.dir('front')))));
-  f.fill(3, 1, 12, 5, 1, 12, 'chiseled_quartz_block');
-  [3, 5].forEach((u) => f.set(u, 2, 12, 'white_candle[candles=3,lit=true]'));
-  f.fill(4, 2, 13, 4, 5, 13, 'gold_block');
-  [3, 5].forEach((u) => f.set(u, 4, 13, 'gold_block'));
-  [2, 6].forEach((u) => [4, 9].forEach((v) => f.set(u, 5, v, 'light[level=12]')));
   f.place('Kapelle', 1, 1, 1, 7, 13);
   [3, 7, 11].forEach((v) => [0, 8].forEach((u) => f.fill(u, 3, v, u, 5, v, 'yellow_stained_glass')));
-  f.set(4, 1, 0, `spruce_door[facing=${f.dir('front')},half=lower]`);
-  f.set(4, 2, 0, `spruce_door[facing=${f.dir('front')},half=upper]`);
+  f.fill(4, 2, 14, 4, 5, 14, 'light_blue_stained_glass');
+  // Mittelgang, Bänke (Lehne zur Tür), Altar mit Kerzen und Blumen, Leuchter an der Decke
+  f.fill(4, 1, 1, 4, 1, 11, 'red_carpet');
+  [3, 5, 7, 9].forEach((v) =>
+    [1, 2, 3, 5, 6, 7].forEach((u) => f.set(u, 1, v, stairs('spruce', f.dir('front')))),
+  );
+  f.fill(3, 1, 12, 5, 1, 12, 'chiseled_stone_bricks');
+  [3, 5].forEach((u) => f.set(u, 2, 12, 'white_candle[candles=3,lit=true]'));
+  f.set(4, 2, 12, 'potted_lily_of_the_valley');
+  [4, 9].forEach((v) => f.set(4, 6, v, 'lantern[hanging=true]'));
+  door(4, 0);
   const [ax, , az] = f.at(0, 0, 0);
   const [bx, , bz] = f.at(8, 0, 14);
   gableRoof(c, {
@@ -650,18 +715,21 @@ export function chapel(c: Canvas, x: number, y: number, z: number, front: Facing
     overhang: 1,
     eaves: 1,
   });
+  // Turm: Vorhalle unten (Tür vorn in der Turmwand), Glockenstube mit Schallöffnungen an drei Seiten
   f.fill(2, 0, -5, 6, 16, -1, 'white_concrete');
-  f.fill(3, 10, -5, 5, 12, -5, 'air');
-  f.set(4, 11, -5, 'bell[attachment=ceiling]');
+  f.fill(3, 0, -4, 5, 0, -1, 'stone_bricks');
+  f.fill(3, 1, -4, 5, 4, -1, 'air');
+  f.set(4, 4, -3, 'lantern[hanging=true]');
+  door(4, -5);
+  f.fill(3, 10, -5, 5, 12, -2, 'air');
+  f.fill(2, 10, -4, 6, 12, -2, 'air');
+  f.place(BELFRY, 2, 10, -4, 6, -2);
+  f.set(4, 12, -3, 'bell[attachment=ceiling]');
   f.fill(1, 17, -6, 7, 17, 0, 'smooth_quartz');
   const [tx, ty, tz] = f.at(4, 18, -3);
   lathe(c, tx, ty, tz, [3, 3, 3, 2, 1, 1, 0], 'waxed_oxidized_copper');
   c.set(tx, ty + 7, tz, 'gold_block');
   c.set(tx, ty + 8, tz, 'lightning_rod');
-  f.set(4, 1, -6, `spruce_door[facing=${f.dir('front')},half=lower]`);
-  f.set(4, 2, -6, `spruce_door[facing=${f.dir('front')},half=upper]`);
-  // Durchgang durch den Turm ins Schiff
-  f.fill(4, 1, -5, 4, 2, -1, 'air');
 }
 
 /** Launchpad: Gold-Druckplatte auf Smaragd mit Rahmen. */
@@ -669,14 +737,4 @@ export function launchpad(c: Canvas, x: number, y: number, z: number): void {
   pairs(range(x - 1, x + 1), range(z - 1, z + 1)).forEach(([px, pz]) => c.set(px, y, pz, 'gold_block'));
   c.set(x, y, z, 'emerald_block');
   c.set(x, y + 1, z, 'light_weighted_pressure_plate');
-}
-
-/** Brunnen: achteckiges Becken mit Säule und Schale. */
-export function fountain(c: Canvas, x: number, y: number, z: number, r: number): void {
-  discAt(c, x, y, z, r, 'polished_andesite');
-  discAt(c, x, y + 1, z, r, 'stone_brick_wall');
-  discAt(c, x, y + 1, z, r - 1, 'water');
-  range(y + 1, y + D.centre).forEach((py) => c.set(x, py, z, 'quartz_pillar'));
-  discAt(c, x, y + D.centre + 1, z, 1, 'smooth_quartz_slab');
-  c.set(x, y + D.centre + 1, z, 'water');
 }

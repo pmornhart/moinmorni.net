@@ -111,7 +111,7 @@ describe('Lobby: alles zu Fuß erreichbar', () => {
     expect(lost).toEqual([]);
   });
 
-  it('gewollt unerreichbar bleibt es: Gefängnis, Brunnenbecken', () => {
+  it('gewollt unerreichbar bleibt es: Gefängnis, Becken der Dorfbrunnen, Glockenstube', () => {
     Object.keys(ON_PURPOSE).forEach((name) => {
       const place = report.places.find((p) => p.name === name);
       expect(place, name).toBeDefined();
@@ -133,7 +133,7 @@ describe('Lobby: alles zu Fuß erreichbar', () => {
     expect(at(-31, 93, -112)).toBe(0);
     // Am Schlossberg über dem Markt (Schlosstreppe) und oben im Hof
     expect(at(-5, 83, -57)).toBe(0);
-    expect(at(0, 91, -110)).toBe(0);
+    expect(at(0, 91, -104)).toBe(0);
     ['Schloss: Festsaal', 'Schloss: Galerie', 'Schloss: Bibliothek', 'Schloss: Rittersaal'].forEach((name) =>
       expect(report.places.find((p) => p.name === name)?.jumps, name).toBe(0),
     );

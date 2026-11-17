@@ -217,10 +217,28 @@ export interface Place {
   readonly y: number;
 }
 
+/** Ein Block traf auf einen Block anderer Herkunft (z. B. ein Baum auf eine Hauswand), für die Bauplan-Prüfung. */
+export interface Overlap {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** Was schon dort stand, und woher (leer = gebaut). */
+  readonly under: string;
+  readonly underOrigin: string;
+  /** Was darauf kam bzw. kommen sollte, und woher. */
+  readonly over: string;
+  readonly overOrigin: string;
+  /** `soft` hat nicht gesetzt, weil die Stelle schon belegt war. */
+  readonly skipped: boolean;
+}
+
 export class Canvas {
   private readonly cells = new Map<number, number>();
   private readonly palette: string[] = [];
   private readonly paletteIndex = new Map<string, number>();
+  /** Herkunft der Blöcke, die in `tagged` gesetzt wurden (Gelände, Baum …); alles andere ist gebaut. */
+  private readonly origins = new Map<number, string>();
+  private origin = '';
   /** Zusätzliche Befehle nach den Blöcken (z. B. `summon` für Texte und NPCs). */
   readonly extra: string[] = [];
   /** Räume und Plätze, die die Bauten melden – die Prüfung „zu Fuß erreichbar“ geht sie alle durch. */
@@ -238,6 +256,9 @@ export class Canvas {
     });
   }
 
+  /** Wo Blöcke verschiedener Herkunft aufeinandertrafen (nur die Prüfung liest das). */
+  readonly overlaps: Overlap[] = [];
+
   private id(block: string): number {
     const known = this.paletteIndex.get(block);
     if (known !== undefined) return known;
@@ -247,18 +268,60 @@ export class Canvas {
   }
 
   set(x: number, y: number, z: number, block: string): void {
-    this.cells.set(key(Math.round(x), Math.round(y), Math.round(z)), this.id(block));
+    const k = key(Math.round(x), Math.round(y), Math.round(z));
+    this.noteOverlap(k, block, false);
+    this.cells.set(k, this.id(block));
+    if (this.origin) this.origins.set(k, this.origin);
+    else this.origins.delete(k);
   }
 
   /** Setzt nur, wenn dort noch nichts (oder Luft) steht. */
   soft(x: number, y: number, z: number, block: string): void {
     const cur = this.get(x, y, z);
     if (cur === undefined || cur === 'air') this.set(x, y, z, block);
+    else this.noteOverlap(key(Math.round(x), Math.round(y), Math.round(z)), block, true);
+  }
+
+  /**
+   * Alles, was `draw` setzt, bekommt die Herkunft `tag` (z. B. „gelaende“, „baum“). Die Bauplan-Prüfung erkennt so
+   * Bäume, die in Häuser wachsen – ohne Herkunft gilt ein Block als gebaut.
+   */
+  tagged(tag: string, draw: () => void): void {
+    const before = this.origin;
+    this.origin = tag;
+    try {
+      draw();
+    } finally {
+      this.origin = before;
+    }
+  }
+
+  /** Herkunft eines Blocks („“ = gebaut). */
+  originAt(x: number, y: number, z: number): string {
+    return this.origins.get(key(Math.round(x), Math.round(y), Math.round(z))) ?? '';
+  }
+
+  private noteOverlap(k: number, block: string, skipped: boolean): void {
+    const cur = this.cells.get(k);
+    if (cur === undefined) return;
+    const under = this.palette[cur] ?? 'air';
+    const underOrigin = this.origins.get(k) ?? '';
+    if (under === 'air' || underOrigin === this.origin) return;
+    const [x, y, z] = unkey(k);
+    this.overlaps.push({ x, y, z, under, underOrigin, over: block, overOrigin: this.origin, skipped });
   }
 
   get(x: number, y: number, z: number): string | undefined {
     const v = this.cells.get(key(Math.round(x), Math.round(y), Math.round(z)));
     return v === undefined ? undefined : this.palette[v];
+  }
+
+  /** Jede gesetzte Stelle einmal (für Prüfungen). */
+  each(visit: (x: number, y: number, z: number, block: string) => void): void {
+    this.cells.forEach((v, k) => {
+      const [x, y, z] = unkey(k);
+      visit(x, y, z, this.palette[v] ?? 'air');
+    });
   }
 
   /** Alle Stellen, deren Block passt (z. B. für Prüfungen der fertigen Lobby). */
