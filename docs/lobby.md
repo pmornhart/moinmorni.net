@@ -283,7 +283,7 @@ Saison-Dekos und meldet jeden Fund mit Koordinaten:
 
 Auf der Kommandozeile: `npx tsx tools/lobby-entwuerfe/src/pruefen.ts [art …]`. Der Test
 `packages/builder/test/lobby-pruefung.test.ts` schlägt bei jedem neuen Fund an; Funde in Teilen, an denen gerade
-andere arbeiten (Schloss, Schlossmarkt, Saison-Deko), stehen in `test/pruefung-offen.ts` – ist einer behoben, die
+andere arbeiten (Schloss, Saison-Deko), stehen in `test/pruefung-offen.ts` – ist einer behoben, die
 Zeile dort löschen. Die Lobby baut ohne Block-Updates; `fitConnections` (`verbindungen.ts`) verbindet darum Zäune,
 Mauern und Scheiben wie beim Setzen von Hand.
 
