@@ -21,6 +21,8 @@ export interface Events {
   'news.published': { slug: string };
   /** Rang oder Name eines Spielers geändert (Discord zieht die Rolle nach). */
   'player.changed': { uuid: string };
+  /** Team-Konto verbunden, getrennt, Rolle geändert, gesperrt oder entfernt: Rang im Spiel und Discord-Rolle ziehen nach. */
+  'team.changed': { uuids: string[]; discordIds: string[] };
   /** Neue Bewerbung – MorniCraft oder Team (Discord postet sie in den Bewerbungs-Eingang). */
   'application.created': { id: number };
   /**

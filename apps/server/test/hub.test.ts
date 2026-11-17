@@ -204,9 +204,10 @@ describe('Hub', () => {
     const proxy = await plugin('proxy', 'proxy');
     const welcome = proxy.received[0] as unknown as { commands: Array<{ name: string; aliases: string[] }> };
     const listed = NETWORK_COMMANDS.filter((c) => c.where === 'hub');
-    // /discord bringt der Discord-Bot mit (hier ohne Bot), die Einstellungen kommen aus dem Katalog.
+    // /discord bringt der Discord-Bot mit, /verbinden die Konten-Verbindungen (hier beide nicht dabei), die
+    // Einstellungen kommen aus dem Katalog.
     const expected = [
-      ...listed.filter((c) => c.name !== 'discord').map((c) => c.name),
+      ...listed.filter((c) => c.name !== 'discord' && c.name !== 'verbinden').map((c) => c.name),
       ...SETTING_ROOTS.filter((r) => !listed.some((c) => c.name === r)),
     ].sort();
     expect(welcome.commands.map((c) => c.name).sort()).toEqual(expected);

@@ -39,6 +39,8 @@ const DENY: readonly string[] = [
   '/api/setup',
   '/api/signup',
   '/api/tokens',
+  // Minecraft-Konto nur mit Bestätigung im Spiel (Panel → Mein Konto → Verbindungen), nicht per Name im Motor.
+  '/api/account/minecraft',
 ];
 
 /** Darf dieser Pfad (ohne /panel/motor davor, ohne ?…) an den Motor? */

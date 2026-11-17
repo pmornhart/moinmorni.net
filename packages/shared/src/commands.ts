@@ -201,11 +201,20 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
   },
   {
     name: 'discord',
-    aliases: ['dc', 'verbinden'],
+    aliases: ['dc'],
     usage: same('/discord'),
     topic: 'account',
     where: 'hub',
     lines: [line('discord', '/discord')],
+  },
+  {
+    // Panel-Konto mit dem Minecraft-Konto verbinden (Code aus Panel → Mein Konto). Ohne Code wie /discord.
+    name: 'verbinden',
+    aliases: ['link'],
+    usage: { de: '/verbinden <code>', en: '/link <code>' },
+    topic: 'account',
+    where: 'hub',
+    lines: [line('verbinden', '/verbinden <code>', '/link <code>')],
   },
   {
     name: 'musik',

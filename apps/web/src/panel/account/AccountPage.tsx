@@ -12,13 +12,14 @@ import {
 import { useEffect, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { EmailCard, meQuery, MinecraftAccountCard, PasskeysCard, PasswordCard, TwoFactorCard } from '@/embed';
+import { EmailCard, meQuery, PasskeysCard, PasswordCard, TwoFactorCard } from '@/embed';
 import { MinecraftHead } from '~/components/minecraft-head';
 import { RoleBadge } from '~/components/role-visuals';
 import { Card } from '~/components/ui';
 import { MM_NAMESPACE } from '~/i18n';
 import { MotorSession } from '../motor-session';
 import { PageHead } from '../PanelShell';
+import { ConnectionsCard } from './ConnectionsCard';
 import { refreshPanelMe, useCan, usePanel } from '../session';
 
 /**
@@ -26,7 +27,7 @@ import { refreshPanelMe, useCan, usePanel } from '../session';
  * Minecraft card is open – it is the one that matters most in MoinMorni.
  */
 const FOLD_STORE = 'mh:fold:';
-const OPEN_ON_FIRST_VISIT = ['account-minecraft'] as const;
+const OPEN_ON_FIRST_VISIT = ['account-password'] as const;
 
 function openOnFirstVisit(): void {
   try {
@@ -55,7 +56,6 @@ function AccountCards(): ReactElement {
   );
   return (
     <>
-      <MinecraftAccountCard />
       <PasswordCard />
       <PasskeysCard />
       <TwoFactorCard />
@@ -165,6 +165,7 @@ export function AccountPage(): ReactElement {
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="order-2 grid min-w-0 gap-4 xl:order-none">
           <MinecraftHint />
+          <ConnectionsCard />
           <MotorSession>
             <AccountCards />
           </MotorSession>

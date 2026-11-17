@@ -9,6 +9,7 @@ import {
   LockOpen,
   LogIn,
   Mail,
+  MessageCircle,
   ShieldCheck,
   ShieldHalf,
   Trash2,
@@ -309,8 +310,15 @@ function MemberRow({
             </Fact>
             <Fact icon={Gamepad2}>
               {member.minecraft?.name
-                ? t('teamAdmin.minecraft', { name: member.minecraft.name })
+                ? t(member.minecraft.confirmed ? 'teamAdmin.minecraftOk' : 'teamAdmin.minecraftUnconfirmed', {
+                    name: member.minecraft.name,
+                  })
                 : t('teamAdmin.noMinecraft')}
+            </Fact>
+            <Fact icon={MessageCircle}>
+              {member.discord
+                ? t('teamAdmin.discordOk', { name: member.discord.name })
+                : t('teamAdmin.noDiscord')}
             </Fact>
             {member.email ? <Fact icon={Mail}>{member.email}</Fact> : null}
             <Fact icon={CalendarPlus}>{t('teamAdmin.since', { date: time.day(member.createdAt) })}</Fact>

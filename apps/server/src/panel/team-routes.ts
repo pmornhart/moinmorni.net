@@ -7,6 +7,7 @@ import type { Db } from '../db/index.js';
 import { players, teamMembers } from '../db/schema.js';
 import { AppError, badRequest, conflict, forbidden, notFound } from '../lib/errors.js';
 import { MotorError, type MotorClient } from '../motor/client.js';
+import { linkOf, putLink, type AccountLinks } from './account-links.js';
 import type { PanelAuth, PanelUser } from './auth.js';
 import type { Stores } from './stores.js';
 
@@ -113,6 +114,7 @@ export function registerTeamRoutes(
   stores: Stores,
   db: Db,
   motor: MotorClient,
+  links?: AccountLinks,
 ): TeamAccess {
   const members = () => db.select().from(teamMembers).all();
   const member = (id: number) => db.select().from(teamMembers).where(eq(teamMembers.motorUserId, id)).get();
@@ -158,9 +160,16 @@ export function registerTeamRoutes(
       username: m.username,
       roleId: m.roleId,
       email: motorUser?.email ?? null,
-      minecraft:
-        motorUser?.minecraft ??
-        (m.minecraftUuid ? { uuid: m.minecraftUuid, name: player?.name ?? '' } : null),
+      minecraft: m.minecraftUuid
+        ? {
+            uuid: m.minecraftUuid,
+            name: player?.name ?? motorUser?.minecraft?.name ?? '',
+            confirmed: linkOf(db, m.motorUserId).confirmed !== undefined,
+          }
+        : null,
+      discord: ((l) => (l.discordId ? { id: l.discordId, name: l.discordName ?? '' } : null))(
+        linkOf(db, m.motorUserId),
+      ),
       disabled: motorUser?.disabled ?? false,
       twoFactor: motorUser?.totpEnabled ?? false,
       mustChangePassword: motorUser?.mustChangePassword ?? false,
@@ -233,6 +242,8 @@ export function registerTeamRoutes(
     if (!mayHandle(me, role)) throw forbidden('team_higher');
     if (m.roleId === OWNER && role.id !== OWNER && owners() <= 1) throw conflict('team_last_owner');
     db.update(teamMembers).set({ roleId: role.id }).where(eq(teamMembers.motorUserId, m.motorUserId)).run();
+    // Rang im Spiel und Discord-Rolle gleich mitziehen.
+    links?.changed(m.motorUserId);
     await syncAccess(m.motorUserId, role);
     return { ok: true };
   });
@@ -244,6 +255,9 @@ export function registerTeamRoutes(
       const me = await auth.require(request, 'roles');
       const m = target(me, request.params.id);
       await ask(motor, 'PATCH', `/api/users/${m.motorUserId}`, { disabled: request.body.disabled });
+      // Gesperrt: Team-Rolle gilt weder im Spiel noch in Discord (entsperrt: wieder).
+      putLink(db, m.motorUserId, { disabled: request.body.disabled || null });
+      links?.changed(m.motorUserId);
       return { ok: true };
     },
   );
@@ -268,7 +282,13 @@ export function registerTeamRoutes(
     const m = target(me, request.params.id);
     if (m.roleId === OWNER && owners() <= 1) throw conflict('team_last_owner');
     await ask(motor, 'DELETE', `/api/users/${m.motorUserId}`);
+    const discordId = linkOf(db, m.motorUserId).discordId;
     db.delete(teamMembers).where(eq(teamMembers.motorUserId, m.motorUserId)).run();
+    putLink(db, m.motorUserId, { confirmed: null, discordId: null, discordName: null, discordAvatar: null });
+    links?.emit({
+      uuids: m.minecraftUuid ? [m.minecraftUuid] : [],
+      discordIds: discordId ? [discordId] : [],
+    });
     return { ok: true };
   });
 
@@ -285,6 +305,13 @@ export function registerTeamRoutes(
     },
     syncAll: async () => {
       const users = await ask<MotorUser[]>(motor, 'GET', '/api/users');
+      // Sperre aus dem Motor spiegeln (auch für Konten, die vor dieser Fassung gesperrt wurden).
+      members().forEach((m) => {
+        const off = users.find((u) => u.id === m.motorUserId)?.disabled === true;
+        if (off === (linkOf(db, m.motorUserId).disabled === true)) return;
+        putLink(db, m.motorUserId, { disabled: off || null });
+        links?.changed(m.motorUserId);
+      });
       await Promise.all(
         members().map((m) => {
           const role = stores.role(m.roleId);

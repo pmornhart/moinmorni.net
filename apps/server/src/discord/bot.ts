@@ -13,6 +13,7 @@ import type { Hub } from '../hub/index.js';
 import { mm } from '../hub/texts.js';
 import type { EventBus } from '../lib/events.js';
 import type { ApplicationService } from '../mornicraft/applications.js';
+import { teamRoleByDiscord, type AccountLinks } from '../panel/account-links.js';
 import type { Stores } from '../panel/stores.js';
 import { publicAuthor } from '../public/author.js';
 import type { StatusService } from '../public/status.js';
@@ -146,6 +147,8 @@ export interface BotDeps {
   readonly status: StatusService;
   readonly log: FastifyBaseLogger;
   readonly fetchImpl?: typeof fetch;
+  /** Verbindungen der Team-Konten (Panel-Code in `/verbinden`). */
+  readonly accounts?: AccountLinks;
 }
 
 const NO_CLIENT = new Error('discord_not_configured');
@@ -360,7 +363,9 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     if (!g || !player?.discordId || !client()) return;
     const m = await member(g, player.discordId);
     if (!m) return;
-    const role = hub.players.roleOf(uuid);
+    const own = hub.players.roleOf(uuid);
+    const team = teamRoleByDiscord(db, stores, player.discordId);
+    const role = team && team.position < own.position ? team : own;
     const jailRole = get('role:jail');
     const jailed = Boolean(jailRole && hub.punish.active(uuid, 'jail'));
     const managed = [...templateRoles().map((r) => get(`role:${r.id}`)), get('role:linked'), jailRole].filter(
@@ -386,6 +391,38 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     // Sprachchat-Stumm, falls die Person gerade in einem Sprachkanal sitzt (sonst beim nächsten Betreten).
     if (hub.punish.active(uuid, 'voice') && !get(`${VOICE_MUTE_KEY}${uuid}`))
       await setVoiceMute(uuid, true, 'MoinMorni: Sprachchat stumm');
+  };
+
+  /**
+   * Ein Discord-Konto nachziehen: mit verbundenem Spieler wie oben, sonst nur über Team-Konten (Rolle + „Verbunden“;
+   * ohne Team-Rolle mehr fällt beides weg).
+   */
+  const syncDiscord = async (discordId: string): Promise<void> => {
+    const linked = hub.players.byDiscord(discordId);
+    if (linked) return syncRoles(linked.uuid);
+    const g = guildId();
+    if (!g || !client()) return;
+    const m = await member(g, discordId);
+    if (!m) return;
+    const role = teamRoleByDiscord(db, stores, discordId);
+    const managed = [...templateRoles().map((r) => get(`role:${r.id}`)), get('role:linked')].filter(
+      (id): id is string => Boolean(id),
+    );
+    const wanted = new Set(
+      (role && !role.fallback ? [get(`role:${role.id}`), get('role:linked')] : []).filter(
+        (id): id is string => Boolean(id),
+      ),
+    );
+    const add = [...wanted].filter((id) => !m.roles.includes(id));
+    const remove = m.roles.filter((id) => managed.includes(id) && !wanted.has(id));
+    await Promise.all([
+      ...add.map((id) =>
+        rest('PUT', `/guilds/${g}/members/${discordId}/roles/${id}`, undefined, 'MoinMorni: Team'),
+      ),
+      ...remove.map((id) =>
+        rest('DELETE', `/guilds/${g}/members/${discordId}/roles/${id}`, undefined, 'MoinMorni: Team'),
+      ),
+    ]);
   };
 
   const setExtra = async (uuid: string, extra: ExtraRole, on: boolean, reason: string): Promise<void> => {
@@ -664,6 +701,22 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
     const options = (d['data'] as { options?: Array<{ name: string; value: string }> }).options ?? [];
     const code = (options.find((o) => o.name === 'code')?.value ?? '').trim().toUpperCase();
     const entry = codes.get(code);
+    if ((!entry || entry.until < Date.now()) && deps.accounts && !codes.has(code)) {
+      // Kein Code aus dem Spiel: vielleicht einer aus dem Panel (Mein Konto → Verbindungen).
+      const raw = ((d['member'] as { user?: unknown } | undefined)?.user ?? d['user']) as {
+        avatar?: unknown;
+      };
+      const result = deps.accounts.claimDiscord(code, {
+        ...userOf(d),
+        avatar: typeof raw.avatar === 'string' ? raw.avatar : null,
+      });
+      await respond(d, {
+        content: result.ok
+          ? bt(lang, 'linkTeamOk', { name: result.username })
+          : bt(lang, result.reason === 'slow' ? 'linkSlow' : 'linkWrong'),
+      });
+      return;
+    }
     if (!entry || entry.until < Date.now()) {
       await respond(d, { content: bt(lang, 'linkWrong') });
       return;
@@ -795,6 +848,7 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       const user = d['user'] as { id: string };
       const linked = hub.players.byDiscord(user.id);
       if (linked) await syncRoles(linked.uuid);
+      else await syncDiscord(user.id);
       const welcome = get('ch:welcome');
       const s = await deps.status.status();
       if (welcome)
@@ -907,6 +961,9 @@ export function createMoinMorniBot(deps: BotDeps): MoinMorniBot {
       });
       events.on('news.published', ({ slug }) =>
         background(() => postNews(slug), 'Discord: News nicht gepostet'),
+      );
+      events.on('team.changed', ({ discordIds }) =>
+        discordIds.forEach((id) => background(() => syncDiscord(id), 'Discord: Team-Rolle nicht übertragen')),
       );
       events.on('player.changed', ({ uuid }) =>
         background(() => syncRoles(uuid), 'Discord: Rang nicht übertragen'),
