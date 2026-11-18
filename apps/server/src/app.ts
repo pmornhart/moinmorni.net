@@ -58,6 +58,7 @@ import { registerTeamRoutes, type TeamAccess } from './panel/team-routes.js';
 import { registerPanelRoutes } from './panel/routes.js';
 import { registerModeRestRoutes } from './panel/mode-rest-routes.js';
 import { registerRestartRoutes } from './panel/restart-routes.js';
+import { registerResetRoutes } from './panel/reset-routes.js';
 import { createStores, type Stores } from './panel/stores.js';
 import { netzPackInfo, netzPackUrl, registerNetzPackRoutes } from './packs/netz.js';
 import { dropServerPack } from './angelkoenig/pack.js';
@@ -541,6 +542,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     countdown: () => Number(stores.settings('updates')['restartCountdown'] ?? DEFAULT_COUNTDOWN_SECONDS),
     log: app.log,
   });
+  // Panel → „Server zurücksetzen“ (nur Owner): Sicherung, dann Welt/Spielstand löschen, über den Neustart oben.
+  registerResetRoutes(app, auth, stores, { motor, db: handle.db, restartNow, log: app.log });
   registerWartungRoutes(app, auth, hub.wartungPlan);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor, accounts);

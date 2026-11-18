@@ -28,6 +28,11 @@ import type { RestartQueue } from './restart.js';
 export interface Target {
   readonly serverId: string;
   readonly member: string;
+  /**
+   * Zurücksetzen (panel/reset-routes.ts): statt eines Neustarts stoppen, dies tun (Welt bzw. Spielstand löschen),
+   * dann starten. Damit darf auch die Wartungs-Lobby von Hand mit.
+   */
+  readonly whileStopped?: () => Promise<void>;
 }
 
 /**
@@ -114,6 +119,7 @@ const HUB_WAIT_MAX_MS = 120_000;
 const BACK_WAIT_MAX_MS = 120_000;
 const RUNNING = 'running';
 const CRASHED = 'crashed';
+const STOPPING: readonly string[] = ['stopping', 'starting', 'installing'];
 
 /** Wie die Server für Spieler heißen, wenn sie kein Spielmodus sind. */
 const FIXED_NAMES: Readonly<Record<string, TextKey>> = {
@@ -296,9 +302,24 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
     const ok = (await restartOnly(item.target)) && (await settle(item.target.serverId, false, 0, before));
     step([item], ok ? 'done' : 'failed');
   };
+  /** Warten, bis der Server wirklich aus ist (höchstens drei Minuten). */
+  const stopped = async (serverId: string, waited: number): Promise<boolean> => {
+    const now = (await liveOf(serverId)).state;
+    if (now !== null && now !== RUNNING && !STOPPING.includes(now)) return true;
+    if (waited >= SETTLE_MAX_MS) return false;
+    await pause(POLL_MS);
+    return stopped(serverId, waited + POLL_MS);
+  };
   const restartOnly = async (target: Target): Promise<boolean> => {
     try {
       queue.remove(target.serverId);
+      if (target.whileStopped) {
+        await motor.request('POST', `/api/servers/${target.serverId}/actions/stop`);
+        if (!(await stopped(target.serverId, 0))) throw new Error('server_did_not_stop');
+        await target.whileStopped();
+        await motor.request('POST', `/api/servers/${target.serverId}/actions/start`);
+        return true;
+      }
       await motor.request('POST', `/api/servers/${target.serverId}/actions/restart`);
       log.info(
         { server: target.member },
@@ -517,11 +538,14 @@ export function createRestartNow(options: RestartNowOptions): RestartNow {
       if (!state.running)
         [...steps].filter(([, now]) => FINISHED.includes(now)).forEach(([member]) => steps.delete(member));
       // Von Hand nie die Wartungs-Lobby – sie nimmt die Spieler der Lobby auf (das Panel lehnt sie schon ab).
-      const wanted = why === 'manual' ? servers.filter((t) => t.member !== WARTUNG_MEMBER) : servers;
+      const wanted =
+        why === 'manual' ? servers.filter((t) => t.member !== WARTUNG_MEMBER || t.whileStopped) : servers;
       wanted.forEach((t) => steps.set(t.member, 'waiting'));
       wanted.forEach((t) => {
         const before = pending.get(t.serverId);
-        pending.set(t.serverId, { target: t, why: before?.why === 'update' ? 'update' : why });
+        // Ein Zurücksetzen bleibt dabei, auch wenn derselbe Server danach noch einmal angemeldet wird.
+        const target = !t.whileStopped && before?.target.whileStopped ? before.target : t;
+        pending.set(t.serverId, { target, why: before?.why === 'update' ? 'update' : why });
       });
       if (!state.running) {
         state.running = (async () => {

@@ -2698,7 +2698,11 @@
     "wartung_no_restart": "Neu starten geht gerade nicht.",
     "wartung_already_on": "Die Wartung ist schon an.",
     "wartung_nothing": "Es ist nichts angekündigt.",
-    "wartung_restarting": "Der Wartungs-Neustart läuft – danach geht die Wartung von selbst aus."
+    "wartung_restarting": "Der Wartungs-Neustart läuft – danach geht die Wartung von selbst aus.",
+    "reset_confirm": "Bitte den Namen genau eintippen (bei mehreren: ALLE).",
+    "reset_owner_only": "Zurücksetzen darf nur der Owner.",
+    "reset_busy": "Es wird gerade schon zurückgesetzt – bitte kurz warten.",
+    "reset_unknown_server": "Diesen Server gibt es im Netzwerk nicht."
   },
   "modeSettings": {
     "title": "Gilt nach dem nächsten Neustart des Modus",
@@ -2858,5 +2862,34 @@
     "changed_other": "{{count}} Einstellungen geändert",
     "settings_one": "{{count}} Einstellung",
     "settings_other": "{{count}} Einstellungen"
+  },
+  "resetDialog": {
+    "button": "Zurücksetzen",
+    "title": "Server zurücksetzen",
+    "text": "Welt, Spielstand oder beides neu – vorher legt MoinMorni immer eine Sicherung an. Nur für den Owner.",
+    "all": "Alle Server",
+    "what": "Was soll neu?",
+    "whats": {
+      "world": "Welt",
+      "progress": "Spielstand",
+      "both": "Beides"
+    },
+    "whatsHint": {
+      "world": "Die Welt wird gelöscht und beim Start neu erzeugt. Lobby und Wartungs-Lobby bauen sich von selbst wieder auf.",
+      "progress": "Statistiken, Bestenlisten und Spielerdaten des Servers bzw. Modus. Die Welt bleibt.",
+      "both": "Welt und Spielstand – wie neu."
+    },
+    "keeps": "Ränge, Strafen, Einstellungen, Team und die Einstellungen der Plugins bleiben. Wer gerade spielt, kommt nach einem Countdown in die Lobby. Gelöschtes liegt 7 Tage im Papierkorb.",
+    "confirmLabel": "Zum Bestätigen „{{word}}“ eintippen",
+    "confirm": "{{count}} zurücksetzen",
+    "close": "Schließen",
+    "started": "Sicherung läuft – danach wird zurückgesetzt.",
+    "step": {
+      "backup": "Sicherung",
+      "waiting": "wartet",
+      "wiping": "löscht",
+      "done": "fertig",
+      "failed": "ging nicht"
+    }
   }
 }
