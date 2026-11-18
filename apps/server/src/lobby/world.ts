@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import {
+  LOBBY_GENERATOR,
   LOBBY_NAMESPACE,
   LOBBY_PACK_DIR,
   lobbyPack,
@@ -228,6 +229,9 @@ export function lobbyProperties(): Record<string, string> {
     'spawn-protection': '0',
     'allow-nether': 'false',
     'generate-structures': 'false',
+    // Leere Welt hinter dem Bergkranz (gilt nur, wenn die Welt neu entsteht; siehe LOBBY_GENERATOR).
+    'level-type': 'minecraft:flat',
+    'generator-settings': JSON.stringify(LOBBY_GENERATOR),
     // Der Selbstbau schickt viele Befehle über RCON – ohne das stünde bei jedem Team-Mitglied mit OP
     // „[Rcon: 16 Chunks … werden nun dauerhaft geladen]“ im Chat.
     'broadcast-rcon-to-ops': 'false',
