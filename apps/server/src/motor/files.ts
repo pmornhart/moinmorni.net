@@ -38,6 +38,8 @@ export async function removeServerFiles(
   serverId: string,
   paths: readonly string[],
 ): Promise<number> {
-  const r = await motor.request<{ moved?: number }>('POST', `/api/servers/${serverId}/files/delete`, { paths });
+  const r = await motor.request<{ moved?: number }>('POST', `/api/servers/${serverId}/files/delete`, {
+    paths,
+  });
   return r?.moved ?? 0;
 }

@@ -244,6 +244,8 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
   const team = createTeamApplications({ db: handle.db, stores, hub, events });
   const lobbyWorld = createLobbyWorld(motor, app.log, {
     season: () => seasonOf(stores.settings('lobby')['season']),
+    // Solange die Lobby baut, warten alle in der Wartungs-Lobby und kommen danach von selbst rüber (Philip).
+    onBuilding: (on) => hub.wartung.building(on),
   });
   const lobbyRef = { id: '', season: seasonOf(stores.settings('lobby')['season']) };
   // Wartungs-Lobby: baut sich wie die Lobby selbst (eigener kleiner Bauplan).
@@ -543,7 +545,14 @@ export async function buildApp(options: BuildOptions): Promise<BuiltApp> {
     log: app.log,
   });
   // Panel → „Server zurücksetzen“ (nur Owner): Sicherung, dann Welt/Spielstand löschen, über den Neustart oben.
-  registerResetRoutes(app, auth, stores, { motor, db: handle.db, restartNow, log: app.log });
+  registerResetRoutes(app, auth, stores, {
+    motor,
+    db: handle.db,
+    restartNow,
+    log: app.log,
+    // Neue Welt: server.properties (flache, leere Welt) vor dem Start schreiben – sonst entsteht normales Gelände.
+    configure: { [LOBBY_MEMBER]: lobbyWorld.configure, [WARTUNG_MEMBER]: wartungWorld.configure },
+  });
   registerWartungRoutes(app, auth, hub.wartungPlan);
   registerPlayerRoutes(app, auth, stores, hub, handle.db);
   const teamAccess: TeamAccess = registerTeamRoutes(app, auth, stores, handle.db, motor, accounts);

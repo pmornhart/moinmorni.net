@@ -21,6 +21,11 @@ const SENT_GRACE_MS = 15_000;
  * noch am Hub hängt (z. B. Server hängt). Verbindet sie sich neu, gilt sie gleich wieder.
  */
 const LOBBY_FAILED_MS = 60_000;
+/**
+ * Höchstens so lange gilt die Lobby wegen ihres Selbstbaus als „nicht bereit“ – scheitert oder hängt der Bau, kommen
+ * die Spieler danach trotzdem hinein (nie für immer ausgesperrt).
+ */
+export const LOBBY_BUILD_MAX_MS = 15 * 60_000;
 /** Alle so viele Millisekunden nachsehen, ob jemand zurück darf. */
 const TICK_MS = 1000;
 
@@ -87,6 +92,12 @@ export interface Wartung {
   readonly holding: () => boolean;
   /** Stand des Wartungs-Neustarts für Leiste und Aushang („5 von 16 fertig“); null = keiner läuft. */
   readonly restartProgress: (progress: { readonly done: number; readonly total: number } | null) => void;
+  /**
+   * Die Lobby baut gerade ihre Welt (Selbstbau, `lobby/world.ts`): solange gilt sie als nicht bereit – Neue und
+   * Rausgeworfene warten in der Wartungs-Lobby, wer in der Lobby steht, kommt dorthin; nach dem Bau automatisch zurück.
+   */
+  readonly building: (on: boolean) => void;
+  readonly isBuilding: () => boolean;
   readonly start: () => void;
   readonly stop: () => void;
 }
@@ -126,7 +137,10 @@ export function createWartung(deps: WartungDeps): Wartung {
     progress: null,
   };
 
-  const lobbyUp = (): boolean => deps.connected(LOBBY) && now() - lobbyFailed.at > LOBBY_FAILED_MS;
+  const build: { since: number | null } = { since: null };
+  const lobbyBuilding = (): boolean => build.since !== null && now() - build.since < LOBBY_BUILD_MAX_MS;
+  const lobbyUp = (): boolean =>
+    deps.connected(LOBBY) && now() - lobbyFailed.at > LOBBY_FAILED_MS && !lobbyBuilding();
   const wartungUp = (): boolean => deps.connected(WARTUNG_SERVER);
   const parked = (uuid: string): boolean =>
     restart.held || (settings().maintenance && !alwaysIn(ctx.players.roleOf(uuid)));
@@ -142,6 +156,7 @@ export function createWartung(deps: WartungDeps): Wartung {
     return {
       t: 'wartung',
       lobby: lobbyUp(),
+      building: lobbyBuilding(),
       maintenance: s.maintenance,
       message: s.message,
       until: s.until,
@@ -299,6 +314,21 @@ export function createWartung(deps: WartungDeps): Wartung {
       tick();
     },
     holding: () => restart.held,
+    building: (on) => {
+      if (on === (build.since !== null)) return;
+      build.since = on ? now() : null;
+      if (on && open())
+        ctx.presence.on(LOBBY).forEach((p) => {
+          waitingSet.add(p.uuid);
+          told.delete(p.uuid);
+          ctx.msg(p.uuid, text(p.lang, 'wartung.building'));
+          ctx.connect(p.uuid, WARTUNG_SERVER);
+        });
+      cancel();
+      push();
+      tick();
+    },
+    isBuilding: lobbyBuilding,
     restartProgress: (progress) => {
       const same = progress?.done === restart.progress?.done && progress?.total === restart.progress?.total;
       restart.progress = progress;

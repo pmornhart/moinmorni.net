@@ -82,6 +82,8 @@ export interface LobbyWorldOptions {
   readonly properties?: () => Record<string, string>;
   /** Name der Welt im Protokoll (Standard: Lobby). */
   readonly label?: string;
+  /** Selbstbau beginnt (true) bzw. ist vorbei, fertig oder gescheitert (false) – die Lobby gilt solange als nicht bereit. */
+  readonly onBuilding?: (on: boolean) => void;
   readonly sleep?: (ms: number) => Promise<void>;
   readonly settleMs?: number;
   readonly gapMs?: number;
@@ -313,6 +315,21 @@ export function createLobbyWorld(
       log.warn({ serverId }, `${name}: Server läuft nicht – Welt wird beim nächsten Start gebaut`);
       return 'not_running';
     }
+    options.onBuilding?.(true);
+    try {
+      return await buildNow(serverId, pack, ns, packId, probes);
+    } finally {
+      options.onBuilding?.(false);
+    }
+  };
+
+  const buildNow = async (
+    serverId: string,
+    pack: LobbyPack,
+    ns: string,
+    packId: string,
+    probes: ReturnType<typeof probesAt>,
+  ): Promise<BuildResult> => {
     const properties = (await readFile(serverId, PROPERTIES_FILE)) ?? '';
     const level = readProperty(properties, 'level-name') || DEFAULT_LEVEL;
     log.info({ version: pack.version, parts: pack.parts }, `${name}: Welt wird gebaut`);

@@ -13,7 +13,7 @@ import type { Db } from '../db/index.js';
 import { badRequest, forbidden } from '../lib/errors.js';
 import type { MotorClient } from '../motor/client.js';
 import { BUILD_MEMBER, LOBBY_MEMBER, WARTUNG_MEMBER } from '../network/provision.js';
-import { backupServer, wipeServer, wipeStats, wipesProgress } from '../network/reset.js';
+import { backupServer, wipeServer, wipeStats, wipesProgress, wipesWorld } from '../network/reset.js';
 import type { RestartNow, Target } from '../network/restart-now.js';
 import { isOurNetwork } from '../public/status.js';
 import type { PanelAuth } from './auth.js';
@@ -67,6 +67,11 @@ export interface ResetRouteDeps {
     readonly warn: (obj: object, msg: string) => void;
     readonly info: (obj: object, msg: string) => void;
   };
+  /**
+   * server.properties eines Servers (nach Netzwerk-Name) schreiben, bevor seine neue Welt entsteht – Lobby und
+   * Wartungs-Lobby brauchen eine flache, leere Welt; die Einstellung wirkt nur beim Erzeugen.
+   */
+  readonly configure?: Readonly<Record<string, (serverId: string) => Promise<boolean>>>;
   /** Tests: Sicherung ohne Warten. */
   readonly backupPause?: (ms: number) => Promise<void>;
 }
@@ -142,6 +147,8 @@ export function registerResetRoutes(app: Api, auth: PanelAuth, stores: Stores, d
     try {
       const n = await wipeServer(motor, e.serverId, what);
       if (wipesProgress(what) && e.statsId) wipeStats(deps.db, e.statsId);
+      const configure = deps.configure?.[e.view.member];
+      if (wipesWorld(what) && configure) await configure(e.serverId);
       deps.log.info({ server: e.view.member, what, paths: n }, 'Panel: Server zurückgesetzt');
       steps.set(e.view.member, { step: 'done' });
     } catch (err) {

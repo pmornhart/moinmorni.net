@@ -252,6 +252,8 @@ export interface Hub {
     readonly parked: (uuid: string) => boolean;
     /** Wie viele dort warten und gleich von selbst in die Lobby zurückkommen? */
     readonly returning: () => number;
+    /** Die Lobby baut gerade ihre Welt – solange warten alle in der Wartungs-Lobby. */
+    readonly building: (on: boolean) => void;
   };
 }
 
@@ -1122,6 +1124,7 @@ export function createHub(options: HubOptions): Hub {
       park: (uuid) => wartung.park(normalUuid(uuid)),
       parked: (uuid) => wartung.parked(normalUuid(uuid)),
       returning: wartung.returning,
+      building: wartung.building,
     },
   };
 }

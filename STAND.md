@@ -838,6 +838,8 @@ paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, f
   heil; frische leere Welt → Selbstbau 73 s, Lobby an drei Blickpunkten gleich wie vorher (Bilder nur lokal).
   Tests: 141 Baukasten, 11 Lobby-Server, JUnit `LobbyVoidTest`, Typen.
 
+- 18.11.: **Lobby zurücksetzen + Lobby baut, Spieler warten** (Philip: zurückgesetzte Lobby war Meer; „erst in die Lobby, wenn sie fertig gebaut ist“; Branch `claude/lobby-bau-wartet`): Beim Zurücksetzen der Welt schreibt MoinMorni die server.properties von Lobby und Wartungs-Lobby (flache, leere Welt) jetzt im Schritt zwischen Stoppen und Starten (`ResetRouteDeps.configure`) – vorher erst beim Bau, also nach dem Erzeugen der Welt. Neuinstallation war schon richtig (Server werden ohne Start angelegt, `configureLobby` vor dem ersten Start). Solange die Lobby ihre Welt baut (`onBuilding` in `lobby/world.ts`, auch nach einem Update mit neuer Bau-Version), gilt sie im Hub als nicht bereit (`wartung.building`): wer in der Lobby steht, kommt mit Hinweis in die Wartungs-Lobby, Neue und Rausgeworfene landen dort, Leiste/Aushang/Begrüßung „Die Lobby wird gerade gebaut – gleich geht’s los“ (de/en, Feld `building` in `wartung`); fertig → Countdown, automatisch zurück; hängt der Bau, nach 15 Min. trotzdem frei (`LOBBY_BUILD_MAX_MS`). Tests: neuer Hub-Test (Parken, Neue, Rauswurf, zurück, Zeitlimit) und Reset-Test gegen echten Motor (Lobby und Wartungs-Lobby flach), wartung/reset/lobby-world 25 grün, Typen, Prettier, Plugin übersetzt. Nicht echt mit Minecraft geprüft. Offen: `/lobby` von Hand während des Baus wird nicht abgewiesen.
+
 ## Offen
 
 - **Leistung (17.11.):** Im Winter ~6 600 Anzeige-Wesen (davon ~2 200 Girlanden-Teile an den Ständen, 660 am

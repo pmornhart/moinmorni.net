@@ -6,6 +6,7 @@ import { WARTUNG_GENERATOR, WARTUNG_NAMESPACE, WARTUNG_POINTS, wartungPack } fro
 import { SERVER_MAX_PLAYERS, WARTUNG_RETURN_SECONDS } from '@moinmorni/shared';
 import { openDatabase } from '../src/db/index.js';
 import { createHub, type Hub } from '../src/hub/index.js';
+import { LOBBY_BUILD_MAX_MS } from '../src/hub/wartung.js';
 import { createEventBus } from '../src/lib/events.js';
 import { createWartungWorld, wartungProperties } from '../src/lobby/wartung.js';
 import type { MotorClient } from '../src/motor/client.js';
@@ -135,6 +136,42 @@ describe('Wartungs-Lobby im Hub', () => {
     expect(back['server']).toBe('lobby');
     await pause(TICK_WAIT_MS);
     expect(proxy.received.some((m) => m.t === 'connect' && m['uuid'] === PHILIP)).toBe(false);
+  });
+
+  test('Lobby baut ihre Welt: alle warten in der Wartungs-Lobby, danach von selbst rüber; hängt der Bau, nach dem Zeitlimit trotzdem', async () => {
+    const proxy = await plugin('proxy', 'proxy');
+    const wartung = await plugin('wartung', 'backend');
+    const lobby = await plugin('lobby', 'backend');
+    await login(proxy, LENA, 'Lena');
+    proxy.send({ t: 'switch', uuid: LENA, server: 'lobby' });
+    await lobby.next('profile', (m) => m['uuid'] === LENA);
+
+    hub.wartung.building(true);
+    // Wer in der Lobby steht, kommt in die Wartungs-Lobby; die Leiste dort weiß warum.
+    expect((await proxy.next('connect', (m) => m['uuid'] === LENA))['server']).toBe('wartung');
+    expect(await wartung.next('wartung', (m) => m['building'] === true)).toMatchObject({ lobby: false });
+    proxy.send({ t: 'switch', uuid: LENA, server: 'wartung' });
+    await wartung.next('profile', (m) => m['uuid'] === LENA);
+    // Neue und Rausgeworfene auch – obwohl die Lobby am Hub hängt.
+    expect(data(await login(proxy, FINN, 'Finn'))).toMatchObject({ server: 'wartung' });
+    const kicked = await proxy.request({ t: 'fallback', uuid: FINN, from: 'duels', tried: ['duels'] });
+    expect(data(kicked)['order']).toEqual(['wartung', 'lobby']);
+    await pause(TICK_WAIT_MS);
+    expect(wartung.received.some((m) => m.t === 'wartung' && typeof m['returnIn'] === 'number')).toBe(false);
+
+    // Fertig gebaut → Countdown → zurück.
+    hub.wartung.building(false);
+    await wartung.next('wartung', (m) => m['returnIn'] === WARTUNG_RETURN_SECONDS);
+    clock.now += WARTUNG_RETURN_SECONDS * SECOND_MS;
+    expect(
+      (await proxy.next('connect', (m) => m['uuid'] === LENA && m['server'] === 'lobby'))['server'],
+    ).toBe('lobby');
+
+    // Hängender Bau: nach dem Zeitlimit gilt die Lobby wieder als bereit.
+    hub.wartung.building(true);
+    expect(data(await login(proxy, PHILIP, 'Philip'))).toMatchObject({ server: 'wartung' });
+    clock.now += LOBBY_BUILD_MAX_MS + SECOND_MS;
+    expect(data(await login(proxy, PHILIP, 'Philip'))).toMatchObject({ server: 'lobby' });
   });
 
   test('Lobby startet nach einem Update neu: ihre Spieler warten in der Wartungs-Lobby, danach von selbst zurück', async () => {

@@ -65,7 +65,8 @@ final class WartungLobby implements Listener {
 
     /** Was der Hub zuletzt gemeldet hat. */
     private record State(boolean lobby, boolean maintenance, String message, String until, boolean returnAuto,
-                         long returnAt, Location spawn, int restartDone, int restartTotal) {
+                         long returnAt, Location spawn, int restartDone, int restartTotal,
+                         boolean building) {
 
         /** Läuft gerade ein Wartungs-Neustart (alle Server starten neu)? */
         boolean restarting() {
@@ -113,7 +114,7 @@ final class WartungLobby implements Listener {
     private final Map<UUID, Long> runs = new ConcurrentHashMap<>();
     private final Map<UUID, Long> best = new ConcurrentHashMap<>();
     private final Map<UUID, Long> clicked = new ConcurrentHashMap<>();
-    private volatile State state = new State(false, false, "", null, true, 0, null, 0, 0);
+    private volatile State state = new State(false, false, "", null, true, 0, null, 0, 0, false);
     private volatile Consumer toLobby;
     private String shownText = "";
 
@@ -165,7 +166,7 @@ final class WartungLobby implements Listener {
                     spawn.get("pitch").getAsFloat());
             state = new State(bool(m, "lobby"), bool(m, "maintenance"), str(m, "message"), HubClient.str(m, "until"),
                     !m.has("returnAuto") || m.get("returnAuto").getAsBoolean(), returnAt, at,
-                    restartPart(m, "done"), restartPart(m, "total"));
+                    restartPart(m, "done"), restartPart(m, "total"), bool(m, "building"));
             tick();
         });
     }
@@ -242,6 +243,11 @@ final class WartungLobby implements Listener {
             text = Component.text(en ? "⚒ Maintenance" + until : "⚒ Wartung" + until, NamedTextColor.GOLD)
                     .append(Component.text(s.message().isEmpty() ? "" : " – " + s.message(), NamedTextColor.WHITE));
             colour = BossBar.Color.YELLOW;
+        } else if (!s.lobby() && s.building()) {
+            text = Component.text(en ? "⚒ The lobby is being built – we’re starting soon"
+                    : "⚒ Die Lobby wird gerade gebaut – gleich geht’s los", NamedTextColor.GOLD);
+            colour = BossBar.Color.YELLOW;
+            progress = (System.currentTimeMillis() / MILLIS_PER_SECOND) % 2 == 0 ? FULL : FULL / 2;
         } else if (!s.lobby()) {
             text = Component.text(en ? "⚒ The lobby is restarting – you’ll go back automatically"
                     : "⚒ Die Lobby startet gerade neu – du kommst automatisch zurück", NamedTextColor.GOLD);
@@ -272,6 +278,8 @@ final class WartungLobby implements Listener {
         } else if (s.maintenance()) {
             String until = s.until() == null ? "" : "\n⏰ bis ca. " + s.until() + " Uhr · until approx. " + s.until();
             text = (s.message().isEmpty() ? "Wartungsarbeiten" : s.message()) + until;
+        } else if (!s.lobby() && s.building() && hubReady.getAsBoolean()) {
+            text = "Die Lobby wird gerade gebaut – gleich geht’s los!\nThe lobby is being built – we’re starting soon!";
         } else if (!s.lobby() || !hubReady.getAsBoolean()) {
             text = "Die Lobby startet gerade neu – gleich geht’s weiter!\nThe lobby is restarting – back in a moment!";
         } else if (s.returnAuto()) {
@@ -344,6 +352,13 @@ final class WartungLobby implements Listener {
             return tag.append(Component.text(en ? "Maintenance" : "Wartungsarbeiten", NamedTextColor.GOLD))
                     .append(Component.text(" – " + (s.message().isEmpty() ? "" : s.message()) + until,
                             NamedTextColor.GRAY));
+        }
+        if (!s.lobby() && s.building()) {
+            return tag.append(Component.text(en ? "The lobby is being built" : "Die Lobby wird gerade gebaut",
+                    NamedTextColor.GOLD)).append(Component.text(en
+                    ? " – you’ll wait here. As soon as it’s ready, you’ll go there automatically."
+                    : " – du wartest so lange hier. Sobald sie fertig ist, geht’s von selbst rüber.",
+                    NamedTextColor.GRAY));
         }
         if (!s.lobby()) {
             return tag.append(Component.text(en ? "The lobby is restarting" : "Die Lobby startet gerade neu",

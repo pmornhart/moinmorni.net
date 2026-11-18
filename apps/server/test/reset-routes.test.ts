@@ -239,4 +239,34 @@ describe('Panel → „Server zurücksetzen“ (echter Motor)', () => {
     },
     RUN_MS * WINS,
   );
+
+  test(
+    'Welt von Lobby und Wartungs-Lobby: flache, leere Welt schon vor dem Start (sonst normales Gelände)',
+    async () => {
+      // Einzeln: zusammen wartet die Wartungs-Lobby bis zu 2 Min. darauf, dass die Lobby wieder am Hub hängt.
+      await [
+        ['lobby', 'Lobby'],
+        ['wartung', 'Wartungs-Lobby'],
+      ].reduce(async (prev, [member, confirm]) => {
+        await prev;
+        await until(async () => !(await overview()).progress.running, RUN_MS);
+        const id = await serverId(member!);
+        await writeServerFile(h.mm.motor, id, 'server.properties', 'level-type=minecraft\\:normal\nmotd=x\n');
+        const res = await call('POST', '/api/panel/servers/reset', owner, {
+          servers: [member],
+          what: 'world',
+          confirm,
+        });
+        expect(res.statusCode, res.body).toBe(OK);
+        await until(
+          async () => (await overview()).progress.servers.find((s) => s.member === member)?.step === 'done',
+          RUN_MS,
+        );
+        const props = (await readServerFile(h.mm.motor, id, 'server.properties')) ?? '';
+        expect(props).toContain('level-type=minecraft\\:flat');
+        expect(props).toContain('generator-settings=');
+      }, Promise.resolve());
+    },
+    RUN_MS * WINS,
+  );
 });
