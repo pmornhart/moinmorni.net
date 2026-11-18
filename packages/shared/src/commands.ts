@@ -200,6 +200,21 @@ export const NETWORK_COMMANDS: readonly NetworkCommand[] = [
     lines: [line('paket', '/paket', '/pack')],
   },
   {
+    // Hilfe-Menü zum Anklicken; mit Thema (modi, befehle, regeln, sprachchat …) nur dieser Teil.
+    name: 'hilfe',
+    aliases: ['help'],
+    usage: { de: '/hilfe [thema]', en: '/help [topic]' },
+    topic: 'account',
+    where: 'hub',
+    lines: [
+      line(
+        'hilfe',
+        '/hilfe [modi|befehle|regeln|sprachchat|freunde]',
+        '/help [modes|commands|rules|voice|friends]',
+      ),
+    ],
+  },
+  {
     name: 'discord',
     aliases: ['dc'],
     usage: same('/discord'),

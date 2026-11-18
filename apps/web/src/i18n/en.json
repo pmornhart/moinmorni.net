@@ -527,7 +527,7 @@
     "help": {
       "eyebrow": "Questions & answers",
       "title": "Help",
-      "text": "Everything you need to get started – explained in short. Click a topic to open it.",
+      "text": "Everything you need to get started – explained in short. Click a topic to open it. In game, /help is there for you any time.",
       "contents": "Topics",
       "stillStuck": "Didn't find what you were looking for? The team is happy to help:",
       "join": {
@@ -1030,6 +1030,7 @@
         "streamerTeil": "Switch one part of streamer mode on or off for yourself (without a word you get the menu to click).",
         "paket": "Load the network pack again – furniture, fountains, fish, clothes and brass band (load once, works on every server).",
         "abzeichen": "Load the badge pack again – then ranks show as little badges before the names.",
+        "hilfe": "The help menu in game: tour, game modes, important commands, website and Discord – all clickable. With a topic, e.g. /help modes.",
         "discord": "An invitation to our Discord – and a code to link your account.",
         "verbinden": "Links your panel account to your Minecraft account – you get the code in the panel under My account. Without a code it works like /discord.",
         "rundgang": "A tour through the village (stop: /tour stop).",

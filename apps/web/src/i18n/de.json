@@ -527,7 +527,7 @@
     "help": {
       "eyebrow": "Fragen & Antworten",
       "title": "Hilfe",
-      "text": "Alles, was du für den Start brauchst – kurz erklärt. Klick auf ein Thema, um es aufzuklappen.",
+      "text": "Alles, was du für den Start brauchst – kurz erklärt. Klick auf ein Thema, um es aufzuklappen. Im Spiel hilft dir jederzeit /hilfe.",
       "contents": "Themen",
       "stillStuck": "Nicht gefunden, was du suchst? Das Team hilft dir gern:",
       "join": {
@@ -1030,6 +1030,7 @@
         "streamerTeil": "Einen Teil des Streamer-Modus für dich an- oder ausschalten (ohne Wort kommt das Menü zum Anklicken).",
         "paket": "Das Netzwerk-Paket noch einmal laden – Möbel, Brunnen, Fische, Kleidung und Blasmusik (einmal laden, gilt auf allen Servern).",
         "abzeichen": "Das Abzeichen-Paket noch einmal laden – dann stehen die Ränge als kleine Schilder vor den Namen.",
+        "hilfe": "Das Hilfe-Menü im Spiel: Rundgang, Spielmodi, wichtige Befehle, Webseite und Discord – alles zum Anklicken. Mit Thema, z. B. /hilfe modi.",
         "discord": "Einladung in unseren Discord – und ein Code, um dein Konto zu verbinden.",
         "verbinden": "Verbindet dein Panel-Konto mit deinem Minecraft-Konto – den Code findest du im Panel unter Mein Konto. Ohne Code wie /discord.",
         "rundgang": "Ein Rundgang durchs Dorf (beenden: /rundgang stopp).",

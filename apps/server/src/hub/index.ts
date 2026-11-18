@@ -59,6 +59,7 @@ import { lobbyMusicBody } from '../lobby/music.js';
 import { createVoice } from './voice.js';
 import { createWartung, type Wartung } from './wartung.js';
 import { createWartungCommands } from './wartung-commands.js';
+import { createHelpCommands } from './help.js';
 import { createWartungPlan, type WartungPlan } from './wartung-plan.js';
 import { dateText, langOfLocale, mm, text, type Lang } from './texts.js';
 import { createTransport, type Body, type Connection } from './transport.js';
@@ -478,6 +479,7 @@ export function createHub(options: HubOptions): Hub {
         ...rejoin.commands,
         createStreamerCommand(ctx, streamers, { now, changed: sendProfile }),
         ...music.commands,
+        ...createHelpCommands(ctx),
         ...createWartungCommands(ctx, wartungPlan, () =>
           createSettingCommands(ctx).find((c) => c.name === 'wartung'),
         ),
