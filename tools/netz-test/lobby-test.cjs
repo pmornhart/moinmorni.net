@@ -445,7 +445,7 @@ async function main() {
  * Dazu der Eintrag im Kompass-Menü und – mit MM_STEUER – die Panel-Schalter.
  */
 async function jumpItem(bot, chats, titles) {
-  const slot1 = () => bot.inventory.slots[37];
+  const slot1 = () => bot.inventory.slots[40];
   const named = (item) => plain(item?.customName ?? item?.displayName ?? '');
   rcon(`tp ${NAME} ${SPAWN.x} ${SPAWN.y} ${SPAWN.z} 0 0`);
   await wait(1500);

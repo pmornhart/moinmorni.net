@@ -93,8 +93,8 @@ final class LobbyFeatures implements Listener {
     /** Eintrag im Kompass-Menü (keine Modus-Kennung beginnt mit #). */
     private static final String MENU_JUMP = "#jumpandrun";
     private static final int MENU_SLOT = 0;
-    /** Gleich neben dem Kompass (Platz 4 hat das Angebot „Zurück ins Spiel“, Platz 8 das Buch). */
-    static final int JUMP_SLOT = 1;
+    /** In der Mitte der Schnellleiste (Philip; Platz 3 hat das Angebot „Zurück ins Spiel“, Platz 8 das Buch). */
+    static final int JUMP_SLOT = 4;
     /** Ein Rechtsklick gilt nur einmal (Java schickt bei manchen Klicks zwei Ereignisse). */
     private static final long ITEM_PAUSE_MS = 400;
     private static final int TOUR_SLOT = 8;

@@ -37,7 +37,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * „Zurück ins Spiel“ in der Lobby (nur dorthin schickt der Hub {@code rejoin-offer}): Hat ein Spielmodus den Platz
  * eines Spielers freigehalten – die Verbindung war mitten im Spiel weg ({@code MoinMorni#holdSlot}) –, bekommt er
  * beim Ankommen eine Zeile im Chat (auf Java zum Anklicken), die Restzeit über der Schnellleiste und einen Gegenstand
- * in der Mitte der Leiste, der bis zum Ablauf bleibt (geht auch auf Bedrock). Ein Klick schickt {@code rejoin} an den
+ * neben der Mitte der Leiste (Platz 3; die Mitte hat die Jump-and-Run-Feder), der bis zum Ablauf bleibt (geht auch auf Bedrock). Ein Klick schickt {@code rejoin} an den
  * Hub, der ihn auf genau diesen Server bringt. Läuft die Zeit ab oder nimmt der Modus das Angebot zurück
  * ({@code rejoin-off}), verschwindet alles.
  */
@@ -46,7 +46,7 @@ final class ReturnOffer implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final String ITEM_KEY = "rejoin_item";
     /** Mitte der Schnellleiste (Kompass 0, Rundgang 8). */
-    private static final int SLOT = 4;
+    private static final int SLOT = 3;
     private static final long TICKS_PER_SECOND = 20L;
     /** Nach dem Betreten erst die Lobby einrichten lassen (sie räumt die Leiste auf), dann anbieten. */
     private static final long SHOW_DELAY = 5L;
@@ -167,7 +167,7 @@ final class ReturnOffer implements Listener {
         String time = remaining(offer.until() - System.currentTimeMillis());
         String how;
         if (item) {
-            how = en ? "middle of your hotbar: back to the game" : "Mitte der Leiste: zurück ins Spiel";
+            how = en ? "next to the middle of your hotbar: back to the game" : "neben der Mitte der Leiste: zurück ins Spiel";
         } else {
             how = en ? "/rejoin: back to the game" : "/rueckkehr: zurück ins Spiel";
         }
@@ -201,7 +201,7 @@ final class ReturnOffer implements Listener {
 
     // ---------- Gegenstand ----------
 
-    /** Gegenstand in die Mitte der Leiste – nicht im Kreativ- oder Zuschauermodus. true = er liegt dort. */
+    /** Gegenstand neben die Mitte der Leiste – nicht im Kreativ- oder Zuschauermodus. true = er liegt dort. */
     private boolean equip(Player p, Offer offer) {
         GameMode mode = p.getGameMode();
         if (mode == GameMode.CREATIVE || mode == GameMode.SPECTATOR) {

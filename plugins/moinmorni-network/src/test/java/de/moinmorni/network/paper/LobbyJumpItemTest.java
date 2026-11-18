@@ -33,8 +33,8 @@ class LobbyJumpItemTest {
     }
 
     @Test
-    void slotNextToTheCompassAndNotTheReturnOffer() {
-        assertEquals(1, LobbyFeatures.JUMP_SLOT);
-        assertNotEquals(4, LobbyFeatures.JUMP_SLOT);
+    void slotInTheMiddleAndNotTheReturnOffer() {
+        assertEquals(4, LobbyFeatures.JUMP_SLOT);
+        assertNotEquals(3, LobbyFeatures.JUMP_SLOT);
     }
 }
