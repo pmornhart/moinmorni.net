@@ -13,7 +13,7 @@ import { biomeCommands } from '../shapes.js';
 import { buildLobby, LOBBY } from './dorfplatz.js';
 import { SEASONS, seasonCommands, seasonPlans, type Season } from './season.js';
 import { withoutHitbox, withViewRange } from './deko.js';
-import { bundleDeko, newDekoModels, type DekoModels } from './buendel.js';
+import { newDekoModels, type DekoModels } from './buendel.js';
 import { SPORT_LOOKS, SPORT_STAND, sportPlan, sportShowCommands } from './sportstand.js';
 
 export const LOBBY_NAMESPACE = 'moinmorni_lobby';
@@ -260,10 +260,10 @@ export function lobbyPack(): LobbyPack {
   );
   // Christbaumkugeln und Ostereier: aus Block-Anzeigen werden Item-Anzeigen mit unserem Namen (schmuck.ts).
   // Danach kleine Teile nur so weit zeichnen, wie man sie sieht (deko.ts, `withViewRange`).
-  // Kleine Teile (Girlanden, Lichter, Zweige) je Block zu einem Modell bündeln (buendel.ts, Leistung im Client).
+  // Bündeln (buendel.ts) ist aus: im echten Client lila-schwarze Würfel (Philip, 18.11.).
   const deko = newDekoModels();
   const asItems = (text: string): string =>
-    bundleDeko(text, deko).split('\n').map(kugelAsItem).map(withViewRange).join('\n');
+    text.split('\n').map(kugelAsItem).map(withViewRange).join('\n');
   [files, seasonFiles].forEach((map) =>
     Object.keys(map).forEach((k) => {
       map[k] = asItems(map[k] ?? '');

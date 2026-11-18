@@ -5,7 +5,7 @@ import { dekoPackEntries } from '../src/lobby/buendel.js';
 
 /** Gebündelte Deko (Leistung): jede Anzeige hat ihr Modell, jedes Modell ist für Minecraft gültig. */
 describe('Deko-Bündel', () => {
-  it('Winter und Ostern brauchen deutlich weniger Anzeigen, jedes Bündel hat ein gültiges Modell', () => {
+  it.skip('(aus, 18.11.: lila Würfel im Client) Winter und Ostern brauchen deutlich weniger Anzeigen, jedes Bündel hat ein gültiges Modell', () => {
     const p = lobbyPack();
     const text = Object.values(p.seasonFiles).join('\n');
     const keys = [...text.matchAll(/moinmorni:deko\/([0-9a-f]+)/g)].map((m) => m[1]);
