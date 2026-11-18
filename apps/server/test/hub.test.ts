@@ -216,6 +216,43 @@ describe('Hub', () => {
       .forEach((c) => expect(c.aliases).toEqual(listed.find((l) => l.name === c.name)?.aliases));
   });
 
+  test('/hilfe: Menü zum Anklicken je Sprache, Rundgang nur in der Lobby, Themen', async () => {
+    const { proxy } = await network();
+    const cmd = (uuid: string, command: string, ...args: string[]) =>
+      proxy.request({ t: 'command', uuid, command, args });
+    const all = (uuid: string) =>
+      proxy.received
+        .filter((m) => m.t === 'msg' && m['uuid'] === uuid)
+        .map((m) => String(m['text']))
+        .join('\n');
+
+    await cmd(PHILIP, 'hilfe');
+    await proxy.next('msg', (m) => m['uuid'] === PHILIP && String(m['text']).includes('/discord'));
+    const de = all(PHILIP);
+    expect(de).toContain("<click:run_command:'/rundgang'>");
+    expect(de).toContain("<click:run_command:'/hilfe modi'>");
+    expect(de).toContain('/befehle?spieler=Philip');
+    // Lena ist in Duels: kein Rundgang dort, sondern /lobby; englische Befehle.
+    await cmd(LENA, 'help');
+    await proxy.next('msg', (m) => m['uuid'] === LENA && String(m['text']).includes('/discord'));
+    const en = all(LENA);
+    expect(en).not.toContain('/tour');
+    expect(en).toContain("<click:run_command:'/lobby'>");
+    expect(en).toContain("<click:run_command:'/help modes'>");
+    await cmd(LENA, 'help', 'voice');
+    await proxy.next('msg', (m) => m['uuid'] === LENA && String(m['text']).includes("'/voice'"));
+    // Jeder Befehl, den das Menü zum Anklicken anbietet, gibt es wirklich.
+    const known = new Set(NETWORK_COMMANDS.flatMap((c) => [c.name, ...c.aliases]));
+    for (const topic of ['', 'modi', 'befehle', 'regeln', 'sprachchat', 'freunde']) {
+      await cmd(PHILIP, 'hilfe', ...(topic ? [topic] : []));
+    }
+    await cmd(LENA, 'help', 'friends');
+    await proxy.next('msg', (m) => m['uuid'] === LENA && String(m['text']).includes('/party'));
+    const clicked = [...(all(PHILIP) + all(LENA)).matchAll(/command:'\/([a-z]+)/g)].map((x) => x[1] ?? '');
+    expect(clicked.length).toBeGreaterThan(10);
+    clicked.forEach((c) => expect(known.has(c), c).toBe(true));
+  });
+
   test('veränderter oder wiederholter Rahmen → Verbindung zu', async () => {
     const lobby = await plugin('lobby', 'backend');
     lobby.send({ t: 'chat', uuid: PHILIP, text: 'hallo' });

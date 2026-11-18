@@ -801,6 +801,8 @@ paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, f
   Deko-Modelle (`lobby/buendel.ts`) ragen über den Block hinaus, die Vorgabe-UV lag außerhalb der Textur – der Client
   26.3 verwarf die Modelle („Unable to bake item model“, lila-schwarze Würfel im Winter); jetzt feste UV 0–16 je Fläche.
 
+- 18.11.: **/hilfe im Spiel** (Philip: „mach, dass dieses /hilfe geht“; Branch `claude/hilfe`): Netzwerk-Befehl `/hilfe` (`/help`) auf jedem Server über den Hub (`hub/help.ts`, `NETWORK_COMMANDS`) – Chat-Menü de/en zum Anklicken: Rundgang (nur in der Lobby, sonst `/lobby`), Themen `modi|befehle|regeln|sprachchat|freunde` (en `modes|commands|rules|voice|friends`, Tab-Vorschläge), Links zur Hilfe-Seite und zu `/befehle?spieler=<name>`, `/discord` für Tickets. Velocity beantwortet ihn vor Paper; der Alias `help` fällt wie alle Aliase aus dem Befehlsbaum (damit auch Papers eigenes /help). Rundgang geprüft: nennt nur `/hilfe` und `/tour` – gab es `/hilfe` vorher nicht, jetzt schon. Befehle- und Hilfe-Seite nennen `/hilfe`. Tests: Hub-Test (jeder anklickbare Befehl steht in `NETWORK_COMMANDS`), 37 Hub-, 132 shared-Tests. Nicht echt mit Minecraft geprüft.
+
 ## Offen
 
 - **Leistung (17.11.):** Im Winter ~6 600 Anzeige-Wesen (davon ~2 200 Girlanden-Teile an den Ständen, 660 am
