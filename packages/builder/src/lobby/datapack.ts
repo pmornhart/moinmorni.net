@@ -94,6 +94,19 @@ export function forceloadCommands(
   );
 }
 
+/**
+ * Welt der Lobby: leer (Philip, 18.11.: hinter dem Bergkranz soll nichts zu sehen sein). Den Boden baut der Bauplan
+ * selbst (`clearCommands`: Stein, Erde, Gras im ganzen Gelände) – außerhalb bleibt Leere. Gilt nur für neue Welten;
+ * bestehende räumt das Lobby-Plugin einmal leer (`LobbyVoid.java`).
+ */
+export const LOBBY_GENERATOR = {
+  layers: [{ block: 'minecraft:air', height: 1 }],
+  biome: 'minecraft:the_void',
+  features: false,
+  lakes: false,
+  structure_overrides: [],
+} as const;
+
 /** Fläche auf die flache Grundwelt zurücksetzen (Stein, Erde, Gras auf 64, darüber Luft). */
 export function clearCommands(cx: number, cz: number, radius = RADIUS): string[] {
   const chunks = (v: number): number[] => {
@@ -262,8 +275,7 @@ export function lobbyPack(): LobbyPack {
   // Danach kleine Teile nur so weit zeichnen, wie man sie sieht (deko.ts, `withViewRange`).
   // Bündeln (buendel.ts) ist aus: im echten Client lila-schwarze Würfel (Philip, 18.11.).
   const deko = newDekoModels();
-  const asItems = (text: string): string =>
-    text.split('\n').map(kugelAsItem).map(withViewRange).join('\n');
+  const asItems = (text: string): string => text.split('\n').map(kugelAsItem).map(withViewRange).join('\n');
   [files, seasonFiles].forEach((map) =>
     Object.keys(map).forEach((k) => {
       map[k] = asItems(map[k] ?? '');

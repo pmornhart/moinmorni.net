@@ -73,6 +73,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
     /** Tageszeit der Lobby (wie in echt) – nur aktiv, wenn der Hub Lobby-Einstellungen schickt. */
     private LobbyClock clock;
     private LobbyWinter winter;
+    private final LobbyVoid lobbyVoid = new LobbyVoid(this);
     private LobbySportStand sportStand;
 
     /** Wartungs-Lobby (Leiste, Aushang, Sprung-Parcours, Schutz) – nur auf dem Server „wartung“. */
@@ -298,6 +299,7 @@ public final class PaperPlugin extends JavaPlugin implements Listener {
                 sportStand.onSettings(m);
                 clock.onSettings(m);
                 winter.onSettings(m);
+                getServer().getScheduler().runTask(this, lobbyVoid::start);
             }
             case "jail" -> jail.onState(m);
             case "wartung" -> wartung.onState(m);

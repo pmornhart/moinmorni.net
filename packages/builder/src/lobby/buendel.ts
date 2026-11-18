@@ -95,6 +95,26 @@ function rot(q: readonly number[], v: V): V {
   ];
 }
 
+/**
+ * Lässt sich die Drehung im Modell genau nachbauen? Ein Modell-Teil dreht nur um eine Achse in 22,5°-Schritten (mit
+ * Vierteldrehungen über getauschte Maße). Alles andere bleibt eine eigene Anzeige – sonst sähe die Deko anders aus.
+ */
+const EPS = 1e-3;
+export function exact(q: readonly number[]): boolean {
+  const comp = [q[0] ?? 0, q[1] ?? 0, q[2] ?? 0].map(Math.abs);
+  const big = comp.filter((c) => c > EPS);
+  if (big.length === 0) return true;
+  if (big.length > 1) return false;
+  const i = comp.indexOf(Math.max(...comp));
+  const deg = (2 * Math.atan2([q[0], q[1], q[2]][i] ?? 0, q[3] ?? 1) * 180) / Math.PI;
+  const steps = deg / 22.5;
+  return Math.abs(steps - Math.round(steps)) < EPS * 10;
+}
+
+/** Liegt ein Teil ganz im Bereich, den Minecraft-Modelle erlauben (−16…32 Pixel)? Sonst nicht bündeln. */
+const fits = (e: Record<string, unknown>): boolean =>
+  [...(e['from'] as number[]), ...(e['to'] as number[])].every((v) => v > -16 + EPS && v < 32 - EPS);
+
 interface Part {
   readonly center: V;
   readonly block: string;
@@ -154,6 +174,7 @@ export function bundleDeko(text: string, into: DekoModels): string {
     const scale = nums(sc ?? '') as V;
     if (Math.max(...scale.map(Math.abs)) > MAX_PART || !textureOf(block ?? '')) return;
     const quat = nums(q ?? '');
+    if (!exact(quat)) return;
     const half = rot(quat, [scale[0] / 2, scale[1] / 2, scale[2] / 2]);
     const tr = nums(t ?? '');
     const center: V = [0, 1, 2].map((k) => Number([x, y, z][k]) + (tr[k] ?? 0) + (half[k] ?? 0)) as V;
@@ -168,8 +189,13 @@ export function bundleDeko(text: string, into: DekoModels): string {
   });
   const out: (string | null)[] = [...lines];
   groups.forEach((g) => {
-    if (g.parts.length < MIN_GROUP) return;
     const mid = g.parts[0]!.center.map((v) => (Math.floor(v / CELL) + 0.5) * CELL) as V;
+    // Was über den Rand des Modells ragt, bleibt eine eigene Anzeige.
+    const keep = g.parts.map((p) => fits(element(p, mid, 0, false)));
+    g.idx = g.idx.filter((_, k) => keep[k]);
+    g.parts = g.parts.filter((_, k) => keep[k]);
+    if (g.parts.length < MIN_GROUP) return;
+    g.first = g.idx[0]!;
     const blocks = [...new Set(g.parts.map((p) => p.block))].sort();
     const tinted = g.parts.some((p) => TINTED.has(p.block));
     const textures: Record<string, string> = { particle: textureOf(blocks[0]!)! };
