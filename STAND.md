@@ -791,6 +791,16 @@ paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, f
   Sichtweite, Netzwerk-Paket, Saisons, Bauplan-Prüfung), Typen. **Nicht echt geprüft** (kein Client, sparsam):
   Aussehen der Bündel, `light_emission` und Drehungen im Client 26.3.
 
+- 18.11. nachts: **Trailer „wie echte Spieler“ – Bausteine** (Philip: „schöne Trailer, als würden echte Menschen spielen“; Branch `claude/trailer-echt`): `tools/trailer/mensch.py` (über `drehbuch.py` als `D.mensch`): menschlich laufen (Umwege, Sprints, Pausen mit Umschauen, Übermut-Sprünge), Gruppen (einer führt, andere folgen mit Abstand und schauen sich an), Chat mit Tipp-Pause und Füllwörtern, Gruß, kleine Fehler (Sprung zu kurz, Ärger, nochmal), Ich-Sicht-Tasten mit Sprint-Stößen; feste Startwerte je Einstellung. Spawn-Drehbuch nutzt sie (Ankunft, Biergarten). **Neu gedreht noch nichts** – Test-Server des Spawn-Trailers war nicht mehr da, Neuaufbau und Dreh aller 17 Trailer offen.
+
+- 18.11. früh: **Spawn-Trailer wie echte Spieler** (Branch `claude/trailer-echt`): alle Einstellungen von
+  `tools/trailer/trailers/spawn.py` nutzen jetzt `D.mensch` (Umwege, Sprint, Pausen, Gruppen, Chat mit Tipp-Pause,
+  Gruß; Ich-Sicht mit Sprint). Neu gedreht auf eigenem Test-Server (Paper 26.1.2 + Netzwerk-Plugin + Via, Test-Hub,
+  Lobby-Selbstbau, Ersatz-Modi und -Proxy, echter Client 26.3 mit Netzwerk-Paket), Video nur lokal
+  (`~/mm-cache/trailer/spawn/MoinMorni-Trailer-Spawn-echt.mp4`). **Behoben** (beim Dreh gefunden): gebündelte
+  Deko-Modelle (`lobby/buendel.ts`) ragen über den Block hinaus, die Vorgabe-UV lag außerhalb der Textur – der Client
+  26.3 verwarf die Modelle („Unable to bake item model“, lila-schwarze Würfel im Winter); jetzt feste UV 0–16 je Fläche.
+
 ## Offen
 
 - **Leistung (17.11.):** Im Winter ~6 600 Anzeige-Wesen (davon ~2 200 Girlanden-Teile an den Ständen, 660 am

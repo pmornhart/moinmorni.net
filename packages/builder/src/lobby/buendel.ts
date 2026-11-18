@@ -121,7 +121,9 @@ function element(p: Part, mid: V, ti: number, tinted: boolean): Record<string, u
   const clamp = (n: number): number => Math.min(32, Math.max(-16, Number(n.toFixed(3))));
   const from = c.map((v, k) => clamp(v - ((s[k] ?? 0) * PX) / 2));
   const to = c.map((v, k) => clamp(v + ((s[k] ?? 0) * PX) / 2));
-  const face = { texture: `#t${ti}`, ...(tinted ? { tintindex: 0 } : {}) };
+  // Feste UV über die ganze Textur: Teile reichen über den Block hinaus (−16…32), die Vorgabe-UV aus der Lage läge
+  // dann außerhalb des 16×16-Bilds – Minecraft 26.x verwirft das ganze Modell („Unable to bake item model“).
+  const face = { texture: `#t${ti}`, uv: [0, 0, 16, 16], ...(tinted ? { tintindex: 0 } : {}) };
   return {
     from,
     to,

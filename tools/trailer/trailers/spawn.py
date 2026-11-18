@@ -125,13 +125,16 @@ def _ankunft():
     """Hinter den Neuen her vom Ankunftsplatz auf den Dorfmarkt mit Maibaum, das Schloss im Hintergrund."""
     cam = [{'p': [0.5, 67.6, 35.0], 'look': [0.0, 76.0, -40.0], 't': 0},
            {'p': [0.5, 67.4, 25.0], 'look': [0.0, 77.0, -60.0], 't': 6.0, 'ease': 1}]
-    ev = [act(0.1, f'{RESI} geh -2.5 {Y} 14.5 blick=0.5,70,0.5'), act(0.3, f'{SEPPL} geh 3.0 {Y} 15.5'),
-          act(0.5, f'{ELLA} geh -0.5 {Y} 18.0'), act(4.0, f'{SEPPL} gruss 2')]
+    M = D.mensch
+    ev = M.merge(M.gruppe(RESI, [SEPPL, ELLA], [(-1.5, 27.5), (-2.5, 14.5)], y=Y, seed='ankunft',
+                          plaudern=[(SEPPL, 'boah ist das schön hier'), (ELLA, 'wo gehts zu duels?')]),
+                 M.gruss(SEPPL, 4.0, 'hey'))
     return {'camera': cam, 'events': ev}
 
 
 def prep_figuren():
-    park(RESI, SEPPL, ELLA, MATZE, LENA, LOTTE)
+    park(RESI, SEPPL, ELLA, LENA, LOTTE)
+    tp(MATZE, -11.0, -13.0, 0)
 
 
 def _figuren():
@@ -139,7 +142,11 @@ def _figuren():
     cam = [{'p': [-8.5, 66.3, -8.5], 'look': [-13.5, 67.0, -7.0], 't': 0},
            {'p': [-8.0, 66.4, 0.5], 'look': [-14.0, 67.0, 0.5], 't': 3.0},
            {'p': [-8.5, 66.3, 9.5], 'look': [-13.5, 67.0, 8.0], 't': 3.0, 'ease': 1}]
-    return {'camera': cam}
+    M = D.mensch
+    ev = M.merge(M.laufen(MATZE, [(-11.0, -13.0), (-11.0, -1.0), (-11.5, 11.0)], y=Y, seed='fig-matze', pausen=0.6,
+                          umweg=0.6, blick='-14,67,8'),
+                 M.chat([(MATZE, 'welcher modus is am besten?')], 2.0, seed='fig'))
+    return {'camera': cam, 'events': ev}
 
 
 def _klick():
@@ -147,7 +154,8 @@ def _klick():
     return {'gamemode': 'adventure', 'aim': 40,
             'start': {'p': [8.5, Y, -8.8], 'yaw': 180, 'pitch': 0},
             'look': [{'at': 0.0, 'target': [8.5, 66.2, -13.5]}],
-            'keys': [{'at': 0.05, 'key': '5', 'dur': 0.05}, {'at': 0.2, 'key': 'w', 'dur': 0.6}],
+            'keys': [{'at': 0.05, 'key': '5', 'dur': 0.05}] + D.mensch.ich_laufen(0.2, 0.6, seed='klick', sprint=0,
+                                                                                   springen=0),
             'clicks': [{'at': 1.3, 'button': 3, 'dur': 0.4}]}
 
 
@@ -161,8 +169,11 @@ def _biergarten():
     """Biergarten unter den Kastanien: Wirt, Gäste mit Steinkrügen, Leute schlendern durch."""
     cam = [{'p': [30.0, 67.0, -12.0], 'look': [42.0, 65.6, -1.0], 't': 0},
            {'p': [36.0, 66.7, -11.5], 'look': [44.0, 65.6, 2.5], 't': 6.0, 'ease': 1}]
-    ev = [act(0.1, f'{ELLA} geh 44.5 {Y} -3.5'), act(0.3, f'{MATZE} geh 45.5 {Y} -1.0'),
-          act(0.2, f'{LENA} geh 37.5 {Y} 2.5'), act(3.6, f'{ELLA} gruss 1')]
+    M = D.mensch
+    ev = M.merge(M.laufen(ELLA, [(40.5, 2.5), (44.5, -3.5)], y=Y, seed='bg-ella'),
+                 M.laufen(MATZE, [(41.5, 4.0), (45.5, -1.0)], y=Y, seed='bg-matze', sprint=0.6),
+                 M.laufen(LENA, [(33.5, 5.5), (37.5, 2.5)], y=Y, seed='bg-lena'),
+                 M.chat([(MATZE, 'erstmal ne brezn'), (LENA, 'prost'), (ELLA, 'hahaha')], 1.0, seed='bg'))
     return {'camera': cam, 'events': ev}
 
 
@@ -176,13 +187,16 @@ def _schlossmarkt():
     """Marktzeile am Schlossberg: Bootshaus der Sommerspiele (Sport-Stand) und die Stände daneben."""
     cam = [{'p': [-12.0, 67.6, -21.0], 'look': [-26.0, 66.6, -31.5], 't': 0},
            {'p': [-19.0, 67.0, -23.5], 'look': [-29.0, 66.6, -32.0], 't': 6.0, 'ease': 1}]
-    ev = [act(0.1, f'{RESI} geh -24.5 {Y} -27.0 blick=-25.5,66.5,-31.5'), act(0.4, f'{SEPPL} geh -31.5 {Y} -27.5')]
+    M = D.mensch
+    ev = M.merge(M.laufen(RESI, [(-15.5, -24.0), (-24.5, -27.0)], y=Y, seed='sm-resi', blick='-25.5,66.5,-31.5'),
+                 M.laufen(SEPPL, [(-17.5, -26.5), (-31.5, -27.5)], t0=0.4, y=Y, seed='sm-seppl', sprint=0.5),
+                 M.chat([(SEPPL, 'sommerspiele?? ich will rudern'), (RESI, 'gleich, erst schauen')], 1.2, seed='sm'))
     return {'camera': cam, 'events': ev}
 
 
 def prep_treppe():
     park(RESI, SEPPL)
-    for i, (n, x) in enumerate(((ELLA, -0.5), (MATZE, 1.5), (LENA, 0.5))):
+    for i, (n, x) in enumerate(((ELLA, -0.5), (LENA, 0.5), (MATZE, 1.5))):
         tp(n, x, -36.0 - 1.0 * i, 180, 70.0)
     time.sleep(1)
 
@@ -193,7 +207,10 @@ def _treppe():
            {'p': [2.6, 67.6, -31.0], 'look': [0.5, 74.0, -52.0], 't': 1.8},
            {'p': [2.6, 72.5, -38.0], 'look': [0.5, 82.0, -62.0], 't': 1.6},
            {'p': [0.5, 81.5, -48.5], 'look': [0.5, 94.0, -78.0], 't': 2.2, 'ease': 1}]
-    ev = [act(0.1, f'{n} geh {x} 92 -72') for n, x in ((ELLA, -0.5), (MATZE, 1.5), (LENA, 0.5))]
+    M = D.mensch  # einer führt, zwei folgen, Matze rennt mit Abstand vorbei (nicht vor die Kamera)
+    ev = M.merge(M.gruppe(ELLA, [LENA], [(-0.5, 70.0, -36.0), (-0.5, 92, -72)], seed='treppe',
+                          plaudern=[(LENA, 'wow die treppe'), (ELLA, 'komm schon')]),
+                 [act(1.5, f'{MATZE} lauf 1.5 92 -72')])
     return {'camera': cam, 'events': ev}
 
 
@@ -207,7 +224,7 @@ def _launchpad():
     """Auf das Launchpad am Schlossmarkt – und in hohem Bogen die Schlosstreppe hinauf."""
     cam = [{'p': [-25.0, 69.0, -13.0], 'look': [-11.0, 69.0, -30.0], 't': 0},
            {'p': [-24.0, 71.5, -15.0], 'look': [-6.0, 76.0, -40.0], 't': 6.0, 'ease': 1}]
-    ev = [act(0.2, f'{LOTTE} renne -13.5 -26.5 1.5')]
+    ev = [act(0.2, f'{LOTTE} chat juhuuu'), act(0.6, f'{LOTTE} renne -13.5 -26.5 1.5')]
     return {'camera': cam, 'events': ev}
 
 
@@ -221,19 +238,27 @@ def _brunnen():
     cam = [{'p': [fx + 10.0, fy + 3.5, fz + 7.0], 'look': [fx, fy + 3.0, fz], 't': 0},
            {'p': [fx + 2.0, fy + 3.0, fz + 11.0], 'look': [fx, fy + 3.5, fz], 't': 3.0},
            {'p': [fx - 8.0, fy + 3.5, fz + 8.0], 'look': [fx, fy + 3.5, fz], 't': 3.0, 'ease': 1}]
-    ev = [act(0.2, f'{RESI} geh {fx + 3} {fy} {fz + 6} blick={fx},{fy + 3},{fz}')]
+    M = D.mensch
+    ev = M.merge(M.laufen(RESI, [(fx + 6, fy, fz + 3), (fx + 3, fy, fz + 6)], y=fy, seed='br', blick=f'{fx},{fy + 3},{fz}'),
+                 M.chat([(RESI, 'der brunnen glitzert ja')], 1.8, seed='br'), M.gruss(RESI, 3.5))
     return {'camera': cam, 'events': ev}
 
 
 def prep_festsaal():
     park(RESI)
+    tp(SEPPL, -4.5, -131.0, 180, 96)
+    tp(ELLA, 5.5, -132.0, 180, 96)
 
 
 def _festsaal():
     cam = [{'p': [-8.0, 96.0, -130.5], 'look': [0.5, 96.8, -137.0], 't': 0},
            {'p': [0.5, 96.3, -129.5], 'look': [0.5, 97.5, -138.0], 't': 3.0},
            {'p': [9.0, 96.0, -130.5], 'look': [0.5, 97.0, -137.5], 't': 3.0, 'ease': 1}]
-    return {'camera': cam}
+    M = D.mensch
+    ev = M.merge(M.laufen(SEPPL, [(-4.5, 96, -131.0), (-1.5, 96, -137.0)], seed='fs-seppl', blick='0.5,99,-138'),
+                 M.laufen(ELLA, [(5.5, 96, -132.0), (2.5, 96, -136.0)], t0=0.5, seed='fs-ella'),
+                 M.chat([(ELLA, 'hier könnt man heiraten')], 2.0, seed='fs'))
+    return {'camera': cam, 'events': ev}
 
 
 def prep_jnr():
@@ -266,8 +291,8 @@ def _doppelsprung():
     return {'gamemode': 'adventure', 'aim': 40,
             'start': {'p': [0.5, Y, 24.0], 'yaw': 180, 'pitch': -8},
             'look': [{'at': 0.0, 'yaw': 180, 'pitch': -10}],
-            'keys': [{'at': 0.1, 'key': 'w', 'dur': 2.0}, {'at': 0.3, 'key': 'space', 'dur': 0.08},
-                     {'at': 0.5, 'key': 'space', 'dur': 0.08}]}
+            'keys': [{'at': 0.1, 'key': 'w', 'dur': 2.0}, {'at': 0.1, 'key': 'ctrl', 'dur': 2.0},
+                     {'at': 0.3, 'key': 'space', 'dur': 0.08}, {'at': 0.5, 'key': 'space', 'dur': 0.08}]}
 
 
 def _kompass():
@@ -283,11 +308,17 @@ def _saison():
     """Gleiche Fahrt in jeder Saison: der Maibaum-Platz als Winter-Wunderland, Wiesn, Ostern, Halloween."""
     cam = [{'p': [-5.0, 75.0, 26.0], 'look': [0.5, 73.0, 0.5], 't': 0},
            {'p': [-13.0, 75.5, 22.0], 'look': [0.5, 73.5, 0.5], 't': 6.0, 'ease': 1}]
-    return {'camera': cam}
+    M = D.mensch
+    ev = M.merge(M.gruppe(LENA, [LOTTE], [(4.5, 16.0), (6.5, 6.0)], y=Y, seed='saison'),
+                 M.laufen(MATZE, [(-6.5, 12.0), (-4.5, 5.0)], y=Y, seed='saison-m', sprint=0.6))
+    return {'camera': cam, 'events': ev}
 
 
 def prep_saison():
     daytime('day')
+    tp(LENA, 4.5, 16.0, 180)
+    tp(LOTTE, 5.5, 18.0, 180)
+    tp(MATZE, -6.5, 12.0, 180)
 
 
 def prep_nacht():
