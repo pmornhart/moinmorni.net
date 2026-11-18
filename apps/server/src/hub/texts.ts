@@ -123,6 +123,10 @@ const TEXTS = {
     de: '<gold><bold>Die Lobby startet gerade neu</bold></gold>\n\n<gray>Gleich ist sie wieder da – versuch es in ein paar Sekunden nochmal.',
     en: '<gold><bold>The lobby is restarting</bold></gold>\n\n<gray>It’ll be back in a moment – try again in a few seconds.',
   },
+  'wartung.building': {
+    de: `${P}<gold>Die Lobby wird gerade gebaut</gold> <gray>– du wartest kurz in der Wartungs-Lobby, danach geht’s von selbst zurück.`,
+    en: `${P}<gold>The lobby is being built</gold> <gray>– you’ll wait in the maintenance lobby for a moment, then go back automatically.`,
+  },
   'wartung.moving': {
     de: `${P}<gold>Die Wartung beginnt</gold> <gray>– du wartest in der Wartungs-Lobby, bis wir fertig sind{until}.`,
     en: `${P}<gold>Maintenance is starting</gold> <gray>– you’ll wait in the maintenance lobby until we’re done{until}.`,
