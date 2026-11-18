@@ -451,12 +451,14 @@ export function palaceWing(c: Canvas, s: WingSpec): void {
   range(0, w).forEach((u) => {
     // Pilaster im Takt, aber keiner vor der Tür – dafür rahmen zwei die Tür ein
     const fromDoor = Math.abs(u - door);
-    const pilaster = (u % D.pilasterGap === 0 && fromDoor > 1) || fromDoor === 2;
+    // Takt ab der Tür nach beiden Seiten gleich (sonst verrutschen die Fenster hinter der Tür)
+    const beat = (fromDoor - 2) % D.pilasterGap;
+    const pilaster = (fromDoor >= 2 && beat === 0) || u === 0 || u === w;
     if (pilaster) f.fill(u, 2, -1, u, top, -1, 'quartz_pillar');
     range(0, s.storeys - 1).forEach((st) => {
       const wy = st * D.storey + D.centre;
       const inDoor = st === 0 && fromDoor <= 1;
-      if (!pilaster && !inDoor && u % D.pilasterGap === 2) {
+      if (!pilaster && !inDoor && fromDoor >= 2 && beat === D.pilasterGap / 2) {
         f.fill(u, wy, 0, u, wy + 2, 0, pane);
         f.set(u, wy + D.centre, -1, 'chiseled_quartz_block');
         f.set(u, wy - 1, -1, stairs('quartz', f.dir('back'), 'top'));
