@@ -458,7 +458,7 @@ export function palaceWing(c: Canvas, s: WingSpec): void {
       const inDoor = st === 0 && fromDoor <= 1;
       if (!pilaster && !inDoor && u % D.pilasterGap === 2) {
         f.fill(u, wy, 0, u, wy + 2, 0, pane);
-        f.set(u, wy + D.centre, -1, 'gold_block');
+        f.set(u, wy + D.centre, -1, 'chiseled_quartz_block');
         f.set(u, wy - 1, -1, stairs('quartz', f.dir('back'), 'top'));
       }
     });
@@ -481,8 +481,8 @@ export function palaceWing(c: Canvas, s: WingSpec): void {
   });
   if (s.interior) hollowWing(c, f, s.interior, w, d, top);
   f.fill(door - 1, 2, 0, door + 1, 5, 0, 'air');
-  f.fill(door - 2, 6, -1, door + 2, 6, -1, 'gold_block');
-  f.set(door, 7, -1, 'emerald_block');
+  f.fill(door - 2, 6, -1, door + 2, 6, -1, 'chiseled_quartz_block');
+  f.set(door, 7, -1, 'gold_block');
   if (s.interior) wingEntrance(f, door, s.interior);
 }
 
