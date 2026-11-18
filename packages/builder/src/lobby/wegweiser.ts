@@ -75,7 +75,7 @@ function arm(cx: number, cz: number, y: number, a: Arm): string[] {
   const texts = sides.map((side) => {
     const [sx, sz] = STEP[side];
     const off = BOARD.thick / 2 + 0.012;
-    return label(a, side, [mx + sx * off, y - 0.055, mz + sz * off]);
+    return label(a, side, [mx + sx * off, y - 0.035, mz + sz * off]);
   });
   return [...board, ...texts];
 }
