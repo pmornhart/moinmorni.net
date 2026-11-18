@@ -840,6 +840,31 @@ export const LOBBY_AREA: SettingArea = {
           ),
           command: '/lobby bewohner <zahl>',
         },
+        {
+          key: 'doors',
+          type: 'boolean',
+          default: true,
+          label: t('Türen und Falltüren benutzbar', 'Doors and trapdoors usable'),
+          help: t(
+            'Spieler dürfen Türen, Falltüren, Zauntore, Hebel und Knöpfe in der Lobby öffnen und schließen. Bauen und Abbauen bleibt gesperrt.',
+            'Players may open and close doors, trapdoors, fence gates, levers and buttons in the lobby. Building and breaking stays blocked.',
+          ),
+          command: '/lobby tueren an|aus',
+        },
+        {
+          key: 'doorsResetSeconds',
+          type: 'number',
+          default: 30,
+          min: 0,
+          max: 3600,
+          unit: t('Sekunden', 'seconds'),
+          label: t('Türen von selbst zurück nach', 'Doors reset after'),
+          help: t(
+            'Ist so lange niemand in der Nähe, geht jede bewegte Tür oder Falltür wieder in den Zustand wie gebaut (0 = nie).',
+            'When nobody is near for this long, every moved door or trapdoor returns to how it was built (0 = never).',
+          ),
+          command: '/lobby tueren zurueck <sekunden>',
+        },
       ],
     },
     {

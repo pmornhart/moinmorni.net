@@ -135,6 +135,8 @@ final class LobbyFeatures implements Listener {
     /** Jump and Run hoch über dem Dorf und Doppelsprung überall. */
     private final LobbyJump jump;
     private final LobbyDoubleJump doubleJump;
+    /** Türen, Falltüren, Tore, Hebel und Knöpfe benutzen (und von selbst zurück). */
+    private final LobbyDoors doors;
 
     /** Sitzt jemand im Gefängnis? Dann kein Menü, kein Rundgang, kein Jump and Run (setzt {@link LobbyJail}). */
     private java.util.function.Predicate<UUID> jailed = id -> false;
@@ -152,6 +154,7 @@ final class LobbyFeatures implements Listener {
                 p -> jailed.test(p.getUniqueId()) || tours.containsKey(p.getUniqueId()),
                 p -> jump.running(p.getUniqueId()), langOf, dataDir);
         this.jump.setChanged(this::equipJump);
+        this.doors = new LobbyDoors(plugin);
     }
 
     /** Wer in der Lobby fliegen darf (Rang-Recht „In der Lobby fliegen“, ab VIP). */
@@ -217,6 +220,7 @@ final class LobbyFeatures implements Listener {
         loadSeen();
         jump.start();
         doubleJump.start();
+        doors.start();
     }
 
     private boolean active() {
@@ -263,6 +267,7 @@ final class LobbyFeatures implements Listener {
         Bukkit.getScheduler().runTask(plugin, () -> apply(next));
         jump.onSettings(m);
         doubleJump.onSettings(m);
+        doors.onSettings(m);
     }
 
     private static View view(JsonObject o) {
@@ -652,7 +657,8 @@ final class LobbyFeatures implements Listener {
         }
         String id = lobbyItem(event.getItem());
         // Rechtsklick auf eine Tür, ein Tor oder eine Falltür öffnet sie – auch mit Kompass oder Rundgang in der Hand.
-        if (id != null && event.getAction() == Action.RIGHT_CLICK_BLOCK && opensByHand(block)) {
+        if (id != null && event.getAction() == Action.RIGHT_CLICK_BLOCK && opensByHand(block)
+                && doors.allows(block.getType())) {
             return;
         }
         if (MENU.equals(id)) {
@@ -672,17 +678,15 @@ final class LobbyFeatures implements Listener {
             }
             return;
         }
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && block != null && !allowedUse(block.getType())
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && block != null && !allowedUse(block.getType(), doors)
                 && p.getGameMode() != GameMode.CREATIVE) {
             event.setCancelled(true);
         }
     }
 
     /** Türen, Falltüren, Tore und Knöpfe darf jeder benutzen; Kisten, Öfen, Betten, Kuchen usw. nicht. */
-    private static boolean allowedUse(Material type) {
-        String name = type.name();
-        return !type.isInteractable() || name.endsWith("_DOOR") || name.endsWith("_TRAPDOOR")
-                || name.endsWith("_FENCE_GATE") || name.endsWith("_BUTTON");
+    private static boolean allowedUse(Material type, LobbyDoors doors) {
+        return !type.isInteractable() || doors.allows(type);
     }
 
     private void launch(Player p, Block plate) {

@@ -687,6 +687,8 @@ export function createHub(options: HubOptions): Hub {
       announcementSeconds: Number(l['announcementSeconds']),
       season: String(l['season'] ?? 'none'),
       launchpads: l['launchpads'] === true,
+      // Ältere Einstellungen ohne den Schalter: Türen benutzbar (Standard).
+      doors: { on: l['doors'] !== false, resetSeconds: Number(l['doorsResetSeconds'] ?? 30) },
       jumpAndRun: {
         on: l['jumpAndRun'] === true,
         harderFrom: Number(l['jumpHarderFrom']),

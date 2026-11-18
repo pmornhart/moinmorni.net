@@ -802,6 +802,26 @@ paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, f
   26.3 verwarf die Modelle („Unable to bake item model“, lila-schwarze Würfel im Winter); jetzt feste UV 0–16 je Fläche.
 
 - 18.11.: **/hilfe im Spiel** (Philip: „mach, dass dieses /hilfe geht“; Branch `claude/hilfe`): Netzwerk-Befehl `/hilfe` (`/help`) auf jedem Server über den Hub (`hub/help.ts`, `NETWORK_COMMANDS`) – Chat-Menü de/en zum Anklicken: Rundgang (nur in der Lobby, sonst `/lobby`), Themen `modi|befehle|regeln|sprachchat|freunde` (en `modes|commands|rules|voice|friends`, Tab-Vorschläge), Links zur Hilfe-Seite und zu `/befehle?spieler=<name>`, `/discord` für Tickets. Velocity beantwortet ihn vor Paper; der Alias `help` fällt wie alle Aliase aus dem Befehlsbaum (damit auch Papers eigenes /help). Rundgang geprüft: nennt nur `/hilfe` und `/tour` – gab es `/hilfe` vorher nicht, jetzt schon. Befehle- und Hilfe-Seite nennen `/hilfe`. Tests: Hub-Test (jeder anklickbare Befehl steht in `NETWORK_COMMANDS`), 37 Hub-, 132 shared-Tests. Nicht echt mit Minecraft geprüft.
+- 18.11.: **Türen benutzbar + Server zurücksetzen** (Branch `claude/reset-falltueren`): **Lobby** – Türen, Falltüren,
+  Zauntore, Hebel und Knöpfe darf jeder öffnen/schließen (Eisentüren nicht, Bauen/Abbauen bleibt gesperrt; Kompass in
+  der Hand öffnet die Tür statt des Menüs); ist 30 s niemand näher als 8 Blöcke, geht jeder bewegte Block (Türen beide
+  Hälften) ohne Blockupdates zurück in den Bau-Zustand, nur wenn dort noch derselbe Block steht (`paper/LobbyDoors.java`).
+  Panel Lobby → Spaß: „Türen und Falltüren benutzbar“ (an) und „Türen von selbst zurück nach“ (30 s, 0 = nie), im
+  Spiel `/lobby tueren an|aus`, `/lobby tueren zurueck <sekunden>`; Hub schickt `doors{on, resetSeconds}` in
+  `lobby-settings`. **Server zurücksetzen** (Panel → Server → „Zurücksetzen“, nur Owner, `panel/reset-routes.ts`,
+  `network/reset.ts`): je Server (Lobby, Wartungs-Lobby, Bau, jeder Modus) oder alle zusammen Welt, Spielstand oder
+  beides; Bestätigung durch Eintippen des Namens bzw. „ALLE“. Ablauf: Sicherung im Motor (muss klappen, sonst bleibt
+  der Server unberührt) → Neustart-Logik (`restart-now.ts`, neu `Target.whileStopped`: stoppen, löschen, starten;
+  Countdown, Spieler in Lobby/Wartungs-Lobby, Reihenfolge wie beim Neustart, dabei darf auch die Wartungs-Lobby mit) →
+  Löschen über den Papierkorb des Motors (7 Tage). Welt = jeder Ordner mit `level.dat` + Bau-Merker (`bau.yml`,
+  `welt.yml`, `lobby-world.version/.target`, `winter-biome.txt` → Lobby/Wartungs-Lobby/Modi bauen sich neu);
+  Spielstand = `playerdata/stats/advancements` jeder Welt, Spielerdaten und Bestenlisten der Modus-Plugins (`spieler`,
+  `geister`, `rangliste.yml`, `bestenliste.yml`, `mornismp.db`, MorniCraft `players`/`clans.yml`/`graves.yml`/`jail.yml`),
+  `jumpandrun.yml`/`wartung-parkour.yml`, `mode_stats`/`mode_players` des Modus. Configs, Ränge, Strafen, Einstellungen,
+  Team bleiben; Namen strikt (keine `..`/Schrägstriche). Schlafende/ausgeschaltete Server werden nur gelöscht, nicht
+  geweckt. Tests: 90 JUnit (2 neu `LobbyDoorsTest`), 132 shared, 327 Server (8 neu `reset-routes.test.ts`, davon 4 gegen
+  den echten Motor: nur Owner, Bestätigung, Duels-Spielstand mit Sicherung, Bau-Welt), Typen, Web-Bau. **Nicht echt mit
+  Minecraft geprüft** (Türen und Zurücksetzen-Ablauf nur über Tests; Rechner knapp).
 
 ## Offen
 

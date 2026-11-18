@@ -2699,7 +2699,11 @@
     "wartung_no_restart": "Restarting isn’t possible right now.",
     "wartung_already_on": "Maintenance is already on.",
     "wartung_nothing": "Nothing is announced.",
-    "wartung_restarting": "The maintenance restart is running – maintenance ends by itself afterwards."
+    "wartung_restarting": "The maintenance restart is running – maintenance ends by itself afterwards.",
+    "reset_confirm": "Please type the name exactly (for several: ALLE).",
+    "reset_owner_only": "Only the owner may reset servers.",
+    "reset_busy": "A reset is already running – please wait.",
+    "reset_unknown_server": "This server is not part of the network."
   },
   "modeSettings": {
     "title": "Applies after the mode’s next restart",
@@ -2859,5 +2863,34 @@
     "changed_other": "{{count}} settings changed",
     "settings_one": "{{count}} setting",
     "settings_other": "{{count}} settings"
+  },
+  "resetDialog": {
+    "button": "Reset",
+    "title": "Reset servers",
+    "text": "New world, new progress or both – MoinMorni always makes a backup first. Owner only.",
+    "all": "All servers",
+    "what": "What should be new?",
+    "whats": {
+      "world": "World",
+      "progress": "Progress",
+      "both": "Both"
+    },
+    "whatsHint": {
+      "world": "The world is deleted and created anew on start. Lobby and maintenance lobby rebuild themselves.",
+      "progress": "Statistics, leaderboards and player data of the server or mode. The world stays.",
+      "both": "World and progress – like new."
+    },
+    "keeps": "Ranks, punishments, settings, team and plugin settings stay. Players get a countdown and go to the lobby. Deleted files stay in the trash for 7 days.",
+    "confirmLabel": "Type “{{word}}” to confirm",
+    "confirm": "Reset {{count}}",
+    "close": "Close",
+    "started": "Backup running – reset follows.",
+    "step": {
+      "backup": "Backup",
+      "waiting": "waiting",
+      "wiping": "wiping",
+      "done": "done",
+      "failed": "failed"
+    }
   }
 }
