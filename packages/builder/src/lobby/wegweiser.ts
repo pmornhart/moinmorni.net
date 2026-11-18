@@ -46,7 +46,13 @@ const READ_FROM: Readonly<Record<Facing, number>> = { south: 0, west: 90, north:
 function label(arm: Arm, side: Facing, at: Vec): string {
   const toRight = RIGHT_OF[OPPOSITE[side]] === arm.dir;
   const text = toRight ? `${arm.text}  →` : `←  ${arm.text}`;
-  return textSign(TAGS, at, READ_FROM[side], [{ text, color: 'white', bold: true }], TEXT);
+  // Die Ost-/West-Seite blieb im echten Client leer (Philip, 18.11.): zur Sicherheit auch in die Gegenrichtung –
+  // die falsch gedrehte Schrift zeigt ins Brett und bleibt unsichtbar.
+  const lines = [{ text, color: 'white', bold: true }];
+  return [
+    textSign(TAGS, at, READ_FROM[side], lines, TEXT),
+    textSign(TAGS, at, READ_FROM[OPPOSITE[side]], lines, TEXT),
+  ].join('\n');
 }
 
 /** Ein Pfeil-Brett am Pfosten (Mitte cx, cz) in Höhe y. */
@@ -77,7 +83,7 @@ function arm(cx: number, cz: number, y: number, a: Arm): string[] {
     const off = BOARD.thick / 2 + 0.012;
     return label(a, side, [mx + sx * off, y - 0.035, mz + sz * off]);
   });
-  return [...board, ...texts];
+  return [...board, ...texts.flatMap((t) => t.split('\n'))];
 }
 
 /** Wegweiser bei (x, z): Pfosten mit Laterne, Bretter von oben nach unten in der Reihenfolge von `arms`. */
