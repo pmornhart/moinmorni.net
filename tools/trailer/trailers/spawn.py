@@ -125,8 +125,10 @@ def _ankunft():
     """Hinter den Neuen her vom Ankunftsplatz auf den Dorfmarkt mit Maibaum, das Schloss im Hintergrund."""
     cam = [{'p': [0.5, 67.6, 35.0], 'look': [0.0, 76.0, -40.0], 't': 0},
            {'p': [0.5, 67.4, 25.0], 'look': [0.0, 77.0, -60.0], 't': 6.0, 'ease': 1}]
-    ev = [act(0.1, f'{RESI} geh -2.5 {Y} 14.5 blick=0.5,70,0.5'), act(0.3, f'{SEPPL} geh 3.0 {Y} 15.5'),
-          act(0.5, f'{ELLA} geh -0.5 {Y} 18.0'), act(4.0, f'{SEPPL} gruss 2')]
+    M = D.mensch
+    ev = M.merge(M.gruppe(RESI, [SEPPL, ELLA], [(-1.5, 27.5), (-2.5, 14.5)], y=Y, seed='ankunft',
+                          plaudern=[(SEPPL, 'boah ist das schön hier'), (ELLA, 'wo gehts zu duels?')]),
+                 M.gruss(SEPPL, 4.0, 'hey'))
     return {'camera': cam, 'events': ev}
 
 
@@ -161,8 +163,11 @@ def _biergarten():
     """Biergarten unter den Kastanien: Wirt, Gäste mit Steinkrügen, Leute schlendern durch."""
     cam = [{'p': [30.0, 67.0, -12.0], 'look': [42.0, 65.6, -1.0], 't': 0},
            {'p': [36.0, 66.7, -11.5], 'look': [44.0, 65.6, 2.5], 't': 6.0, 'ease': 1}]
-    ev = [act(0.1, f'{ELLA} geh 44.5 {Y} -3.5'), act(0.3, f'{MATZE} geh 45.5 {Y} -1.0'),
-          act(0.2, f'{LENA} geh 37.5 {Y} 2.5'), act(3.6, f'{ELLA} gruss 1')]
+    M = D.mensch
+    ev = M.merge(M.laufen(ELLA, [(40.5, 2.5), (44.5, -3.5)], y=Y, seed='bg-ella'),
+                 M.laufen(MATZE, [(41.5, 4.0), (45.5, -1.0)], y=Y, seed='bg-matze', sprint=0.6),
+                 M.laufen(LENA, [(33.5, 5.5), (37.5, 2.5)], y=Y, seed='bg-lena'),
+                 M.chat([(MATZE, 'erstmal ne brezn'), (LENA, 'prost'), (ELLA, 'hahaha')], 1.0, seed='bg'))
     return {'camera': cam, 'events': ev}
 
 

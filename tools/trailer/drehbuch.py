@@ -16,6 +16,7 @@ import copy, json, math, os, re, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import make  # noqa: E402
+import mensch  # noqa: E402,F401  (Bausteine „wie echte Menschen“: D.mensch.laufen, gruppe, chat, verfehlen …)
 
 _rc = None
 

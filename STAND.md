@@ -791,6 +791,8 @@ paket-angebot` an; der Provisioner schreibt dann `paket.json` (Adresse, SHA-1, f
   Sichtweite, Netzwerk-Paket, Saisons, Bauplan-Prüfung), Typen. **Nicht echt geprüft** (kein Client, sparsam):
   Aussehen der Bündel, `light_emission` und Drehungen im Client 26.3.
 
+- 18.11. nachts: **Trailer „wie echte Spieler“ – Bausteine** (Philip: „schöne Trailer, als würden echte Menschen spielen“; Branch `claude/trailer-echt`): `tools/trailer/mensch.py` (über `drehbuch.py` als `D.mensch`): menschlich laufen (Umwege, Sprints, Pausen mit Umschauen, Übermut-Sprünge), Gruppen (einer führt, andere folgen mit Abstand und schauen sich an), Chat mit Tipp-Pause und Füllwörtern, Gruß, kleine Fehler (Sprung zu kurz, Ärger, nochmal), Ich-Sicht-Tasten mit Sprint-Stößen; feste Startwerte je Einstellung. Spawn-Drehbuch nutzt sie (Ankunft, Biergarten). **Neu gedreht noch nichts** – Test-Server des Spawn-Trailers war nicht mehr da, Neuaufbau und Dreh aller 17 Trailer offen.
+
 ## Offen
 
 - **Leistung (17.11.):** Im Winter ~6 600 Anzeige-Wesen (davon ~2 200 Girlanden-Teile an den Ständen, 660 am
