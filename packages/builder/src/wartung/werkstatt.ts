@@ -228,7 +228,7 @@ function workshop(c: Canvas, rnd: () => number): void {
   );
   [-3, 3].forEach((x) => c.fill(x, G + 1, z2, x, G + 5, z2, 'stripped_spruce_log[axis=y]'));
   c.fill(x1, G + 5, z2, x2, G + 5, z2, 'stripped_spruce_log[axis=x]');
-  c.fill(x1 + 1, G + 1, z2, x2 - 1, G + 1, z2, 'air');
+  // Vorne offen – die beiden Pfosten bei −3 und 3 gehen bis auf den Boden (vorher fehlte ihr unterstes Stück).
   range(x1 + 1, x2 - 1)
     .filter((x) => x !== -3 && x !== 3)
     .forEach((x) => range(G + 1, G + 4).forEach((y) => c.set(x, y, z2, 'air')));
