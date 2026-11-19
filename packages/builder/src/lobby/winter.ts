@@ -30,6 +30,7 @@ import { displayStuck, type World } from '../pruefung.js';
 import { aroundX, aroundY, aroundZ, blockDisplay, placeModel, type Vec } from './deko.js';
 import { settleDown } from './halt.js';
 import { inSportZone } from './sportstand.js';
+import { staendeThema } from './staende-thema.js';
 import { BUDEN, budeArea, krippeArea, weihnachtsmarkt } from './weihnachtsmarkt.js';
 import { grosserSchlitten, rodel, schneemann } from './winter-figuren.js';
 import {
@@ -697,6 +698,7 @@ export function winterPlan(base: Canvas): WinterPlan {
   const v = viewOf(base, w);
   const tree = christbaum(w, v);
   const markt = weihnachtsmarkt(w, v);
+  staendeThema(w, v, 'winter');
   eisbahn(w, v);
   fichtenPlaetze(v).forEach(([x, z, h]) => {
     clearPlants(w, v, x, z);

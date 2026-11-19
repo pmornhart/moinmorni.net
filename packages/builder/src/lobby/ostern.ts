@@ -29,6 +29,7 @@ import { anchorEnd, settle, stands } from './halt.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
 import { seasonPlanOf, type SeasonPlan } from './saison-plan.js';
 import { BUDE_POSTS, budeGeruest, budeSign, pennants, ringCells, seasonTags, segment } from './saison-kit.js';
+import { staendeThema } from './staende-thema.js';
 import { budeSchmuecken, EINGANG, pointAt, staendeSchmuecken } from './weihnachtsmarkt.js';
 import { OSTERN } from './girlanden.js';
 import { bogenSchmuck } from './standschmuck.js';
@@ -480,11 +481,9 @@ function dorf(world: World): string[] {
   ];
   const eggs = gardens.flatMap(([x1, z1, x2, z2]) =>
     range(0, 4).flatMap((i) => {
-      const spots = range(0, 19).map((): Vec => [
-        x1 + rnd() * (x2 - x1),
-        BASE + EI.h * 0.75,
-        z1 + rnd() * (z2 - z1),
-      ]);
+      const spots = range(0, 19).map(
+        (): Vec => [x1 + rnd() * (x2 - x1), BASE + EI.h * 0.75, z1 + rnd() * (z2 - z1)],
+      );
       const found = spots.map((at) => [ei('garten', at, i, 1.5)]).find((egg) => stands(world, egg));
       return found ?? [];
     }),
@@ -517,6 +516,7 @@ export function osternPlan(base: Canvas): SeasonPlan {
   const v = viewOf(base, w);
   const world: World = (x, y, z) => v.now(x, y, z);
   blueten(w, base);
+  staendeThema(w, v, 'ostern');
   const displays = [
     ...brunnen(w, v),
     ...eierbaum(w, v),

@@ -97,7 +97,11 @@ describe('Winter-Wunderland', () => {
       const solid = (b: string): boolean =>
         !['air', 'light', 'snow', 'white_candle', 'lantern'].includes(baseName(b)) && kindOf(b) !== 'plant';
       // Feste Winter-Blöcke im Dorfmarkt: nur der Baum selbst (und Laternen auf den Heuballen)
-      const outside = ring.filter(([x, , z, b]) => solid(b) && toTree(x, z) > BAUM_RADIUS + 0.75);
+      // Stände tauschen nur festes Holz und ihre Waren (`staende-thema.ts`) – das nimmt keinen Platz weg
+      const outside = ring.filter(
+        ([x, y, z, b]) =>
+          solid(b) && !solid(plan.restore.get(x, y, z) ?? 'air') && toTree(x, z) > BAUM_RADIUS + 0.75,
+      );
       expect(outside.slice(0, 5)).toEqual([]);
       // Weg zwischen Baum und Ständen in Kopfhöhe frei
       const blocked = pairs(range(-12, 12), range(-12, 12))
