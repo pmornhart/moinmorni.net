@@ -27,7 +27,7 @@ import { BAUM_RADIUS, christbaum, CHRISTBAUM } from './christbaum.js';
 import { LAUNCHPADS, LOBBY_SPAWN_VIEW } from './features.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
 import { displayStuck, type World } from '../pruefung.js';
-import { aroundX, aroundY, aroundZ, blockDisplay, placeModel, type Vec } from './deko.js';
+import { aroundY, blockDisplay, placeModel, type Vec } from './deko.js';
 import { settleDown } from './halt.js';
 import { inSportZone } from './sportstand.js';
 import { staendeThema } from './staende-thema.js';
@@ -127,10 +127,13 @@ export interface WinterPlan {
 
 // ---------- Schnee ----------
 
-/** Verwehungen auf Wiesen: meist zwei Schichten, mal eine, mal drei – große, weiche Flecken. */
-const DRIFT: readonly number[] = [0.42, 0.6];
+/**
+ * Verwehungen auf Wiesen: große weiche Wellen (1–4 Schichten) und darüber kleine Buckel, damit die Fläche nicht
+ * platt wirkt.
+ */
+const DRIFT: readonly number[] = [0.36, 0.5, 0.64];
 function drift(x: number, z: number): number {
-  const n = fbm(1312, x, z, 16, 2);
+  const n = 0.75 * fbm(1312, x, z, 14, 2) + 0.25 * fbm(4242, x, z, 4, 2);
   return 1 + DRIFT.filter((d) => n > d).length;
 }
 
@@ -220,7 +223,11 @@ function snowCover(base: Canvas, w: Canvas, v: View): void {
   const paved = (x: number, z: number): boolean =>
     top.get(colKey(x, z)) === GROUND && kindOf(v.now(x, GROUND, z)) === 'solid';
   const bank = (x: number, z: number): number =>
-    NEIGHBOURS.some(([dx, dz]) => paved(x + dx, z + dz)) ? 3 + (fbm(77, x, z, 5, 2) > 0.5 ? 1 : 0) : 0;
+    NEIGHBOURS.some(([dx, dz]) => paved(x + dx, z + dz))
+      ? 3 + (fbm(77, x, z, 5, 2) > 0.5 ? 1 : 0)
+      : NEIGHBOURS.some(([dx, dz]) => paved(x + 2 * dx, z + 2 * dz))
+        ? 2
+        : 0;
   const depth: Depth = (x, z) => Math.max(drift(x, z), bank(x, z));
   const changes: Change[] = [];
   top.forEach((h, k) => {
@@ -418,24 +425,30 @@ function rowSegments(v: View, g: RoofGeo, side: Side, i: number): Array<[number,
     }, []);
 }
 
-const SHEET = 0.14;
-const LIP = 0.18;
+const SHEET = 0.13;
+/** Breite der Schneekante oben auf der hohen Stufe (etwas mehr als die halbe Stufe, steht leicht über). */
+const LEDGE = 0.58;
+/** Breite des Schnees auf der Trittfläche – davor bleibt ein Streifen Holz an der Stufe frei. */
+const TREAD = 0.4;
 
-/** Schneeplatte über den Reihen i0 … i1 im Abschnitt aS … aE: liegt auf den Stufenkanten (45°). */
-function sheet(g: RoofGeo, side: Side, i0: number, i1: number, aS: number, aE: number): string {
-  const s = sign(side);
-  const from = outer(g, side, i0) - s * (i0 === 0 ? LIP : 0);
-  const to = i1 === g.layers - 1 ? g.center : outer(g, side, i1 + 1);
-  const mid = (from + to) / 2;
-  const lift = SHEET / 2 / Math.SQRT2;
-  const slope = Math.abs(to - from) * Math.SQRT2;
+/**
+ * Schnee auf den Dachreihen i0 … i1 im Abschnitt aS … aE: je Reihe ein dünner Streifen oben auf der hohen Stufe und
+ * einer auf der Trittfläche der Treppe. So liegt der Schnee in Stufen wie echter, die Dachform und ein schmaler
+ * Streifen Holz an jeder Stufe bleiben sichtbar – kein flacher weißer Deckel.
+ */
+function sheet(g: RoofGeo, side: Side, i0: number, i1: number, aS: number, aE: number): string[] {
   const length = aE + 1 - aS;
-  const at = toWorld(g, (aS + aE + 1) / 2, plane(g, side, mid) + lift, mid - s * lift);
-  return blockDisplay(tags('dach'), at, 'snow_block', {
-    scale: g.alongX ? [length, SHEET, slope] : [slope, SHEET, length],
-    rotation: g.alongX ? aroundX((-s * Math.PI) / 4) : aroundZ((s * Math.PI) / 4),
-    light: { sky: 15, block: 0 },
-    view: 2,
+  const plate = (b: number, y: number, width: number): string =>
+    blockDisplay(tags('dach'), toWorld(g, (aS + aE + 1) / 2, y + SHEET / 2, b), 'snow_block', {
+      scale: g.alongX ? [length, SHEET, width] : [width, SHEET, length],
+      view: 2,
+    });
+  return range(i0, i1).flatMap((i) => {
+    const b0 = rowB(g, side, i);
+    const y = g.y + i;
+    const top = side === 1 ? b0 + 1 - LEDGE / 2 : b0 + LEDGE / 2;
+    const tread = side === 1 ? b0 + TREAD / 2 : b0 + 1 - TREAD / 2;
+    return [plate(top, y + 1, LEDGE), plate(tread, y + HALF, TREAD)];
   });
 }
 
@@ -452,8 +465,8 @@ function roofSide(v: View, g: RoofGeo, side: Side): string[] {
   // liegen; was dann noch steckt, bleibt ohne Schnee.
   const world: World = (x, y, z) => v.now(x, y, z);
   const fit = (i0: number, i1: number, aS: number, aE: number): string[] => {
-    const cmd = sheet(g, side, i0, i1, aS, aE);
-    if (displayStuck(world, cmd) === null) return [cmd];
+    const cmds = sheet(g, side, i0, i1, aS, aE);
+    if (cmds.every((cmd) => displayStuck(world, cmd) === null)) return cmds;
     if (aS < aE) {
       const m = Math.floor((aS + aE) / 2);
       return [...fit(i0, i1, aS, m), ...fit(i0, i1, m + 1, aE)];
