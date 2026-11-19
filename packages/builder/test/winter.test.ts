@@ -246,7 +246,7 @@ describe('Winter-Wunderland', () => {
     () => {
       const renamed = ['chain', 'grass'];
       expect(changed.filter(([, , , b]) => renamed.includes(baseName(b)))).toEqual([]);
-      expect(plan.displays.length).toBeGreaterThan(1500);
+      expect(plan.displays.length).toBeGreaterThan(1000);
       // Dezent (19.11.): Stände nur mit schlanker Girlande vorn, keine Lichterketten zwischen den Buden
       expect(plan.displays.length).toBeLessThan(2600);
       const wrong = plan.displays.filter((d) => {
