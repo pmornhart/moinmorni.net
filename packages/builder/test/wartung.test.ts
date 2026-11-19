@@ -9,6 +9,8 @@ import {
   wartungPack,
 } from '../src/index.js';
 import { GROUND } from '../src/nature.js';
+import { checkPlan, describe as lines } from '../src/pruefung.js';
+import { MOEBEL } from '../src/furniture.js';
 
 /** Das Datenpaket zweimal zu bauen dauert auf einem ausgelasteten Rechner länger als die üblichen 5 s. */
 const SLOW = 60_000;
@@ -65,6 +67,24 @@ describe('Wartungs-Lobby', () => {
       expect(text).not.toMatch(/ grass[ [\]]/);
       expect(wartungPack().version).toBe(pack.version);
       expect(pack.namespace).toBe('moinmorni_wartung');
+    },
+    SLOW,
+  );
+
+  it('Bauplan-Prüfung: nichts schwebt, keine Figur im Block', () => {
+    expect(lines(checkPlan(canvas))).toEqual([]);
+  });
+
+  it(
+    'Brotzeit: Bierbank und Biertisch als Möbel-Anzeigen, Krüge auf dem Tisch, Gäste auf der Bank',
+    () => {
+      expect(canvas.get(12, GROUND + 1, 12)).toBe(MOEBEL.biertisch);
+      expect(canvas.get(12, GROUND + 1, 13)).toBe(MOEBEL.bierbank);
+      const all = Object.values(wartungPack().files).join('\n');
+      expect(all).toContain('moinmorni:moebel/biertisch');
+      expect(all).toContain('moinmorni:moebel/bierbank');
+      expect(all).not.toContain('birch_slab[type');
+      expect(canvas.get(12, GROUND + 1, 12)).toBe(MOEBEL.biertisch);
     },
     SLOW,
   );

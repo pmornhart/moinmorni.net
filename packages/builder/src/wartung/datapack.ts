@@ -14,6 +14,7 @@ import {
   summonOnce,
   type LobbyPack,
 } from '../lobby/datapack.js';
+import { toLobbyDisplays } from '../lobby/moebel.js';
 import { buildWartung, WARTUNG_BORDER, WARTUNG_POINTS, WARTUNG_RADIUS } from './werkstatt.js';
 
 export const WARTUNG_NAMESPACE = 'moinmorni_wartung';
@@ -49,7 +50,14 @@ let cached: LobbyPack | null = null;
 export function wartungPack(): LobbyPack {
   if (cached) return cached;
   const { canvas } = buildWartung();
-  const body = [...clearCommands(0, 0, WARTUNG_RADIUS), ...canvas.commands().map(summonOnce)];
+  // Bierbank und Biertisch der Brotzeit als Item-Anzeigen mit Modell aus dem Netzwerk-Paket (wie in der Lobby).
+  const moebel = toLobbyDisplays(canvas);
+  const body = [
+    ...clearCommands(0, 0, WARTUNG_RADIUS),
+    ...canvas.commands().map(summonOnce),
+    ...moebel.commands,
+  ];
+  moebel.restore();
   const parts = Array.from({ length: Math.ceil(body.length / PART_SIZE) }, (_, i) =>
     body.slice(i * PART_SIZE, (i + 1) * PART_SIZE),
   );
