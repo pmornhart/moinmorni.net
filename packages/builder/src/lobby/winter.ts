@@ -478,7 +478,7 @@ function icicles(v: View, g: RoofGeo, side: Side, rnd: () => number): string[] {
       const length = 0.3 + rnd() * 0.55;
       const shift = (rnd() - HALF) * 0.5;
       const [x, y, z] = toWorld(g, a, g.y - 1, rowB(g, side, 0));
-      if (pick > 0.42 || v.now(x, y, z) !== 'air') return [];
+      if (pick > 0.1 || v.now(x, y, z) !== 'air') return [];
       const at = toWorld(g, a + HALF + shift, g.y - length / 2 + 0.02, outer(g, side, 0) + s * 0.2);
       return [
         blockDisplay(tags('eiszapfen'), at, 'ice', {
@@ -521,8 +521,8 @@ function gableLights(v: View, r: RoofSpec, g: RoofGeo): string[] {
   const a = end < 0 ? g.a1 - 0.08 : g.a2 + 1 + 0.08;
   return ([1, 2] as const).flatMap((side) => {
     const span = Math.abs(g.center - outer(g, side, 0));
-    return range(0, Math.floor((span - 0.6) / 0.9)).flatMap((k) => {
-      const b = outer(g, side, 0) + sign(side) * (0.35 + k * 0.9);
+    return range(0, Math.floor((span - 0.6) / 2.6)).flatMap((k) => {
+      const b = outer(g, side, 0) + sign(side) * (0.35 + k * 2.6);
       const at = toWorld(g, a, plane(g, side, b) - 0.16, b);
       const [x, y, z] = at.map(Math.floor) as unknown as [number, number, number];
       if (v.now(x, y, z) !== 'air') return [];

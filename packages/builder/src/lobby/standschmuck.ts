@@ -1,6 +1,7 @@
 /* eslint-disable ts-patterns/no-magic-numbers -- decoration plan: positions and sizes as the stalls need them */
 /**
- * Weihnachtsschmuck der Stände wie am Weihnachtstor (Philip, 17.11.: „an den Ständen bitte das gleiche wie bei dem
+ * Dezenter Weihnachts- bzw. Osterschmuck der Stände (Philip, 19.11.: „etwas dezenter … frisst FPS“ – nur noch eine schlanke
+ * Girlande vorn mit ein paar Lichtern und zwei Schleifen; der Rest dieser Beschreibung ist der Stand vom 17.11.: „an den Ständen bitte das gleiche wie bei dem
  * Eingang“ – vorher hing an jeder Markise nur eine dünne, flache Girlande):
  *
  * - **Marktstände** (Dorfmarkt um den Christbaum und Schlossmarkt): dicker Strang aus Tannenzweigen an der Vorderkante
@@ -16,49 +17,18 @@
  * Die Bausteine kommen aus `girlanden.ts`; ohne Lobby-Paket sind die Kugeln schräge Würfel, sonst rund.
  */
 import { placeModel, type ModelPart, type Vec } from './deko.js';
-import {
-  BRANCH,
-  REACH,
-  TOUCH,
-  WEIHNACHT,
-  kugelPart,
-  schleife,
-  spiral,
-  strang,
-  swag,
-  type Stil,
-} from './girlanden.js';
+import { BRANCH, REACH, TOUCH, WEIHNACHT, schleife, strang, type Stil } from './girlanden.js';
 
 /** So weit vor der Fläche sitzt die Mitte eines Strangs (die Zweige berühren das Holz gerade). */
 const OUT = BRANCH * REACH - TOUCH;
-const SWAG_SIZE = BRANCH * 0.86;
-/** Bögen hängen etwas vor dem Strang. */
-const SWAG_OUT = SWAG_SIZE * REACH + 0.02;
-/** Strang an den Seiten (etwas dünner). */
-const SIDE_SIZE = 0.5;
-const SIDE_OUT = SIDE_SIZE * REACH - TOUCH;
 /**
  * An den Ständen etwas weiter auseinander als am Tor (0,27): gut zwanzig Stände – so bleibt die Zahl der Anzeigen im
  * Rahmen, der Strang wirkt aus der Nähe trotzdem dicht.
  */
-const STAND_STEP = 0.33;
-const SIDE_STEP = 0.42;
-
-/** Zwei Bögen von a nach b mit Schleifen an den Enden und einer Kugel in der Mitte, vorne bei `z`. */
-function boegen(
-  hooks: readonly number[],
-  y: number,
-  z: number,
-  sag: number,
-  k: number,
-  stil: Stil,
-): ModelPart[] {
-  const pairs = hooks.slice(1).map((b, i) => [hooks[i] ?? b, b] as const);
-  const swags = pairs.flatMap(([a, b]) => swag([a, y, z], [b, y, z], sag, SWAG_SIZE, stil));
-  const bows = hooks.map((x, i) => schleife([x, y + 0.06, z + 0.32], 0.85, stil, i + k)).flat();
-  const balls = pairs.map(([a, b], i) => kugelPart([(a + b) / 2, y - sag - 0.33, z], 0.27, i + k, stil));
-  return [...swags, ...bows, ...balls];
-}
+/** Schlanke Girlande der Marktstände: kleinere, weiter auseinander stehende Zweige. */
+const LIP_SIZE = 0.42;
+const LIP_OUT = LIP_SIZE * REACH - TOUCH;
+const LIP_STEP = 0.85;
 
 export interface StandSeiten {
   /** Linke bzw. rechte Seite frei – kein Nachbarstand dicht daneben (sonst stießen die Zweige aneinander). */
@@ -75,40 +45,27 @@ export interface Schmuck {
   readonly posts: ModelPart[];
 }
 
-/** Um einen Pfosten vorne (Mitte x | −0,5) gewunden: nur nach vorn und zur Seite, nicht nach hinten in die Theke. */
-const postSpiral = (x: number, top: number, start: number, turns: number, stil: Stil): ModelPart[] =>
-  spiral(x, -0.5, top, 1.25, start, { turns, keep: (_x, z) => z > -0.6, stil });
-
 /**
  * Marktstand (`marketStall` in `village.ts`), Rahmen-Koordinaten: x = u (0 … 7), y über dem Boden, z = −v. Die
  * Markise hängt vorne als Wollstreifen (y 4 … 5, z 0 … 1), das Dach liegt dahinter auf y 5 … 6 (z −4 … 0); Pfosten
  * vorne bei u 0 und 6 (z −1 … 0), dahinter Fässer, an den vorderen Ecken hängen Laternen (y 3 … 4).
  */
 export function markiseSchmuck(seiten: StandSeiten, k: number, stil: Stil = WEIHNACHT): Schmuck {
-  const front = 1 + OUT;
+  const front = 1 + LIP_OUT;
   // Stößt ein Nachbarstand an die Ecke, bleibt der Schmuck auf der eigenen Markise
-  const from = seiten.left ? -0.15 : 0.3;
-  const to = seiten.right ? 7.15 : 6.7;
-  // Name des Stands steht mittig auf der Markise (gut zwei Blöcke breit): dort keine Zapfen, keine Bögen
-  const name = (p: Vec): boolean => p[0] < 1.7 || p[0] > 5.3;
+  const from = seiten.left ? 0.1 : 0.4;
+  const to = seiten.right ? 6.9 : 6.6;
+  // Dezent (Philip, 19.11.): eine schlanke Girlande vorn mit ein paar warmen Lichtern, zwei Schleifen an den Enden,
+  // keine Bögen, keine Seitenstränge, keine umwundenen Pfosten. Die Mitte (Name des Stands) bleibt frei.
   const lip = strang([from, 4.86, front], [to, 4.86, front], {
     out: [0, 0, 1],
-    cone: name,
+    cone: () => false,
+    size: LIP_SIZE,
     stil,
-    step: STAND_STEP,
+    step: LIP_STEP,
   });
-  const swagZ = 1 + SWAG_OUT;
-  const swags = [
-    ...boegen([seiten.left ? 0.1 : 0.55, 2.1], 4.56, swagZ, 0.45, k, stil),
-    ...boegen([4.9, seiten.right ? 6.9 : 6.45], 4.56, swagZ, 0.45, k + 1, stil),
-  ];
-  // Seiten: entlang der Dachkante bis hinten
-  const side = (x: number, out: number): ModelPart[] =>
-    strang([x, 5.86, -0.1], [x, 5.86, -3.9], { out: [out, 0, 0], size: SIDE_SIZE, stil, step: SIDE_STEP });
-  const sides = [...(seiten.left ? side(-SIDE_OUT, -1) : []), ...(seiten.right ? side(7 + SIDE_OUT, 1) : [])];
-  // Vorderpfosten umwunden – unter den Laternen (ab y 3), nicht in die Fässer dahinter
-  const posts = [0.5, 6.5].flatMap((x, i) => postSpiral(x, 2.85, Math.PI / 2 + i * Math.PI, 1.25, stil));
-  return { parts: [...lip, ...swags, ...sides], posts };
+  const bows = [from + 0.2, to - 0.2].flatMap((x, i) => schleife([x, 4.92, front + 0.3], 0.7, stil, i + k));
+  return { parts: [...lip, ...bows], posts: [] };
 }
 
 /**
@@ -120,18 +77,14 @@ export function budeSchmuck(width: number, k: number, stil: Stil = WEIHNACHT, he
   const gy = height + 1.12;
   const gable = strang([-1.1, gy, front], [width + 1.1, gy, front], {
     out: [0, 0, 1],
-    cone: (p) => p[0] < 0.6 || p[0] > width - 0.6,
+    cone: () => false,
     stil,
+    step: LIP_STEP,
   });
-  const bows = [-0.6, width / 2, width + 0.6].flatMap((x, i) =>
+  const bows = [-0.6, width + 0.6].flatMap((x, i) =>
     schleife([x, gy - 0.12, front + 0.42], 0.85, stil, i + k),
   );
-  const balls = [-0.3, width + 0.3].map((x, i) => kugelPart([x, gy - 0.5, front + 0.12], 0.27, i + k, stil));
-  // Pfosten umwunden (innen Theke und Bretter, hinten die Seitenwand – was dort stäke, nimmt der Aufsteller weg)
-  const posts = [0.5, width - 0.5].flatMap((x, i) =>
-    postSpiral(x, height + 0.6, Math.PI / 2 + i * Math.PI, 1.75, stil),
-  );
-  return { parts: [...gable, ...bows, ...balls], posts };
+  return { parts: [...gable, ...bows], posts: [] };
 }
 
 /**
@@ -142,13 +95,9 @@ export function budeSchmuck(width: number, k: number, stil: Stil = WEIHNACHT, he
  */
 function bogenSeite(stil: Stil): { readonly side: ModelPart[]; readonly posts: ModelPart[] } {
   const edge = 0.5 - 0.12;
-  // Oben auf dem Balken: über den Wimpeln, zwischen den Laternen auf den Enden
+  // Dezent (19.11.): nur die Girlande oben auf dem Balken – keine Bögen, keine Schleifen, keine Pfosten
   const crest = strang([-6.4, 1.45, edge], [6.4, 1.45, edge], { out: [0, 0, 1], cone: () => false, stil });
-  // Bögen nur in der freien Mitte zwischen den Wimpeln, auf der Balkenfläche über der Schrift
-  const swags = boegen([-2.2, 0, 2.2], 0.82, 0.5 + SWAG_OUT, 0.36, 0, stil);
-  // Pfosten unter den Wimpeln umwunden (die Wimpel hängen bis etwa einen Block unter den Balken), bis über die Töpfe
-  const posts = [-6, 6].flatMap((x, i) => spiral(x, 0, -1.25, -4.9, Math.PI / 2 + i * Math.PI, { stil }));
-  return { side: [...crest, ...swags], posts };
+  return { side: crest, posts: [] };
 }
 
 /** Marktbogen: Schmuck vorn und hinten, `mid` = Mitte des Balkens, unten (Welt). */

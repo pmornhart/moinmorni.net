@@ -62,8 +62,6 @@ export const STALLS: readonly Stall[] = [
     ring: false,
   })),
 ];
-/** Abstand zweier benachbarter Stände am Schlossmarkt (dazwischen hängt eine Kette, über eine Lücke nicht). */
-const NEIGHBOUR_GAP = 8;
 
 const SCRATCH = new Canvas();
 /** Bau-Rahmen eines Stands wie in `stallAt` (common.ts): Ursprung drei Blöcke links der Mitte. */
@@ -195,8 +193,6 @@ export function stallCorners(s: Stall): readonly [Vec, Vec] {
   return [pointAt(f, 0, 4.55, -1.05), pointAt(f, 7, 4.55, -1.05)];
 }
 
-/** Kürzer lohnt keine Kette (Stände, die sich an einer Ecke berühren). */
-const MIN_CHAIN = 2;
 const CHAIN_LIGHTS: readonly string[] = [
   'glowstone',
   'ochre_froglight',
@@ -220,50 +216,6 @@ export function lightChain(kind: string, a: Vec, b: Vec, sag: number, colours: r
       scale: [0.16, 0.16, 0.16],
       glow: true,
     });
-  });
-}
-
-/** Ring aus Lichterketten um den Christbaum: von jeder Bude zur nächsten (über die Gassen hinweg). */
-function ringKetten(): string[] {
-  const ring = STALLS.filter((s) => s.ring);
-  const corners = ring.flatMap((s, i) => stallCorners(s).map((p) => ({ p, stall: i })));
-  const angle = (p: Vec): number => Math.atan2(p[2] - HALF, p[0] - HALF);
-  const sorted = [...corners].sort((a, b) => angle(a.p) - angle(b.p));
-  return sorted.flatMap((c, k) => {
-    const next = sorted[(k + 1) % sorted.length];
-    if (!next || next.stall === c.stall) return [];
-    const gap = Math.hypot(next.p[0] - c.p[0], next.p[2] - c.p[2]);
-    // Stände, die an einer Ecke aneinanderstoßen, brauchen keine Kette
-    if (gap < MIN_CHAIN) return [];
-    return lightChain('kette', c.p, next.p, Math.min(1.1, 0.25 + gap * 0.08), CHAIN_LIGHTS);
-  });
-}
-
-/** Schlossmarkt: Ketten von Stand zu Stand auf jeder Seite und vom Marktbogen zum ersten Stand. */
-function schlossmarktKetten(): string[] {
-  const row = STALLS.filter((s) => !s.ring);
-  const side = (sign: number): Stall[] =>
-    row.filter((s) => Math.sign(s.x) === sign).sort((a, b) => Math.abs(a.x) - Math.abs(b.x));
-  return [-1, 1].flatMap((sign) => {
-    const stalls = side(sign);
-    // Ecke, die zur Prachtstraße zeigt (innen) bzw. nach außen
-    const inner = (s: Stall): Vec =>
-      stallCorners(s).reduce((p, q) => (Math.abs(q[0]) < Math.abs(p[0]) ? q : p));
-    const outer = (s: Stall): Vec =>
-      stallCorners(s).reduce((p, q) => (Math.abs(q[0]) > Math.abs(p[0]) ? q : p));
-    const arch: Vec = [sign > 0 ? 7.5 : -6.5, GROUND + 6.6, MARKET_ARCH_Z + HALF];
-    const first = stalls[0];
-    return [
-      ...(first ? lightChain('kette', arch, inner(first), 0.9, CHAIN_LIGHTS) : []),
-      ...stalls.slice(1).flatMap((s, i) => {
-        const prev = stalls[i];
-        if (!prev || Math.abs(Math.abs(s.x) - Math.abs(prev.x)) > NEIGHBOUR_GAP) return [];
-        // Seit acht Ständen (17.11.) stoßen die Markisen fast aneinander – dort hängt keine Kette.
-        const [a, b] = [outer(prev), inner(s)];
-        if (Math.hypot(b[0] - a[0], b[2] - a[2]) < MIN_CHAIN) return [];
-        return lightChain('kette', a, b, 0.35, CHAIN_LIGHTS);
-      }),
-    ];
   });
 }
 
@@ -535,8 +487,6 @@ export function weihnachtsmarkt(w: Canvas, v: View): string[] {
   const world: World = (x, y, z) => v.now(x, y, z);
   return [
     ...STALLS.flatMap((s, i) => stallDeco(world, s, i)),
-    ...ringKetten(),
-    ...schlossmarktKetten(),
     ...marktbogen(world),
     ...buden,
     ...gate,

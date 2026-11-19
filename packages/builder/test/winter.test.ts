@@ -243,8 +243,8 @@ describe('Winter-Wunderland', () => {
       const renamed = ['chain', 'grass'];
       expect(changed.filter(([, , , b]) => renamed.includes(baseName(b)))).toEqual([]);
       expect(plan.displays.length).toBeGreaterThan(1500);
-      // Seit die Stände wie das Weihnachtstor geschmückt sind (dicker Strang, Bögen, umwundene Pfosten) gut 5000
-      expect(plan.displays.length).toBeLessThan(6500);
+      // Dezent (19.11.): Stände nur mit schlanker Girlande vorn, keine Lichterketten zwischen den Buden
+      expect(plan.displays.length).toBeLessThan(2600);
       const wrong = plan.displays.filter((d) => {
         const block = DISPLAY_BLOCK.exec(d)?.[1];
         const shown = d.startsWith('summon block_display')
@@ -256,22 +256,12 @@ describe('Winter-Wunderland', () => {
       // Eine Zeile, die Minecraft nicht lesen kann (z. B. NaN), lässt die ganze Funktion nicht laden.
       expect([...plan.on, ...plan.off, ...plan.moves].filter((c) => /NaN|Infinity/.test(c))).toEqual([]);
       // Alles da: Kugeln, Stern, Lichter, Buden, Krippe, Weihnachtsmarkt-Schild
-      [
-        'kugel',
-        'stern',
-        'licht',
-        'kette',
-        'stand',
-        'bude',
-        'krippe',
-        'eingang',
-        'schlitten',
-        'schneemann',
-      ].forEach((kind) =>
-        expect(
-          plan.displays.some((d) => d.includes(`'mm_winter_${kind}'`)),
-          kind,
-        ).toBe(true),
+      ['kugel', 'stern', 'licht', 'stand', 'bude', 'krippe', 'eingang', 'schlitten', 'schneemann'].forEach(
+        (kind) =>
+          expect(
+            plan.displays.some((d) => d.includes(`'mm_winter_${kind}'`)),
+            kind,
+          ).toBe(true),
       );
     },
     SLOW,
