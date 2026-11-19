@@ -379,27 +379,6 @@ function blumen(w: Canvas, v: View, base: Canvas): void {
 
 // ---------- Ostermarkt und Eingang ----------
 
-/** Großes Osterei obenauf (statt des Sterns im Winter): rosa Ei mit gelbem Band, zwei kleine daneben. */
-function osterEi(size: number): ModelPart[] {
-  const h = size * 0.85;
-  const w = size * 0.6;
-  return [
-    { at: [0, 0, 0], block: KUGELN.rosa, scale: [w, h, w], light: { sky: 15, block: 12 } },
-    {
-      at: [-w * 0.75, -h * 0.25, 0],
-      block: KUGELN.hellblau,
-      scale: [w * 0.5, h * 0.5, w * 0.5],
-      light: { sky: 15, block: 12 },
-    },
-    {
-      at: [w * 0.75, -h * 0.25, 0],
-      block: KUGELN.gold,
-      scale: [w * 0.5, h * 0.5, w * 0.5],
-      light: { sky: 15, block: 12 },
-    },
-  ];
-}
-
 /** Eingangsbogen wie das Weihnachtstor, im Osterstil (Philip, 17.11.: „das gleiche wie bei Weihnachten, nur mehr
  * im Osterstyle“): Blütenzweige mit Grün, Pastell-Schleifen, Ostereier, Weidenkätzchen, Osterbäumchen im Kübel,
  * Schild oben auf dem Balken (die Begrüßung bleibt frei). */
@@ -408,7 +387,6 @@ const OSTER_TOR: TorThema = {
   stil: OSTERN,
   pfosten: 'stripped_birch_log',
   balken: 'stripped_birch_log[axis=x]',
-  krone: 'flowering_azalea_leaves[persistent=true]',
   drauf: null,
   vorne: [
     { text: '✿ Frohe Ostern! ✿\\n', color: 'light_purple', bold: true },
@@ -418,7 +396,6 @@ const OSTER_TOR: TorThema = {
     { text: '✿ Frühlingsfest ✿\\n', color: 'light_purple', bold: true },
     { text: 'Spring festival', color: 'white' },
   ],
-  spitze: osterEi,
   busch: 'flowering_azalea_leaves[persistent=true]',
 };
 
