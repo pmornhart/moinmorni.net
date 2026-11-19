@@ -97,12 +97,16 @@ function sharedRules(season: Season, kinds: readonly string[], keepsMaypole = tr
   const solidAt = (x: number, z: number): boolean =>
     [BASE, BASE + 1].some((y) => {
       const b = plan.blocks.get(x, y, z);
-      return b !== undefined && !passable(b);
+      return b !== undefined && !passable(b) && passable(plan.restore.get(x, y, z) ?? 'air');
     });
+  // Ein Block, der nur einen schon festen Block tauscht (Holz, Waren der Stände), nimmt keinen Platz weg
   const nearSolid = (x: number, z: number, d: number): boolean =>
     changed.some(
       ([cx, cy, cz, b]) =>
-        (cy === BASE || cy === BASE + 1) && !passable(b) && Math.hypot(cx + 0.5 - x, cz + 0.5 - z) < d,
+        (cy === BASE || cy === BASE + 1) &&
+        !passable(b) &&
+        passable(plan.restore.get(cx, cy, cz) ?? 'air') &&
+        Math.hypot(cx + 0.5 - x, cz + 0.5 - z) < d,
     );
 
   it(

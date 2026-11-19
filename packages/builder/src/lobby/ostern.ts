@@ -29,6 +29,7 @@ import { anchorEnd, settle, stands } from './halt.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
 import { seasonPlanOf, type SeasonPlan } from './saison-plan.js';
 import { BUDE_POSTS, budeGeruest, budeSign, pennants, ringCells, seasonTags, segment } from './saison-kit.js';
+import { staendeThema } from './staende-thema.js';
 import { budeSchmuecken, EINGANG, pointAt, staendeSchmuecken } from './weihnachtsmarkt.js';
 import { OSTERN } from './girlanden.js';
 import { bogenSchmuck } from './standschmuck.js';
@@ -517,6 +518,7 @@ export function osternPlan(base: Canvas): SeasonPlan {
   const v = viewOf(base, w);
   const world: World = (x, y, z) => v.now(x, y, z);
   blueten(w, base);
+  staendeThema(w, v, 'ostern');
   const displays = [
     ...brunnen(w, v),
     ...eierbaum(w, v),
