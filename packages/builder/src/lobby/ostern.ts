@@ -28,16 +28,7 @@ import { LAUNCHPADS } from './features.js';
 import { anchorEnd, settle, stands } from './halt.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
 import { seasonPlanOf, type SeasonPlan } from './saison-plan.js';
-import {
-  BUDE_POSTS,
-  budeGeruest,
-  budeSign,
-  pennants,
-  ringCells,
-  ringPairs,
-  seasonTags,
-  segment,
-} from './saison-kit.js';
+import { BUDE_POSTS, budeGeruest, budeSign, pennants, ringCells, seasonTags, segment } from './saison-kit.js';
 import { budeSchmuecken, EINGANG, pointAt, staendeSchmuecken } from './weihnachtsmarkt.js';
 import { OSTERN } from './girlanden.js';
 import { bogenSchmuck } from './standschmuck.js';
@@ -479,10 +470,6 @@ function dorf(world: World): string[] {
   const y = GROUND + 6;
   const street = [30, 44, 58, 72, 86, 100].flatMap((z) => hung(world, [-7, y, z + HALF], [8, y, z + HALF]));
   const lane = [-55, -69, -83, -97, -111].flatMap((x) => hung(world, [x + HALF, y, 0], [x + HALF, y, 15]));
-  const ring = ringPairs().flatMap(([a, b]) => {
-    const gap = Math.hypot(b[0] - a[0], b[2] - a[2]);
-    return pennants(S, 'kette', a, b, Math.min(1.1, 0.25 + gap * 0.08), PASTELL);
-  });
   // Eier in den Vorgärten (im Gras, nicht in Zäunen oder Büschen)
   const rnd = random(2026);
   const gardens: readonly (readonly [number, number, number, number])[] = [
@@ -492,7 +479,7 @@ function dorf(world: World): string[] {
     [-98, 11, -90, 13],
   ];
   const eggs = gardens.flatMap(([x1, z1, x2, z2]) =>
-    range(0, 7).flatMap((i) => {
+    range(0, 4).flatMap((i) => {
       const spots = range(0, 19).map((): Vec => [
         x1 + rnd() * (x2 - x1),
         BASE + EI.h * 0.75,
@@ -516,7 +503,7 @@ function dorf(world: World): string[] {
     ([x, z], i) =>
       `summon rabbit ${(x ?? 0) + HALF} ${BASE} ${(z ?? 0) + HALF} {${tag('hase')},PersistenceRequired:1b,Invulnerable:1b,RabbitType:${i % 5}}`,
   );
-  return [...street, ...lane, ...ring, ...eggs, ...rabbits];
+  return [...street, ...lane, ...eggs, ...rabbits];
 }
 
 // ---------- Alles zusammen ----------
