@@ -481,9 +481,11 @@ function dorf(world: World): string[] {
   ];
   const eggs = gardens.flatMap(([x1, z1, x2, z2]) =>
     range(0, 4).flatMap((i) => {
-      const spots = range(0, 19).map(
-        (): Vec => [x1 + rnd() * (x2 - x1), BASE + EI.h * 0.75, z1 + rnd() * (z2 - z1)],
-      );
+      const spots = range(0, 19).map((): Vec => [
+        x1 + rnd() * (x2 - x1),
+        BASE + EI.h * 0.75,
+        z1 + rnd() * (z2 - z1),
+      ]);
       const found = spots.map((at) => [ei('garten', at, i, 1.5)]).find((egg) => stands(world, egg));
       return found ?? [];
     }),
