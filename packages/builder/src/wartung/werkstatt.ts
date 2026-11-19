@@ -15,6 +15,7 @@ import { GROUND, meadow, roundTree, spruce, terrain } from '../nature.js';
 import { disc, range } from '../range.js';
 import { gableRoof, stairs, type Facing } from '../shapes.js';
 import { npc, signText, type TextPart } from '../village.js';
+import { MOEBEL } from '../furniture.js';
 import { forest, lampPost, mountains } from '../lobby/common.js';
 import type { LobbyPoint, LobbyView } from '../lobby/features.js';
 
@@ -151,25 +152,23 @@ export function wartungHeight(): (x: number, z: number) => number {
   return (x, z) => G + Math.round(hills(x, z));
 }
 
-/** Weg: meist festgetretene Erde, dazwischen Kies und grobe Erde (Anteile von unten gezählt). */
-const TRAIL: ReadonlyArray<{ readonly below: number; readonly block: string }> = [
-  { below: 0.16, block: 'gravel' },
-  { below: 0.26, block: 'coarse_dirt' },
-];
+/** Halbe Breite der Wege: drei Blöcke breit, auch schräge Stücke ohne Graslücken. */
+const TRAIL_HALF = 1.5;
 
-/** Wege aus festgetretener Erde mit Kies am Rand. */
-function trail(c: Canvas, points: ReadonlyArray<readonly [number, number]>, rnd: () => number): void {
+/**
+ * Wege aus festgetretener Erde, ein Belag, durchgehend (Philip: vorher Flickwerk aus Kies, grober Erde und Gras).
+ * Gras am Rand bleibt; Blumen setzt `meadow` nur auf Gras, also nie auf den Weg.
+ */
+function trail(c: Canvas, points: ReadonlyArray<readonly [number, number]>, _rnd: () => number): void {
   points.slice(1).forEach((q, i) => {
     const a = points[i] as readonly [number, number];
-    const len = Math.max(Math.abs(q[0] - a[0]), Math.abs(q[1] - a[1]), 1);
+    const len = Math.max(Math.abs(q[0] - a[0]), Math.abs(q[1] - a[1]), 1) * 2;
     range(0, len).forEach((s) => {
-      const x = Math.round(a[0] + ((q[0] - a[0]) * s) / len);
-      const z = Math.round(a[1] + ((q[1] - a[1]) * s) / len);
-      disc(x, z, 1.2).forEach(([px, pz]) => {
+      const x = a[0] + ((q[0] - a[0]) * s) / len;
+      const z = a[1] + ((q[1] - a[1]) * s) / len;
+      disc(Math.round(x), Math.round(z), TRAIL_HALF).forEach(([px, pz]) => {
         if (c.get(px, G, pz) !== undefined) return;
-        const roll = rnd();
-        const surface = TRAIL.find((t) => roll < t.below)?.block ?? 'dirt_path';
-        c.set(px, G, pz, surface);
+        c.set(px, G, pz, 'dirt_path');
       });
     });
   });
@@ -267,9 +266,15 @@ function workshop(c: Canvas, rnd: () => number): void {
     'composter[level=4]',
   ];
   bench.forEach((block, i) => c.set(-6 + i, G + 1, z1 + 1, block));
-  ['lantern', 'potted_red_tulip', 'brewing_stand', 'candle[candles=3,lit=true]'].forEach((block, i) =>
-    c.set(-5 + i * 3, G + 2, z1 + 1, block),
-  );
+  // Nur auf ganze Blöcke (Werkbank, Pfeilmacher, Kartentisch, Fass) – auf Truhe oder Schleifstein schwebten sie.
+  (
+    [
+      [-4, 'lantern'],
+      [-2, 'potted_red_tulip'],
+      [0, 'brewing_stand'],
+      [5, 'candle[candles=3,lit=true]'],
+    ] as const
+  ).forEach(([x, block]) => c.set(x, G + 2, z1 + 1, block));
   // Holzstapel links, Amboss und Hackklotz in der Mitte, Sägebock rechts.
   c.fill(-7, G + 1, -14, -6, G + 2, -10, 'spruce_log[axis=z]');
   c.fill(-7, G + 3, -13, -7, G + 3, -11, 'spruce_log[axis=z]');
@@ -300,7 +305,7 @@ function workshop(c: Canvas, rnd: () => number): void {
   );
   // Werkzeug vor der Tür: Schubkarre (Kessel auf Rad) und Steinhaufen.
   c.set(6, G + 1, -5, 'cauldron');
-  c.set(5, G + 1, -5, 'dark_oak_trapdoor[facing=east,half=bottom,open=true]');
+  c.set(5, G + 1, -5, 'dark_oak_trapdoor[facing=west,half=bottom,open=true]');
   range(0, 3).forEach((i) =>
     c.set(-6 + i, G + 1, -5 - (i % 2), pick(rnd, ['cobblestone', 'andesite', 'gravel'])),
   );
@@ -363,23 +368,39 @@ function constructionSite(c: Canvas, rnd: () => number): void {
   );
 }
 
-/** Brotzeit am Lagerfeuer: Tisch, Bänke, eine Bäuerin mit Brot. */
+/**
+ * Brotzeit am Lagerfeuer: Biertisch mit zwei Bierbänken (dieselben Möbel wie im Biergarten der Lobby, Netzwerk-Paket),
+ * zwei Gäste sitzen auf den Bänken, auf dem Tisch Krüge; daneben ein Lagerfeuer im Steinkreis mit Holzklötzen.
+ */
 function brotzeit(c: Canvas): void {
-  c.set(12, G + 1, 12, 'spruce_fence');
-  c.set(12, G + 2, 12, 'spruce_slab[type=bottom]');
-  c.set(13, G + 1, 12, 'spruce_fence');
-  c.set(13, G + 2, 12, 'spruce_slab[type=bottom]');
-  [12, 13].forEach((x) => {
-    c.set(x, G + 1, 13, stairs('spruce', 'south'));
-    c.set(x, G + 1, 11, stairs('spruce', 'north'));
+  const tz = 12;
+  range(11, 13).forEach((x) => {
+    c.set(x, G + 1, tz - 1, MOEBEL.bierbank);
+    c.set(x, G + 1, tz, MOEBEL.biertisch);
+    c.set(x, G + 1, tz + 1, MOEBEL.bierbank);
   });
-  c.set(13, G + 3, 12, 'candle[candles=2,lit=true]');
-  c.set(16, G + 1, 14, 'campfire[lit=true,signal_fire=false]');
-  disc(16, 14, 1.5)
-    .filter(([x, z]) => x !== 16 || z !== 14)
-    .forEach(([x, z]) => c.set(x, G, z, 'cobblestone'));
-  npc(c, { x: 12, y: G + 1, z: 13, look: 'north', skin: 'gast2', hand: 'bread', sit: true });
-  npc(c, { x: 13, y: G + 1, z: 11, look: 'south', skin: 'kellnerin', hand: 'honey_bottle', sit: true });
+  c.set(11, G + 2, tz, MOEBEL.krug(2));
+  c.set(13, G + 2, tz, MOEBEL.krug(1));
+  // Gäste sitzen auf der Bank, Blick zum Tisch (wie im Biergarten der Lobby).
+  npc(c, { x: 12, y: G + 1, z: tz + 1, look: 'north', skin: 'gast2', hand: 'bread', sit: true });
+  npc(c, { x: 13, y: G + 1, z: tz - 1, look: 'south', skin: 'kellnerin', hand: 'honey_bottle', sit: true });
+  // Lagerfeuer: Steinkreis aus Stufen, darunter Pflaster statt Kies, zwei Holzklötze zum Sitzen.
+  const [fx, fz] = [17, 14];
+  c.set(fx, G, fz, 'stone');
+  c.set(fx, G + 1, fz, 'campfire[lit=true,signal_fire=false]');
+  disc(fx, fz, 1.5)
+    .filter(([x, z]) => x !== fx || z !== fz)
+    .forEach(([x, z], i) => {
+      c.set(x, G, z, 'stone');
+      c.set(
+        x,
+        G + 1,
+        z,
+        i % 3 === 0 ? 'mossy_cobblestone_slab[type=bottom]' : 'cobblestone_slab[type=bottom]',
+      );
+    });
+  c.set(fx + 3, G + 1, fz, 'stripped_spruce_log[axis=z]');
+  c.set(fx, G + 1, fz + 3, 'stripped_spruce_log[axis=x]');
 }
 
 /** Sprung-Parcours im Westen (Zeitvertreib): Startplatte, Sprünge, Plattform mit Glocke. */
@@ -387,6 +408,9 @@ function parkour(c: Canvas): void {
   const s = WARTUNG_POINTS.parkourStart;
   c.set(s.x, G, s.z, 'polished_andesite');
   c.set(s.x, s.y, s.z, 'light_weighted_pressure_plate');
+  // Pfosten mit Laterne neben der Platte – daran hängt die Schrift (sonst schwebte sie frei).
+  range(G + 1, G + 2).forEach((y) => c.set(s.x - 1, y, s.z, 'spruce_fence'));
+  c.set(s.x - 1, G + 3, s.z, 'lantern');
   WARTUNG_PARKOUR_STEPS.forEach((st) => {
     // range zählt auch rückwärts – ein Sprung direkt auf dem Boden braucht keinen Pfosten (sonst Zaun statt Block)
     if (st.y > G + 1) range(G + 1, st.y - 1).forEach((y) => c.set(st.x, y, st.z, 'spruce_fence'));
@@ -463,6 +487,13 @@ export function buildWartung(): WartungScene {
       [0, -4],
     ],
     rnd,
+  );
+  // Platz zwischen den beiden Wegen zur Werkstatt: ganz festgetreten statt einer Grasinsel mit Blumen mittendrin.
+  range(-5, 5).forEach((x) =>
+    range(-4, 11).forEach((z) => {
+      const inside = z >= 3 || Math.abs(x) * 7 <= 5 * (z + 4);
+      if (inside && c.get(x, G, z) === undefined) c.set(x, G, z, 'dirt_path');
+    }),
   );
   trail(
     c,
