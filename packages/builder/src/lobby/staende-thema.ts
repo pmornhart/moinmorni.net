@@ -6,7 +6,7 @@
  *   Schwarzeiche), die weißen Bahnen der Markise rot (bei roten Ständen grün), auf den Fässern Lebkuchen (Kuchen),
  *   Kerzenkuchen und Laternen. Den Schnee auf der Markise legt `winter.ts` darüber.
  * - **Ostern:** Frühlings-Stände aus Kirschholz, die weißen Bahnen der Markise rosa (bei rosa Ständen hellblau),
- *   auf den Fässern Tulpen, Maiglöckchen und Schildkröteneier als Ostereier.
+ *   auf den Fässern Tulpen, Maiglöckchen und rosa Kerzen.
  *
  * Die Farbe des Modus (andere Bahnen, Banner hinten) bleibt, Figur und Schild über der Figur bleiben frei. Getauscht
  * wird nur, wo im Bauplan noch der erwartete Block steht; den Rückweg rechnet `seasonPlanOf` bzw. der Winter selbst.
@@ -45,7 +45,7 @@ const THEMEN: Readonly<Record<StandThema, Thema>> = {
     alt: 'light_blue',
     goods: [
       'potted_pink_tulip',
-      'turtle_egg[eggs=3,hatch=0]',
+      'pink_candle[candles=3,lit=false]',
       'potted_lily_of_the_valley',
       'potted_red_tulip',
     ],
