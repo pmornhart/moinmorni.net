@@ -11,7 +11,7 @@ class LobbyDoorsTest {
     @Test
     void movableBlocks() {
         assertTrue(LobbyDoors.movable(Material.OAK_DOOR));
-        assertTrue(LobbyDoors.movable(Material.SPRUCE_TRAPDOOR));
+        assertFalse(LobbyDoors.movable(Material.SPRUCE_TRAPDOOR));
         assertTrue(LobbyDoors.movable(Material.BIRCH_FENCE_GATE));
         assertTrue(LobbyDoors.movable(Material.LEVER));
         assertTrue(LobbyDoors.movable(Material.STONE_BUTTON));

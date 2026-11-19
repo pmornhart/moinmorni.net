@@ -42,7 +42,7 @@ final class LobbyDoors implements Listener {
         if (name.startsWith("IRON_")) {
             return false;
         }
-        return name.endsWith("_DOOR") || name.endsWith("_TRAPDOOR") || name.endsWith("_FENCE_GATE")
+        return name.endsWith("_DOOR") || name.endsWith("_FENCE_GATE")
                 || name.endsWith("_BUTTON") || type == Material.LEVER;
     }
 
