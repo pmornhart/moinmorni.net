@@ -410,19 +410,18 @@ function stairOf(g: RoofGeo, side: Side): string {
 }
 
 const SHEET = 0.14;
-const LIP = 0.18;
-
-/** Überstand der Schneeplatte an den Giebelseiten (so viel wie an der Traufe hinausragt). */
-const EDGE = LIP;
+/** Die Platte ist schräg abgeschnitten: so weit nach innen, dass ihre Oberkante bündig mit der Traufe abschließt. */
+const FLUSH = SHEET / Math.SQRT2;
 
 /**
- * Schneeplatte über den Reihen i0 … i1 von a0 bis a1 (Blockkanten, an den Giebeln mit Überstand): liegt schräg auf den
- * Stufenkanten (45°), unten an der Traufe mit kleinem Überstand, oben bis zum First.
+ * Schneeplatte über den Reihen i0 … i1 von a0 bis a1 (Blockkanten, bündig mit den Giebeln): liegt schräg auf den
+ * Stufenkanten (45°), unten bündig mit der Traufe, oben bis zum First.
  */
 function sheet(g: RoofGeo, side: Side, i0: number, i1: number, a0: number, a1: number): string {
   const s = sign(side);
-  const from = outer(g, side, i0) - s * (i0 === 0 ? LIP : 0);
-  const to = i1 === g.layers - 1 ? g.center : outer(g, side, i1 + 1);
+  const from = outer(g, side, i0) + s * (i0 === 0 ? FLUSH : 0);
+  // Am First so weit über die Mitte, dass sich die Oberkanten beider Seiten treffen (keine Lücke am First).
+  const to = i1 === g.layers - 1 ? g.center + s * FLUSH : outer(g, side, i1 + 1);
   const mid = (from + to) / 2;
   const lift = SHEET / 2 / Math.SQRT2;
   const slope = Math.abs(to - from) * Math.SQRT2;
@@ -465,8 +464,8 @@ function roofSide(v: View, g: RoofGeo, side: Side): string[] {
     else acc.push({ aS: c.a, aE: c.a, runs: c.runs });
     return acc;
   }, []);
-  const lo = (a: number): number => (a === g.a1 ? a - EDGE : a);
-  const hi = (a: number): number => (a === g.a2 ? a + 1 + EDGE : a + 1);
+  const lo = (a: number): number => a;
+  const hi = (a: number): number => a + 1;
   // Steckt eine Platte trotzdem in etwas (Turm, Wand am Dach), wird sie geteilt – bis zu einzelnen Feldern, die frei
   // liegen; was dann noch steckt, bleibt ohne Schnee.
   const world: World = (x, y, z) => v.now(x, y, z);

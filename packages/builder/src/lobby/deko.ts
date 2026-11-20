@@ -90,7 +90,14 @@ export const aroundZ = (a: number): Quat => [0, 0, Math.sin(a / 2), Math.cos(a /
 
 /** Zahl für NBT (Kommazahl mit f) bzw. für Koordinaten (ohne). */
 export const f = (n: number): string => `${Number(n.toFixed(4))}f`;
-export const c = (n: number): string => `${Number(n.toFixed(4))}`;
+/**
+ * Koordinate für Befehle. Immer mit Nachkommastelle: eine ganze Zahl wie „-2“ setzt Minecraft bei x/z auf die
+ * Blockmitte (-1.5) – die Anzeige läge dann einen halben Block daneben.
+ */
+export const c = (n: number): string => {
+  const v = Number(n.toFixed(4));
+  return Number.isInteger(v) ? `${v}.0` : `${v}`;
+};
 
 export interface DisplayOptions {
   readonly scale: Vec;
