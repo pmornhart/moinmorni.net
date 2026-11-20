@@ -27,7 +27,7 @@ import { BAUM_RADIUS, christbaum, CHRISTBAUM } from './christbaum.js';
 import { LAUNCHPADS, LOBBY_SPAWN_VIEW } from './features.js';
 import { JUMP_AND_RUN } from './jumpandrun.js';
 import { displayStuck, type World } from '../pruefung.js';
-import { aroundY, blockDisplay, placeModel, type Vec } from './deko.js';
+import { aroundX, aroundY, aroundZ, blockDisplay, placeModel, type Vec } from './deko.js';
 import { settleDown } from './halt.js';
 import { inSportZone } from './sportstand.js';
 import { staendeThema } from './staende-thema.js';
@@ -409,64 +409,70 @@ function stairOf(g: RoofGeo, side: Side): string {
   return `${g.material}_stairs[facing=${side === 1 ? f1 : f2},half=bottom]`;
 }
 
-/** Abschnitte (a von … bis) einer Dachreihe, in denen die Treppe noch frei unter dem Himmel liegt. */
-function rowSegments(v: View, g: RoofGeo, side: Side, i: number): Array<[number, number]> {
+const SHEET = 0.14;
+const LIP = 0.18;
+
+/** Überstand der Schneeplatte an den Giebelseiten (so viel wie an der Traufe hinausragt). */
+const EDGE = LIP;
+
+/**
+ * Schneeplatte über den Reihen i0 … i1 von a0 bis a1 (Blockkanten, an den Giebeln mit Überstand): liegt schräg auf den
+ * Stufenkanten (45°), unten an der Traufe mit kleinem Überstand, oben bis zum First.
+ */
+function sheet(g: RoofGeo, side: Side, i0: number, i1: number, a0: number, a1: number): string {
+  const s = sign(side);
+  const from = outer(g, side, i0) - s * (i0 === 0 ? LIP : 0);
+  const to = i1 === g.layers - 1 ? g.center : outer(g, side, i1 + 1);
+  const mid = (from + to) / 2;
+  const lift = SHEET / 2 / Math.SQRT2;
+  const slope = Math.abs(to - from) * Math.SQRT2;
+  const length = a1 - a0;
+  const at = toWorld(g, (a0 + a1) / 2, plane(g, side, mid) + lift, mid - s * lift);
+  return blockDisplay(tags('dach'), at, 'snow_block', {
+    scale: g.alongX ? [length, SHEET, slope] : [slope, SHEET, length],
+    rotation: g.alongX ? aroundX((-s * Math.PI) / 4) : aroundZ((s * Math.PI) / 4),
+    light: { sky: 15, block: 0 },
+    view: 2,
+  });
+}
+
+/** Freie Reihen einer Dachspalte a als Läufe [i0, i1] (eine Treppe ist frei, wenn darüber Luft ist). */
+function freeRuns(v: View, g: RoofGeo, side: Side, a: number): Array<[number, number]> {
   const stair = stairOf(g, side);
-  return range(g.a1, g.a2)
-    .filter((a) => {
+  return range(0, g.layers - 1)
+    .filter((i) => {
       const [x, y, z] = toWorld(g, a, g.y + i, rowB(g, side, i));
       return v.now(x, y, z) === stair && v.now(x, y + 1, z) === 'air';
     })
-    .reduce<Array<[number, number]>>((runs, a) => {
+    .reduce<Array<[number, number]>>((runs, i) => {
       const last = runs[runs.length - 1];
-      if (last && last[1] === a - 1) last[1] = a;
-      else runs.push([a, a]);
+      if (last && last[1] === i - 1) last[1] = i;
+      else runs.push([i, i]);
       return runs;
     }, []);
 }
 
-const SHEET = 0.13;
-/** Breite der Schneekante oben auf der hohen Stufe (etwas mehr als die halbe Stufe, steht leicht über). */
-const LEDGE = 0.58;
-/** Breite des Schnees auf der Trittfläche – davor bleibt ein Streifen Holz an der Stufe frei. */
-const TREAD = 0.4;
-
 /**
- * Schnee auf den Dachreihen i0 … i1 im Abschnitt aS … aE: je Reihe ein dünner Streifen oben auf der hohen Stufe und
- * einer auf der Trittfläche der Treppe. So liegt der Schnee in Stufen wie echter, die Dachform und ein schmaler
- * Streifen Holz an jeder Stufe bleiben sichtbar – kein flacher weißer Deckel.
+ * Schnee auf einer Dachseite: möglichst eine Platte über die ganze Seite. Nur wo etwas auf dem Dach steht (Kamin,
+ * Gaube, Turm), wird die Seite in Streifen geteilt – dort endet die Platte am Hindernis und geht darüber weiter,
+ * daneben laufen die Platten durchgehend von der Traufe bis zum First.
  */
-function sheet(g: RoofGeo, side: Side, i0: number, i1: number, aS: number, aE: number): string[] {
-  const length = aE + 1 - aS;
-  const plate = (b: number, y: number, width: number): string =>
-    blockDisplay(tags('dach'), toWorld(g, (aS + aE + 1) / 2, y + SHEET / 2, b), 'snow_block', {
-      scale: g.alongX ? [length, SHEET, width] : [width, SHEET, length],
-      view: 2,
-    });
-  return range(i0, i1).flatMap((i) => {
-    const b0 = rowB(g, side, i);
-    const y = g.y + i;
-    const top = side === 1 ? b0 + 1 - LEDGE / 2 : b0 + LEDGE / 2;
-    const tread = side === 1 ? b0 + TREAD / 2 : b0 + 1 - TREAD / 2;
-    return [plate(top, y + 1, LEDGE), plate(tread, y + HALF, TREAD)];
-  });
-}
-
-/** Schnee auf einer Dachseite: Reihen mit gleichen Abschnitten bekommen eine gemeinsame Platte. */
 function roofSide(v: View, g: RoofGeo, side: Side): string[] {
-  const rows = range(0, g.layers - 1).map((i) => ({ i, segs: rowSegments(v, g, side, i) }));
-  const groups = rows.reduce<Array<{ i0: number; i1: number; segs: Array<[number, number]> }>>((acc, row) => {
+  const cols = range(g.a1, g.a2).map((a) => ({ a, runs: freeRuns(v, g, side, a) }));
+  const strips = cols.reduce<Array<{ aS: number; aE: number; runs: Array<[number, number]> }>>((acc, c) => {
     const last = acc[acc.length - 1];
-    if (last && JSON.stringify(last.segs) === JSON.stringify(row.segs)) last.i1 = row.i;
-    else acc.push({ i0: row.i, i1: row.i, segs: row.segs });
+    if (last && last.aE === c.a - 1 && JSON.stringify(last.runs) === JSON.stringify(c.runs)) last.aE = c.a;
+    else acc.push({ aS: c.a, aE: c.a, runs: c.runs });
     return acc;
   }, []);
-  // Steckt eine Platte in etwas (Turm, Wand, Kamin am Dach), wird sie geteilt – bis zu einzelnen Feldern, die frei
+  const lo = (a: number): number => (a === g.a1 ? a - EDGE : a);
+  const hi = (a: number): number => (a === g.a2 ? a + 1 + EDGE : a + 1);
+  // Steckt eine Platte trotzdem in etwas (Turm, Wand am Dach), wird sie geteilt – bis zu einzelnen Feldern, die frei
   // liegen; was dann noch steckt, bleibt ohne Schnee.
   const world: World = (x, y, z) => v.now(x, y, z);
   const fit = (i0: number, i1: number, aS: number, aE: number): string[] => {
-    const cmds = sheet(g, side, i0, i1, aS, aE);
-    if (cmds.every((cmd) => displayStuck(world, cmd) === null)) return cmds;
+    const cmd = sheet(g, side, i0, i1, lo(aS), hi(aE));
+    if (displayStuck(world, cmd) === null) return [cmd];
     if (aS < aE) {
       const m = Math.floor((aS + aE) / 2);
       return [...fit(i0, i1, aS, m), ...fit(i0, i1, m + 1, aE)];
@@ -477,7 +483,7 @@ function roofSide(v: View, g: RoofGeo, side: Side): string[] {
     }
     return [];
   };
-  return groups.flatMap((gr) => gr.segs.flatMap(([aS, aE]) => fit(gr.i0, gr.i1, aS, aE)));
+  return strips.flatMap((st) => st.runs.flatMap(([i0, i1]) => fit(i0, i1, st.aS, st.aE)));
 }
 
 /** Holzdächer (Häuser, Kapelle) bekommen Eiszapfen und Lichter, die Kupferdächer des Schlosses nur Schnee. */
@@ -486,8 +492,9 @@ const wooden = (g: RoofGeo): boolean => !g.material.includes('copper');
 /** Eiszapfen an der Traufe: unregelmäßig, verschieden lang. */
 function icicles(v: View, g: RoofGeo, side: Side, rnd: () => number): string[] {
   const s = sign(side);
-  return rowSegments(v, g, side, 0).flatMap(([aS, aE]) =>
-    range(aS, aE).flatMap((a) => {
+  return range(g.a1, g.a2)
+    .filter((a) => freeRuns(v, g, side, a)[0]?.[0] === 0)
+    .flatMap((a) => {
       const pick = rnd();
       const length = 0.3 + rnd() * 0.55;
       const shift = (rnd() - HALF) * 0.5;
@@ -500,8 +507,7 @@ function icicles(v: View, g: RoofGeo, side: Side, rnd: () => number): string[] {
           rotation: aroundY(Math.PI / 4),
         }),
       ];
-    }),
-  );
+    });
 }
 
 const GABLE_LIGHTS: readonly string[] = [
